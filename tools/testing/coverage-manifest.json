@@ -19066,36 +19066,6 @@
       ]
     },
     {
-      "path": "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/compares-and-resumes-offline-work-and-loads--restores-and-rebases-revisions-using-native-activation-1.png",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/retains-decision-results-while-keyboard-users-retry-conflicts-or-start-a-new-proposal-1.png",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/__screenshots__/typing.browser-component.test.tsx/collaborative-typing-in-Chromium-preserves-character-order-and-local-undo-while-entering-an-insertion-proposal-1.png",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20356,6 +20326,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20363,8 +20334,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20390,6 +20360,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20397,8 +20368,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20413,6 +20383,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20420,8 +20391,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20447,6 +20417,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20454,8 +20425,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20546,6 +20516,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20553,8 +20524,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20569,6 +20539,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20576,8 +20547,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20592,6 +20562,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20599,8 +20570,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20615,6 +20585,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20622,8 +20593,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20638,6 +20608,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20645,8 +20616,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20667,6 +20637,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20674,8 +20645,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20690,6 +20660,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20697,8 +20668,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20713,6 +20683,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20720,8 +20691,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20736,6 +20706,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20743,8 +20714,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20835,6 +20805,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
@@ -20842,8 +20813,7 @@
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png"
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -20868,6 +20838,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20938,146 +20918,6 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-Plate-between-Konva-layers-when-a-shape-is-moved-behind-the-active-text-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-selected-text-properties-available-while-editing-and-lets-the-panel-collapse-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.marquee.browser-component.test.tsx/shows-a-marquee-inside-a-frame--selects-contained-shapes--extends-with-Shift--and-preserves-frame-border-selection-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/StudioCrop.browser-component.test.tsx/drags-a-crop-edge-on-the-real-canvas-and-saves-the-smaller-frame-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/StudioCrop.browser-component.test.tsx/focuses-and-activates-crop-controls-with-the-keyboard-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/StudioCrop.browser-component.test.tsx/pans-a-crop-on-the-real-canvas-within-the-source-bounds-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/exposes-Studio-creation--text--media--campaign-and-export-controls-to-real-keyboard-focus-and-native-activation-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/exposes-Studio-creation--text--media-and-export-controls-to-real-keyboard-focus-and-native-activation-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-a-partial-editor-selection-when-a-text-menu-action-takes-focus-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-the-toolbar-menu-above-the-canvas-properties-panel-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-toolbar-dropdowns-above-the-canvas-properties-panel-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/navigates-icon-only-Studio-menus-with-arrow-keys-and-returns-focus-on-Escape-1.png",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/opens-image-crop-with-native-keyboard-focus-and-activation-1.png",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -21306,6 +21146,16 @@
     },
     {
       "path": "src/features/create/hooks/__tests__/useCreateStatementForm.coverage.component.test.tsx",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
       "domain": "features:create",
       "owner": "polity/features:create",
       "kind": "test-infrastructure",
@@ -21741,6 +21591,29 @@
           }
         }
       ],
+      "suggestedTestRefs": [
+        "src/features/create/hooks/__tests__/create-election-candidate.lsf-a09.component.test.tsx",
+        "src/features/create/hooks/__tests__/create-event.lsf-a09.component.test.tsx",
+        "src/features/create/hooks/__tests__/create-payment.lsf-a09.component.test.tsx",
+        "src/features/create/hooks/__tests__/create-todo.lsf-a09.component.test.tsx",
+        "src/features/create/hooks/__tests__/createAuxiliaryControllers.coverage.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCarouselFormLayoutController.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateAgendaItemForm.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateAmendmentForm.coverage.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateBlogForm.coverage.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateElectionCandidateForm.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateEventForm.component.test.tsx",
+        "src/features/create/hooks/__tests__/useCreateFormShellController.coverage.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/create/hooks/useCreateStudioProjectForm.tsx",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/create/hooks/__tests__/create-election-candidate.lsf-a09.component.test.tsx",
         "src/features/create/hooks/__tests__/create-event.lsf-a09.component.test.tsx",
@@ -66877,8 +66750,8 @@
         "src/features/amendments/ui/__tests__/useSupportConfirmationPanelController.a04.component.test.tsx",
         "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/keeps-selected-text-properties-available-while-editing-and-lets-the-panel-collapse-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-the-toolbar-menu-above-the-canvas-properties-panel-1.png"
+        "src/features/events/ui/__tests__/DelegateAssemblyCompositionPanel.component.test.tsx",
+        "src/features/groups/hooks/__tests__/useMembershipCompositionPanelController.component.test.tsx"
       ]
     },
     {
@@ -66998,13 +66871,13 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.lsf-a04.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-the-toolbar-menu-above-the-canvas-properties-panel-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-toolbar-dropdowns-above-the-canvas-properties-panel-1.png",
         "src/features/editor/ui/__tests__/EditorToolbar.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
         "src/features/pql/hooks/__tests__/pql-toolbar-rest.branch-a09.component.test.tsx",
         "src/features/pql/ui/__tests__/PqlToolbar.component.test.tsx",
-        "src/features/pql/ui/__tests__/PqlToolbarView.branch-a09.component.test.tsx"
+        "src/features/pql/ui/__tests__/PqlToolbarView.branch-a09.component.test.tsx",
+        "src/features/shared/hooks/__tests__/toolbar-and-emoji-controllers.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx"
       ]
     },
     {
@@ -71732,12 +71605,12 @@
         "src/features/change-requests/ui/__tests__/EditorViewModeToggleView.contract.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-a-partial-editor-selection-when-a-text-menu-action-takes-focus-1.png",
         "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/editor-realtime-version.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useEditor.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
-        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx"
+        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
+        "src/features/editor/hooks/__tests__/useEditorOperations.component.test.tsx"
       ]
     },
     {
@@ -77143,13 +77016,13 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.lsf-a04.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-the-toolbar-menu-above-the-canvas-properties-panel-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/keeps-toolbar-dropdowns-above-the-canvas-properties-panel-1.png",
         "src/features/editor/ui/__tests__/EditorToolbar.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
         "src/features/pql/hooks/__tests__/pql-toolbar-rest.branch-a09.component.test.tsx",
         "src/features/pql/ui/__tests__/PqlToolbar.component.test.tsx",
-        "src/features/pql/ui/__tests__/PqlToolbarView.branch-a09.component.test.tsx"
+        "src/features/pql/ui/__tests__/PqlToolbarView.branch-a09.component.test.tsx",
+        "src/features/shared/hooks/__tests__/toolbar-and-emoji-controllers.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx"
       ]
     },
     {
@@ -88868,8 +88741,8 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -89071,13 +88944,13 @@
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
         "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
         "src/features/calendar/logic/__tests__/calendarEventNavigation.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
         "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/useCurrentUserNavigationEntities.component.test.tsx"
+        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx"
       ]
     },
     {
@@ -90706,8 +90579,8 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -90909,13 +90782,13 @@
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
         "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
         "src/features/calendar/logic/__tests__/calendarEventNavigation.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
         "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/useCurrentUserNavigationEntities.component.test.tsx"
+        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx"
       ]
     },
     {
@@ -93710,6 +93583,16 @@
           }
         }
       ],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
+      "path": "src/routes/_authed/create/studio-project.tsx",
+      "domain": "routes:ui",
+      "owner": "polity/routes:ui",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
@@ -99439,7 +99322,6 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/compares-and-resumes-offline-work-and-loads--restores-and-rebases-revisions-using-native-activation-1.png",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -100046,7 +99928,6 @@
       "testRefs": [],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/KonvaStudioCanvas.browser-component.test.tsx/drops-a-canvas-node-into-the-open-Elements-menu-and-moves-normally-elsewhere-1.png",
         "src/features/shared/hooks/__tests__/useTocElementStaticController.component.test.tsx",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -100056,7 +99937,8 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts"
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts"
       ]
     },
     {
@@ -100068,8 +99950,6 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/exposes-Studio-creation--text--media--campaign-and-export-controls-to-real-keyboard-focus-and-native-activation-1.png",
-        "src/features/communication-studio/ui/__tests__/__screenshots__/keyboard.browser-component.test.tsx/exposes-Studio-creation--text--media-and-export-controls-to-real-keyboard-focus-and-native-activation-1.png",
         "src/features/events/logic/__tests__/icalExport.unit.test.ts",
         "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx",
         "src/features/shared/ui/calendar/__tests__/CalendarExportButton.component.test.tsx",
@@ -100079,7 +99959,9 @@
         "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
-        "src/server/studio/__tests__/export.unit.test.ts"
+        "src/server/studio/__tests__/export.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {

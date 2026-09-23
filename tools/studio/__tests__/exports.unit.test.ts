@@ -10,6 +10,7 @@ import { element } from '../../../src/features/communication-studio/logic/docume
 import { setTableBorders } from '../../../src/features/communication-studio/logic/table-operations';
 import { defaultBrand } from '../../../src/features/communication-studio/logic/document';
 import { createStudioTemplateDocumentV5 } from '../../../src/features/communication-studio/logic/templates-v5';
+import { legacyDocumentToV3 } from '../../../src/features/communication-studio/logic/v3-adapter';
 const io = vi.hoisted(() => ({
   launch: vi.fn(),
   spawn: vi.fn(),
@@ -194,20 +195,27 @@ describe('Studio export artifacts', () => {
   it('exports multi-page PNG archives and PDF pages with their exact requested dimensions', async () => {
     const doc = createDocument('carousel', 'Deck');
     doc.pages[1].format = 'square';
-    const archive = await exportDoc(doc, 'png');
+    const selected = [doc.pages[0].id, doc.pages[1].id];
+    const archive = await exportDoc(doc, 'png', {}, selected);
     expect(archive.mime).toBe('application/zip');
     expect(archive.name).toBe('Deck.zip');
     const files = unzipSync(archive.bytes);
-    expect(Object.keys(files)).toHaveLength(doc.pages.length);
+    expect(Object.keys(files)).toHaveLength(selected.length);
     expect(Object.keys(files)[0]).toMatch(/^PNG\/001-/);
+    expect(Object.keys(files)[1]).toMatch(/^PNG\/002-/);
+    expect(io.paint.mock.calls.map(call => call[1])).toEqual(selected);
     const result = await exportDoc(doc, 'pdf');
+    expect(result.name).toBe('Deck.pdf');
+    expect(result.mime).toBe('application/pdf');
     const pdf = await PDFDocument.load(result.bytes);
     expect(pdf.getPageCount()).toBe(doc.pages.length);
     expect(pdf.getPage(0).getSize()).toEqual({ width: 810, height: 1012.5 });
     expect(pdf.getPage(1).getSize()).toEqual({ width: 810, height: 810 });
-    expect(result.mime).toBe('application/pdf');
+    const xlsx = await exportDoc(doc, 'xlsx', {}, selected);
+    expect(xlsx.name).toBe('Deck.zip');
+    expect(Object.keys(unzipSync(xlsx.bytes))).toEqual(['Deck.xlsx']);
   });
-  it('keeps PowerPoint text and shapes editable and embeds media while preserving grouped output formats', async () => {
+  it('keeps PowerPoint text and shapes editable and embeds media in one presentation', async () => {
     const doc = createDocument('single', 'Editable');
     doc.pages[0].elements.push(
       element('ellipse', { rotation: 25, opacity: 0.5 }),
@@ -237,9 +245,70 @@ describe('Studio export artifacts', () => {
       })),
     });
     const multiple = await exportDoc(doc, 'pptx', media);
-    expect(
-      Object.keys(unzipSync(multiple.bytes)).filter(name => name.endsWith('.pptx'))
-    ).toHaveLength(2);
+    expect(multiple.name).toBe('Editable.pptx');
+    expect(multiple.mime).toContain('presentationml');
+    const slides = unzipSync(multiple.bytes);
+    expect(slides['ppt/slides/slide1.xml']).toBeDefined();
+    expect(slides['ppt/slides/slide2.xml']).toBeDefined();
+    expect(slides['ppt/slides/slide3.xml']).toBeUndefined();
+  });
+  it('returns a multi-frame PPTX directly with one slide per selected frame', async () => {
+    const doc = createDocument('carousel', 'Slides');
+    const selected = doc.pages.slice(0, 2).map(page => page.id);
+    const result = await exportDoc(doc, 'pptx', {}, selected);
+    expect(result.name).toBe('Slides.pptx');
+    expect(result.mime).toContain('presentationml');
+    const slides = unzipSync(result.bytes);
+    expect(slides['ppt/slides/slide1.xml']).toBeDefined();
+    expect(slides['ppt/slides/slide2.xml']).toBeDefined();
+    expect(slides['ppt/slides/slide3.xml']).toBeUndefined();
+  });
+  it('keeps frame order and centers a square frame on the first frame’s portrait slide', async () => {
+    const doc = createDocument('carousel', 'Mixed sizes');
+    doc.pages[0].elements = [element('text', { text: 'FIRST_FRAME' })];
+    doc.pages[1].format = 'square';
+    doc.pages[1].elements = [
+      element('rect', {
+        x: 0,
+        y: 0,
+        width: 1080,
+        height: 1080,
+        fill: '#00ff00',
+        strokeWidth: 0,
+      }),
+      element('text', { text: 'SECOND_FRAME' }),
+    ];
+    const result = await exportDoc(doc, 'pptx', {}, [doc.pages[1].id, doc.pages[0].id]);
+    const deck = unzipSync(result.bytes);
+    expect(strFromU8(deck['ppt/presentation.xml'])).toContain('cx="6858000" cy="8572500"');
+    expect(strFromU8(deck['ppt/slides/slide1.xml'])).toContain('FIRST_FRAME');
+    const secondSlide = strFromU8(deck['ppt/slides/slide2.xml']);
+    expect(secondSlide).toContain('SECOND_FRAME');
+    const greenShape = (secondSlide.match(/<p:sp>[\s\S]*?<\/p:sp>/g) ?? []).find(shape =>
+      shape.includes('00FF00')
+    );
+    expect(greenShape).toContain('<a:off x="0" y="857250"/>');
+    expect(greenShape).toContain('<a:ext cx="6858000" cy="6858000"/>');
+  });
+  it('keeps all selected frames in the single presentation inside the Canva package', async () => {
+    const doc = createDocument('carousel', 'Canva slides');
+    doc.pages[1].format = 'square';
+    const result = await exportDoc(
+      doc,
+      'canva',
+      {},
+      doc.pages.slice(0, 2).map(page => page.id)
+    );
+    expect(result.name).toBe('Canva-slides.zip');
+    const files = unzipSync(result.bytes);
+    expect(Object.keys(files).filter(file => file.endsWith('.pptx'))).toEqual([
+      'Canva-slides.pptx',
+    ]);
+    expect(files['Canva-Import.md']).toBeDefined();
+    const deck = unzipSync(files['Canva-slides.pptx']);
+    expect(deck['ppt/slides/slide1.xml']).toBeDefined();
+    expect(deck['ppt/slides/slide2.xml']).toBeDefined();
+    expect(deck['ppt/slides/slide3.xml']).toBeUndefined();
   });
   it('packages Canva import instructions and raster video posters in editable PowerPoint slides', async () => {
     const doc = createDocument('single', 'Canva');
@@ -253,14 +322,14 @@ describe('Studio export artifacts', () => {
     });
     const files = unzipSync(result.bytes);
     expect(strFromU8(files['Canva-Import.md'])).toContain('PowerPoint');
-    const ppt = unzipSync(files['Canva-feed.pptx']);
+    const ppt = unzipSync(files['Canva.pptx']);
     expect(Object.keys(ppt).some(name => name.endsWith('.mp4'))).toBe(false);
     expect(
       Object.keys(ppt).some(name => name.startsWith('ppt/media/') && name.endsWith('.png'))
     ).toBe(true);
   });
   it('exports cropped images as picture objects and cropped video posters with the original video beside the PPTX', async () => {
-    const doc = createDocument('single', 'Cropped');
+    const doc = createDocument('carousel', 'Cropped');
     const crop = { x: 25, y: 0, width: 50, height: 100, naturalWidth: 100, naturalHeight: 100 };
     doc.pages[0].elements.push(
       element('image', { assetId: imageId, fit: 'cover', crop }),
@@ -273,9 +342,11 @@ describe('Studio export artifacts', () => {
     });
     expect(result.mime).toBe('application/zip');
     const files = unzipSync(result.bytes);
+    expect(Object.keys(files).filter(file => file.endsWith('.pptx'))).toEqual(['Cropped.pptx']);
     expect(files[`Medien/${videoId}.mp4`]).toEqual(sourceVideo);
-    const ppt = unzipSync(files['Cropped-feed.pptx']);
+    const ppt = unzipSync(files['Cropped.pptx']);
     const slide = strFromU8(ppt['ppt/slides/slide1.xml']);
+    expect(ppt['ppt/slides/slide2.xml']).toBeDefined();
     expect(slide.match(/<p:pic>/g) ?? []).toHaveLength(2);
     expect(Object.keys(ppt).some(name => name.endsWith('.mp4'))).toBe(false);
     expect(
@@ -284,33 +355,116 @@ describe('Studio export artifacts', () => {
   });
   it('creates a complete campaign archive with media, channel captions, calendar and presentation', async () => {
     const doc = createDocument('single', 'Campaign');
-    const media = Object.fromEntries(
-      ['image/png', 'image/jpeg', 'image/webp', 'video/mp4'].map((mime, index) => [
-        String(index),
-        { mime, bytes: png, name: 'source' },
-      ])
-    );
+    doc.pages[0].elements.push(element('image', { assetId: imageId }));
+    const media = {
+      [imageId]: { mime: 'image/png', bytes: png, name: 'source' },
+      [videoId]: { mime: 'video/mp4', bytes: png, name: 'unused' },
+    };
     const result = await exportDoc(doc, 'zip', media);
     const files = unzipSync(result.bytes);
     expect(Object.keys(files)).toEqual(
       expect.arrayContaining([
-        'Medien/0.png',
-        'Medien/1.jpg',
-        'Medien/2.webp',
-        'Medien/3.mp4',
+        `Medien/${imageId}.png`,
         'Kampagnenplan.xlsx',
         'Kanaltexte.md',
         'Polity-Projekt.json',
         'Campaign.pdf',
-        'Campaign-feed.pptx',
+        'Campaign.pptx',
+        'Canva/Campaign.pptx',
+        'Canva/Canva-Import.md',
       ])
     );
+    expect(files[`Medien/${videoId}.mp4`]).toBeUndefined();
     expect(strFromU8(files['Kanaltexte.md'])).toContain('instagram');
     expect(JSON.parse(strFromU8(files['Polity-Projekt.json']))).toMatchObject({ schemaVersion: 5 });
     expect(Object.keys(unzipSync(files['Kampagnenplan.xlsx']))).toContain('xl/workbook.xml');
     const excel = await exportDoc(doc, 'xlsx');
     expect(excel.name).toBe('Campaign.xlsx');
     expect(excel.mime).toContain('spreadsheet');
+  });
+  it('limits every ZIP artifact and its project backup to marked frames', async () => {
+    const doc = createDocument('carousel', 'Selected');
+    doc.pages = doc.pages.slice(0, 2);
+    doc.pages[0].elements.push(element('image', { assetId: imageId }));
+    doc.pages[1].elements.push(element('image', { assetId: videoId }));
+    doc.posts = [
+      { ...doc.posts[0], pageIds: doc.pages.map(page => page.id) },
+      {
+        ...structuredClone(doc.posts[0]),
+        id: crypto.randomUUID(),
+        code: 'UNSELECTED',
+        pageIds: [doc.pages[1].id],
+      },
+    ];
+    const result = await exportDoc(
+      doc,
+      'zip',
+      {
+        [imageId]: { mime: 'image/png', bytes: png, name: 'selected.png' },
+        [videoId]: { mime: 'image/png', bytes: png, name: 'other.png' },
+      },
+      [doc.pages[0].id]
+    );
+    const files = unzipSync(result.bytes);
+    expect(Object.keys(files).filter(name => name.startsWith('PNG/'))).toEqual([
+      `PNG/${pageFile(doc.pages[0], 0)}`,
+    ]);
+    expect(files[`Medien/${imageId}.png`]).toBeDefined();
+    expect(files[`Medien/${videoId}.png`]).toBeUndefined();
+    const project = JSON.parse(strFromU8(files['Polity-Projekt.json']));
+    expect(project.nodes.some((node: { id: string }) => node.id === doc.pages[1].id)).toBe(false);
+    expect(project.deliverables).toHaveLength(1);
+    expect(project.deliverables[0].frameIds).toEqual([doc.pages[0].id]);
+    expect(strFromU8(files['Kanaltexte.md'])).not.toContain('UNSELECTED');
+    expect((await PDFDocument.load(files['Selected.pdf'])).getPageCount()).toBe(1);
+    expect(unzipSync(files['Selected.pptx'])['ppt/slides/slide2.xml']).toBeUndefined();
+    expect(unzipSync(files['Canva/Selected.pptx'])['ppt/slides/slide2.xml']).toBeUndefined();
+    const xlsx = await exportDoc(doc, 'xlsx', {}, [doc.pages[0].id]);
+    expect(strFromU8(unzipSync(xlsx.bytes)['xl/worksheets/sheet1.xml'])).not.toContain(
+      'UNSELECTED'
+    );
+  });
+  it('includes one PPTX and one Canva deck for mixed frame formats', async () => {
+    const doc = createDocument('carousel', 'Mixed');
+    doc.pages[1].format = 'square';
+    const files = unzipSync((await exportDoc(doc, 'zip')).bytes);
+    expect(Object.keys(files)).toEqual(
+      expect.arrayContaining(['Mixed.pptx', 'Canva/Mixed.pptx', 'Canva/Canva-Import.md'])
+    );
+    expect(Object.keys(files).filter(file => file.endsWith('.pptx'))).toEqual([
+      'Mixed.pptx',
+      'Canva/Mixed.pptx',
+    ]);
+    for (const file of ['Mixed.pptx', 'Canva/Mixed.pptx']) {
+      const slides = unzipSync(files[file]);
+      expect(slides['ppt/slides/slide1.xml']).toBeDefined();
+      expect(slides['ppt/slides/slide2.xml']).toBeDefined();
+    }
+    expect((await PDFDocument.load(files['Mixed.pdf'])).getPageCount()).toBe(doc.pages.length);
+  });
+  it('keeps ZIP usable and explains when a selected video exceeds the MP4 limit', async () => {
+    const doc = createDocument('carousel', 'Long video');
+    const document = legacyDocumentToV3(doc);
+    const frames = document.nodes.filter(node => node.type === 'frame');
+    document.deliverables[0].kind = 'video';
+    document.deliverables[0].frameIds = frames.slice(0, 2).map(frame => frame.id);
+    for (const frame of frames.slice(0, 2)) frame.duration = 31;
+    const files = unzipSync(
+      (
+        await render(
+          document,
+          {},
+          'zip',
+          frames.slice(0, 2).map(frame => frame.id),
+          temp,
+          vi.fn().mockResolvedValue(undefined),
+          vi.fn().mockResolvedValue(false)
+        )
+      ).bytes
+    );
+    expect(strFromU8(files['Video-Hinweis.md'])).toContain('60 Sekunden');
+    expect(Object.keys(files).some(name => name.endsWith('.mp4'))).toBe(false);
+    expect(files['Long-video.pdf']).toBeDefined();
   });
   it('encodes portrait frames with optional trimmed audio and reports progress', async () => {
     const doc = createDocument('video', 'Video');

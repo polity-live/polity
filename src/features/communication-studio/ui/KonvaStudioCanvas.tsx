@@ -27,6 +27,7 @@ import {
   Text,
 } from 'react-konva';
 import type Konva from 'konva';
+import { CanvasChangeRequestMarker } from '@/features/shared/ui/change-requests/CanvasChangeRequestMarker';
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import type {
   StudioDocumentV3,
@@ -75,6 +76,14 @@ export interface StudioCanvasState {
   toolLocked: boolean;
   zoom: number;
   viewBounds: Bounds | null;
+}
+
+export interface StudioCanvasChangeRequestMarker {
+  id: string;
+  proposalId: string;
+  nodeId: string;
+  label: string;
+  selected: boolean;
 }
 
 export type StudioCanvasCommand =
@@ -132,6 +141,9 @@ interface Props {
   contextToolbarLabel?: string;
   inspector?: ReactNode;
   inspectorLabels?: { title: string; collapse: string; expand: string; move: string };
+  changeRequestMarkers?: StudioCanvasChangeRequestMarker[];
+  changeRequestOverlay?: ReactNode;
+  onChangeRequestSelect?: (id: string) => void;
   editable: boolean;
   fit?: 'workspace' | 'contain';
   guides?: boolean;
@@ -508,7 +520,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const [toolLocked, setToolLocked] = useState(false);
     const [rounded, setRounded] = useState(false);
     const [editing, setEditing] = useState<string | null>(null);
-    const pendingTextEdit = useRef<string | null>(null);
+    const [pendingTextEdit, setPendingTextEdit] = useState<string | null>(null);
     const contextToolbarRef = useRef<HTMLDivElement>(null);
     const [contextToolbarSize, setContextToolbarSize] = useState({ width: 0, height: 0 });
     const [contextToolbarBounds, setContextToolbarBounds] = useState<Bounds | null>(null);
@@ -838,12 +850,22 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             : null,
       });
     }, [activeTool, toolLocked, zoom, pan, viewport, props.onCanvasStateChange]);
+    useLayoutEffect(() => {
+      if (!pendingTextEdit) return;
+      if (!props.editable) {
+        setPendingTextEdit(null);
+        return;
+      }
+      if (!props.selected.includes(pendingTextEdit)) return;
+      const node = props.document.nodes.find(candidate => candidate.id === pendingTextEdit);
+      if (node?.type !== 'richText') return;
+      setEditing(pendingTextEdit);
+      setPendingTextEdit(null);
+    }, [pendingTextEdit, props.document, props.editable, props.selected]);
     useEffect(() => {
-      if (pendingTextEdit.current === editing && !editingNode) return;
-      if (pendingTextEdit.current === editing && editingNode) pendingTextEdit.current = null;
-      if (!editingNode || !props.editable || !props.selected.includes(editingNode.id))
+      if (editing && (!editingNode || !props.editable || !props.selected.includes(editing)))
         setEditing(null);
-    }, [editingNode, props.editable, props.selected]);
+    }, [editing, editingNode, props.editable, props.selected]);
     useEffect(() => {
       if (cropDraft && (!props.editable || !props.selected.includes(cropDraft.nodeId))) {
         setCropDraft(null);
@@ -1425,6 +1447,10 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 })
               }
               onPointerDown={event => {
+                if (activeTool === 'text' && node.type === 'richText' && !spacePressedRef.current) {
+                  event.cancelBubble = true;
+                  return;
+                }
                 if (
                   cropDraft?.nodeId !== node.id ||
                   (event.evt.pointerType === 'touch' && touchSuppressed.current)
@@ -1437,9 +1463,19 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 event.cancelBubble = true;
                 if (spacePressedRef.current || touchSuppressed.current) return;
                 if (activeTool === 'eraser') props.onDeleteNodes?.([node.id]);
-                else if (activeTool === 'selection') {
+                else if (
+                  activeTool === 'selection' ||
+                  (activeTool === 'text' && node.type === 'richText')
+                ) {
                   activateNodeFrame(node);
                   selectNode(node.id, event.evt.shiftKey);
+                  if (
+                    node.type === 'richText' &&
+                    props.editable &&
+                    !node.locked &&
+                    !event.evt.shiftKey
+                  )
+                    setPendingTextEdit(node.id);
                 }
               }}
               onDblClick={event => {
@@ -1447,7 +1483,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 if (spacePressedRef.current || touchSuppressed.current) return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
-                  setEditing(node.id);
+                  setPendingTextEdit(node.id);
                 }
                 if (
                   !cropDraft &&
@@ -1462,7 +1498,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 if (touchSuppressed.current) return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
-                  setEditing(node.id);
+                  setPendingTextEdit(node.id);
                 }
                 if (
                   !cropDraft &&
@@ -1881,9 +1917,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 gesture.points
               );
               if (id) {
+                if (activeTool === 'text') setPendingTextEdit(id);
                 props.selectExact?.([id]);
-                if (activeTool === 'text') setEditing(id);
-                if (activeTool === 'text') pendingTextEdit.current = id;
                 if (!toolLocked) setActiveTool('selection');
               }
             }
@@ -2024,6 +2059,47 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               ))}
           </Layer>
         </Stage>
+        {props.changeRequestMarkers?.map(marker => {
+          const node = props.document.nodes.find(item => item.id === marker.nodeId);
+          if (
+            !node ||
+            (node.id !== props.activeFrameId &&
+              !isDescendantOf(props.document, node, props.activeFrameId))
+          )
+            return null;
+          const bounds = worldBounds(props.document, node);
+          const left = bounds.left * zoom + pan.x;
+          const top = bounds.top * zoom + pan.y;
+          const right = bounds.right * zoom + pan.x;
+          const bottom = bounds.bottom * zoom + pan.y;
+          if (right < 0 || bottom < 0 || left > viewport.width || top > viewport.height)
+            return null;
+          return (
+            <div
+              key={marker.id}
+              className="pointer-events-none absolute z-20 rounded border-2 border-amber-500/75"
+              style={{
+                left,
+                top,
+                width: Math.max(8, right - left),
+                height: Math.max(8, bottom - top),
+              }}
+            >
+              <CanvasChangeRequestMarker
+                actionId="communication-studio.procedure.select-marker"
+                displayId={marker.proposalId.slice(0, 8)}
+                label={marker.label}
+                title={marker.label}
+                tone="update"
+                selected={marker.selected}
+                positioningClassName="-top-3 -right-3"
+                style={{}}
+                onSelect={() => props.onChangeRequestSelect?.(marker.proposalId)}
+              />
+            </div>
+          );
+        })}
+        {props.changeRequestOverlay}
         {props.editable && !cropDraft && props.contextToolbar && contextToolbarBounds && (
           <div
             ref={contextToolbarRef}

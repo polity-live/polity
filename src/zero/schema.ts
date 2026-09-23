@@ -139,6 +139,7 @@ import { dataset, datasetSnapshot } from './datasets/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
 import {
   studioProject,
+  studioProjectCollaborator,
   studioExport,
   studioState,
   studioOperation,
@@ -326,6 +327,7 @@ const zeroTables = [
   canvasProposal,
   canvasWorkspaceReader,
   studioProject,
+  studioProjectCollaborator,
   studioExport,
   // Live tutorial
   appTutorialRun,

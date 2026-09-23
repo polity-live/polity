@@ -59,17 +59,36 @@ it('rechecks export downloads and sends an attachment without exposing a reusabl
       project_id: 'project',
       workspace_id: null,
       storage_path: 'private/export',
-      mime_type: 'application/octet-stream',
       file_name: 'Polity.pdf',
     },
   ]);
   const response = await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export');
   expect(response.headers.get('Content-Disposition')).toBe(
-    "attachment; filename*=UTF-8''Polity.pdf"
+    'attachment; filename="Polity.pdf"; filename*=UTF-8\'\'Polity.pdf'
   );
+  expect(response.headers.get('Content-Type')).toBe('application/pdf');
   expect(io.access).toHaveBeenCalledWith('actor', 'project', null, false, io.sql);
   io.access.mockRejectedValue(new Error('revoked'));
   expect(
     (await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export')).status
   ).toBe(404);
+});
+it.each([
+  ['Deck.zip', 'application/zip'],
+  ['Deck.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+  ['Deck.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  ['Frame.png', 'image/png'],
+  ['Clip.mp4', 'video/mp4'],
+])('serves %s with a downloadable filename and its actual MIME type', async (fileName, mime) => {
+  io.sql.mockResolvedValue([
+    {
+      project_id: 'project',
+      workspace_id: null,
+      storage_path: 'private/export',
+      file_name: fileName,
+    },
+  ]);
+  const response = await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export');
+  expect(response.headers.get('Content-Type')).toBe(mime);
+  expect(response.headers.get('Content-Disposition')).toContain(`filename="${fileName}"`);
 });

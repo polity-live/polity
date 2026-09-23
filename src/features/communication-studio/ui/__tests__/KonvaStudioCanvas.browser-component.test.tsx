@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { defaultBrand } from '../../logic/document';
 import { applyStudioCommandV3 } from '../../logic/commands-v3';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
@@ -124,6 +125,156 @@ it('selects a whole group from the canvas and toggles it as one selection with S
   );
   click(occluder.id, true);
   expect(screen.getByTestId('selected-ids')).toHaveTextContent(other.id);
+});
+
+it('focuses a new text node as soon as it reaches the canvas document', async () => {
+  const { document: initial, frame, title } = fixture();
+  const ref = { current: null as StudioCanvasHandle | null };
+  const fresh = structuredClone(title);
+  if (fresh.type !== 'richText') throw new Error('Expected a rich text fixture');
+  fresh.id = crypto.randomUUID();
+  fresh.content = [
+    { id: crypto.randomUUID(), type: 'p', children: [{ id: crypto.randomUUID(), text: '' }] },
+  ];
+  fresh.transform = { ...fresh.transform, x: 100, y: 100 };
+  function Harness() {
+    const [document, setDocument] = useState(initial);
+    const [selected, setSelected] = useState<string[]>([]);
+    return (
+      <div style={{ width: 700, height: 500 }}>
+        <KonvaStudioCanvas
+          ref={ref}
+          document={document}
+          activeFrameId={frame.id}
+          assets={[]}
+          selected={selected}
+          selectExact={setSelected}
+          editable
+          onCreateNode={() => {
+            setDocument(current => ({ ...current, nodes: [...current.nodes, fresh] }));
+            return fresh.id;
+          }}
+          onTextChange={(id, content) =>
+            setDocument(current => ({
+              ...current,
+              nodes: current.nodes.map(node =>
+                node.id === id && node.type === 'richText' ? { ...node, content } : node
+              ),
+            }))
+          }
+        />
+      </div>
+    );
+  }
+  render(<Harness />);
+  await waitFor(() => expect(ref.current).not.toBeNull());
+  await act(async () => {
+    await ref.current!.execute({ type: 'setTool', tool: 'text' });
+  });
+  const host = screen.getByTestId('studio-canvas');
+  const surface = [...host.querySelectorAll<HTMLCanvasElement>('.konvajs-content canvas')].at(-1)!;
+  await userEvent.dragAndDrop(surface, surface, {
+    sourcePosition: { x: 140, y: 140 },
+    targetPosition: { x: 190, y: 180 },
+  } as never);
+  await userEvent.keyboard('Hallo');
+  const editor = await screen.findByLabelText('Text');
+  await waitFor(() => expect(document.activeElement).toBe(editor));
+  await waitFor(() => expect(editor).toHaveTextContent('Hallo'));
+});
+
+it('lets a user type into an existing text node after one click', async () => {
+  const { document: initial, frame, title } = fixture();
+  let zoom = 1;
+  function Harness() {
+    const [document, setDocument] = useState(initial);
+    const [selected, setSelected] = useState<string[]>([]);
+    return (
+      <div style={{ width: 700, height: 500 }}>
+        <KonvaStudioCanvas
+          document={document}
+          activeFrameId={frame.id}
+          fit="contain"
+          assets={[]}
+          selected={selected}
+          selectExact={setSelected}
+          onTextChange={(id, content) =>
+            setDocument(current => ({
+              ...current,
+              nodes: current.nodes.map(node =>
+                node.id === id && node.type === 'richText' ? { ...node, content } : node
+              ),
+            }))
+          }
+          onCanvasStateChange={state => {
+            zoom = state.zoom;
+          }}
+          editable
+        />
+        <output data-testid="selected-ids">{selected.join(',')}</output>
+      </div>
+    );
+  }
+  render(<Harness />);
+  const host = screen.getByTestId('studio-canvas');
+  await waitFor(() => expect(host.querySelectorAll('.konvajs-content canvas').length).toBe(2));
+  await waitFor(() => expect(zoom).toBeLessThan(1));
+  const surface = [...host.querySelectorAll<HTMLCanvasElement>('.konvajs-content canvas')].at(-1)!;
+  const stageBounds = surface.getBoundingClientRect();
+  const frameBounds = worldBounds(initial, frame);
+  const titleBounds = worldBounds(initial, title);
+  const x =
+    stageBounds.width / 2 +
+    (titleBounds.left + 30 - (frameBounds.left + frameBounds.right) / 2) * zoom;
+  const y =
+    stageBounds.height / 2 +
+    (titleBounds.top + 30 - (frameBounds.top + frameBounds.bottom) / 2) * zoom;
+  await userEvent.click(surface, { position: { x, y } } as never);
+  expect(screen.getByTestId('selected-ids')).toHaveTextContent(title.id);
+  const editor = await screen.findByLabelText('Text');
+  await waitFor(() => expect(document.activeElement).toBe(editor));
+  await userEvent.keyboard('Hallo');
+  await waitFor(() => expect(editor).toHaveTextContent('Hallo'));
+});
+
+it('keeps the contextual toolbar above the selected node while the canvas pans', async () => {
+  const { document, frame, title } = fixture();
+  const view = render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={document}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[title.id]}
+        editable
+        contextToolbar={<button type="button">Action</button>}
+        contextToolbarLabel="Element actions"
+      />
+    </div>
+  );
+  const toolbar = await screen.findByRole('toolbar', { name: 'Element actions' });
+  await waitFor(() => expect(Number.parseFloat(toolbar.style.left)).toBeGreaterThan(0));
+  const initialLeft = Number.parseFloat(toolbar.style.left);
+  const host = screen.getByTestId('studio-canvas');
+  const surface = host.querySelector<HTMLCanvasElement>('.konvajs-content canvas')!;
+  fireEvent.wheel(surface, { deltaX: 40, deltaY: 0 });
+  await waitFor(() => expect(Number.parseFloat(toolbar.style.left)).toBeLessThan(initialLeft));
+  expect(Number.parseFloat(toolbar.style.left) + toolbar.offsetWidth).toBeLessThanOrEqual(
+    host.clientWidth - 8
+  );
+  view.rerender(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={document}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable
+        contextToolbar={null}
+      />
+    </div>
+  );
+  expect(screen.queryByRole('toolbar', { name: 'Element actions' })).toBeNull();
 });
 
 it('reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing', async () => {

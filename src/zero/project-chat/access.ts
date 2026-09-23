@@ -15,7 +15,18 @@ export function projectGroupAccess(q: any, userID: string): any {
 export function studioChatAccess(q: any, userID: string): any {
   return q.where(({ or, and, cmp, exists }: any) =>
     or(
-      and(cmp('group_id', 'IS', null), cmp('owner_id', userID)),
+      and(
+        cmp('group_id', 'IS', null),
+        or(
+          cmp('owner_id', userID),
+          and(
+            cmp('kind', '!=', 'whiteboard'),
+            exists('collaborators', (c: any) =>
+              c.where('user_id', userID).where('status', 'active')
+            )
+          )
+        )
+      ),
       exists('group', (g: any) => projectGroupAccess(g, userID))
     )
   );

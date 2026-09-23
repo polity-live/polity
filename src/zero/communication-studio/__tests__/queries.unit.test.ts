@@ -29,11 +29,11 @@ describe('Studio Zero visibility projections', () => {
         ])
       );
       const rules = access('studio_project');
-      expect(rules).toContainEqual([
-        'and',
-        ['cmp', 'group_id', 'IS', null],
-        ['cmp', 'owner_id', 'alice'],
-      ]);
+      expect(rules).toContainEqual(['cmp', 'group_id', 'IS', null]);
+      expect(rules).toContainEqual(['cmp', 'owner_id', 'alice']);
+      expect(rules).toContainEqual(['where', 'collaborators', 'user_id', 'alice']);
+      expect(rules).toContainEqual(['where', 'collaborators', 'status', 'active']);
+      expect(rules).toContainEqual(['cmp', 'kind', '!=', 'whiteboard']);
       expect(rules).toContainEqual([
         'where',
         'memberships',
@@ -84,11 +84,10 @@ describe('Studio Zero visibility projections', () => {
       'document_schema_version',
       5,
     ]);
-    expect(rules).toContainEqual([
-      'and',
-      ['cmp', 'group_id', 'IS', null],
-      ['cmp', 'owner_id', 'alice'],
-    ]);
+    expect(rules).toContainEqual(['cmp', 'group_id', 'IS', null]);
+    expect(rules).toContainEqual(['cmp', 'owner_id', 'alice']);
+    expect(rules).toContainEqual(['where', 'collaborators', 'user_id', 'alice']);
+    expect(rules).toContainEqual(['where', 'collaborators', 'status', 'active']);
     expect(rules).toContainEqual(['where', 'memberships', 'user_id', 'alice']);
     expect(rules).toContainEqual([
       'where',

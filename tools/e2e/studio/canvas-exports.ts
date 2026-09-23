@@ -60,7 +60,7 @@ for (const format of ['png', 'pdf', 'pptx', 'canva', 'zip'] as const) {
   if (format === 'canva') {
     const archive = unzipSync(exported.bytes);
     assert(archive['Canva-Import.md']);
-    assert(archive['Studio-V5-export-feed.pptx']);
+    assert(archive['Studio-V5-export.pptx']);
   }
   if (format === 'zip') {
     const archive = unzipSync(exported.bytes);

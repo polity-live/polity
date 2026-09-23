@@ -57,6 +57,7 @@ import { Route as AuthedCreateEventRouteImport } from './routes/_authed/create/e
 import { Route as AuthedCreateGroupRouteImport } from './routes/_authed/create/group'
 import { Route as AuthedCreatePaymentRouteImport } from './routes/_authed/create/payment'
 import { Route as AuthedCreateStatementRouteImport } from './routes/_authed/create/statement'
+import { Route as AuthedCreateStudioProjectRouteImport } from './routes/_authed/create/studio-project'
 import { Route as AuthedCreateTodoRouteImport } from './routes/_authed/create/todo'
 import { Route as AuthedEventIdRouteImport } from './routes/_authed/event/$id'
 import { Route as AuthedGroupIdRouteImport } from './routes/_authed/group/$id'
@@ -407,6 +408,12 @@ const AuthedCreateStatementRoute = AuthedCreateStatementRouteImport.update({
   path: '/create/statement',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCreateStudioProjectRoute =
+  AuthedCreateStudioProjectRouteImport.update({
+    id: '/create/studio-project',
+    path: '/create/studio-project',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedCreateTodoRoute = AuthedCreateTodoRouteImport.update({
   id: '/create/todo',
   path: '/create/todo',
@@ -1041,6 +1048,7 @@ export interface FileRoutesByFullPath {
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/event/$id': typeof AuthedEventIdRouteWithChildren
   '/group/$id': typeof AuthedGroupIdRouteWithChildren
@@ -1193,6 +1201,7 @@ export interface FileRoutesByTo {
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/statement/$id': typeof AuthedStatementIdRoute
   '/studio/$projectId': typeof AuthedStudioProjectIdRoute
@@ -1343,6 +1352,7 @@ export interface FileRoutesById {
   '/_authed/create/group': typeof AuthedCreateGroupRoute
   '/_authed/create/payment': typeof AuthedCreatePaymentRoute
   '/_authed/create/statement': typeof AuthedCreateStatementRoute
+  '/_authed/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/_authed/create/todo': typeof AuthedCreateTodoRoute
   '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
   '/_authed/group/$id': typeof AuthedGroupIdRouteWithChildren
@@ -1503,6 +1513,7 @@ export interface FileRouteTypes {
     | '/create/group'
     | '/create/payment'
     | '/create/statement'
+    | '/create/studio-project'
     | '/create/todo'
     | '/event/$id'
     | '/group/$id'
@@ -1655,6 +1666,7 @@ export interface FileRouteTypes {
     | '/create/group'
     | '/create/payment'
     | '/create/statement'
+    | '/create/studio-project'
     | '/create/todo'
     | '/statement/$id'
     | '/studio/$projectId'
@@ -1804,6 +1816,7 @@ export interface FileRouteTypes {
     | '/_authed/create/group'
     | '/_authed/create/payment'
     | '/_authed/create/statement'
+    | '/_authed/create/studio-project'
     | '/_authed/create/todo'
     | '/_authed/event/$id'
     | '/_authed/group/$id'
@@ -2301,6 +2314,13 @@ declare module '@tanstack/react-router' {
       path: '/create/statement'
       fullPath: '/create/statement'
       preLoaderRoute: typeof AuthedCreateStatementRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/create/studio-project': {
+      id: '/_authed/create/studio-project'
+      path: '/create/studio-project'
+      fullPath: '/create/studio-project'
+      preLoaderRoute: typeof AuthedCreateStudioProjectRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/create/todo': {
@@ -3398,6 +3418,7 @@ interface AuthedRouteChildren {
   AuthedCreateGroupRoute: typeof AuthedCreateGroupRoute
   AuthedCreatePaymentRoute: typeof AuthedCreatePaymentRoute
   AuthedCreateStatementRoute: typeof AuthedCreateStatementRoute
+  AuthedCreateStudioProjectRoute: typeof AuthedCreateStudioProjectRoute
   AuthedCreateTodoRoute: typeof AuthedCreateTodoRoute
   AuthedEventIdRoute: typeof AuthedEventIdRouteWithChildren
   AuthedGroupIdRoute: typeof AuthedGroupIdRouteWithChildren
@@ -3426,6 +3447,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCreateGroupRoute: AuthedCreateGroupRoute,
   AuthedCreatePaymentRoute: AuthedCreatePaymentRoute,
   AuthedCreateStatementRoute: AuthedCreateStatementRoute,
+  AuthedCreateStudioProjectRoute: AuthedCreateStudioProjectRoute,
   AuthedCreateTodoRoute: AuthedCreateTodoRoute,
   AuthedEventIdRoute: AuthedEventIdRouteWithChildren,
   AuthedGroupIdRoute: AuthedGroupIdRouteWithChildren,

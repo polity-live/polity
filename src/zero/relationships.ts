@@ -6,6 +6,7 @@ import { user, file } from './users/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
 import {
   studioProject,
+  studioProjectCollaborator,
   studioExport,
   studioState,
   studioOperation,
@@ -27,9 +28,20 @@ export const studioOperationRelationships = relationships(studioOperation, ({ on
 export const studioStateRelationships = relationships(studioState, ({ one }) => ({
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
 }));
-export const studioProjectRelationships = relationships(studioProject, ({ one }) => ({
+export const studioProjectRelationships = relationships(studioProject, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
+  collaborators: many({
+    sourceField: ['id'],
+    destField: ['project_id'],
+    destSchema: studioProjectCollaborator,
+  }),
 }));
+export const studioProjectCollaboratorRelationships = relationships(
+  studioProjectCollaborator,
+  ({ one }) => ({
+    project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+  })
+);
 export const studioExportRelationships = relationships(studioExport, ({ one }) => ({
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
 }));
@@ -2683,6 +2695,7 @@ export const allRelationships = [
   studioOperationRelationships,
   canvasProposalRelationships,
   studioProjectRelationships,
+  studioProjectCollaboratorRelationships,
   studioExportRelationships,
   appearanceThemeRevisionRelationships,
   aiSkillRelationships,

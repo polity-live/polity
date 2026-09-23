@@ -28,7 +28,7 @@ export async function queueCommittedExport(
     if (!row || Number(row.content_revision) !== revision)
       throw new StudioError('Studio changes are still saving. Please try the export again.', 409);
     const value = studioDocumentV3Schema.parse(row.document);
-    const legacy = v3DocumentToLegacy(value);
+    const legacy = v3DocumentToLegacy(value, { allowLongVideo: true });
     if (
       pageIds.some(
         id =>
@@ -42,7 +42,7 @@ export async function queueCommittedExport(
       )
     )
       throw new StudioError('A selected Studio frame no longer exists or cannot be exported.', 400);
-    const issues = validateExport(legacy, pageIds);
+    const issues = validateExport(legacy, pageIds, true);
     if (issues.length) throw new StudioError(`Studio export cannot start: ${issues[0]}`, 422);
     if (operationId) {
       const [prior] = await rows<{ id: string }>(

@@ -1,0 +1,478 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/providers/auth-provider';
+import { createClient } from '@/lib/supabase/client';
+import { EditingModeToolbarButton } from '@/features/shared/ui/status/EditingModeToolbarButton';
+import { CanvasChangeRequestList } from '@/features/shared/ui/change-requests/CanvasChangeRequestList';
+import { CanvasVoteButtons } from '@/features/shared/ui/change-requests/CanvasVoteButtons';
+import {
+  CanvasChangeRequestCard,
+  CanvasChangeRequestCloseButton,
+} from '@/features/shared/ui/change-requests/CanvasChangeRequestCard';
+import { Button } from '@/features/shared/ui/ui/button';
+import type { CanvasProposal, CanvasSession } from '../logic/governance';
+import type { StudioDocumentV3 } from '../logic/document-v3';
+import type { useStudioController } from '../hooks/useStudioController';
+import type { StudioAsset } from '../hooks/useStudioDocument';
+import { StudioPlateDiff, studioText } from './StudioPlateDiff';
+
+type Controller = ReturnType<typeof useStudioController>;
+const modes = ['edit', 'suggest_internal', 'vote_internal'] as const;
+
+export function proposalNodeIds(proposal: CanvasProposal): string[] {
+  return [
+    ...new Set(
+      (proposal.changes ?? [])
+        .filter(change => change.path[0] === 'nodes' && change.path[1]?.startsWith('#'))
+        .map(change => change.path[1].slice(1))
+    ),
+  ];
+}
+
+export function useStudioProcedure({
+  projectId,
+  workspaceId,
+  chooseWorkspace,
+  c,
+}: {
+  projectId: string;
+  workspaceId?: string;
+  chooseWorkspace: (id?: string) => void;
+  c: Controller;
+}) {
+  const { user } = useAuth();
+  const [session, setSession] = useState<CanvasSession | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(workspaceId ?? null);
+  const [preview, setPreview] = useState<StudioDocumentV3 | null>(null);
+  const [previewAssets, setPreviewAssets] = useState<StudioAsset[]>([]);
+  const [showProposed, setShowProposed] = useState(false);
+  const [title, setTitle] = useState('');
+  const [reason, setReason] = useState('');
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const de = typeof document === 'undefined' || document.documentElement.lang !== 'en';
+  const tr = (german: string, english: string) => (de ? german : english);
+  const request = c.actions.request;
+  const refresh = async () => {
+    const next = await request<CanvasSession>('canvas', { projectId, action: 'session' });
+    if (next && !Array.isArray(next) && Array.isArray(next.proposals)) setSession(next);
+  };
+
+  useEffect(() => {
+    let live = true;
+    const load = () =>
+      request<CanvasSession>('canvas', { projectId, action: 'session' })
+        .then(next => {
+          if (live && next && !Array.isArray(next) && Array.isArray(next.proposals))
+            setSession(next);
+        })
+        .catch(cause => {
+          if (live) setError(String(cause));
+        });
+    void load();
+    const timer = setInterval(() => void load(), 4000);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [projectId]);
+
+  useEffect(() => {
+    setShowProposed(false);
+    setPreview(null);
+    setPreviewAssets([]);
+    if (!selectedId || selectedId === workspaceId) {
+      setPreview(null);
+      return;
+    }
+    let live = true;
+    const objectUrls: string[] = [];
+    void Promise.all([
+      request<{ document: StudioDocumentV3 }>('canvas', {
+        projectId,
+        action: 'loadDraft',
+        workspaceId: selectedId,
+      }),
+      request<StudioAsset[]>('assets', { id: projectId, workspaceId: selectedId }),
+    ])
+      .then(async ([result, assets]) => {
+        const missing = assets.filter(asset => !c.assets.some(current => current.id === asset.id));
+        const { data } = missing.length
+          ? await createClient().auth.getSession()
+          : { data: { session: null } };
+        if (missing.length && !data.session?.access_token) throw new Error('Please sign in');
+        const hydrated = await Promise.all(
+          missing.map(async asset => {
+            const response = await fetch(asset.url, {
+              headers: { Authorization: `Bearer ${data.session?.access_token}` },
+            });
+            if (!response.ok) throw new Error('Cannot load media');
+            const url = URL.createObjectURL(await response.blob());
+            objectUrls.push(url);
+            return { ...asset, url };
+          })
+        );
+        if (live) {
+          setPreview(result.document);
+          setPreviewAssets(hydrated);
+        }
+      })
+      .catch(cause => {
+        if (live) setError(String(cause));
+      });
+    return () => {
+      live = false;
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [projectId, selectedId, workspaceId]);
+
+  const run = async (action: string, extra: Record<string, unknown> = {}) => {
+    if (!session || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      let revision: number | undefined;
+      if (['createDraft', 'submit', 'phase'].includes(action)) revision = await c.commit();
+      if (action === 'phase' || action === 'resolveDraft')
+        revision = (await request<{ revision: number }>('load', { id: projectId })).revision;
+      const result = await request<{ workspaceId?: string }>('canvas', {
+        projectId,
+        action,
+        generation: session.generation,
+        operationId: crypto.randomUUID(),
+        revision,
+        ...extra,
+      });
+      await refresh();
+      if ((action === 'createDraft' || action === 'resolveDraft') && result.workspaceId)
+        chooseWorkspace(result.workspaceId);
+      if (action === 'submit') {
+        chooseWorkspace();
+        setSelectedId(extra.workspaceId as string);
+      }
+      if (action === 'withdraw') setSelectedId(null);
+      if (action === 'comment') setComment('');
+    } catch (cause) {
+      setError(String(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const proposal = session?.proposals.find(item => item.id === (selectedId ?? workspaceId)) ?? null;
+  const visible = session?.proposals.filter(item => item.state !== 'withdrawn') ?? [];
+  const markers = useMemo(
+    () =>
+      visible.flatMap(item =>
+        proposalNodeIds(item).map(nodeId => ({
+          id: `${item.id}:${nodeId}`,
+          proposalId: item.id,
+          nodeId,
+          label: item.title,
+          selected: item.id === (selectedId ?? workspaceId),
+        }))
+      ),
+    [visible, selectedId, workspaceId]
+  );
+  const currentVote = proposal?.votes.find(vote => vote.user_id === user?.id)?.choice;
+  const textChanges =
+    proposal && preview
+      ? proposalNodeIds(proposal).flatMap(nodeId => {
+          const original = c.v3Value?.nodes.find(node => node.id === nodeId);
+          const proposed = preview.nodes.find(node => node.id === nodeId);
+          if (original?.type !== 'richText' || proposed?.type !== 'richText') return [];
+          const before = studioText(original),
+            after = studioText(proposed);
+          return before === after ? [] : [{ id: nodeId, name: proposed.name, before, after }];
+        })
+      : [];
+  const canVote =
+    session?.phase === 'vote_internal' &&
+    proposal?.state === 'voting' &&
+    session.capabilities.vote &&
+    proposal.electorate?.includes(user?.id ?? '');
+
+  const modeButton = session && (
+    <EditingModeToolbarButton
+      data-action-id="communication-studio.procedure.open-mode"
+      availableModes={modes}
+      canChangeMode={session.capabilities.manage && !busy}
+      disabledModeReasons={{}}
+      showLabel
+      mode={
+        modes.includes(session.phase as (typeof modes)[number])
+          ? (session.phase as (typeof modes)[number])
+          : 'suggest_internal'
+      }
+      onModeChange={next => void run('phase', { phase: next })}
+    />
+  );
+
+  const canvasOverlay = session && (
+    <>
+      <CanvasChangeRequestList
+        items={visible}
+        selectedId={selectedId ?? workspaceId ?? null}
+        onSelect={setSelectedId}
+        title={tr('Änderungsanträge', 'Change requests')}
+        emptyLabel={tr('Noch keine Änderungsanträge', 'No change requests yet')}
+        renderItem={(item, selected, select) => (
+          <button
+            type="button"
+            onClick={select}
+            aria-pressed={selected}
+            className="hover:bg-muted w-full rounded border p-2 text-left text-sm"
+          >
+            <strong className="block truncate">{item.title}</strong>
+            <span className="text-muted-foreground">
+              {item.state} · {item.decision ?? item.application}
+            </span>
+          </button>
+        )}
+      />
+      {session.phase === 'suggest_internal' && !workspaceId && session.capabilities.suggest && (
+        <form
+          className="bg-background/95 pointer-events-auto absolute bottom-4 left-4 z-20 flex max-w-[calc(100%-2rem)] flex-wrap gap-2 rounded border p-2 shadow-lg"
+          onSubmit={event => {
+            event.preventDefault();
+            if (title.trim()) void run('createDraft', { title: title.trim(), reason });
+          }}
+        >
+          <input
+            aria-label={tr('Antragstitel', 'Proposal title')}
+            className="rounded border px-2"
+            value={title}
+            onChange={event => setTitle(event.target.value)}
+            placeholder={tr('Antragstitel', 'Proposal title')}
+          />
+          <input
+            aria-label={tr('Begründung', 'Reason')}
+            className="rounded border px-2"
+            value={reason}
+            onChange={event => setReason(event.target.value)}
+            placeholder={tr('Begründung', 'Reason')}
+          />
+          <Button type="submit" disabled={busy || !title.trim()}>
+            {tr('Vorschlag beginnen', 'Start proposal')}
+          </Button>
+        </form>
+      )}
+      {proposal && (
+        <CanvasChangeRequestCard
+          className="bg-background/95 pointer-events-auto absolute right-4 bottom-4 z-30 max-h-[min(32rem,65%)] w-[min(23rem,calc(100%-2rem))] space-y-2 overflow-auto rounded-md border p-3 text-sm shadow-xl backdrop-blur"
+          label={tr('Änderungsantrag', 'Change request')}
+        >
+          <div className="flex justify-between gap-2">
+            <strong>{proposal.title}</strong>
+            <CanvasChangeRequestCloseButton
+              actionId="communication-studio.procedure.close-details"
+              onClose={() => setSelectedId(null)}
+              label={tr('Schließen', 'Close')}
+            />
+          </div>
+          <p>{proposal.reason}</p>
+          <p className="text-muted-foreground">
+            {proposal.state}
+            {proposal.decision && ` · ${proposal.decision}`}
+            {proposal.application === 'conflict' &&
+              ` · ${tr('Anwendungskonflikt', 'Application conflict')}`}
+          </p>
+          {workspaceId === proposal.id &&
+            proposal.state === 'draft' &&
+            proposal.owner_id === user?.id && (
+              <Button
+                disabled={busy}
+                onClick={() => void run('submit', { workspaceId: proposal.id })}
+              >
+                {tr('Einreichen', 'Submit')}
+              </Button>
+            )}
+          {!workspaceId &&
+            proposal.state === 'draft' &&
+            session.phase === 'suggest_internal' &&
+            (proposal.owner_id === user?.id || proposal.shared_ids.includes(user?.id ?? '')) && (
+              <Button variant="outline" onClick={() => chooseWorkspace(proposal.id)}>
+                {tr('Entwurf bearbeiten', 'Edit draft')}
+              </Button>
+            )}
+          {proposal.owner_id === user?.id &&
+            (proposal.state === 'draft' || proposal.state === 'submitted') && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => void run('withdraw', { workspaceId: proposal.id })}
+              >
+                {tr('Zurückziehen', 'Withdraw')}
+              </Button>
+            )}
+          {workspaceId && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                void c.commit().then(() => chooseWorkspace());
+              }}
+            >
+              {tr('Zum Projekt', 'Back to project')}
+            </Button>
+          )}
+          {preview && proposal.changes?.length ? (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                aria-pressed={!showProposed}
+                onClick={() => setShowProposed(false)}
+              >
+                {tr('Original', 'Original')}
+              </Button>
+              <Button
+                variant="outline"
+                aria-pressed={showProposed}
+                onClick={() => setShowProposed(true)}
+              >
+                {tr('Vorschlag', 'Proposal')}
+              </Button>
+            </div>
+          ) : null}
+          {proposal.changes?.length ? (
+            <details>
+              <summary>
+                {tr('Änderungen', 'Changes')} ({proposal.changes.length})
+              </summary>
+              <div className="max-h-32 space-y-1 overflow-auto text-xs">
+                {proposal.changes.map((change, index) => (
+                  <div key={index} className="rounded border p-1">
+                    <span className="font-mono">{change.path.join(' / ')}</span>
+                    <div className="grid grid-cols-2 gap-1">
+                      <del className="bg-red-50 break-all text-black">
+                        {JSON.stringify(change.before.value)?.slice(0, 250)}
+                      </del>
+                      <ins className="bg-green-50 break-all text-black">
+                        {JSON.stringify(change.after.value)?.slice(0, 250)}
+                      </ins>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : null}
+          {textChanges.map(change => (
+            <div key={change.id} className="space-y-1">
+              <strong>{change.name}</strong>
+              <StudioPlateDiff before={change.before} after={change.after} />
+            </div>
+          ))}
+          {proposal.electorate && (
+            <p className="rounded border p-2 text-xs">
+              {proposal.votes.length}/{proposal.electorate.length}{' '}
+              {tr('Stimmberechtigte haben abgestimmt', 'eligible voters have voted')}
+              {' · '}
+              {proposal.votes.filter(vote => vote.choice === 'accept').length} {tr('Ja', 'Yes')}
+              {' · '}
+              {proposal.votes.filter(vote => vote.choice === 'reject').length} {tr('Nein', 'No')}
+              {' · '}
+              {proposal.votes.filter(vote => vote.choice === 'abstain').length}{' '}
+              {tr('Enthaltung', 'Abstain')}
+            </p>
+          )}
+          {canVote && (
+            <CanvasVoteButtons
+              actionIdPrefix="communication-studio.procedure.vote"
+              selected={currentVote}
+              disabled={busy}
+              labels={{
+                accept: tr('Ja', 'Yes'),
+                reject: tr('Nein', 'No'),
+                abstain: tr('Enthaltung', 'Abstain'),
+              }}
+              onVote={choice => run('vote', { workspaceId: proposal.id, choice })}
+            />
+          )}
+          {proposal.state === 'voting' && session.capabilities.manage && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void run('finalize', { workspaceId: proposal.id })}
+            >
+              {tr('Abschließen', 'Finalize')}
+            </Button>
+          )}
+          {proposal.application === 'conflict' && session.capabilities.suggest && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                void run('resolveDraft', {
+                  workspaceId: proposal.id,
+                  title: `${tr('Klärung', 'Resolution')}: ${proposal.title}`,
+                })
+              }
+            >
+              {tr('Klärungsvorschlag', 'Resolution proposal')}
+            </Button>
+          )}
+          {proposal.application === 'conflict' && session.capabilities.manage && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void run('reapply', { workspaceId: proposal.id })}
+            >
+              {tr('Beschluss erneut anwenden', 'Retry decision')}
+            </Button>
+          )}
+          <div className="space-y-2 border-t pt-2">
+            <strong>{tr('Kommentare', 'Comments')}</strong>
+            {session.comments
+              .filter(item => item.proposal_id === proposal.id)
+              .map(item => (
+                <p key={item.id} className="rounded border p-2">
+                  {item.body}
+                </p>
+              ))}
+            <form
+              onSubmit={event => {
+                event.preventDefault();
+                if (comment.trim())
+                  void run('comment', {
+                    workspaceId: proposal.id,
+                    body: comment.trim(),
+                    elementId: c.selected[0] ?? null,
+                  });
+              }}
+            >
+              <textarea
+                className="w-full rounded border p-2"
+                aria-label={tr('Kommentar', 'Comment')}
+                value={comment}
+                onChange={event => setComment(event.target.value)}
+              />
+              <Button
+                type="submit"
+                disabled={busy || !comment.trim() || !session.capabilities.comment}
+              >
+                {tr('Kommentieren', 'Comment')}
+              </Button>
+            </form>
+          </div>
+        </CanvasChangeRequestCard>
+      )}
+      {error && (
+        <p
+          role="alert"
+          className="bg-background text-destructive pointer-events-auto absolute bottom-1 left-1 z-40 p-2"
+        >
+          {error}
+        </p>
+      )}
+    </>
+  );
+
+  return {
+    modeButton,
+    canvasOverlay,
+    markers,
+    previewDocument: showProposed ? preview : null,
+    previewAssets: showProposed ? previewAssets : [],
+    editingAllowed: !!workspaceId || session?.phase === 'edit',
+    selectProposal: setSelectedId,
+  };
+}

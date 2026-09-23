@@ -13,6 +13,17 @@ export const studioProject = table('studio_project')
     updated_at: number(),
   })
   .primaryKey('id');
+export const studioProjectCollaborator = table('studio_project_collaborator')
+  .columns({
+    id: string(),
+    project_id: string(),
+    user_id: string(),
+    invited_by_id: string(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
 export const studioExport = table('studio_export')
   .columns({
     id: string(),

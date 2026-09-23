@@ -23,7 +23,8 @@ export type CivicContentType =
   | 'payment'
   | 'action'
   | 'workflow'
-  | 'user';
+  | 'user'
+  | 'studio';
 
 export type CivicRightType =
   | 'informationRight'
@@ -300,6 +301,7 @@ const CONTENT_TYPE_TO_TONE = {
   action: 'neutral',
   workflow: 'accent',
   user: 'user',
+  studio: 'accent',
 } as const satisfies Record<CivicContentType, BadgeToneKind>;
 
 const SEMANTIC_SURFACE_CLASS_NAMES: Record<SemanticTone, string> = {

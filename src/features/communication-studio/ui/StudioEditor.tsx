@@ -1,4 +1,13 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   AlignCenter,
   AlignJustify,
@@ -52,7 +61,6 @@ import {
   Underline,
   Undo2,
   UnlockKeyhole,
-  UserPlus,
   Users,
 } from 'lucide-react';
 import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
@@ -69,6 +77,7 @@ import { ImageEditorDialog } from '@/features/file-upload/ui/ImageEditorDialog';
 import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
 import { GroupThemeSettings } from '@/features/groups/ui/GroupThemeSettings';
 import { StudioPanel } from './StudioPanel';
+import { StudioInviteDialog } from './StudioInviteDialog';
 import { openStudioPanel } from '../logic/panel-events';
 import { StudioLayersPanel } from './StudioLayersPanel';
 import { StudioPreviewDialog } from './StudioPreviewDialog';
@@ -125,7 +134,9 @@ import type {
   StudioCanvasHandle,
   StudioCanvasNodeChange,
   StudioCanvasState,
+  StudioCanvasChangeRequestMarker,
 } from './KonvaStudioCanvas';
+import type { StudioDocumentV3 } from '../logic/document-v3';
 const KonvaStudioCanvas = lazy(() => import('./KonvaStudioCanvas'));
 const input = 'w-full rounded-md border bg-background px-2 py-1.5 text-sm';
 const button = 'rounded-md border px-3 py-2 text-sm hover:bg-muted disabled:opacity-40';
@@ -217,6 +228,13 @@ export function StudioEditor({
   conversationId,
   open,
   governance,
+  modeButton,
+  canvasOverlay,
+  changeRequestMarkers,
+  previewDocument,
+  previewAssets,
+  editingAllowed,
+  onChangeRequestSelect,
 }: {
   c: ReturnType<typeof useStudioController>;
   projectId: string;
@@ -224,6 +242,13 @@ export function StudioEditor({
   conversationId?: string;
   open: (id: string) => void;
   governance?: ReactNode;
+  modeButton?: ReactNode;
+  canvasOverlay?: ReactNode;
+  changeRequestMarkers?: StudioCanvasChangeRequestMarker[];
+  previewDocument?: StudioDocumentV3 | null;
+  previewAssets?: ReturnType<typeof useStudioController>['assets'];
+  editingAllowed?: boolean;
+  onChangeRequestSelect?: (id: string) => void;
 }) {
   const { t } = useTranslation(),
     tr = (k: string) => t('features.studio.' + k);
@@ -316,6 +341,13 @@ export function StudioEditor({
       conversationId={conversationId}
       open={open}
       governance={governance}
+      modeButton={modeButton}
+      canvasOverlay={canvasOverlay}
+      changeRequestMarkers={changeRequestMarkers}
+      previewDocument={previewDocument}
+      previewAssets={previewAssets}
+      editingAllowed={editingAllowed}
+      onChangeRequestSelect={onChangeRequestSelect}
       tr={tr}
     />
   );
@@ -330,6 +362,13 @@ function StudioEditorReady({
   conversationId,
   open,
   governance,
+  modeButton,
+  canvasOverlay,
+  changeRequestMarkers,
+  previewDocument,
+  previewAssets,
+  editingAllowed,
+  onChangeRequestSelect,
   tr,
 }: {
   c: ReturnType<typeof useStudioController>;
@@ -341,9 +380,16 @@ function StudioEditorReady({
   conversationId?: string;
   open: (id: string) => void;
   governance?: ReactNode;
+  modeButton?: ReactNode;
+  canvasOverlay?: ReactNode;
+  changeRequestMarkers?: StudioCanvasChangeRequestMarker[];
+  previewDocument?: StudioDocumentV3 | null;
+  previewAssets?: ReturnType<typeof useStudioController>['assets'];
+  editingAllowed?: boolean;
+  onChangeRequestSelect?: (id: string) => void;
   tr: (key: string) => string;
 }) {
-  const disabled = !c.canEdit || c.busy;
+  const disabled = !c.canEdit || c.busy || !!previewDocument || editingAllowed === false;
   const studioPresence = useMemo(
     () => buildStudioPresence(c.identity, c.peers),
     [c.identity, c.peers]
@@ -383,6 +429,14 @@ function StudioEditorReady({
     zoom: 1,
     viewBounds: null,
   });
+  const handleCanvasStateChange = useCallback(
+    (state: StudioCanvasState) => {
+      setCanvasState(state);
+      if (useStudioViewportStore.getState().activeTool !== state.activeTool)
+        setTool(state.activeTool);
+    },
+    [setTool]
+  );
   const [selectionState, setSelectionState] = useState<StudioSelectionState>(emptyStudioSelection);
   const [masterMode] = useState(false);
   const [tableInsertCount, setTableInsertCount] = useState(0);
@@ -1313,7 +1367,7 @@ function StudioEditorReady({
       )}
     </fieldset>
   );
-  const canvasDocument = c.v3Value;
+  const canvasDocument = previewDocument ?? c.v3Value;
   const selectedGroupId =
     selectedNodes.length > 1 ? selectedNodes[0].groupIds[selectionState.groupDepth] : null;
   const completeGroupSelected =
@@ -1411,15 +1465,18 @@ function StudioEditorReady({
           <Crop className="size-4" />,
           () => void canvasRef.current?.execute({ type: 'crop', action: 'start' })
         )}
-        {contextAction('editImage', <Pencil className="size-4" />, () =>
-          c.setPhotoEdit(c.assets.find(asset => asset.id === activeNode.assetId)?.url)
+        {contextAction(
+          'editImage',
+          <Pencil className="size-4" />,
+          () => c.setPhotoEdit(c.assets.find(asset => asset.id === activeNode.assetId)?.url),
+          { disabled: !c.assets.some(asset => asset.id === activeNode.assetId && asset.url) }
         )}
       </>
     ) : null;
   if (!canvasDocument) return null;
   return (
     <main
-      className="h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem))] overflow-hidden bg-[var(--surface-sunken)] pt-10 [--studio-status-height:2.5rem] [--studio-toolbar-height:2.5rem]"
+      className="flex h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem))] flex-col overflow-hidden bg-[var(--surface-sunken)] pt-10 [--studio-status-height:2.5rem] [--studio-toolbar-height:2.5rem]"
       data-testid="studio-editor"
     >
       <FixedToolbar
@@ -1433,17 +1490,19 @@ function StudioEditorReady({
             </a>
           </ToolbarButton>
           <StudioToolbarMenu panelKey="project" label={tr('project')} icon={<FolderOpen />}>
-            <StudioMenuItem
-              label={tr('saveTemplate')}
-              icon={<Library />}
-              disabled={disabled}
-              onSelect={() =>
-                c.run(async () => {
-                  await c.commit();
-                  await c.actions.request('template', { id: projectId, value: true });
-                })
-              }
-            />
+            {(groupId || c.project?.owner_id === c.identity.id) && (
+              <StudioMenuItem
+                label={tr('saveTemplate')}
+                icon={<Library />}
+                disabled={disabled}
+                onSelect={() =>
+                  c.run(async () => {
+                    await c.commit();
+                    await c.actions.request('template', { id: projectId, value: true });
+                  })
+                }
+              />
+            )}
             <StudioMenuItem
               label={tr('duplicateProject')}
               icon={<Copy />}
@@ -1459,6 +1518,7 @@ function StudioEditorReady({
             />
           </StudioToolbarMenu>
         </ToolbarGroup>
+        {modeButton && <ToolbarGroup>{modeButton}</ToolbarGroup>}
         <ToolbarGroup>
           <ToolbarButton
             data-action-kind="interaction"
@@ -2278,7 +2338,7 @@ function StudioEditorReady({
                 >
                   {['png', 'pdf', 'pptx', 'canva', 'mp4', 'xlsx', 'zip'].map(f => (
                     <option key={f} value={f}>
-                      {f.toUpperCase()}
+                      {f === 'zip' ? 'ALL' : f.toUpperCase()}
                     </option>
                   ))}
                 </select>
@@ -2370,18 +2430,19 @@ function StudioEditorReady({
                       />
                     )}
                     <span>
-                      {job.format.toUpperCase()} · {tr(job.status)} · {job.progress}%
+                      {job.format === 'zip' ? 'ALL' : job.format.toUpperCase()} · {tr(job.status)} ·{' '}
+                      {job.progress}%
                     </span>
                     {job.status === 'completed' ? (
                       <>
                         <button
                           data-action-id="communication-studio.studioworkspace.activate.button-fdbeb1cd6b"
                           className={button}
-                          onClick={() => c.downloadExport(job.id)}
+                          onClick={() => c.downloadExport(job.id, job.fileName)}
                         >
                           {tr('download')}
                         </button>
-                        {(job.format === 'png' || job.format === 'mp4') && (
+                        {(job.fileName?.endsWith('.png') || job.fileName?.endsWith('.mp4')) && (
                           <button
                             data-action-id="communication-studio.studioworkspace.activate.button-07f95dca6d"
                             className={button}
@@ -2437,7 +2498,7 @@ function StudioEditorReady({
           </StudioPanel>
         </ToolbarGroup>
       </FixedToolbar>
-      <section className="bg-card flex h-full min-h-0 flex-col overflow-hidden">
+      <section className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden">
         <header
           className="scrollbar-hide flex h-10 min-h-10 shrink-0 items-center gap-3 overflow-x-auto border-b px-3 py-1"
           aria-label={tr('projectStatus')}
@@ -2457,16 +2518,11 @@ function StudioEditorReady({
               title={value.title}
               size="sm"
             />
-            {groupId ? (
-              <Button asChild variant="outline" size="sm">
-                <a
-                  data-action-id="editor.collaborator-invite.open"
-                  href={`/group/${groupId}/memberships?tab=membershipsByUser`}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  {tr('invite')}
-                </a>
-              </Button>
+            {!groupId &&
+            c.project?.group_id === null &&
+            c.project.owner_id === c.identity.id &&
+            c.project.kind !== 'whiteboard' ? (
+              <StudioInviteDialog projectId={projectId} currentUserId={c.identity.id} />
             ) : null}
             <OnlineCollaboratorAvatars
               collaborators={studioPresence.collaborators}
@@ -2540,6 +2596,9 @@ function StudioEditorReady({
               ref={canvasRef}
               key={`${projectId}:${masterMode ? 'master' : 'content'}`}
               document={canvasDocument}
+              changeRequestMarkers={changeRequestMarkers}
+              changeRequestOverlay={canvasOverlay}
+              onChangeRequestSelect={onChangeRequestSelect}
               activeFrameId={canvasPage.id}
               onCreateNode={createCanvasNode}
               onDeleteNodes={cutV3Clipboard}
@@ -2557,14 +2616,14 @@ function StudioEditorReady({
                 if (!disabled && c.elementSets.some(set => set.id === setId))
                   void c.insertElementSet(setId, point);
               }}
-              assets={c.assets}
+              assets={previewDocument ? [...c.assets, ...(previewAssets ?? [])] : c.assets}
               selected={c.selected}
               selectExact={c.selectExact}
-              editable={!disabled}
+              editable={!disabled && !previewDocument}
               peers={c.peers}
               cursor={(x, y) => c.cursor(canvasPage.id, x, y, c.selected)}
               guides={c.guides}
-              onCanvasStateChange={setCanvasState}
+              onCanvasStateChange={handleCanvasStateChange}
               onCropCommit={(nodeId, state) =>
                 c.transactV3(document => {
                   const node = document.nodes.find(candidate => candidate.id === nodeId);

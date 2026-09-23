@@ -27,6 +27,7 @@ const io = vi.hoisted(() => ({
   canvasProps: null as any,
   editor: {} as any,
   projects: [] as any[],
+  project: null as any,
   exports: [] as any[],
   loading: false,
   projectChat: vi.fn(),
@@ -43,6 +44,13 @@ vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
     return <button data-project-chat-dock>Shared project chat</button>;
   },
 }));
+vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
+  SmartLink: ({ href, children, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: { id: 'author', email: 'author@polity.test' } }),
 }));
@@ -58,9 +66,17 @@ vi.mock('@/zero/users/useUserState', () => ({
   }),
 }));
 vi.mock('@/zero/communication-studio/useStudioState', () => ({
-  useStudioState: () => ({ projects: io.projects, exports: io.exports, isLoading: io.loading }),
+  useStudioState: () => ({
+    projects: io.projects,
+    project: io.project,
+    exports: io.exports,
+    isLoading: io.loading,
+  }),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ useStudioApi: () => io }));
+vi.mock('@/zero/communication-studio/useStudioApi', () => ({
+  useStudioApi: () => io,
+  studioRequest: io.request,
+}));
 vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
   CollaborationStatus: () => <span>Shared connection status</span>,
 }));
@@ -236,6 +252,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
   io.projects = [];
+  io.project = null;
   io.exports = [];
   io.loading = false;
   io.canvasProps = null;
@@ -524,31 +541,8 @@ describe('Studio toolbar workflows', () => {
     expect(screen.getByText('loading')).toBeTruthy();
     io.loading = false;
     await act(async () => ui.rerender(<StudioWorkspace open={vi.fn()} />));
-    expect(screen.getByRole('button', { name: 'create' })).toBeTruthy();
-    change('name', 'Campaign draft');
-    change('templateName', 'campaign');
-    change('weeks', '8');
-    change('core', '2');
-    change('stories', '1');
-    io.request.mockRejectedValueOnce(new Error('Temporary failure'));
-    click('create');
-    await waitFor(() =>
-      expect(screen.getByRole('alert').textContent).toContain('Temporary failure')
-    );
-    expect((screen.getByLabelText('name') as HTMLInputElement).value).toBe('Campaign draft');
-    click('create');
-    await waitFor(() =>
-      expect(io.request).toHaveBeenCalledWith(
-        'create',
-        expect.objectContaining({
-          title: 'Campaign draft',
-          kind: 'campaign',
-          themeId: '00000000-0000-4000-8000-000000000001',
-          themeMode: 'light',
-          template: { kind: 'builtin', id: 'announcement' },
-          campaign: { weeks: 8, core: 2, stories: 1 },
-        })
-      )
+    expect(screen.getByRole('link', { name: 'create' }).getAttribute('href')).toBe(
+      '/create/studio-project'
     );
   });
   it('shows storage status and peers without a permanent sidebar', async () => {
@@ -557,9 +551,7 @@ describe('Studio toolbar workflows', () => {
     expect(screen.getByRole('button', { name: 'Ada Lovelace' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Peer' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'invite' }).getAttribute('href')).toBe(
-      '/group/group/memberships?tab=membershipsByUser'
-    );
+    expect(screen.queryByRole('button', { name: 'invite' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Shared project chat' })).toBeTruthy();
     expect(document.querySelector('aside')).toBeNull();
     expect(screen.queryByRole('button', { name: 'ai' })).toBeNull();
@@ -569,6 +561,22 @@ describe('Studio toolbar workflows', () => {
         context: expect.objectContaining({ surface: 'studio' }),
       })
     );
+  });
+  it('opens collaborator invitations only for the owner of a personal Studio project', async () => {
+    io.project = { id: 'project', owner_id: 'author', group_id: null, kind: 'single' };
+    const ui = await show({ projectId: 'project', open: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: 'invite' }));
+    expect(await screen.findByRole('dialog', { name: 'inviteCollaborators' })).toBeTruthy();
+    ui.unmount();
+
+    io.project = { id: 'project', owner_id: 'other', group_id: null, kind: 'single' };
+    await show({ projectId: 'project', open: vi.fn() });
+    expect(screen.queryByRole('button', { name: 'invite' })).toBeNull();
+  });
+  it('does not offer project invitations on personal whiteboards', async () => {
+    io.project = { id: 'project', owner_id: 'author', group_id: null, kind: 'whiteboard' };
+    await show({ projectId: 'project', whiteboards: true, open: vi.fn() });
+    expect(screen.queryByRole('button', { name: 'invite' })).toBeNull();
   });
   it('renders one icon toolbar and a separate compact project status row', async () => {
     ydoc.pages[0].name = 'Different page name';
@@ -1165,21 +1173,76 @@ describe('Studio toolbar workflows', () => {
   });
   it('exports a confirmed JSON revision and lists export status', async () => {
     io.editor.commit = vi.fn().mockResolvedValue(7);
-    io.exports = [{ id: 'job', format: 'png', status: 'completed', progress: 100 }];
+    io.exports = [
+      { id: 'job', format: 'png', status: 'completed', progress: 100, file_name: 'Frames.zip' },
+    ];
     await show();
     panel('exports');
-    change('scope', 'all');
     click('export');
     await waitFor(() =>
       expect(io.request).toHaveBeenCalledWith('export', {
         projectId: 'project',
         format: 'png',
-        pageIds: [],
+        pageIds: [ydoc.pages[0].id],
         revision: 7,
       })
     );
     expect(screen.getByRole('button', { name: 'download' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'usePost' })).toBeNull();
   });
+  it('searches frames, marks the selected frame, and exports only checked frames', async () => {
+    setup('single');
+    ydoc.pages.push({
+      ...structuredClone(ydoc.pages[0]),
+      id: crypto.randomUUID(),
+      order: 1,
+      elements: ydoc.pages[0].elements.map(item => ({
+        ...structuredClone(item),
+        id: crypto.randomUUID(),
+      })),
+    });
+    ydoc.pages.forEach((page, index) => {
+      page.name = `Export frame ${index + 1}`;
+    });
+    await show();
+    panel('exports');
+    expect(screen.getByRole('option', { name: 'ALL' }).getAttribute('value')).toBe('zip');
+    const list = screen.getByRole('group', { name: 'exportFrames' });
+    expect(within(list).getAllByRole('checkbox')).toHaveLength(ydoc.pages.length);
+    expect(
+      within(list)
+        .getAllByRole('checkbox')
+        .every(box => (box as HTMLInputElement).checked)
+    ).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'markSelectedFrame' }) as HTMLButtonElement).disabled
+    ).toBe(true);
+    change('searchExportFrames', 'Export frame 2');
+    expect(within(list).getAllByRole('checkbox')).toHaveLength(1);
+    fireEvent.click(within(list).getByRole('checkbox'));
+    change('searchExportFrames', '');
+    expect((within(list).getAllByRole('checkbox')[1] as HTMLInputElement).checked).toBe(false);
+    click('markAllFrames');
+    expect(
+      within(list)
+        .getAllByRole('checkbox')
+        .every(box => (box as HTMLInputElement).checked)
+    ).toBe(true);
+    for (const box of within(list).getAllByRole('checkbox')) fireEvent.click(box);
+    expect((screen.getByRole('button', { name: 'export' }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    act(() => io.canvasProps.selectExact([ydoc.pages[1].id]));
+    click('markSelectedFrame');
+    expect((within(list).getAllByRole('checkbox')[1] as HTMLInputElement).checked).toBe(true);
+    click('export');
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith(
+        'export',
+        expect.objectContaining({ pageIds: [ydoc.pages[1].id] })
+      )
+    );
+  }, 10000);
   it('shows preparation immediately and then animates queued and running progress', async () => {
     let confirm!: (revision: number) => void;
     io.editor.commit = vi.fn().mockImplementation(
@@ -1220,7 +1283,14 @@ describe('Studio toolbar workflows', () => {
     io.request.mockImplementation(async (op: string) => {
       if (op === 'export') return { id: 'new-job' };
       if (op === 'exportStatus')
-        return { id: 'new-job', format: 'png', status: 'completed', progress: 100, error: null };
+        return {
+          id: 'new-job',
+          format: 'png',
+          status: 'completed',
+          progress: 100,
+          error: null,
+          fileName: 'Selected-frames.zip',
+        };
       return [];
     });
     await show();
@@ -1230,8 +1300,10 @@ describe('Studio toolbar workflows', () => {
     expect((clicked.mock.instances[0] as HTMLAnchorElement).getAttribute('href')).toBe(
       '/api/studio/exports/new-job'
     );
+    expect((clicked.mock.instances[0] as HTMLAnchorElement).download).toBe('Selected-frames.zip');
     click('download');
     expect(clicked).toHaveBeenCalledTimes(2);
+    expect((clicked.mock.instances[1] as HTMLAnchorElement).download).toBe('Selected-frames.zip');
   });
   it('shows the API reason in the export dropdown when queueing fails', async () => {
     io.request.mockImplementation(async (op: string) => {
@@ -1447,4 +1519,55 @@ it('offers crop for one unlocked image or video and commits geometry in one tran
   ydoc.pages[0].elements.find(item => item.id === videoId)!.locked = true;
   act(notifyAll);
   expect(screen.queryByRole('button', { name: 'cropMedia' })).toBeNull();
+});
+
+it('exposes contextual text and image actions through the canvas toolbar', async () => {
+  const textId = crypto.randomUUID();
+  const imageId = crypto.randomUUID();
+  const assetId = crypto.randomUUID();
+  ydoc.pages[0].elements.push(
+    element('text', { id: textId, text: 'Write here' }),
+    element('image', { id: imageId, assetId })
+  );
+  io.editor.assets = [{ id: assetId, url: 'http://localhost:3000/image.png' }];
+  await show();
+  click(`Select text ${textId}`);
+  const textToolbar = render(<div>{io.canvasProps.contextToolbar}</div>);
+  expect(within(textToolbar.container).getAllByRole('button')).toHaveLength(3);
+  fireEvent.click(within(textToolbar.container).getByRole('button', { name: 'bold' }));
+  expect(value().pages[0].elements.find(item => item.id === textId)?.bold).toBe(true);
+  textToolbar.unmount();
+  click(`Select image ${imageId}`);
+  const imageToolbar = render(<div>{io.canvasProps.contextToolbar}</div>);
+  fireEvent.click(within(imageToolbar.container).getByRole('button', { name: 'resizeImage' }));
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'crop', action: 'start' });
+  fireEvent.click(within(imageToolbar.container).getByRole('button', { name: 'editImage' }));
+  expect(screen.getByRole('dialog')).toBeTruthy();
+});
+
+it('uses contextual group alignment and distribution with the shared reference', async () => {
+  const group = crypto.randomUUID();
+  const ids = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
+  ydoc.pages[0].elements.push(
+    ...ids.map((id, index) =>
+      element('rect', { id, group, x: [50, 180, 500][index], y: 200, width: 50, height: 50 })
+    )
+  );
+  await show();
+  act(() => io.canvasProps.selectExact(ids));
+  const toolbar = render(<div>{io.canvasProps.contextToolbar}</div>);
+  const actions = within(toolbar.container);
+  expect(actions.getAllByRole('button')).toHaveLength(12);
+  expect(
+    actions.getByRole<HTMLButtonElement>('button', { name: 'distributeHorizontal' }).disabled
+  ).toBe(false);
+  fireEvent.click(actions.getByRole('button', { name: 'distributeHorizontal' }));
+  const spread = ids.map(id => value().pages[0].elements.find(item => item.id === id)!.x);
+  expect(spread[0]).toBe(50);
+  expect(spread[1]).toBeGreaterThan(180);
+  expect(spread[2]).toBe(500);
+  fireEvent.click(actions.getByRole('button', { name: 'left' }));
+  expect(
+    new Set(ids.map(id => value().pages[0].elements.find(item => item.id === id)!.x)).size
+  ).toBe(1);
 });

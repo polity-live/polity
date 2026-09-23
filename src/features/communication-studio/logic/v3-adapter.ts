@@ -701,7 +701,7 @@ function nativeElement(node: StudioNode, _nodeById: Map<string, StudioNode>) {
 
 export function v3DocumentToLegacy(
   input: StudioDocumentV3,
-  options: { includeMaster?: boolean } = {}
+  options: { includeMaster?: boolean; allowLongVideo?: boolean } = {}
 ): StudioDocument {
   const document = studioDocumentV3Schema.parse(input);
   const brand = themeToLegacyBrand(document.theme);
@@ -840,7 +840,22 @@ export function v3DocumentToLegacy(
       canvas,
     };
   });
-  return documentSchema.parse({
+  const longVideoIds = new Set(
+    options.allowLongVideo
+      ? document.deliverables
+          .filter(
+            deliverable =>
+              deliverable.kind === 'video' &&
+              deliverable.frameIds.reduce(
+                (duration, frameId) =>
+                  duration + (pages.find(page => page.id === frameId)?.duration ?? 0),
+                0
+              ) > 60
+          )
+          .map(deliverable => deliverable.id)
+      : []
+  );
+  const legacy = documentSchema.parse({
     version: 2,
     title: document.title,
     kind: document.kind,
@@ -850,7 +865,7 @@ export function v3DocumentToLegacy(
       id: deliverable.id,
       code: deliverable.code,
       title: deliverable.title,
-      kind: deliverable.kind,
+      kind: longVideoIds.has(deliverable.id) ? 'carousel' : deliverable.kind,
       pageIds: deliverable.frameIds,
       day: deliverable.dayOffset,
       action: deliverable.brief,
@@ -861,6 +876,8 @@ export function v3DocumentToLegacy(
     startDate: document.campaign.startDate,
     source: null,
   });
+  for (const post of legacy.posts) if (longVideoIds.has(post.id)) post.kind = 'video';
+  return legacy;
 }
 
 export function isStudioDocumentV3(value: unknown): value is StudioDocumentV3 {

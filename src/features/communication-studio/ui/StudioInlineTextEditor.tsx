@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Plate,
   PlateContent,
@@ -96,11 +96,9 @@ export function StudioInlineTextEditor({
     [node.id]
   );
   const published = useRef(stableJson(node.content));
-  const contentRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => contentRef.current?.focus());
-    return () => cancelAnimationFrame(frame);
-  }, [node.id]);
+  useLayoutEffect(() => {
+    editor.tf.focus({ edge: 'endEditor' });
+  }, [editor, node.id]);
   useEffect(() => {
     const incoming = stableJson(node.content);
     if (incoming !== published.current) {
@@ -137,8 +135,6 @@ export function StudioInlineTextEditor({
       }}
     >
       <PlateContent
-        ref={contentRef}
-        autoFocus
         aria-label="Text"
         style={{
           width: '100%',

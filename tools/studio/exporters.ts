@@ -200,15 +200,26 @@ export async function render(
       .map((frame, index) => [frame.id, index] as const)
   );
   const v5Document = selectStudioExportDocument(sourceDocument, selected);
-  const doc: StudioDocument = v3DocumentToLegacy(v5Document, { includeMaster: true });
+  const doc: StudioDocument = v3DocumentToLegacy(v5Document, {
+    includeMaster: true,
+    allowLongVideo: true,
+  });
   const pages = doc.kind === 'whiteboard' ? doc.pages.map(fitWhiteboardExport) : doc.pages;
   const name = slug(doc.title);
-  if (format === 'xlsx')
-    return {
-      bytes: await workbook(doc, originalPageIndex),
-      name: name + '.xlsx',
-      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    };
+  if (format === 'xlsx') {
+    const bytes = await workbook(doc, originalPageIndex);
+    return pages.length > 1
+      ? {
+          bytes: zipSync({ [name + '.xlsx']: bytes }, { level: 4 }),
+          name: name + '.zip',
+          mime: 'application/zip',
+        }
+      : {
+          bytes,
+          name: name + '.xlsx',
+          mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        };
+  }
   await mkdir(workdir, { recursive: true });
   const browser = await chromium.launch({
     headless: true,
@@ -276,288 +287,285 @@ export async function render(
       }
       files[name + '.pdf'] = await pdf.save();
     };
-    const addPpt = async () => {
-      for (const f of [...new Set(pages.map(p => p.format))]) {
-        const ppt = new PptxGenJS();
-        const [w, h] = formats[f];
-        ppt.defineLayout({ name: 'Polity', width: w / 144, height: h / 144 });
-        ppt.layout = 'Polity';
-        ppt.author = 'Polity';
-        ppt.subject = doc.title;
-        for (const p of pages.filter(p => p.format === f)) {
-          const slide = ppt.addSlide();
-          slide.background = { color: p.background.slice(1) };
-          slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
-          for (const layer of editableV5Layers(v5Document, p.id)) {
-            if (layer.kind === 'drawing') {
-              const { node, matrix } = layer;
-              const points = node.points.map(([x, y]) => `${x},${y}`).join(' ');
-              const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${node.style.stroke ?? '#12362D'}" stroke-width="${Math.max(2, node.style.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" opacity="${node.style.opacity}" transform="matrix(${matrix.join(' ')})"/></svg>`;
-              slide.addImage({
-                data: 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64'),
-                x: 0,
-                y: 0,
-                w: w / 144,
-                h: h / 144,
-              });
-              continue;
-            }
-            const e = layer.element;
-            const box = {
-              x:
+    const addPpt = async (canvaCompatible = false, folder = '') => {
+      const ppt = new PptxGenJS();
+      const [slideWidth, slideHeight] = formats[pages[0].format];
+      ppt.defineLayout({ name: 'Polity', width: slideWidth / 144, height: slideHeight / 144 });
+      ppt.layout = 'Polity';
+      ppt.author = 'Polity';
+      ppt.subject = doc.title;
+      for (const p of pages) {
+        const [w, h] = formats[p.format];
+        const scale = Math.min(slideWidth / w, slideHeight / h);
+        const offsetX = (slideWidth - w * scale) / 2;
+        const offsetY = (slideHeight - h * scale) / 2;
+        const slide = ppt.addSlide();
+        slide.background = { color: p.background.slice(1) };
+        slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
+        for (const layer of editableV5Layers(v5Document, p.id)) {
+          if (layer.kind === 'drawing') {
+            const { node, matrix } = layer;
+            const points = node.points.map(([x, y]) => `${x},${y}`).join(' ');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${node.style.stroke ?? '#12362D'}" stroke-width="${Math.max(2, node.style.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" opacity="${node.style.opacity}" transform="matrix(${matrix.join(' ')})"/></svg>`;
+            slide.addImage({
+              data: 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64'),
+              x: offsetX / 144,
+              y: offsetY / 144,
+              w: (w * scale) / 144,
+              h: (h * scale) / 144,
+            });
+            continue;
+          }
+          const e = layer.element;
+          const box = {
+            x:
+              (offsetX +
                 (e.x +
                   ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.width) / 2 -
-                  (Math.sin((e.rotation * Math.PI) / 180) * e.height) / 2) /
-                144,
-              y:
+                  (Math.sin((e.rotation * Math.PI) / 180) * e.height) / 2) *
+                  scale) /
+              144,
+            y:
+              (offsetY +
                 (e.y +
                   (Math.sin((e.rotation * Math.PI) / 180) * e.width) / 2 +
-                  ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.height) / 2) /
-                144,
-              w: e.width / 144,
-              h: e.height / 144,
-              rotate: e.rotation,
-              transparency: (1 - e.opacity) * 100,
-            };
-            if (e.type === 'text')
-              slide.addText(
-                e.richText.length
-                  ? e.richText.flatMap((p, i) =>
-                      p.children.map((r, j) => ({
-                        text: r.text,
-                        options: {
-                          align: p.align ?? e.align,
-                          bold: r.bold ?? e.bold,
-                          italic: r.italic ?? e.italic,
-                          underline:
-                            (r.underline ?? e.underline) ? { style: 'sng' as const } : undefined,
-                          strike:
-                            (r.strikethrough ?? e.strikethrough)
-                              ? ('sngStrike' as const)
+                  ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.height) / 2) *
+                  scale) /
+              144,
+            w: (e.width * scale) / 144,
+            h: (e.height * scale) / 144,
+            rotate: e.rotation,
+            transparency: (1 - e.opacity) * 100,
+          };
+          if (e.type === 'text')
+            slide.addText(
+              e.richText.length
+                ? e.richText.flatMap((p, i) =>
+                    p.children.map((r, j) => ({
+                      text: r.text,
+                      options: {
+                        align: p.align ?? e.align,
+                        bold: r.bold ?? e.bold,
+                        italic: r.italic ?? e.italic,
+                        underline:
+                          (r.underline ?? e.underline) ? { style: 'sng' as const } : undefined,
+                        strike:
+                          (r.strikethrough ?? e.strikethrough) ? ('sngStrike' as const) : undefined,
+                        color: (r.color ?? e.fill).slice(1),
+                        fontFace: r.fontFamily ?? e.font,
+                        fontSize: ((r.fontSize ?? e.fontSize) * scale) / 2,
+                        hyperlink: r.url ? { url: r.url } : undefined,
+                        breakLine: j === p.children.length - 1 && i < e.richText.length - 1,
+                        bullet:
+                          p.list === 'bullet'
+                            ? {}
+                            : p.list === 'number'
+                              ? { type: 'number' as const }
                               : undefined,
-                          color: (r.color ?? e.fill).slice(1),
-                          fontFace: r.fontFamily ?? e.font,
-                          fontSize: (r.fontSize ?? e.fontSize) / 2,
-                          hyperlink: r.url ? { url: r.url } : undefined,
-                          breakLine: j === p.children.length - 1 && i < e.richText.length - 1,
-                          bullet:
-                            p.list === 'bullet'
-                              ? {}
-                              : p.list === 'number'
-                                ? { type: 'number' as const }
-                                : undefined,
-                        },
-                      }))
-                    )
-                  : e.text,
-                {
-                  ...box,
-                  fontFace: e.font,
-                  fontSize: e.fontSize / 2,
-                  bold: e.bold,
-                  italic: e.italic,
-                  underline: e.underline ? { style: 'sng' } : undefined,
-                  strike: e.strikethrough ? 'sngStrike' : undefined,
-                  valign: e.verticalAlign,
-                  color: e.fill.slice(1),
-                  align: e.align,
-                  margin: 0,
-                  breakLine: false,
-                  lineSpacingMultiple: e.lineHeight,
-                }
-              );
-            else if (e.type === 'table' && e.table) {
-              const table = e.table;
-              slide.addTable(
-                table.rows.map(r =>
-                  r.cells.map(c => ({
-                    text: c.text,
-                    options: {
-                      fill: { color: c.fill.slice(1), transparency: (1 - e.opacity) * 100 },
-                      color: c.color.slice(1),
-                      align: c.align,
-                      bold: c.bold,
-                      border: (['top', 'right', 'bottom', 'left'] as const).map(side =>
-                        c.borders?.[side] === false
-                          ? { type: 'none' as const, pt: 0 }
-                          : { type: 'solid' as const, color: table.border.slice(1), pt: 1 }
-                      ) as [
-                        { type: 'none' | 'solid'; pt: number; color?: string },
-                        { type: 'none' | 'solid'; pt: number; color?: string },
-                        { type: 'none' | 'solid'; pt: number; color?: string },
-                        { type: 'none' | 'solid'; pt: number; color?: string },
-                      ],
-                    },
-                  }))
-                ),
-                {
-                  ...box,
-                  colW: table.widths.map(
-                    v => (box.w * v) / table.widths.reduce((a, b) => a + b, 0)
-                  ),
-                  rowH: box.h / table.rows.length,
-                  fontFace: e.font,
-                  fontSize: e.fontSize / 2,
-                  margin: 3,
-                  autoPage: false,
-                }
-              );
-            } else if (e.type === 'chart' && e.chart)
-              slide.addChart(
-                e.chart.kind,
-                e.chart.series.map(s => ({
-                  name: s.name,
-                  labels: e.chart?.labels ?? [],
-                  values: s.values,
-                })),
-                {
-                  ...box,
-                  showLegend: e.chart.legend,
-                  showTitle: false,
-                  chartColors:
-                    e.chart.kind === 'pie'
-                      ? (
-                          e.chart.colors ?? [
-                            '#B88A3B',
-                            '#12362D',
-                            '#588DB2',
-                            '#9A597F',
-                            '#75965D',
-                            '#D46E48',
-                          ]
-                        ).map(c => c.slice(1))
-                      : e.chart.series.map(s => s.color.slice(1)),
-                  showValue: false,
-                  catAxisLabelFontSize: 10,
-                  valAxisLabelFontSize: 10,
-                }
-              );
-            else if (e.type === 'line' || e.type === 'arrow')
-              slide.addShape(ppt.ShapeType.line, {
+                      },
+                    }))
+                  )
+                : e.text,
+              {
                 ...box,
+                fontFace: e.font,
+                fontSize: (e.fontSize * scale) / 2,
+                bold: e.bold,
+                italic: e.italic,
+                underline: e.underline ? { style: 'sng' } : undefined,
+                strike: e.strikethrough ? 'sngStrike' : undefined,
+                valign: e.verticalAlign,
+                color: e.fill.slice(1),
+                align: e.align,
+                margin: 0,
+                breakLine: false,
+                lineSpacingMultiple: e.lineHeight,
+              }
+            );
+          else if (e.type === 'table' && e.table) {
+            const table = e.table;
+            slide.addTable(
+              table.rows.map(r =>
+                r.cells.map(c => ({
+                  text: c.text,
+                  options: {
+                    fill: { color: c.fill.slice(1), transparency: (1 - e.opacity) * 100 },
+                    color: c.color.slice(1),
+                    align: c.align,
+                    bold: c.bold,
+                    border: (['top', 'right', 'bottom', 'left'] as const).map(side =>
+                      c.borders?.[side] === false
+                        ? { type: 'none' as const, pt: 0 }
+                        : { type: 'solid' as const, color: table.border.slice(1), pt: scale }
+                    ) as [
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                    ],
+                  },
+                }))
+              ),
+              {
+                ...box,
+                colW: table.widths.map(v => (box.w * v) / table.widths.reduce((a, b) => a + b, 0)),
+                rowH: box.h / table.rows.length,
+                fontFace: e.font,
+                fontSize: (e.fontSize * scale) / 2,
+                margin: 3 * scale,
+                autoPage: false,
+              }
+            );
+          } else if (e.type === 'chart' && e.chart)
+            slide.addChart(
+              e.chart.kind,
+              e.chart.series.map(s => ({
+                name: s.name,
+                labels: e.chart?.labels ?? [],
+                values: s.values,
+              })),
+              {
+                ...box,
+                showLegend: e.chart.legend,
+                showTitle: false,
+                chartColors:
+                  e.chart.kind === 'pie'
+                    ? (
+                        e.chart.colors ?? [
+                          '#B88A3B',
+                          '#12362D',
+                          '#588DB2',
+                          '#9A597F',
+                          '#75965D',
+                          '#D46E48',
+                        ]
+                      ).map(c => c.slice(1))
+                    : e.chart.series.map(s => s.color.slice(1)),
+                showValue: false,
+                catAxisLabelFontSize: 10 * scale,
+                valAxisLabelFontSize: 10 * scale,
+              }
+            );
+          else if (e.type === 'line' || e.type === 'arrow')
+            slide.addShape(ppt.ShapeType.line, {
+              ...box,
+              line: {
+                color: e.stroke.slice(1),
+                width: (Math.max(1, e.strokeWidth) * scale) / 2,
+                endArrowType: e.type === 'arrow' ? 'triangle' : undefined,
+              },
+            });
+          else if (e.type === 'rect' || e.type === 'ellipse')
+            slide.addShape(
+              e.type === 'ellipse'
+                ? ppt.ShapeType.ellipse
+                : 'node' in layer && layer.node.type === 'shape' && layer.node.shape === 'diamond'
+                  ? ppt.ShapeType.diamond
+                  : 'node' in layer &&
+                      layer.node.type === 'shape' &&
+                      layer.node.shape === 'rounded-rectangle'
+                    ? ppt.ShapeType.roundRect
+                    : ppt.ShapeType.rect,
+              {
+                ...box,
+                fill: { color: e.fill.slice(1), transparency: (1 - e.opacity) * 100 },
                 line: {
                   color: e.stroke.slice(1),
-                  width: Math.max(1, e.strokeWidth) / 2,
-                  endArrowType: e.type === 'arrow' ? 'triangle' : undefined,
+                  transparency: e.strokeWidth ? 0 : 100,
+                  width: (e.strokeWidth * scale) / 2,
                 },
+              }
+            );
+          else if (e.assetId && media[e.assetId]) {
+            const m = media[e.assetId];
+            if (e.type === 'video' && !e.crop && !canvaCompatible)
+              slide.addMedia({
+                ...box,
+                type: 'video',
+                data: `${m.mime};base64,${Buffer.from(m.bytes).toString('base64')}`,
+                extn: 'mp4',
               });
-            else if (e.type === 'rect' || e.type === 'ellipse')
-              slide.addShape(
-                e.type === 'ellipse'
-                  ? ppt.ShapeType.ellipse
-                  : 'node' in layer && layer.node.type === 'shape' && layer.node.shape === 'diamond'
-                    ? ppt.ShapeType.diamond
-                    : 'node' in layer &&
-                        layer.node.type === 'shape' &&
-                        layer.node.shape === 'rounded-rectangle'
-                      ? ppt.ShapeType.roundRect
-                      : ppt.ShapeType.rect,
+            else {
+              const raster = await tab.evaluate(
+                async ({ id, url, video, seek }) => {
+                  let source = (window as any).__studioMedia?.[id] as
+                    HTMLImageElement | HTMLVideoElement | undefined;
+                  if (!source) {
+                    source = video ? document.createElement('video') : new Image();
+                    const loading = source;
+                    await new Promise<void>((resolve, reject) => {
+                      loading.onerror = () => reject(new Error('Media could not be decoded'));
+                      if (loading instanceof HTMLVideoElement) {
+                        loading.muted = true;
+                        loading.preload = 'auto';
+                        loading.onloadeddata = () => resolve();
+                      } else loading.onload = () => resolve();
+                      loading.src = url;
+                    });
+                  }
+                  ((window as any).__studioMedia ??= {})[id] = source;
+                  if (source instanceof HTMLVideoElement && seek > 0) {
+                    const target = Math.min(seek, Math.max(0, source.duration - 0.05));
+                    if (target > 0)
+                      await new Promise<void>(resolve => {
+                        source.onseeked = () => resolve();
+                        source.currentTime = target;
+                      });
+                  }
+                  const canvas = document.createElement('canvas');
+                  canvas.width =
+                    source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
+                  canvas.height =
+                    source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
+                  const context = canvas.getContext('2d');
+                  if (!context) throw new Error('Canvas unavailable');
+                  context.drawImage(source, 0, 0);
+                  return {
+                    width: canvas.width,
+                    height: canvas.height,
+                    data: canvas.toDataURL('image/png'),
+                  };
+                },
                 {
-                  ...box,
-                  fill: { color: e.fill.slice(1), transparency: (1 - e.opacity) * 100 },
-                  line: {
-                    color: e.stroke.slice(1),
-                    transparency: e.strokeWidth ? 0 : 100,
-                    width: e.strokeWidth / 2,
-                  },
+                  id: e.assetId,
+                  url: data[e.assetId],
+                  video: e.type === 'video',
+                  seek: e.trimStart + 1,
                 }
               );
-            else if (e.assetId && media[e.assetId]) {
-              const m = media[e.assetId];
-              if (e.type === 'video' && !e.crop && format !== 'canva')
-                slide.addMedia({
-                  ...box,
-                  type: 'video',
-                  data: `${m.mime};base64,${Buffer.from(m.bytes).toString('base64')}`,
-                  extn: 'mp4',
-                });
-              else {
-                const raster = await tab.evaluate(
-                  async ({ id, url, video, seek }) => {
-                    let source = (window as any).__studioMedia?.[id] as
-                      HTMLImageElement | HTMLVideoElement | undefined;
-                    if (!source) {
-                      source = video ? document.createElement('video') : new Image();
-                      const loading = source;
-                      await new Promise<void>((resolve, reject) => {
-                        loading.onerror = () => reject(new Error('Media could not be decoded'));
-                        if (loading instanceof HTMLVideoElement) {
-                          loading.muted = true;
-                          loading.preload = 'auto';
-                          loading.onloadeddata = () => resolve();
-                        } else loading.onload = () => resolve();
-                        loading.src = url;
-                      });
-                    }
-                    ((window as any).__studioMedia ??= {})[id] = source;
-                    if (source instanceof HTMLVideoElement && seek > 0) {
-                      const target = Math.min(seek, Math.max(0, source.duration - 0.05));
-                      if (target > 0)
-                        await new Promise<void>(resolve => {
-                          source.onseeked = () => resolve();
-                          source.currentTime = target;
-                        });
-                    }
-                    const canvas = document.createElement('canvas');
-                    canvas.width =
-                      source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
-                    canvas.height =
-                      source instanceof HTMLVideoElement
-                        ? source.videoHeight
-                        : source.naturalHeight;
-                    const context = canvas.getContext('2d');
-                    if (!context) throw new Error('Canvas unavailable');
-                    context.drawImage(source, 0, 0);
-                    return {
-                      width: canvas.width,
-                      height: canvas.height,
-                      data: canvas.toDataURL('image/png'),
-                    };
-                  },
-                  {
-                    id: e.assetId,
-                    url: data[e.assetId],
-                    video: e.type === 'video',
-                    seek: e.trimStart + 1,
-                  }
-                );
-                const placement = mediaDrawGeometry(e, raster.width, raster.height);
-                const poster = await tab.evaluate(
-                  ({ id, width, height, placement }) => {
-                    const source = (window as any).__studioMedia[id] as
-                      HTMLImageElement | HTMLVideoElement;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = Math.max(1, Math.round(width));
-                    canvas.height = Math.max(1, Math.round(height));
-                    const context = canvas.getContext('2d');
-                    if (!context) throw new Error('Canvas unavailable');
-                    context.drawImage(
-                      source,
-                      placement.x,
-                      placement.y,
-                      placement.width,
-                      placement.height
-                    );
-                    return canvas.toDataURL('image/png');
-                  },
-                  { id: e.assetId, width: e.width, height: e.height, placement }
-                );
-                slide.addImage({ ...box, data: poster, flipH: e.flipX, flipV: e.flipY });
-                if (e.type === 'video' && e.crop && (format === 'pptx' || format === 'canva'))
-                  files[`Medien/${e.assetId}.mp4`] = m.bytes;
-              }
+              const placement = mediaDrawGeometry(e, raster.width, raster.height);
+              const poster = await tab.evaluate(
+                ({ id, width, height, placement }) => {
+                  const source = (window as any).__studioMedia[id] as
+                    HTMLImageElement | HTMLVideoElement;
+                  const canvas = document.createElement('canvas');
+                  canvas.width = Math.max(1, Math.round(width));
+                  canvas.height = Math.max(1, Math.round(height));
+                  const context = canvas.getContext('2d');
+                  if (!context) throw new Error('Canvas unavailable');
+                  context.drawImage(
+                    source,
+                    placement.x,
+                    placement.y,
+                    placement.width,
+                    placement.height
+                  );
+                  return canvas.toDataURL('image/png');
+                },
+                { id: e.assetId, width: e.width, height: e.height, placement }
+              );
+              slide.addImage({ ...box, data: poster, flipH: e.flipX, flipV: e.flipY });
+              if (e.type === 'video' && e.crop && format !== 'zip')
+                files[`Medien/${e.assetId}.mp4`] = m.bytes;
             }
           }
         }
-        files[`${name}-${f}.pptx`] = new Uint8Array(
-          (await ppt.write({ outputType: 'uint8array' })) as Uint8Array
-        );
       }
-    };
-    const addVideo = async () => {
-      const posts = doc.posts.filter(
-        p => p.kind === 'video' && p.pageIds.some(id => pages.some(x => x.id === id))
+      files[`${folder}${name}.pptx`] = new Uint8Array(
+        (await ppt.write({ outputType: 'uint8array' })) as Uint8Array
       );
+    };
+    const addVideo = async (posts = doc.posts.filter(p => p.kind === 'video')) => {
       const sequences = posts.length
         ? posts.map(post => ({
             name: post.code,
@@ -640,16 +648,42 @@ export async function render(
     };
     if (format === 'png' || format === 'zip') addPng();
     if (format === 'pdf' || format === 'zip') await addPdf();
-    if (['pptx', 'canva', 'zip'].includes(format)) await addPpt();
-    if (format === 'mp4' || (format === 'zip' && doc.posts.some(p => p.kind === 'video')))
-      await addVideo();
-    if (format === 'canva')
-      files['Canva-Import.md'] = strToU8(
+    if (format === 'pptx' || format === 'zip') await addPpt();
+    if (format === 'canva' || format === 'zip')
+      await addPpt(true, format === 'zip' ? 'Canva/' : '');
+    if (format === 'mp4') await addVideo();
+    if (format === 'zip' && doc.posts.some(post => post.kind === 'video')) {
+      const videoPosts = doc.posts.filter(post => post.kind === 'video');
+      const ineligible = videoPosts.filter(post => {
+        const frames = pages.filter(page => post.pageIds.includes(page.id));
+        return (
+          frames.reduce((total, frame) => total + frame.duration, 0) > 60 ||
+          frames.some(frame => frame.format !== frames[0]?.format)
+        );
+      });
+      if (ineligible.length)
+        files['Video-Hinweis.md'] = strToU8(
+          `MP4 ausgelassen für: ${ineligible.map(post => post.title).join(', ')}. Die Auswahl überschreitet 60 Sekunden oder enthält Frames mit unterschiedlichen Formaten.`
+        );
+      const eligible = videoPosts.filter(post => !ineligible.includes(post));
+      if (eligible.length) await addVideo(eligible);
+    }
+    if (format === 'canva' || format === 'zip')
+      files[format === 'zip' ? 'Canva/Canva-Import.md' : 'Canva-Import.md'] = strToU8(
         'PowerPoint-Datei in Canva importieren. Texte und Formen sind bearbeitbar. Schriftarten, Bildausschnitte und Videoposter prüfen. Animationen liegen in MP4 vor.'
       );
     if (format === 'zip') {
       files['Polity-Projekt.json'] = strToU8(JSON.stringify(v5Document));
-      for (const [id, m] of Object.entries(media))
+      const referencedMedia = new Set(
+        v5Document.nodes.flatMap(node =>
+          node.type === 'media'
+            ? [node.assetId]
+            : node.type === 'chart' && node.sourceAssetId
+              ? [node.sourceAssetId]
+              : []
+        )
+      );
+      for (const [id, m] of Object.entries(media).filter(([id]) => referencedMedia.has(id)))
         files[
           `Medien/${id}.${m.mime === 'video/mp4' ? 'mp4' : m.mime === 'image/jpeg' ? 'jpg' : m.mime === 'image/webp' ? 'webp' : 'png'}`
         ] = m.bytes;
@@ -665,7 +699,7 @@ export async function render(
     }
     await progress(95);
     const entries = Object.entries(files);
-    if (entries.length === 1) {
+    if (entries.length === 1 && (pages.length === 1 || format === 'pdf' || format === 'pptx')) {
       const [filename, bytes] = entries[0];
       return {
         bytes,

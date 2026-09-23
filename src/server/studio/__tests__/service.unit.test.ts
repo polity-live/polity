@@ -101,7 +101,11 @@ beforeEach(() => {
       )
         return available;
       if (sql.startsWith('select * from studio_export')) return job ? [job] : [];
-      if (sql.startsWith('select project_id,format,status,progress,error from studio_export'))
+      if (
+        sql.startsWith(
+          'select project_id,format,status,progress,error,file_name from studio_export'
+        )
+      )
         return job ? [job] : [];
       if (sql.startsWith('select p.group_id')) return [source];
       if (sql.startsWith('insert') && failInsert) throw new Error('database_down');
@@ -293,6 +297,7 @@ describe('Studio shared persistence and media authority', () => {
       status: 'running',
       progress: 45,
       error: null,
+      fileName: 'Result.png',
     });
     expect(io.access).toHaveBeenCalledWith('reader', 'project');
     io.access.mockRejectedValueOnce(new Error('No access'));

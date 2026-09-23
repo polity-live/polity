@@ -223,6 +223,10 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
     category: 'socialNotifications',
     key: 'documentInvitations',
   },
+  studio_collaboration_invite: {
+    category: 'socialNotifications',
+    key: 'documentInvitations',
+  },
 
   // Statement types
   statement_response: { category: 'socialNotifications', key: 'mentions' },

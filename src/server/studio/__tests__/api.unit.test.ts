@@ -269,6 +269,7 @@ describe('Studio HTTP authorization and transactional operations', () => {
     expect((await request({ operation: 'cancel', id })).status).toBe(200);
     expect(mocks.access).toHaveBeenCalledWith('actor', id, true, mocks.sql);
     expect(mocks.sql.mock.calls[1][0].join('')).toContain("status in ('queued','running')");
+    mocks.sql.mockResolvedValueOnce([{ owner_id: 'actor', group_id: null }]);
     expect((await request({ operation: 'template', id, value: true })).status).toBe(200);
     mocks.access.mockRejectedValueOnce(new StudioError('Revoked', 403));
     const before = mocks.sql.mock.calls.length;
@@ -276,13 +277,28 @@ describe('Studio HTTP authorization and transactional operations', () => {
     expect(mocks.sql).toHaveBeenCalledTimes(before);
   });
   it('preserves projects whose media is published or whose export is still running', async () => {
-    mocks.sql.mockResolvedValueOnce([{ id }]);
+    mocks.sql
+      .mockResolvedValueOnce([{ owner_id: 'actor', group_id: null }])
+      .mockResolvedValueOnce([{ id }]);
     expect((await request({ operation: 'delete', id })).status).toBe(400);
-    mocks.sql.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id }]);
+    mocks.sql
+      .mockResolvedValueOnce([{ owner_id: 'actor', group_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id }]);
     expect((await request({ operation: 'delete', id })).status).toBe(400);
     expect(mocks.sql.mock.calls.every(([sql]) => !sql.join('').includes('delete from'))).toBe(true);
     mocks.sql.mockResolvedValue([]);
+    mocks.sql.mockResolvedValueOnce([{ owner_id: 'actor', group_id: null }]);
     expect((await request({ operation: 'delete', id })).status).toBe(200);
     expect(mocks.sql.mock.lastCall?.[0].join('')).toContain('delete from studio_project');
+  });
+  it('does not let an active personal collaborator manage the project', async () => {
+    mocks.sql.mockResolvedValueOnce([{ owner_id: 'owner', group_id: null }]);
+    expect((await request({ operation: 'template', id, value: true })).status).toBe(403);
+    mocks.sql.mockResolvedValueOnce([{ owner_id: 'owner', group_id: null }]);
+    expect((await request({ operation: 'delete', id })).status).toBe(403);
+    expect(
+      mocks.sql.mock.calls.every(([sql]) => !sql.join('').includes('delete from studio_project'))
+    ).toBe(true);
   });
 });

@@ -1,14 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  CheckCircle2,
-  CheckIcon,
-  ChevronDown,
-  MessageSquare,
-  Pencil,
-  Send,
-  Vote,
-  XIcon,
-} from 'lucide-react';
+import { CheckCircle2, ChevronDown, MessageSquare, Pencil, Send, Vote } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
@@ -31,6 +22,12 @@ import {
   AlertDialogTrigger,
 } from '@/features/shared/ui/ui/alert-dialog';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CanvasChangeRequestList } from '@/features/shared/ui/change-requests/CanvasChangeRequestList';
+import { CanvasVoteButtons } from '@/features/shared/ui/change-requests/CanvasVoteButtons';
+import {
+  CanvasChangeRequestCard,
+  CanvasChangeRequestCloseButton,
+} from '@/features/shared/ui/change-requests/CanvasChangeRequestCard';
 import { cn } from '@/features/shared/utils/utils';
 import { getBadgeToneClasses } from '@/features/shared/theme';
 import {
@@ -107,52 +104,22 @@ export function CityDesignChangeRequestCanvasList({
   const { t } = useTranslation();
 
   return (
-    <div className="bg-background/95 pointer-events-auto absolute top-4 right-4 z-20 w-[min(18rem,calc(100%-2rem))] overflow-hidden rounded-md border text-sm shadow-xl backdrop-blur">
-      <div className="border-b px-3 py-2">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-muted-foreground text-xs font-medium uppercase">
-              {t('features.amendments.cityDesign.changeRequests.badge', 'Change requests')}
-            </p>
-            <h2 className="text-sm font-semibold">
-              {t('features.amendments.cityDesign.topbar.changeRequestsCount', {
-                count: changeRequests.length,
-              })}
-            </h2>
-          </div>
-          {selectedChangeRequestId ? (
-            <Button
-              data-action-id="amendments.city-cr.close.selection"
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              aria-label={t('features.amendments.cityDesign.changeRequests.close', 'Close')}
-              onClick={() => onChangeRequestSelect(null)}
-            >
-              <XIcon className="size-4" />
-            </Button>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="max-h-72 overflow-auto p-2">
-        {changeRequests.length === 0 ? (
-          <div className="text-muted-foreground rounded-md border px-3 py-6 text-center text-sm">
-            {t('features.amendments.cityDesign.topbar.noChangeRequests', 'No change requests')}
-          </div>
-        ) : (
-          changeRequests.map(changeRequest => (
-            <CityDesignChangeRequestListItem
-              key={changeRequest.id}
-              changeRequest={changeRequest}
-              selected={selectedChangeRequestId === changeRequest.id}
-              onSelect={() => onChangeRequestSelect(changeRequest.id)}
-            />
-          ))
-        )}
-      </div>
-    </div>
+    <CanvasChangeRequestList
+      items={changeRequests}
+      selectedId={selectedChangeRequestId}
+      onSelect={onChangeRequestSelect}
+      title={t('features.amendments.cityDesign.changeRequests.badge', 'Change requests')}
+      emptyLabel={t('features.amendments.cityDesign.topbar.noChangeRequests', 'No change requests')}
+      closeActionId="amendments.city-cr.close.selection"
+      closeLabel={t('features.amendments.cityDesign.changeRequests.close', 'Close')}
+      renderItem={(changeRequest, selected, select) => (
+        <CityDesignChangeRequestListItem
+          changeRequest={changeRequest}
+          selected={selected}
+          onSelect={select}
+        />
+      )}
+    />
   );
 }
 
@@ -213,7 +180,9 @@ export function CityDesignChangeRequestPanel({
   };
 
   return (
-    <div className={cn('space-y-4 p-4', compact && 'max-h-[min(34rem,80vh)] overflow-auto')}>
+    <CanvasChangeRequestCard
+      className={cn('p-4', compact && 'max-h-[min(34rem,80vh)] overflow-auto')}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -273,17 +242,11 @@ export function CityDesignChangeRequestPanel({
         </div>
 
         {onClose ? (
-          <Button
-            data-action-id="amendments.city-cr.close.details"
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label={t('features.amendments.cityDesign.changeRequests.close', 'Close')}
-            onClick={onClose}
-          >
-            <XIcon className="size-4" />
-          </Button>
+          <CanvasChangeRequestCloseButton
+            actionId="amendments.city-cr.close.details"
+            label={t('features.amendments.cityDesign.changeRequests.close', 'Close')}
+            onClose={onClose}
+          />
         ) : null}
       </div>
 
@@ -342,38 +305,16 @@ export function CityDesignChangeRequestPanel({
       )}
 
       {canVote ? (
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            data-action-id="amendments.city-cr.vote.accept"
-            type="button"
-            variant="default"
-            presentation="success"
-            className={cn(currentUserVote === 'accept' && 'ring-ring ring-2 ring-offset-1')}
-            onClick={() => void onVote?.(changeRequest.id, 'accept')}
-          >
-            <CheckIcon className="mr-2 size-4" />
-            {getVoteLabel('accept', t)}
-          </Button>
-          <Button
-            data-action-id="amendments.city-cr.vote.reject"
-            type="button"
-            variant="destructive"
-            className={cn(currentUserVote === 'reject' && 'ring-ring ring-2 ring-offset-1')}
-            onClick={() => void onVote?.(changeRequest.id, 'reject')}
-          >
-            <XIcon className="mr-2 size-4" />
-            {getVoteLabel('reject', t)}
-          </Button>
-          <Button
-            data-action-id="amendments.city-cr.vote.abstain"
-            type="button"
-            variant="outline"
-            className={cn(currentUserVote === 'abstain' && 'ring-ring ring-2 ring-offset-1')}
-            onClick={() => void onVote?.(changeRequest.id, 'abstain')}
-          >
-            {getVoteLabel('abstain', t)}
-          </Button>
-        </div>
+        <CanvasVoteButtons
+          actionIdPrefix="amendments.city-cr.vote"
+          selected={currentUserVote}
+          labels={{
+            accept: getVoteLabel('accept', t),
+            reject: getVoteLabel('reject', t),
+            abstain: getVoteLabel('abstain', t),
+          }}
+          onVote={choice => onVote?.(changeRequest.id, choice)}
+        />
       ) : null}
 
       {canFinalize ? (
@@ -556,7 +497,7 @@ export function CityDesignChangeRequestPanel({
           )}
         </div>
       </section>
-    </div>
+    </CanvasChangeRequestCard>
   );
 }
 

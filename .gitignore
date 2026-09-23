@@ -184,3 +184,4 @@ test-output.txt
 
 # Generated Vitest attachments
 .vitest-attachments/
+**/__screenshots__/

@@ -280,12 +280,25 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         }
         case 'phase': {
           if (!capabilities.manage || !project.group_id) denied();
+          const groupStudio = project.kind !== 'whiteboard';
+          if (groupStudio && input.phase === 'view') denied();
           if (input.revision !== canonical.content_revision)
             throw new StudioError('Canvas revision changed', 409);
           const [pending] =
             await sql`select id from canvas_proposal where project_id=${projectId} and (state='voting' or application='conflict') limit 1`;
           if (pending)
             throw new StudioError('Resolve active ballots and application conflicts first', 409);
+          if (groupStudio && input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
+            const submitted =
+              await sql`select * from canvas_proposal where project_id=${projectId} and state='submitted' for update`;
+            const electorate =
+              await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`;
+            if (submitted.length && !electorate.length) throw new StudioError('No eligible voters');
+            for (const submittedProposal of submitted) {
+              assertBallotIntegrity(submittedProposal);
+              await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=null,updated_at=${Date.now()} where id=${submittedProposal.id}`;
+            }
+          }
           await sql`update canvas_control set phase=${requireValue(input.phase)} where project_id=${projectId}`;
           break;
         }
@@ -295,6 +308,13 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
             action === 'resolveDraft' &&
             proposal?.decision === 'accepted' &&
             proposal.application === 'conflict';
+          if (
+            action === 'createDraft' &&
+            project.group_id &&
+            project.kind !== 'whiteboard' &&
+            control.phase !== 'suggest_internal'
+          )
+            denied();
           if (
             !capabilities.suggest ||
             !(
@@ -342,7 +362,17 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           const changes = diffStudio(p.base_document, p.document);
           if (!changes.length) throw new StudioError('Proposal has no changes');
           await validateAssets(sql, projectId, p.document, p.id);
-          await sql`update canvas_proposal set state='submitted',changes=${sql.json(changes)},checksum=${checksum({ base: p.base_revision, generation: p.base_generation, changes })},updated_at=${Date.now()} where id=${p.id}`;
+          const openResolutionBallot =
+            project.group_id &&
+            project.kind !== 'whiteboard' &&
+            control.phase === 'vote_internal' &&
+            !!p.resolves_id;
+          const electorate = openResolutionBallot
+            ? await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`
+            : [];
+          if (openResolutionBallot && !electorate.length)
+            throw new StudioError('No eligible voters');
+          await sql`update canvas_proposal set state=${openResolutionBallot ? 'voting' : 'submitted'},changes=${sql.json(changes)},checksum=${checksum({ base: p.base_revision, generation: p.base_generation, changes })},electorate=${openResolutionBallot ? electorate.map(v => v.id) : null},deadline=null,updated_at=${Date.now()} where id=${p.id}`;
           break;
         }
         case 'withdraw': {
@@ -356,6 +386,9 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           break;
         }
         case 'startVote': {
+          // Older Studio clients may repeat the action after the group phase has opened its ballots.
+          if (project.group_id && project.kind !== 'whiteboard' && proposal?.state === 'voting')
+            break;
           if (
             !capabilities.manage ||
             control.phase !== 'vote_internal' ||
@@ -377,7 +410,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
             !proposal.electorate.includes(actor)
           )
             denied();
-          if (Date.now() >= Number(proposal.deadline)) {
+          if (proposal.deadline != null && Date.now() >= Number(proposal.deadline)) {
             await finalize(sql, proposal, control);
             result = { closed: true };
             break;
@@ -392,7 +425,8 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           if (
             !proposal ||
             control.phase !== 'vote_internal' ||
-            (!capabilities.manage && Date.now() < Number(proposal.deadline))
+            (!capabilities.manage &&
+              (proposal.deadline == null || Date.now() < Number(proposal.deadline)))
           )
             denied();
           await finalize(sql, proposal, control);

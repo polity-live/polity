@@ -199,7 +199,7 @@ describe('studio editing workflows', () => {
     hook.rerender();
     expect(hook.result.current.active?.type).toBe('ellipse');
   });
-  it('reorders pages and exports whole projects or posts', async () => {
+  it('reorders pages and exports marked frames in layer order', async () => {
     draft('carousel');
     const hook = renderHook(() => useStudioController(null, 'project', vi.fn()));
     const first = hook.result.current.page!;
@@ -211,11 +211,18 @@ describe('studio editing workflows', () => {
     await act(() => hook.result.current.exportMedia());
     expect(io.request).toHaveBeenLastCalledWith(
       'export',
-      expect.objectContaining({ pageIds: io.editor.value.posts[0].pageIds })
+      expect.objectContaining({ pageIds: hook.result.current.exportFrameIds })
     );
-    act(() => hook.result.current.setScope('all'));
+    const onlyFrame = hook.result.current.exportFrameIds[1];
+    act(() => {
+      for (const frameId of hook.result.current.exportFrameIds)
+        if (frameId !== onlyFrame) hook.result.current.toggleExportFrame(frameId);
+    });
     await act(() => hook.result.current.exportMedia());
-    expect(io.request).toHaveBeenLastCalledWith('export', expect.objectContaining({ pageIds: [] }));
+    expect(io.request).toHaveBeenLastCalledWith(
+      'export',
+      expect.objectContaining({ pageIds: [onlyFrame] })
+    );
   });
   it('saves photo edits only after upload succeeds', async () => {
     draft('story');
@@ -530,10 +537,9 @@ describe('studio editing workflows', () => {
     });
     expect(io.editor.refreshAssets).toHaveBeenCalled();
   });
-  it('queues the selected page and the current shared state for export', async () => {
+  it('queues the marked frame and the current shared state for export', async () => {
     const { result } = renderHook(() => useStudioController(null, 'project', vi.fn()));
     act(() => {
-      result.current.setScope('page');
       result.current.setFormat('pptx');
     });
     await act(async () => {

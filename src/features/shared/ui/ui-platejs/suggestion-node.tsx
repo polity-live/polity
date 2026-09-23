@@ -14,8 +14,7 @@ import {
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
-
-const INLINE_SUGGESTION_MARK_CLASSES = 'box-decoration-clone rounded-sm border px-0.5 no-underline';
+import { suggestionPreviewClassName } from './suggestion-mark-style';
 
 export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const { api, editor, setOption } = useEditorPlugin(suggestionPlugin);
@@ -83,7 +82,7 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
       // browser text node and collapses its selection to the line start.
       as="span"
       className={cn(
-        INLINE_SUGGESTION_MARK_CLASSES,
+        suggestionPreviewClassName(hasRemove ? 'remove' : 'insert'),
         getMotionPreset('colors'),
         insertTone.surface,
         (hasActive || hasHover) && `ring-1 ${insertTone.ring}`,

@@ -25,6 +25,14 @@ export const createPageTranslations = {
     operational: 'Operational',
     eventOptions: 'Event Options',
   },
+  studioProject: {
+    title: 'Create Studio project',
+    description: 'Design content and campaigns in Studio',
+    details: 'Project',
+    settings: 'Design',
+    startWith: 'Start with',
+    openProject: 'Open project in Studio',
+  },
   common: {
     loading: 'Loading...',
     title: 'Title',

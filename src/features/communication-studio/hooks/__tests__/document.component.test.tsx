@@ -18,9 +18,14 @@ const io = vi.hoisted(() => ({
 }));
 vi.mock('@rocicorp/zero/react', () => ({
   useZero: () => ({ mutate: io.mutate }),
-  useQuery: (query: unknown) => [query ? io.remote : undefined],
+  useQuery: (query: { workspaceId?: string } | undefined) => [
+    query ? io.remote : undefined,
+    query?.workspaceId ? { type: 'complete' } : undefined,
+  ],
 }));
-vi.mock('@/zero/queries', () => ({ queries: { studio: { document: (v: unknown) => v } } }));
+vi.mock('@/zero/queries', () => ({
+  queries: { studio: { document: (v: unknown) => v, workspace: (v: unknown) => v } },
+}));
 vi.mock('@/zero/mutators', () => ({ mutators: { studio: { apply: (v: unknown) => v } } }));
 vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
 vi.mock('@/lib/supabase/client', () => ({
@@ -87,6 +92,22 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+it('keeps a server-authorized draft editable while its Zero workspace query is still empty', async () => {
+  io.request.mockImplementation(async op =>
+    op === 'canvas'
+      ? { document: structuredClone(io.server), revision: 0, generation: 'test', canEdit: true }
+      : op === 'assets'
+        ? []
+        : op === 'canvasPresence'
+          ? { peers: [] }
+          : []
+  );
+  const workspaceId = crypto.randomUUID();
+  const hook = renderHook(() => useStudioDocument(id, user, workspaceId));
+  await waitFor(() => expect(hook.result.current.value?.title).toBe('Initial'));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  expect(hook.result.current.status).not.toBe('unavailable');
 });
 it('saves through Zero and waits for the durable receipt', async () => {
   const hook = renderHook(() => useStudioDocument(id, user));

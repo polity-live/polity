@@ -3,10 +3,22 @@ import { z } from 'zod';
 import { zql } from '../schema';
 const requireQueryUser = (userID: string | undefined | null) =>
   userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
+function personalProjectAccess(userID: string, { or, and, cmp, exists }: any) {
+  return and(
+    cmp('group_id', 'IS', null),
+    or(
+      cmp('owner_id', userID),
+      and(
+        cmp('kind', '!=', 'whiteboard'),
+        exists('collaborators', (c: any) => c.where('user_id', userID).where('status', 'active'))
+      )
+    )
+  );
+}
 function projects(userID: string) {
   return zql.studio_project.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
     or(
-      and(cmp('group_id', 'IS', null), cmp('owner_id', userID)),
+      personalProjectAccess(userID, { or, and, cmp, exists }),
       exists('group', g =>
         g.where(({ or, cmp, exists }) =>
           or(
@@ -39,7 +51,7 @@ export const studioQueries = {
         .whereExists('project', p =>
           p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
             or(
-              and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
+              personalProjectAccess(requireQueryUser(userID), { or, and, cmp, exists }),
               exists('group', g =>
                 g.where(({ or, cmp, exists }) =>
                   or(
@@ -63,7 +75,7 @@ export const studioQueries = {
       .whereExists('project', p =>
         p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
           or(
-            and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
+            personalProjectAccess(requireQueryUser(userID), { or, and, cmp, exists }),
             exists('group', g =>
               g.where(({ or, cmp, exists }) =>
                 or(
@@ -98,7 +110,7 @@ export const studioQueries = {
       .whereExists('project', p =>
         p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
           or(
-            and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
+            personalProjectAccess(requireQueryUser(userID), { or, and, cmp, exists }),
             exists('group', g =>
               g.where(({ or, cmp, exists }) =>
                 or(

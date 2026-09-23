@@ -13,6 +13,7 @@ import {
   ImageIcon,
   ListOrdered,
   PlayCircle,
+  PanelsTopLeft,
   Quote,
   User,
   Video,
@@ -38,7 +39,15 @@ import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type ReviewContentType =
-  ReviewEntityType | 'meetup' | 'video' | 'image' | 'statement' | 'payment' | 'action' | 'workflow';
+  | ReviewEntityType
+  | 'meetup'
+  | 'video'
+  | 'image'
+  | 'statement'
+  | 'payment'
+  | 'action'
+  | 'workflow'
+  | 'studio';
 
 export type ContentType = ReviewContentType;
 
@@ -80,6 +89,7 @@ const REVIEW_CONTENT_TYPE_CONFIG: Record<ReviewContentType, ReviewThemeConfig> =
   workflow: createReviewThemeConfig('workflow', GitBranch),
   user: createReviewThemeConfig('user', User),
   role: createReviewThemeConfig('role', User),
+  studio: createReviewThemeConfig('studio', PanelsTopLeft),
 };
 
 export interface ReviewCardField {

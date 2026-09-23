@@ -6,6 +6,26 @@ import { studioSql } from './db';
 import { assertCanvasWorkspace } from './workspace-access';
 import { validMediaRange } from './media-range';
 
+function exportMimeType(fileName: string) {
+  const extension = fileName.toLowerCase().split('.').pop();
+  switch (extension) {
+    case 'png':
+      return 'image/png';
+    case 'pdf':
+      return 'application/pdf';
+    case 'pptx':
+      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    case 'xlsx':
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    case 'mp4':
+      return 'video/mp4';
+    case 'zip':
+      return 'application/zip';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
 /** Proxy bytes so previously issued image URLs cannot outlive their current ACL. */
 export async function privateCanvasMedia(
   request: Request,
@@ -40,7 +60,7 @@ export async function privateCanvasMedia(
   const [asset] =
     kind === 'asset'
       ? await sql`select * from studio_asset where id=${id} and ready=true`
-      : await sql`select project_id,null::uuid as workspace_id,storage_path,file_name,'application/octet-stream' as mime_type from studio_export where id=${id} and status='completed' and storage_path is not null`;
+      : await sql`select project_id,null::uuid as workspace_id,storage_path,file_name from studio_export where id=${id} and status='completed' and storage_path is not null`;
   if (!asset) return new Response(null, { status: 404, headers });
   try {
     await assertCanvasWorkspace(session.user.id, asset.project_id, asset.workspace_id, false, sql);
@@ -66,14 +86,17 @@ export async function privateCanvasMedia(
   if (!upstream.ok) return new Response(null, { status: 502, headers });
   const responseHeaders = new Headers({
     ...headers,
-    'Content-Type': asset.mime_type,
+    'Content-Type': kind === 'export' ? exportMimeType(asset.file_name ?? '') : asset.mime_type,
     'Accept-Ranges': 'bytes',
   });
-  if (kind === 'export')
+  if (kind === 'export') {
+    const fileName = asset.file_name ?? 'Polity-export';
+    const asciiName = fileName.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
     responseHeaders.set(
       'Content-Disposition',
-      `attachment; filename*=UTF-8''${encodeURIComponent(asset.file_name ?? 'Polity-export')}`
+      `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
     );
+  }
   for (const header of ['content-range', 'content-length']) {
     const value = upstream.headers.get(header);
     if (value) responseHeaders.set(header, value);

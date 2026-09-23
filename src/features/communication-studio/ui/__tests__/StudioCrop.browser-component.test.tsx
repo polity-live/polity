@@ -217,6 +217,54 @@ it('drags a crop edge on the real canvas and saves the smaller frame', async () 
   expect(commit.mock.calls[0][1].crop.width).toBeLessThan(100);
 });
 
+it('drags an image corner inward to save a smaller frame and source crop', async () => {
+  const { studio, frame, media, asset } = fixture(false);
+  const ref = createRef<StudioCanvasHandle>();
+  const commit = vi.fn();
+  render(
+    <div style={{ width: 500, height: 300 }}>
+      <KonvaStudioCanvas
+        ref={ref}
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[asset]}
+        selected={[media.id]}
+        editable
+        fit="contain"
+        onCropCommit={commit}
+      />
+    </div>
+  );
+  const canvases = [...screen.getByTestId('studio-canvas').querySelectorAll('canvas')];
+  await waitFor(() => expect(solidColors(canvases[0]).red).toBeGreaterThan(100));
+  await act(async () => {
+    await ref.current!.execute({ type: 'crop', action: 'start' });
+  });
+  const controls = canvases.at(-1)!;
+  const { clientX, clientY } = await waitFor(() => pointerOnMedia(controls, media.id, 3, 3));
+  await act(async () => {
+    fireEvent.pointerDown(controls, { clientX, clientY, pointerId: 3, button: 0 });
+    fireEvent.pointerMove(controls, {
+      clientX: clientX + 20,
+      clientY: clientY + 20,
+      pointerId: 3,
+      button: 0,
+    });
+    fireEvent.pointerUp(controls, {
+      clientX: clientX + 20,
+      clientY: clientY + 20,
+      pointerId: 3,
+      button: 0,
+    });
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(commit).toHaveBeenCalledTimes(1);
+  expect(commit.mock.calls[0][1].frame.width).toBeLessThan(100);
+  expect(commit.mock.calls[0][1].frame.height).toBeLessThan(100);
+  expect(commit.mock.calls[0][1].crop.width).toBeLessThan(200);
+  expect(commit.mock.calls[0][1].crop.height).toBeLessThan(100);
+});
+
 it('pans a crop on the real canvas within the source bounds', async () => {
   const { studio, frame, media, asset } = fixture(true);
   const ref = createRef<StudioCanvasHandle>();

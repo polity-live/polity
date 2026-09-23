@@ -59,12 +59,13 @@ interface StudioExportJob {
   status: string;
   progress: number;
   error?: string | null;
+  fileName?: string | null;
 }
 
-function downloadStudioExport(id: string) {
+function downloadStudioExport(id: string, fileName?: string | null) {
   const link = document.createElement('a');
   link.href = `/api/studio/exports/${encodeURIComponent(id)}`;
-  link.download = '';
+  link.download = fileName ?? '';
   link.hidden = true;
   document.body.appendChild(link);
   link.click();
@@ -94,7 +95,7 @@ export function useStudioController(
   const { user } = useAuth();
   const { currentUser } = useUserState();
   const studioApi = useStudioApi();
-  const { projects, exports, isLoading } = useStudioState(groupId, id);
+  const { projects, project, exports, isLoading } = useStudioState(groupId, id);
   const identity = useMemo(
     () => ({
       id: user?.id ?? '',
@@ -166,6 +167,7 @@ export function useStudioController(
           status: job.status,
           progress: job.progress,
           error: job.error,
+          fileName: job.file_name,
         })),
     ];
   }, [exports, trackedExports]);
@@ -205,7 +207,7 @@ export function useStudioController(
   useEffect(() => {
     for (const job of Object.values(trackedExports)) {
       if (job.status === 'completed' && autoDownloadIds.current.delete(job.id))
-        downloadStudioExport(job.id);
+        downloadStudioExport(job.id, job.fileName);
       if (job.status === 'failed' || job.status === 'cancelled')
         autoDownloadIds.current.delete(job.id);
     }
@@ -770,6 +772,7 @@ export function useStudioController(
     identity,
     ...editor,
     projects,
+    project,
     exports: exportJobs,
     exportPreparing,
     exportFailure,

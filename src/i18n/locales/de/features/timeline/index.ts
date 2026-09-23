@@ -91,6 +91,7 @@ export const timelineTranslations = {
     group: 'Gruppe',
     blog: 'Blog',
     user: 'Benutzer',
+    studio: 'Studio-Projekt',
     amendmentCreated: 'hat einen Antrag erstellt',
     amendmentUpdated: 'hat einen Antrag aktualisiert',
     amendmentApproved: 'Antrag wurde genehmigt',

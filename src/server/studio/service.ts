@@ -321,7 +321,7 @@ export async function downloadExport(userId: string, id: string) {
 export async function exportStatus(userId: string, id: string) {
   const sql = studioSql();
   const [job] =
-    await sql`select project_id,format,status,progress,error from studio_export where id=${id}`;
+    await sql`select project_id,format,status,progress,error,file_name from studio_export where id=${id}`;
   if (!job) throw new StudioError('Export not found', 404);
   await assertStudioAccess(userId, job.project_id);
   return {
@@ -330,6 +330,7 @@ export async function exportStatus(userId: string, id: string) {
     status: job.status,
     progress: Number(job.progress),
     error: job.error,
+    fileName: job.file_name,
   };
 }
 export async function duplicateProject(userId: string, id: string) {

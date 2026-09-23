@@ -148,9 +148,9 @@ it('isolates proposal media from the canonical library and promotes only media i
   await command(member, 'vote', { workspaceId, choice: 'accept' });
   expect(await assetUrls(owner, id)).toContainEqual(expect.objectContaining({ id: asset }));
 });
-async function fixture() {
+async function fixture(kind: 'whiteboard' | 'single' = 'whiteboard') {
   const id = crypto.randomUUID(),
-    legacy = createDocument('whiteboard', 'Canvas fixture');
+    legacy = createDocument(kind, 'Canvas fixture');
   projects.push(id);
   legacy.pages[0].canvas = { version: 1, elements: [], files: {} };
   const doc = legacyDocumentToV3(legacy);
@@ -237,6 +237,35 @@ it('blocks a corrupted submitted ballot instead of inventing a replacement votin
   expect(
     (await sql`select document from studio_state where project_id=${id}`)[0].document.title
   ).toBe(doc.title);
+});
+it('opens all submitted group Studio ballots on the mode change and closes when everyone voted', async () => {
+  const { id, doc, command } = await fixture('single');
+  await expect(command(owner, 'phase', { phase: 'view', revision: 0 })).rejects.toThrow();
+  await command(owner, 'phase', { phase: 'suggest_internal', revision: 0 });
+  const { workspaceId } = await command(member, 'createDraft', {
+    title: 'Change the title',
+    revision: 0,
+  });
+  const next = structuredClone(doc);
+  next.title = 'Title after the vote';
+  await command(member, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, next) });
+  await command(member, 'submit', { workspaceId, revision: 1 });
+  await command(owner, 'phase', { phase: 'vote_internal', revision: 0 });
+  const opened = (await canvasCommand(owner, { action: 'session', projectId: id })).proposals.find(
+    (item: { id: string }) => item.id === workspaceId
+  );
+  expect(opened).toMatchObject({ state: 'voting', deadline: null });
+  expect(opened.electorate).toEqual(expect.arrayContaining([owner, member]));
+  await command(owner, 'vote', { workspaceId, choice: 'accept' });
+  await command(member, 'vote', { workspaceId, choice: 'accept' });
+  const closed = (await canvasCommand(owner, { action: 'session', projectId: id })).proposals.find(
+    (item: { id: string }) => item.id === workspaceId
+  );
+  expect(closed).toMatchObject({ state: 'closed', decision: 'accepted', application: 'applied' });
+  expect(
+    (await sql`select document->>'title' as title from studio_state where project_id=${id}`)[0]
+      .title
+  ).toBe('Title after the vote');
 });
 it('keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision', async () => {
   const { id, doc, command } = await fixture();

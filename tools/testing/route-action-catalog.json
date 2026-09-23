@@ -523,6 +523,26 @@
       ]
     },
     {
+      "file": "src/routes/_authed/create/studio-project.tsx",
+      "routePath": "/_authed/create/studio-project",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "file": "src/routes/_authed/create/todo.tsx",
       "routePath": "/_authed/create/todo",
       "access": "authenticated",

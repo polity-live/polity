@@ -166,11 +166,28 @@ export function useStudioDocument(
   }, [id, workspaceId]);
   useEffect(() => {
     if (workspaceId && workspaceStatus?.type === 'complete' && !remoteWorkspace && draft.current) {
-      setCanEdit(false);
-      setStatus('unavailable');
-      setPeers([]);
+      let live = true;
+      void loadDocument()
+        .then(result => {
+          if (!live) return;
+          setWorkspaceRemote({ document: result.document, content_revision: result.revision });
+          setCanEdit(result.canEdit);
+          if (!result.canEdit) {
+            setStatus('unavailable');
+            setPeers([]);
+          }
+        })
+        .catch(() => {
+          if (!live) return;
+          setCanEdit(false);
+          setStatus('unavailable');
+          setPeers([]);
+        });
+      return () => {
+        live = false;
+      };
     }
-  }, [workspaceId, remoteWorkspace, workspaceStatus]);
+  }, [workspaceId, remoteWorkspace, workspaceStatus?.type]);
   useEffect(() => {
     draft.current = null;
     blocked.current = false;

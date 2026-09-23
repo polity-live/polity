@@ -33,6 +33,13 @@ import {
   publishElementSetRevision,
   renameElementSet,
 } from './elements';
+import {
+  inviteStudioCollaborators,
+  listMyStudioInvitations,
+  listStudioCollaborators,
+  removeStudioCollaborator,
+  respondStudioInvitation,
+} from './collaborators';
 const uuid = z.string().uuid();
 export async function handleStudio(request: Request) {
   try {
@@ -50,6 +57,33 @@ export async function handleStudio(request: Request) {
     if (!body || typeof body.operation !== 'string') throw new StudioError('Invalid studio input');
     let result: unknown;
     switch (body.operation) {
+      case 'collaborators':
+        result = await listStudioCollaborators(userId, uuid.parse(body.projectId));
+        break;
+      case 'myInvitations':
+        result = await listMyStudioInvitations(userId);
+        break;
+      case 'inviteCollaborators':
+        result = await inviteStudioCollaborators(
+          userId,
+          uuid.parse(body.projectId),
+          z.array(uuid).min(1).max(20).parse(body.userIds)
+        );
+        break;
+      case 'respondInvitation':
+        result = await respondStudioInvitation(
+          userId,
+          uuid.parse(body.invitationId),
+          z.boolean().parse(body.accept)
+        );
+        break;
+      case 'removeCollaborator':
+        result = await removeStudioCollaborator(
+          userId,
+          uuid.parse(body.projectId),
+          uuid.parse(body.userId)
+        );
+        break;
       case 'canvasPresence':
         result = await (await import('./presence')).canvasPresence(userId, body);
         break;
@@ -187,6 +221,10 @@ export async function handleStudio(request: Request) {
         result = await studioTransaction(async sql => {
           const id = uuid.parse(body.id);
           await assertStudioAccess(userId, id, true, sql);
+          const [project] =
+            await sql`select owner_id,group_id from studio_project where id=${id} for update`;
+          if (!project || (project.group_id === null && project.owner_id !== userId))
+            throw new StudioError('Only the project owner can change templates', 403);
           await sql`update studio_project set is_template=${z.boolean().parse(body.value)} where id=${id}`;
           return { ok: true };
         });
@@ -196,6 +234,10 @@ export async function handleStudio(request: Request) {
         result = await studioTransaction(async sql => {
           const id = uuid.parse(body.id);
           await assertStudioAccess(userId, id, true, sql);
+          const [project] =
+            await sql`select owner_id,group_id from studio_project where id=${id} for update`;
+          if (!project || (project.group_id === null && project.owner_id !== userId))
+            throw new StudioError('Only the project owner can delete it', 403);
           const [used] =
             await sql`select s.id from statement s join studio_export e on (s.image_url='/api/studio/published-media/' || e.id::text or s.video_url='/api/studio/published-media/' || e.id::text) where e.project_id=${id} limit 1`;
           if (used) throw new StudioError('This project contains media used by a Polity post');

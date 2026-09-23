@@ -308,8 +308,27 @@ export function dateForDay(start: string, day: number) {
 export function sorted<T extends { order: number; id: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
-export function validateExport(doc: StudioDocument, pageIds: string[] = []) {
-  documentSchema.parse(doc);
+export function validateExport(
+  doc: StudioDocument,
+  pageIds: string[] = [],
+  allowLongVideo = false
+) {
+  documentSchema.parse(
+    allowLongVideo
+      ? {
+          ...doc,
+          posts: doc.posts.map(post =>
+            post.kind === 'video' &&
+            post.pageIds.reduce(
+              (duration, id) => duration + (doc.pages.find(page => page.id === id)?.duration ?? 0),
+              0
+            ) > 60
+              ? { ...post, kind: 'carousel' as const }
+              : post
+          ),
+        }
+      : doc
+  );
   const issues: string[] = [];
   for (const p of doc.pages.filter(page => !pageIds.length || pageIds.includes(page.id))) {
     for (const e of p.elements) {

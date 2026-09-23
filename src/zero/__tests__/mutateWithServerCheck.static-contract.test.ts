@@ -133,6 +133,8 @@ describe('mutate-with-server-check', () => {
       'features/communication-studio/hooks/useStudioController.ts',
       // Studio document saves need the accepted mutation before fetching its receipt.
       'features/communication-studio/hooks/useStudioDocument.ts',
+      // New Studio projects wait for the server to confirm creation before navigation.
+      'features/create/hooks/useCreateStudioProjectForm.tsx',
       'features/decision-terminal/hooks/useDecisionVoteDialogController.ts',
       'features/editor/hooks/useEditorOperations.ts',
       'features/editor/hooks/useEditor.ts',
