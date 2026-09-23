@@ -10,13 +10,8 @@ import {
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import type { StudioDocumentV3 } from '../logic/document-v3';
-import { v3DocumentToLegacy } from '../logic/v3-adapter';
 
-const StudioCanvas = lazy(() => import('./StudioCanvas'));
-
-const noopSelection = (_ids: string[]) => undefined;
-const noopPatch = () => undefined;
-const noopCursor = () => undefined;
+const KonvaStudioCanvas = lazy(() => import('./KonvaStudioCanvas'));
 
 export function StudioPreviewDialog({
   document,
@@ -39,11 +34,6 @@ export function StudioPreviewDialog({
     () => getStudioRootFramesInLayerOrder(document).filter(frame => frame.visible),
     [document]
   );
-  const pages = useMemo(
-    () => v3DocumentToLegacy(document, { includeMaster: true }).pages,
-    [document]
-  );
-  const pageById = useMemo(() => new Map(pages.map(page => [page.id, page])), [pages]);
   const frameIds = frames.map(frame => frame.id);
   const frameOrderKey = frameIds.join('|');
   const previousFrameIds = useRef(frameIds);
@@ -75,7 +65,6 @@ export function StudioPreviewDialog({
         : (frameIds[0] ?? null);
   const currentIndex = resolvedFrameId ? frameIds.indexOf(resolvedFrameId) : -1;
   const frame = currentIndex >= 0 ? frames[currentIndex] : null;
-  const page = frame ? pageById.get(frame.id) : null;
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < frames.length - 1;
   const move = (offset: -1 | 1) => {
@@ -135,60 +124,50 @@ export function StudioPreviewDialog({
             </DialogClose>
           </header>
 
-          <div
-            className={`relative flex min-h-0 flex-1 items-center justify-center overflow-hidden ${hasNext ? 'cursor-pointer' : ''}`}
-            onClick={() => move(1)}
-          >
-            {frame && page ? (
-              <Suspense fallback={<p role="status">{tr('loading')}</p>}>
-                <StudioCanvas
-                  key={page.id}
-                  page={page}
-                  dimensions={[frame.transform.width, frame.transform.height]}
-                  fit="contain"
-                  assets={assets}
-                  selected={[]}
-                  select={noopSelection}
-                  patch={noopPatch}
-                  editable={false}
-                  peers={[]}
-                  cursor={noopCursor}
-                  guides={false}
-                />
-              </Suspense>
-            ) : (
-              <p className="text-sm text-white/70" role="status">
-                {tr('noVisibleFrames')}
-              </p>
-            )}
-
+          <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-4 flex items-center justify-center gap-3 px-4"
-              onClick={event => event.stopPropagation()}
+              data-testid="preview-advance-surface"
+              className={`flex h-full w-full items-center justify-center ${hasNext ? 'cursor-pointer' : ''}`}
+              onClick={() => move(1)}
             >
+              {frame ? (
+                <Suspense fallback={<p role="status">{tr('loading')}</p>}>
+                  <KonvaStudioCanvas
+                    key={frame.id}
+                    document={document}
+                    activeFrameId={frame.id}
+                    fit="contain"
+                    assets={assets}
+                    selected={[]}
+                    editable={false}
+                    guides={false}
+                  />
+                </Suspense>
+              ) : (
+                <p className="text-sm text-white/70" role="status">
+                  {tr('noVisibleFrames')}
+                </p>
+              )}
+            </div>
+
+            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3">
               <button
                 type="button"
                 data-action-id="communication-studio.preview.previous"
-                className="pointer-events-auto inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={tr('previousFrame')}
                 disabled={!hasPrevious}
-                onClick={event => {
-                  event.stopPropagation();
-                  move(-1);
-                }}
+                onClick={() => move(-1)}
               >
                 <ChevronLeft className="size-6" />
               </button>
               <button
                 type="button"
                 data-action-id="communication-studio.preview.next"
-                className="pointer-events-auto inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={tr('nextFrame')}
                 disabled={!hasNext}
-                onClick={event => {
-                  event.stopPropagation();
-                  move(1);
-                }}
+                onClick={() => move(1)}
               >
                 <ChevronRight className="size-6" />
               </button>

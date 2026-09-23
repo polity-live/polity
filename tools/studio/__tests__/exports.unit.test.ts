@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '../../../src/features/communication-studio/logic/templates';
 import { element } from '../../../src/features/communication-studio/logic/document';
 import { setTableBorders } from '../../../src/features/communication-studio/logic/table-operations';
+import { defaultBrand } from '../../../src/features/communication-studio/logic/document';
+import { createStudioTemplateDocumentV5 } from '../../../src/features/communication-studio/logic/templates-v5';
 const io = vi.hoisted(() => ({
   launch: vi.fn(),
   spawn: vi.fn(),
@@ -65,6 +67,7 @@ beforeEach(async () => {
   vi.stubGlobal('HTMLVideoElement', Video);
   vi.stubGlobal('window', {
     paintStudioPage: io.paint,
+    PolityStudioV5Renderer: { renderFrame: io.paint },
     __studioMedia: { [imageId]: { naturalWidth: 200, naturalHeight: 100 }, [videoId]: new Video() },
   });
   io.paint.mockResolvedValue(pngUrl);
@@ -73,7 +76,12 @@ beforeEach(async () => {
   );
   io.route.mockImplementation(async (_pattern, body) => body({ abort: vi.fn() }));
   io.launch.mockResolvedValue({
-    newPage: async () => ({ route: io.route, setContent: io.content, evaluate: io.evaluate }),
+    newPage: async () => ({
+      route: io.route,
+      setContent: io.content,
+      evaluate: io.evaluate,
+      addScriptTag: vi.fn(),
+    }),
     close: io.close,
   });
   io.close.mockResolvedValue(undefined);
@@ -109,6 +117,42 @@ const exportDoc = (
   cancel = vi.fn().mockResolvedValue(false)
 ) => render(doc, media, format, selected, temp, vi.fn().mockResolvedValue(undefined), cancel);
 describe('Studio export artifacts', () => {
+  it('keeps V5 shape-text-shape order and editable text in PowerPoint', async () => {
+    const document = createStudioTemplateDocumentV5('single', 'V5 order', defaultBrand);
+    const frame = document.nodes.find(node => node.type === 'frame')!;
+    const title = document.nodes.find(node => node.type === 'richText')!;
+    const source = document.nodes.find(node => node.type === 'shape')!;
+    const bottom = structuredClone(source);
+    const top = structuredClone(source);
+    bottom.id = crypto.randomUUID();
+    top.id = crypto.randomUUID();
+    bottom.style.fill = '#ff0000';
+    top.style.fill = '#0000ff';
+    bottom.zIndex = 0;
+    title.zIndex = 1;
+    top.zIndex = 2;
+    title.content = [
+      {
+        id: crypto.randomUUID(),
+        type: 'p',
+        children: [{ id: crypto.randomUUID(), text: 'CENTER' }],
+      },
+    ];
+    document.nodes = [frame, bottom, title, top];
+    const result = await render(
+      document,
+      {},
+      'pptx',
+      [],
+      temp,
+      vi.fn().mockResolvedValue(undefined),
+      vi.fn().mockResolvedValue(false)
+    );
+    const xml = strFromU8(unzipSync(result.bytes)['ppt/slides/slide1.xml']);
+    expect(xml.indexOf('FF0000')).toBeLessThan(xml.indexOf('CENTER'));
+    expect(xml.indexOf('CENTER')).toBeLessThan(xml.indexOf('0000FF'));
+    expect(xml).toContain('CENTER');
+  });
   it('keeps disabled table edges editable and hidden in PowerPoint', async () => {
     const doc = createDocument('single', 'Table borders');
     const table = element('table');
@@ -143,7 +187,7 @@ describe('Studio export artifacts', () => {
     expect(result.name).toBe(pageFile(doc.pages[1], 1));
     expect(result.bytes).toEqual(new Uint8Array(png));
     expect(io.paint).toHaveBeenCalledTimes(1);
-    expect(io.paint.mock.calls[0][0].id).toBe(doc.pages[1].id);
+    expect(io.paint.mock.calls[0][1]).toBe(doc.pages[1].id);
     expect(io.close).toHaveBeenCalledTimes(1);
     expect(pageFile({ ...doc.pages[0], name: '' }, 0)).toBe('001-polity.png');
   });
@@ -151,6 +195,8 @@ describe('Studio export artifacts', () => {
     const doc = createDocument('carousel', 'Deck');
     doc.pages[1].format = 'square';
     const archive = await exportDoc(doc, 'png');
+    expect(archive.mime).toBe('application/zip');
+    expect(archive.name).toBe('Deck.zip');
     const files = unzipSync(archive.bytes);
     expect(Object.keys(files)).toHaveLength(doc.pages.length);
     expect(Object.keys(files)[0]).toMatch(/^PNG\/001-/);
@@ -166,8 +212,7 @@ describe('Studio export artifacts', () => {
     doc.pages[0].elements.push(
       element('ellipse', { rotation: 25, opacity: 0.5 }),
       element('image', { assetId: imageId, fit: 'contain' }),
-      element('video', { assetId: videoId }),
-      element('image')
+      element('video', { assetId: videoId })
     );
     const media = {
       [imageId]: { mime: 'image/png', bytes: png, name: 'photo.png' },
@@ -182,7 +227,15 @@ describe('Studio export artifacts', () => {
       expect.stringMatching(/mp4$/)
     );
     expect(result.mime).toContain('presentationml');
-    doc.pages.push({ ...structuredClone(doc.pages[0]), id: crypto.randomUUID(), format: 'square' });
+    doc.pages.push({
+      ...structuredClone(doc.pages[0]),
+      id: crypto.randomUUID(),
+      format: 'square',
+      elements: doc.pages[0].elements.map(item => ({
+        ...structuredClone(item),
+        id: crypto.randomUUID(),
+      })),
+    });
     const multiple = await exportDoc(doc, 'pptx', media);
     expect(
       Object.keys(unzipSync(multiple.bytes)).filter(name => name.endsWith('.pptx'))
@@ -206,6 +259,29 @@ describe('Studio export artifacts', () => {
       Object.keys(ppt).some(name => name.startsWith('ppt/media/') && name.endsWith('.png'))
     ).toBe(true);
   });
+  it('exports cropped images as picture objects and cropped video posters with the original video beside the PPTX', async () => {
+    const doc = createDocument('single', 'Cropped');
+    const crop = { x: 25, y: 0, width: 50, height: 100, naturalWidth: 100, naturalHeight: 100 };
+    doc.pages[0].elements.push(
+      element('image', { assetId: imageId, fit: 'cover', crop }),
+      element('video', { assetId: videoId, fit: 'cover', crop })
+    );
+    const sourceVideo = new Uint8Array([1, 2, 3]);
+    const result = await exportDoc(doc, 'pptx', {
+      [imageId]: { mime: 'image/png', bytes: png, name: 'photo.png' },
+      [videoId]: { mime: 'video/mp4', bytes: sourceVideo, name: 'clip.mp4' },
+    });
+    expect(result.mime).toBe('application/zip');
+    const files = unzipSync(result.bytes);
+    expect(files[`Medien/${videoId}.mp4`]).toEqual(sourceVideo);
+    const ppt = unzipSync(files['Cropped-feed.pptx']);
+    const slide = strFromU8(ppt['ppt/slides/slide1.xml']);
+    expect(slide.match(/<p:pic>/g) ?? []).toHaveLength(2);
+    expect(Object.keys(ppt).some(name => name.endsWith('.mp4'))).toBe(false);
+    expect(
+      Object.keys(ppt).filter(name => name.startsWith('ppt/media/') && name.endsWith('.png'))
+    ).toHaveLength(2);
+  });
   it('creates a complete campaign archive with media, channel captions, calendar and presentation', async () => {
     const doc = createDocument('single', 'Campaign');
     const media = Object.fromEntries(
@@ -224,11 +300,13 @@ describe('Studio export artifacts', () => {
         'Medien/3.mp4',
         'Kampagnenplan.xlsx',
         'Kanaltexte.md',
+        'Polity-Projekt.json',
         'Campaign.pdf',
         'Campaign-feed.pptx',
       ])
     );
     expect(strFromU8(files['Kanaltexte.md'])).toContain('instagram');
+    expect(JSON.parse(strFromU8(files['Polity-Projekt.json']))).toMatchObject({ schemaVersion: 5 });
     expect(Object.keys(unzipSync(files['Kampagnenplan.xlsx']))).toContain('xl/workbook.xml');
     const excel = await exportDoc(doc, 'xlsx');
     expect(excel.name).toBe('Campaign.xlsx');
@@ -237,7 +315,7 @@ describe('Studio export artifacts', () => {
   it('encodes portrait frames with optional trimmed audio and reports progress', async () => {
     const doc = createDocument('video', 'Video');
     doc.pages = [doc.pages[0]];
-    doc.pages[0].duration = 0.1;
+    doc.pages[0].duration = 1;
     doc.pages[0].elements.push(element('video', { assetId: videoId, muted: false, trimStart: 1 }));
     doc.posts[0].pageIds = [doc.pages[0].id];
     const progress = vi.fn().mockResolvedValue(undefined);
@@ -252,18 +330,21 @@ describe('Studio export artifacts', () => {
     );
     expect(result.mime).toBe('video/mp4');
     expect(Buffer.from(result.bytes).toString()).toBe('encoded-video');
-    expect(io.paint.mock.calls.filter(([, , , animate]) => animate)).toHaveLength(3);
+    expect(io.paint).toHaveBeenCalledTimes(31);
     const args = io.spawn.mock.calls.find(([, args]) =>
       args.includes('-filter_complex')
     )![1] as string[];
-    expect(args.join(' ')).toContain('atrim=start=1:duration=0.1');
+    expect(args.join(' ')).toContain('atrim=start=1:duration=1');
     expect(args).toContain('aac');
     expect(progress).toHaveBeenLastCalledWith(95);
   });
   it('supports silent clips and the portrait fallback sequence without claiming missing audio exists', async () => {
     const doc = createDocument('story', 'Story');
     doc.pages = [doc.pages[0]];
-    doc.pages[0].duration = 0.1;
+    doc.pages[0].duration = 1;
+    doc.posts.forEach(post => {
+      post.pageIds = [doc.pages[0].id];
+    });
     doc.pages[0].elements.push(
       element('video', { assetId: videoId, muted: false }),
       element('video', { assetId: '33333333-3333-4333-8333-333333333333', muted: false })
@@ -277,20 +358,20 @@ describe('Studio export artifacts', () => {
   it('includes video posts in campaign archives and enforces duration and portrait constraints', async () => {
     const doc = createDocument('video', 'Video');
     doc.pages = [doc.pages[0]];
-    doc.pages[0].duration = 0.1;
+    doc.pages[0].duration = 1;
     doc.posts[0].pageIds = [doc.pages[0].id];
     const result = await exportDoc(doc, 'zip');
     expect(Object.keys(unzipSync(result.bytes)).some(name => name.endsWith('.mp4'))).toBe(true);
     doc.pages[0].duration = 61;
-    await expect(exportDoc(doc, 'mp4')).rejects.toThrow('Video exceeds 60 seconds');
-    doc.pages[0].duration = 0.1;
+    await expect(exportDoc(doc, 'mp4')).rejects.toThrow('exceeds 60 seconds');
+    doc.pages[0].duration = 1;
     doc.pages[0].format = 'feed';
     expect((await exportDoc(doc, 'mp4')).mime).toBe('video/mp4');
   });
   it('honors cancellation before rendering and during video generation and always closes Chromium', async () => {
     const doc = createDocument('video', 'Cancelled');
     doc.pages = [doc.pages[0]];
-    doc.pages[0].duration = 0.1;
+    doc.pages[0].duration = 1;
     doc.posts[0].pageIds = [doc.pages[0].id];
     await expect(exportDoc(doc, 'png', {}, [], vi.fn().mockResolvedValue(true))).rejects.toThrow(
       'Export cancelled'
@@ -313,7 +394,10 @@ describe('Studio export artifacts', () => {
     await expect(ffmpeg(['encode'])).rejects.toThrow('ENOENT');
     const doc = createDocument('story', 'Audio probe');
     doc.pages = [doc.pages[0]];
-    doc.pages[0].duration = 0.1;
+    doc.pages[0].duration = 1;
+    doc.posts.forEach(post => {
+      post.pageIds = [doc.pages[0].id];
+    });
     doc.pages[0].elements.push(element('video', { assetId: videoId, muted: false }));
     await expect(
       exportDoc(doc, 'mp4', { [videoId]: { mime: 'video/mp4', bytes: png, name: 'clip' } })

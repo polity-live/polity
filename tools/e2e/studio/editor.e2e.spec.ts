@@ -4,6 +4,7 @@ import postgres from 'postgres';
 import { createDocument } from '../../../src/features/communication-studio/logic/templates';
 import { element } from '../../../src/features/communication-studio/logic/document';
 import { legacyDocumentToV3 } from '../../../src/features/communication-studio/logic/v3-adapter';
+import { createStudioNodeFromElement } from '../../../src/features/communication-studio/logic/create-studio-node';
 const fixture = JSON.parse(await readFile('output/studio/visual-fixture.json', 'utf8'));
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
@@ -411,34 +412,29 @@ test('persists context-menu copy, paste, cut and flip actions without validation
       fill: '#B88A3B',
     }),
   ];
-  seed.pages[0].canvas = {
-    version: 1,
-    elements: [860, 1145].map((x, index) => ({
-      id: `native-rectangle-${index}`,
-      type: 'rectangle' as const,
-      x,
-      y: 311,
-      width: 171,
-      height: 129,
-      angle: 0,
-      isDeleted: false,
-      strokeColor: '#1b1b1f',
-      backgroundColor: '#e03131',
-      fillStyle: 'solid',
-      strokeWidth: 2,
-      strokeStyle: 'solid',
-      roughness: 0,
-      opacity: 100,
-      customData: { polityOrder: index },
-    })),
-    files: {},
-  };
   const seeded = legacyDocumentToV3(seed);
-  const semanticBefore = seeded.nodes.find(
-    (node: any) => node.type !== 'frame' && !node.excalidraw
+  const frame = seeded.nodes.find(node => node.type === 'frame' && !node.parentFrameId);
+  if (!frame) throw new Error('Missing frame');
+  seeded.nodes.push(
+    ...[860, 1145].map((x, index) =>
+      createStudioNodeFromElement(
+        element('rect', {
+          x,
+          y: 311,
+          width: 171,
+          height: 129,
+          fill: '#e03131',
+          stroke: '#1b1b1f',
+          strokeWidth: 2,
+        }),
+        frame.id,
+        index + 10
+      )
+    )
   );
+  const semanticBefore = seeded.nodes.find((node: any) => node.type === 'richText');
   if (!semanticBefore) throw new Error('Missing semantic text');
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${seed.title},${seed.kind},3,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${seed.title},${seed.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(seeded)))},0)`;
   try {
     const pageErrors: string[] = [];
@@ -447,7 +443,7 @@ test('persists context-menu copy, paste, cut and flip actions without validation
     await page.getByRole('button', { name: 'I understand', exact: true }).click();
     const saveStatus = page.getByRole('status').first();
     await expect(saveStatus).toHaveText('Saved', { timeout: 30000 });
-    const bounds = await page.locator('canvas.interactive').boundingBox();
+    const bounds = await page.locator('[data-testid="studio-canvas"] canvas').first().boundingBox();
     if (!bounds) throw new Error('Missing Studio canvas');
     const semanticPoint = { x: bounds.x + 600, y: bounds.y + 580 };
     const rectanglePoint = { x: bounds.x + 720, y: bounds.y + 330 };
@@ -486,18 +482,19 @@ test('persists context-menu copy, paste, cut and flip actions without validation
     await page.getByText('Copy', { exact: true }).click();
     await page.mouse.click(rectanglePoint.x, rectanglePoint.y, { button: 'right' });
     await page.getByText('Paste', { exact: true }).click();
-    const nativeRectangleCount = async () => {
+    const rectangleCount = async () => {
       const [state] = await sql`select document from studio_state where project_id=${projectId}`;
-      return state.document.nodes.filter((node: any) => node.excalidraw?.type === 'rectangle')
-        .length;
+      return state.document.nodes.filter(
+        (node: any) => node.type === 'shape' && node.shape === 'rectangle'
+      ).length;
     };
-    await expect.poll(nativeRectangleCount).toBe(3);
+    await expect.poll(rectangleCount).toBe(3);
     await page.mouse.click(pastedRectanglePoint.x, pastedRectanglePoint.y, { button: 'right' });
     await page.getByText('Cut', { exact: true }).click();
-    await expect.poll(nativeRectangleCount).toBe(2);
+    await expect.poll(rectangleCount).toBe(2);
     await page.mouse.click(rectanglePoint.x, rectanglePoint.y, { button: 'right' });
     await page.getByText('Paste', { exact: true }).click();
-    await expect.poll(nativeRectangleCount).toBe(3);
+    await expect.poll(rectangleCount).toBe(3);
     await page.reload();
     await expect(saveStatus).toHaveText('Saved', { timeout: 30000 });
     await expect
@@ -506,7 +503,7 @@ test('persists context-menu copy, paste, cut and flip actions without validation
         return state.document.nodes.find((node: any) => node.id === semanticBefore.id)?.transform;
       })
       .toMatchObject({ flipX: true, flipY: true });
-    await expect.poll(nativeRectangleCount).toBe(3);
+    await expect.poll(rectangleCount).toBe(3);
     await expect(page.getByText('invalid_union', { exact: false })).toHaveCount(0);
     expect(pageErrors).toEqual([]);
   } finally {

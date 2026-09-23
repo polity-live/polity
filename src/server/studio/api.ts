@@ -15,6 +15,7 @@ import {
 import {
   assetUrls,
   downloadExport,
+  exportStatus,
   loadProject,
   queueExport,
   duplicateProject,
@@ -167,6 +168,9 @@ export async function handleStudio(request: Request) {
       }
       case 'download':
         result = await downloadExport(userId, uuid.parse(body.id));
+        break;
+      case 'exportStatus':
+        result = await exportStatus(userId, uuid.parse(body.id));
         break;
       case 'cancel': {
         result = await studioTransaction(async sql => {

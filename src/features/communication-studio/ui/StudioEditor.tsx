@@ -12,6 +12,7 @@ import {
   Circle,
   Code2,
   Copy,
+  Crop,
   Diamond,
   Download,
   Eraser,
@@ -19,12 +20,14 @@ import {
   FolderOpen,
   Frame,
   Grid3X3,
+  Group,
   Hand,
   Highlighter,
   Italic,
   Layers3,
   Link2,
   Library,
+  Loader2,
   List,
   ListOrdered,
   LockKeyhole,
@@ -61,18 +64,17 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
 import { FixedToolbar } from '@/features/shared/ui/ui-platejs/fixed-toolbar';
 import { ToolbarButton, ToolbarGroup } from '@/features/shared/ui/layout';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Progress } from '@/features/shared/ui/ui/progress';
 import { ImageEditorDialog } from '@/features/file-upload/ui/ImageEditorDialog';
 import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
 import { GroupThemeSettings } from '@/features/groups/ui/GroupThemeSettings';
 import { StudioPanel } from './StudioPanel';
+import { openStudioPanel } from '../logic/panel-events';
 import { StudioLayersPanel } from './StudioLayersPanel';
 import { StudioPreviewDialog } from './StudioPreviewDialog';
 import { StudioMenuItem, StudioToolbarMenu } from './StudioToolbarMenu';
 import { TableSizePicker } from '@/features/shared/ui/ui-platejs/TableSizePicker';
 import {
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -80,22 +82,42 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover';
 import { StudioDataProperties } from './StudioDataProperties';
+import { StudioCanonicalProperties } from './StudioCanonicalProperties';
 import type { StudioTextSelectionEditor } from './StudioTextEditor';
 import type { useStudioController } from '../hooks/useStudioController';
-import { fontFamilies, formats, type StudioDocument } from '../logic/document';
-import { applyStudioCommand, type StudioCommandName } from '../logic/commands';
-import { type FrameNode } from '../logic/document-v3';
+import { fontFamilies, formats } from '../logic/document';
+import {
+  createFrameNode,
+  drawingNodeSchema,
+  richTextNodeSchema,
+  shapeNodeSchema,
+  type FrameNode,
+  type StudioPlateElement,
+  type StudioNode,
+} from '../logic/document-v3';
 import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import { applyStudioCommandV3 } from '../logic/commands-v3';
-import { isDescendantOf, moveByWorldDelta, selectionUnits } from '../logic/selection-geometry';
-import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
-import { legacyDocumentToV3, v3DocumentToLegacy } from '../logic/v3-adapter';
-import { diffStudio, mergeStudio } from '../logic/operations';
-import { paletteColor, themeFontFamily } from '../logic/theme';
 import {
+  arrangementReferenceBounds,
+  arrangementUnits,
+  isDescendantOf,
+  moveByWorldDelta,
+  selectionUnits,
+  worldBounds,
+  worldToLocalPoint,
+  type ArrangementReference,
+} from '../logic/selection-geometry';
+import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
+import { v3DocumentToLegacy } from '../logic/v3-adapter';
+import { paletteColor, themeFontFamily } from '../logic/theme';
+import { formatStudioRichText } from '../logic/patch-studio-node';
+import {
+  createStudioV3ClipboardPayload,
   getProjectStudioClipboard,
   parseStudioClipboard,
   pasteStudioV3Clipboard,
+  setProjectStudioClipboard,
+  stringifyStudioClipboard,
   type StudioClipboardV2Payload,
 } from '../logic/studio-clipboard';
 import { useStudioViewportStore, type StudioTool } from '../state/studio-viewport-store';
@@ -103,8 +125,8 @@ import type {
   StudioCanvasHandle,
   StudioCanvasNodeChange,
   StudioCanvasState,
-} from './ExcalidrawCanvas';
-const ExcalidrawCanvas = lazy(() => import('./ExcalidrawCanvas'));
+} from './KonvaStudioCanvas';
+const KonvaStudioCanvas = lazy(() => import('./KonvaStudioCanvas'));
 const input = 'w-full rounded-md border bg-background px-2 py-1.5 text-sm';
 const button = 'rounded-md border px-3 py-2 text-sm hover:bg-muted disabled:opacity-40';
 
@@ -243,7 +265,9 @@ export function StudioEditor({
       const target = event.target as HTMLElement;
       if (
         target instanceof HTMLElement &&
-        target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]')
+        target.closest(
+          'input,textarea,select,[contenteditable="true"],[role="dialog"],.polity-canvas-properties'
+        )
       )
         return;
       const mod = event.ctrlKey || event.metaKey;
@@ -330,7 +354,7 @@ function StudioEditorReady({
       : ['error', 'offline', 'unavailable', 'conflict'].includes(c.status)
         ? 'error'
         : 'saved';
-  const activeNode = active ? c.v3Value?.nodes.find(node => node.id === active.id) : undefined;
+  const activeNode = c.v3Value?.nodes.find(node => node.id === c.selected[0]);
   const masterFrame = c.v3Value?.nodes.find(
     (node): node is FrameNode =>
       node.type === 'frame' && node.id === c.v3Value?.masterLayout.frameId
@@ -342,22 +366,25 @@ function StudioEditorReady({
   const visiblePreviewFrames = rootFrames.filter(frame => frame.visible);
   const activeTool = useStudioViewportStore(state => state.activeTool);
   const setTool = useStudioViewportStore(state => state.setTool);
-  const [reference, setReference] = useState<'page' | 'selection' | undefined>();
+  const [reference, setReference] = useState<ArrangementReference>('selection');
   const textEditor = useRef<StudioTextSelectionEditor | null>(null);
   const uploadInput = useRef<HTMLInputElement | null>(null);
   const previewButton = useRef<HTMLElement | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [elementQuery, setElementQuery] = useState('');
+  const [exportQuery, setExportQuery] = useState('');
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const canvasRef = useRef<StudioCanvasHandle | null>(null);
+  const elementsDropTarget = useRef<HTMLElement | null>(null);
   const [canvasState, setCanvasState] = useState<StudioCanvasState>({
     activeTool: 'selection',
     toolLocked: false,
     zoom: 1,
+    viewBounds: null,
   });
   const [selectionState, setSelectionState] = useState<StudioSelectionState>(emptyStudioSelection);
   const [masterMode] = useState(false);
-  const [tableEditorRequest, setTableEditorRequest] = useState<string | null>(null);
   const [tableInsertCount, setTableInsertCount] = useState(0);
   const masterPage = useMemo(() => {
     if (!c.v3Value || !masterFrame) return null;
@@ -375,18 +402,89 @@ function StudioEditorReady({
     c.v3Value && selectedNodeIds.length
       ? selectionUnits(c.v3Value, selectedNodeIds, selectionState.groupDepth)
       : [];
+  const arrangedUnits =
+    c.v3Value && selectedNodeIds.length
+      ? arrangementUnits(c.v3Value, selectedNodeIds, selectionState.groupDepth)
+      : [];
+  const frameReferenceAvailable =
+    !!c.v3Value && !!arrangementReferenceBounds(c.v3Value, arrangedUnits, 'frame');
+  const viewReferenceAvailable =
+    !!c.v3Value &&
+    !!arrangementReferenceBounds(c.v3Value, arrangedUnits, 'view', canvasState.viewBounds);
+  const referenceAvailable =
+    reference === 'selection' ||
+    (reference === 'frame' ? frameReferenceAvailable : viewReferenceAvailable);
   const selectedNodes = c.v3Value?.nodes.filter(node => selectedNodeIds.includes(node.id)) ?? [];
   const selectionLocked = selectedNodes.some(node => node.locked);
   const selectionFullyLocked = selectedNodes.length > 0 && selectedNodes.every(node => node.locked);
+  const linkedSelection =
+    c.v3Value?.componentInstances.some(instance =>
+      Object.values(instance.sourceToInstance).some(id => c.selected.includes(id))
+    ) ?? false;
+  const canSaveElements = (ids: string[]) =>
+    !disabled &&
+    !c.workspaceId &&
+    ids.length > 0 &&
+    ids.every(id => {
+      const node = c.v3Value?.nodes.find(candidate => candidate.id === id);
+      return (
+        node && (node.type !== 'frame' || (!!node.parentFrameId && node.id !== masterFrame?.id))
+      );
+    });
+  const visibleElementSets = c.elementSets.filter(set =>
+    set.name.toLocaleLowerCase().includes(elementQuery.trim().toLocaleLowerCase())
+  );
+  const clearElementsDropTarget = () => {
+    elementsDropTarget.current?.removeAttribute('data-studio-drop-active');
+    elementsDropTarget.current = null;
+  };
+  const overElementsTarget = (ids: string[], x: number, y: number) => {
+    clearElementsDropTarget();
+    if (!canSaveElements(ids)) return false;
+    const anchor = [
+      ...document.querySelectorAll<HTMLElement>(
+        '[data-navigation-item-id="studio-elements"], [data-studio-elements-drop-zone]'
+      ),
+    ].find(item => {
+      const bounds = item.getBoundingClientRect();
+      return (
+        bounds.width > 0 &&
+        bounds.height > 0 &&
+        x >= bounds.left &&
+        x <= bounds.right &&
+        y >= bounds.top &&
+        y <= bounds.bottom
+      );
+    });
+    if (!anchor) return false;
+    anchor.setAttribute('data-studio-drop-active', 'true');
+    elementsDropTarget.current = anchor;
+    return true;
+  };
+  useEffect(() => () => clearElementsDropTarget(), []);
+  const dropCanvasSelectionOnElements = (ids: string[], x: number, y: number) => {
+    const overTarget = overElementsTarget(ids, x, y);
+    clearElementsDropTarget();
+    if (!overTarget) return false;
+    c.selectExact(ids);
+    void c.saveSelectionToElements(ids).then(saved => {
+      if (saved)
+        openStudioPanel({
+          panelKey: 'elements',
+          origin: 'secondary-navigation',
+          navigationItemId: 'studio-elements',
+        });
+    });
+    return true;
+  };
   const canGroup =
     selectedUnits.length >= 2 &&
     new Set(selectedUnits.map(unit => unit.parentFrameId)).size === 1 &&
     !selectionLocked;
   const canUngroup = selectedNodes.some(node => !!node.groupIds[selectionState.groupDepth]);
-  const canAlignToParent =
-    selectedUnits.length > 0 &&
-    !!selectedUnits[0].parentFrameId &&
-    selectedUnits.every(unit => unit.parentFrameId === selectedUnits[0].parentFrameId);
+  useEffect(() => {
+    if (!referenceAvailable) setReference('selection');
+  }, [referenceAvailable]);
   useEffect(() => {
     setSelectionState(current =>
       JSON.stringify(current.nodeIds) === JSON.stringify(c.selected)
@@ -428,13 +526,6 @@ function StudioEditorReady({
     } as const;
     if (action !== 'tool') void canvasRef.current?.execute({ type: 'zoom', mode: modes[action] });
   };
-  const command = (name: StudioCommandName, args: Record<string, unknown>) =>
-    c.transact(d =>
-      Object.assign(
-        d,
-        applyStudioCommand(d, name, { pageId: page.id, elementIds: c.selected, ...args })
-      )
-    );
   const arrangeSelection = (
     action:
       | 'front'
@@ -493,11 +584,7 @@ function StudioEditorReady({
     );
   };
   const alignSelection = (direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
-    if (!selectedNodeIds.length || selectionLocked) return;
-    const target =
-      reference === 'page'
-        ? 'parent'
-        : (reference ?? (selectedUnits.length === 1 && canAlignToParent ? 'parent' : 'selection'));
+    if (!selectedNodeIds.length || selectionLocked || !referenceAvailable) return;
     c.transactV3(document =>
       Object.assign(
         document,
@@ -505,14 +592,20 @@ function StudioEditorReady({
           type: 'alignNodes',
           nodeIds: selectedNodeIds,
           direction,
-          reference: target,
+          reference,
+          viewBounds: reference === 'view' ? (canvasState.viewBounds ?? undefined) : undefined,
           groupDepth: selectionState.groupDepth,
         })
       )
     );
   };
   const distributeSelection = (axis: 'horizontal' | 'vertical') => {
-    if (selectedUnits.length < 3 || selectionLocked) return;
+    if (
+      arrangedUnits.length < (reference === 'selection' ? 3 : 2) ||
+      selectionLocked ||
+      !referenceAvailable
+    )
+      return;
     c.transactV3(document =>
       Object.assign(
         document,
@@ -520,11 +613,36 @@ function StudioEditorReady({
           type: 'distributeNodes',
           nodeIds: selectedNodeIds,
           axis,
+          reference,
+          viewBounds: reference === 'view' ? (canvasState.viewBounds ?? undefined) : undefined,
           groupDepth: selectionState.groupDepth,
         })
       )
     );
   };
+  const referenceOptions = () => (
+    <>
+      <DropdownMenuLabel>{tr('reference')}</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={reference}
+        onValueChange={value => setReference(value as ArrangementReference)}
+      >
+        {(['selection', 'frame', 'view'] as const).map(value => (
+          <DropdownMenuRadioItem
+            key={value}
+            value={value}
+            disabled={
+              (value === 'frame' && !frameReferenceAvailable) ||
+              (value === 'view' && !viewReferenceAvailable)
+            }
+          >
+            {tr(value)}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+      <DropdownMenuSeparator />
+    </>
+  );
   const applyCanvasChanges = (changes: StudioCanvasNodeChange[]) => {
     if (!changes.length) return;
     c.transactV3(document => {
@@ -555,7 +673,6 @@ function StudioEditorReady({
             flipX: change.transform.flipX,
             flipY: change.transform.flipY,
           };
-          if (change.transform.excalidraw) node.excalidraw = change.transform.excalidraw;
           if (node.type === 'media' && change.transform.crop !== undefined)
             node.crop = change.transform.crop;
           if (
@@ -615,6 +732,156 @@ function StudioEditorReady({
       )
     );
   };
+  const createCanvasNode = (
+    tool: StudioTool,
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    rounded: boolean,
+    points: [number, number][] = []
+  ): string | null => {
+    const currentDocument = c.v3Value;
+    if (!currentDocument || !c.canEdit) return null;
+    const frame = [...rootFrames].reverse().find(candidate => {
+      const bounds = worldBounds(currentDocument, candidate);
+      return (
+        start.x >= bounds.left &&
+        start.x <= bounds.right &&
+        start.y >= bounds.top &&
+        start.y <= bounds.bottom
+      );
+    });
+    const parentFrameId = tool === 'frame' ? null : (frame?.id ?? null);
+    const localStart = worldToLocalPoint(currentDocument, parentFrameId, start);
+    const localEnd = worldToLocalPoint(currentDocument, parentFrameId, end);
+    const x = Math.min(localStart.x, localEnd.x);
+    const y = Math.min(localStart.y, localEnd.y);
+    const width = Math.max(tool === 'text' ? 700 : 4, Math.abs(localEnd.x - localStart.x));
+    const height = Math.max(tool === 'text' ? 180 : 4, Math.abs(localEnd.y - localStart.y));
+    const id = crypto.randomUUID();
+    const zIndex =
+      Math.max(
+        -1,
+        ...currentDocument.nodes
+          .filter(node => node.parentFrameId === parentFrameId)
+          .map(node => node.zIndex)
+      ) + 1;
+    const foreground = c.value?.brand.foreground ?? '#12362D';
+    const common = {
+      id,
+      name: tool === 'text' ? 'Text' : tool,
+      parentFrameId,
+      transform: { x, y, width, height, rotation: 0 },
+      zIndex,
+      style: {
+        fill:
+          tool === 'text'
+            ? foreground
+            : ['line', 'arrow', 'draw', 'laser'].includes(tool)
+              ? null
+              : '#B88A3B',
+        stroke: foreground,
+        strokeWidth: ['line', 'arrow', 'draw', 'laser'].includes(tool) ? 3 : 1,
+        cornerRadius: rounded ? 24 : 0,
+        opacity: 1,
+      },
+    };
+    let node: StudioNode;
+    if (tool === 'frame') {
+      node = createFrameNode('custom', {
+        id,
+        name: 'Frame',
+        zIndex,
+        transform: {
+          x,
+          y,
+          width: Math.max(200, width),
+          height: Math.max(200, height),
+          rotation: 0,
+        },
+      });
+    } else if (tool === 'text') {
+      node = richTextNodeSchema.parse({
+        ...common,
+        content: [
+          { id: crypto.randomUUID(), type: 'p', children: [{ id: crypto.randomUUID(), text: '' }] },
+        ],
+        typography: {
+          fontFamily: 'Manrope',
+          fontSize: 42,
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          horizontalAlign: 'left',
+          verticalAlign: 'top',
+        },
+        type: 'richText',
+      });
+    } else if (tool === 'draw' || tool === 'laser') {
+      const localPoints = points.map(([px, py]) =>
+        worldToLocalPoint(currentDocument, parentFrameId, { x: px, y: py })
+      );
+      node = drawingNodeSchema.parse({
+        ...common,
+        type: 'drawing',
+        tool: tool === 'laser' ? 'laser' : 'pen',
+        points: localPoints.map(point => [point.x - x, point.y - y]),
+      });
+    } else {
+      node = shapeNodeSchema.parse({
+        ...common,
+        type: 'shape',
+        shape: tool === 'rectangle' ? (rounded ? 'rounded-rectangle' : 'rectangle') : tool,
+        endArrowhead: tool === 'arrow' ? 'arrow' : 'none',
+      });
+    }
+    c.transactV3(document => {
+      document.nodes.push(node);
+    });
+    return id;
+  };
+  const changeCanvasText = (id: string, content: StudioPlateElement[]) => {
+    c.transactV3(document => {
+      const node = document.nodes.find(candidate => candidate.id === id);
+      if (node?.type !== 'richText') return;
+      node.content = content;
+      node.name =
+        content
+          .map(block => block.children.map(child => ('text' in child ? child.text : '')).join(''))
+          .join(' ')
+          .slice(0, 80) || 'Text';
+    });
+  };
+  const canvasClipboard = async (action: 'copy' | 'cut' | 'paste') => {
+    if (!c.v3Value) return;
+    if (action === 'copy' || action === 'cut') {
+      const payload = createStudioV3ClipboardPayload({
+        projectId,
+        selectedNodeIds,
+        document: c.v3Value,
+      });
+      if (!payload) return;
+      setProjectStudioClipboard(payload);
+      try {
+        await navigator.clipboard.writeText(stringifyStudioClipboard(payload));
+      } catch {
+        /* Project clipboard remains available. */
+      }
+      if (action === 'cut') {
+        cutV3Clipboard(selectedNodeIds);
+        c.selectExact([]);
+      }
+      return;
+    }
+    let clipboard = '';
+    try {
+      clipboard = await navigator.clipboard.readText();
+    } catch {
+      /* Use project clipboard. */
+    }
+    const parsed = parseStudioClipboard(clipboard) ?? getProjectStudioClipboard(projectId);
+    if (parsed?.version !== 2) return;
+    const ids = pasteV3Clipboard(parsed, page.id);
+    c.selectExact(ids);
+  };
   const formatText = (key: string, v: unknown) => {
     if (textEditor.current) {
       if (['align', 'list'].includes(key)) textEditor.current.paragraph(key, v);
@@ -623,16 +890,11 @@ function StudioEditorReady({
         textEditor.current.mark(key === 'fill' ? 'color' : key === 'font' ? 'fontFamily' : key, v);
       }
     } else if (active?.type === 'text')
-      c.transact(d =>
-        Object.assign(
-          d,
-          applyStudioCommand(d, 'studio_format_text', {
-            pageId: page.id,
-            elementIds: [active.id],
-            patch: { [key]: v },
-          })
-        )
-      );
+      c.transactV3(document => {
+        const node = document.nodes.find(candidate => candidate.id === active.id);
+        if (node?.type === 'richText')
+          formatStudioRichText(node, key as Parameters<typeof formatStudioRichText>[1], v);
+      });
   };
   const applyTextStyle = (styleId: string) => {
     const style = c.theme?.textStyles.find(item => item.id === styleId);
@@ -656,7 +918,9 @@ function StudioEditorReady({
       const target = ev.target as HTMLElement;
       if (
         target instanceof HTMLElement &&
-        target.closest('input,textarea,select,[contenteditable="true"],[role="dialog"]')
+        target.closest(
+          'input,textarea,select,[contenteditable="true"],[role="dialog"],.polity-canvas-properties'
+        )
       )
         return;
       const mod = ev.ctrlKey || ev.metaKey;
@@ -705,15 +969,12 @@ function StudioEditorReady({
         ev.preventDefault();
         const [x, y] = move[ev.key],
           step = ev.shiftKey ? 10 : 1;
-        c.transact(d =>
-          d.pages
-            .find(p => p.id === page.id)
-            ?.elements.filter(e => c.selected.includes(e.id) && !e.locked)
-            .forEach(e => {
-              e.x += x * step;
-              e.y += y * step;
-            })
-        );
+        c.transactV3(document => {
+          for (const node of document.nodes.filter(
+            candidate => c.selected.includes(candidate.id) && !candidate.locked
+          ))
+            moveByWorldDelta(document, node, { x: x * step, y: y * step });
+        });
       }
     };
     window.addEventListener('keydown', key, true);
@@ -744,21 +1005,6 @@ function StudioEditorReady({
     );
   const props = (
     <fieldset disabled={disabled || selectionLocked} className="space-y-3">
-      {!!c.selected.length && (
-        <div
-          draggable={!disabled}
-          className="bg-muted cursor-grab rounded-md border border-dashed px-3 py-2 text-xs"
-          onDragStart={event => {
-            event.dataTransfer.effectAllowed = 'copy';
-            event.dataTransfer.setData(
-              'application/x-polity-studio-selection',
-              JSON.stringify(c.selected)
-            );
-          }}
-        >
-          {tr('dragSelectionToElements')}
-        </div>
-      )}
       {c.selected.length > 1 && <p>{tr('firstSelectedElement')}</p>}{' '}
       {active && (
         <>
@@ -888,6 +1134,21 @@ function StudioEditorReady({
           )}
           {(active.type === 'image' || active.type === 'video') && (
             <>
+              {selectedNodeIds.length === 1 &&
+                activeNode?.type === 'media' &&
+                !activeNode.locked && (
+                  <button
+                    type="button"
+                    data-action-id="communication-studio.media.crop.open"
+                    className={button}
+                    disabled={disabled}
+                    onClick={() =>
+                      void canvasRef.current?.execute({ type: 'crop', action: 'start' })
+                    }
+                  >
+                    {tr('cropMedia')}
+                  </button>
+                )}
               {field(
                 'fit',
                 <select
@@ -934,6 +1195,35 @@ function StudioEditorReady({
       {active && (
         <>
           <StudioDataProperties element={active} patch={patch => c.patch(active.id, patch)} />
+          {activeNode?.type === 'shape' &&
+            (activeNode.shape === 'arrow' || activeNode.shape === 'line') && (
+              <div className="grid grid-cols-2 gap-2">
+                {(['startArrowhead', 'endArrowhead'] as const).map(key =>
+                  field(
+                    key,
+                    <select
+                      className={input}
+                      value={activeNode[key]}
+                      onChange={event =>
+                        c.transactV3(document => {
+                          const node = document.nodes.find(
+                            candidate => candidate.id === activeNode.id
+                          );
+                          if (node?.type === 'shape')
+                            node[key] = event.target.value as (typeof node)[typeof key];
+                        })
+                      }
+                    >
+                      {(['none', 'arrow', 'bar', 'dot', 'triangle'] as const).map(value => (
+                        <option key={value} value={value}>
+                          {tr(value)}
+                        </option>
+                      ))}
+                    </select>
+                  )
+                )}
+              </div>
+            )}
           {activeNode && (
             <div className="grid grid-cols-2 gap-2">
               {field(
@@ -1009,8 +1299,124 @@ function StudioEditorReady({
           )}
         </>
       )}
+      {activeNode && !active && (
+        <StudioCanonicalProperties
+          node={activeNode}
+          tr={tr}
+          update={change =>
+            c.transactV3(document => {
+              const node = document.nodes.find(candidate => candidate.id === activeNode.id);
+              if (node) change(node);
+            })
+          }
+        />
+      )}
     </fieldset>
   );
+  const canvasDocument = c.v3Value;
+  const selectedGroupId =
+    selectedNodes.length > 1 ? selectedNodes[0].groupIds[selectionState.groupDepth] : null;
+  const completeGroupSelected =
+    !!selectedGroupId &&
+    selectedNodes.every(node => node.groupIds[selectionState.groupDepth] === selectedGroupId) &&
+    c.v3Value?.nodes.filter(node => node.groupIds[selectionState.groupDepth] === selectedGroupId)
+      .length === selectedNodes.length;
+  const contextAction = (
+    key: string,
+    icon: ReactNode,
+    onClick: () => void,
+    options: { disabled?: boolean; pressed?: boolean; preserveTextFocus?: boolean } = {}
+  ) => (
+    <button
+      key={key}
+      type="button"
+      data-action-id={`communication-studio.context.${key}`}
+      aria-label={tr(key)}
+      aria-pressed={options.pressed}
+      disabled={options.disabled}
+      onMouseDown={options.preserveTextFocus ? event => event.preventDefault() : undefined}
+      onClick={onClick}
+    >
+      {icon}
+    </button>
+  );
+  const contextToolbar =
+    disabled || selectionLocked || !selectedNodeIds.length ? null : completeGroupSelected ? (
+      <>
+        {(
+          [
+            ['front', ArrowUp],
+            ['forward', ArrowUp],
+            ['backward', ArrowDown],
+            ['back', ArrowDown],
+          ] as const
+        ).map(([action, Icon]) =>
+          contextAction(action, <Icon className="size-4" />, () => arrangeSelection(action))
+        )}
+        <span className="polity-canvas-context-separator" aria-hidden="true" />
+        {(
+          [
+            ['left', AlignLeft],
+            ['center', AlignCenter],
+            ['right', AlignRight],
+            ['top', ArrowUp],
+            ['middle', MoveVertical],
+            ['bottom', ArrowDown],
+          ] as const
+        ).map(([direction, Icon]) =>
+          contextAction(direction, <Icon className="size-4" />, () => alignSelection(direction), {
+            disabled: !referenceAvailable,
+          })
+        )}
+        <span className="polity-canvas-context-separator" aria-hidden="true" />
+        {(['horizontal', 'vertical'] as const).map(axis =>
+          contextAction(
+            `distribute${axis === 'horizontal' ? 'Horizontal' : 'Vertical'}`,
+            axis === 'horizontal' ? (
+              <MoveHorizontal className="size-4" />
+            ) : (
+              <MoveVertical className="size-4" />
+            ),
+            () => distributeSelection(axis),
+            {
+              disabled:
+                !referenceAvailable || arrangedUnits.length < (reference === 'selection' ? 3 : 2),
+            }
+          )
+        )}
+      </>
+    ) : selectedNodeIds.length === 1 &&
+      activeNode?.type === 'richText' &&
+      active?.type === 'text' ? (
+      <>
+        {(
+          [
+            ['bold', Bold],
+            ['italic', Italic],
+            ['underline', Underline],
+          ] as const
+        ).map(([mark, Icon]) =>
+          contextAction(mark, <Icon className="size-4" />, () => formatText(mark, !active[mark]), {
+            pressed: active[mark],
+            preserveTextFocus: true,
+          })
+        )}
+      </>
+    ) : selectedNodeIds.length === 1 &&
+      activeNode?.type === 'media' &&
+      activeNode.mediaType === 'image' ? (
+      <>
+        {contextAction(
+          'resizeImage',
+          <Crop className="size-4" />,
+          () => void canvasRef.current?.execute({ type: 'crop', action: 'start' })
+        )}
+        {contextAction('editImage', <Pencil className="size-4" />, () =>
+          c.setPhotoEdit(c.assets.find(asset => asset.id === activeNode.assetId)?.url)
+        )}
+      </>
+    ) : null;
+  if (!canvasDocument) return null;
   return (
     <main
       className="h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem))] overflow-hidden bg-[var(--surface-sunken)] pt-10 [--studio-status-height:2.5rem] [--studio-toolbar-height:2.5rem]"
@@ -1261,56 +1667,40 @@ function StudioEditorReady({
           </ToolbarButton>
         </ToolbarGroup>
         <ToolbarGroup>
+          <ToolbarButton
+            data-action-kind="interaction"
+            tooltip={tr('chart')}
+            disabled={disabled}
+            onClick={() => c.add('chart')}
+          >
+            <Grid3X3 />
+          </ToolbarButton>
           <StudioToolbarMenu
             key={tableInsertCount}
-            panelKey="insert"
-            label={tr('insert')}
-            icon={<Plus />}
+            panelKey="table"
+            label={tr('table')}
+            icon={<Table2 />}
+            disabled={disabled}
+            className="p-1"
           >
-            {(
-              [
-                ['text', Type],
-                ['rect', Square],
-                ['ellipse', Circle],
-                ['line', Minus],
-                ['arrow', ArrowRight],
-                ['chart', Grid3X3],
-              ] as const
-            ).map(([type, Icon]) => (
-              <StudioMenuItem
-                key={type}
-                label={tr(type)}
-                icon={<Icon />}
-                disabled={disabled}
-                onSelect={() => c.add(type)}
-              />
-            ))}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger disabled={disabled} className="gap-2">
-                <Table2 className="size-4" />
-                {tr('table')}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="p-1">
-                <TableSizePicker
-                  label={tr('tableSize')}
-                  onSelect={dimensions => {
-                    const id = c.addTable(dimensions);
-                    if (id) {
-                      setTableEditorRequest(id);
-                      setTableInsertCount(value => value + 1);
-                    }
-                  }}
-                />
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <StudioMenuItem
-              label={tr('upload')}
-              icon={<FileUp />}
-              disabled={disabled}
-              onSelect={() => uploadInput.current?.click()}
+            <TableSizePicker
+              label={tr('tableSize')}
+              onSelect={dimensions => {
+                const id = c.addTable(dimensions);
+                if (id) {
+                  setTableInsertCount(value => value + 1);
+                }
+              }}
             />
           </StudioToolbarMenu>
+          <ToolbarButton
+            data-action-kind="interaction"
+            tooltip={tr('upload')}
+            disabled={disabled}
+            onClick={() => uploadInput.current?.click()}
+          >
+            <FileUp />
+          </ToolbarButton>
           <input
             ref={uploadInput}
             hidden
@@ -1400,25 +1790,12 @@ function StudioEditorReady({
           >
             <Trash2 />
           </ToolbarButton>
-          <StudioToolbarMenu panelKey="arrange" label={tr('arrange')} icon={<AlignCenter />}>
-            <DropdownMenuLabel>{tr('reference')}</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={reference ?? ''}
-              onValueChange={value =>
-                setReference(value ? (value as 'page' | 'selection') : undefined)
-              }
-            >
-              {(['', 'page', 'selection'] as const).map(value => (
-                <DropdownMenuRadioItem
-                  key={value}
-                  value={value}
-                  disabled={value === 'page' && !canAlignToParent}
-                >
-                  {tr(value || 'automatic')}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
+          <StudioToolbarMenu
+            panelKey="arrange"
+            label={tr('elementAlignment')}
+            icon={<AlignCenter />}
+          >
+            {referenceOptions()}
             <DropdownMenuLabel>{tr('elementAlignment')}</DropdownMenuLabel>
             <div className="grid grid-cols-6">
               {(
@@ -1437,30 +1814,40 @@ function StudioEditorReady({
                   icon={<Icon />}
                   iconOnly
                   disabled={
-                    disabled ||
-                    !selectedUnits.length ||
-                    selectionLocked ||
-                    (reference === 'page' && !canAlignToParent)
+                    disabled || !arrangedUnits.length || selectionLocked || !referenceAvailable
                   }
                   onSelect={() => alignSelection(direction)}
                 />
               ))}
             </div>
-            <DropdownMenuSeparator />
+          </StudioToolbarMenu>
+          <StudioToolbarMenu label={tr('distribute')} icon={<MoveHorizontal />}>
+            {referenceOptions()}
             <DropdownMenuLabel>{tr('distribute')}</DropdownMenuLabel>
             <StudioMenuItem
               label={`${tr('distribute')} ${tr('horizontal')}`}
               icon={<MoveHorizontal />}
-              disabled={disabled || selectedUnits.length < 3 || selectionLocked}
+              disabled={
+                disabled ||
+                arrangedUnits.length < (reference === 'selection' ? 3 : 2) ||
+                selectionLocked ||
+                !referenceAvailable
+              }
               onSelect={() => distributeSelection('horizontal')}
             />
             <StudioMenuItem
               label={`${tr('distribute')} ${tr('vertical')}`}
               icon={<MoveVertical />}
-              disabled={disabled || selectedUnits.length < 3 || selectionLocked}
+              disabled={
+                disabled ||
+                arrangedUnits.length < (reference === 'selection' ? 3 : 2) ||
+                selectionLocked ||
+                !referenceAvailable
+              }
               onSelect={() => distributeSelection('vertical')}
             />
-            <DropdownMenuSeparator />
+          </StudioToolbarMenu>
+          <StudioToolbarMenu label={tr('order')} icon={<Layers3 />}>
             <DropdownMenuLabel>{tr('order')}</DropdownMenuLabel>
             {(
               [
@@ -1483,7 +1870,8 @@ function StudioEditorReady({
                 onSelect={() => arrangeSelection(action)}
               />
             ))}
-            <DropdownMenuSeparator />
+          </StudioToolbarMenu>
+          <StudioToolbarMenu label={tr('groupElements')} icon={<Group />}>
             <DropdownMenuLabel>{tr('groupElements')}</DropdownMenuLabel>
             {(['group', 'ungroup'] as const).map(action => (
               <StudioMenuItem
@@ -1491,18 +1879,6 @@ function StudioEditorReady({
                 label={action === 'group' ? tr('groupElements') : tr(action)}
                 icon={<Layers3 />}
                 disabled={disabled || (action === 'group' ? !canGroup : !canUngroup)}
-                onSelect={() => arrangeSelection(action)}
-              />
-            ))}
-            <DropdownMenuSeparator />
-            {(['lock', 'unlock'] as const).map(action => (
-              <StudioMenuItem
-                key={action}
-                label={tr(action)}
-                icon={action === 'lock' ? <LockKeyhole /> : <UnlockKeyhole />}
-                disabled={
-                  disabled || !selectedNodeIds.length || (action === 'lock' && selectionLocked)
-                }
                 onSelect={() => arrangeSelection(action)}
               />
             ))}
@@ -1643,12 +2019,7 @@ function StudioEditorReady({
                       icon={<List />}
                       onSelect={() => {
                         if (textEditor.current) textEditor.current.paragraph('list', 'bullet');
-                        else
-                          command('studio_format_text', {
-                            elementIds: [active.id],
-                            patch: {},
-                            list: 'bullet',
-                          });
+                        else formatText('list', 'bullet');
                       }}
                     />
                     <StudioMenuItem
@@ -1656,12 +2027,7 @@ function StudioEditorReady({
                       icon={<ListOrdered />}
                       onSelect={() => {
                         if (textEditor.current) textEditor.current.paragraph('list', 'number');
-                        else
-                          command('studio_format_text', {
-                            elementIds: [active.id],
-                            patch: {},
-                            list: 'number',
-                          });
+                        else formatText('list', 'number');
                       }}
                     />
                     <DropdownMenuSeparator />
@@ -1689,12 +2055,7 @@ function StudioEditorReady({
                     onKeyDown={ev => {
                       if (ev.key === 'Enter' && /^https?:\/\//.test(linkUrl)) {
                         if (textEditor.current) textEditor.current.mark('url', linkUrl);
-                        else
-                          command('studio_format_text', {
-                            elementIds: [active.id],
-                            patch: {},
-                            url: linkUrl,
-                          });
+                        else formatText('url', linkUrl);
                         setLinkOpen(false);
                       }
                     }}
@@ -1801,74 +2162,87 @@ function StudioEditorReady({
             </details>
           </section>
         </StudioPanel>
-        <StudioPanel panelKey="elements" label={tr('elements')} toolbarTrigger={false}>
-          <section
-            className="space-y-3 p-2"
-            onDragOver={event => {
-              if (event.dataTransfer.types.includes('application/x-polity-studio-selection'))
-                event.preventDefault();
-            }}
-            onDrop={event => {
-              if (!event.dataTransfer.getData('application/x-polity-studio-selection')) return;
-              event.preventDefault();
-              void c.saveSelectionToElements();
-            }}
-          >
-            <div className="bg-muted rounded-md border border-dashed p-4 text-center text-sm">
-              {tr('dropSelectionHere')}
-            </div>
+        <StudioPanel
+          panelKey="elements"
+          label={tr('elements')}
+          toolbarTrigger={false}
+          keepOpenOnCanvasInteraction
+        >
+          <section data-studio-elements-drop-zone className="space-y-2 p-1">
+            <input
+              className="bg-background h-8 w-full rounded-md border px-2 text-sm"
+              type="search"
+              aria-label={tr('searchElements')}
+              placeholder={tr('searchElements')}
+              value={elementQuery}
+              onChange={event => setElementQuery(event.currentTarget.value)}
+            />
             <button
               type="button"
-              className={button + ' w-full'}
-              disabled={disabled || !c.selected.length}
+              className="hover:bg-muted w-full rounded-sm border px-2 py-1.5 text-left text-sm disabled:opacity-40"
+              disabled={!canSaveElements(c.selected)}
               onClick={() => void c.saveSelectionToElements()}
             >
               {tr('saveSelectionToElements')}
             </button>
-            {c.elementSets.map(set => (
-              <article
-                key={set.id}
-                draggable
-                className="bg-card rounded-md border p-3"
-                onDragStart={event => {
-                  event.dataTransfer.effectAllowed = 'copy';
-                  event.dataTransfer.setData('application/x-polity-element-set', set.id);
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <Library className="size-4" />
-                  <strong className="min-w-0 flex-1 truncate text-sm">{set.name}</strong>
+            <div className="max-h-[min(32rem,70dvh)] space-y-0.5 overflow-auto">
+              {visibleElementSets.map(set => (
+                <article
+                  key={set.id}
+                  draggable={!disabled}
+                  className="hover:bg-muted/60 flex min-h-8 items-center gap-2 rounded-sm px-2 text-sm"
+                  onDragStart={event => {
+                    event.dataTransfer.effectAllowed = 'copy';
+                    event.dataTransfer.setData('application/x-polity-element-set', set.id);
+                  }}
+                >
+                  <Library className="size-4 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{set.name}</span>
                   <span className="text-muted-foreground text-xs">v{set.version}</span>
-                </div>
-                <div className="mt-2 flex gap-2">
                   <button
                     type="button"
-                    className={button}
+                    className="hover:bg-muted focus-visible:ring-ring inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
+                    aria-label={`${tr('rename')}: ${set.name}`}
+                    disabled={disabled}
                     onClick={() => {
                       const name = window.prompt(tr('rename'), set.name);
                       if (name?.trim()) void c.renameElementSet(set.id, name);
                     }}
                   >
-                    {tr('rename')}
+                    <Pencil className="size-4" />
                   </button>
                   <button
                     type="button"
-                    className={button}
+                    className="hover:bg-muted focus-visible:ring-ring inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
+                    aria-label={`${tr('delete')}: ${set.name}`}
+                    disabled={disabled}
                     onClick={() => void c.archiveElementSet(set.id)}
                   >
-                    {tr('delete')}
+                    <Trash2 className="size-4" />
                   </button>
-                </div>
-              </article>
-            ))}
-            <button
-              type="button"
-              className={button + ' w-full'}
-              disabled={disabled || !c.selected.length}
-              onClick={() => void c.publishSelectedElementChanges()}
-            >
-              {tr('publishElementChanges')}
-            </button>
+                </article>
+              ))}
+              {!c.elementSets.length && (
+                <p className="text-muted-foreground px-2 py-4 text-center text-sm">
+                  {tr('noElements')}
+                </p>
+              )}
+              {!!c.elementSets.length && !visibleElementSets.length && (
+                <p className="text-muted-foreground px-2 py-4 text-center text-sm">
+                  {tr('noElementsFound')}
+                </p>
+              )}
+            </div>
+            {linkedSelection && (
+              <button
+                type="button"
+                className="hover:bg-muted w-full rounded-sm border px-2 py-1.5 text-left text-sm disabled:opacity-40"
+                disabled={disabled || !!c.workspaceId}
+                onClick={() => void c.publishSelectedElementChanges()}
+              >
+                {tr('publishElementChanges')}
+              </button>
+            )}
           </section>
         </StudioPanel>
         <ToolbarGroup>
@@ -1892,14 +2266,12 @@ function StudioEditorReady({
           >
             <Grid3X3 />
           </ToolbarButton>
-          <StudioPanel panelKey="exports" label={tr('exports')} icon={<Download />}>
-            {' '}
-            <section className="space-y-3 rounded-lg border p-4">
-              <h2 className="font-semibold">{tr('exports')}</h2>
-              <div className="flex flex-wrap gap-2">
+          <StudioPanel panelKey="exports" label={tr('exports')} icon={<Download />} compact>
+            <section className="space-y-2 p-1">
+              <div className="flex items-center gap-2">
                 <select
                   data-action-id="communication-studio.studioworkspace.activate.format-2"
-                  className={input + ' max-w-32'}
+                  className={input + ' min-w-0 flex-1'}
                   aria-label={tr('format')}
                   value={c.format}
                   onChange={e => c.setFormat(e.target.value)}
@@ -1910,34 +2282,93 @@ function StudioEditorReady({
                     </option>
                   ))}
                 </select>
-                <select
-                  data-action-id="communication-studio.studioworkspace.activate.select-ba740cd21e"
-                  className={input + ' max-w-52'}
-                  aria-label={tr('scope')}
-                  value={c.scope}
-                  onChange={e => c.setScope(e.target.value)}
-                >
-                  {['page', 'post', 'all'].map(s => (
-                    <option key={s} value={s}>
-                      {tr(s)}
-                    </option>
-                  ))}
-                </select>
                 <button
                   data-action-id="communication-studio.studio-workspace.export-media"
                   className={button}
-                  disabled={disabled || c.status === 'offline'}
+                  disabled={
+                    disabled ||
+                    c.status === 'offline' ||
+                    c.exportPreparing ||
+                    !c.exportFrameIds.length
+                  }
                   onClick={c.exportMedia}
                 >
-                  {tr('export')}
+                  {c.exportPreparing ? tr('preparingExport') : tr('export')}
                 </button>
+              </div>
+              <input
+                className="bg-background h-8 w-full rounded-md border px-2 text-sm"
+                type="search"
+                aria-label={tr('searchExportFrames')}
+                placeholder={tr('searchExportFrames')}
+                value={exportQuery}
+                onChange={event => setExportQuery(event.currentTarget.value)}
+              />
+              <div className="flex gap-1">
+                <button type="button" className={button} onClick={c.markAllExportFrames}>
+                  {tr('markAllFrames')}
+                </button>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={!c.exportFrames.some(frame => frame.id === c.selected[0])}
+                  onClick={c.markSelectedExportFrame}
+                >
+                  {tr('markSelectedFrame')}
+                </button>
+              </div>
+              <div
+                className="max-h-[min(24rem,50dvh)] space-y-0.5 overflow-auto"
+                role="group"
+                aria-label={tr('exportFrames')}
+              >
+                {c.exportFrames
+                  .filter(frame =>
+                    frame.name.toLocaleLowerCase().includes(exportQuery.trim().toLocaleLowerCase())
+                  )
+                  .map(frame => (
+                    <label
+                      key={frame.id}
+                      className="hover:bg-muted/60 flex min-h-8 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={c.exportFrameIds.includes(frame.id)}
+                        onChange={() => c.toggleExportFrame(frame.id)}
+                      />
+                      <Frame className="size-4 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{frame.name}</span>
+                    </label>
+                  ))}
               </div>
               <p className="text-muted-foreground text-xs">
                 {tr(c.format === 'canva' ? 'canvaHint' : 'exportHint')}
               </p>
+              {c.exportPreparing && (
+                <div role="status" className="flex items-center gap-2 text-sm">
+                  <Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+                  {tr('preparingExport')}
+                </div>
+              )}
+              {c.exportFailure && (
+                <p role="alert" className="text-destructive text-sm">
+                  {c.exportFailure}
+                </p>
+              )}
+              {c.exportStatusError && (
+                <p role="status" className="text-muted-foreground text-sm">
+                  {tr('exportStatusUnavailable')}
+                </p>
+              )}
               {c.exports.map(job => (
-                <div key={job.id} className="rounded border p-2 text-sm">
+                <div key={job.id} className="border-t px-1 pt-2 text-sm">
                   <div className="flex items-center gap-3">
+                    {(job.status === 'queued' || job.status === 'running') && (
+                      <Loader2
+                        className="size-4 shrink-0 motion-safe:animate-spin"
+                        aria-hidden="true"
+                      />
+                    )}
                     <span>
                       {job.format.toUpperCase()} · {tr(job.status)} · {job.progress}%
                     </span>
@@ -1946,14 +2377,7 @@ function StudioEditorReady({
                         <button
                           data-action-id="communication-studio.studioworkspace.activate.button-fdbeb1cd6b"
                           className={button}
-                          onClick={() =>
-                            c.run(async () => {
-                              const result = await c.actions.request<{ url: string }>('download', {
-                                id: job.id,
-                              });
-                              window.open(result.url, '_blank', 'noopener,noreferrer');
-                            })
-                          }
+                          onClick={() => c.downloadExport(job.id)}
                         >
                           {tr('download')}
                         </button>
@@ -1999,6 +2423,13 @@ function StudioEditorReady({
                       )
                     )}
                   </div>
+                  {(job.status === 'queued' || job.status === 'running') && (
+                    <Progress
+                      aria-label={`${job.format.toUpperCase()} ${tr('exportProgress')}`}
+                      value={Math.max(0, Math.min(100, job.progress))}
+                      className="mt-2 h-2 motion-safe:animate-pulse"
+                    />
+                  )}
                   {job.error && <p role="alert">{job.error}</p>}
                 </div>
               ))}
@@ -2103,151 +2534,74 @@ function StudioEditorReady({
             </button>
           </section>
         )}
-        <div
-          className="min-h-0 flex-1"
-          onDragOver={event => {
-            if (event.dataTransfer.types.includes('application/x-polity-element-set'))
-              event.preventDefault();
-          }}
-          onDrop={event => {
-            const setId = event.dataTransfer.getData('application/x-polity-element-set');
-            if (!setId) return;
-            event.preventDefault();
-            const point = canvasRef.current?.scenePoint(event.clientX, event.clientY) ?? {
-              x: 0,
-              y: 0,
-              targetFrameId: page.id,
-            };
-            void c.insertElementSet(setId, point);
-          }}
-        >
+        <div className="min-h-0 flex-1">
           <Suspense fallback={<p>{tr('loading')}</p>}>
-            <ExcalidrawCanvas
+            <KonvaStudioCanvas
               ref={canvasRef}
               key={`${projectId}:${masterMode ? 'master' : 'content'}`}
-              whiteboard={value.kind === 'whiteboard'}
-              draft={!!c.workspaceId}
-              projectId={projectId}
-              sources={value.pages.flatMap(p => p.elements)}
-              frames={masterMode && masterFrame ? [masterFrame] : rootFrames}
-              rootNodes={
-                masterMode
-                  ? []
-                  : (c.v3Value?.nodes.filter(
-                      node => node.type !== 'frame' && node.parentFrameId === null
-                    ) ?? [])
-              }
-              frameDefaultBackground={
-                c.v3Value?.frameDefaults?.background ??
-                (c.v3Value?.theme ? c.v3Value.theme[c.v3Value.theme.mode].background : undefined)
-              }
-              themeColors={
-                c.themePalette
-                  ? [
-                      ...Object.entries(c.themePalette).flatMap(([role, color]) =>
-                        role === 'charts' ? (color as string[]) : [color as string]
-                      ),
-                    ].filter((color, index, values) => values.indexOf(color) === index)
-                  : undefined
-              }
-              master={
-                !masterMode && masterFrame && masterPage
-                  ? { frame: masterFrame, page: masterPage }
-                  : undefined
-              }
+              document={canvasDocument}
+              activeFrameId={canvasPage.id}
+              onCreateNode={createCanvasNode}
+              onDeleteNodes={cutV3Clipboard}
+              onTextChange={changeCanvasText}
+              onClipboard={canvasClipboard}
               activateFrame={frameId => {
                 c.setPageId(frameId);
               }}
-              replace={(next, base, track = true) => {
-                if (masterMode && masterFrame) {
-                  c.transactV3(document => {
-                    const temporary = {
-                      ...document,
-                      masterLayout: { frameId: null, placements: {} },
-                    };
-                    const legacy: StudioDocument = {
-                      ...value,
-                      pages: [next],
-                      posts: [],
-                    };
-                    const converted = legacyDocumentToV3(legacy, temporary);
-                    const replacementIds = new Set([masterFrame.id]);
-                    let changed = true;
-                    while (changed) {
-                      changed = false;
-                      for (const node of document.nodes)
-                        if (
-                          node.parentFrameId &&
-                          replacementIds.has(node.parentFrameId) &&
-                          !replacementIds.has(node.id)
-                        ) {
-                          replacementIds.add(node.id);
-                          changed = true;
-                        }
-                    }
-                    document.nodes = [
-                      ...document.nodes.filter(node => !replacementIds.has(node.id)),
-                      ...converted.nodes.filter(
-                        node => node.id === masterFrame.id || node.parentFrameId === masterFrame.id
-                      ),
-                    ];
-                    document.masterLayout.frameId = masterFrame.id;
-                    document.masterLayout.placements = Object.fromEntries(
-                      Object.entries(document.masterLayout.placements).filter(([nodeId]) =>
-                        document.nodes.some(node => node.id === nodeId)
-                      )
-                    );
-                  }, track);
-                  return;
-                }
-                c.transact(d => {
-                  const index = d.pages.findIndex(p => p.id === next.id);
-                  if (index < 0) return;
-                  const before = structuredClone(d),
-                    after = structuredClone(d);
-                  before.pages[index] = base;
-                  after.pages[index] = next;
-                  const merged = mergeStudio(d, diffStudio(before, after));
-                  if (merged.conflicts.length)
-                    throw new Error('Canvas changed during this gesture. Please retry the change.');
-                  Object.assign(d, merged.value);
-                }, track);
-              }}
-              commit={c.commit}
-              undo={c.undo}
-              redo={c.redo}
-              page={canvasPage}
-              pages={value.pages}
-              v3Document={c.v3Value ?? undefined}
-              selectionState={selectionState}
-              onSelectionChange={setSelectionState}
-              onArrangeSelection={arrangeSelection}
-              onAlignSelection={alignSelection}
-              onDistributeSelection={distributeSelection}
               applyCanvasChanges={applyCanvasChanges}
-              pasteV3Clipboard={pasteV3Clipboard}
-              cutV3Clipboard={cutV3Clipboard}
+              onNodeDragMove={(_nodeId, ids, x, y) => {
+                overElementsTarget(ids, x, y);
+              }}
+              onNodeDragEnd={(_nodeId, ids, x, y) => dropCanvasSelectionOnElements(ids, x, y)}
+              onElementSetDrop={(setId, point) => {
+                if (!disabled && c.elementSets.some(set => set.id === setId))
+                  void c.insertElementSet(setId, point);
+              }}
               assets={c.assets}
               selected={c.selected}
-              select={c.select}
               selectExact={c.selectExact}
-              patch={c.patch}
-              move={c.move}
-              transform={c.transform}
               editable={!disabled}
               peers={c.peers}
               cursor={(x, y) => c.cursor(canvasPage.id, x, y, c.selected)}
               guides={c.guides}
               onCanvasStateChange={setCanvasState}
-              inspector={!masterMode && active ? props : undefined}
-              tableEditorRequest={tableEditorRequest}
-              removeTable={id => {
-                c.removeElement(page.id, id);
-                c.select([]);
+              onCropCommit={(nodeId, state) =>
+                c.transactV3(document => {
+                  const node = document.nodes.find(candidate => candidate.id === nodeId);
+                  if (node?.type !== 'media' || node.locked || !state) return;
+                  node.transform = { ...state.frame };
+                  const crop = state.crop;
+                  const fullSource =
+                    Math.abs(crop.x) < 0.01 &&
+                    Math.abs(crop.y) < 0.01 &&
+                    Math.abs(crop.width - crop.naturalWidth) < 0.01 &&
+                    Math.abs(crop.height - crop.naturalHeight) < 0.01;
+                  node.crop = fullSource ? null : { ...crop };
+                  node.fit = state.fit;
+                  node.focus = { ...state.focus };
+                })
+              }
+              cropLabels={{
+                crop: tr('cropMedia'),
+                apply: tr('applyCrop'),
+                cancel: tr('cancelCrop'),
+                reset: tr('resetCrop'),
+                zoom: tr('cropZoom'),
+                loading: tr('cropLoading'),
+                failed: tr('cropFailed'),
+              }}
+              inspector={!masterMode && activeNode ? props : undefined}
+              inspectorLabels={{
+                title: tr('properties'),
+                collapse: tr('collapseProperties'),
+                expand: tr('expandProperties'),
+                move: tr('moveProperties'),
               }}
               registerTextEditor={e => {
                 textEditor.current = e;
               }}
+              contextToolbar={contextToolbar}
+              contextToolbarLabel={tr('elementActions')}
             />
           </Suspense>
         </div>

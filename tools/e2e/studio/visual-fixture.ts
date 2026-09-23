@@ -138,7 +138,7 @@ const persistedDocument = legacyDocumentToV3(document);
 await executeZeroTransaction(createZeroContext(actor), async tx => {
   await tx.dbTransaction.query('insert into "user"(id) values($1) on conflict do nothing', [actor]);
   await tx.dbTransaction.query(
-    'insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,3,0,0)',
+    'insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,5,0,0)',
     [projectId, actor, document.title, document.kind]
   );
   await tx.dbTransaction.query(

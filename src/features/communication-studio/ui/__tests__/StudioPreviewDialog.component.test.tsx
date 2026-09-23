@@ -7,16 +7,15 @@ import { getStudioRootFramesInLayerOrder } from '../../logic/frame-order';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import type { StudioDocumentV3 } from '../../logic/document-v3';
 
-vi.mock('../StudioCanvas', () => ({
-  default: (props: {
-    page: { id: string };
-    dimensions: readonly [number, number];
-    fit: string;
-  }) => (
+vi.mock('../KonvaStudioCanvas', () => ({
+  default: (props: { document: StudioDocumentV3; activeFrameId: string; fit: string }) => (
     <div
       data-testid="preview-canvas"
-      data-page-id={props.page.id}
-      data-dimensions={props.dimensions.join('x')}
+      data-page-id={props.activeFrameId}
+      data-dimensions={(() => {
+        const frame = props.document.nodes.find(node => node.id === props.activeFrameId);
+        return frame ? `${frame.transform.width}x${frame.transform.height}` : '';
+      })()}
       data-fit={props.fit}
     />
   ),
@@ -79,6 +78,13 @@ describe('Studio fullscreen preview', () => {
     );
     expect(screen.getByTestId('preview-canvas').getAttribute('data-dimensions')).toBe('1440x900');
     expect(screen.getByTestId('preview-canvas').getAttribute('data-fit')).toBe('contain');
+
+    const previousButton = screen.getByRole('button', { name: 'previousFrame' });
+    expect(screen.getByTestId('preview-advance-surface').contains(previousButton)).toBe(false);
+    fireEvent.click(previousButton);
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[1].id);
+    fireEvent.click(screen.getByRole('button', { name: 'nextFrame' }));
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[3].id);
 
     fireEvent.keyDown(dialog, { key: 'ArrowRight' });
     expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[4].id);

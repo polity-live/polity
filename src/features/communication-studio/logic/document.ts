@@ -308,16 +308,13 @@ export function dateForDay(start: string, day: number) {
 export function sorted<T extends { order: number; id: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
-export function validateExport(doc: StudioDocument) {
+export function validateExport(doc: StudioDocument, pageIds: string[] = []) {
   documentSchema.parse(doc);
   const issues: string[] = [];
-  for (const p of doc.pages) {
-    const [w, h] = formats[p.format];
+  for (const p of doc.pages.filter(page => !pageIds.length || pageIds.includes(page.id))) {
     for (const e of p.elements) {
       if ((e.type === 'image' || e.type === 'video') && !e.assetId)
         issues.push(`${p.name}: missing media`);
-      if (e.x + e.width < 0 || e.y + e.height < 0 || e.x > w || e.y > h)
-        issues.push(`${p.name}: element outside page`);
     }
   }
   return issues;

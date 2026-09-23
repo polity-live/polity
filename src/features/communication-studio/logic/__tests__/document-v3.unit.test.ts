@@ -155,7 +155,7 @@ describe('StudioDocumentV3', () => {
       files: {},
     };
     const document = legacyDocumentToV3(legacy);
-    const root = document.nodes.find(node => node.excalidraw?.customData != null);
+    const root = document.nodes.find(node => node.type === 'shape' && node.parentFrameId === null);
     expect(root?.parentFrameId).toBeNull();
     const projected = v3DocumentToLegacy(document);
     expect(projected.pages[0].canvas?.elements ?? []).toEqual([]);
@@ -381,7 +381,7 @@ describe('StudioDocumentV3', () => {
     legacy.pages[0].transition = 'fade';
     legacy.pages[0].elements[0].animation = 'fade';
     const v3 = legacyDocumentToV3(legacy);
-    expect(v3.schemaVersion).toBe(4);
+    expect(v3.schemaVersion).toBe(5);
     expect(v3.nodes.filter(node => node.type === 'frame')).toHaveLength(5);
     expect(v3.deliverables[0].frameIds).toEqual(legacy.posts[0].pageIds);
     const restored = v3DocumentToLegacy(v3);

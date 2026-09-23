@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   assets: vi.fn(),
   createSelection: vi.fn(),
   download: vi.fn(),
+  exportStatus: vi.fn(),
   export: vi.fn(),
   duplicate: vi.fn(),
   beginUpload: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock('../service', () => ({
   assetUrls: mocks.assets,
   createProjectFromSelection: mocks.createSelection,
   downloadExport: mocks.download,
+  exportStatus: mocks.exportStatus,
   queueExport: mocks.export,
   duplicateProject: mocks.duplicate,
   beginUpload: mocks.beginUpload,
@@ -71,6 +73,7 @@ beforeEach(() => {
   for (const handler of [
     mocks.createSelection,
     mocks.download,
+    mocks.exportStatus,
     mocks.export,
     mocks.duplicate,
     mocks.beginUpload,
@@ -107,6 +110,7 @@ describe('Studio HTTP authorization and transactional operations', () => {
       ['load', mocks.load, {}, ['actor', id]],
       ['duplicate', mocks.duplicate, {}, ['actor', id]],
       ['download', mocks.download, {}, ['actor', id]],
+      ['exportStatus', mocks.exportStatus, {}, ['actor', id]],
       [
         'export',
         mocks.export,

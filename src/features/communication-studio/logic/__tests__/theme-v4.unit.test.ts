@@ -17,7 +17,7 @@ describe('Studio V4 theme snapshots', () => {
     const dark = createThemeSnapshot(BUILTIN_THEMES[1], 'dark');
     applyThemeSnapshot(document, dark);
 
-    expect(document.schemaVersion).toBe(4);
+    expect(document.schemaVersion).toBe(5);
     expect(document.theme.mode).toBe('dark');
     expect(text.style.fill).toBe('#123456');
     expect(paletteColor(dark.dark, 'primary')).toBe(dark.dark.primary);

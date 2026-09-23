@@ -9,9 +9,32 @@ import {
   type StudioDocumentV3,
   type StudioNode,
 } from './document-v3';
-import { moveByWorldDelta, selectionUnits, unionBounds, worldBounds } from './selection-geometry';
+import {
+  arrangementReferenceBounds,
+  arrangementUnits,
+  moveByWorldDelta,
+} from './selection-geometry';
 
 const nodeIds = z.array(z.string().uuid()).min(1).max(1_000);
+const viewBoundsSchema = z.object({
+  left: z.number().finite(),
+  top: z.number().finite(),
+  right: z.number().finite(),
+  bottom: z.number().finite(),
+});
+
+function regenerateNestedIds(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(regenerateNestedIds);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nested]) => [
+      key,
+      key === 'id' && typeof nested === 'string'
+        ? crypto.randomUUID()
+        : regenerateNestedIds(nested),
+    ])
+  );
+}
 
 export const studioCommandV3Schema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('createNodes'), nodes: z.array(studioNodeSchema).min(1).max(1_000) }),
@@ -73,13 +96,16 @@ export const studioCommandV3Schema = z.discriminatedUnion('type', [
     type: z.literal('alignNodes'),
     nodeIds,
     direction: z.enum(['left', 'center', 'right', 'top', 'middle', 'bottom']),
-    reference: z.enum(['selection', 'parent']).default('selection'),
+    reference: z.enum(['selection', 'frame', 'view', 'parent']).default('selection'),
+    viewBounds: viewBoundsSchema.optional(),
     groupDepth: z.number().int().min(0).max(31).default(0),
   }),
   z.object({
     type: z.literal('distributeNodes'),
-    nodeIds: z.array(z.string().uuid()).min(3).max(1_000),
+    nodeIds: z.array(z.string().uuid()).min(2).max(1_000),
     axis: z.enum(['horizontal', 'vertical']),
+    reference: z.enum(['selection', 'frame', 'view']).default('selection'),
+    viewBounds: viewBoundsSchema.optional(),
     groupDepth: z.number().int().min(0).max(31).default(0),
   }),
   z.object({
@@ -375,13 +401,6 @@ export function applyStudioCommandV3(
           for (const child of descendantsOf(document, node.id)) chosen.add(child.id);
       const sources = document.nodes.filter(node => chosen.has(node.id));
       const idMap = new Map(sources.map(node => [node.id, crypto.randomUUID()]));
-      const sceneIdMap = new Map(
-        sources.flatMap(node =>
-          node.excalidraw && typeof node.excalidraw.id === 'string'
-            ? [[node.excalidraw.id, crypto.randomUUID()] as const]
-            : []
-        )
-      );
       const groupMap = new Map<string, string>();
       const clones = sources.map(node => {
         const copy = structuredClone(node);
@@ -401,20 +420,19 @@ export function applyStudioCommandV3(
           groupMap.set(id, mapped);
           return mapped;
         });
-        if (copy.excalidraw) {
-          const raw = copy.excalidraw as Record<string, unknown>;
-          raw.id = sceneIdMap.get(String(raw.id)) ?? crypto.randomUUID();
-          if (typeof raw.frameId === 'string')
-            raw.frameId = sceneIdMap.get(raw.frameId) ?? raw.frameId;
-          raw.groupIds = copy.groupIds;
-          raw.customData = {
-            ...(raw.customData &&
-            typeof raw.customData === 'object' &&
-            !Array.isArray(raw.customData)
-              ? raw.customData
-              : {}),
-            polityNode: copy.id,
-          };
+        if (copy.type === 'richText')
+          copy.content = regenerateNestedIds(copy.content) as typeof copy.content;
+        if (copy.type === 'table') copy.data = regenerateNestedIds(copy.data) as typeof copy.data;
+        if (copy.type === 'chart')
+          copy.data.series = copy.data.series.map(series => ({
+            ...series,
+            id: crypto.randomUUID(),
+          }));
+        if (copy.type === 'shape') {
+          copy.startBindingId = copy.startBindingId
+            ? (idMap.get(copy.startBindingId) ?? null)
+            : null;
+          copy.endBindingId = copy.endBindingId ? (idMap.get(copy.endBindingId) ?? null) : null;
         }
         return copy;
       });
@@ -468,17 +486,11 @@ export function applyStudioCommandV3(
     case 'alignNodes': {
       const nodes = selectedNodes(document, command.nodeIds);
       assertEditable(nodes);
-      const units = selectionUnits(document, command.nodeIds, command.groupDepth);
+      const units = arrangementUnits(document, command.nodeIds, command.groupDepth);
       if (!units.length) break;
-      let bounds = unionBounds(units.map(unit => unit.bounds));
-      if (command.reference === 'parent') {
-        const parents = new Set(units.map(unit => unit.parentFrameId));
-        if (parents.size !== 1 || !units[0].parentFrameId)
-          throw new Error('Parent alignment requires a shared parent frame');
-        const parent = document.nodes.find(node => node.id === units[0].parentFrameId);
-        if (parent?.type !== 'frame') throw new Error('Parent frame not found');
-        bounds = worldBounds(document, parent);
-      }
+      const reference = command.reference === 'parent' ? 'frame' : command.reference;
+      const bounds = arrangementReferenceBounds(document, units, reference, command.viewBounds);
+      if (!bounds) throw new Error('Alignment reference is unavailable for this selection');
       for (const unit of units) {
         const box = unit.bounds;
         const dx =
@@ -507,15 +519,21 @@ export function applyStudioCommandV3(
     case 'distributeNodes': {
       const nodes = selectedNodes(document, command.nodeIds);
       assertEditable(nodes);
-      const units = selectionUnits(document, command.nodeIds, command.groupDepth);
-      if (units.length < 3) throw new Error('Select at least three independent objects');
+      const units = arrangementUnits(document, command.nodeIds, command.groupDepth);
+      if (units.length < (command.reference === 'selection' ? 3 : 2))
+        throw new Error('Select more independent objects to distribute');
+      const bounds = arrangementReferenceBounds(
+        document,
+        units,
+        command.reference,
+        command.viewBounds
+      );
+      if (!bounds) throw new Error('Distribution reference is unavailable for this selection');
       const coordinate = command.axis === 'horizontal' ? 'left' : 'top';
       const far = command.axis === 'horizontal' ? 'right' : 'bottom';
       const ordered = [...units].sort((a, b) => a.bounds[coordinate] - b.bounds[coordinate]);
-      const start = ordered[0].bounds[coordinate];
-      const last = ordered.at(-1);
-      if (!last) throw new Error('At least three nodes are required');
-      const end = last.bounds[far];
+      const start = bounds[coordinate];
+      const end = bounds[far];
       const occupied = ordered.reduce(
         (sum, unit) => sum + unit.bounds[far] - unit.bounds[coordinate],
         0

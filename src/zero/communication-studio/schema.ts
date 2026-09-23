@@ -35,7 +35,7 @@ export const studioProjectSchema = z.object({
   kind: studioDocumentV3Schema.shape.kind,
   is_template: z.boolean(),
   version: z.number().int(),
-  document_schema_version: z.literal(4),
+  document_schema_version: z.literal(5),
   created_at: z.number(),
   updated_at: z.number(),
 });

@@ -22,7 +22,7 @@ describe('Studio Zero visibility projections', () => {
       studioQueries.list.fn({ args: { groupId }, ctx: { userID: 'alice', email: '' } });
       expect(harness.lastQuery('studio_project').calls).toEqual(
         expect.arrayContaining([
-          ['where', 'document_schema_version', 4],
+          ['where', 'document_schema_version', 5],
           ['where', 'group_id', groupId === null ? 'IS' : '=', groupId],
           ['orderBy', 'updated_at', 'desc'],
           ['limit', 100],
@@ -82,7 +82,7 @@ describe('Studio Zero visibility projections', () => {
     expect(harness.lastQuery('studio_export.project').calls).toContainEqual([
       'where',
       'document_schema_version',
-      4,
+      5,
     ]);
     expect(rules).toContainEqual([
       'and',
@@ -106,7 +106,7 @@ describe('Studio Zero visibility projections', () => {
     expect(harness.lastQuery('studio_state.project').calls).toContainEqual([
       'where',
       'document_schema_version',
-      4,
+      5,
     ]);
   });
 });

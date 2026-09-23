@@ -1,7 +1,7 @@
 import { useZero } from '@rocicorp/zero/react';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';
 import { useStudioApi } from '@/zero/communication-studio/useStudioApi';
@@ -15,7 +15,7 @@ import {
   type StudioPage,
 } from '../logic/document';
 import { applyProposal, type StudioProposal } from '../logic/ai-proposal';
-import { addPage, patchPage, patchElement, patchPost } from '../logic/collaboration';
+import { patchPage, patchElement } from '../logic/collaboration';
 import { resizePage } from '../logic/layout';
 import {
   createFrameNode,
@@ -25,6 +25,8 @@ import {
 } from '../logic/document-v3';
 import { applyStudioCommandV3, type StudioCommandV3 } from '../logic/commands-v3';
 import { createTableData, type TableDimensions } from '../logic/table-operations';
+import { patchStudioNode } from '../logic/patch-studio-node';
+import { createStudioNodeFromElement } from '../logic/create-studio-node';
 import { BUILTIN_THEMES } from '@/features/shared/appearance-theme';
 import {
   activePalette,
@@ -40,6 +42,8 @@ import {
   instantiateElementSet,
   type ElementSetListItem,
 } from '../logic/element-library';
+import { worldToLocalPoint } from '../logic/selection-geometry';
+import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 
 const presetByFormat: Record<StudioPage['format'], FramePresetId> = {
   feed: 'portrait',
@@ -48,6 +52,24 @@ const presetByFormat: Record<StudioPage['format'], FramePresetId> = {
   widescreen: 'widescreen',
   standard: 'standard',
 };
+
+interface StudioExportJob {
+  id: string;
+  format: string;
+  status: string;
+  progress: number;
+  error?: string | null;
+}
+
+function downloadStudioExport(id: string) {
+  const link = document.createElement('a');
+  link.href = `/api/studio/exports/${encodeURIComponent(id)}`;
+  link.download = '';
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
 
 function runV3Command(document: StudioDocumentV3, command: StudioCommandV3) {
   Object.assign(document, applyStudioCommandV3(document, command));
@@ -116,10 +138,110 @@ export function useStudioController(
     [elementSets, setElementSets] = useState<ElementSetListItem[]>([]),
     [guides, setGuides] = useState(true),
     [format, setFormat] = useState('png'),
-    [scope, setScope] = useState('post'),
-    [photoEdit, setPhotoEdit] = useState<string | undefined>();
+    [exportFrameSelection, setExportFrameSelection] = useState<
+      { kind: 'all' } | { kind: 'explicit'; ids: string[] }
+    >({ kind: 'all' }),
+    [photoEdit, setPhotoEdit] = useState<string | undefined>(),
+    [exportPreparing, setExportPreparing] = useState(false),
+    [exportFailure, setExportFailure] = useState(''),
+    [exportStatusError, setExportStatusError] = useState(false),
+    [trackedExports, setTrackedExports] = useState<Record<string, StudioExportJob>>({});
+  const exportRequest = useRef(studioApi.request);
+  exportRequest.current = studioApi.request;
+  const autoDownloadIds = useRef(new Set<string>());
+  const activeExportIds = Object.values(trackedExports)
+    .filter(job => job.status === 'queued' || job.status === 'running')
+    .map(job => job.id)
+    .sort()
+    .join(',');
+  const exportJobs = useMemo<StudioExportJob[]>(() => {
+    const tracked = Object.values(trackedExports).reverse();
+    return [
+      ...tracked,
+      ...exports
+        .filter(job => !trackedExports[job.id])
+        .map(job => ({
+          id: job.id,
+          format: job.format,
+          status: job.status,
+          progress: job.progress,
+          error: job.error,
+        })),
+    ];
+  }, [exports, trackedExports]);
+  useEffect(() => {
+    if (!activeExportIds) return;
+    const ids = activeExportIds.split(',');
+    let disposed = false;
+    let polling = false;
+    const poll = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        const results = await Promise.allSettled(
+          ids.map(id => exportRequest.current<StudioExportJob>('exportStatus', { id }))
+        );
+        if (disposed) return;
+        const updates = results.flatMap(result =>
+          result.status === 'fulfilled' ? [result.value] : []
+        );
+        if (updates.length)
+          setTrackedExports(current => ({
+            ...current,
+            ...Object.fromEntries(updates.map(job => [job.id, job])),
+          }));
+        setExportStatusError(results.some(result => result.status === 'rejected'));
+      } finally {
+        polling = false;
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 1500);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+    };
+  }, [activeExportIds]);
+  useEffect(() => {
+    for (const job of Object.values(trackedExports)) {
+      if (job.status === 'completed' && autoDownloadIds.current.delete(job.id))
+        downloadStudioExport(job.id);
+      if (job.status === 'failed' || job.status === 'cancelled')
+        autoDownloadIds.current.delete(job.id);
+    }
+  }, [trackedExports]);
   const pages = editor.value?.pages ?? [],
     posts = editor.value?.posts ?? [];
+  const exportFrames = editor.v3Value ? getStudioRootFramesInLayerOrder(editor.v3Value) : [];
+  const exportFrameIds = exportFrames
+    .filter(
+      frame => exportFrameSelection.kind === 'all' || exportFrameSelection.ids.includes(frame.id)
+    )
+    .map(frame => frame.id);
+  const toggleExportFrame = (frameId: string) => {
+    setExportFrameSelection(current => {
+      const allIds = exportFrames.map(frame => frame.id);
+      const ids = current.kind === 'all' ? allIds : current.ids;
+      return {
+        kind: 'explicit',
+        ids: ids.includes(frameId) ? ids.filter(id => id !== frameId) : [...ids, frameId],
+      };
+    });
+  };
+  const markSelectedExportFrame = () => {
+    const frameId = selected[0];
+    if (!exportFrames.some(frame => frame.id === frameId)) return;
+    setExportFrameSelection(current => ({
+      kind: 'explicit',
+      ids: [
+        ...new Set([
+          ...(current.kind === 'all' ? exportFrames.map(frame => frame.id) : current.ids),
+          frameId,
+        ]),
+      ],
+    }));
+  };
+  useEffect(() => setExportFrameSelection({ kind: 'all' }), [id]);
   const page = pages.find(p => p.id === pageId) ?? pages[0];
   const post = posts.find(p => page && p.pageIds.includes(page.id));
   useEffect(() => {
@@ -256,7 +378,10 @@ export function useStudioController(
     });
   };
   const patch = (id: string, change: Partial<StudioElement>) => {
-    if (page) editor.transact(d => patchElement(d, page.id, id, change));
+    editor.transactV3(document => {
+      const node = document.nodes.find(candidate => candidate.id === id);
+      if (node) patchStudioNode(node, change);
+    });
   };
   const transform = (changes: { id: string; patch: Partial<StudioElement> }[]) => {
     if (page)
@@ -273,7 +398,14 @@ export function useStudioController(
       height: type === 'text' ? 180 : 300,
       width: type === 'text' ? 700 : 300,
     });
-    editor.insertElement(page.id, e);
+    editor.transactV3(document => {
+      const zIndex =
+        Math.max(
+          -1,
+          ...document.nodes.filter(node => node.parentFrameId === page.id).map(node => node.zIndex)
+        ) + 1;
+      document.nodes.push(createStudioNodeFromElement(e, page.id, zIndex));
+    });
     setSelected([e.id]);
   };
   const addTable = (dimensions: TableDimensions) => {
@@ -285,13 +417,21 @@ export function useStudioController(
       width: Math.max(300, dimensions.colCount * 150),
       table: createTableData(dimensions),
     });
-    editor.insertElement(page.id, e);
+    editor.transactV3(document => {
+      const zIndex =
+        Math.max(
+          -1,
+          ...document.nodes.filter(node => node.parentFrameId === page.id).map(node => node.zIndex)
+        ) + 1;
+      document.nodes.push(createStudioNodeFromElement(e, page.id, zIndex));
+    });
     setSelected([e.id]);
     return e.id;
   };
   const upload = (file: File) =>
     run(async () => {
-      if (!id || !page) return;
+      if (!id) return;
+      if (!exportFrameIds.length) throw new Error('Select at least one frame to export.');
       const asset = await studioApi.upload(id, file, workspaceId);
       const e = element(asset.mime.startsWith('video') ? 'video' : 'image', {
         assetId: asset.id,
@@ -301,42 +441,66 @@ export function useStudioController(
         height: 650,
         order: page.elements.length + 1,
       });
-      editor.insertElement(page.id, e);
+      editor.transactV3(document => {
+        const zIndex =
+          Math.max(
+            -1,
+            ...document.nodes
+              .filter(node => node.parentFrameId === page.id)
+              .map(node => node.zIndex)
+          ) + 1;
+        document.nodes.push(createStudioNodeFromElement(e, page.id, zIndex));
+      });
       await editor.refreshAssets();
       setSelected([e.id]);
     });
   const duplicatePage = () => {
     if (!page || pages.length >= 300 || (post && post.pageIds.length >= 30)) return;
-    const p = {
-      ...structuredClone(page),
-      id: crypto.randomUUID(),
-      name: page.name.slice(0, 152) + ' · Kopie',
-      order: Math.max(...pages.map(p => p.order)) + 1,
-      elements: page.elements.map(e => ({ ...e, id: crypto.randomUUID(), group: null })),
-    };
     if (
       post?.kind === 'video' &&
       pages
         .filter(page => post.pageIds.includes(page.id))
-        .reduce((n, page) => n + page.duration, p.duration) > 60
+        .reduce((n, candidate) => n + candidate.duration, page.duration) > 60
     )
       return;
-    editor.transact(d => {
-      addPage(d, p);
-      if (post) patchPost(d, post.id, { pageIds: [...post.pageIds, p.id] });
+    let copyId = '';
+    editor.transactV3(document => {
+      const existing = new Set(document.nodes.map(node => node.id));
+      runV3Command(document, { type: 'duplicateNodes', nodeIds: [page.id] });
+      const copy = document.nodes.find(
+        node => !existing.has(node.id) && node.type === 'frame' && node.parentFrameId === null
+      );
+      if (!copy || copy.type !== 'frame') throw new Error('Frame copy was not created');
+      copyId = copy.id;
+      copy.name = page.name.slice(0, 152) + ' · Kopie';
+      copy.zIndex =
+        Math.max(
+          -1,
+          ...document.nodes
+            .filter(
+              node => node.type === 'frame' && node.parentFrameId === null && node.id !== copy.id
+            )
+            .map(node => node.zIndex)
+        ) + 1;
+      const deliverable = post
+        ? document.deliverables.find(item => item.id === post.id)
+        : undefined;
+      if (deliverable) {
+        const index = deliverable.frameIds.indexOf(page.id);
+        deliverable.frameIds.splice(
+          index < 0 ? deliverable.frameIds.length : index + 1,
+          0,
+          copy.id
+        );
+      }
     });
-    setPageId(p.id);
+    if (copyId) setPageId(copyId);
   };
   const removePage = () => {
     if (!page || pages.length === 1) return;
-    editor.transact(d => {
-      d.pages = d.pages.filter(p => p.id !== page.id);
-      for (const post of posts) {
-        const pageIds = post.pageIds.filter(p => p !== page.id);
-        if (pageIds.length) patchPost(d, post.id, { pageIds });
-        else d.posts = d.posts.filter(p => p.id !== post.id);
-      }
-    });
+    editor.transactV3(document =>
+      runV3Command(document, { type: 'deleteNodes', nodeIds: [page.id] })
+    );
     setPageId('');
   };
   const insertFrame = (format: StudioPage['format'] = page?.format ?? 'feed') => {
@@ -463,20 +627,39 @@ export function useStudioController(
     });
     if (firstFrameId) setPageId(firstFrameId);
   };
-  const exportMedia = () =>
-    run(async () => {
+  const exportMedia = async () => {
+    if (exportPreparing) return;
+    setExportPreparing(true);
+    setExportFailure('');
+    setFailure('');
+    setBusy(true);
+    try {
       if (!id || !page) return;
       if (workspaceId)
         throw new Error(
           'Return to canonical content to export a committed project. Drafts can be downloaded from the canvas.'
         );
-      await studioApi.request('export', {
+      const result = await studioApi.request<{ id: string }>('export', {
         projectId: id,
         format,
-        pageIds: scope === 'all' ? [] : scope === 'page' ? [page.id] : (post?.pageIds ?? [page.id]),
+        pageIds: exportFrameIds,
         revision: await editor.commit(),
       });
-    });
+      autoDownloadIds.current.add(result.id);
+      setTrackedExports(current => ({
+        ...current,
+        [result.id]: { id: result.id, format, status: 'queued', progress: 0, error: null },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setExportFailure(message);
+      setFailure(message);
+      studioApi.notifyError(error);
+    } finally {
+      setExportPreparing(false);
+      setBusy(false);
+    }
+  };
   const applyTheme = (theme: StudioThemeSnapshot) => {
     editor.transactV3(document => applyThemeSnapshot(document, theme));
     setThemeId(theme.themeId);
@@ -497,15 +680,18 @@ export function useStudioController(
           applyTextStyleToNode(node, style, palette);
     });
   };
-  const saveSelectionToElements = () =>
+  const saveSelectionToElements = (selectedIds: string[] = selected) =>
     run(async () => {
-      if (!id || !selected.length) throw new Error('Select elements first');
+      if (!id || !selectedIds.length) throw new Error('Select elements first');
+      if (workspaceId) throw new Error('Return to canonical content to save Elements');
+      await editor.commit();
       await studioApi.request('elementSetCreate', {
         projectId: id,
         groupId,
-        selectedIds: selected,
+        selectedIds,
       });
       await refreshElementSets();
+      return true;
     });
   const insertElementSet = (
     setId: string,
@@ -519,13 +705,24 @@ export function useStudioController(
         snapshot: unknown;
         assetIds: Record<string, string>;
       }>('elementSetInstantiate', { setId, projectId: id });
+      const document = editor.v3Value;
+      if (!document) throw new Error('Studio not loaded');
+      const targetFrameId =
+        point.targetFrameId === undefined ? (page?.id ?? null) : point.targetFrameId;
+      const localPoint = worldToLocalPoint(document, targetFrameId, point);
       const created = instantiateElementSet(elementSetSnapshotSchema.parse(result.snapshot), {
         setId: result.setId,
         revisionId: result.revisionId,
-        targetFrameId: point.targetFrameId ?? page?.id ?? null,
-        x: point.x,
-        y: point.y,
-        zIndex: Math.max(0, ...(editor.v3Value?.nodes.map(node => node.zIndex) ?? [0])) + 1,
+        targetFrameId,
+        x: localPoint.x,
+        y: localPoint.y,
+        zIndex:
+          Math.max(
+            -1,
+            ...document.nodes
+              .filter(node => node.parentFrameId === targetFrameId)
+              .map(node => node.zIndex)
+          ) + 1,
         assetIds: result.assetIds,
       });
       editor.transactV3(document => {
@@ -538,10 +735,12 @@ export function useStudioController(
   const publishSelectedElementChanges = () =>
     run(async () => {
       if (!id || !editor.v3Value) return;
+      if (workspaceId) throw new Error('Return to canonical content to publish Elements');
       const instance = editor.v3Value.componentInstances.find(item =>
         Object.values(item.sourceToInstance).some(nodeId => selected.includes(nodeId))
       );
       if (!instance) throw new Error('Select a linked Elements instance first');
+      await editor.commit();
       const result = await studioApi.request<{ revisionId: string }>('elementSetPublish', {
         projectId: id,
         instanceId: instance.id,
@@ -571,7 +770,11 @@ export function useStudioController(
     identity,
     ...editor,
     projects,
-    exports,
+    exports: exportJobs,
+    exportPreparing,
+    exportFailure,
+    exportStatusError,
+    downloadExport: downloadStudioExport,
     isLoading,
     id,
     groupId,
@@ -616,8 +819,11 @@ export function useStudioController(
     setGuides,
     format,
     setFormat,
-    scope,
-    setScope,
+    exportFrames,
+    exportFrameIds,
+    toggleExportFrame,
+    markAllExportFrames: () => setExportFrameSelection({ kind: 'all' }),
+    markSelectedExportFrame,
     photoEdit,
     setPhotoEdit,
     run,

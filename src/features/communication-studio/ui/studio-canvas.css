@@ -1,0 +1,132 @@
+.polity-canvas {
+  height: calc(
+    100dvh - var(--app-shell-mobile-top-offset, 0rem) -
+      var(--app-shell-mobile-bottom-offset, 0rem) - var(--studio-toolbar-height, 2.5rem) -
+      var(--studio-status-height, 2.5rem)
+  );
+  min-height: 320px;
+  position: relative;
+}
+
+.polity-canvas-properties {
+  position: absolute;
+  z-index: 55;
+  width: min(22rem, calc(100% - 2rem));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--popover) 96%, transparent);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-panel, 0 12px 32px rgb(0 0 0 / 0.2));
+  backdrop-filter: blur(10px);
+}
+
+.polity-canvas-context-toolbar {
+  position: absolute;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  max-width: calc(100% - 1rem);
+  min-height: 2.25rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-panel, 0 12px 32px rgb(0 0 0 / 0.2));
+}
+
+.polity-canvas-context-toolbar button {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.375rem;
+}
+
+.polity-canvas-context-toolbar button:hover:not(:disabled),
+.polity-canvas-context-toolbar button[aria-pressed='true'] {
+  background: var(--accent);
+}
+
+.polity-canvas-context-toolbar button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.polity-canvas-context-toolbar button:disabled {
+  opacity: 0.4;
+}
+
+.polity-canvas-context-toolbar .polity-canvas-context-separator {
+  width: 1px;
+  height: 1.25rem;
+  flex: none;
+  margin: 0 0.125rem;
+  background: var(--border);
+}
+
+.polity-canvas-properties[data-collapsed='true'] {
+  width: min(14rem, calc(100% - 2rem));
+}
+
+.polity-canvas-properties[data-expand-direction='up'] {
+  flex-direction: column-reverse;
+  transform: translateY(calc(-100% + 2.75rem));
+}
+
+.polity-canvas-properties-header {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.polity-canvas-properties-drag-handle {
+  display: flex;
+  min-width: 0;
+  min-height: 2.75rem;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  cursor: grab;
+  text-align: left;
+  font-weight: 600;
+  touch-action: none;
+  user-select: none;
+}
+
+.polity-canvas-properties-drag-handle:active {
+  cursor: grabbing;
+}
+
+.polity-canvas-properties-toggle {
+  display: grid;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  place-items: center;
+}
+
+.polity-canvas-properties-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 0.875rem;
+}
+
+.polity-canvas-properties-body[hidden] {
+  display: none;
+}
+
+[data-navigation-item-id='studio-elements'][data-studio-drop-active='true'],
+[data-studio-elements-drop-zone][data-studio-drop-active='true'] {
+  background: color-mix(in srgb, var(--primary) 16%, var(--background));
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

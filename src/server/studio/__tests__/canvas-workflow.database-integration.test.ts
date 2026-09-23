@@ -154,7 +154,7 @@ async function fixture() {
   projects.push(id);
   legacy.pages[0].canvas = { version: 1, elements: [], files: {} };
   const doc = legacyDocumentToV3(legacy);
-  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${owner},${group},${doc.title},${doc.kind},3,0,0)`;
+  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${owner},${group},${doc.title},${doc.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
   const session = await canvasCommand(owner, { action: 'session', projectId: id });
   const command = (actor: string, action: string, input: Record<string, unknown> = {}) =>
@@ -384,7 +384,8 @@ it('commits independent edits from ten distinct simultaneous editors and refuses
   );
   const [stored] =
     await sql`select document,content_revision from studio_state where project_id=${id}`;
-  expect(stored.document.nodes.filter((node: any) => node.excalidraw)).toHaveLength(10);
+  expect(stored.document.nodes.filter((node: any) => node.type === 'shape')).toHaveLength(10);
+  expect(stored.document.nodes.every((node: any) => !('excalidraw' in node))).toBe(true);
   expect(stored.content_revision).toBe(10);
   expect(elapsed.sort((a, b) => a - b)[9]).toBeLessThan(1000);
   await expect(

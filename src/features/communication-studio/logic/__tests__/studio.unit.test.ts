@@ -44,10 +44,10 @@ describe('studio document', () => {
     { x: 0, y: -1100 },
     { x: 1081, y: 0 },
     { x: 0, y: 1351 },
-  ])('reports objects completely outside the export canvas at %j', position => {
+  ])('allows objects completely outside the export canvas at %j', position => {
     const d = createDocument('single', 'Test');
     d.pages[0].elements = [element('rect', { width: 100, height: 100, ...position })];
-    expect(validateExport(d)).toEqual(['Test: element outside page']);
+    expect(validateExport(d)).toEqual([]);
   });
   it('keeps template-specific quote, invitation and explanation content editable with optional group branding', () => {
     for (const format of ['story', 'feed'] as const) {
@@ -128,6 +128,14 @@ describe('studio document', () => {
     const d = createDocument('single', 'Test');
     d.pages[0].elements.push(element('image'));
     expect(validateExport(d)).toContain('Test: missing media');
+  });
+  it('validates only selected frames for export', () => {
+    const d = createDocument('single', 'Test');
+    const second = makePage('Second', 'feed');
+    second.elements.push(element('image'));
+    d.pages.push(second);
+    expect(validateExport(d, [d.pages[0].id])).toEqual([]);
+    expect(validateExport(d, [second.id])).toContain('Second: missing media');
   });
   it('applies AI to a copy without changing manual source data', () => {
     const d = createDocument('single', 'Original');

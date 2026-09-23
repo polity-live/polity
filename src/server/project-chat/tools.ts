@@ -166,7 +166,7 @@ const namedStudioTools: ToolSet = Object.fromEntries([
     'studio_upload_media',
     tool({
       description:
-        'Request a local image or video upload. Requires the user to choose a file in Insert > Upload; cannot complete without that step.',
+        'Request a local image or video upload. Requires the user to choose a file with the editor’s Upload media button; cannot complete without that step.',
       inputSchema: z.object({}),
     }),
   ],
@@ -182,7 +182,7 @@ const namedStudioTools: ToolSet = Object.fromEntries([
     'studio_media',
     tool({
       description:
-        'List ready project media IDs usable with studio_element_add. Local uploads require the user to use Insert > Upload.',
+        'List ready project media IDs usable with studio_element_add. Local uploads require the user to use the editor’s Upload media button.',
       inputSchema: z.object({}),
     }),
   ],
@@ -575,7 +575,7 @@ export async function executeProjectTool(
   if (name === 'studio_upload_media')
     return {
       status: 'needs_user_action',
-      step: 'Open Insert > Upload and choose an image or video. Then use studio_media to read the uploaded asset ID.',
+      step: 'Click Upload media in the editor toolbar and choose an image or video. Then use studio_media to read the uploaded asset ID.',
     };
   if (name === 'studio_import_chat_media') {
     const { path } = z.object({ path: z.string().min(1).max(1000) }).parse(input);

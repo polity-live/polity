@@ -84,7 +84,7 @@ try {
       actor,
     ]);
     await tx.dbTransaction.query(
-      'insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,3,0,0)',
+      'insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,5,0,0)',
       [projectId, actor, value.title, value.kind]
     );
     await tx.dbTransaction.query(

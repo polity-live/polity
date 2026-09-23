@@ -4,7 +4,7 @@ import { zql } from '../schema';
 const requireQueryUser = (userID: string | undefined | null) =>
   userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
 function projects(userID: string) {
-  return zql.studio_project.where('document_schema_version', 4).where(({ or, and, cmp, exists }) =>
+  return zql.studio_project.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
     or(
       and(cmp('group_id', 'IS', null), cmp('owner_id', userID)),
       exists('group', g =>
@@ -37,7 +37,7 @@ export const studioQueries = {
         .where('id', args.operationId)
         .where('actor_id', requireQueryUser(userID))
         .whereExists('project', p =>
-          p.where('document_schema_version', 4).where(({ or, and, cmp, exists }) =>
+          p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
             or(
               and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
               exists('group', g =>
@@ -61,7 +61,7 @@ export const studioQueries = {
     zql.studio_state
       .where('project_id', args.id)
       .whereExists('project', p =>
-        p.where('document_schema_version', 4).where(({ or, and, cmp, exists }) =>
+        p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
           or(
             and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
             exists('group', g =>
@@ -96,7 +96,7 @@ export const studioQueries = {
     zql.studio_export
       .where('project_id', args.projectId)
       .whereExists('project', p =>
-        p.where('document_schema_version', 4).where(({ or, and, cmp, exists }) =>
+        p.where('document_schema_version', 5).where(({ or, and, cmp, exists }) =>
           or(
             and(cmp('group_id', 'IS', null), cmp('owner_id', requireQueryUser(userID))),
             exists('group', g =>
@@ -123,7 +123,7 @@ function canvasWorkspaces(actor: string, projectId: string) {
   return zql.canvas_proposal
     .where('project_id', projectId)
     .whereExists('project', p =>
-      p.where('document_schema_version', 4).whereExists('group', g =>
+      p.where('document_schema_version', 5).whereExists('group', g =>
         g.where(({ or, cmp, exists }) =>
           or(
             cmp('owner_id', actor),

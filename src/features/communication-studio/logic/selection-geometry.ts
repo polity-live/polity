@@ -74,6 +74,22 @@ export function worldMatrix(document: StudioDocumentV3, node: StudioNode): Matri
   return chain.reduce((matrix, item) => multiply(matrix, nodeMatrix(item)), identity);
 }
 
+export function worldToLocalPoint(
+  document: StudioDocumentV3,
+  parentFrameId: string | null,
+  value: Point
+): Point {
+  const parent = document.nodes.find(node => node.id === parentFrameId);
+  if (!parent) return value;
+  const [a, b, c, d, x, y] = worldMatrix(document, parent);
+  const determinant = a * d - b * c;
+  if (Math.abs(determinant) < 1e-8) throw new Error('Invalid parent transform');
+  return {
+    x: (d * (value.x - x) - c * (value.y - y)) / determinant,
+    y: (-b * (value.x - x) + a * (value.y - y)) / determinant,
+  };
+}
+
 export function worldBounds(document: StudioDocumentV3, node: StudioNode): Bounds {
   const matrix = worldMatrix(document, node);
   const { width, height } = node.transform;
@@ -136,6 +152,8 @@ export interface SelectionUnit {
   parentFrameId: string | null;
 }
 
+export type ArrangementReference = 'selection' | 'frame' | 'view';
+
 /** Group IDs are ordered outermost first. Each group moves as a single unit. */
 export function selectionUnits(
   document: StudioDocumentV3,
@@ -165,4 +183,44 @@ export function selectionUnits(
     bounds: unionBounds(members.map(node => worldBounds(document, node))),
     parentFrameId: members[0].parentFrameId,
   }));
+}
+
+/** A lone, fully selected group exposes its direct members to arrangement commands. */
+export function arrangementUnits(
+  document: StudioDocumentV3,
+  ids: string[],
+  groupDepth = 0
+): SelectionUnit[] {
+  const grouped = selectionUnits(document, ids, groupDepth);
+  if (grouped.length !== 1 || grouped[0].ids.length < 2) return grouped;
+  const groupId = document.nodes.find(node => node.id === grouped[0].ids[0])?.groupIds[groupDepth];
+  if (!groupId) return grouped;
+  const chosen = new Set(ids);
+  const members = document.nodes.filter(node => node.groupIds[groupDepth] === groupId);
+  if (members.length !== chosen.size || members.some(node => !chosen.has(node.id))) return grouped;
+  return selectionUnits(document, ids, groupDepth + 1);
+}
+
+export function arrangementReferenceBounds(
+  document: StudioDocumentV3,
+  units: SelectionUnit[],
+  reference: ArrangementReference,
+  viewBounds?: Bounds | null
+): Bounds | null {
+  if (!units.length) return null;
+  if (reference === 'selection') return unionBounds(units.map(unit => unit.bounds));
+  if (reference === 'frame') {
+    const parents = new Set(units.map(unit => unit.parentFrameId));
+    if (parents.size !== 1 || !units[0].parentFrameId) return null;
+    const frame = document.nodes.find(node => node.id === units[0].parentFrameId);
+    return frame?.type === 'frame' ? worldBounds(document, frame) : null;
+  }
+  if (
+    !viewBounds ||
+    !Object.values(viewBounds).every(Number.isFinite) ||
+    viewBounds.right <= viewBounds.left ||
+    viewBounds.bottom <= viewBounds.top
+  )
+    return null;
+  return viewBounds;
 }

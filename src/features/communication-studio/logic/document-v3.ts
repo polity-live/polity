@@ -7,7 +7,7 @@ const finite = z.number().finite();
 const color = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i);
 const uuid = z.string().uuid();
 
-export const STUDIO_DOCUMENT_SCHEMA_VERSION = 4 as const;
+export const STUDIO_DOCUMENT_SCHEMA_VERSION = 5 as const;
 
 export const framePresetRegistry = {
   square: { id: 'square', label: 'Square post', width: 1080, height: 1080, safeArea: 54 },
@@ -60,8 +60,6 @@ const nodeBaseShape = {
   componentRef: z.string().max(200).nullable().default(null),
   overrides: z.array(z.string().min(1).max(120)).max(100).default([]),
   animation: z.enum(['none', 'fade']).default('none'),
-  /** Durable Excalidraw payload for elements that use native Excalidraw interaction. */
-  excalidraw: z.record(z.string(), z.json()).nullable().default(null),
 };
 
 export const frameNodeSchema = z.object({
@@ -360,6 +358,8 @@ export type StudioDeliverable = z.infer<typeof deliverableSchema>;
 export type StudioDocumentV3 = z.infer<typeof studioDocumentV3Schema>;
 export type StudioDocumentV4 = StudioDocumentV3;
 export const studioDocumentV4Schema = studioDocumentV3Schema;
+export type StudioDocumentV5 = StudioDocumentV3;
+export const studioDocumentV5Schema = studioDocumentV3Schema;
 
 export function createStudioDocumentV3(
   title: string,
@@ -381,6 +381,7 @@ export function createStudioDocumentV3(
 }
 
 export const createStudioDocumentV4 = createStudioDocumentV3;
+export const createStudioDocumentV5 = createStudioDocumentV3;
 
 export function createFrameNode(
   preset: FramePresetId | 'custom' = 'portrait',
@@ -418,7 +419,6 @@ export function createFrameNode(
     },
     componentRef: null,
     animation: 'none',
-    excalidraw: null,
     preset,
     duration: 5,
     transition: 'none',

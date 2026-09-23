@@ -56,7 +56,7 @@ export function StudioToolbarMenu({
       <DropdownMenuContent
         align="start"
         className={cn(
-          'max-h-[75dvh] w-max max-w-[calc(100vw-1rem)] min-w-0 overflow-y-auto',
+          'z-[60] max-h-[75dvh] w-max max-w-[calc(100vw-1rem)] min-w-0 overflow-y-auto',
           className
         )}
         onCloseAutoFocus={onCloseAutoFocus}

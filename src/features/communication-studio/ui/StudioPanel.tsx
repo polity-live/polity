@@ -54,6 +54,7 @@ export function StudioPanel({
   compact = false,
   panelKey,
   toolbarTrigger = true,
+  keepOpenOnCanvasInteraction = false,
 }: {
   label: string;
   icon?: ReactNode;
@@ -63,6 +64,7 @@ export function StudioPanel({
   compact?: boolean;
   panelKey?: string;
   toolbarTrigger?: boolean;
+  keepOpenOnCanvasInteraction?: boolean;
 }) {
   const mobile = useStudioMobile();
   const [open, setOpen] = useState(false);
@@ -163,7 +165,7 @@ export function StudioPanel({
               </ToolbarButton>
             </PopoverTrigger>
             <PopoverContent
-              className="max-h-[75vh] w-[min(28rem,90vw)] overflow-auto"
+              className="z-[60] max-h-[75vh] w-[min(28rem,90vw)] overflow-auto"
               align="start"
               onCloseAutoFocus={restoreToolbarFocus}
             >
@@ -199,6 +201,14 @@ export function StudioPanel({
           collisionPadding={8}
           updatePositionStrategy="always"
           onCloseAutoFocus={restoreSidebarFocus}
+          onInteractOutside={event => {
+            if (
+              keepOpenOnCanvasInteraction &&
+              event.target instanceof Element &&
+              event.target.closest('[data-canvas-engine="konva"]')
+            )
+              event.preventDefault();
+          }}
           className={cn(
             'max-h-[calc(100dvh-1rem)] overflow-auto p-2',
             compact
@@ -222,7 +232,7 @@ export function StudioPanel({
           <SheetContent
             onCloseAutoFocus={restoreToolbarFocus}
             side="bottom"
-            className="max-h-[85dvh] overflow-auto"
+            className="z-[60] max-h-[85dvh] overflow-auto"
           >
             <SheetTitle>{label}</SheetTitle>
             {content}
@@ -237,7 +247,7 @@ export function StudioPanel({
         >
           <DialogContent
             onCloseAutoFocus={restoreToolbarFocus}
-            className="max-h-[85dvh] max-w-4xl overflow-auto"
+            className="z-[60] max-h-[85dvh] max-w-4xl overflow-auto"
           >
             <DialogTitle>{label}</DialogTitle>
             {content}

@@ -1,7 +1,5 @@
-import { drawStudioElement } from '../../src/features/communication-studio/logic/draw-element';
-import { canvasRenderBundle } from './canvas-render-bundle';
-import { addEditableCanvasElement } from './canvas-pptx';
-import { canvasLayers } from '../../src/features/communication-studio/logic/canvas-layers';
+import { studioV5RenderBundle } from './studio-v5-render-bundle';
+import { editableV5Layers } from './editable-v5-layers';
 import { fitWhiteboardExport } from './canvas-export-layout';
 import { chromium } from 'playwright';
 import PptxGenJS from 'pptxgenjs';
@@ -11,7 +9,12 @@ import { zipSync, strToU8 } from 'fflate';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { paintStudioPage } from '../../src/features/communication-studio/logic/paint';
+import type { StudioDocumentV3 } from '../../src/features/communication-studio/logic/document-v3';
+import {
+  legacyDocumentToV3,
+  v3DocumentToLegacy,
+} from '../../src/features/communication-studio/logic/v3-adapter';
+import { mediaDrawGeometry } from '../../src/features/communication-studio/logic/media-geometry';
 import {
   formats,
   channels,
@@ -136,7 +139,7 @@ async function fonts() {
   return css;
 }
 export async function render(
-  doc: StudioDocument,
+  input: StudioDocument | StudioDocumentV3,
   media: MediaMap,
   format: string,
   selected: string[],
@@ -144,6 +147,8 @@ export async function render(
   progress: (n: number) => Promise<void>,
   cancelled: () => Promise<boolean>
 ): Promise<ExportResult> {
+  const v5Document = 'schemaVersion' in input ? input : legacyDocumentToV3(input);
+  const doc: StudioDocument = v3DocumentToLegacy(v5Document, { includeMaster: true });
   const sourcePages = selected.length ? doc.pages.filter(p => selected.includes(p.id)) : doc.pages;
   const pages = doc.kind === 'whiteboard' ? sourcePages.map(fitWhiteboardExport) : sourcePages;
   const name = slug(doc.title);
@@ -172,8 +177,7 @@ export async function render(
     await tab.setContent(
       `<html><head><style>${await fonts()}body{margin:0}</style></head><body><canvas></canvas></body></html>`
     );
-    if (pages.some(p => p.canvas?.elements.length))
-      await tab.addScriptTag({ content: await canvasRenderBundle() });
+    await tab.addScriptTag({ content: await studioV5RenderBundle() });
     await tab.evaluate(async () => {
       for (const font of [
         'Newsreader',
@@ -189,14 +193,11 @@ export async function render(
       ])
         for (const weight of [400, 700]) await document.fonts.load(`${weight} 40px "${font}"`);
     });
-    await tab.evaluate(
-      `window.__name=(target)=>target;window.drawStudioElement=${drawStudioElement.toString()};window.paintStudioPage=${paintStudioPage.toString()}`
-    );
-    const frame = async (p: StudioPage, time = 1, animateScene = false) => {
+    const frame = async (p: StudioPage, time = 1, _animateScene = false) => {
       const url = await tab.evaluate(
-        async ({ p, data, time, animateScene }) =>
-          (window as any).paintStudioPage(p, data, time, animateScene),
-        { p: p as any, data, time, animateScene }
+        async ({ p, data, time, v5Document }) =>
+          (window as any).PolityStudioV5Renderer.renderFrame(v5Document, p.id, data, time),
+        { p: p as any, data, time, v5Document: v5Document as any }
       );
       return new Uint8Array(Buffer.from(url.split(',')[1], 'base64'));
     };
@@ -239,27 +240,18 @@ export async function render(
           const slide = ppt.addSlide();
           slide.background = { color: p.background.slice(1) };
           slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
-          for (const layer of canvasLayers(p)) {
-            if (layer.kind === 'native') {
-              for (const element of layer.elements) {
-                if (addEditableCanvasElement(ppt, slide, element)) continue;
-                const drawing = await tab.evaluate(
-                  async scene => (window as any).PolityCanvasRenderer.renderNative(scene),
-                  { ...p.canvas, elements: [element] } as any
-                );
-                if (drawing && drawing.width && drawing.height)
-                  slide.addImage({
-                    data:
-                      'data:image/svg+xml;base64,' + Buffer.from(drawing.svg).toString('base64'),
-                    x: drawing.x / 144,
-                    y: drawing.y / 144,
-                    w: drawing.width / 144,
-                    h: drawing.height / 144,
-                  });
-              }
-              slide.addNotes(
-                'Precise canvas text and basic shapes are editable. Freehand, sketch effects, bindings and framed drawings use graphics. Structured Studio elements remain editable.'
-              );
+          for (const layer of editableV5Layers(v5Document, p.id)) {
+            if (layer.kind === 'drawing') {
+              const { node, matrix } = layer;
+              const points = node.points.map(([x, y]) => `${x},${y}`).join(' ');
+              const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${node.style.stroke ?? '#12362D'}" stroke-width="${Math.max(2, node.style.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" opacity="${node.style.opacity}" transform="matrix(${matrix.join(' ')})"/></svg>`;
+              slide.addImage({
+                data: 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64'),
+                x: 0,
+                y: 0,
+                w: w / 144,
+                h: h / 144,
+              });
               continue;
             }
             const e = layer.element;
@@ -402,18 +394,29 @@ export async function render(
                 },
               });
             else if (e.type === 'rect' || e.type === 'ellipse')
-              slide.addShape(e.type === 'rect' ? ppt.ShapeType.rect : ppt.ShapeType.ellipse, {
-                ...box,
-                fill: { color: e.fill.slice(1), transparency: (1 - e.opacity) * 100 },
-                line: {
-                  color: e.stroke.slice(1),
-                  transparency: e.strokeWidth ? 0 : 100,
-                  width: e.strokeWidth / 2,
-                },
-              });
+              slide.addShape(
+                e.type === 'ellipse'
+                  ? ppt.ShapeType.ellipse
+                  : 'node' in layer && layer.node.type === 'shape' && layer.node.shape === 'diamond'
+                    ? ppt.ShapeType.diamond
+                    : 'node' in layer &&
+                        layer.node.type === 'shape' &&
+                        layer.node.shape === 'rounded-rectangle'
+                      ? ppt.ShapeType.roundRect
+                      : ppt.ShapeType.rect,
+                {
+                  ...box,
+                  fill: { color: e.fill.slice(1), transparency: (1 - e.opacity) * 100 },
+                  line: {
+                    color: e.stroke.slice(1),
+                    transparency: e.strokeWidth ? 0 : 100,
+                    width: e.strokeWidth / 2,
+                  },
+                }
+              );
             else if (e.assetId && media[e.assetId]) {
               const m = media[e.assetId];
-              if (e.type === 'video' && format !== 'canva')
+              if (e.type === 'video' && !e.crop && format !== 'canva')
                 slide.addMedia({
                   ...box,
                   type: 'video',
@@ -421,42 +424,79 @@ export async function render(
                   extn: 'mp4',
                 });
               else {
-                const raster = await tab.evaluate(id => {
-                  const source = (window as any).__studioMedia[id] as
-                    HTMLImageElement | HTMLVideoElement;
-                  const canvas = document.createElement('canvas');
-                  canvas.width =
-                    source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
-                  canvas.height =
-                    source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
-                  const context = canvas.getContext('2d');
-                  if (!context) throw new Error('Canvas unavailable');
-                  context.drawImage(source, 0, 0);
-                  return {
-                    width: canvas.width,
-                    height: canvas.height,
-                    data: canvas.toDataURL('image/png'),
-                  };
-                }, e.assetId);
-                const scale = (e.fit === 'cover' ? Math.max : Math.min)(
-                  box.w / raster.width,
-                  box.h / raster.height
-                );
-                const iw = raster.width * scale,
-                  ih = raster.height * scale;
-                slide.addImage({
-                  ...box,
-                  w: iw,
-                  h: ih,
-                  data: raster.data,
-                  sizing: {
-                    type: 'crop',
-                    w: box.w,
-                    h: box.h,
-                    x: (iw - box.w) * e.cropX,
-                    y: (ih - box.h) * e.cropY,
+                const raster = await tab.evaluate(
+                  async ({ id, url, video, seek }) => {
+                    let source = (window as any).__studioMedia?.[id] as
+                      HTMLImageElement | HTMLVideoElement | undefined;
+                    if (!source) {
+                      source = video ? document.createElement('video') : new Image();
+                      const loading = source;
+                      await new Promise<void>((resolve, reject) => {
+                        loading.onerror = () => reject(new Error('Media could not be decoded'));
+                        if (loading instanceof HTMLVideoElement) {
+                          loading.muted = true;
+                          loading.preload = 'auto';
+                          loading.onloadeddata = () => resolve();
+                        } else loading.onload = () => resolve();
+                        loading.src = url;
+                      });
+                    }
+                    ((window as any).__studioMedia ??= {})[id] = source;
+                    if (source instanceof HTMLVideoElement && seek > 0) {
+                      const target = Math.min(seek, Math.max(0, source.duration - 0.05));
+                      if (target > 0)
+                        await new Promise<void>(resolve => {
+                          source.onseeked = () => resolve();
+                          source.currentTime = target;
+                        });
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width =
+                      source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
+                    canvas.height =
+                      source instanceof HTMLVideoElement
+                        ? source.videoHeight
+                        : source.naturalHeight;
+                    const context = canvas.getContext('2d');
+                    if (!context) throw new Error('Canvas unavailable');
+                    context.drawImage(source, 0, 0);
+                    return {
+                      width: canvas.width,
+                      height: canvas.height,
+                      data: canvas.toDataURL('image/png'),
+                    };
                   },
-                });
+                  {
+                    id: e.assetId,
+                    url: data[e.assetId],
+                    video: e.type === 'video',
+                    seek: e.trimStart + 1,
+                  }
+                );
+                const placement = mediaDrawGeometry(e, raster.width, raster.height);
+                const poster = await tab.evaluate(
+                  ({ id, width, height, placement }) => {
+                    const source = (window as any).__studioMedia[id] as
+                      HTMLImageElement | HTMLVideoElement;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(width));
+                    canvas.height = Math.max(1, Math.round(height));
+                    const context = canvas.getContext('2d');
+                    if (!context) throw new Error('Canvas unavailable');
+                    context.drawImage(
+                      source,
+                      placement.x,
+                      placement.y,
+                      placement.width,
+                      placement.height
+                    );
+                    return canvas.toDataURL('image/png');
+                  },
+                  { id: e.assetId, width: e.width, height: e.height, placement }
+                );
+                slide.addImage({ ...box, data: poster, flipH: e.flipX, flipV: e.flipY });
+                if (e.type === 'video' && e.crop && (format === 'pptx' || format === 'canva'))
+                  files[`Medien/${e.assetId}.mp4`] = m.bytes;
               }
             }
           }
@@ -560,7 +600,7 @@ export async function render(
         'PowerPoint-Datei in Canva importieren. Texte und Formen sind bearbeitbar. Schriftarten, Bildausschnitte und Videoposter prüfen. Animationen liegen in MP4 vor.'
       );
     if (format === 'zip') {
-      files['Polity-Projekt.json'] = strToU8(JSON.stringify(doc));
+      files['Polity-Projekt.json'] = strToU8(JSON.stringify(v5Document));
       for (const [id, m] of Object.entries(media))
         files[
           `Medien/${id}.${m.mime === 'video/mp4' ? 'mp4' : m.mime === 'image/jpeg' ? 'jpg' : m.mime === 'image/webp' ? 'webp' : 'png'}`

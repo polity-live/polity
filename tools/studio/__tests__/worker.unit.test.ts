@@ -195,9 +195,9 @@ describe('Studio export worker lifecycle', () => {
     expect(calls("set status='failed'")[0]).toContain('Export cancelled');
   });
   it('records storage failures and always releases the rendering temporary directory', async () => {
-    io.upload.mockResolvedValue({ error: true });
+    io.upload.mockResolvedValue({ error: { message: 'unsupported mime type' } });
     await import('../worker');
-    expect(calls("set status='failed'")[0]).toContain('Cannot store export');
+    expect(calls("set status='failed'")[0]).toContain('Cannot store export: unsupported mime type');
     expect(io.rm).toHaveBeenCalledTimes(1);
   });
   it('normalizes non-Error failures and refuses unsafe temporary cleanup paths', async () => {

@@ -7,8 +7,7 @@ import {
   studioCreateSchema,
   ProjectToolError,
 } from '@/features/project-chat/logic/contracts';
-import { createDocument } from '@/features/communication-studio/logic/templates';
-import { legacyDocumentToV3 } from '@/features/communication-studio/logic/v3-adapter';
+import { createStudioTemplateDocumentV5 } from '@/features/communication-studio/logic/templates-v5';
 import { createZeroContext, executeZeroTransaction } from '@/server/zero-mutate';
 import { rows, sqlTransaction, lockAuthority } from '@/server/transaction';
 import { studioEnabled } from '@/server/studio/db';
@@ -88,7 +87,7 @@ export function buildProjectStarterTools(
             );
             if (!access?.allowed) throw new ProjectToolError('permission_denied');
           }
-          const value = createDocument(
+          const persisted = createStudioTemplateDocumentV5(
             args.kind,
             args.title,
             themeToLegacyBrand(DEFAULT_STUDIO_THEME),
@@ -99,14 +98,13 @@ export function buildProjectStarterTools(
               stories: args.campaign?.storiesPerWeek ?? 2,
             }
           );
-          const persisted = legacyDocumentToV3(value);
           applyThemeSnapshot(persisted, selectedTheme);
           const projectId = crypto.randomUUID(),
             conversationId = crypto.randomUUID(),
             now = Date.now();
           await sql.query(
-            'insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,$5,4,$6,$6)',
-            [projectId, actor, args.groupId, value.title, value.kind, now]
+            'insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,$5,5,$6,$6)',
+            [projectId, actor, args.groupId, persisted.title, persisted.kind, now]
           );
           await sql.query(
             'insert into studio_state(project_id,document,updated_at) values($1,$2::jsonb,$3)',

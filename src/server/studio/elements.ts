@@ -100,7 +100,7 @@ export async function createElementSet(
   const sql = studioSql();
   const [project] = await sql`
     select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id
-    where p.id=${input.projectId} and p.document_schema_version=4`;
+    where p.id=${input.projectId} and p.document_schema_version=5`;
   if (!project || project.group_id !== input.groupId)
     throw new StudioError('Elements library scope does not match the project', 403);
   if (input.groupId) {
@@ -240,7 +240,7 @@ export async function publishElementSetRevision(
   const sql = studioSql();
   const [project] = await sql`
     select s.document from studio_project p join studio_state s on s.project_id=p.id
-    where p.id=${input.projectId} and p.document_schema_version=4`;
+    where p.id=${input.projectId} and p.document_schema_version=5`;
   if (!project) throw new StudioError('Studio project not found', 404);
   const document = studioDocumentV3Schema.parse(project.document);
   const instance = document.componentInstances.find(item => item.id === input.instanceId);
@@ -322,7 +322,7 @@ export async function synchronizeProjectElementInstances(userId: string, project
       const [row] = await tx`
         select s.document,s.content_revision
         from studio_state s join studio_project p on p.id=s.project_id
-        where s.project_id=${projectId} and p.document_schema_version=4 for update`;
+        where s.project_id=${projectId} and p.document_schema_version=5 for update`;
       if (!row) throw new StudioError('Studio project not found', 404);
       const document = studioDocumentV3Schema.parse(row.document);
       if (!document.componentInstances.length) return null;

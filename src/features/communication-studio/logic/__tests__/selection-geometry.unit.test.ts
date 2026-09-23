@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { applyStudioCommandV3 } from '../commands-v3';
 import { createFrameNode, createStudioDocumentV3, type StudioDocumentV3 } from '../document-v3';
-import { selectionUnits, worldBounds } from '../selection-geometry';
+import {
+  arrangementReferenceBounds,
+  arrangementUnits,
+  selectionUnits,
+  worldBounds,
+} from '../selection-geometry';
 import { createDocument } from '../templates';
 import { legacyDocumentToV3, v3DocumentToLegacy } from '../v3-adapter';
 
@@ -136,6 +141,234 @@ describe('Studio selection geometry and commands', () => {
     expect(units[1].bounds.left - units[0].bounds.right).toBeCloseTo(
       units[2].bounds.left - units[1].bounds.right
     );
+  });
+
+  it('aligns the members of a lone complete group to the selection edges and centers', () => {
+    const document = scene();
+    const members = document.nodes.slice(2);
+    members[0].transform.y = 10;
+    members[1].transform.y = 80;
+    members[2].transform.y = 140;
+    const grouped = applyStudioCommandV3(document, {
+      type: 'groupNodes',
+      nodeIds: members.map(node => node.id),
+      groupId: crypto.randomUUID(),
+    });
+    expect(
+      arrangementUnits(
+        grouped,
+        members.map(node => node.id)
+      )
+    ).toHaveLength(3);
+    const original = members.map(node => worldBounds(grouped, node));
+    const selection = {
+      left: Math.min(...original.map(bounds => bounds.left)),
+      right: Math.max(...original.map(bounds => bounds.right)),
+      top: Math.min(...original.map(bounds => bounds.top)),
+      bottom: Math.max(...original.map(bounds => bounds.bottom)),
+    };
+    for (const [direction, edge, expected] of [
+      ['left', 'left', selection.left],
+      ['center', 'centerX', (selection.left + selection.right) / 2],
+      ['right', 'right', selection.right],
+      ['top', 'top', selection.top],
+      ['middle', 'centerY', (selection.top + selection.bottom) / 2],
+      ['bottom', 'bottom', selection.bottom],
+    ] as const) {
+      const aligned = applyStudioCommandV3(grouped, {
+        type: 'alignNodes',
+        nodeIds: members.map(node => node.id),
+        direction,
+        reference: 'selection',
+      });
+      for (const member of members) {
+        const bounds = worldBounds(
+          aligned,
+          aligned.nodes.find(node => node.id === member.id)!
+        );
+        const actual =
+          edge === 'centerX'
+            ? (bounds.left + bounds.right) / 2
+            : edge === 'centerY'
+              ? (bounds.top + bounds.bottom) / 2
+              : bounds[edge];
+        expect(actual).toBeCloseTo(expected);
+      }
+    }
+  });
+
+  it('keeps a group together when other objects are selected', () => {
+    const document = scene();
+    const [, , first, second, third] = document.nodes;
+    const grouped = applyStudioCommandV3(document, {
+      type: 'groupNodes',
+      nodeIds: [first.id, second.id],
+      groupId: crypto.randomUUID(),
+    });
+    const ids = [first.id, second.id, third.id];
+    expect(arrangementUnits(grouped, ids)).toHaveLength(2);
+    const before = [first, second].map(node => worldBounds(grouped, node).left);
+    const aligned = applyStudioCommandV3(grouped, {
+      type: 'alignNodes',
+      nodeIds: ids,
+      direction: 'right',
+      reference: 'selection',
+    });
+    const after = [first, second].map(
+      node =>
+        worldBounds(
+          aligned,
+          aligned.nodes.find(candidate => candidate.id === node.id)!
+        ).left
+    );
+    expect(after[0] - before[0]).toBeCloseTo(after[1] - before[1]);
+    expect(after[1] - after[0]).toBeCloseTo(before[1] - before[0]);
+  });
+
+  it('distributes the members of a lone group on both axes', () => {
+    const document = scene();
+    const members = document.nodes.slice(2);
+    members[0].transform.x = 0;
+    members[1].transform.x = 55;
+    members[2].transform.x = 260;
+    members[0].transform.y = 0;
+    members[1].transform.y = 45;
+    members[2].transform.y = 220;
+    const grouped = applyStudioCommandV3(document, {
+      type: 'groupNodes',
+      nodeIds: members.map(node => node.id),
+      groupId: crypto.randomUUID(),
+    });
+    for (const [axis, near, far] of [
+      ['horizontal', 'left', 'right'],
+      ['vertical', 'top', 'bottom'],
+    ] as const) {
+      const arranged = applyStudioCommandV3(grouped, {
+        type: 'distributeNodes',
+        nodeIds: members.map(node => node.id),
+        axis,
+        reference: 'selection',
+      });
+      const bounds = members
+        .map(node =>
+          worldBounds(
+            arranged,
+            arranged.nodes.find(candidate => candidate.id === node.id)!
+          )
+        )
+        .sort((a, b) => a[near] - b[near]);
+      expect(bounds[1][near] - bounds[0][far]).toBeCloseTo(bounds[2][near] - bounds[1][far]);
+    }
+  });
+
+  it('distinguishes a nested parent frame from the visible canvas and spans two objects', () => {
+    const document = scene();
+    const viewBounds = { left: -75, top: 35, right: 450, bottom: 700 };
+    const nested = document.nodes[2];
+    nested.transform.x = 60;
+    nested.transform.width = 240;
+    nested.transform.height = 180;
+    const children = [10, 90].map(x =>
+      createFrameNode('custom', {
+        parentFrameId: nested.id,
+        transform: { x, y: 10, width: 40, height: 40, rotation: 0 },
+      })
+    );
+    document.nodes.push(...children);
+    const ids = children.map(node => node.id);
+    const frameAligned = applyStudioCommandV3(document, {
+      type: 'alignNodes',
+      nodeIds: ids,
+      direction: 'left',
+      reference: 'frame',
+    });
+    const viewAligned = applyStudioCommandV3(document, {
+      type: 'alignNodes',
+      nodeIds: ids,
+      direction: 'left',
+      reference: 'view',
+      viewBounds,
+    });
+    expect(
+      worldBounds(
+        frameAligned,
+        frameAligned.nodes.find(node => node.id === ids[0])!
+      ).left
+    ).toBeCloseTo(160);
+    expect(
+      worldBounds(
+        viewAligned,
+        viewAligned.nodes.find(node => node.id === ids[0])!
+      ).left
+    ).toBeCloseTo(-75);
+    const frameResult = applyStudioCommandV3(document, {
+      type: 'distributeNodes',
+      nodeIds: ids,
+      axis: 'horizontal',
+      reference: 'frame',
+    });
+    const viewResult = applyStudioCommandV3(document, {
+      type: 'distributeNodes',
+      nodeIds: ids,
+      axis: 'horizontal',
+      reference: 'view',
+      viewBounds,
+    });
+    const frameBounds = children.map(node =>
+      worldBounds(
+        frameResult,
+        frameResult.nodes.find(item => item.id === node.id)!
+      )
+    );
+    const visibleBounds = children.map(node =>
+      worldBounds(
+        viewResult,
+        viewResult.nodes.find(item => item.id === node.id)!
+      )
+    );
+    expect(frameBounds[0].left).toBeCloseTo(worldBounds(document, nested).left);
+    expect(frameBounds[1].right).toBeCloseTo(worldBounds(document, nested).right);
+    expect(visibleBounds[0].left).toBeCloseTo(viewBounds.left);
+    expect(visibleBounds[1].right).toBeCloseTo(viewBounds.right);
+  });
+
+  it('uses the visible canvas for objects with different parent frames', () => {
+    const document = scene();
+    const ids = [document.nodes[1].id, document.nodes[2].id];
+    const units = arrangementUnits(document, ids);
+    const viewBounds = { left: -50, top: -30, right: 750, bottom: 500 };
+    expect(arrangementReferenceBounds(document, units, 'frame')).toBeNull();
+    const aligned = applyStudioCommandV3(document, {
+      type: 'alignNodes',
+      nodeIds: ids,
+      direction: 'top',
+      reference: 'view',
+      viewBounds,
+    });
+    expect(
+      ids.map(
+        id =>
+          worldBounds(
+            aligned,
+            aligned.nodes.find(node => node.id === id)!
+          ).top
+      )
+    ).toEqual([-30, -30]);
+    const distributed = applyStudioCommandV3(document, {
+      type: 'distributeNodes',
+      nodeIds: ids,
+      axis: 'vertical',
+      reference: 'view',
+      viewBounds,
+    });
+    const bounds = ids.map(id =>
+      worldBounds(
+        distributed,
+        distributed.nodes.find(node => node.id === id)!
+      )
+    );
+    expect(Math.min(...bounds.map(item => item.top))).toBeCloseTo(viewBounds.top);
+    expect(Math.max(...bounds.map(item => item.bottom))).toBeCloseTo(viewBounds.bottom);
   });
 
   it('preserves nested semantic group IDs through legacy edits', () => {

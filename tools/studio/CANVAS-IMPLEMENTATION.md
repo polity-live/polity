@@ -1,26 +1,9 @@
-# Studio V3 implementation status
+# Studio V5 canvas
 
-Studio V3 is implemented behind rollout flags. Production activation still requires the environment-specific acceptance described in `docs/studio-zero-rollout.md`.
+The persisted Studio document uses semantic V5 nodes. The editor and preview use Konva. A selected rich-text node is painted from its Plate content in normal mode and edited in an HTML Plate overlay between lower and upper Konva layers. The Layers panel's `moveNode` command supplies the paint order in both modes.
 
-## Implemented
+The Studio export worker paints V5 nodes directly for PNG, PDF and video frames. PPTX and Canva import files flatten the same scene order to editable text, shapes, tables, charts and media where supported. Drawings are embedded as SVG.
 
-- `StudioDocumentV3` with stable frame, rich-text, shape, drawing, media, table, chart and embed nodes; deliverables and campaign planning reference frame IDs.
-- Typed commands for create, update, transform, resize, reparent, reorder, delete, align and distribute, including cycle protection, world-position-preserving reparenting and optional frame-content scaling.
-- Explicit V2/V3 database separation through `studio_project.document_schema_version`. New Studio APIs and Zero queries only expose V3 projects; V2 data is retained unchanged.
-- Excalidraw 0.18.x as the sole canvas interaction engine. Plate remains the semantic rich-text editor. Complex content is rendered as a derived projection and is not rasterized as its source of truth.
-- Full-screen personal and group routes for Studio and Whiteboards, Amendment-style fixed toolbar, responsive panels/Sheets, contextual selection toolbar and Polity light/dark tokens.
-- Frame presets and sets, position/size/rotation, constraints, frame clipping, safe areas, grid and snapping settings, free/horizontal/vertical/wrap layout metadata, searchable layers, visibility, locking and ordering.
-- Assets, Brand Kit, sources, AI/project chat, captions, campaign planning, comments, proposals, voting, revisions, Presence, offline drafts and visible conflict resolution.
-- Confirmed-revision exports for the existing PNG, SVG, PDF, PPTX, Canva, MP4, XLSX, ZIP and `.excalidraw` paths.
-- Full-screen project URLs replace the former `?project=` navigation.
+New projects, insert-menu objects, drawn objects, media uploads and duplicated frames write semantic nodes. The V5 schema does not contain an Excalidraw payload. The Excalidraw SDK, canvas UI, native clipboard and export bundle have been removed.
 
-## Verification
-
-- Studio unit/component suite: 27 files and 204 tests.
-- TypeScript, targeted Oxlint, route catalog, action catalog, accountability ledger and database coverage checks pass.
-- Production client/server build passes.
-- Database integration, pgTAP, multi-user browser, touch-device and export-golden suites remain required against each target environment before production activation.
-
-## Rollout boundary
-
-Production requires `STUDIO_V3_ENABLED=true`, `VITE_STUDIO_V3_ENABLED=true`, `CANVAS_ENABLED=true` and the existing Studio enablement. V2 projects are not migrated, surfaced or deleted. Rollout and rollback details are documented in `docs/studio-zero-rollout.md`.
+The V5 database migration is `supabase/migrations/20260923020000_studio_document_v5.sql`. Existing projects require the planned database reset; there is no V4 document migration. Run the Studio unit/component suite, browser component tests, typecheck, build, database integration and authenticated multiuser tests before production rollout.

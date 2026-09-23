@@ -45,6 +45,7 @@ import {
   beginUpload,
   createProject,
   downloadExport,
+  exportStatus,
   duplicateProject,
   finishUpload,
   queueExport,
@@ -100,6 +101,8 @@ beforeEach(() => {
       )
         return available;
       if (sql.startsWith('select * from studio_export')) return job ? [job] : [];
+      if (sql.startsWith('select project_id,format,status,progress,error from studio_export'))
+        return job ? [job] : [];
       if (sql.startsWith('select p.group_id')) return [source];
       if (sql.startsWith('insert') && failInsert) throw new Error('database_down');
       return [];
@@ -281,6 +284,21 @@ describe('Studio shared persistence and media authority', () => {
     await expect(downloadExport('reader', 'export')).rejects.toThrow('Export is not ready');
     job = null;
     await expect(downloadExport('reader', 'missing')).rejects.toThrow('Export not found');
+  });
+  it('reports export progress only to a user with current project access', async () => {
+    Object.assign(job, { format: 'png', status: 'running', progress: 45, error: null });
+    expect(await exportStatus('reader', 'export')).toEqual({
+      id: 'export',
+      format: 'png',
+      status: 'running',
+      progress: 45,
+      error: null,
+    });
+    expect(io.access).toHaveBeenCalledWith('reader', 'project');
+    io.access.mockRejectedValueOnce(new Error('No access'));
+    await expect(exportStatus('reader', 'export')).rejects.toThrow('No access');
+    job = null;
+    await expect(exportStatus('reader', 'missing')).rejects.toThrow('Export not found');
   });
   it('copies private assets before exposing a new project and remaps media references', async () => {
     const image = crypto.randomUUID();

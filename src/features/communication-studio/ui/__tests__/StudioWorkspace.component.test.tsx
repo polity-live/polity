@@ -2,9 +2,17 @@
 import { forwardRef, useEffect, useImperativeHandle, useReducer } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { StudioDocument } from '../../logic/document';
+import { element, type StudioDocument } from '../../logic/document';
 import { createDocument } from '../../logic/templates';
-import { studioDocumentV3Schema } from '../../logic/document-v3';
+import {
+  createFrameNode,
+  drawingNodeSchema,
+  embedNodeSchema,
+  mediaNodeSchema,
+  studioDocumentV3Schema,
+} from '../../logic/document-v3';
+import { createStudioNodeFromElement } from '../../logic/create-studio-node';
+import { createElementSetSnapshot } from '../../logic/element-library';
 import {
   createStudioV3ClipboardPayload,
   setProjectStudioClipboard,
@@ -79,25 +87,41 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     },
   }),
 }));
-vi.mock('../ExcalidrawCanvas', () => ({
+vi.mock('../KonvaStudioCanvas', () => ({
   default: forwardRef((p: any, ref) => {
     io.canvasProps = p;
+    const canvasPage = p.document
+      ? v3DocumentToLegacy(p.document).pages.find(page => page.id === p.activeFrameId)!
+      : ydoc.pages.find(page => page.id === p.activeFrameId)!;
     useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));
     useEffect(
       () => p.onGeometry?.({ left: 100, top: 150, right: 350, bottom: 450, interacting: false }),
       []
     );
+    useEffect(() => {
+      p.onCanvasStateChange?.({
+        activeTool: 'selection',
+        toolLocked: false,
+        zoom: 1,
+        viewBounds: { left: 100, top: 200, right: 900, bottom: 1000 },
+      });
+    }, []);
     return (
-      <div data-testid="canvas" data-page-id={p.page.id}>
+      <div data-testid="canvas" data-canvas-engine="konva" data-page-id={p.activeFrameId}>
         {p.inspector && (
           <section aria-label="properties" className="polity-inspector-extension">
             {p.inspector}
           </section>
         )}
         <button onClick={() => p.cursor(12, 24)}>Move cursor</button>
-        <button onClick={() => p.select(p.page.elements.map((e: any) => e.id))}>Select all</button>
-        {p.page.elements.map((e: any) => (
-          <button key={e.id} onClick={() => p.select([e.id])}>{`Select ${e.type} ${e.id}`}</button>
+        <button onClick={() => p.selectExact(canvasPage.elements.map((e: any) => e.id))}>
+          Select all
+        </button>
+        {canvasPage.elements.map((e: any) => (
+          <button
+            key={e.id}
+            onClick={() => p.selectExact([e.id])}
+          >{`Select ${e.type} ${e.id}`}</button>
         ))}
       </div>
     );
@@ -215,7 +239,13 @@ beforeEach(() => {
   io.exports = [];
   io.loading = false;
   io.canvasProps = null;
-  io.request.mockImplementation(async (op: string) => (op === 'create' ? { id: 'saved' } : []));
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'create') return { id: 'saved' };
+    if (op === 'export') return { id: 'new-job' };
+    if (op === 'exportStatus')
+      return { id: 'new-job', format: 'png', status: 'queued', progress: 0, error: null };
+    return [];
+  });
   setup();
 });
 afterEach(() => {
@@ -237,10 +267,13 @@ const menuNames = new Set([
   'frame',
   'shapes',
   'line',
+  'table',
   'draw',
   'zoom 100%',
-  'insert',
-  'arrange',
+  'elementAlignment',
+  'distribute',
+  'order',
+  'groupElements',
   'text',
   'font',
   'alignment',
@@ -266,7 +299,225 @@ const selectText = () => {
   click(`Select text ${e.id}`);
   return e;
 };
+function addElementsAnchor() {
+  const navigation = document.createElement('nav');
+  navigation.dataset.navigationType = 'secondary';
+  const anchor = document.createElement('button');
+  anchor.dataset.navigationItemId = 'studio-elements';
+  navigation.append(anchor);
+  document.body.append(navigation);
+  vi.spyOn(navigation, 'getBoundingClientRect').mockReturnValue({
+    x: 960,
+    y: 0,
+    left: 960,
+    top: 0,
+    right: 1024,
+    bottom: 768,
+    width: 64,
+    height: 768,
+    toJSON: () => ({}),
+  });
+  vi.spyOn(anchor, 'getBoundingClientRect').mockReturnValue({
+    x: 968,
+    y: 128,
+    left: 968,
+    top: 128,
+    right: 1016,
+    bottom: 176,
+    width: 48,
+    height: 48,
+    toJSON: () => ({}),
+  });
+  return { navigation, anchor };
+}
 describe('Studio toolbar workflows', () => {
+  it('shows compact Elements rows with accessible actions and a native drag source', async () => {
+    const set = {
+      id: crypto.randomUUID(),
+      name: 'Test element',
+      scope: 'group',
+      revisionId: crypto.randomUUID(),
+      version: 2,
+      width: 120,
+      height: 80,
+      updatedAt: Date.now(),
+    };
+    io.request.mockImplementation(async (op: string) => (op === 'elementSets' ? [set] : []));
+    await show();
+    const { navigation } = addElementsAnchor();
+    await act(async () =>
+      window.dispatchEvent(
+        new CustomEvent('studio-open-panel', {
+          detail: {
+            panelKey: 'elements',
+            origin: 'secondary-navigation',
+            navigationItemId: 'studio-elements',
+          },
+        })
+      )
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'elements' });
+    const row = within(dialog).getByText(set.name).closest('article')!;
+    expect(row.draggable).toBe(true);
+    expect(row.textContent).toContain('v2');
+    expect(within(dialog).queryByText('dropSelectionHere')).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'publishElementChanges' })).toBeNull();
+    const search = within(dialog).getByRole('searchbox', { name: 'searchElements' });
+    fireEvent.change(search, { target: { value: 'missing' } });
+    expect(within(dialog).queryByText(set.name)).toBeNull();
+    expect(within(dialog).getByText('noElementsFound')).toBeTruthy();
+    fireEvent.change(search, { target: { value: 'TEST' } });
+    expect(within(dialog).getByText(set.name)).toBeTruthy();
+    const dataTransfer = { effectAllowed: '', setData: vi.fn() };
+    fireEvent.dragStart(within(dialog).getByText(set.name).closest('article')!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith('application/x-polity-element-set', set.id);
+    vi.spyOn(window, 'prompt').mockReturnValue('Renamed element');
+    fireEvent.click(within(dialog).getByRole('button', { name: `rename: ${set.name}` }));
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith('elementSetRename', {
+        setId: set.id,
+        name: 'Renamed element',
+      })
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: `delete: ${set.name}` }));
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith('elementSetArchive', { setId: set.id })
+    );
+    navigation.remove();
+  });
+
+  it('copies canvas selection onto the Elements sidebar button and preserves normal moves elsewhere', async () => {
+    const commit = vi.spyOn(io.editor, 'commit');
+    await show();
+    const { navigation, anchor } = addElementsAnchor();
+    const selected = selectText();
+    expect(io.canvasProps.onNodeDragEnd(selected.id, [selected.id], 200, 200)).toBe(false);
+    expect(io.canvasProps.onNodeDragEnd(value().pages[0].id, [value().pages[0].id], 990, 150)).toBe(
+      false
+    );
+    io.canvasProps.onNodeDragMove(selected.id, [selected.id], 990, 150);
+    expect(anchor.getAttribute('data-studio-drop-active')).toBe('true');
+    await act(async () => {
+      expect(io.canvasProps.onNodeDragEnd(selected.id, [selected.id], 990, 150)).toBe(true);
+    });
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith('elementSetCreate', {
+        projectId: 'project',
+        groupId: 'group',
+        selectedIds: [selected.id],
+      })
+    );
+    expect(commit).toHaveBeenCalled();
+    expect(anchor.hasAttribute('data-studio-drop-active')).toBe(false);
+    expect(await screen.findByRole('dialog', { name: 'elements' })).toBeTruthy();
+    const second = value().pages[0].elements.find(element => element.id !== selected.id)!;
+    await act(async () => {
+      expect(io.canvasProps.onNodeDragEnd(selected.id, [selected.id, second.id], 990, 150)).toBe(
+        true
+      );
+    });
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith('elementSetCreate', {
+        projectId: 'project',
+        groupId: 'group',
+        selectedIds: [selected.id, second.id],
+      })
+    );
+    navigation.remove();
+  });
+
+  it('copies a canvas node dropped into the open Elements menu', async () => {
+    await show();
+    const { navigation } = addElementsAnchor();
+    await act(async () =>
+      window.dispatchEvent(
+        new CustomEvent('studio-open-panel', {
+          detail: {
+            panelKey: 'elements',
+            origin: 'secondary-navigation',
+            navigationItemId: 'studio-elements',
+          },
+        })
+      )
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'elements' });
+    const dropZone = dialog.querySelector<HTMLElement>('[data-studio-elements-drop-zone]')!;
+    fireEvent.pointerDown(screen.getByTestId('canvas'));
+    expect(screen.getByRole('dialog', { name: 'elements' })).toBeTruthy();
+    vi.spyOn(dropZone, 'getBoundingClientRect').mockReturnValue({
+      x: 600,
+      y: 100,
+      left: 600,
+      top: 100,
+      right: 900,
+      bottom: 500,
+      width: 300,
+      height: 400,
+      toJSON: () => ({}),
+    });
+    const selected = selectText();
+    io.canvasProps.onNodeDragMove(selected.id, [selected.id], 700, 200);
+    expect(dropZone.getAttribute('data-studio-drop-active')).toBe('true');
+    await act(async () => {
+      expect(io.canvasProps.onNodeDragEnd(selected.id, [selected.id], 700, 200)).toBe(true);
+    });
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith('elementSetCreate', {
+        projectId: 'project',
+        groupId: 'group',
+        selectedIds: [selected.id],
+      })
+    );
+    expect(dropZone.hasAttribute('data-studio-drop-active')).toBe(false);
+    navigation.remove();
+  });
+
+  it('inserts a dropped library element at frame-local coordinates on a shifted canvas frame', async () => {
+    setup('carousel');
+    const canonical = legacyDocumentToV3(value());
+    const frames = canonical.nodes.filter(node => node.type === 'frame' && !node.parentFrameId);
+    const source = canonical.nodes.find(node => node.parentFrameId === frames[0].id)!;
+    const target = frames[1];
+    const setId = crypto.randomUUID();
+    const revisionId = crypto.randomUUID();
+    const snapshot = createElementSetSnapshot(canonical, [source.id]);
+    const set = {
+      id: setId,
+      name: 'Reusable',
+      scope: 'group',
+      revisionId,
+      version: 1,
+      width: snapshot.width,
+      height: snapshot.height,
+      updatedAt: Date.now(),
+    };
+    io.request.mockImplementation(async (op: string) => {
+      if (op === 'elementSets') return [set];
+      if (op === 'elementSetInstantiate') return { setId, revisionId, snapshot, assetIds: {} };
+      return [];
+    });
+    await show();
+    const before = value().pages.find(page => page.id === target.id)!.elements.length;
+    await act(async () =>
+      io.canvasProps.onElementSetDrop(setId, {
+        x: target.transform.x + 140,
+        y: target.transform.y + 90,
+        targetFrameId: target.id,
+      })
+    );
+    await waitFor(() =>
+      expect(value().pages.find(page => page.id === target.id)!.elements).toHaveLength(before + 1)
+    );
+    const inserted = value()
+      .pages.find(page => page.id === target.id)!
+      .elements.at(-1)!;
+    expect(inserted.x).toBeCloseTo(140);
+    expect(inserted.y).toBeCloseTo(90);
+    expect(io.request).toHaveBeenCalledWith('elementSetInstantiate', {
+      setId,
+      projectId: 'project',
+    });
+  });
   it('keeps project overview and creation available', async () => {
     io.loading = true;
     const ui = await show({ open: vi.fn() });
@@ -324,11 +575,23 @@ describe('Studio toolbar workflows', () => {
     await show();
     expect(screen.getAllByRole('toolbar')).toHaveLength(1);
     const toolbar = screen.getByRole('toolbar', { name: 'tools' });
-    for (const name of ['selection', 'hand', 'text', 'undo', 'redo', 'guides']) {
+    for (const name of [
+      'selection',
+      'hand',
+      'text',
+      'line',
+      'chart',
+      'table',
+      'upload',
+      'undo',
+      'redo',
+      'guides',
+    ]) {
       const control = within(toolbar).getByRole('button', { name });
       expect(control.querySelector('svg')).toBeTruthy();
       expect(control.textContent).toBe('');
     }
+    expect(within(toolbar).queryByRole('button', { name: 'insert' })).toBeNull();
     const statusRow = screen.getByLabelText('projectStatus');
     expect(statusRow.className).toContain('scrollbar-hide');
     expect(within(statusRow).queryByText('Different page name')).toBeNull();
@@ -356,13 +619,30 @@ describe('Studio toolbar workflows', () => {
     fireEvent.click(within(zoom).getByRole('menuitem', { name: '100 %' }));
     expect(io.canvasExecute).toHaveBeenLastCalledWith({ type: 'zoom', mode: 'reset' });
   });
-  it('inserts direct element types from the insert menu', async () => {
+  it('keeps line tools in their menu and inserts charts and sized tables from toolbar buttons', async () => {
     await show();
-    for (const type of ['text', 'rect', 'ellipse', 'line', 'arrow', 'chart']) {
-      const insert = panel('insert');
-      fireEvent.click(within(insert).getByRole('menuitem', { name: type }));
-      expect(value().pages[0].elements.at(-1)?.type).toBe(type);
+    for (const tool of ['line', 'arrow']) {
+      const lines = panel('line');
+      fireEvent.click(within(lines).getByRole('menuitem', { name: tool }));
+      expect(io.canvasExecute).toHaveBeenLastCalledWith({
+        type: 'setTool',
+        tool,
+        locked: false,
+      });
     }
+    click('chart');
+    expect(value().pages[0].elements.at(-1)?.type).toBe('chart');
+
+    const tableMenu = panel('table');
+    const picker = within(tableMenu).getByRole('button', { name: 'tableSize: 0 x 0' });
+    fireEvent.keyDown(picker, { key: 'ArrowDown' });
+    fireEvent.keyDown(picker, { key: 'ArrowRight' });
+    fireEvent.keyDown(picker, { key: 'Enter' });
+    const table = value().pages[0].elements.at(-1);
+    expect(table?.type).toBe('table');
+    expect(table?.table?.rows).toHaveLength(1);
+    expect(table?.table?.widths).toHaveLength(2);
+    expect(screen.queryByRole('menu')).toBeNull();
   });
   it('formats text through compact font, alignment, list and link menus', async () => {
     await show();
@@ -392,7 +672,7 @@ describe('Studio toolbar workflows', () => {
   it('opens automation-targeted menus and returns focus on Escape', async () => {
     await show();
     selectText();
-    for (const key of ['project', 'insert', 'arrange', 'text']) {
+    for (const key of ['project', 'table', 'text']) {
       const trigger = screen
         .getAllByRole('button', { name: key })
         .find(button => button.getAttribute('aria-haspopup') === 'menu')!;
@@ -401,11 +681,25 @@ describe('Studio toolbar workflows', () => {
         window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: key }));
       });
       const menu = await screen.findByRole('menu');
-      expect(menu.querySelectorAll('[role="menuitem"]').length).toBeGreaterThan(0);
+      if (key === 'table') {
+        expect(within(menu).getByRole('button', { name: 'tableSize: 0 x 0' })).toBeTruthy();
+      } else {
+        expect(menu.querySelectorAll('[role="menuitem"]').length).toBeGreaterThan(0);
+      }
       fireEvent.keyDown(menu, { key: 'Escape' });
       await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
       expect(document.activeElement).toBe(trigger);
     }
+    const alignTrigger = screen.getByRole('button', { name: 'elementAlignment' });
+    alignTrigger.focus();
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: 'arrange' }));
+    });
+    const alignMenu = await screen.findByRole('menu');
+    expect(within(alignMenu).getByRole('menuitem', { name: 'center' })).toBeTruthy();
+    fireEvent.keyDown(alignMenu, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    expect(document.activeElement).toBe(alignTrigger);
   });
   it('anchors secondary-navigation panels to the right sidebar and keeps only one open', async () => {
     await show();
@@ -496,18 +790,209 @@ describe('Studio toolbar workflows', () => {
     expect(screen.queryByRole('button', { name: 'properties' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'properties' })).toBeNull();
   });
+  it('opens properties for every canonical canvas element type, including nodes without a legacy projection', async () => {
+    let canonical = legacyDocumentToV3(ydoc);
+    const root = canonical.nodes.find(node => node.type === 'frame' && !node.parentFrameId)!;
+    const base = createFrameNode('custom', {
+      id: crypto.randomUUID(),
+      name: 'Nested frame',
+      parentFrameId: root.id,
+      transform: { x: 30, y: 30, width: 300, height: 200, rotation: 0 },
+      zIndex: 50,
+    });
+    const semantic = [
+      element('rect'),
+      element('arrow'),
+      element('text'),
+      element('image', { assetId: crypto.randomUUID() }),
+      element('table'),
+      element('chart'),
+    ].map((item, index) => createStudioNodeFromElement(item, root.id, 10 + index));
+    const extra = [
+      base,
+      mediaNodeSchema.parse({
+        ...base,
+        id: crypto.randomUUID(),
+        name: 'Audio',
+        type: 'media',
+        mediaType: 'audio',
+        assetId: crypto.randomUUID(),
+      }),
+      mediaNodeSchema.parse({
+        ...base,
+        id: crypto.randomUUID(),
+        name: 'File',
+        type: 'media',
+        mediaType: 'file',
+        assetId: crypto.randomUUID(),
+      }),
+      drawingNodeSchema.parse({
+        ...base,
+        id: crypto.randomUUID(),
+        name: 'Drawing',
+        type: 'drawing',
+        points: [
+          [0, 0],
+          [10, 10],
+        ],
+      }),
+      embedNodeSchema.parse({
+        ...base,
+        id: crypto.randomUUID(),
+        name: 'Embed',
+        type: 'embed',
+        provider: 'code',
+        value: 'example',
+      }),
+    ];
+    canonical = studioDocumentV3Schema.parse({
+      ...canonical,
+      nodes: [...canonical.nodes, ...semantic, ...extra],
+    });
+    Object.defineProperty(io.editor, 'v3Value', {
+      configurable: true,
+      get: () => structuredClone(canonical),
+    });
+    Object.defineProperty(io.editor, 'value', {
+      configurable: true,
+      get: () => v3DocumentToLegacy(canonical),
+    });
+    io.editor.transactV3 = (change: (document: typeof canonical) => void) => {
+      change(canonical);
+      canonical = studioDocumentV3Schema.parse(canonical);
+      notifyAll();
+    };
+    await show();
+    for (const node of [...semantic, ...extra]) {
+      act(() => io.canvasProps.selectExact([node.id]));
+      expect(io.canvasProps.inspector, node.type).toBeTruthy();
+      const inspector = screen.getByRole('region', { name: 'properties' });
+      if (node.type === 'shape' && node.shape === 'arrow') {
+        fireEvent.change(within(inspector).getByLabelText('endArrowhead'), {
+          target: { value: 'bar' },
+        });
+        expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
+          endArrowhead: 'bar',
+        });
+      }
+      if (node.type === 'frame') {
+        fireEvent.change(within(inspector).getByLabelText('width'), { target: { value: '420' } });
+        expect(canonical.nodes.find(candidate => candidate.id === node.id)?.transform.width).toBe(
+          420
+        );
+      }
+      if (node.type === 'media' && node.mediaType === 'audio') {
+        fireEvent.change(within(inspector).getByLabelText('text'), {
+          target: { value: 'Interview' },
+        });
+        expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
+          alt: 'Interview',
+        });
+      }
+    }
+    const embed = extra.at(-1)!;
+    const inspector = screen.getByRole('region', { name: 'properties' });
+    fireEvent.change(within(inspector).getByLabelText('name'), {
+      target: { value: 'Updated embed' },
+    });
+    expect(canonical.nodes.find(node => node.id === embed.id)?.name).toBe('Updated embed');
+  });
   it('aligns, duplicates and deletes through selection tools', async () => {
     await show();
     selectText();
-    panel('arrange');
+    const alignmentMenu = panel('elementAlignment');
+    fireEvent.click(within(alignmentMenu).getByRole('menuitemradio', { name: 'view' }));
+    expect(
+      within(panel('elementAlignment'))
+        .getByRole('menuitemradio', { name: 'view' })
+        .getAttribute('aria-checked')
+    ).toBe('true');
+    close();
+    panel('elementAlignment');
     fireEvent.click(screen.getByRole('menuitem', { name: 'center' }));
     const e = value().pages[0].elements.find(e => e.type === 'text')!;
-    expect(e.x).toBe((1080 - e.width) / 2);
+    expect(e.x).toBe((100 + 900 - e.width) / 2);
     const count = value().pages[0].elements.length;
     click('duplicate');
     expect(value().pages[0].elements.length).toBe(count + 1);
     click('remove');
     expect(value().pages[0].elements.length).toBe(count);
+  });
+  it('embeds shared references in alignment and distribution menus and disables unavailable choices', async () => {
+    await show();
+    const toolbar = screen.getByRole('toolbar', { name: 'tools' });
+    expect(within(toolbar).queryByRole('button', { name: 'arrange' })).toBeNull();
+    expect(within(toolbar).queryByRole('button', { name: 'reference' })).toBeNull();
+
+    const alignmentMenu = panel('elementAlignment');
+    expect(within(alignmentMenu).getAllByRole('menuitemradio')).toHaveLength(3);
+    expect(
+      within(alignmentMenu)
+        .getByRole('menuitemradio', { name: 'view' })
+        .getAttribute('data-disabled')
+    ).not.toBeNull();
+    expect(
+      within(alignmentMenu)
+        .getByRole('menuitemradio', { name: 'frame' })
+        .getAttribute('data-disabled')
+    ).not.toBeNull();
+    expect(within(alignmentMenu).getAllByRole('menuitem')).toHaveLength(6);
+    expect(
+      within(alignmentMenu).getByRole('menuitem', { name: 'left' }).getAttribute('data-disabled')
+    ).not.toBeNull();
+    close();
+
+    const distributeMenu = panel('distribute');
+    expect(within(distributeMenu).getAllByRole('menuitemradio')).toHaveLength(3);
+    expect(within(distributeMenu).getAllByRole('menuitem')).toHaveLength(2);
+    expect(
+      within(distributeMenu)
+        .getByRole('menuitem', { name: 'distribute horizontal' })
+        .getAttribute('data-disabled')
+    ).not.toBeNull();
+    close();
+
+    const orderMenu = panel('order');
+    expect(within(orderMenu).getAllByRole('menuitem')).toHaveLength(4);
+    expect(
+      within(orderMenu).getByRole('menuitem', { name: 'front' }).getAttribute('data-disabled')
+    ).not.toBeNull();
+    close();
+
+    const groupMenu = panel('groupElements');
+    expect(within(groupMenu).getAllByRole('menuitem')).toHaveLength(2);
+    expect(
+      within(groupMenu)
+        .getByRole('menuitem', { name: 'groupElements' })
+        .getAttribute('data-disabled')
+    ).not.toBeNull();
+    expect(within(groupMenu).queryByRole('menuitem', { name: 'lock' })).toBeNull();
+    expect(within(groupMenu).queryByRole('menuitem', { name: 'unlock' })).toBeNull();
+    expect(within(toolbar).getByRole('button', { name: 'lock' })).toBeTruthy();
+  });
+  it('shares a chosen reference between alignment and distribution', async () => {
+    await show();
+    selectText();
+    fireEvent.click(within(panel('elementAlignment')).getByRole('menuitemradio', { name: 'view' }));
+    const distributeMenu = panel('distribute');
+    expect(
+      within(distributeMenu)
+        .getByRole('menuitemradio', { name: 'view' })
+        .getAttribute('aria-checked')
+    ).toBe('true');
+    fireEvent.click(within(distributeMenu).getByRole('menuitemradio', { name: 'frame' }));
+    expect(
+      within(panel('elementAlignment'))
+        .getByRole('menuitemradio', { name: 'frame' })
+        .getAttribute('aria-checked')
+    ).toBe('true');
+    close();
+    act(() => io.canvasProps.selectExact([]));
+    expect(
+      within(panel('distribute'))
+        .getByRole('menuitemradio', { name: 'selection' })
+        .getAttribute('aria-checked')
+    ).toBe('true');
   });
   it('searches and operates the canonical frame tree through the Layers popover', async () => {
     setup('carousel');
@@ -653,20 +1138,24 @@ describe('Studio toolbar workflows', () => {
       reordered.nodes.find(node => node.id === frames[0].id)!.zIndex
     );
   });
-  it('uploads media from the insert panel and keeps a failed image edit open', async () => {
+  it('uploads media from its toolbar button and keeps a failed image edit open', async () => {
     const asset = crypto.randomUUID();
     io.editor.assets = [{ id: asset, url: 'http://localhost:3000/image.png' }];
     io.upload.mockResolvedValue({ id: asset, mime: 'image/png' });
     await show();
-    panel('insert');
-    fireEvent.change(document.querySelector('input[type="file"][aria-label="upload"]')!, {
+    const fileInput = document.querySelector(
+      'input[type="file"][aria-label="upload"]'
+    ) as HTMLInputElement;
+    const openFileDialog = vi.spyOn(fileInput, 'click');
+    click('upload');
+    expect(openFileDialog).toHaveBeenCalledOnce();
+    fireEvent.change(fileInput, {
       target: { files: [new File(['image'], 'image.png')] },
     });
     await waitFor(() => expect(io.upload).toHaveBeenCalled());
-    close();
     const image = value().pages[0].elements.find(element => element.type === 'image');
     expect(image).toBeTruthy();
-    click(`Select image ${image!.id}`);
+    fireEvent.click(await screen.findByRole('button', { name: `Select image ${image!.id}` }));
     const properties = screen.getByRole('region', { name: 'properties' });
     fireEvent.click(within(properties).getByRole('button', { name: 'editImage' }));
     io.upload.mockRejectedValueOnce(new Error('Upload rejected'));
@@ -690,6 +1179,74 @@ describe('Studio toolbar workflows', () => {
       })
     );
     expect(screen.getByRole('button', { name: 'download' })).toBeTruthy();
+  });
+  it('shows preparation immediately and then animates queued and running progress', async () => {
+    let confirm!: (revision: number) => void;
+    io.editor.commit = vi.fn().mockImplementation(
+      () =>
+        new Promise<number>(resolve => {
+          confirm = resolve;
+        })
+    );
+    let statusCalls = 0;
+    io.request.mockImplementation(async (op: string) => {
+      if (op === 'export') return { id: 'new-job' };
+      if (op === 'exportStatus') {
+        statusCalls++;
+        return statusCalls === 1
+          ? { id: 'new-job', format: 'png', status: 'queued', progress: 0, error: null }
+          : { id: 'new-job', format: 'png', status: 'running', progress: 45, error: null };
+      }
+      return [];
+    });
+    await show();
+    panel('exports');
+    click('export');
+    expect(
+      screen.getAllByRole('status').some(status => status.textContent?.includes('preparingExport'))
+    ).toBe(true);
+    await act(async () => confirm(7));
+    await waitFor(() => expect(screen.getByRole('progressbar')).toBeTruthy());
+    await waitFor(
+      () => expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('45'),
+      { timeout: 4000 }
+    );
+    expect(screen.getByText(/PNG · running · 45%/)).toBeTruthy();
+  });
+  it('downloads a newly completed export once and keeps manual download available', async () => {
+    const clicked = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    io.request.mockImplementation(async (op: string) => {
+      if (op === 'export') return { id: 'new-job' };
+      if (op === 'exportStatus')
+        return { id: 'new-job', format: 'png', status: 'completed', progress: 100, error: null };
+      return [];
+    });
+    await show();
+    panel('exports');
+    click('export');
+    await waitFor(() => expect(clicked).toHaveBeenCalledTimes(1));
+    expect((clicked.mock.instances[0] as HTMLAnchorElement).getAttribute('href')).toBe(
+      '/api/studio/exports/new-job'
+    );
+    click('download');
+    expect(clicked).toHaveBeenCalledTimes(2);
+  });
+  it('shows the API reason in the export dropdown when queueing fails', async () => {
+    io.request.mockImplementation(async (op: string) => {
+      if (op === 'export') throw new Error('Studio export cannot start: missing media');
+      return [];
+    });
+    await show();
+    panel('exports');
+    click('export');
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole('alert').some(alert => alert.textContent?.includes('missing media'))
+      ).toBe(true)
+    );
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
   it('confirms drafts before copying a project', async () => {
     const commit = vi.fn().mockResolvedValue(7);
@@ -715,9 +1272,9 @@ describe('Studio toolbar workflows', () => {
     io.editor.canEdit = false;
     await show();
     expect(screen.getByText('readOnly')).toBeTruthy();
-    panel('insert');
-    expect(screen.getByRole('menuitem', { name: 'rect' }).getAttribute('data-disabled')).toBe('');
-    close();
+    for (const name of ['chart', 'table', 'upload']) {
+      expect(screen.getByRole('button', { name }).getAttribute('aria-disabled')).toBe('true');
+    }
     panel('exports');
     expect((screen.getByRole('button', { name: 'export' }) as HTMLButtonElement).disabled).toBe(
       true
@@ -806,7 +1363,7 @@ describe('Studio toolbar workflows', () => {
     });
     if (!payload) throw new Error('Missing sole-frame clipboard fixture');
     setProjectStudioClipboard(payload);
-    act(() => io.canvasProps.cutV3Clipboard([frame.id]));
+    act(() => io.canvasProps.onDeleteNodes([frame.id]));
     expect(screen.getByRole('status').textContent).toBe('The canvas is empty.');
 
     fireEvent.keyDown(window, { key: 'v', ctrlKey: true });
@@ -850,4 +1407,44 @@ it('changes object properties without moving other selected objects', async () =
     verticalAlign: 'bottom',
     text: 'Updated',
   });
+});
+
+it('offers crop for one unlocked image or video and commits geometry in one transaction', async () => {
+  const imageId = crypto.randomUUID();
+  const videoId = crypto.randomUUID();
+  ydoc.pages[0].elements.push(
+    element('image', { id: imageId, assetId: crypto.randomUUID() }),
+    element('video', { id: videoId, assetId: crypto.randomUUID() })
+  );
+  const transact = io.editor.transactV3;
+  io.editor.transactV3 = vi.fn(transact);
+  await show();
+  click(`Select image ${imageId}`);
+  expect(screen.getByRole('button', { name: 'cropMedia' })).toBeTruthy();
+  click('cropMedia');
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'crop', action: 'start' });
+  const source = io.editor.v3Value.nodes.find((node: any) => node.id === imageId);
+  const frame = {
+    ...source.transform,
+    x: source.transform.x + 20,
+    width: source.transform.width - 20,
+  };
+  act(() =>
+    io.canvasProps.onCropCommit(imageId, {
+      frame,
+      fit: 'cover',
+      focus: { x: 0.5, y: 0.5 },
+      crop: { x: 20, y: 0, width: 80, height: 100, naturalWidth: 100, naturalHeight: 100 },
+    })
+  );
+  expect(io.editor.transactV3).toHaveBeenCalledTimes(1);
+  expect(io.editor.v3Value.nodes.find((node: any) => node.id === imageId)).toMatchObject({
+    transform: frame,
+    crop: { x: 20, width: 80 },
+  });
+  click(`Select video ${videoId}`);
+  expect(screen.getByRole('button', { name: 'cropMedia' })).toBeTruthy();
+  ydoc.pages[0].elements.find(item => item.id === videoId)!.locked = true;
+  act(notifyAll);
+  expect(screen.queryByRole('button', { name: 'cropMedia' })).toBeNull();
 });

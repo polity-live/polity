@@ -5,8 +5,7 @@ import {
   studioDocumentV3Schema,
   type StudioDocumentV3,
 } from '@/features/communication-studio/logic/document-v3';
-import { createDocument } from '@/features/communication-studio/logic/templates';
-import { legacyDocumentToV3 } from '@/features/communication-studio/logic/v3-adapter';
+import { createStudioTemplateDocumentV5 } from '@/features/communication-studio/logic/templates-v5';
 import {
   applyThemeSnapshot,
   createThemeSnapshot,
@@ -85,14 +84,14 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     const [template] = await sql`
       select s.document
       from studio_project p join studio_state s on s.project_id=p.id
-      where p.id=${input.template.id} and p.is_template=true and p.document_schema_version=4`;
+      where p.id=${input.template.id} and p.is_template=true and p.document_schema_version=5`;
     if (!template) throw new StudioError('Studio template not found', 404);
     document = studioDocumentV3Schema.parse(structuredClone(template.document));
     templateAssets = await sql`
       select * from studio_asset
       where project_id=${input.template.id} and workspace_id is null and ready=true`;
   } else {
-    const legacy = createDocument(
+    document = createStudioTemplateDocumentV5(
       input.kind,
       input.title,
       themeToLegacyBrand(DEFAULT_STUDIO_THEME),
@@ -100,7 +99,6 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
       input.template.id,
       { core: input.campaign.core, stories: input.campaign.stories }
     );
-    document = legacyDocumentToV3(legacy);
   }
   document.title = input.title;
   document.kind = input.kind;
@@ -140,7 +138,7 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     const now = Date.now();
     await studioTransaction(async tx => {
       if (input.groupId) await assertStudioGroup(userId, input.groupId, tx);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},4,${now},${now})`;
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},5,${now},${now})`;
       for (const asset of copied)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
@@ -186,7 +184,7 @@ export async function createProject(
   const now = Date.now();
   await studioTransaction(async tx => {
     if (groupId) await assertStudioGroup(userId, groupId, tx);
-    await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${userId},${groupId},${document.title},${document.kind},4,${now},${now})`;
+    await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${userId},${groupId},${document.title},${document.kind},5,${now},${now})`;
     await tx`insert into studio_state(project_id,document,updated_at) values(${id},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
   });
   return { id };
@@ -196,7 +194,7 @@ export async function loadProject(userId: string, id: string) {
   const synchronized = await synchronizeProjectElementInstances(userId, id);
   const sql = studioSql();
   const [row] =
-    await sql`select s.document,s.content_revision,c.generation,(c.phase='edit' and studio_access(${userId}::uuid,${id}::uuid,true)) as can_edit from studio_state s join canvas_control c using(project_id) join studio_project p on p.id=s.project_id where s.project_id=${id} and p.document_schema_version=4`;
+    await sql`select s.document,s.content_revision,c.generation,(c.phase='edit' and studio_access(${userId}::uuid,${id}::uuid,true)) as can_edit from studio_state s join canvas_control c using(project_id) join studio_project p on p.id=s.project_id where s.project_id=${id} and p.document_schema_version=5`;
   if (!row) throw new StudioError('Studio project not found', 404);
   return {
     id,
@@ -320,11 +318,25 @@ export async function downloadExport(userId: string, id: string) {
   if (job.status !== 'completed' || !job.storage_path) throw new StudioError('Export is not ready');
   return { url: `/api/studio/exports/${id}`, name: job.file_name };
 }
+export async function exportStatus(userId: string, id: string) {
+  const sql = studioSql();
+  const [job] =
+    await sql`select project_id,format,status,progress,error from studio_export where id=${id}`;
+  if (!job) throw new StudioError('Export not found', 404);
+  await assertStudioAccess(userId, job.project_id);
+  return {
+    id,
+    format: job.format,
+    status: job.status,
+    progress: Number(job.progress),
+    error: job.error,
+  };
+}
 export async function duplicateProject(userId: string, id: string) {
   await assertStudioAccess(userId, id);
   const sql = studioSql();
   const [source] =
-    await sql`select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=4`;
+    await sql`select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
   if (!source) throw new StudioError('Studio project not found', 404);
   const value = studioDocumentV3Schema.parse(source.document);
   const projectId = crypto.randomUUID();
@@ -368,7 +380,7 @@ export async function duplicateProject(userId: string, id: string) {
     await studioTransaction(async tx => {
       await assertStudioAccess(userId, id, false, tx);
       if (source.group_id) await assertStudioGroup(userId, source.group_id, tx);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${source.group_id},${value.title},${value.kind},4,${now},${now})`;
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${source.group_id},${value.title},${value.kind},5,${now},${now})`;
       for (const asset of copies)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(value)))},${now})`;

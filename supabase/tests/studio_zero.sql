@@ -18,7 +18,7 @@ SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.studio_reset_st
 SELECT is((SELECT count(*)::integer FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE 'collaboration_%'), 0, 'Retired SQL entry points are removed');
 SELECT is((SELECT count(*)::integer FROM pg_policies WHERE schemaname='realtime' AND tablename='messages' AND policyname IN ('studio_presence_read', 'studio_presence_write')), 2, 'Private channel reads and writes require project authorization');
 SELECT has_column('public', 'studio_project', 'document_schema_version', 'Studio projects identify their document schema');
-SELECT is((SELECT column_default FROM information_schema.columns WHERE table_schema='public' AND table_name='studio_project' AND column_name='document_schema_version'), '4', 'New Studio projects default to schema V4');
+SELECT is((SELECT column_default FROM information_schema.columns WHERE table_schema='public' AND table_name='studio_project' AND column_name='document_schema_version'), '5', 'New Studio projects default to schema V5');
 SELECT ok(EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.studio_project'::regclass AND conname='studio_project_document_schema_version_check'), 'Only supported Studio schema versions can be stored');
 SELECT * FROM finish();
 ROLLBACK;

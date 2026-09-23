@@ -9,8 +9,9 @@ import {
   stableJson,
 } from '../operations';
 import { applyStudioCommand, studioCommandSchemas } from '../commands';
-import { formatNativeText } from '../canvas-text';
-import { legacyDocumentToV3 } from '../v3-adapter';
+import { formatStudioRichText } from '../patch-studio-node';
+import { createStudioTemplateDocumentV5 } from '../templates-v5';
+import { defaultBrand } from '../document';
 import { mergeStudioV3 } from '../operations';
 describe('Studio Zero operations', () => {
   it('merges independent properties without losing either author', () => {
@@ -64,31 +65,13 @@ describe('Studio Zero operations', () => {
     ).toBe(false);
   });
   it.each(['bold', 'italic', 'underline'] as const)(
-    'saves native %s formatting as a JSON operation and restores it with undo',
+    'saves V5 %s formatting as a JSON operation and restores it with undo',
     style => {
-      const source = createDocument('whiteboard', 'Text formatting');
-      source.pages[0].canvas = {
-        version: 1,
-        elements: [
-          {
-            id: 'native-text',
-            type: 'text',
-            x: 50,
-            y: 50,
-            width: 200,
-            height: 40,
-            angle: 0,
-            isDeleted: false,
-            text: 'Hello',
-            strokeColor: '#12362D',
-            fontSize: 24,
-          },
-        ],
-        files: {},
-      };
-      const before = legacyDocumentToV3(source);
-      const formatted = formatNativeText(source.pages[0], 'native-text', style);
-      const after = legacyDocumentToV3({ ...source, pages: [formatted.page] }, before);
+      const before = createStudioTemplateDocumentV5('single', 'Text formatting', defaultBrand);
+      const after = structuredClone(before);
+      const target = after.nodes.find(node => node.type === 'richText');
+      if (!target || target.type !== 'richText') throw new Error('Text fixture missing');
+      formatStudioRichText(target, style, true);
       const changes = diffStudio(before, after);
       expect(
         studioOperationSchema.safeParse({

@@ -179,31 +179,23 @@
       }
     ],
     "src/features/communication-studio/logic/paint.ts": [],
-    "src/features/communication-studio/ui/StudioCanvas.tsx": [
+    "src/features/communication-studio/logic/paint-v5.ts": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "clears selection on the canvas background while ignoring pointer events without coordinates"
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows the same cropped source in Konva preview and PNG rendering"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-crop.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "opens a cover crop without moving the existing pixels and clamps pan and zoom"
       },
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "loads media previews, crops images, synchronizes video playback and releases media on replacement"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "renders different shapes, placeholders, matching peer cursors and a bounded transition during preview"
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "moves clip edges and corners at fixed source scale and keeps them inside the source"
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx": [
@@ -694,36 +686,74 @@
     ]
   },
   "actionReferences": {
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studio-canvas.action": [
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.media.crop.open": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "caseId": "offers crop for one unlocked image or video and commits geometry in one transaction",
+        "scenarios": ["idle", "disabled", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens image crop with native keyboard focus and activation",
+        "scenarios": ["keyboard", "focus"]
       }
     ],
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studio-canvas.features-studio-clear-selection": [
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.media.crop.zoom": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies a crop once and discards an abandoned crop",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses and activates crop controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
       }
     ],
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studiocanvas.activate.rect-820a638cbc": [
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.media.crop.reset": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies a crop once and discards an abandoned crop",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses and activates crop controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
       }
     ],
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studio-canvas.activate.group-23d805b8bd": [
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.media.crop.cancel": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies a crop once and discards an abandoned crop",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses and activates crop controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.media.crop.apply": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies a crop once and discards an abandoned crop",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses and activates crop controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-2591644817": [

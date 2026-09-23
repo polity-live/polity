@@ -31,8 +31,8 @@ SELECT is((SELECT public FROM storage.buckets WHERE id='studio'),false,'Media bu
 SELECT is((SELECT file_size_limit FROM storage.buckets WHERE id='studio'),104857600::bigint,'Media bucket accepts 100 MiB files');
 SELECT is(
   (SELECT array_agg(mime ORDER BY mime) FROM storage.buckets,unnest(allowed_mime_types) mime WHERE id='studio'),
-  ARRAY['image/jpeg','image/png','image/webp','video/mp4']::text[],
-  'Media bucket allows exactly the Studio media types'
+  ARRAY['application/pdf','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip','image/jpeg','image/png','image/webp','video/mp4']::text[],
+  'Studio bucket allows media and export MIME types'
 );
 SELECT * FROM finish();
 ROLLBACK;

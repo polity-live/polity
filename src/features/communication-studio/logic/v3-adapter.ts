@@ -12,11 +12,13 @@ import {
 } from './document';
 import {
   framePresetRegistry,
+  STUDIO_DOCUMENT_SCHEMA_VERSION,
   studioDocumentV3Schema,
   type FrameNode,
   type FramePresetId,
   type StudioDocumentV3,
   type StudioNode,
+  type StudioPlateChild,
   type StudioPlateElement,
 } from './document-v3';
 import { DEFAULT_STUDIO_THEME, themeToLegacyBrand } from './theme';
@@ -74,7 +76,7 @@ function commonNode(element: StudioElement, parentFrameId: string, base?: Studio
   const strokeChanged = !!base && base.style.stroke !== nextStyle.stroke;
   return {
     id: element.id,
-    name: element.text.slice(0, 80) || element.type,
+    name: base?.name ?? (element.text.slice(0, 80) || element.type),
     parentFrameId,
     transform: {
       x: element.x,
@@ -89,13 +91,17 @@ function commonNode(element: StudioElement, parentFrameId: string, base?: Studio
     visible: element.visible,
     locked: element.locked,
     groupIds: element.group
-      ? base?.groupIds[0] === stableUuid('group', element.group)
+      ? base?.groupIds[0] === element.group ||
+        base?.groupIds[0] === stableUuid('group', element.group)
         ? [...base.groupIds]
         : [stableUuid('group', element.group)]
       : [],
     constraints: base?.constraints ?? { horizontal: 'left' as const, vertical: 'top' as const },
     style: {
       ...nextStyle,
+      strokeStyle: base?.style.strokeStyle ?? 'solid',
+      cornerRadius: base?.style.cornerRadius ?? 0,
+      roughness: base?.style.roughness ?? 0,
       fillBinding: fillChanged ? null : (base?.style.fillBinding ?? null),
       strokeBinding: strokeChanged ? null : (base?.style.strokeBinding ?? null),
     },
@@ -106,11 +112,12 @@ function commonNode(element: StudioElement, parentFrameId: string, base?: Studio
       ...(strokeChanged ? ['style.stroke'] : []),
     ].filter((value, index, values) => values.indexOf(value) === index),
     animation: element.animation,
-    excalidraw: null,
   };
 }
 
 function richContent(element: StudioElement, base?: StudioNode): StudioPlateElement[] {
+  if (base?.type === 'richText' && element.text === textFromContent(base.content))
+    return base.content;
   const existing = base?.type === 'richText' ? base.content : [];
   const paragraphs: StudioElement['richText'] = element.richText.length
     ? element.richText
@@ -158,7 +165,7 @@ function semanticNode(
         fontFamily: element.font,
         fontSize: element.fontSize,
         lineHeight: element.lineHeight,
-        letterSpacing: 0,
+        letterSpacing: base?.type === 'richText' ? base.typography.letterSpacing : 0,
         horizontalAlign: element.align,
         verticalAlign: element.verticalAlign,
         textStyleId:
@@ -237,7 +244,13 @@ function semanticNode(
     ...common,
     type: 'shape',
     shape:
-      element.type === 'rect' ? 'rectangle' : element.type === 'ellipse' ? 'ellipse' : element.type,
+      element.type === 'rect'
+        ? base?.type === 'shape' && (base.shape === 'diamond' || base.shape === 'rounded-rectangle')
+          ? base.shape
+          : 'rectangle'
+        : element.type === 'ellipse'
+          ? 'ellipse'
+          : element.type,
     startArrowhead: 'none',
     endArrowhead: element.type === 'arrow' ? 'arrow' : 'none',
     startBindingId: null,
@@ -325,7 +338,6 @@ function nativeNode(
       ...(base && base.style.stroke !== style.stroke ? ['style.stroke'] : []),
     ].filter((value, index, values) => values.indexOf(value) === index),
     animation: base?.animation ?? 'none',
-    excalidraw: JSON.parse(JSON.stringify(element)) as Record<string, never>,
   };
   if (element.type === 'frame' || element.type === 'magicframe')
     return {
@@ -448,7 +460,6 @@ export function legacyDocumentToV3(
       componentRef: oldFrame?.componentRef ?? null,
       overrides: oldFrame?.overrides ?? [],
       animation: oldFrame?.animation ?? 'none',
-      excalidraw: null,
       preset,
       duration: page.duration,
       transition: page.transition,
@@ -537,7 +548,7 @@ export function legacyDocumentToV3(
     };
   });
   return studioDocumentV3Schema.parse({
-    schemaVersion: 4,
+    schemaVersion: STUDIO_DOCUMENT_SCHEMA_VERSION,
     title: legacy.title,
     kind: legacy.kind,
     theme: previous?.theme ?? DEFAULT_STUDIO_THEME,
@@ -551,14 +562,28 @@ export function legacyDocumentToV3(
   });
 }
 
+function flattenPlateLeaves(
+  children: StudioPlateChild[],
+  url?: string
+): (Extract<StudioPlateChild, { text: string }> & { url?: string })[] {
+  return children.flatMap(child =>
+    'text' in child
+      ? [{ ...child, ...(url ? { url } : {}) }]
+      : flattenPlateLeaves(child.children, child.url ?? url)
+  );
+}
+
 function textFromContent(content: StudioPlateElement[]) {
   return content
-    .map(block => block.children.map(child => ('text' in child ? child.text : '')).join(''))
+    .map(block =>
+      flattenPlateLeaves(block.children)
+        .map(child => child.text)
+        .join('')
+    )
     .join('\n');
 }
 
-function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioElement | null {
-  if (node.excalidraw) return null;
+export function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioElement | null {
   const common = {
     id: node.id,
     x: node.transform.x,
@@ -579,12 +604,7 @@ function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioElement | 
     animation: node.animation,
   };
   if (node.type === 'richText') {
-    const textRuns = node.content.flatMap(block =>
-      block.children.filter(
-        (child): child is Extract<(typeof block.children)[number], { text: string }> =>
-          'text' in child
-      )
-    );
+    const textRuns = node.content.flatMap(block => flattenPlateLeaves(block.children, block.url));
     const everyRunHas = (mark: 'bold' | 'italic' | 'underline' | 'strikethrough') =>
       textRuns.length > 0 && textRuns.every(run => run[mark] === true);
     const paragraphs = node.content.map(block =>
@@ -593,20 +613,15 @@ function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioElement | 
         type: 'p',
         align: block.align,
         list: block.list,
-        children: block.children
-          .filter(
-            (child): child is Extract<(typeof block.children)[number], { text: string }> =>
-              'text' in child
-          )
-          .map(
-            ({
-              id: _id,
-              code: _code,
-              highlight: _highlight,
-              backgroundColor: _background,
-              ...leaf
-            }) => leaf
-          ),
+        children: flattenPlateLeaves(block.children, block.url).map(
+          ({
+            id: _id,
+            code: _code,
+            highlight: _highlight,
+            backgroundColor: _background,
+            ...leaf
+          }) => leaf
+        ),
       })
     );
     return elementSchema.parse({
@@ -657,34 +672,7 @@ function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioElement | 
   return null;
 }
 
-function nativeElement(node: StudioNode, nodeById: Map<string, StudioNode>) {
-  if (node.excalidraw) {
-    const original = structuredClone(node.excalidraw) as Record<string, unknown>;
-    const parent = node.parentFrameId ? nodeById.get(node.parentFrameId) : undefined;
-    return {
-      ...original,
-      x: node.transform.x,
-      y: node.transform.y,
-      width: node.transform.width,
-      height: node.transform.height,
-      angle: (node.transform.rotation * Math.PI) / 180,
-      ...(Array.isArray(original.scale)
-        ? { scale: [node.transform.flipX ? -1 : 1, node.transform.flipY ? -1 : 1] }
-        : {}),
-      isDeleted: !node.visible,
-      locked: node.locked,
-      groupIds: [...node.groupIds].reverse(),
-      frameId: parent?.excalidraw ? (parent.excalidraw as Record<string, unknown>).id : null,
-      customData: {
-        ...(typeof original.customData === 'object' &&
-        original.customData &&
-        !Array.isArray(original.customData)
-          ? original.customData
-          : {}),
-        polityNode: node.id,
-      },
-    };
-  }
+function nativeElement(node: StudioNode, _nodeById: Map<string, StudioNode>) {
   if (node.type !== 'frame') return null;
   return {
     id: node.id,

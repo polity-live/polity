@@ -156,13 +156,13 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
       const { projectId, action, workspaceId } = input;
       await assertStudioAccess(actor, projectId, false, sql);
       const [project] =
-        await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=4 ${readOnly ? sql`` : sql`for update`}`;
+        await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=5 ${readOnly ? sql`` : sql`for update`}`;
       const [control] =
         await sql`select * from canvas_control where project_id=${projectId} ${readOnly ? sql`` : sql`for update`}`;
       const [canonical] =
         await sql`select * from studio_state where project_id=${projectId} ${readOnly ? sql`` : sql`for update`}`;
       if (!project || !control || !canonical)
-        throw new StudioError('Studio V4 project not found', 404);
+        throw new StudioError('Studio V5 project not found', 404);
       let proposal: postgres.Row | undefined;
       if (workspaceId) {
         [proposal] =

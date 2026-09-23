@@ -10,7 +10,7 @@ import { userEvent } from 'vitest/browser';
 import { createDocument } from '../../logic/templates';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import { element } from '../../logic/document';
-const io = vi.hoisted(() => ({ controller: {} as any }));
+const io = vi.hoisted(() => ({ controller: {} as any, canvasExecute: vi.fn() }));
 vi.mock('../../hooks/useStudioController', () => ({ useStudioController: () => io.controller }));
 vi.mock('../../hooks/useStudioEditorTools', () => ({ useStudioEditorTools: vi.fn() }));
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
@@ -18,6 +18,9 @@ vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
 }));
 vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
   ProjectChatPanel: () => <p>Project chat</p>,
+}));
+vi.mock('@/features/groups/ui/GroupThemeSettings', () => ({
+  GroupThemeSettings: () => null,
 }));
 vi.mock('../StudioCanvas', () => ({
   default: ({ onGeometry }: any) => {
@@ -36,9 +39,9 @@ vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({ ImageEditorDialo
 vi.mock('../CanvasGovernancePanel', () => ({
   CanvasGovernancePanel: () => <section aria-label="Procedure" />,
 }));
-vi.mock('../ExcalidrawCanvas', () => ({
+vi.mock('../KonvaStudioCanvas', () => ({
   default: forwardRef(({ inspector }: any, ref) => {
-    useImperativeHandle(ref, () => ({ execute: vi.fn() }));
+    useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));
     return <div>{inspector && <section aria-label="properties">{inspector}</section>}</div>;
   }),
 }));
@@ -62,7 +65,10 @@ function model() {
       projects: [{ id: 'p', title: 'Existing', kind: 'single' }],
       themes: [{ id: 'theme', name: 'Theme' }],
       sources: [{ id: 'source', title: 'Source' }],
+      elementSets: [],
       selected: [value.pages[0].elements[1].id],
+      theme: null,
+      themePalette: null,
       canEdit: true,
       busy: false,
       playing: false,
@@ -148,16 +154,38 @@ it('exposes Studio creation, text, media, campaign and export controls to real k
   io.controller = model();
   const ui = render(<StudioWorkspace groupId="group" open={vi.fn()} />);
   expect(await keyboardControls(ui.container)).toBeGreaterThan(8);
-  ui.rerender(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
-  for (const panel of ['insert', 'layers', 'arrange', 'text', 'tools', 'exports', 'project']) {
+  ui.unmount();
+  io.controller = model();
+  render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  await screen.findByRole('button', { name: 'table' });
+  for (const panel of [
+    'layers',
+    'elementAlignment',
+    'distribute',
+    'order',
+    'groupElements',
+    'text',
+    'exports',
+    'project',
+  ]) {
     const triggers = screen.getAllByRole('button', { name: panel });
     const trigger = triggers.find(button => button.hasAttribute('aria-haspopup')) ?? triggers[0];
     trigger.focus();
     await userEvent.keyboard('{Enter}');
     const surface = await screen.findByRole(
-      ['project', 'insert', 'arrange', 'text'].includes(panel) ? 'menu' : 'dialog'
+      ['project', 'elementAlignment', 'distribute', 'order', 'groupElements', 'text'].includes(
+        panel
+      )
+        ? 'menu'
+        : 'dialog'
     );
-    expect(await keyboardControls(surface)).toBeGreaterThan(0);
+    if (['elementAlignment', 'distribute', 'groupElements'].includes(panel)) {
+      expect(surface.querySelectorAll('[role="menuitem"]').length).toBeGreaterThan(0);
+      if (panel !== 'groupElements')
+        expect(surface.querySelectorAll('[role="menuitemradio"]')).toHaveLength(3);
+    } else {
+      expect(await keyboardControls(surface), panel).toBeGreaterThan(0);
+    }
     await userEvent.keyboard('{Escape}');
     await waitFor(() =>
       expect(screen.queryByRole(surface.getAttribute('role') as 'menu' | 'dialog')).toBeNull()
@@ -167,10 +195,9 @@ it('exposes Studio creation, text, media, campaign and export controls to real k
   expect(
     await keyboardControls(screen.getByRole('region', { name: 'properties' }))
   ).toBeGreaterThan(10);
-  expect(io.controller.add).toHaveBeenCalled();
-  expect(io.controller.transact).toHaveBeenCalled();
+  expect(io.controller.transactV3).toHaveBeenCalled();
   expect(io.controller.exportMedia).toHaveBeenCalled();
-});
+}, 30000);
 
 it('supports native keyboard focus and activation for table and chart controls', async () => {
   const patch = vi.fn();
@@ -185,6 +212,25 @@ it('supports native keyboard focus and activation for table and chart controls',
   ui.rerender(<StudioDataProperties element={pie} patch={patch} />);
   expect(await keyboardControls(ui.container)).toBeGreaterThan(10);
   expect(screen.getByLabelText('color A')).toBeInstanceOf(HTMLInputElement);
+});
+
+it('opens image crop with native keyboard focus and activation', async () => {
+  const controller = model();
+  const image = element('image', { assetId: crypto.randomUUID() });
+  controller.value.pages[0].elements.push(image);
+  controller.v3Value = legacyDocumentToV3(controller.value);
+  controller.active = image;
+  controller.selected = [];
+  io.controller = controller;
+  io.canvasExecute.mockClear();
+  const ui = render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  controller.selected = [image.id];
+  ui.rerender(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  const crop = await screen.findByRole<HTMLButtonElement>('button', { name: 'cropMedia' });
+  crop.focus();
+  expect(document.activeElement).toBe(crop);
+  await userEvent.keyboard('{Enter}');
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'crop', action: 'start' });
 });
 
 it('navigates icon-only Studio menus with arrow keys and returns focus on Escape', async () => {

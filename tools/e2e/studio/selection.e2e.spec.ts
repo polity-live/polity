@@ -7,6 +7,8 @@ import {
   studioDocumentV3Schema,
 } from '../../../src/features/communication-studio/logic/document-v3';
 import { legacyDocumentToV3 } from '../../../src/features/communication-studio/logic/v3-adapter';
+import { element } from '../../../src/features/communication-studio/logic/document';
+import { createStudioNodeFromElement } from '../../../src/features/communication-studio/logic/create-studio-node';
 
 const fixture = JSON.parse(await readFile('output/studio/visual-fixture.json', 'utf8'));
 const database =
@@ -25,33 +27,24 @@ test('selects mixed Studio objects, distributes and groups root objects across f
   const text = seed.pages[0].elements.find(element => element.type === 'text');
   if (!text) throw new Error('Missing semantic text fixture');
   seed.pages[0].elements = [text];
-  seed.pages[0].canvas = {
-    version: 1,
-    elements: [
-      {
-        id: 'root-selection-rectangle',
-        type: 'rectangle',
-        x: 4500,
-        y: 260,
-        width: 100,
-        height: 100,
-        angle: 0,
-        isDeleted: false,
-        strokeColor: '#1b1b1f',
-        backgroundColor: '#e03131',
-        fillStyle: 'solid',
-        strokeWidth: 2,
-        strokeStyle: 'solid',
-        roughness: 0,
-        opacity: 100,
-        customData: { polityRoot: true },
-      },
-    ],
-    files: {},
-  };
   const document = legacyDocumentToV3(seed);
   const firstFrame = document.nodes.find(node => node.type === 'frame' && !node.parentFrameId);
   if (!firstFrame) throw new Error('Missing first frame');
+  const rootShape = createStudioNodeFromElement(
+    element('rect', {
+      x: 4500,
+      y: 260,
+      width: 100,
+      height: 100,
+      fill: '#e03131',
+      stroke: '#1b1b1f',
+      strokeWidth: 2,
+    }),
+    firstFrame.id,
+    1
+  );
+  rootShape.parentFrameId = null;
+  document.nodes.push(rootShape);
   firstFrame.transform.x = 0;
   firstFrame.transform.y = 0;
   const secondFrame = createFrameNode('custom', {
@@ -81,7 +74,7 @@ test('selects mixed Studio objects, distributes and groups root objects across f
     const [row] = await sql`select document from studio_state where project_id=${projectId}`;
     return row.document.nodes as typeof document.nodes;
   };
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},3,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},0)`;
   try {
     const pageErrors: string[] = [];
@@ -89,7 +82,7 @@ test('selects mixed Studio objects, distributes and groups root objects across f
     await page.goto(`/studio/${projectId}`);
     await page.getByRole('button', { name: 'I understand', exact: true }).click();
     await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(seed.title);
-    const canvas = page.locator('canvas.interactive');
+    const canvas = page.locator('[data-testid="studio-canvas"] canvas').first();
     await expect(canvas).toBeVisible();
     const context = page.getByRole('toolbar', { name: 'Context tools' });
     const projectStatus = page.locator('header[aria-label="Project status"]');
@@ -221,7 +214,7 @@ test('selects mixed Studio objects, distributes and groups root objects across f
 
 test('touch long press enters selection mode and movement cancels it', async ({ page }) => {
   const projectId = crypto.randomUUID();
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${fixture.document.title},${fixture.document.kind},3,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${fixture.document.title},${fixture.document.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(fixture.document)},0)`;
   try {
     await page.goto(`/studio/${projectId}`);
@@ -229,7 +222,7 @@ test('touch long press enters selection mode and movement cancels it', async ({ 
     await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(
       fixture.document.title
     );
-    const canvas = page.locator('canvas.interactive');
+    const canvas = page.locator('[data-testid="studio-canvas"] canvas').first();
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Missing Studio canvas');
     const x = box.x + box.width / 2;
@@ -287,7 +280,7 @@ test('locked frames are skipped on the canvas and can be unlocked from layers', 
   const frame = document.nodes.find((node: { type: string }) => node.type === 'frame');
   if (!frame) throw new Error('Missing frame fixture');
   frame.locked = true;
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},3,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(document)},0)`;
   try {
     await page.goto(`/studio/${projectId}`);
@@ -295,7 +288,7 @@ test('locked frames are skipped on the canvas and can be unlocked from layers', 
     await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(
       document.title
     );
-    const canvas = page.locator('canvas.interactive');
+    const canvas = page.locator('[data-testid="studio-canvas"] canvas').first();
     await expect(canvas).toBeVisible();
     await canvas.click({ position: { x: 25, y: 25 } });
     await page.keyboard.press('ControlOrMeta+a');

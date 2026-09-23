@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
-import { element } from '../document';
 import { applyStudioCommandV3 } from '../commands-v3';
 import { createFrameNode, createStudioDocumentV3, shapeNodeSchema } from '../document-v3';
 import {
-  createStudioClipboardPayload,
   createStudioV3ClipboardPayload,
-  duplicateStudioClipboard,
   getProjectStudioClipboard,
   parseStudioClipboard,
   pasteStudioV3Clipboard,
@@ -15,179 +11,8 @@ import {
 } from '../studio-clipboard';
 
 const projectId = crypto.randomUUID();
-const frame = {
-  id: crypto.randomUUID(),
-  type: 'frame',
-  x: 100,
-  y: 200,
-  width: 1080,
-  height: 1080,
-  angle: 0,
-  isDeleted: false,
-  locked: false,
-  groupIds: [],
-} as unknown as ExcalidrawElement;
-
-function projection(id: string) {
-  return {
-    id,
-    type: 'image',
-    x: 140,
-    y: 260,
-    width: 300,
-    height: 120,
-    angle: 0,
-    isDeleted: false,
-    locked: false,
-    groupIds: ['group'],
-    frameId: frame.id,
-    fileId: `polity-${id}`,
-    scale: [1, 1],
-    customData: { polityElement: id },
-  } as unknown as ExcalidrawElement;
-}
 
 describe('Studio project clipboard', () => {
-  it('serializes complete semantic selections relative to their frame and restores them with new IDs', () => {
-    const source = element('text', {
-      x: 40,
-      y: 60,
-      width: 300,
-      height: 120,
-      text: 'Structured source',
-      group: 'group',
-      flipX: true,
-    });
-    const shown = projection(source.id);
-    const payload = createStudioClipboardPayload({
-      projectId,
-      selectedIds: [source.id],
-      elements: [frame, shown],
-      semanticElements: [source],
-      files: {
-        [`polity-${source.id}`]: {
-          id: `polity-${source.id}`,
-          mimeType: 'image/png',
-          dataURL: 'data:image/png;base64,AAAA',
-          created: 0,
-        },
-      } as never,
-      frameIds: new Set([frame.id]),
-      activeFrame: frame,
-    });
-    expect(payload).not.toBeNull();
-    expect(payload!.elements[0]).toMatchObject({ x: 40, y: 60, frameId: null });
-    expect(payload!.semanticElements[0]).toMatchObject({ text: source.text, flipX: true });
-
-    const pasted = duplicateStudioClipboard(payload!, projectId, frame);
-    expect(pasted.semanticElements[0]).toMatchObject({
-      x: 64,
-      y: 84,
-      text: source.text,
-      flipX: true,
-    });
-    expect(pasted.semanticElements[0].id).not.toBe(source.id);
-    expect(pasted.elements[0]).toMatchObject({
-      x: 164,
-      y: 284,
-      frameId: frame.id,
-      isDeleted: false,
-      customData: { polityElement: pasted.semanticElements[0].id },
-    });
-    expect(pasted.elements[0].id).toBe(pasted.semanticElements[0].id);
-  });
-
-  it('keeps cut content in the project fallback and rejects another project', () => {
-    const source = element('rect');
-    const payload = createStudioClipboardPayload({
-      projectId,
-      selectedIds: [source.id],
-      elements: [projection(source.id)],
-      semanticElements: [source],
-      files: {},
-    });
-    if (!payload) throw new Error('Missing clipboard fixture');
-    setProjectStudioClipboard(payload);
-    const restored = getProjectStudioClipboard(projectId);
-    expect(restored).toEqual(payload);
-    expect(restored).not.toBe(payload);
-    expect(parseStudioClipboard(stringifyStudioClipboard(payload))).toEqual(payload);
-    expect(parseStudioClipboard('plain text')).toBeNull();
-    expect(() => duplicateStudioClipboard(payload, crypto.randomUUID())).toThrow('another project');
-  });
-
-  it('remaps selected bindings and drops references to objects outside the copied selection', () => {
-    const first = {
-      ...projection(crypto.randomUUID()),
-      id: 'first',
-      type: 'rectangle',
-      boundElements: [
-        { id: 'bound', type: 'text' },
-        { id: 'outside', type: 'arrow' },
-      ],
-      customData: {},
-    } as unknown as ExcalidrawElement;
-    const bound = {
-      ...projection(crypto.randomUUID()),
-      id: 'bound',
-      type: 'text',
-      containerId: 'first',
-      customData: {},
-    } as unknown as ExcalidrawElement;
-    const payload = createStudioClipboardPayload({
-      projectId,
-      selectedIds: ['first'],
-      elements: [first, bound],
-      semanticElements: [],
-      files: {},
-    });
-    if (!payload) throw new Error('Missing clipboard fixture');
-    const pasted = duplicateStudioClipboard(payload, projectId);
-    const rectangle = pasted.elements.find(item => item.type === 'rectangle')!;
-    const text = pasted.elements.find(item => item.type === 'text')! as ExcalidrawElement & {
-      containerId: string;
-    };
-    expect(rectangle.boundElements).toEqual([{ id: text.id, type: 'text' }]);
-    expect(text.containerId).toBe(rectangle.id);
-  });
-
-  it('copies derived locked content as an editable independent element', () => {
-    const master = {
-      ...projection('master-source'),
-      id: 'derived-master',
-      locked: true,
-      customData: {
-        polityMaster: 'master-source',
-        polityMasterFrame: 'master-frame',
-        polityTargetFrame: frame.id,
-      },
-    } as unknown as ExcalidrawElement;
-    const background = {
-      ...projection('background-source'),
-      id: 'derived-background',
-      type: 'rectangle',
-      locked: true,
-      customData: { polityFrameBackground: frame.id },
-    } as unknown as ExcalidrawElement;
-    const payload = createStudioClipboardPayload({
-      projectId,
-      selectedIds: [master.id, background.id],
-      elements: [master, background],
-      semanticElements: [],
-      files: {},
-    });
-    if (!payload) throw new Error('Missing derived clipboard fixture');
-
-    const pasted = duplicateStudioClipboard(payload, projectId, frame);
-    expect(pasted.elements).toHaveLength(2);
-    for (const copied of pasted.elements) {
-      expect(copied.locked).toBe(false);
-      expect(copied.customData).not.toHaveProperty('polityMaster');
-      expect(copied.customData).not.toHaveProperty('polityFrameBackground');
-      expect(copied.frameId).toBe(frame.id);
-    }
-  });
-
   it('copies a complete V3 frame hierarchy and inserts the new frame beside its source', () => {
     const document = createStudioDocumentV3('Clipboard hierarchy');
     const root = createFrameNode('square', {
@@ -211,12 +36,6 @@ describe('Studio project clipboard', () => {
       parentFrameId: root.id,
       groupIds: [sharedGroupId],
       shape: 'rectangle',
-      excalidraw: {
-        id: 'native-box',
-        groupIds: [sharedGroupId],
-        boundElements: [{ id: 'native-arrow', type: 'arrow' }],
-        customData: { polityNode: boxId, polityElement: boxId },
-      },
     });
     const arrow = shapeNodeSchema.parse({
       ...createFrameNode('custom'),
@@ -227,12 +46,6 @@ describe('Studio project clipboard', () => {
       groupIds: [sharedGroupId],
       shape: 'arrow',
       startBindingId: boxId,
-      excalidraw: {
-        id: 'native-arrow',
-        groupIds: [sharedGroupId],
-        startBinding: { elementId: 'native-box', focus: 0, gap: 0 },
-        customData: { polityNode: arrowId },
-      },
     });
     document.nodes.push(root, child, box, arrow);
     const deliverableId = crypto.randomUUID();
@@ -289,15 +102,8 @@ describe('Studio project clipboard', () => {
     expect(boxCopy?.groupIds).toEqual(arrowCopy?.groupIds);
     expect(boxCopy?.groupIds[0]).not.toBe(sharedGroupId);
     expect(arrowCopy).toMatchObject({ startBindingId: boxCopy?.id });
-    expect(boxCopy?.excalidraw).toMatchObject({
-      id: expect.not.stringMatching(/^native-box$/),
-      boundElements: [{ id: arrowCopy?.excalidraw?.id, type: 'arrow' }],
-      customData: { polityNode: boxCopy?.id, polityElement: boxCopy?.id },
-    });
-    expect(arrowCopy?.excalidraw).toMatchObject({
-      startBinding: { elementId: boxCopy?.excalidraw?.id },
-      customData: { polityNode: arrowCopy?.id },
-    });
+    expect(boxCopy).not.toHaveProperty('excalidraw');
+    expect(arrowCopy).not.toHaveProperty('excalidraw');
     expect(pasted.document.deliverables.find(item => item.id === deliverableId)?.frameIds).toEqual([
       root.id,
       rootCopy?.id,

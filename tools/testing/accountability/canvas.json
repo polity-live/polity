@@ -1,27 +1,6 @@
 {
   "version": 1,
   "sourceReferenceAdditions": {
-    "src/features/communication-studio/logic/canvas-adapter.ts": [
-      {
-        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
-        "project": "unit",
-        "caseId": "preserves mixed native and structured layer order without rewriting unrelated records"
-      }
-    ],
-    "src/features/communication-studio/logic/canvas-layers.ts": [
-      {
-        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
-        "project": "unit",
-        "caseId": "preserves mixed native and structured layer order without rewriting unrelated records"
-      }
-    ],
-    "src/features/communication-studio/logic/canvas-schema.ts": [
-      {
-        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
-        "project": "unit",
-        "caseId": "rejects executable links, duplicate IDs and executable image formats"
-      }
-    ],
     "src/server/studio/governance.ts": [
       {
         "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -57,11 +36,16 @@
         "caseId": "rejects the same asset URL after access is withdrawn before contacting storage"
       }
     ],
-    "src/features/communication-studio/ui/ExcalidrawCanvas.tsx": [
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx": [
       {
-        "file": "tools/e2e/studio/canvas.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drags a crop edge on the real canvas and saves the smaller frame"
       }
     ],
     "src/features/communication-studio/ui/CanvasGovernancePanel.tsx": [
