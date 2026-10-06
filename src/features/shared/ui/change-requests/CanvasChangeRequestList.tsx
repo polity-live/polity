@@ -55,8 +55,9 @@ export function CanvasChangeRequestList<T extends { id: string }>({
         <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
           <h2 className="min-w-0 flex-1 text-sm font-semibold">
             {collapsible ? (
-              <CollapsibleTrigger asChild>
+              <CollapsibleTrigger data-action-id="shared.canvas-change-request-list.toggle" asChild>
                 <button
+                  data-action-id="shared.canvas-change-request-list.toggle"
                   type="button"
                   className="focus-visible:ring-ring flex w-full items-center justify-between gap-2 rounded-sm text-left focus-visible:ring-2 focus-visible:outline-none"
                 >
@@ -74,7 +75,7 @@ export function CanvasChangeRequestList<T extends { id: string }>({
           {selectedId && (
             <button
               type="button"
-              data-action-id={closeActionId}
+              data-action-id={closeActionId ?? 'shared.canvas-change-request.list.close'}
               aria-label={closeLabel}
               onClick={() => onSelect(null)}
             >

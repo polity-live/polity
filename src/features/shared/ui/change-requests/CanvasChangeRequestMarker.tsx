@@ -43,7 +43,8 @@ export function CanvasChangeRequestMarker({
   return (
     <TooltipHint content={label}>
       <button
-        data-action-id={actionId}
+        data-action-id={actionId || 'shared.canvas-change-request.marker.select'}
+        data-action-kind="selection"
         type="button"
         className={cn(
           'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',

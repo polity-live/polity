@@ -34,7 +34,7 @@ export function CanvasChangeRequestCloseButton({
 }) {
   return (
     <Button
-      data-action-id={actionId}
+      data-action-id={actionId ?? 'shared.canvas-change-request.card.close'}
       type="button"
       variant="ghost"
       size="icon"

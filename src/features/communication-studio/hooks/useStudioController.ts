@@ -417,7 +417,7 @@ export function useStudioController(
   const upload = (file: File) =>
     run(async () => {
       if (!id) return;
-      if (!exportFrameIds.length) throw new Error('Select at least one frame to export.');
+      if (!page) throw new Error('Select a frame to upload media.');
       const asset = await studioApi.upload(id, file, workspaceId);
       const e = element(asset.mime.startsWith('video') ? 'video' : 'image', {
         assetId: asset.id,
@@ -453,10 +453,10 @@ export function useStudioController(
     editor.transactV3(document => {
       const existing = new Set(document.nodes.map(node => node.id));
       runV3Command(document, { type: 'duplicateNodes', nodeIds: [page.id] });
-      const copy = document.nodes.find(
+      // The validated command either creates the copied root frame or throws.
+      const [copy] = document.nodes.filter(
         node => !existing.has(node.id) && node.type === 'frame' && node.parentFrameId === null
       );
-      if (!copy || copy.type !== 'frame') throw new Error('Frame copy was not created');
       copyId = copy.id;
       copy.name = page.name.slice(0, 152) + ' · Kopie';
       copy.zIndex =

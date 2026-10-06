@@ -19325,6 +19325,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -19366,10 +19376,166 @@
           "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
           "project": "component",
           "caseId": "prevents a carousel from exceeding thirty pages"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "constructs the editor identity for $name without requiring profile metadata"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "follows only valid canvas hash links and removes the listener on unmount"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "selects exact frames, merges explicit export selections and resets selections for another project"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "polls an export to %s, deduplicates stored jobs and downloads completed jobs exactly once"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "retains failed status polling, retries without overlapping requests and ignores late results after unmount"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "downloads a manually selected export with encoded identifiers and no optional filename"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reports export failures and retains the draft (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "does not queue a second export while preparing and rejects exporting a proposal workspace"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "creates a project template with AI fallback briefing only after the chat mutation is confirmed"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores malformed returned drafts while retaining built-in themes"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "applies themes and text styles only to selected rich text nodes and preserves unknown styles"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "denies %s Elements from a proposal workspace before contacting the API"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "saves, renames and archives a selected Elements set only after the editor commits"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects saving or publishing invalid Elements selections (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "instantiates Elements in the requested coordinate space (%s) and publishes local changes"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "does not instantiate or publish into an unavailable document (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "retains Elements selections when a published instance was concurrently removed"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "inserts the %s deliverable with independent frames and matching metadata"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "prevents frame additions at the project limit and does not execute commands with no document"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "transforms a complete legacy selection and does not alter its coordinates for style-only changes"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps all local mutations inert if editing permissions disappear before the transaction"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects media insertion when no frame is available and keeps upload requests untouched"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "positions a new frame on an empty canvas and keeps standalone pages independent of deliverables"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reports a stale legacy frame rather than accepting a failed duplicate transaction"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "instantiates a root Elements set when no legacy frame is active and preserves an unrelated instance"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "uploads media to the active frame even when all export frames are unmarked"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "expands grouped nodes while retaining unrelated selection identities"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores unavailable canvas values for legacy transformations and export frame marking"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "appends a duplicated frame when its prior legacy association has already changed"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the canvas usable when Elements discovery fails and adds an explicitly unmarked export frame"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "retains text styles when the document contains no selectable nodes"
         }
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
@@ -19645,6 +19811,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
@@ -19930,6 +20097,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/controller.lifecycle.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
@@ -64105,9 +64273,25 @@
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
           "project": "component",
           "caseId": "formats object, geometry, value, vote, discussion, author, and tone alternatives"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders a %s labelled request card and closes it with native keyboard activation"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and clears the %s marker using native keyboard input and prevents canvas pointer propagation"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ]
     },
@@ -64138,9 +64322,25 @@
           "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "fits a narrow canvas with its trigger and close button visible"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders a %s labelled request card and closes it with native keyboard activation"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and clears the %s marker using native keyboard input and prevents canvas pointer propagation"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ]
     },
@@ -64231,9 +64431,25 @@
           "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
           "project": "component",
           "caseId": "projects canvas anchors from the current scene camera pose"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders a %s labelled request card and closes it with native keyboard activation"
+        },
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and clears the %s marker using native keyboard input and prevents canvas pointer propagation"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ]
     },
@@ -64282,8 +64498,19 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",

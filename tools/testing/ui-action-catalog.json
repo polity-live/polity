@@ -66952,32 +66952,70 @@
       "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx#shared.canvas-change-request-card.on-close",
+      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx#shared.canvas-change-request.card.close",
       "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx#Button-2741957725",
       "file": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx",
-      "actionId": "shared.canvas-change-request-card.on-close",
-      "identifierSource": "action-id-prop",
+      "actionId": "shared.canvas-change-request.card.close",
+      "identifierSource": "manifest-declaration",
+      "declarationKey": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx#Button-2741957725",
       "tag": "Button",
       "line": 36,
       "column": 4,
       "kind": "interaction",
-      "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "actionId",
+      "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onClose",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders a %s labelled request card and closes it with native keyboard activation",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#button-2d4e0b17bd",
+      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#shared.canvas-change-request-list.toggle",
+      "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#CollapsibleTrigger-f5ba1c8aab",
+      "file": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx",
+      "actionId": "shared.canvas-change-request-list.toggle",
+      "identifierSource": "data-action-id",
+      "tag": "CollapsibleTrigger",
+      "line": 58,
+      "column": 14,
+      "kind": "interaction",
+      "classification": "transparent-wrapper",
+      "aliasOfLegacyFingerprint": "a829d200ae",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
+      ],
+      "accountabilityStatus": "merged-alias"
+    },
+    {
+      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#shared.canvas-change-request-list.toggle",
       "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#button-2d4e0b17bd",
       "file": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "shared.canvas-change-request-list.toggle",
+      "identifierSource": "data-action-id",
       "tag": "button",
       "line": 59,
       "column": 16,
@@ -66986,73 +67024,78 @@
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#CollapsibleTrigger-f5ba1c8aab",
-      "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#CollapsibleTrigger-f5ba1c8aab",
-      "file": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx",
-      "identifierSource": "unidentified",
-      "tag": "CollapsibleTrigger",
-      "line": 58,
-      "column": 14,
-      "kind": "interaction",
-      "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "2d4e0b17bd",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#shared.canvas-change-request-list.action",
+      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#shared.canvas-change-request.list.close",
       "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#button-1b01ed8bb1",
       "file": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx",
-      "actionId": "shared.canvas-change-request-list.action",
-      "identifierSource": "action-id-prop",
+      "actionId": "shared.canvas-change-request.list.close",
+      "identifierSource": "manifest-declaration",
+      "declarationKey": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx#button-1b01ed8bb1",
       "tag": "button",
-      "line": 75,
+      "line": 76,
       "column": 12,
       "kind": "interaction",
-      "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "closeActionId",
+      "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onSelect",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and closes list requests, collapses with the native keyboard and retains focus on each surviving control",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-7ce8f72d04",
-      "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-7ce8f72d04",
+      "key": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#shared.canvas-change-request.marker.select",
+      "debtKey": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-294759a95e",
       "file": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx",
-      "identifierSource": "action-id-prop",
+      "actionId": "shared.canvas-change-request.marker.select",
+      "identifierSource": "manifest-declaration",
+      "declarationKey": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-294759a95e",
       "tag": "button",
       "line": 45,
       "column": 6,
-      "kind": "interaction",
-      "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "actionId",
+      "kind": "selection",
+      "classification": "canonical-action",
       "accessibilityIssues": [],
-      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and clears the %s marker using native keyboard input and prevents canvas pointer propagation",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx#shared.canvas-vote.choice.submit",
@@ -67087,6 +67130,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestControls.browser-component.test.tsx",
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
