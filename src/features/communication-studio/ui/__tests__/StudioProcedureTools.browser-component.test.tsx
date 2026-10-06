@@ -6,6 +6,7 @@ import { StudioProcedureTools } from '../StudioProcedureTools';
 import { useStudioController } from '../../hooks/useStudioController';
 import { createDocument } from '../../logic/templates';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
+import { Toolbar } from '@/features/shared/ui/layout';
 
 const io = vi.hoisted(() => ({
   user: { id: 'actor' } as { id: string } | null,
@@ -43,17 +44,19 @@ const controller = () => ({
   recoverAsProposal: io.recover,
   run: io.run,
 });
-function Harness() {
+function Harness({ workspaceId }: { workspaceId?: string }) {
   const procedure = useStudioProcedure({
     projectId: 'project',
+    workspaceId,
     chooseWorkspace: io.choose,
     c: controller() as never,
   });
   return (
-    <>
+    <main style={{ position: 'relative', minHeight: 800 }}>
+      <Toolbar>{procedure.modeButton}</Toolbar>
       {procedure.tools}
       {procedure.canvasOverlay}
-    </>
+    </main>
   );
 }
 function ControllerHarness() {
@@ -109,8 +112,11 @@ beforeEach(async () => {
   });
   io.request.mockImplementation(async (operation, input) => {
     if (operation === 'themes' || operation === 'elementSets') return [];
+    if (operation === 'assets') return [];
     if (operation === 'load') return { revision: 11 };
     if (input.action === 'session') return io.session;
+    if (input.action === 'loadDraft')
+      return { document: { nodes: [] }, baseDocument: { nodes: [] } };
     const result = await pending;
     if (input.action === 'setCapability')
       io.session = {
@@ -130,6 +136,23 @@ beforeEach(async () => {
         ...io.session,
         comments: [{ ...io.session.comments[0], resolved: true }],
       };
+    if (input.action === 'share')
+      io.session = {
+        ...io.session,
+        proposals: io.session.proposals.map((item: any) =>
+          item.id === input.workspaceId ? { ...item, shared_ids: input.userIds } : item
+        ),
+      };
+    if (input.action === 'vote')
+      io.session = {
+        ...io.session,
+        proposals: io.session.proposals.map((item: any) =>
+          item.id === input.workspaceId
+            ? { ...item, votes: [{ user_id: 'actor', choice: input.choice }] }
+            : item
+        ),
+      };
+    if (input.action === 'phase') io.session = { ...io.session, phase: input.phase };
     return result;
   });
   io.commit.mockResolvedValue(7);
@@ -417,3 +440,348 @@ it('hides protected controls and keeps comment submission disabled without proje
   await expect.element(page.getByRole('button', { name: 'Comment', exact: true })).toBeDisabled();
   expect(io.request.mock.calls.filter(([, input]) => input.action !== 'session')).toHaveLength(0);
 });
+
+const proposal = (overrides: Record<string, unknown> = {}) => ({
+  id: 'proposal',
+  title: 'Proposed introduction',
+  reason: 'Clearer wording',
+  owner_id: 'actor',
+  shared_ids: [],
+  revision: 4,
+  base_revision: 1,
+  state: 'draft',
+  decision: null,
+  application: 'pending',
+  resolves_id: null,
+  deadline: null,
+  electorate: null,
+  votes: [],
+  changes: [],
+  ...overrides,
+});
+const workflow = [
+  {
+    action: 'createDraft',
+    label: 'Start proposal',
+    phase: 'suggest_internal',
+    workspaceId: undefined,
+  },
+  { action: 'submit', label: 'Submit', phase: 'suggest_internal', workspaceId: 'proposal' },
+  { action: 'withdraw', label: 'Withdraw', phase: 'edit', workspaceId: undefined },
+  { action: 'acceptPrivate', label: 'Accept', phase: 'edit', workspaceId: undefined },
+  { action: 'rejectPrivate', label: 'Reject', phase: 'edit', workspaceId: undefined },
+  { action: 'finalize', label: 'Finalize', phase: 'vote_internal', workspaceId: undefined },
+  { action: 'reapply', label: 'Retry decision', phase: 'vote_internal', workspaceId: undefined },
+  {
+    action: 'resolveDraft',
+    label: 'Resolution proposal',
+    phase: 'vote_internal',
+    workspaceId: undefined,
+  },
+  {
+    action: 'return',
+    label: 'Back to project',
+    phase: 'suggest_internal',
+    workspaceId: 'proposal',
+  },
+];
+it.each(
+  workflow.flatMap(operation =>
+    ['success', 'error', 'unauthorized'].map(outcome => ({ ...operation, outcome }))
+  )
+)(
+  'runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending',
+  async operation => {
+    io.session.phase = operation.phase;
+    io.session.comments = [];
+    io.session.proposals =
+      operation.action === 'createDraft'
+        ? []
+        : [
+            proposal({
+              origin: ['acceptPrivate', 'rejectPrivate'].includes(operation.action)
+                ? 'ai'
+                : undefined,
+              state: operation.phase === 'vote_internal' ? 'voting' : 'draft',
+              application: ['reapply', 'resolveDraft'].includes(operation.action)
+                ? 'conflict'
+                : 'pending',
+              electorate: operation.phase === 'vote_internal' ? ['actor'] : null,
+            }),
+          ];
+    if (['acceptPrivate', 'rejectPrivate'].includes(operation.action)) io.session.groupId = null;
+    if (operation.action === 'return')
+      io.commit.mockImplementation(
+        () =>
+          new Promise((resolve, fail) => {
+            finish = resolve;
+            reject = fail;
+          })
+      );
+    render(<Harness workspaceId={operation.workspaceId} />);
+    if (operation.action === 'createDraft') {
+      const title = page.getByRole('textbox', { name: 'Proposal title' });
+      await expect.element(title).toBeVisible();
+      await title.click();
+      await userEvent.keyboard('New proposal');
+      await expect.element(title).toHaveFocus();
+      const reason = page.getByRole('textbox', { name: 'Reason' });
+      await reason.click();
+      await userEvent.keyboard('Specific explanation');
+      await expect.element(reason).toHaveFocus();
+    } else if (!operation.workspaceId) {
+      const row = page.getByRole('button', { name: /^Proposed introduction/ });
+      await expect.element(row).toBeVisible();
+      row.element().focus();
+      await userEvent.keyboard('{Enter}');
+    }
+    const control = page.getByRole('button', { name: operation.label, exact: true });
+    await expect.element(control).toBeVisible();
+    control.element().focus();
+    await expect.element(control).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect.element(control).toBeDisabled();
+    await userEvent.keyboard('{Enter} ');
+    if (operation.action === 'return') expect(io.commit).toHaveBeenCalledTimes(1);
+    else {
+      await waitFor(() =>
+        expect(
+          io.request.mock.calls.filter(([, input]) => input.action === operation.action)
+        ).toHaveLength(1)
+      );
+      expect(io.request).toHaveBeenCalledWith(
+        'canvas',
+        expect.objectContaining({
+          action: operation.action,
+          projectId: 'project',
+          generation: 'generation',
+          operationId: expect.any(String),
+          ...(operation.action === 'createDraft'
+            ? { title: 'New proposal', reason: 'Specific explanation', revision: 7 }
+            : { workspaceId: 'proposal' }),
+        })
+      );
+    }
+    if (operation.outcome === 'success') {
+      finish(operation.action === 'return' ? 7 : { workspaceId: 'created' });
+      if (['createDraft', 'resolveDraft'].includes(operation.action))
+        await waitFor(() => expect(io.choose).toHaveBeenCalledWith('created'));
+      else if (['submit', 'return'].includes(operation.action))
+        await waitFor(() => expect(io.choose).toHaveBeenCalledWith());
+      else if (operation.action === 'withdraw')
+        await expect
+          .element(page.getByRole('region', { name: 'Change request' }))
+          .not.toBeInTheDocument();
+      else await expect.element(control).not.toBeDisabled();
+    } else {
+      reject(
+        new Error(
+          operation.outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'
+        )
+      );
+      await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(
+          operation.outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'
+        );
+      await expect.element(control).not.toBeDisabled();
+      if (operation.action === 'createDraft')
+        await expect
+          .element(page.getByRole('textbox', { name: 'Proposal title' }))
+          .toHaveValue('New proposal');
+      else await expect.element(page.getByRole('region', { name: 'Change request' })).toBeVisible();
+    }
+  }
+);
+
+it('selects proposal rows, switches every comparison view and closes details with native keyboard input', async () => {
+  io.session.proposals = [proposal()];
+  render(<Harness />);
+  const row = page.getByRole('button', { name: /^Proposed introduction/ });
+  await expect.element(row).toHaveAttribute('aria-pressed', 'false');
+  row.element().focus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(row).toHaveAttribute('aria-pressed', 'true');
+  const region = page.getByRole('region', { name: 'Change request' });
+  for (const name of ['Original', 'Proposal', 'Difference']) {
+    const control = region.getByRole('button', { name, exact: true });
+    await expect.element(control).toBeVisible();
+    control.element().focus();
+    await expect.element(control).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect.element(control).toHaveAttribute('aria-pressed', 'true');
+    for (const other of ['Original', 'Proposal', 'Difference'].filter(label => label !== name))
+      await expect
+        .element(region.getByRole('button', { name: other, exact: true }))
+        .toHaveAttribute('aria-pressed', 'false');
+  }
+  const edit = region.getByRole('button', { name: 'Edit draft' });
+  edit.element().focus();
+  await expect.element(edit).toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+  expect(io.choose).toHaveBeenCalledWith('proposal');
+  const close = region.getByRole('button', { name: 'Close', exact: true });
+  close.element().focus();
+  await expect.element(close).toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(region).not.toBeInTheDocument();
+  await expect.element(row).toHaveAttribute('aria-pressed', 'false');
+});
+
+it.each(['success', 'error', 'unauthorized'])(
+  'shares and revokes access with native keyboard input through %s without losing the selected collaborators',
+  async outcome => {
+    io.session.phase = 'suggest_internal';
+    io.session.proposals = [proposal()];
+    io.session.members = [{ id: 'reader', first_name: 'Reader' }];
+    render(<Harness workspaceId="proposal" />);
+    const checkbox = page.getByRole('checkbox', { name: 'Reader' });
+    await expect.element(checkbox).not.toBeChecked();
+    checkbox.element().focus();
+    await expect.element(checkbox).toHaveFocus();
+    await userEvent.keyboard(' ');
+    await expect.element(checkbox).toBeDisabled();
+    await userEvent.keyboard(' ');
+    await waitFor(() =>
+      expect(io.request.mock.calls.filter(([, input]) => input.action === 'share')).toHaveLength(1)
+    );
+    expect(io.request).toHaveBeenCalledWith(
+      'canvas',
+      expect.objectContaining({
+        action: 'share',
+        workspaceId: 'proposal',
+        userIds: ['reader'],
+        generation: 'generation',
+        operationId: expect.any(String),
+      })
+    );
+    if (outcome === 'success') {
+      finish({});
+      await expect.element(checkbox).toBeChecked();
+      await expect.element(checkbox).not.toBeDisabled();
+      checkbox.element().focus();
+      await expect.element(checkbox).toHaveFocus();
+      await userEvent.keyboard(' ');
+      await expect.element(checkbox).not.toBeChecked();
+      expect(io.request).toHaveBeenCalledWith(
+        'canvas',
+        expect.objectContaining({ action: 'share', userIds: [] })
+      );
+    } else {
+      reject(new Error(outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'));
+      await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(
+          outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'
+        );
+      await expect.element(checkbox).not.toBeChecked();
+      await expect.element(checkbox).not.toBeDisabled();
+    }
+  }
+);
+
+it.each(
+  ['accept', 'reject', 'abstain'].flatMap(choice =>
+    ['success', 'error', 'unauthorized'].map(outcome => ({ choice, outcome }))
+  )
+)(
+  'casts the $choice vote through $outcome using native keyboard input and retains the previous vote on failure',
+  async ({ choice, outcome }) => {
+    io.session.phase = 'vote_internal';
+    io.session.comments = [];
+    const previous = choice === 'accept' ? 'reject' : 'accept';
+    io.session.proposals = [
+      proposal({
+        state: 'voting',
+        electorate: ['actor'],
+        votes: [{ user_id: 'actor', choice: previous }],
+      }),
+    ];
+    render(<Harness />);
+    const row = page.getByRole('button', { name: /^Proposed introduction/ });
+    await expect.element(row).toBeVisible();
+    row.element().focus();
+    await userEvent.keyboard('{Enter}');
+    const labels = { accept: 'Yes', reject: 'No', abstain: 'Abstain' };
+    const control = page.getByRole('button', {
+      name: labels[choice as keyof typeof labels],
+      exact: true,
+    });
+    await expect.element(control).toHaveAttribute('aria-pressed', 'false');
+    control.element().focus();
+    await expect.element(control).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect.element(control).toBeDisabled();
+    await userEvent.keyboard('{Enter} ');
+    await waitFor(() =>
+      expect(io.request.mock.calls.filter(([, input]) => input.action === 'vote')).toHaveLength(1)
+    );
+    expect(io.request).toHaveBeenCalledWith(
+      'canvas',
+      expect.objectContaining({
+        action: 'vote',
+        workspaceId: 'proposal',
+        choice,
+        projectId: 'project',
+        generation: 'generation',
+        operationId: expect.any(String),
+      })
+    );
+    if (outcome === 'success') {
+      finish({});
+      await expect.element(control).toHaveAttribute('aria-pressed', 'true');
+      await expect
+        .element(page.getByRole('button', { name: labels[previous], exact: true }))
+        .toHaveAttribute('aria-pressed', 'false');
+    } else {
+      reject(new Error(outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'));
+      await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(
+          outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'
+        );
+      await expect.element(control).toHaveAttribute('aria-pressed', 'false');
+      await expect
+        .element(page.getByRole('button', { name: labels[previous], exact: true }))
+        .toHaveAttribute('aria-pressed', 'true');
+    }
+    await expect.element(control).not.toBeDisabled();
+  }
+);
+
+it.each(['success', 'error', 'unauthorized'])(
+  'opens and changes the procedure mode through %s with native menu keyboard navigation and restores trigger focus',
+  async outcome => {
+    render(<Harness />);
+    const trigger = page.getByRole('button', { name: 'Collaborative Editing', exact: true });
+    await expect.element(trigger).toBeVisible();
+    trigger.element().focus();
+    await expect.element(trigger).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    const option = page.getByRole('menuitemradio', { name: /Internal Suggestions/ });
+    await expect.element(option).toBeVisible();
+    option.element().focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(io.request).toHaveBeenCalledWith(
+        'canvas',
+        expect.objectContaining({ action: 'phase', phase: 'suggest_internal', revision: 11 })
+      )
+    );
+    await expect.element(trigger).toHaveFocus();
+    if (outcome === 'success') {
+      finish({});
+      await expect
+        .element(page.getByRole('button', { name: 'Internal Suggestions', exact: true }))
+        .toBeVisible();
+    } else {
+      reject(new Error(outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'));
+      await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(
+          outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'
+        );
+      await expect.element(trigger).toBeVisible();
+    }
+  }
+);

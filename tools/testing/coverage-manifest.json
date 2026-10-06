@@ -23083,6 +23083,31 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shares and revokes access with native keyboard input through %s without losing the selected collaborators"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "casts the $choice vote through $outcome using native keyboard input and retains the previous vote on failure"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and changes the procedure mode through %s with native menu keyboard navigation and restores trigger focus"
         }
       ],
       "suggestedTestRefs": [
@@ -23708,6 +23733,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -23944,6 +23979,156 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "creates a trimmed suggestion after committing the editor and rejects an empty form"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "decides an AI suggestion with %s against its own revision"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "executes the owned draft command %s and applies its workspace transition"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "opens an editable shared draft and returns to the canonical workspace only after committing"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "executes the managed resolution command %s against the correct protected revision"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "records the eligible voter choice %s and preserves the visible voting state"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "shares and unshares the private draft with an explicit user identity (initially shared=%s)"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "selects a linked proposal from the URL, compares changed rich text and closes its details"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "hydrates proposal media securely and handles %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "loads newly proposed ghost media and handles %s without duplicating canonical assets"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores malformed or missing proposal node paths and unchanged text comparisons"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores session responses settled by %s after leaving the project"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reports an initial session failure and refreshes the recovered project on the next poll"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the live procedure when a command refresh returns the incomplete session %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "handles proposal draft loading with %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "does not allocate a late %s media URL after the editor has unmounted"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores a rejected %s media request after the editor has unmounted"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the initial procedure without document globals on the server"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "denies anonymous voting and editing, falls back from view mode, and respects the controller busy state"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reports a rejected decision while preserving the selected proposal for retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "navigates to the adopted group only after the server acknowledges the committed revision"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "opens an old proposal without a base document or canonical nodes and ignores absent changes"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reuses canonical assets while hydrating only additional proposal media"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "drops a second suggestion submission while the first command awaits acknowledgement"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "returns from the private draft through %s while preserving it until acknowledgement"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shares and revokes access with native keyboard input through %s without losing the selected collaborators"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "casts the $choice vote through $outcome using native keyboard input and retains the previous vote on failure"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and changes the procedure mode through %s with native menu keyboard navigation and restores trigger focus"
         }
       ],
       "suggestedTestRefs": [
@@ -64079,6 +64264,21 @@
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
           "project": "component",
           "caseId": "formats object, geometry, value, vote, discussion, author, and tone alternatives"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "casts the $choice vote through $outcome using native keyboard input and retains the previous vote on failure",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
         }
       ],
       "suggestedTestRefs": [

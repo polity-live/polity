@@ -60,10 +60,7 @@ export function useStudioProcedure({
   const tr = (german: string, english: string) => (de ? german : english);
   const request = c.actions.request;
   useEffect(() => {
-    const id =
-      typeof window === 'undefined'
-        ? null
-        : new URLSearchParams(window.location.search).get('proposalId');
+    const id = new URLSearchParams(window.location.search).get('proposalId');
     if (id) setSelectedId(id);
   }, [projectId]);
   const refresh = async () => {
@@ -141,7 +138,9 @@ export function useStudioProcedure({
               headers: { Authorization: `Bearer ${data.session?.access_token}` },
             });
             if (!response.ok) throw new Error('Cannot load media');
-            const url = URL.createObjectURL(await response.blob());
+            const blob = await response.blob();
+            if (!live) return asset;
+            const url = URL.createObjectURL(blob);
             objectUrls.push(url);
             return { ...asset, url };
           })
@@ -239,7 +238,9 @@ export function useStudioProcedure({
               headers: { Authorization: `Bearer ${data.session?.access_token}` },
             });
             if (!response.ok) throw new Error('Cannot load media');
-            const url = URL.createObjectURL(await response.blob());
+            const blob = await response.blob();
+            if (!live) return asset;
+            const url = URL.createObjectURL(blob);
             objectUrls.push(url);
             return { ...asset, url };
           })
@@ -319,308 +320,359 @@ export function useStudioProcedure({
     />
   );
 
-  const canvasOverlay = session && (
+  const canvasOverlay = (
     <>
-      <CanvasChangeRequestList
-        collapsible
-        items={visible}
-        selectedId={selectedId ?? workspaceId ?? null}
-        onSelect={setSelectedId}
-        title={tr('Änderungsanträge', 'Change requests')}
-        emptyLabel={tr('Noch keine Änderungsanträge', 'No change requests yet')}
-        renderItem={(item, selected, select) => (
-          <button
-            type="button"
-            onClick={select}
-            aria-pressed={selected}
-            className="hover:bg-muted w-full rounded border p-2 text-left text-sm"
-          >
-            <strong className="block truncate">{item.title}</strong>
-            <span className="text-muted-foreground">
-              {item.state} · {item.decision ?? item.application}
-            </span>
-          </button>
-        )}
-      />
-      {session.phase === 'suggest_internal' && !workspaceId && session.capabilities.suggest && (
-        <form
-          className="bg-background/95 pointer-events-auto absolute bottom-4 left-4 z-20 flex max-w-[calc(100%-2rem)] flex-wrap gap-2 rounded border p-2 shadow-lg"
-          onSubmit={event => {
-            event.preventDefault();
-            if (title.trim()) void run('createDraft', { title: title.trim(), reason });
-          }}
-        >
-          <input
-            aria-label={tr('Antragstitel', 'Proposal title')}
-            className="rounded border px-2"
-            value={title}
-            onChange={event => setTitle(event.target.value)}
-            placeholder={tr('Antragstitel', 'Proposal title')}
-          />
-          <input
-            aria-label={tr('Begründung', 'Reason')}
-            className="rounded border px-2"
-            value={reason}
-            onChange={event => setReason(event.target.value)}
-            placeholder={tr('Begründung', 'Reason')}
-          />
-          <Button type="submit" disabled={busy || !title.trim()}>
-            {tr('Vorschlag beginnen', 'Start proposal')}
-          </Button>
-        </form>
-      )}
-      {proposal && (
-        <CanvasChangeRequestCard
-          className="bg-background/95 pointer-events-auto absolute right-4 bottom-4 z-30 max-h-[min(32rem,65%)] w-[min(23rem,calc(100%-2rem))] space-y-2 overflow-auto rounded-md border p-3 text-sm shadow-xl backdrop-blur"
-          label={tr('Änderungsantrag', 'Change request')}
-        >
-          <div className="flex justify-between gap-2">
-            <strong>
-              {proposal.origin === 'ai' ? 'AI Suggestion · ' : ''}
-              {proposal.title}
-            </strong>
-            <CanvasChangeRequestCloseButton
-              actionId="communication-studio.procedure.close-details"
-              onClose={() => setSelectedId(null)}
-              label={tr('Schließen', 'Close')}
-            />
-          </div>
-          <p>{proposal.reason}</p>
-          {proposal.origin === 'ai' && (
-            <p className="text-muted-foreground text-xs">
-              {proposal.ai_mode === 'free'
-                ? tr('Frei gestaltet', 'Free design')
-                : tr('Vorlage', 'Template')}
-              {proposal.ai_sources?.length
-                ? ` · ${proposal.ai_sources.length} ${tr('Quellen', 'sources')}`
-                : ''}
-              {proposal.ai_warnings?.length ? ` · ${proposal.ai_warnings.join(', ')}` : ''}
-            </p>
-          )}
-          <p className="text-muted-foreground">
-            {proposal.state}
-            {proposal.decision && ` · ${proposal.decision}`}
-            {proposal.application === 'conflict' &&
-              ` · ${tr('Anwendungskonflikt', 'Application conflict')}`}
-          </p>
-          {workspaceId === proposal.id &&
-            proposal.state === 'draft' &&
-            (session.phase === 'suggest_internal' ||
-              (session.phase === 'vote_internal' && !!proposal.resolves_id) ||
-              (!session.groupId && session.phase === 'edit')) &&
-            proposal.owner_id === user?.id && (
-              <Button
-                disabled={busy || !draftEditable}
-                onClick={() => void run('submit', { workspaceId: proposal.id })}
+      {session && (
+        <>
+          <CanvasChangeRequestList
+            collapsible
+            items={visible}
+            selectedId={selectedId ?? workspaceId ?? null}
+            onSelect={setSelectedId}
+            title={tr('Änderungsanträge', 'Change requests')}
+            emptyLabel={tr('Noch keine Änderungsanträge', 'No change requests yet')}
+            renderItem={(item, selected, select) => (
+              <button
+                data-action-id="studio.proposal.select"
+                data-action-kind="selection"
+                type="button"
+                onClick={select}
+                aria-pressed={selected}
+                className="hover:bg-muted w-full rounded border p-2 text-left text-sm"
               >
-                {tr('Einreichen', 'Submit')}
-              </Button>
+                <strong className="block truncate">{item.title}</strong>
+                <span className="text-muted-foreground">
+                  {item.state} · {item.decision ?? item.application}
+                </span>
+              </button>
             )}
-          {!workspaceId &&
-            !session.groupId &&
-            session.phase === 'edit' &&
-            proposal.origin === 'ai' &&
-            proposal.state === 'draft' &&
-            session.capabilities.manage && (
-              <div className="flex gap-2">
+          />
+          {session.phase === 'suggest_internal' && !workspaceId && session.capabilities.suggest && (
+            <form
+              data-action-id="studio.proposal.create.submit"
+              className="bg-background/95 pointer-events-auto absolute bottom-4 left-4 z-20 flex max-w-[calc(100%-2rem)] flex-wrap gap-2 rounded border p-2 shadow-lg"
+              onSubmit={event => {
+                event.preventDefault();
+                if (title.trim()) void run('createDraft', { title: title.trim(), reason });
+              }}
+            >
+              <input
+                data-action-id="studio.proposal.create.title"
+                data-action-kind="interaction"
+                aria-label={tr('Antragstitel', 'Proposal title')}
+                className="rounded border px-2"
+                value={title}
+                onChange={event => setTitle(event.target.value)}
+                placeholder={tr('Antragstitel', 'Proposal title')}
+              />
+              <input
+                data-action-id="studio.proposal.create.reason"
+                data-action-kind="interaction"
+                aria-label={tr('Begründung', 'Reason')}
+                className="rounded border px-2"
+                value={reason}
+                onChange={event => setReason(event.target.value)}
+                placeholder={tr('Begründung', 'Reason')}
+              />
+              <Button
+                data-action-id="studio.proposal.create.start"
+                type="submit"
+                disabled={busy || !title.trim()}
+              >
+                {tr('Vorschlag beginnen', 'Start proposal')}
+              </Button>
+            </form>
+          )}
+          {proposal && (
+            <CanvasChangeRequestCard
+              className="bg-background/95 pointer-events-auto absolute right-4 bottom-4 z-30 max-h-[min(32rem,65%)] w-[min(23rem,calc(100%-2rem))] space-y-2 overflow-auto rounded-md border p-3 text-sm shadow-xl backdrop-blur"
+              label={tr('Änderungsantrag', 'Change request')}
+            >
+              <div className="flex justify-between gap-2">
+                <strong>
+                  {proposal.origin === 'ai' ? 'AI Suggestion · ' : ''}
+                  {proposal.title}
+                </strong>
+                <CanvasChangeRequestCloseButton
+                  data-action-id="communication-studio.procedure.close-details"
+                  actionId="communication-studio.procedure.close-details"
+                  onClose={() => setSelectedId(null)}
+                  label={tr('Schließen', 'Close')}
+                />
+              </div>
+              <p>{proposal.reason}</p>
+              {proposal.origin === 'ai' && (
+                <p className="text-muted-foreground text-xs">
+                  {proposal.ai_mode === 'free'
+                    ? tr('Frei gestaltet', 'Free design')
+                    : tr('Vorlage', 'Template')}
+                  {proposal.ai_sources?.length
+                    ? ` · ${proposal.ai_sources.length} ${tr('Quellen', 'sources')}`
+                    : ''}
+                  {proposal.ai_warnings?.length ? ` · ${proposal.ai_warnings.join(', ')}` : ''}
+                </p>
+              )}
+              <p className="text-muted-foreground">
+                {proposal.state}
+                {proposal.decision && ` · ${proposal.decision}`}
+                {proposal.application === 'conflict' &&
+                  ` · ${tr('Anwendungskonflikt', 'Application conflict')}`}
+              </p>
+              {workspaceId === proposal.id &&
+                proposal.state === 'draft' &&
+                (session.phase === 'suggest_internal' ||
+                  (session.phase === 'vote_internal' && !!proposal.resolves_id) ||
+                  (!session.groupId && session.phase === 'edit')) &&
+                proposal.owner_id === user?.id && (
+                  <Button
+                    data-action-id="studio.proposal.submit"
+                    disabled={busy || !draftEditable}
+                    onClick={() => void run('submit', { workspaceId: proposal.id })}
+                  >
+                    {tr('Einreichen', 'Submit')}
+                  </Button>
+                )}
+              {!workspaceId &&
+                !session.groupId &&
+                session.phase === 'edit' &&
+                proposal.origin === 'ai' &&
+                proposal.state === 'draft' &&
+                session.capabilities.manage && (
+                  <div className="flex gap-2">
+                    <Button
+                      data-action-id="studio.proposal.ai.accept"
+                      disabled={busy}
+                      onClick={() => void run('acceptPrivate', { workspaceId: proposal.id })}
+                    >
+                      {tr('Annehmen', 'Accept')}
+                    </Button>
+                    <Button
+                      data-action-id="studio.proposal.ai.reject"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void run('rejectPrivate', { workspaceId: proposal.id })}
+                    >
+                      {tr('Ablehnen', 'Reject')}
+                    </Button>
+                  </div>
+                )}
+              {!workspaceId && canEditProposal(proposal) && (
                 <Button
-                  disabled={busy}
-                  onClick={() => void run('acceptPrivate', { workspaceId: proposal.id })}
+                  data-action-id="studio.proposal.edit"
+                  variant="outline"
+                  onClick={() => chooseWorkspace(proposal.id)}
                 >
-                  {tr('Annehmen', 'Accept')}
+                  {tr('Entwurf bearbeiten', 'Edit draft')}
                 </Button>
+              )}
+              {proposal.owner_id === user?.id &&
+                (proposal.state === 'draft' || proposal.state === 'submitted') && (
+                  <Button
+                    data-action-id="studio.proposal.withdraw"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => void run('withdraw', { workspaceId: proposal.id })}
+                  >
+                    {tr('Zurückziehen', 'Withdraw')}
+                  </Button>
+                )}
+              {workspaceId && (
                 <Button
+                  data-action-id="studio.proposal.return"
                   variant="outline"
                   disabled={busy}
-                  onClick={() => void run('rejectPrivate', { workspaceId: proposal.id })}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError('');
+                    try {
+                      await c.commit();
+                      chooseWorkspace();
+                    } catch (cause) {
+                      setError(String(cause));
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
                 >
-                  {tr('Ablehnen', 'Reject')}
+                  {tr('Zum Projekt', 'Back to project')}
                 </Button>
-              </div>
-            )}
-          {!workspaceId && canEditProposal(proposal) && (
-            <Button variant="outline" onClick={() => chooseWorkspace(proposal.id)}>
-              {tr('Entwurf bearbeiten', 'Edit draft')}
-            </Button>
-          )}
-          {proposal.owner_id === user?.id &&
-            (proposal.state === 'draft' || proposal.state === 'submitted') && (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => void run('withdraw', { workspaceId: proposal.id })}
-              >
-                {tr('Zurückziehen', 'Withdraw')}
-              </Button>
-            )}
-          {workspaceId && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                void c.commit().then(() => chooseWorkspace());
-              }}
-            >
-              {tr('Zum Projekt', 'Back to project')}
-            </Button>
-          )}
-          {preview || (workspaceId === proposal.id && draftBase) ? (
-            <div role="group" aria-label={tr('Ansicht', 'View')} className="flex flex-wrap gap-2">
-              <Button
-                variant={comparisonView === 'original' ? 'default' : 'outline'}
-                aria-pressed={comparisonView === 'original'}
-                onClick={() => setComparisonView('original')}
-              >
-                {tr('Original', 'Original')}
-              </Button>
-              <Button
-                variant={comparisonView === 'difference' ? 'default' : 'outline'}
-                aria-pressed={comparisonView === 'difference'}
-                onClick={() => setComparisonView('difference')}
-              >
-                {tr('Differenz', 'Difference')}
-              </Button>
-              <Button
-                variant={comparisonView === 'proposal' ? 'default' : 'outline'}
-                aria-pressed={comparisonView === 'proposal'}
-                onClick={() => setComparisonView('proposal')}
-              >
-                {tr('Vorschlag', 'Proposal')}
-              </Button>
-            </div>
-          ) : null}
-          {proposal.changes?.length ? (
-            <details>
-              <summary>
-                {tr('Änderungen', 'Changes')} ({proposal.changes.length})
-              </summary>
-              <div className="max-h-32 space-y-1 overflow-auto text-xs">
-                {proposal.changes.map((change, index) => (
-                  <div key={index} className="rounded border p-1">
-                    <span className="font-mono">{change.path.join(' / ')}</span>
-                    <div className="grid grid-cols-2 gap-1">
-                      <del className="bg-red-50 break-all text-black">
-                        {JSON.stringify(change.before.value)?.slice(0, 250)}
-                      </del>
-                      <ins className="bg-green-50 break-all text-black">
-                        {JSON.stringify(change.after.value)?.slice(0, 250)}
-                      </ins>
-                    </div>
+              )}
+              {preview || (workspaceId === proposal.id && draftBase) ? (
+                <div
+                  role="group"
+                  aria-label={tr('Ansicht', 'View')}
+                  className="flex flex-wrap gap-2"
+                >
+                  <Button
+                    data-action-id="studio.proposal.compare.original"
+                    data-action-kind="selection"
+                    variant={comparisonView === 'original' ? 'default' : 'outline'}
+                    aria-pressed={comparisonView === 'original'}
+                    onClick={() => setComparisonView('original')}
+                  >
+                    {tr('Original', 'Original')}
+                  </Button>
+                  <Button
+                    data-action-id="studio.proposal.compare.difference"
+                    data-action-kind="selection"
+                    variant={comparisonView === 'difference' ? 'default' : 'outline'}
+                    aria-pressed={comparisonView === 'difference'}
+                    onClick={() => setComparisonView('difference')}
+                  >
+                    {tr('Differenz', 'Difference')}
+                  </Button>
+                  <Button
+                    data-action-id="studio.proposal.compare.proposal"
+                    data-action-kind="selection"
+                    variant={comparisonView === 'proposal' ? 'default' : 'outline'}
+                    aria-pressed={comparisonView === 'proposal'}
+                    onClick={() => setComparisonView('proposal')}
+                  >
+                    {tr('Vorschlag', 'Proposal')}
+                  </Button>
+                </div>
+              ) : null}
+              {proposal.changes?.length ? (
+                <details>
+                  <summary>
+                    {tr('Änderungen', 'Changes')} ({proposal.changes.length})
+                  </summary>
+                  <div className="max-h-32 space-y-1 overflow-auto text-xs">
+                    {proposal.changes.map((change, index) => (
+                      <div key={index} className="rounded border p-1">
+                        <span className="font-mono">{change.path.join(' / ')}</span>
+                        <div className="grid grid-cols-2 gap-1">
+                          <del className="bg-red-50 break-all text-black">
+                            {JSON.stringify(change.before.value)?.slice(0, 250)}
+                          </del>
+                          <ins className="bg-green-50 break-all text-black">
+                            {JSON.stringify(change.after.value)?.slice(0, 250)}
+                          </ins>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </details>
-          ) : null}
-          {textChanges.map(change => (
-            <div key={change.id} className="space-y-1">
-              <strong>{change.name}</strong>
-              <StudioPlateDiff before={change.before} after={change.after} />
-            </div>
-          ))}
-          {proposal.electorate && (
-            <p className="rounded border p-2 text-xs">
-              {proposal.votes.length}/{proposal.electorate.length}{' '}
-              {tr('Stimmberechtigte haben abgestimmt', 'eligible voters have voted')}
-              {' · '}
-              {proposal.votes.filter(vote => vote.choice === 'accept').length} {tr('Ja', 'Yes')}
-              {' · '}
-              {proposal.votes.filter(vote => vote.choice === 'reject').length} {tr('Nein', 'No')}
-              {' · '}
-              {proposal.votes.filter(vote => vote.choice === 'abstain').length}{' '}
-              {tr('Enthaltung', 'Abstain')}
-            </p>
-          )}
-          {canVote && (
-            <CanvasVoteButtons
-              actionIdPrefix="communication-studio.procedure.vote"
-              selected={currentVote}
-              disabled={busy}
-              labels={{
-                accept: tr('Ja', 'Yes'),
-                reject: tr('Nein', 'No'),
-                abstain: tr('Enthaltung', 'Abstain'),
-              }}
-              onVote={async choice => {
-                await run('vote', { workspaceId: proposal.id, choice });
-              }}
-            />
-          )}
-          {proposal.state === 'voting' && session.capabilities.manage && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => void run('finalize', { workspaceId: proposal.id })}
-            >
-              {tr('Abschließen', 'Finalize')}
-            </Button>
-          )}
-          {proposal.application === 'conflict' && session.capabilities.suggest && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() =>
-                void run('resolveDraft', {
-                  workspaceId: proposal.id,
-                  title: `${tr('Klärung', 'Resolution')}: ${proposal.title}`,
-                })
-              }
-            >
-              {tr('Klärungsvorschlag', 'Resolution proposal')}
-            </Button>
-          )}
-          {proposal.application === 'conflict' && session.capabilities.manage && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => void run('reapply', { workspaceId: proposal.id })}
-            >
-              {tr('Beschluss erneut anwenden', 'Retry decision')}
-            </Button>
-          )}
-          {workspaceId === proposal.id &&
-            proposal.state === 'draft' &&
-            proposal.owner_id === user?.id && (
-              <fieldset
-                disabled={busy || !canEditProposal(proposal)}
-                className="rounded border p-2"
-              >
-                <legend>{tr('Privaten Entwurf teilen', 'Share private draft')}</legend>
-                <p>
-                  {tr(
-                    'Nur ausgewählte Personen können diesen Entwurf und seine Diskussion sehen.',
-                    'Only selected people can access this draft and its discussion.'
-                  )}
+                </details>
+              ) : null}
+              {textChanges.map(change => (
+                <div key={change.id} className="space-y-1">
+                  <strong>{change.name}</strong>
+                  <StudioPlateDiff before={change.before} after={change.after} />
+                </div>
+              ))}
+              {proposal.electorate && (
+                <p className="rounded border p-2 text-xs">
+                  {proposal.votes.length}/{proposal.electorate.length}{' '}
+                  {tr('Stimmberechtigte haben abgestimmt', 'eligible voters have voted')}
+                  {' · '}
+                  {proposal.votes.filter(vote => vote.choice === 'accept').length} {tr('Ja', 'Yes')}
+                  {' · '}
+                  {proposal.votes.filter(vote => vote.choice === 'reject').length}{' '}
+                  {tr('Nein', 'No')}
+                  {' · '}
+                  {proposal.votes.filter(vote => vote.choice === 'abstain').length}{' '}
+                  {tr('Enthaltung', 'Abstain')}
                 </p>
-                {session.members
-                  .filter(member => member.id !== user?.id)
-                  .map(member => (
-                    <label key={member.id} className="flex items-center gap-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={proposal.shared_ids.includes(member.id)}
-                        onChange={event =>
-                          void run('share', {
-                            workspaceId: proposal.id,
-                            userIds: event.target.checked
-                              ? [...proposal.shared_ids, member.id]
-                              : proposal.shared_ids.filter(id => id !== member.id),
-                          })
-                        }
-                      />
-                      {[member.first_name, member.last_name].filter(Boolean).join(' ') || member.id}
-                    </label>
-                  ))}
-              </fieldset>
-            )}
-          <StudioProcedureComments
-            key={proposal.id}
-            session={session}
-            workspaceId={proposal.id}
-            c={c}
-            busy={busy}
-            run={run}
-            tr={tr}
-          />
-        </CanvasChangeRequestCard>
+              )}
+              {canVote && (
+                <CanvasVoteButtons
+                  actionIdPrefix="communication-studio.procedure.vote"
+                  selected={currentVote}
+                  disabled={busy}
+                  labels={{
+                    accept: tr('Ja', 'Yes'),
+                    reject: tr('Nein', 'No'),
+                    abstain: tr('Enthaltung', 'Abstain'),
+                  }}
+                  onVote={async choice => {
+                    await run('vote', { workspaceId: proposal.id, choice });
+                  }}
+                />
+              )}
+              {proposal.state === 'voting' && session.capabilities.manage && (
+                <Button
+                  data-action-id="studio.proposal.vote.finalize"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void run('finalize', { workspaceId: proposal.id })}
+                >
+                  {tr('Abschließen', 'Finalize')}
+                </Button>
+              )}
+              {proposal.application === 'conflict' && session.capabilities.suggest && (
+                <Button
+                  data-action-id="studio.proposal.resolve"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void run('resolveDraft', {
+                      workspaceId: proposal.id,
+                      title: `${tr('Klärung', 'Resolution')}: ${proposal.title}`,
+                    })
+                  }
+                >
+                  {tr('Klärungsvorschlag', 'Resolution proposal')}
+                </Button>
+              )}
+              {proposal.application === 'conflict' && session.capabilities.manage && (
+                <Button
+                  data-action-id="studio.proposal.reapply"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void run('reapply', { workspaceId: proposal.id })}
+                >
+                  {tr('Beschluss erneut anwenden', 'Retry decision')}
+                </Button>
+              )}
+              {workspaceId === proposal.id &&
+                proposal.state === 'draft' &&
+                proposal.owner_id === user?.id && (
+                  <fieldset
+                    disabled={busy || !canEditProposal(proposal)}
+                    className="rounded border p-2"
+                  >
+                    <legend>{tr('Privaten Entwurf teilen', 'Share private draft')}</legend>
+                    <p>
+                      {tr(
+                        'Nur ausgewählte Personen können diesen Entwurf und seine Diskussion sehen.',
+                        'Only selected people can access this draft and its discussion.'
+                      )}
+                    </p>
+                    {session.members
+                      .filter(member => member.id !== user?.id)
+                      .map(member => (
+                        <label key={member.id} className="flex items-center gap-2 py-1">
+                          <input
+                            data-action-id="studio.proposal.share"
+                            type="checkbox"
+                            checked={proposal.shared_ids.includes(member.id)}
+                            onChange={event =>
+                              void run('share', {
+                                workspaceId: proposal.id,
+                                userIds: event.target.checked
+                                  ? [...proposal.shared_ids, member.id]
+                                  : proposal.shared_ids.filter(id => id !== member.id),
+                              })
+                            }
+                          />
+                          {[member.first_name, member.last_name].filter(Boolean).join(' ') ||
+                            member.id}
+                        </label>
+                      ))}
+                  </fieldset>
+                )}
+              <StudioProcedureComments
+                key={proposal.id}
+                session={session}
+                workspaceId={proposal.id}
+                c={c}
+                busy={busy}
+                run={run}
+                tr={tr}
+              />
+            </CanvasChangeRequestCard>
+          )}
+        </>
       )}
       {error && (
         <p

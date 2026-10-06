@@ -29324,382 +29324,27 @@
       "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-176bbd66c1",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-176bbd66c1",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 432,
-      "column": 16,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-23fb9f5b7e",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-23fb9f5b7e",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 426,
-      "column": 16,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-48098c42f2",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-48098c42f2",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 412,
-      "column": 14,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-51cc3fee36",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-51cc3fee36",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 557,
-      "column": 12,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-6a9e56c7da",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-6a9e56c7da",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "ambiguous",
-      "tag": "Button",
-      "line": 482,
-      "column": 14,
-      "kind": "interaction",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "setComparisonView",
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-717f1c7765",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-717f1c7765",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 448,
-      "column": 14,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-76e4315fbb",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-76e4315fbb",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 367,
-      "column": 10,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-98f7183ca9",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-98f7183ca9",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 457,
-      "column": 12,
-      "kind": "interaction",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-a449f33398",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-a449f33398",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "ambiguous",
-      "tag": "Button",
-      "line": 468,
-      "column": 14,
-      "kind": "interaction",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "setComparisonView",
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-a4744a0172",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-a4744a0172",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "ambiguous",
-      "tag": "Button",
-      "line": 475,
-      "column": 14,
-      "kind": "interaction",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "setComparisonView",
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-b99934e092",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-b99934e092",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 548,
-      "column": 12,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-ba4a954d2c",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-ba4a954d2c",
-      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "Button",
-      "line": 571,
-      "column": 12,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#CanvasChangeRequestCloseButton-52b6697d8f",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#communication-studio.procedure.close-details",
       "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#CanvasChangeRequestCloseButton-52b6697d8f",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "communication-studio.procedure.close-details",
+      "identifierSource": "data-action-id",
       "tag": "CanvasChangeRequestCloseButton",
-      "line": 382,
-      "column": 12,
+      "line": 396,
+      "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29714,7 +29359,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#communication-studio.procedure.open-mode",
@@ -29723,14 +29368,21 @@
       "actionId": "communication-studio.procedure.open-mode",
       "identifierSource": "data-action-id",
       "tag": "EditingModeToolbarButton",
-      "line": 307,
+      "line": 308,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and changes the procedure mode through %s with native menu keyboard navigation and restores trigger focus",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29745,24 +29397,241 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#communication-studio.use-studio-procedure.action",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#button-a5f33e7f8b",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.ai.accept",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-23fb9f5b7e",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "actionId": "communication-studio.use-studio-procedure.action",
-      "identifierSource": "accessible-text",
-      "tag": "button",
-      "line": 332,
-      "column": 10,
+      "actionId": "studio.proposal.ai.accept",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 442,
+      "column": 20,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.ai.reject",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-176bbd66c1",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.ai.reject",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 449,
+      "column": 20,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.compare.difference",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-d9ff0edccc",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.compare.difference",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 515,
+      "column": 18,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setComparisonView",
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.compare.original",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-c381f86fba",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.compare.original",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 506,
+      "column": 18,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setComparisonView",
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.compare.proposal",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-e8882287b5",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.compare.proposal",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 524,
+      "column": 18,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setComparisonView",
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.create.reason",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-110c18998e",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.create.reason",
+      "identifierSource": "data-action-id",
+      "tag": "input",
+      "line": 368,
+      "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
-      "handler": "select",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29777,24 +29646,163 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#communication-studio.use-studio-procedure.choose-workspace",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.create.start",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-76e4315fbb",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.create.start",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 377,
+      "column": 14,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.create.submit",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#form-0734f316eb",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.create.submit",
+      "identifierSource": "data-action-id",
+      "tag": "form",
+      "line": 351,
+      "column": 12,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.create.title",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-96085f5065",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.create.title",
+      "identifierSource": "data-action-id",
+      "tag": "input",
+      "line": 359,
+      "column": 14,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.edit",
       "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-231cd3ee68",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "actionId": "communication-studio.use-studio-procedure.choose-workspace",
-      "identifierSource": "handler",
+      "actionId": "studio.proposal.edit",
+      "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 442,
-      "column": 12,
+      "line": 460,
+      "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "chooseWorkspace",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29809,22 +29817,39 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#form-0734f316eb",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#form-0734f316eb",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.reapply",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-ba4a954d2c",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "form",
-      "line": 346,
-      "column": 8,
+      "actionId": "studio.proposal.reapply",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 618,
+      "column": 16,
       "kind": "async-action",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29839,22 +29864,164 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-2e7216b2f1",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.resolve",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-51cc3fee36",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.resolve",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 603,
+      "column": 16,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.return",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-6a3d6421c7",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.return",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 480,
+      "column": 16,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setBusy",
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.select",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#button-011a12c4ff",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.select",
+      "identifierSource": "data-action-id",
+      "tag": "button",
+      "line": 335,
+      "column": 14,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "select",
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects proposal rows, switches every comparison view and closes details with native keyboard input",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.share",
       "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-2e7216b2f1",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "studio.proposal.share",
+      "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 597,
-      "column": 22,
+      "line": 645,
+      "column": 26,
       "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["selected", "unselected", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shares and revokes access with native keyboard input through %s without losing the selected collaborators",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29869,22 +30036,39 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-32669c09d4",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-32669c09d4",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.submit",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-48098c42f2",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "input",
-      "line": 360,
-      "column": 10,
-      "kind": "selection",
+      "actionId": "studio.proposal.submit",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 427,
+      "column": 18,
+      "kind": "async-action",
       "classification": "canonical-action",
       "accessibilityIssues": [],
-      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29899,22 +30083,39 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-a3fdb4627d",
-      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#input-a3fdb4627d",
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.vote.finalize",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-b99934e092",
       "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
-      "identifierSource": "unidentified",
-      "tag": "input",
-      "line": 353,
-      "column": 10,
-      "kind": "selection",
+      "actionId": "studio.proposal.vote.finalize",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 593,
+      "column": 16,
+      "kind": "async-action",
       "classification": "canonical-action",
       "accessibilityIssues": [],
-      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29929,7 +30130,54 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#studio.proposal.withdraw",
+      "debtKey": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-717f1c7765",
+      "file": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "actionId": "studio.proposal.withdraw",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 470,
+      "column": 18,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "runs the proposal $action command through $outcome using native keyboard input and preserves the draft while pending",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/content/ui/BlogsAndStatementsView.tsx#content.blogs-and-statements.blog.create",
@@ -66807,10 +67055,12 @@
       "accountabilityStatus": "new-gap"
     },
     {
-      "key": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx#Button-8bfb6d6641",
+      "key": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx#shared.canvas-vote.choice.submit",
       "debtKey": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx#Button-8bfb6d6641",
       "file": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "shared.canvas-vote.choice.submit",
+      "identifierSource": "manifest-declaration",
+      "declarationKey": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx#Button-8bfb6d6641",
       "tag": "Button",
       "line": 23,
       "column": 8,
@@ -66819,11 +67069,27 @@
       "accessibilityIssues": [],
       "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "casts the $choice vote through $outcome using native keyboard input and retains the previous vote on failure",
+          "scenarios": [
+            "idle",
+            "loading",
+            "success",
+            "error",
+            "unauthorized",
+            "disabled",
+            "keyboard",
+            "focus"
+          ]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/shared/ui/collections/CollectionCard.tsx#shared.collection.menu.open",
