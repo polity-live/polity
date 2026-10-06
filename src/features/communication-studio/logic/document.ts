@@ -185,7 +185,7 @@ export const postSchema = z.object({
   id: z.string().uuid(),
   code: z.string().max(100),
   title: z.string().max(200),
-  kind: z.enum(['single', 'carousel', 'story', 'video']),
+  kind: z.enum(['single', 'carousel', 'story', 'video', 'presentation']),
   pageIds: z.array(z.string().uuid()).max(30),
   day: z.number().int().min(0).max(365),
   action: z.string().max(300),
@@ -201,7 +201,7 @@ export const documentSchema = z
   .object({
     version: z.literal(2),
     title: z.string().max(200),
-    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign']),
+    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign', 'presentation']),
     brand: brandSchema,
     pages: z.array(pageSchema).max(300),
     posts: z.array(postSchema).max(100),

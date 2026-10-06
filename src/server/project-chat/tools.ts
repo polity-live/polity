@@ -16,6 +16,13 @@ import { rows, sqlTransaction, lockAuthority } from '@/server/transaction';
 import { checksum } from '@/server/checksum';
 import { applyStudioOperation } from '@/server/studio/operations';
 import {
+  studioProjectGenerationSchema,
+  studioEditSuggestionSchema,
+  studioTargetSchema,
+  resolveStudioTargets,
+} from '@/server/studio/project-targets';
+import { resolveStudioSource } from '@/server/studio/source';
+import {
   diffStudio,
   mergeStudio,
   inverseChanges,
@@ -139,11 +146,18 @@ const catalogSchema = z.object({
     .optional(),
 });
 export function studioToolNamesForGroups(groups: string[]) {
-  return Object.keys(toolsForScope(true)).filter(
-    name =>
-      ['studio_catalog', 'studio_read'].includes(name) ||
-      groups.includes('all') ||
-      groups.includes(studioToolGroup(name))
+  void groups;
+  return Object.keys(toolsForScope(true)).filter(name =>
+    [
+      'studio_catalog',
+      'studio_read',
+      'studio_media',
+      'studio_editor_status',
+      'studio_export_status',
+      'studio_generate_suggestion',
+      'studio_edit_suggestion',
+      'studio_resolve_target',
+    ].includes(name)
   );
 }
 const namedStudioTools: ToolSet = Object.fromEntries([
@@ -273,6 +287,21 @@ const namedStudioTools: ToolSet = Object.fromEntries([
   ],
 ]);
 export const projectToolDefinitions = {
+  studio_edit_suggestion: tool({
+    description:
+      'Make a precise text replacement in a reviewable AI suggestion, preserving style and all other elements. Read studio_read first for snapshotId. Use role/name to identify the requested text element; a named role takes precedence over editor selection. Does not apply automatically.',
+    inputSchema: studioEditSuggestionSchema,
+  }),
+  studio_resolve_target: tool({
+    description:
+      'Resolve one named text role (title/subtitle/body/cta) or element name in the current Studio frame. Returns exact IDs and a fresh snapshot. Multiple matches require asking the user.',
+    inputSchema: studioTargetSchema,
+  }),
+  studio_generate_suggestion: tool({
+    description:
+      'Generate an editable AI Suggestion in the current Studio project. Use action=edit for followups or selected elements. Use mode=free only when explicitly requested. Theme fields require an explicit request; set themeOnly=true for a change limited to themeId/themeName/themeMode. It is never applied automatically.',
+    inputSchema: studioProjectGenerationSchema,
+  }),
   city_design_read_features: tool({
     description:
       'Read complete OSM feature records from the saved project map. Use feature IDs with osm.import_feature. No external map request is performed.',
@@ -318,6 +347,9 @@ export function toolsForScope(studio: boolean): ToolSet {
     ? {
         ...namedStudioTools,
         studio_read: projectToolDefinitions.studio_read,
+        studio_resolve_target: projectToolDefinitions.studio_resolve_target,
+        studio_edit_suggestion: projectToolDefinitions.studio_edit_suggestion,
+        studio_generate_suggestion: projectToolDefinitions.studio_generate_suggestion,
         studio_apply_actions: projectToolDefinitions.studio_apply_actions,
       }
     : {
@@ -527,6 +559,25 @@ export async function executeProjectTool(
   const conversation = await requireProjectConversation(tx, actor, conversationId);
   if (!Object.hasOwn(toolsForScope(!!conversation.studio_project_id), name))
     throw new ProjectToolError('tool_not_available');
+  if (
+    conversation.studio_project_id &&
+    ![
+      'studio_read',
+      'studio_media',
+      'studio_catalog',
+      'studio_editor_status',
+      'studio_export_status',
+      'studio_generate_suggestion',
+      'studio_edit_suggestion',
+      'studio_resolve_target',
+    ].includes(name)
+  )
+    throw new ProjectToolError(
+      'tool_not_available',
+      'Studio AI edits must create a reviewable suggestion.'
+    );
+  if (name === 'studio_generate_suggestion' || name === 'studio_edit_suggestion')
+    throw new ProjectToolError('tool_not_available', 'Use the Studio AI suggestion runner.');
   if (editorNames.has(name)) {
     const args =
         studioEditorCommandSchemas[name as keyof typeof studioEditorCommandSchemas].parse(input),
@@ -588,12 +639,43 @@ export async function executeProjectTool(
       operationUUID(`${runId}:import-media:${path}`)
     );
   }
-  if (name === 'studio_media')
+  if (name === 'studio_resolve_target') {
+    const source = await resolveStudioSource(
+      actor,
+      conversation.studio_project_id ?? '',
+      hints?.proposalId ?? null,
+      sqlTransaction(tx)
+    );
+    const targets = resolveStudioTargets(source.document, studioTargetSchema.parse(input), hints);
+    return {
+      ...(await readContext(
+        tx,
+        actor,
+        runId,
+        conversationId,
+        'studio',
+        hints,
+        0,
+        20,
+        false,
+        maxContextCharacters
+      )),
+      targets,
+    };
+  }
+  if (name === 'studio_media') {
+    const source = await resolveStudioSource(
+      actor,
+      conversation.studio_project_id ?? '',
+      hints?.proposalId ?? null,
+      sqlTransaction(tx)
+    );
     return rows(
       sqlTransaction(tx),
-      'select id,name,mime_type from studio_asset where project_id=$1 and workspace_id is null and ready=true',
-      [conversation.studio_project_id]
+      'select id,name,mime_type from studio_asset where project_id=$1 and (workspace_id is null or workspace_id=$2) and ready=true',
+      [source.projectId, source.workspaceId]
     );
+  }
   if (name === 'studio_format_text_range') name = 'studio_format_text';
   if (name === 'studio_catalog') {
     const { group } = catalogSchema.parse(input);
@@ -890,6 +972,11 @@ export async function undoProjectChange(
   }>(sql, 'select * from ai_change_set where id=$1 for update', [changeSetId]);
   if (!change || change.actor_id !== actor) throw new ProjectToolError('permission_denied');
   await requireProjectConversation(tx, actor, change.conversation_id);
+  if (change.resource_kind === 'studio')
+    throw new ProjectToolError(
+      'proposal_requires_governance',
+      'Studio AI changes must be reviewed through suggestions.'
+    );
   if (change.status === (redo ? 'applied' : 'undone')) return;
   if (change.status !== (redo ? 'undone' : 'applied'))
     throw new ProjectToolError(

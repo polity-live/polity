@@ -14,7 +14,6 @@ import {
   type StudioElement,
   type StudioPage,
 } from '../logic/document';
-import { applyProposal, type StudioProposal } from '../logic/ai-proposal';
 import { patchPage, patchElement } from '../logic/collaboration';
 import { resizePage } from '../logic/layout';
 import {
@@ -130,7 +129,6 @@ export function useStudioController(
     [mode, setMode] = useState<'template' | 'ai'>('template'),
     [template, setTemplate] = useState('announcement'),
     [brief, setBrief] = useState(''),
-    [proposal, setProposal] = useState<StudioProposal | null>(null),
     [themes, setThemes] = useState<StudioThemeSnapshot[]>(() =>
       BUILTIN_THEMES.map(theme => createThemeSnapshot(theme))
     ),
@@ -303,20 +301,6 @@ export function useStudioController(
       /* Ignore an expired or malformed local draft. */
     }
   }, [id]);
-  const generate = async (document: StudioDocument) => {
-    const proposal: StudioProposal = { title: document.title, posts: [] };
-    // Keep each provider response bounded, including an eight-week campaign.
-    for (let i = 0; i < document.posts.length; i += 3) {
-      const batch = document.posts.slice(i, i + 3);
-      const suggestion = await studioApi.request<StudioProposal>('generate', {
-        prompt: `Sprache: Deutsch. Kampagne: ${document.title}. Briefing: ${brief}. Quelle: ${JSON.stringify(document.source)}. Erzeuge exakt ${batch.length} Beiträge, fortlaufend ab ${i + 1}, in dieser Reihenfolge: ${batch.map(p => `${p.title}, ${p.kind}, ${p.pageIds.length} Seiten`).join('; ')}.`,
-      });
-      if (suggestion.posts.length !== batch.length)
-        throw new Error('KI-Antwort unvollständig. Bitte erneut versuchen.');
-      proposal.posts.push(...suggestion.posts);
-    }
-    return proposal;
-  };
   const create = () =>
     run(async () => {
       const result = await studioApi.request<{ id: string }>('create', {
@@ -563,11 +547,16 @@ export function useStudioController(
     });
     if (frameId) setPageId(frameId);
   };
-  const insertFrameSet = (kind: 'single' | 'carousel' | 'story' | 'video') => {
+  const insertFrameSet = (kind: 'single' | 'carousel' | 'story' | 'video' | 'presentation') => {
     if (!editor.value) return;
-    const count = kind === 'single' ? 1 : kind === 'story' ? 3 : 5;
+    const count = kind === 'single' ? 1 : kind === 'story' || kind === 'presentation' ? 3 : 5;
     if (editor.value.pages.length + count > 300) return;
-    const format: StudioPage['format'] = kind === 'story' || kind === 'video' ? 'story' : 'feed';
+    const format: StudioPage['format'] =
+      kind === 'presentation'
+        ? 'widescreen'
+        : kind === 'story' || kind === 'video'
+          ? 'story'
+          : 'feed';
     let firstFrameId = '';
     editor.transactV3(document => {
       const preset = presetByFormat[format];
@@ -578,7 +567,7 @@ export function useStudioController(
           node.type === 'frame' && !node.parentFrameId && node.id !== document.masterLayout.frameId
       ).length;
       const frames = Array.from({ length: count }, (_, index) => {
-        const name = `${kind === 'carousel' ? 'Karussell' : kind === 'story' ? 'Story' : kind === 'video' ? 'Szene' : 'Post'} ${index + 1}`;
+        const name = `${kind === 'carousel' ? 'Karussell' : kind === 'story' ? 'Story' : kind === 'video' ? 'Szene' : kind === 'presentation' ? 'Folie' : 'Post'} ${index + 1}`;
         const frame = createFrameNode(preset, {
           name,
           zIndex: rootCount + index,
@@ -616,7 +605,7 @@ export function useStudioController(
           title: frames[0].name,
           kind,
           frameIds: frames.map(frame => frame.id),
-          channel: 'instagram',
+          channel: kind === 'presentation' ? 'custom' : 'instagram',
           order: document.deliverables.length,
           status: 'draft',
           dayOffset: 0,
@@ -756,17 +745,6 @@ export function useStudioController(
       });
       await refreshElementSets();
     });
-  const ai = () =>
-    run(async () => {
-      if (!editor.value) return;
-      setProposal(await generate(editor.value));
-    });
-  const acceptAI = () => {
-    if (!proposal || !editor.value) return;
-    const next = applyProposal(editor.value, proposal);
-    editor.transact(d => Object.assign(d, next));
-    setProposal(null);
-  };
   return {
     workspaceId,
     identity,
@@ -807,8 +785,6 @@ export function useStudioController(
     setTemplate,
     brief,
     setBrief,
-    proposal,
-    setProposal,
     themes,
     themeId,
     setThemeId,
@@ -875,8 +851,6 @@ export function useStudioController(
         await studioApi.request('elementSetArchive', { setId });
         await refreshElementSets();
       }),
-    ai,
-    acceptAI,
     deleteSelected: () => {
       if (page) for (const el of selected) editor.removeElement(page.id, el);
       setSelected([]);

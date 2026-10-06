@@ -117,6 +117,7 @@ export const messagesTranslations = {
     loadFailed: 'Failed to load messages',
   },
   ai: {
+    sources: { app: 'Polity free', byok: 'Personal API key', chatgpt: 'ChatGPT plan' },
     retry: 'Try again',
     settings: 'AI settings',
     information: 'About AI responses',

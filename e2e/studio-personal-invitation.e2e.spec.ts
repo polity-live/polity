@@ -62,8 +62,10 @@ test('personal Studio invitation requires acceptance before a second actor can e
       })
       .toBe('active');
     await expect(
-      invitedPage.getByRole('heading', { name: /Shared with me|Mit mir geteilt/i })
-    ).toBeVisible();
+      invitedPage.getByRole('link', {
+        name: new RegExp(document.title + '.*(Shared with me|Mit mir geteilt)', 'i'),
+      })
+    ).toBeVisible({ timeout: 15_000 });
     await invitedPage.goto(`/studio/${projectId}`);
     await waitForAppReady(invitedPage);
     const title = invitedPage.getByRole('textbox', { name: /Name|Title/i }).first();

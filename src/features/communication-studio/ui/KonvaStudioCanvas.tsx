@@ -1,5 +1,6 @@
 import './studio-fonts.css';
 import './studio-canvas.css';
+import { canvasFocusTarget, canvasFocusView, freeCanvasRectangle } from '../logic/canvas-focus';
 import { createPortal } from 'react-dom';
 import {
   forwardRef,
@@ -83,6 +84,7 @@ export type StudioCanvasChangeRequestMarker = StudioChangeRequestAnnotation;
 
 export type StudioCanvasCommand =
   | { type: 'setTool'; tool: StudioTool; locked?: boolean; rounded?: boolean }
+  | { type: 'focus'; nodeId: string }
   | { type: 'zoom'; mode: 'in' | 'out' | 'reset' | 'selection' | 'all' }
   | { type: 'search'; query: string }
   | { type: 'clipboard'; action: 'copy' | 'cut' | 'paste' }
@@ -570,6 +572,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const transformer = useRef<Konva.Transformer>(null);
     const [viewport, setViewport] = useState({ width: 1, height: 1 });
     const initialFit = useRef(false);
+    const focusSequence = useRef(0);
+    const latestDocument = useRef(props.document);
+    latestDocument.current = props.document;
     const [zoom, setZoom] = useState(1);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [activeTool, setActiveTool] = useState<StudioTool>('selection');
@@ -612,6 +617,16 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       end: { x: number; y: number };
       points: [number, number][];
     } | null>(null);
+    const textGesture = useRef<{
+      pointerId: number;
+      nodeId: string | null;
+      start: { x: number; y: number };
+      clientX: number;
+      clientY: number;
+      shiftKey: boolean;
+      active: boolean;
+    } | null>(null);
+    const suppressTextClick = useRef(false);
     const [marquee, setMarquee] = useState<{
       pointerId: number;
       start: { x: number; y: number };
@@ -644,10 +659,118 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     );
     const touchResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const panPointer = useRef<{ x: number; y: number } | null>(null);
+    useEffect(() => {
+      const cancel = () => {
+        if (!textGesture.current) return;
+        textGesture.current = null;
+        suppressTextClick.current = true;
+        setGesture(null);
+      };
+      const keyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && textGesture.current) {
+          event.preventDefault();
+          cancel();
+        }
+      };
+      window.addEventListener('keydown', keyDown);
+      window.addEventListener('blur', cancel);
+      return () => {
+        window.removeEventListener('keydown', keyDown);
+        window.removeEventListener('blur', cancel);
+      };
+    }, []);
     const panRef = useRef(pan);
     const zoomRef = useRef(zoom);
     panRef.current = pan;
     zoomRef.current = zoom;
+    useEffect(() => {
+      if (!props.editable || props.fit === 'contain') return;
+      const content = stage.current?.content;
+      if (!content) return;
+      let drag: { pointerId: number; x: number; y: number; cursor: string } | null = null;
+      const stop = () => {
+        if (!drag) return;
+        const { pointerId, cursor } = drag;
+        drag = null;
+        content.style.cursor = cursor;
+        if (content.hasPointerCapture(pointerId)) content.releasePointerCapture(pointerId);
+      };
+      const onDown = (event: PointerEvent) => {
+        // Capture the gesture before Konva can select, crop, or drag an element.
+        if (
+          event.pointerType !== 'mouse' ||
+          event.button !== 1 ||
+          !(event.target instanceof HTMLCanvasElement)
+        )
+          return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        drag = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          cursor: content.style.cursor,
+        };
+        content.style.cursor = 'grabbing';
+        try {
+          content.setPointerCapture(event.pointerId);
+        } catch {
+          // Synthetic events have no active pointer; window listeners still end the gesture.
+        }
+      };
+      const onMove = (event: PointerEvent) => {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!(event.buttons & 4)) {
+          stop();
+          return;
+        }
+        const nextPan = {
+          x: panRef.current.x + event.clientX - drag.x,
+          y: panRef.current.y + event.clientY - drag.y,
+        };
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        panRef.current = nextPan;
+        setPan(nextPan);
+      };
+      const onEnd = (event: PointerEvent) => {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        if (event.type === 'pointerup' && event.buttons & 4) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        stop();
+      };
+      const preventMiddleClick = (event: MouseEvent) => {
+        if (
+          event.button !== 1 ||
+          !(event.target instanceof HTMLCanvasElement || event.target === content)
+        )
+          return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      };
+      content.addEventListener('pointerdown', onDown, true);
+      content.addEventListener('mousedown', preventMiddleClick, true);
+      content.addEventListener('auxclick', preventMiddleClick, true);
+      content.addEventListener('lostpointercapture', onEnd, true);
+      window.addEventListener('pointermove', onMove, true);
+      window.addEventListener('pointerup', onEnd, true);
+      window.addEventListener('pointercancel', onEnd, true);
+      window.addEventListener('blur', stop);
+      return () => {
+        stop();
+        content.removeEventListener('pointerdown', onDown, true);
+        content.removeEventListener('mousedown', preventMiddleClick, true);
+        content.removeEventListener('auxclick', preventMiddleClick, true);
+        content.removeEventListener('lostpointercapture', onEnd, true);
+        window.removeEventListener('pointermove', onMove, true);
+        window.removeEventListener('pointerup', onEnd, true);
+        window.removeEventListener('pointercancel', onEnd, true);
+        window.removeEventListener('blur', stop);
+      };
+    }, [props.editable, props.fit]);
     useEffect(() => {
       if (!marquee) return;
       const cancel = (event: KeyboardEvent) => {
@@ -838,6 +961,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         }
         event.preventDefault();
         touchSuppressed.current = true;
+        textGesture.current = null;
+        suppressTextClick.current = true;
         setGesture(null);
         marqueeRef.current = null;
         setMarquee(null);
@@ -1120,12 +1245,86 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       [cropDraft, props.onCropCommit]
     );
 
+    const focusNode = useCallback(
+      async (nodeId: string) => {
+        const requestId = ++focusSequence.current;
+        const target = canvasFocusTarget(props.document, nodeId);
+        const element = host.current;
+        if (!element) throw new Error('Canvas unavailable');
+        element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        // Select by ID first; wait for the inspector and chat layout before measuring.
+        props.selectExact?.([nodeId]);
+        if (target.frameId) props.activateFrame?.(target.frameId);
+        setEditing(null);
+        setPendingTextEdit(null);
+        setActiveTool('selection');
+        setToolLocked(false);
+        const nextFrame = () =>
+          new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        let lastLayout = '';
+        for (let pass = 0; pass < 3; pass++) {
+          await nextFrame();
+          await nextFrame();
+          if (requestId !== focusSequence.current) return;
+          if (!element.isConnected) throw new Error('Canvas unavailable');
+          const currentTarget = canvasFocusTarget(latestDocument.current, nodeId);
+          const rect = element.getBoundingClientRect();
+          const viewportBounds = {
+            left: Math.max(0, -rect.left),
+            top: Math.max(0, -rect.top),
+            right: Math.min(rect.width, window.innerWidth - rect.left),
+            bottom: Math.min(rect.height, window.innerHeight - rect.top),
+          };
+          const obstacles = [
+            ...document.querySelectorAll<HTMLElement>(
+              '[data-project-chat-dock] section[role="dialog"], [data-canvas-focus-occluder], .polity-canvas-properties'
+            ),
+          ]
+            .filter(
+              panel =>
+                !panel.hidden &&
+                panel.getAttribute('aria-hidden') !== 'true' &&
+                getComputedStyle(panel).visibility !== 'hidden'
+            )
+            .map(panel => {
+              const bounds = panel.getBoundingClientRect();
+              return {
+                left: bounds.left - rect.left,
+                top: bounds.top - rect.top,
+                right: bounds.right - rect.left,
+                bottom: bounds.bottom - rect.top,
+              };
+            });
+          const free = freeCanvasRectangle(viewportBounds, obstacles);
+          if (!free) throw new Error('No free canvas area');
+          const layout = JSON.stringify(free);
+          if (pass > 0 && layout === lastLayout) break;
+          lastLayout = layout;
+          const next = canvasFocusView(currentTarget.bounds, free, zoom);
+          setZoom(next.zoom);
+          setPan(next.pan);
+        }
+      },
+      [props.document, props.selectExact, props.activateFrame, zoom]
+    );
+
     useImperativeHandle(
       ref,
       () => ({
         scenePoint,
         execute: async command => {
+          if (command.type === 'focus') return focusNode(command.nodeId);
           if (command.type === 'setTool') {
+            if (textGesture.current) suppressTextClick.current = true;
+            textGesture.current = null;
+            setGesture(null);
+            marqueeRef.current = null;
+            setMarquee(null);
+            panPointer.current = null;
+            if (command.tool === 'text') {
+              setEditing(null);
+              setPendingTextEdit(null);
+            }
             setActiveTool(command.tool);
             setToolLocked(command.locked ?? false);
             setRounded(command.rounded ?? false);
@@ -1161,6 +1360,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       }),
       [
         scenePoint,
+        focusNode,
         fit,
         paintOrder,
         props.onClipboard,
@@ -1503,8 +1703,25 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 })
               }
               onPointerDown={event => {
-                if (activeTool === 'text' && node.type === 'richText' && !spacePressedRef.current) {
-                  event.cancelBubble = true;
+                if (
+                  activeTool === 'text' &&
+                  node.type === 'richText' &&
+                  props.editable &&
+                  !cropDraft &&
+                  !spacePressedRef.current &&
+                  (event.evt.pointerType !== 'touch' || !touchSuppressed.current) &&
+                  (event.evt.button === 0 || event.evt.pointerType === 'touch')
+                ) {
+                  if (textGesture.current) return;
+                  textGesture.current = {
+                    pointerId: event.evt.pointerId,
+                    nodeId: node.id,
+                    start: scenePoint(event.evt.clientX, event.evt.clientY),
+                    clientX: event.evt.clientX,
+                    clientY: event.evt.clientY,
+                    shiftKey: event.evt.shiftKey,
+                    active: false,
+                  };
                   return;
                 }
                 if (
@@ -1517,7 +1734,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               }}
               onClick={event => {
                 event.cancelBubble = true;
-                if (spacePressedRef.current || touchSuppressed.current) return;
+                if (suppressTextClick.current || spacePressedRef.current || touchSuppressed.current)
+                  return;
                 if (activeTool === 'eraser') props.onDeleteNodes?.([node.id]);
                 else if (
                   activeTool === 'selection' ||
@@ -1536,7 +1754,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               }}
               onDblClick={event => {
                 event.cancelBubble = true;
-                if (spacePressedRef.current || touchSuppressed.current) return;
+                if (suppressTextClick.current || spacePressedRef.current || touchSuppressed.current)
+                  return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
                   setPendingTextEdit(node.id);
@@ -1551,7 +1770,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   void startCrop(node.id);
               }}
               onDblTap={() => {
-                if (touchSuppressed.current) return;
+                if (suppressTextClick.current || touchSuppressed.current) return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
                   setPendingTextEdit(node.id);
@@ -1760,6 +1979,13 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           )
             return;
           if (event.key === 'Escape') {
+            if (textGesture.current) {
+              event.preventDefault();
+              textGesture.current = null;
+              suppressTextClick.current = true;
+              setGesture(null);
+              return;
+            }
             if (marqueeRef.current) {
               event.preventDefault();
               marqueeRef.current = null;
@@ -1825,6 +2051,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             }
           }}
           onPointerDown={event => {
+            suppressTextClick.current = false;
+            if (textGesture.current && textGesture.current.pointerId !== event.evt.pointerId)
+              return;
             if (!props.editable) return;
             if (event.evt.pointerType === 'touch' && touchSuppressed.current) return;
             if (event.evt.button !== 0 && event.evt.pointerType !== 'touch') return;
@@ -1879,12 +2108,38 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               return;
             }
             if (activeTool === 'eraser') return;
+            if (activeTool === 'text') {
+              textGesture.current ??= {
+                pointerId: event.evt.pointerId,
+                nodeId: null,
+                start: point,
+                clientX: event.evt.clientX,
+                clientY: event.evt.clientY,
+                shiftKey: event.evt.shiftKey,
+                active: false,
+              };
+              if (textGesture.current.nodeId) return;
+            }
             setGesture({ mode: 'tool', start: point, end: point, points: [[point.x, point.y]] });
           }}
           onPointerMove={event => {
             if (event.evt.pointerType === 'touch' && touchSuppressed.current) return;
             const point = scenePoint(event.evt.clientX, event.evt.clientY);
             props.cursor?.(point.x, point.y);
+            const text = textGesture.current;
+            if (text) {
+              if (text.pointerId !== event.evt.pointerId) return;
+              text.active ||=
+                Math.hypot(event.evt.clientX - text.clientX, event.evt.clientY - text.clientY) >= 4;
+              if (text.nodeId && !text.active) return;
+              setGesture({
+                mode: 'tool',
+                start: text.start,
+                end: point,
+                points: [[text.start.x, text.start.y]],
+              });
+              return;
+            }
             const selection = marqueeRef.current;
             if (selection && selection.pointerId === event.evt.pointerId) {
               const next = {
@@ -1948,7 +2203,34 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             );
           }}
           onPointerUp={event => {
+            // Konva also emits pointerup for a cancelled native pointer before React rerenders.
+            if (event.evt.type === 'pointercancel' || event.evt.type === 'touchcancel') return;
             if (event.evt.pointerType === 'touch' && touchSuppressed.current) return;
+            const text = textGesture.current;
+            let creationGesture = gesture;
+            if (text) {
+              if (text.pointerId !== event.evt.pointerId) return;
+              textGesture.current = null;
+              suppressTextClick.current = true;
+              text.active ||=
+                Math.hypot(event.evt.clientX - text.clientX, event.evt.clientY - text.clientY) >= 4;
+              if (text.nodeId && !text.active) {
+                const node = props.document.nodes.find(candidate => candidate.id === text.nodeId);
+                if (node?.type === 'richText') {
+                  activateNodeFrame(node);
+                  selectNode(node.id, text.shiftKey);
+                  if (props.editable && !node.locked && !text.shiftKey) setPendingTextEdit(node.id);
+                }
+                setGesture(null);
+                return;
+              }
+              creationGesture = {
+                mode: 'tool',
+                start: text.start,
+                end: scenePoint(event.evt.clientX, event.evt.clientY),
+                points: [[text.start.x, text.start.y]],
+              };
+            }
             const selection = marqueeRef.current;
             if (selection && selection.pointerId === event.evt.pointerId) {
               const end = scenePoint(event.evt.clientX, event.evt.clientY);
@@ -1975,7 +2257,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               cropGesture.current = null;
               return;
             }
-            if (!gesture) {
+            if (!creationGesture) {
               if (
                 event.evt.pointerType === 'touch' &&
                 activeTool === 'selection' &&
@@ -1988,16 +2270,16 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             }
             const point = scenePoint(event.evt.clientX, event.evt.clientY);
             if (
-              gesture.mode === 'tool' &&
+              creationGesture.mode === 'tool' &&
               props.editable &&
               !['hand', 'selection', 'eraser', 'comment'].includes(activeTool)
             ) {
               const id = props.onCreateNode?.(
                 activeTool,
-                gesture.start,
+                creationGesture.start,
                 point,
                 rounded,
-                gesture.points
+                creationGesture.points
               );
               if (id) {
                 if (activeTool === 'text') setPendingTextEdit(id);
@@ -2008,7 +2290,11 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             setGesture(null);
             panPointer.current = null;
           }}
-          onPointerCancel={() => {
+          onPointerCancel={event => {
+            if (textGesture.current && textGesture.current.pointerId !== event.evt.pointerId)
+              return;
+            if (textGesture.current) suppressTextClick.current = true;
+            textGesture.current = null;
             marqueeRef.current = null;
             setMarquee(null);
             setGesture(null);
@@ -2087,6 +2373,28 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 listening={false}
               />
             )}
+            {props.selected.map(id => {
+              const node = props.document.nodes.find(item => item.id === id);
+              if (
+                !node ||
+                (!node.locked && props.editable) ||
+                !paintOrder.some(item => item.id === id)
+              )
+                return null;
+              const bounds = worldBounds(props.document, node);
+              return (
+                <Rect
+                  key={`focus-outline:${id}`}
+                  x={bounds.left}
+                  y={bounds.top}
+                  width={bounds.right - bounds.left}
+                  height={bounds.bottom - bounds.top}
+                  stroke="#6856c8"
+                  strokeWidth={2 / zoom}
+                  listening={false}
+                />
+              );
+            })}
             {props.editable && !cropDraft && (
               <Transformer
                 ref={transformer}

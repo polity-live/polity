@@ -1,3 +1,6 @@
+import { ProjectContextChips } from '@/features/project-chat/ui/ProjectContextChips';
+import { editorContextSchema } from '@/features/project-chat/logic/contracts';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { featureThemeClassName } from '@/features/shared/theme';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { AlertCircle } from 'lucide-react';
@@ -11,6 +14,7 @@ import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
 import { isAssistantErrorContext } from '../logic/contextAttachments';
 import { AiContextCards } from './AiContextCards';
+import { AiTraceDetails } from './AiTraceDetails';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 
 interface MessageBubbleProps {
@@ -26,6 +30,18 @@ export function MessageBubble({
   isAssistantConversation = false,
   resolveAttachmentCardData,
 }: MessageBubbleProps) {
+  const { t } = useTranslation();
+  let projectContext;
+  let outcome: string | undefined;
+  try {
+    const project = JSON.parse(message.context_json ?? '{}').project;
+    const parsed = editorContextSchema.safeParse(project?.editorContext);
+    if (parsed.success) projectContext = parsed.data;
+    if (['proposed', 'needs_clarification', 'failed'].includes(project?.outcome))
+      outcome = project.outcome;
+  } catch {
+    /* Legacy context stays readable. */
+  }
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
   const content = message.content ?? '';
   const hasContent = Boolean(content.trim());
@@ -34,6 +50,7 @@ export function MessageBubble({
 
   return (
     <div
+      id={`message-${message.id}`}
       className={cn(
         'flex gap-3',
         useFlatAssistantLayout ? 'items-start' : 'items-end',
@@ -97,12 +114,24 @@ export function MessageBubble({
           </div>
         )}
 
+        {projectContext?.references ? (
+          <ProjectContextChips
+            references={projectContext.references}
+            sourceContext={projectContext}
+          />
+        ) : null}
+        {outcome ? (
+          <p role="status" className="text-sm font-medium">
+            {t(`features.projectChat.context.${outcome}`)}
+          </p>
+        ) : null}
         <AiContextCards
           contextJson={message.context_json}
           contextLabel={contextLabel}
           resolveAttachmentCardData={resolveAttachmentCardData}
           className={cn(isOwnMessage && 'justify-self-end')}
         />
+        {isAssistantConversation ? <AiTraceDetails messageId={message.id} /> : null}
 
         {!hasContent && (
           <p className={cn('text-muted-foreground px-1 text-xs', isOwnMessage && 'text-right')}>

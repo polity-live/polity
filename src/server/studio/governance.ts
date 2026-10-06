@@ -5,6 +5,8 @@ import {
   assertStudioCollaborationAccess,
   canvasEnabled,
 } from './db';
+import { aiAttachmentEntitySchema } from '@/lib/ai/schemas';
+import { assertProjectAiSourceSharing, assertStudioProposalSourceAudience } from './ai-sources';
 import { checksum } from '@/server/checksum';
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { canvasPhaseSchema } from '@/features/communication-studio/logic/governance';
@@ -41,6 +43,8 @@ const inputSchema = z.object({
     'libraries',
     'setCapability',
     'adopt',
+    'acceptPrivate',
+    'rejectPrivate',
   ]),
   operationId: z.string().uuid().optional(),
   generation: z.string().uuid().optional(),
@@ -90,6 +94,15 @@ async function applyDecision(sql: Sql, proposal: postgres.Row, control: postgres
   if (proposal.decision !== 'accepted' || ['applied', 'superseded'].includes(proposal.application))
     return;
   assertBallotIntegrity(proposal);
+  if (proposal.origin === 'ai')
+    await assertStudioProposalSourceAudience(
+      null,
+      proposal.project_id,
+      z
+        .array(z.object({ type: aiAttachmentEntitySchema, id: z.string().uuid() }))
+        .parse(proposal.ai_sources),
+      sql
+    );
   const [stored] =
     await sql`select * from studio_state where project_id=${proposal.project_id} for update`;
   const merged = mergeStudioV3(
@@ -118,6 +131,18 @@ async function applyDecision(sql: Sql, proposal: postgres.Row, control: postgres
     await sql`update studio_asset set workspace_id=null where workspace_id=${proposal.id} and id in ${sql(assetIds)}`;
   await sql`select set_config('polity.canvas_command',${proposal.project_id},true)`;
   await sql`update studio_state set document=${sql.json(JSON.parse(JSON.stringify(merged.value)) as postgres.JSONValue)},content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${proposal.project_id}`;
+  if (proposal.origin === 'ai') {
+    const [project] =
+      await sql`select source_references from studio_project where id=${proposal.project_id}`;
+    const refs = [
+      ...new Map(
+        [...project.source_references, ...proposal.ai_sources].map(
+          (ref: { type: string; id: string }) => [`${ref.type}:${ref.id}`, ref] as const
+        )
+      ).values(),
+    ];
+    await sql`update studio_project set source_references=${sql.json(refs)} where id=${proposal.project_id}`;
+  }
   await sql`update studio_project set title=${merged.value.title},updated_at=${Date.now()} where id=${proposal.project_id}`;
   await sql`update canvas_proposal set application='applied',conflicts='[]',updated_at=${Date.now()} where id=${proposal.id}`;
   if (proposal.resolves_id)
@@ -152,11 +177,29 @@ async function finalize(sql: Sql, p: postgres.Row, control: postgres.Row) {
   await applyDecision(sql, { ...p, decision }, control);
 }
 
+async function procedureMembers(sql: Sql, project: postgres.Row) {
+  return sql`select u.id,u.first_name,u.last_name from "user" u where u.id in (
+    select owner_id from "group" where id=${project.group_id}
+    union select user_id from group_membership where group_id=${project.group_id}
+      and status in ('active','member','admin')
+    union select owner_id from studio_project where id=${project.id} and group_id is null
+    union select user_id from studio_project_collaborator where project_id=${project.id}
+      and ${project.group_id}::uuid is null and status='active'
+  ) order by u.id`;
+}
+
+async function eligibleVoters(sql: Sql, project: postgres.Row) {
+  const members = await procedureMembers(sql, project);
+  if (!members.length) return [];
+  return sql`select id from "user" where id in ${sql(members.map(member => member.id))}
+    and canvas_capability(id,${project.id}::uuid,'vote') order by id`;
+}
+
 export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
   if (!canvasEnabled()) throw new StudioError('Canvas preview is not enabled', 404);
   const input = inputSchema.parse(raw);
   const readOnly = ['session', 'loadDraft', 'libraries'].includes(input.action);
-  return studioTransaction(
+  const response = await studioTransaction(
     async sql => {
       const { projectId, action, workspaceId } = input;
       await assertStudioCollaborationAccess(actor, projectId, sql);
@@ -186,16 +229,14 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
       };
       if (action === 'session') {
         const proposals =
-          await sql`select id,title,reason,owner_id,shared_ids,revision,base_revision,state,changes,decision,application,conflicts,electorate,deadline,resolves_id from canvas_proposal where project_id=${projectId} and canvas_proposal_access(${actor}::uuid,id) order by created_at`;
+          await sql`select id,title,reason,owner_id,shared_ids,revision,base_revision,state,changes,decision,application,conflicts,electorate,deadline,resolves_id,origin,ai_mode,ai_status,ai_sources,ai_warnings from canvas_proposal where project_id=${projectId} and ai_status='ready' and canvas_proposal_access(${actor}::uuid,id) order by created_at`;
         for (const p of proposals)
           p.votes = await sql`select user_id,choice from canvas_vote where proposal_id=${p.id}`;
         const comments =
           await sql`select * from canvas_comment where project_id=${projectId} and (proposal_id is null or canvas_proposal_access(${actor}::uuid,proposal_id)) order by created_at`;
         const revisions =
           await sql`select id,revision,created_at from canvas_history where project_id=${projectId} order by revision desc limit 100`;
-        const members = project.group_id
-          ? await sql`select u.id,u.first_name,u.last_name from "user" u where u.id in (select owner_id from "group" where id=${project.group_id} union select user_id from group_membership where group_id=${project.group_id} and status in ('active','member','admin'))`
-          : [];
+        const members = await procedureMembers(sql, project);
         const roles =
           capabilities.manage && project.group_id
             ? await sql`select r.id,r.name,coalesce(jsonb_object_agg(c.capability,c.allowed) filter(where c.capability is not null),'{}') as capabilities from role r left join canvas_role_capability c on c.role_id=r.id where r.group_id=${project.group_id} group by r.id,r.name`
@@ -205,6 +246,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           groupId: project.group_id,
           generation: control.generation,
           capabilities,
+          canEditProject: !!project.can_edit,
           proposals,
           comments,
           revisions,
@@ -217,7 +259,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         };
       }
       if (action === 'loadDraft') {
-        if (!proposal) denied();
+        if (!proposal || proposal.ai_status !== 'ready') denied();
         return {
           canvasEnabled: true,
           document: studioDocumentV3Schema.parse(proposal.document),
@@ -266,6 +308,43 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         return proposal;
       };
       switch (action) {
+        case 'acceptPrivate':
+        case 'rejectPrivate': {
+          if (
+            project.group_id ||
+            control.phase !== 'edit' ||
+            !capabilities.manage ||
+            !proposal ||
+            proposal.origin !== 'ai' ||
+            proposal.ai_status !== 'ready' ||
+            proposal.state !== 'draft' ||
+            input.revision !== proposal.revision
+          )
+            denied();
+          const decision = action === 'acceptPrivate' ? 'accepted' : 'rejected';
+          const changes =
+            decision === 'accepted' ? diffStudio(proposal.base_document, proposal.document) : [];
+          if (decision === 'accepted' && !changes.length)
+            throw new StudioError('AI suggestion has no changes');
+          if (decision === 'accepted')
+            await validateAssets(sql, projectId, proposal.document, proposal.id);
+          const digest =
+            decision === 'accepted'
+              ? checksum({
+                  base: proposal.base_revision,
+                  generation: proposal.base_generation,
+                  changes,
+                })
+              : null;
+          await sql`update canvas_proposal set state='closed',decision=${decision},
+            changes=${sql.json(changes)},checksum=${digest},
+            application=${decision === 'accepted' ? 'pending' : 'not_applicable'},
+            updated_at=${Date.now()} where id=${proposal.id}`;
+          if (decision === 'accepted')
+            await applyDecision(sql, { ...proposal, changes, checksum: digest, decision }, control);
+          result = { decision };
+          break;
+        }
         case 'adopt': {
           if (
             project.group_id ||
@@ -278,6 +357,15 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           const [allowed] =
             await sql`select studio_group_access(${actor}::uuid,${target}::uuid,true) as value`;
           if (!allowed.value) denied();
+          const audience = await sql`select owner_id as id from "group" where id=${target}
+            union select user_id as id from group_membership
+            where group_id=${target} and status in ('active','member','admin')`;
+          await assertProjectAiSourceSharing(
+            projectId,
+            audience.map(person => person.id),
+            'private',
+            sql
+          );
           await sql`update studio_project set group_id=${target},updated_at=${Date.now()} where id=${projectId}`;
           await sql`update canvas_control set generation=gen_random_uuid() where project_id=${projectId}`;
           await sql`update studio_state set content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${projectId}`;
@@ -285,7 +373,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           break;
         }
         case 'phase': {
-          if (!capabilities.manage || !project.group_id) denied();
+          if (!capabilities.manage) denied();
           if (input.phase === 'view') denied();
           if (input.revision !== canonical.content_revision)
             throw new StudioError('Canvas revision changed', 409);
@@ -296,8 +384,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           if (input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
             const submitted =
               await sql`select * from canvas_proposal where project_id=${projectId} and state='submitted' for update`;
-            const electorate =
-              await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`;
+            const electorate = await eligibleVoters(sql, project);
             if (submitted.length && !electorate.length) throw new StudioError('No eligible voters');
             for (const submittedProposal of submitted) {
               assertBallotIntegrity(submittedProposal);
@@ -354,20 +441,28 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           if (p.owner_id !== actor) denied();
           for (const id of input.userIds ?? [])
             await assertStudioCollaborationAccess(id, projectId, sql);
+          if (p.origin === 'ai')
+            await assertStudioProposalSourceAudience(
+              actor,
+              projectId,
+              z
+                .array(z.object({ type: aiAttachmentEntitySchema, id: z.string().uuid() }))
+                .parse(p.ai_sources),
+              sql
+            );
           await sql`update canvas_proposal set shared_ids=${input.userIds ?? []},updated_at=${Date.now()} where id=${p.id}`;
           break;
         }
         case 'submit': {
           const p = ownDraft();
           if (p.owner_id !== actor) denied();
+          if (p.origin === 'ai' && project.group_id && control.phase !== 'suggest_internal')
+            denied();
           const changes = diffStudio(p.base_document, p.document);
           if (!changes.length) throw new StudioError('Proposal has no changes');
           await validateAssets(sql, projectId, p.document, p.id);
-          const openResolutionBallot =
-            project.group_id && control.phase === 'vote_internal' && !!p.resolves_id;
-          const electorate = openResolutionBallot
-            ? await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`
-            : [];
+          const openResolutionBallot = control.phase === 'vote_internal' && !!p.resolves_id;
+          const electorate = openResolutionBallot ? await eligibleVoters(sql, project) : [];
           if (openResolutionBallot && !electorate.length)
             throw new StudioError('No eligible voters');
           await sql`update canvas_proposal set state=${openResolutionBallot ? 'voting' : 'submitted'},changes=${sql.json(changes)},checksum=${checksum({ base: p.base_revision, generation: p.base_generation, changes })},electorate=${openResolutionBallot ? electorate.map(v => v.id) : null},deadline=null,updated_at=${Date.now()} where id=${p.id}`;
@@ -384,8 +479,9 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           break;
         }
         case 'startVote': {
-          // Older Studio clients may repeat the action after the group phase has opened its ballots.
-          if (project.group_id && proposal?.state === 'voting') break;
+          if (!capabilities.manage) denied();
+          // Older Studio clients may repeat the action after the phase has opened its ballots.
+          if (proposal?.state === 'voting') break;
           if (
             !capabilities.manage ||
             control.phase !== 'vote_internal' ||
@@ -393,8 +489,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           )
             denied();
           assertBallotIntegrity(proposal);
-          const electorate =
-            await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`;
+          const electorate = await eligibleVoters(sql, project);
           if (!electorate.length) throw new StudioError('No eligible voters');
           await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=${Date.now() + (input.minutes ?? 5) * 60000},updated_at=${Date.now()} where id=${requireValue(workspaceId)}`;
           break;
@@ -501,4 +596,16 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
     },
     { readOnly }
   );
+  if (
+    input.workspaceId &&
+    ['withdraw', 'rejectPrivate', 'acceptPrivate', 'vote', 'finalize', 'reapply'].includes(
+      input.action
+    )
+  ) {
+    const { cleanupStudioProposalAssets } = await import('./ai-suggestions');
+    await cleanupStudioProposalAssets(input.workspaceId).catch(error =>
+      console.error('Cannot clean up rejected AI media', error)
+    );
+  }
+  return response;
 }

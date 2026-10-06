@@ -1,31 +1,26 @@
 import type { AiChatAttachment } from '@/lib/ai/schemas';
 import type { ProjectScope } from '@/features/project-chat/logic/contracts';
-import type { ZeroTransaction } from '@/server/zero-mutate';
-import { resolveAiAttachmentForUser } from '@/server/ai-tools';
-import { enrichAiAttachmentsForPrompt } from '@/server/ai-db';
-import { resolveOwnedUploadAttachment } from './upload-attachments';
+import { resolveProjectSources } from '@/server/studio/ai-sources';
 
 /** Only server-loaded public/group sources can cross a personal-chat boundary.
  * Client titles, prompt_context and card payloads are intentionally discarded. */
 export async function sharedAttachments(
-  tx: ZeroTransaction,
   actor: string,
-  scope: ProjectScope,
+  scope: ProjectScope | null,
   input: readonly AiChatAttachment[]
 ) {
-  void tx;
-  void scope;
   const attachments: AiChatAttachment[] = [];
   for (const attachment of input.slice(0, 20)) {
     try {
-      const canonical =
-        attachment.entityType === 'document' && attachment.entityId.startsWith('editor-uploads/')
-          ? await resolveOwnedUploadAttachment(actor, attachment.entityId)
-          : await resolveAiAttachmentForUser(actor, {
-              entityType: attachment.entityType,
-              entityId: attachment.entityId,
-            });
-      if (canonical) attachments.push(...(await enrichAiAttachmentsForPrompt([canonical])));
+      if (attachment.entityId.startsWith('editor-uploads/')) continue;
+      attachments.push(
+        ...(await resolveProjectSources(actor, scope, [
+          {
+            type: attachment.entityType,
+            id: attachment.entityId,
+          },
+        ]))
+      );
     } catch {
       /* Inaccessible and malformed references are never copied into the project. */
     }

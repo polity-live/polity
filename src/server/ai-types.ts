@@ -29,6 +29,7 @@ export type {
 export const aiChatStartRequestSchema = z.object({
   conversationId: z.string(),
   requestId: z.string().uuid().optional(),
+  originMessageId: z.string().uuid().optional(),
   resume: z.literal(false).optional(),
   editorContext: editorContextSchema.optional(),
   content: z.string().trim().min(1),

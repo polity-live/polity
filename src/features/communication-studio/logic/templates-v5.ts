@@ -13,6 +13,28 @@ import {
 type TemplateKind = StudioDocumentV5['kind'];
 type DeliverableKind = StudioDocumentV5['deliverables'][number]['kind'];
 
+/** Relative safe-area slots shared by AI template generation and Studio tooling. */
+export const studioAiTemplateLayouts = {
+  announcement: {
+    eyebrow: [0.08, 0.08, 0.84, 0.08],
+    headline: [0.08, 0.2, 0.84, 0.34],
+    body: [0.08, 0.59, 0.84, 0.24],
+    cta: [0.08, 0.88, 0.84, 0.08],
+  },
+  invitation: {
+    eyebrow: [0.08, 0.08, 0.84, 0.08],
+    headline: [0.08, 0.22, 0.84, 0.26],
+    body: [0.08, 0.53, 0.84, 0.3],
+    cta: [0.08, 0.88, 0.84, 0.08],
+  },
+  editorial: {
+    eyebrow: [0.08, 0.08, 0.84, 0.08],
+    headline: [0.08, 0.2, 0.84, 0.38],
+    body: [0.08, 0.61, 0.84, 0.22],
+    cta: [0.08, 0.88, 0.84, 0.08],
+  },
+} as const;
+
 function addText(
   document: StudioDocumentV5,
   frame: FrameNode,
@@ -27,6 +49,7 @@ function addText(
   const node = richTextNodeSchema.parse({
     id: crypto.randomUUID(),
     name: value.slice(0, 80) || 'Text',
+    textRole: zIndex === 0 ? 'eyebrow' : zIndex === 1 ? 'title' : 'subtitle',
     parentFrameId: frame.id,
     transform: { ...box, rotation: 0 },
     zIndex,
@@ -88,7 +111,12 @@ function addFrame(
     document,
     frame,
     quote ? `„${name}“` : name,
-    { x: 85, y: format === 'story' ? 440 : 250, width: 900, height: 440 },
+    {
+      x: 85,
+      y: format === 'story' ? 440 : format === 'widescreen' ? 220 : 250,
+      width: format === 'widescreen' ? 1500 : 900,
+      height: format === 'widescreen' ? 360 : 440,
+    },
     brand.font,
     82,
     foreground,
@@ -107,7 +135,12 @@ function addFrame(
     document,
     frame,
     body,
-    { x: 85, y: format === 'story' ? 1100 : 850, width: 900, height: 300 },
+    {
+      x: 85,
+      y: format === 'story' ? 1100 : format === 'widescreen' ? 680 : 850,
+      width: format === 'widescreen' ? 1500 : 900,
+      height: format === 'widescreen' ? 220 : 300,
+    },
     brand.bodyFont,
     38,
     foreground,
@@ -120,7 +153,7 @@ function addFrame(
     parentFrameId: frame.id,
     transform: {
       x: 85,
-      y: format === 'story' ? 1620 : 1210,
+      y: format === 'story' ? 1620 : format === 'widescreen' ? 980 : 1210,
       width: template === 'explanation' ? 220 : 910,
       height: template === 'invitation' ? 12 : 4,
       rotation: 0,
@@ -169,7 +202,13 @@ export function createStudioTemplateDocumentV5(
   let frameIndex = 0;
   const addPost = (postKind: DeliverableKind, name: string, day: number, code: string) => {
     const count =
-      postKind === 'carousel' || postKind === 'video' ? 5 : postKind === 'story' ? 3 : 1;
+      postKind === 'presentation'
+        ? 3
+        : postKind === 'carousel' || postKind === 'video'
+          ? 5
+          : postKind === 'story'
+            ? 3
+            : 1;
     const frames = Array.from({ length: count }, (_, index) => {
       const frameName =
         index === 0
@@ -180,7 +219,11 @@ export function createStudioTemplateDocumentV5(
       return addFrame(
         document,
         frameName,
-        postKind === 'story' || postKind === 'video' ? 'story' : 'portrait',
+        postKind === 'presentation'
+          ? 'widescreen'
+          : postKind === 'story' || postKind === 'video'
+            ? 'story'
+            : 'portrait',
         brand,
         frameIndex++,
         template
@@ -192,7 +235,7 @@ export function createStudioTemplateDocumentV5(
       title: name,
       kind: postKind,
       frameIds: frames.map(frame => frame.id),
-      channel: 'instagram',
+      channel: postKind === 'presentation' ? 'custom' : 'instagram',
       order: document.deliverables.length,
       status: 'draft',
       dayOffset: day,

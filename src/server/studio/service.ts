@@ -79,16 +79,18 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
   const projectId = crypto.randomUUID();
   let document: StudioDocumentV3;
   let templateAssets: Record<string, unknown>[] = [];
+  let sourceReferences: unknown[] = [];
 
   if (input.template.kind === 'project') {
     await assertStudioAccess(userId, input.template.id);
     const sql = studioSql();
     const [template] = await sql`
-      select s.document
+      select s.document,p.source_references
       from studio_project p join studio_state s on s.project_id=p.id
       where p.id=${input.template.id} and p.is_template=true and p.document_schema_version=5`;
     if (!template) throw new StudioError('Studio template not found', 404);
     document = studioDocumentV3Schema.parse(structuredClone(template.document));
+    sourceReferences = template.source_references ?? [];
     templateAssets = await sql`
       select * from studio_asset
       where project_id=${input.template.id} and workspace_id is null and ready=true`;
@@ -140,7 +142,21 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     const now = Date.now();
     await studioTransaction(async tx => {
       if (input.groupId) await assertStudioGroup(userId, input.groupId, tx, true);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},${input.visibility},5,${now},${now})`;
+      if (input.template.kind === 'project') {
+        const audience = input.groupId
+          ? await tx`select owner_id as id from "group" where id=${input.groupId}
+              union select user_id as id from group_membership where group_id=${input.groupId}
+              and status in ('active','member','admin')`
+          : [{ id: userId }];
+        const { assertProjectAiSourceSharing } = await import('./ai-sources');
+        await assertProjectAiSourceSharing(
+          input.template.id,
+          audience.map(reader => reader.id),
+          input.visibility,
+          tx
+        );
+      }
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},${input.visibility},5,${tx.json(JSON.parse(JSON.stringify(sourceReferences)))},${now},${now})`;
       for (const asset of copied)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
@@ -342,8 +358,19 @@ export async function duplicateProject(
   await assertStudioAccess(userId, id);
   if (destinationGroupId) await assertStudioGroup(userId, destinationGroupId, studioSql(), true);
   const sql = studioSql();
+  const { assertProjectAiSourceSharing } = await import('./ai-sources');
+  const destinationReaders = destinationGroupId
+    ? await sql`select owner_id as id from "group" where id=${destinationGroupId}
+        union select user_id as id from group_membership
+        where group_id=${destinationGroupId} and status in ('active','member','admin')`
+    : [{ id: userId }];
+  await assertProjectAiSourceSharing(
+    id,
+    destinationReaders.map(reader => reader.id),
+    visibility
+  );
   const [source] =
-    await sql`select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
+    await sql`select p.group_id,p.source_references,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
   if (!source) throw new StudioError('Studio project not found', 404);
   const value = studioDocumentV3Schema.parse(source.document);
   const projectId = crypto.randomUUID();
@@ -386,7 +413,18 @@ export async function duplicateProject(
     await studioTransaction(async tx => {
       await assertStudioAccess(userId, id, false, tx);
       if (destinationGroupId) await assertStudioGroup(userId, destinationGroupId, tx, true);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${userId},${destinationGroupId},${value.title},${value.kind},${visibility},5,${now},${now})`;
+      const currentReaders = destinationGroupId
+        ? await tx`select owner_id as id from "group" where id=${destinationGroupId}
+            union select user_id as id from group_membership where group_id=${destinationGroupId}
+            and status in ('active','member','admin')`
+        : [{ id: userId }];
+      await assertProjectAiSourceSharing(
+        id,
+        currentReaders.map(reader => reader.id),
+        visibility,
+        tx
+      );
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${destinationGroupId},${value.title},${value.kind},${visibility},5,${tx.json(JSON.parse(JSON.stringify(source.source_references ?? [])))},${now},${now})`;
       for (const asset of copies)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(value)))},${now})`;

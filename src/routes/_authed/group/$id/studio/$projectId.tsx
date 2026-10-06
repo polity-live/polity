@@ -3,19 +3,28 @@ import { z } from 'zod';
 import { StudioProjectAccess } from '@/features/communication-studio/ui/StudioProjectAccess';
 
 export const Route = createFileRoute('/_authed/group/$id/studio/$projectId')({
-  validateSearch: z.object({ conversationId: z.string().uuid().optional() }),
+  validateSearch: z.object({
+    conversationId: z.string().uuid().optional(),
+    workspaceId: z.string().uuid().optional(),
+    focusNodeId: z.string().min(1).max(200).optional(),
+  }),
   component: GroupStudioProject,
 });
 
 function GroupStudioProject() {
   const { id, projectId } = Route.useParams();
-  const { conversationId } = Route.useSearch();
+  const { conversationId, workspaceId, focusNodeId } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
     <StudioProjectAccess
       groupId={id}
       projectId={projectId}
       conversationId={conversationId}
+      workspaceId={workspaceId}
+      focusNodeId={focusNodeId}
+      onFocusHandled={nextWorkspaceId =>
+        void navigate({ search: { conversationId, workspaceId: nextWorkspaceId }, replace: true })
+      }
       open={next =>
         void navigate({ to: '/group/$id/studio/$projectId', params: { id, projectId: next } })
       }

@@ -117,6 +117,7 @@ export const messagesTranslations = {
     loadFailed: 'Nachrichten konnten nicht geladen werden',
   },
   ai: {
+    sources: { app: 'Polity kostenlos', byok: 'Eigener API-Key', chatgpt: 'ChatGPT-Abo' },
     retry: 'Erneut versuchen',
     settings: 'KI-Einstellungen',
     information: 'Hinweise zur KI-Nutzung',

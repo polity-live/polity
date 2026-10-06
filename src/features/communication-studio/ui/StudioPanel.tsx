@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Dialog, DialogContent, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/features/shared/ui/ui/sheet';
@@ -128,9 +128,12 @@ export function StudioPanel({
     return () => window.removeEventListener(STUDIO_OPEN_PANEL_EVENT, listener);
   }, [open, panelKey, placement]);
 
-  const mount = (node: HTMLDivElement | null) => {
-    if (node && container) node.appendChild(container);
-  };
+  const mount = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node && container && container.parentNode !== node) node.appendChild(container);
+    },
+    [container]
+  );
   const restoreToolbarFocus = (event: Event) => {
     event.preventDefault();
     trigger.current?.focus();
@@ -141,6 +144,10 @@ export function StudioPanel({
     restoreNavigationFocus.current = true;
   };
   const content = <div ref={mount} />;
+  const preserveLayerRenameOnEscape = (event: KeyboardEvent) => {
+    if (event.target instanceof Element && event.target.closest('[data-studio-layer-name-input]'))
+      event.preventDefault();
+  };
   const triggerContent = icon ?? label;
   const toolbarPopover = !mobile && !large;
   const toolbarOpen = open && placement === 'toolbar' && toolbarTrigger;
@@ -165,6 +172,8 @@ export function StudioPanel({
               </ToolbarButton>
             </PopoverTrigger>
             <PopoverContent
+              data-canvas-focus-occluder
+              onEscapeKeyDown={preserveLayerRenameOnEscape}
               className="z-[60] max-h-[75vh] w-[min(28rem,90vw)] overflow-auto"
               align="start"
               onCloseAutoFocus={restoreToolbarFocus}
@@ -194,6 +203,8 @@ export function StudioPanel({
       >
         <PopoverAnchor virtualRef={navigationAnchor} />
         <PopoverContent
+          data-canvas-focus-occluder
+          onEscapeKeyDown={preserveLayerRenameOnEscape}
           aria-label={label}
           side="left"
           align="start"
@@ -230,6 +241,8 @@ export function StudioPanel({
           }}
         >
           <SheetContent
+            data-canvas-focus-occluder
+            onEscapeKeyDown={preserveLayerRenameOnEscape}
             onCloseAutoFocus={restoreToolbarFocus}
             side="bottom"
             className="z-[60] max-h-[85dvh] overflow-auto"
@@ -246,6 +259,8 @@ export function StudioPanel({
           }}
         >
           <DialogContent
+            data-canvas-focus-occluder
+            onEscapeKeyDown={preserveLayerRenameOnEscape}
             onCloseAutoFocus={restoreToolbarFocus}
             className="z-[60] max-h-[85dvh] max-w-4xl overflow-auto"
           >

@@ -41,6 +41,9 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }));
 vi.mock('@/server/studio/export', () => ({ queueCommittedExport: io.export }));
+vi.mock('../ai-sources', () => ({
+  assertProjectAiSourceSharing: vi.fn().mockResolvedValue(undefined),
+}));
 import {
   assetUrls,
   beginUpload,

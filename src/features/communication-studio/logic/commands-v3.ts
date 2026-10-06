@@ -114,7 +114,7 @@ export const studioCommandV3Schema = z.discriminatedUnion('type', [
       id: z.string().uuid(),
       code: z.string().max(100),
       title: z.string().max(200),
-      kind: z.enum(['single', 'carousel', 'story', 'video']),
+      kind: z.enum(['single', 'carousel', 'story', 'video', 'presentation']),
       frameIds: z.array(z.string().uuid()).min(1).max(100),
       channel: z.enum(['instagram', 'linkedin', 'facebook', 'custom']),
       order: z.number().int().nonnegative(),

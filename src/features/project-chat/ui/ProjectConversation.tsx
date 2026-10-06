@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { toast } from '@/features/shared/ui/ui/sonner';
+import { ProjectContextNavigation, type ActivateProjectContext } from './ProjectContextNavigation';
+import { focusProjectEditor } from '../hooks/editor-bridge';
+import { X } from 'lucide-react';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
@@ -17,7 +21,7 @@ import {
 } from '@/features/messages/hooks/useAssistantChat';
 import { AssistantMessageContentView } from '@/features/messages/ui/AssistantMessageContentView';
 import type { EditorContext, ProjectScope } from '../logic/contracts';
-import { flushProjectEditor } from '../hooks/editor-bridge';
+import { useProjectComposerContext } from '../hooks/useProjectComposerContext';
 
 interface ProjectConversationProps {
   conversationId: string;
@@ -61,7 +65,7 @@ function projectTools(
         t('features.projectChat.tools.studioReadDescription')
       ),
       tool(
-        'studio_apply_actions',
+        'studio_edit_suggestion',
         t('features.projectChat.tools.studioApply'),
         t('features.projectChat.tools.studioApplyDescription')
       ),
@@ -102,20 +106,6 @@ function projectTools(
   ];
 }
 
-function savedEditorContext(messages: readonly Message[]): EditorContext | undefined {
-  for (const message of messages) {
-    try {
-      const value = JSON.parse(message.context_json ?? '{}') as {
-        project?: { editorContext?: EditorContext };
-      };
-      if (value.project?.editorContext) return value.project.editorContext;
-    } catch {
-      // Older messages may contain a non-project context payload.
-    }
-  }
-  return undefined;
-}
-
 export function ProjectConversation(props: ProjectConversationProps) {
   const { conversationId, active = true } = props;
   const { user } = useAuth();
@@ -128,6 +118,19 @@ export function ProjectConversation(props: ProjectConversationProps) {
   );
   const participant = conversation?.participants?.find(item => item.user_id === user?.id);
   const joinedConversation = useRef('');
+  const participantId = participant?.id;
+  const lastReadAt = participant?.last_read_at ?? 0;
+  const latestMessageAt = (props.messages ?? queriedMessages).reduce<number | null>(
+    (latest, message) =>
+      latest === null ? message.created_at : Math.max(latest, message.created_at),
+    null
+  );
+  const attemptedRead = useRef<{
+    conversationId: string;
+    participantId: string;
+    messageAt: number;
+    failed: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!conversation || !user || participant || joinedConversation.current === conversation.id) {
@@ -145,11 +148,40 @@ export function ProjectConversation(props: ProjectConversationProps) {
   }, [conversation, participant, user, zero]);
 
   useEffect(() => {
-    if (!active || !participant || queriedMessages.length === 0) return;
-    void serverConfirmed(
-      zero.mutate(mutators.messages.markRead({ id: participant.id, last_read_at: Date.now() }))
-    );
-  }, [active, participant, queriedMessages, zero]);
+    if (attemptedRead.current?.failed) attemptedRead.current = null;
+  }, [active, conversationId, participantId]);
+
+  useEffect(() => {
+    if (!active) return;
+    if (!participantId || latestMessageAt === null || lastReadAt >= latestMessageAt) return;
+    const previous = attemptedRead.current;
+    if (
+      previous?.conversationId === conversationId &&
+      previous.participantId === participantId &&
+      previous.messageAt >= latestMessageAt
+    ) {
+      return;
+    }
+
+    // Zero's optimistic participant update must not trigger another read mutation.
+    const attempt = { conversationId, participantId, messageAt: latestMessageAt, failed: false };
+    attemptedRead.current = attempt;
+    void (async () => {
+      try {
+        await serverConfirmed(
+          zero.mutate(
+            mutators.messages.markRead({
+              id: participantId,
+              last_read_at: Math.max(Date.now(), latestMessageAt),
+            })
+          )
+        );
+      } catch (error) {
+        attempt.failed = true;
+        console.error('Failed to mark project messages as read:', error);
+      }
+    })();
+  }, [active, conversationId, participantId, lastReadAt, latestMessageAt, zero]);
 
   if (!conversation) {
     return <p className="p-4 text-sm">{t('features.projectChat.unavailable')}</p>;
@@ -166,6 +198,7 @@ export function ProjectConversation(props: ProjectConversationProps) {
 
   return (
     <LoadedProjectConversation
+      key={conversationId}
       {...props}
       conversation={conversation}
       scope={scope}
@@ -208,11 +241,11 @@ function LoadedProjectConversation({
   const zero = useZero();
   const { t } = useTranslation();
   const [runs] = useQuery(queries.projectChat.runs({ conversationId: conversation.id }));
+  const [contextDismissed, setContextDismissed] = useState(false);
   const [changes] = useQuery(queries.projectChat.changes({ conversationId: conversation.id }));
   const [studioProject] = useQuery(
     scope.kind === 'studio' ? queries.studio.project({ id: scope.projectId }) : undefined
   );
-  const storedContext = useMemo(() => savedEditorContext(messages), [messages]);
   const toolOptions = useMemo(() => projectTools(scope, t), [scope.kind, t]);
   const currentParticipant = conversation.participants.find(item => item.user_id === user?.id);
   const surfaceStorageKey = `project-chat-surface:${user?.id ?? 'anonymous'}:${conversation.id}`;
@@ -254,19 +287,23 @@ function LoadedProjectConversation({
       }
     : undefined;
 
+  const composerContext = useProjectComposerContext(
+    scope,
+    context ?? { surface: scope.kind === 'studio' ? 'studio' : surface },
+    studioProject?.title ?? conversation.name ?? t('features.projectChat.project')
+  );
   const assistantChat = useAssistantChat(conversation, user?.id, {
     project: {
       projectTools: toolOptions,
       externallyBusy: Boolean(activeRun),
       resumeRequestId: interruptedRun?.request_id ?? null,
       onCancel: cancelOwnRun,
-      beforeSend: async () => {
-        const fallback: EditorContext = context ?? {
-          ...storedContext,
-          surface: scope.kind === 'studio' ? 'studio' : surface,
-        };
-        return flushProjectEditor(scope, fallback);
-      },
+      beforeSend: composerContext.beforeSend,
+      contextReferences: composerContext.references,
+      contextOptions: composerContext.options,
+      addContextReference: composerContext.add,
+      removeContextReference: composerContext.remove,
+      onSent: composerContext.onSent,
     },
   });
 
@@ -313,6 +350,40 @@ function LoadedProjectConversation({
         ? `/group/${studioProject.group_id}/studio/${scope.projectId}?conversationId=${conversation.id}`
         : `/studio/${scope.projectId}?conversationId=${conversation.id}`
       : `/amendment/${scope.amendmentId}/${surface === 'city_design' ? 'citydesign' : 'text'}?conversationId=${conversation.id}${context?.branchId ? `&branch=${context.branchId}` : ''}`;
+  const navigate = useNavigate();
+  const activateContext: ActivateProjectContext = (reference, sourceContext) => {
+    if (scope.kind !== 'studio' || !['frame', 'element'].includes(reference.kind)) return;
+    const target = {
+      nodeId: reference.id,
+      workspaceId:
+        reference.workspaceId !== undefined
+          ? reference.workspaceId
+          : sourceContext
+            ? (sourceContext.proposalId ?? null)
+            : (composerContext.liveContext.proposalId ?? null),
+    };
+    void (async () => {
+      if (context && (await focusProjectEditor(scope, target))) return;
+      const search = {
+        conversationId: conversation.id,
+        workspaceId: target.workspaceId ?? undefined,
+        focusNodeId: target.nodeId,
+      };
+      if (studioProject?.group_id) {
+        await navigate({
+          to: '/group/$id/studio/$projectId',
+          params: { id: studioProject.group_id, projectId: scope.projectId },
+          search,
+        });
+      } else {
+        await navigate({
+          to: '/studio/$projectId',
+          params: { projectId: scope.projectId },
+          search,
+        });
+      }
+    })().catch(() => toast.error(t('features.projectChat.context.focusFailed')));
+  };
   const canManage = conversation.requested_by_id === user?.id;
   const defaultTogglePin = (id: string, pinned: boolean) => {
     void serverConfirmed(
@@ -341,8 +412,16 @@ function LoadedProjectConversation({
     }
   };
 
-  const contextActions: ReactNode = (
-    <div className="flex flex-wrap items-center justify-end gap-3">
+  const contextActions: ReactNode = contextDismissed ? null : (
+    <div className="relative flex flex-wrap items-center justify-end gap-3 pr-7">
+      <button
+        type="button"
+        className="hover:bg-muted absolute top-0 right-0 rounded p-1"
+        aria-label={t('features.projectChat.dismissContext')}
+        onClick={() => setContextDismissed(true)}
+      >
+        <X className="size-4" aria-hidden="true" />
+      </button>
       {!context && scope.kind === 'amendment' ? (
         <label className="mr-auto flex items-center gap-2">
           <span className="text-muted-foreground">{t('features.projectChat.surface')}</span>
@@ -420,28 +499,32 @@ function LoadedProjectConversation({
   }));
 
   return (
-    <AssistantMessageContentView
-      conversation={conversation}
-      messages={messages}
-      hasMoreOlderMessages={hasMoreOlderMessages ?? internalHasMore}
-      onLoadOlderMessages={onLoadOlderMessages ?? onInternalLoadOlder}
-      onAtEndChange={onAtEndChange}
-      currentUserId={user?.id}
-      onBack={onBack ?? (() => undefined)}
-      onTogglePin={onTogglePin ?? defaultTogglePin}
-      onDeleteClick={onDeleteClick ?? defaultDelete}
-      onMembersClick={onMembersClick ?? (() => undefined)}
-      onRenameConversation={onRenameConversation ?? defaultRename}
-      onAcceptConversation={onAcceptConversation ?? (() => undefined)}
-      onRejectConversation={onRejectConversation ?? (() => undefined)}
-      className={className}
-      swipeHandlers={swipeHandlers}
-      assistantChat={assistantChat}
-      streamingAssistantMessage={streamingAssistantMessage}
-      compact={compact}
-      canManage={canManage}
-      contextActions={contextActions}
-      timelineItems={timelineItems}
-    />
+    <ProjectContextNavigation.Provider
+      value={scope.kind === 'studio' ? activateContext : undefined}
+    >
+      <AssistantMessageContentView
+        conversation={conversation}
+        messages={messages}
+        hasMoreOlderMessages={hasMoreOlderMessages ?? internalHasMore}
+        onLoadOlderMessages={onLoadOlderMessages ?? onInternalLoadOlder}
+        onAtEndChange={onAtEndChange}
+        currentUserId={user?.id}
+        onBack={onBack ?? (() => undefined)}
+        onTogglePin={onTogglePin ?? defaultTogglePin}
+        onDeleteClick={onDeleteClick ?? defaultDelete}
+        onMembersClick={onMembersClick ?? (() => undefined)}
+        onRenameConversation={onRenameConversation ?? defaultRename}
+        onAcceptConversation={onAcceptConversation ?? (() => undefined)}
+        onRejectConversation={onRejectConversation ?? (() => undefined)}
+        className={className}
+        swipeHandlers={swipeHandlers}
+        assistantChat={assistantChat}
+        streamingAssistantMessage={streamingAssistantMessage}
+        compact={compact}
+        canManage={canManage}
+        contextActions={contextActions}
+        timelineItems={timelineItems}
+      />
+    </ProjectContextNavigation.Provider>
   );
 }

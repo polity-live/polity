@@ -1,5 +1,5 @@
 import { sharedAttachments } from './attachments';
-import type { AiChatAttachment } from '@/lib/ai/schemas';
+import type { AiChatAttachment, AiModelDescriptor, AiReasoningEffort } from '@/lib/ai/schemas';
 import { tool } from 'ai';
 import { z } from 'zod';
 import {
@@ -19,18 +19,23 @@ import {
   themeToLegacyBrand,
 } from '@/features/communication-studio/logic/theme';
 import { resolveStudioTheme } from '@/server/studio/service';
+import {
+  generateStudioSuggestion,
+  studioGenerateSuggestionToolSchema,
+} from '@/server/studio/ai-suggestions';
 
 /** Handoffs copy the actual current instruction, never model-supplied history. */
 export function buildProjectStarterTools(
   actor: string,
   instruction = '',
-  currentAttachments: readonly AiChatAttachment[] = []
+  currentAttachments: readonly AiChatAttachment[] = [],
+  aiAccess?: { model?: AiModelDescriptor; reasoningEffort?: AiReasoningEffort }
 ) {
-  const createChat = async (scope: z.infer<typeof projectScopeSchema>, name: string) =>
-    executeZeroTransaction(createZeroContext(actor), async (tx, ctx) => {
+  const createChat = async (scope: z.infer<typeof projectScopeSchema>, name: string) => {
+    const shared = await sharedAttachments(actor, scope, currentAttachments);
+    return executeZeroTransaction(createZeroContext(actor), async (tx, ctx) => {
       const id = crypto.randomUUID();
       await projectChatSharedMutators.create.fn({ tx, ctx, args: { id, scope, name } });
-      const shared = await sharedAttachments(tx, actor, scope, currentAttachments);
       if (instruction.trim())
         await tx.mutate.message.insert({
           id: crypto.randomUUID(),
@@ -54,7 +59,28 @@ export function buildProjectStarterTools(
         notice: 'Only the current instruction was copied. Continue in this shared project chat.',
       };
     });
+  };
   return {
+    studio_generate_suggestion: tool({
+      description:
+        'Create an editable Polity Studio AI Suggestion from this request and canonical source references. Use action=edit for requested changes to a draft or selected elements. Use mode=free only when explicitly requested. Theme fields require an explicit user request; set themeOnly=true for a change limited to themeId/themeName/themeMode. The user reviews and accepts it in Studio.',
+      inputSchema: studioGenerateSuggestionToolSchema,
+      execute: async (args, options) =>
+        generateStudioSuggestion(
+          actor,
+          {
+            ...args,
+            instruction: instruction.trim() || args.instruction || '',
+          },
+          {
+            requestKey: options.toolCallId,
+            ...aiAccess,
+            attachmentRefs: currentAttachments
+              .filter(attachment => !attachment.entityId.startsWith('editor-uploads/'))
+              .map(attachment => ({ type: attachment.entityType, id: attachment.entityId })),
+          }
+        ),
+    }),
     open_project_chat: tool({
       description:
         'Open a new shared AI chat for an existing Studio project or amendment. Only the current user instruction is copied; personal history stays private. Amendment text and City Design share chats. Returns a link to continue.',
@@ -76,6 +102,7 @@ export function buildProjectStarterTools(
           args.themeId,
           args.themeMode
         );
+        const shared = await sharedAttachments(actor, null, args.groupId ? [] : currentAttachments);
         return executeZeroTransaction(createZeroContext(actor), async (tx, ctx) => {
           const sql = sqlTransaction(tx);
           await lockAuthority(sql);
@@ -118,12 +145,6 @@ export function buildProjectStarterTools(
             ctx,
             args: { id: conversationId, scope: { kind: 'studio', projectId }, name: args.title },
           });
-          const shared = await sharedAttachments(
-            tx,
-            actor,
-            { kind: 'studio', projectId },
-            currentAttachments
-          );
           if (instruction.trim())
             await tx.mutate.message.insert({
               id: crypto.randomUUID(),

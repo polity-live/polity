@@ -29,6 +29,7 @@ const kinds: StudioDocument['kind'][] = [
   'story',
   'video',
   'campaign',
+  'presentation',
 ];
 
 export function useCreateStudioProjectForm(initialGroupId: string | null): CreateFormConfig {

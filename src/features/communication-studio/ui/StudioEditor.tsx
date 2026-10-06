@@ -68,13 +68,13 @@ import type { EditorCollaborator, EditorPresencePeer } from '@/features/editor/t
 import { EditorSaveStatus } from '@/features/editor/ui/EditorSaveStatus';
 import { OnlineCollaboratorAvatars } from '@/features/editor/ui/OnlineCollaboratorAvatars';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { InlineCheckbox } from '@/features/shared/ui/form/InlineCheckbox';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
 import { FixedToolbar } from '@/features/shared/ui/ui-platejs/fixed-toolbar';
 import { ToolbarButton, ToolbarGroup } from '@/features/shared/ui/layout';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { ImageEditorDialog } from '@/features/file-upload/ui/ImageEditorDialog';
-import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
 import { GroupThemeSettings } from '@/features/groups/ui/GroupThemeSettings';
 import { StudioPanel } from './StudioPanel';
 import { StudioInviteDialog } from './StudioInviteDialog';
@@ -227,7 +227,7 @@ export function StudioEditor({
   c,
   projectId,
   groupId,
-  conversationId,
+  onCanvasReady,
   governance,
   modeButton,
   canvasOverlay,
@@ -235,12 +235,14 @@ export function StudioEditor({
   previewDocument,
   previewAssets,
   editingAllowed,
+  readOnlyReason,
   onChangeRequestSelect,
 }: {
   c: ReturnType<typeof useStudioController>;
   projectId: string;
   groupId: string | null;
   conversationId?: string;
+  onCanvasReady?: (handle: StudioCanvasHandle | null) => void;
   open: (id: string) => void;
   governance?: ReactNode;
   modeButton?: ReactNode;
@@ -249,6 +251,7 @@ export function StudioEditor({
   previewDocument?: StudioDocumentV3 | null;
   previewAssets?: ReturnType<typeof useStudioController>['assets'];
   editingAllowed?: boolean;
+  readOnlyReason?: string | null;
   onChangeRequestSelect?: (id: string) => void;
 }) {
   const { t } = useTranslation(),
@@ -339,7 +342,7 @@ export function StudioEditor({
       value={value}
       projectId={projectId}
       groupId={groupId}
-      conversationId={conversationId}
+      onCanvasReady={onCanvasReady}
       governance={governance}
       modeButton={modeButton}
       canvasOverlay={canvasOverlay}
@@ -347,6 +350,7 @@ export function StudioEditor({
       previewDocument={previewDocument}
       previewAssets={previewAssets}
       editingAllowed={editingAllowed}
+      readOnlyReason={readOnlyReason}
       onChangeRequestSelect={onChangeRequestSelect}
       tr={tr}
     />
@@ -359,7 +363,7 @@ function StudioEditorReady({
   value,
   projectId,
   groupId,
-  conversationId,
+  onCanvasReady,
   governance,
   modeButton,
   canvasOverlay,
@@ -367,6 +371,7 @@ function StudioEditorReady({
   previewDocument,
   previewAssets,
   editingAllowed,
+  readOnlyReason,
   onChangeRequestSelect,
   tr,
 }: {
@@ -376,7 +381,7 @@ function StudioEditorReady({
   value: NonNullable<ReturnType<typeof useStudioController>['value']>;
   projectId: string;
   groupId: string | null;
-  conversationId?: string;
+  onCanvasReady?: (handle: StudioCanvasHandle | null) => void;
   governance?: ReactNode;
   modeButton?: ReactNode;
   canvasOverlay?: ReactNode;
@@ -384,6 +389,7 @@ function StudioEditorReady({
   previewDocument?: StudioDocumentV3 | null;
   previewAssets?: ReturnType<typeof useStudioController>['assets'];
   editingAllowed?: boolean;
+  readOnlyReason?: string | null;
   onChangeRequestSelect?: (id: string) => void;
   tr: (key: string) => string;
 }) {
@@ -423,6 +429,13 @@ function StudioEditorReady({
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const canvasRef = useRef<StudioCanvasHandle | null>(null);
+  const attachCanvas = useCallback(
+    (handle: StudioCanvasHandle | null) => {
+      canvasRef.current = handle;
+      onCanvasReady?.(handle);
+    },
+    [onCanvasReady]
+  );
   const elementsDropTarget = useRef<HTMLElement | null>(null);
   const [canvasState, setCanvasState] = useState<StudioCanvasState>({
     activeTool: 'selection',
@@ -1166,13 +1179,12 @@ function StudioEditorReady({
               </div>
             )}
           </div>
-          <label className="block">
-            <input
+          <label className="flex items-center gap-2">
+            <InlineCheckbox
               data-action-id="communication-studio.studioworkspace.activate.input-70799f297e"
-              type="checkbox"
               checked={active.locked}
-              onChange={e => c.patch(active.id, { locked: e.target.checked })}
-            />{' '}
+              onCheckedChange={value => c.patch(active.id, { locked: value === true })}
+            />
             {tr('locked')}
           </label>
           {field(
@@ -1223,13 +1235,12 @@ function StudioEditorReady({
           {active.type === 'video' && (
             <>
               {n('trim', 'trimStart', active.trimStart, 0, 3600)}
-              <label>
-                <input
+              <label className="flex items-center gap-2">
+                <InlineCheckbox
                   data-action-id="communication-studio.studioworkspace.activate.input-f95d891276"
-                  type="checkbox"
                   checked={active.muted}
-                  onChange={e => c.patch(active.id, { muted: e.target.checked })}
-                />{' '}
+                  onCheckedChange={value => c.patch(active.id, { muted: value === true })}
+                />
                 {tr('muted')}
               </label>
             </>
@@ -1340,6 +1351,7 @@ function StudioEditorReady({
               {field(
                 'verticalAlign',
                 <select
+                  className={input}
                   value={active.verticalAlign}
                   onChange={ev => c.patch(active.id, { verticalAlign: ev.target.value as 'top' })}
                 >
@@ -1565,10 +1577,16 @@ function StudioEditorReady({
               />
             ))}
             <DropdownMenuSeparator />
-            {(['single', 'carousel', 'story', 'video'] as const).map(kind => (
+            {(['single', 'carousel', 'story', 'video', 'presentation'] as const).map(kind => (
               <StudioMenuItem
                 key={kind}
-                label={tr(kind)}
+                label={
+                  kind === 'presentation'
+                    ? typeof document !== 'undefined' && document.documentElement.lang === 'en'
+                      ? 'Presentation'
+                      : 'Präsentation'
+                    : tr(kind)
+                }
                 icon={<Layers3 />}
                 disabled={disabled}
                 onSelect={() => c.insertFrameSet(kind)}
@@ -1782,6 +1800,23 @@ function StudioEditorReady({
                 selectedNodeIds={selectedNodeIds}
                 disabled={disabled}
                 tr={tr}
+                onRename={(nodeId, name) => {
+                  if (disabled) return;
+                  const normalizedName = name.trim();
+                  if (!normalizedName || normalizedName.length > 200) return;
+                  c.transactV3(document => {
+                    const node = document.nodes.find(candidate => candidate.id === nodeId);
+                    if (!node || node.locked || node.name === normalizedName) return;
+                    Object.assign(
+                      document,
+                      applyStudioCommandV3(document, {
+                        type: 'updateNode',
+                        nodeId,
+                        patch: { name: normalizedName },
+                      })
+                    );
+                  });
+                }}
                 onSelect={(node, rootFrameId) => {
                   if (rootFrameId) c.setPageId(rootFrameId);
                   c.selectExact([node.id]);
@@ -2551,7 +2586,9 @@ function StudioEditorReady({
             {c.failure || c.error}
           </p>
         )}
-        {!c.canEdit && <p>{tr('readOnly')}</p>}
+        {(readOnlyReason || (!c.canEdit && readOnlyReason === undefined)) && (
+          <p role="status">{readOnlyReason ? tr(readOnlyReason) : tr('readOnly')}</p>
+        )}
         {!!c.conflicts.length && (
           <section role="alert" className="space-y-2 rounded border p-3">
             <h2>{tr('conflict')}</h2>
@@ -2590,7 +2627,7 @@ function StudioEditorReady({
         <div className="min-h-0 flex-1">
           <Suspense fallback={<p>{tr('loading')}</p>}>
             <KonvaStudioCanvas
-              ref={canvasRef}
+              ref={attachCanvas}
               key={`${projectId}:${masterMode ? 'master' : 'content'}`}
               document={canvasDocument}
               changeRequestMarkers={changeRequestMarkers}
@@ -2673,12 +2710,6 @@ function StudioEditorReady({
           tr={tr}
         />
       )}
-      <ProjectChatPanel
-        scope={{ kind: 'studio', projectId }}
-        context={{ surface: 'studio', pageId: page.id, elementIds: c.selected }}
-        conversationId={conversationId}
-        initialInstruction={sessionStorage.getItem(`studio-brief:${projectId}`) ?? undefined}
-      />
       <ImageEditorDialog
         imageUrl={c.photoEdit}
         open={!!c.photoEdit}

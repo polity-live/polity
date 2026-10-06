@@ -21,6 +21,7 @@ import { FormFieldShell, PasswordField, TextField } from '@/features/shared/ui/f
 import { DangerConfirmDialog, ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { AiProvider } from '@/lib/ai/schemas';
+import type { ReactNode } from 'react';
 
 const PROVIDER_CONFIG: Record<
   AiProvider,
@@ -100,6 +101,7 @@ export interface AiSettingsTabViewProps {
   customSkillColumns: any;
   aiSettingsOverviewCard: any;
   availableModelsCard: any;
+  chatGptConnectionCard?: ReactNode;
 }
 
 export function AiSettingsTabView({
@@ -115,10 +117,12 @@ export function AiSettingsTabView({
   customSkillColumns,
   aiSettingsOverviewCard,
   availableModelsCard,
+  chatGptConnectionCard,
 }: AiSettingsTabViewProps) {
   return (
     <div className="space-y-6">
       {aiSettingsOverviewCard}
+      {chatGptConnectionCard}
 
       <Card data-tutorial-anchor="settings-ai-tools">
         <CardHeader>

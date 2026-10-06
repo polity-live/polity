@@ -1,5 +1,6 @@
 import { optionalFields } from '@/features/communication-studio/logic/patch-schema';
 import { z } from 'zod';
+import { projectContextReferenceSchema } from './context-references';
 import {
   elementSchema,
   brandSchema,
@@ -30,6 +31,7 @@ export const surfaceSchema = z.enum(['studio', 'amendment_text', 'city_design'])
 export const editorContextSchema = z.strictObject({
   surface: surfaceSchema,
   branchId: z.string().uuid().nullable().optional(),
+  proposalId: z.string().uuid().nullable().optional(),
   documentId: z.string().uuid().optional(),
   cityDesignId: z.string().uuid().optional(),
   pageId: id.optional(),
@@ -37,6 +39,7 @@ export const editorContextSchema = z.strictObject({
   objectIds: z.array(id).max(100).optional(),
   featureIds: z.array(id).max(50).optional(),
   contentRevision: z.number().int().nonnegative().optional(),
+  references: z.array(projectContextReferenceSchema).max(150).optional(),
   selection: z
     .strictObject({
       anchor: z.strictObject({
@@ -54,7 +57,7 @@ export type EditorContext = z.infer<typeof editorContextSchema>;
 export const studioCreateSchema = z.strictObject({
   title: z.string().trim().min(1).max(200),
   groupId: z.string().uuid().nullable(),
-  kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign']),
+  kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign', 'presentation']),
   template: z.enum(templateNames).default('announcement'),
   themeId: z.string().uuid().default(BUILTIN_THEME_IDS.polity),
   themeMode: z.enum(['light', 'dark']).default('light'),

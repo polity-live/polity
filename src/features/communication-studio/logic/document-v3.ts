@@ -149,6 +149,7 @@ export const plateElementSchema: z.ZodType<StudioPlateElement> = z.lazy(() =>
 export const richTextNodeSchema = z.object({
   ...nodeBaseShape,
   type: z.literal('richText'),
+  textRole: z.enum(['title', 'subtitle', 'body', 'cta', 'eyebrow']).optional(),
   content: z.array(plateElementSchema).min(1).max(5_000),
   typography: z.object({
     fontFamily: z.enum(fontFamilies).default('Manrope'),
@@ -228,7 +229,7 @@ export const deliverableSchema = z.object({
   id: uuid,
   code: z.string().max(100),
   title: z.string().max(200),
-  kind: z.enum(['single', 'carousel', 'story', 'video']),
+  kind: z.enum(['single', 'carousel', 'story', 'video', 'presentation']),
   frameIds: z.array(uuid).min(1).max(100),
   channel: z.enum(['instagram', 'linkedin', 'facebook', 'custom']).default('instagram'),
   order: z.number().int().nonnegative(),
@@ -258,7 +259,7 @@ export const studioDocumentV3Schema = z
   .object({
     schemaVersion: z.literal(STUDIO_DOCUMENT_SCHEMA_VERSION),
     title: z.string().min(1).max(200),
-    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign']),
+    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign', 'presentation']),
     theme: studioThemeSnapshotSchema,
     frameDefaults: z
       .object({ background: color.nullable().default(null) })

@@ -1,4 +1,6 @@
 import postgres from 'postgres';
+import { z } from 'zod';
+import type { AppErrorCode } from '@/features/shared/errors/app-error';
 let connection: ReturnType<typeof postgres> | undefined;
 export function studioSql() {
   return (connection ??= postgres(
@@ -9,7 +11,8 @@ export function studioSql() {
 export class StudioError extends Error {
   constructor(
     message: string,
-    public status = 400
+    public status = 400,
+    public code?: AppErrorCode
   ) {
     super(message);
   }
@@ -29,6 +32,11 @@ export async function assertStudioCollaborationAccess(
   projectId: string,
   sql: ReturnType<typeof postgres> | postgres.TransactionSql = studioSql()
 ) {
+  if (
+    !z.string().uuid().safeParse(userId).success ||
+    !z.string().uuid().safeParse(projectId).success
+  )
+    throw new StudioError('Invalid Studio identifier', 400, 'ai_invalid_identifier');
   const [row] =
     await sql`select public.studio_collaboration_access(${userId}::uuid,${projectId}::uuid) as allowed`;
   if (!row?.allowed) throw new StudioError('No access to this studio workspace', 403);

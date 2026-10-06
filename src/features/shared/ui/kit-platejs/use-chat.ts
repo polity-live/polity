@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Chat, useChat as useBaseChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type ChatRequestOptions, type UIMessage } from 'ai';
 import { useAuth } from '@/providers/auth-provider';
+import { useAiEditorDocumentId } from './ai-editor-trace-context';
 
 export interface PlateEditorChatOptions {
   api?: string;
@@ -141,6 +142,7 @@ export function getAppendText(message?: LegacyChatMessage | { text?: string }): 
 export const useChat = () => {
   const options = DEFAULT_EDITOR_CHAT_OPTIONS;
   const { session } = useAuth();
+  const documentId = useAiEditorDocumentId();
 
   const transport = React.useMemo(
     () =>
@@ -150,6 +152,7 @@ export const useChat = () => {
         credentials: options.credentials,
         headers: {
           ...options.headers,
+          ...(documentId ? { 'X-AI-Document-Id': documentId } : {}),
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         prepareSendMessagesRequest: ({ messages, body, headers, credentials, api }) => ({
@@ -159,7 +162,14 @@ export const useChat = () => {
           headers,
         }),
       }),
-    [options.api, options.body, options.credentials, options.headers, session?.access_token]
+    [
+      options.api,
+      options.body,
+      options.credentials,
+      options.headers,
+      session?.access_token,
+      documentId,
+    ]
   );
 
   const chatInstance = React.useMemo(

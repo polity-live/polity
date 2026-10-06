@@ -1,3 +1,8 @@
+vi.mock('@/server/ai-trace-store', () => ({
+  insertAiTrace: vi.fn(),
+  insertAiOperation: vi.fn(),
+  finishAiOperation: vi.fn(),
+}));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -150,6 +155,85 @@ describe('AI chat route setup errors', () => {
     await expect(response.json()).resolves.toMatchObject({
       error: { version: 1, code: 'permission_denied' },
     });
+  });
+
+  it('passes the explicit personal source and authenticated actor to nested Studio tools', async () => {
+    mockSuccessfulChatSetup();
+    const descriptor = { provider: 'openai', id: 'gpt-4.1-mini', source: 'byok' };
+    mocks.getAiCatalog.mockResolvedValue({
+      credentials: [],
+      models: [{ ...descriptor, supports_tools: true }],
+    });
+    const response = await handleAiChatRequest(chatRequest({ ...validBody, model: descriptor }));
+    await response.text();
+    expect(mocks.resolveLanguageModelForUser).toHaveBeenCalledWith('user-1', descriptor, 'medium');
+    expect(mocks.buildAiTools).toHaveBeenCalledWith('user-1', 'UTC', 'Hello', [], {
+      model: descriptor,
+      reasoningEffort: 'medium',
+    });
+  });
+
+  it('logs the persisted originating message once, rather than the constructed model prompt', async () => {
+    vi.stubEnv('AI_LOG_PROMPTS', 'true');
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      const originMessageId = crypto.randomUUID();
+      mockSuccessfulChatSetup({
+        history: [
+          {
+            id: originMessageId,
+            sender_id: 'user-1',
+            content: 'Original saved message',
+            context_json: '[]',
+            created_at: '1',
+          },
+        ],
+      });
+      const response = await handleAiChatRequest(chatRequest({ ...validBody, originMessageId }));
+      await response.text();
+      const records = info.mock.calls.map(([value]) => JSON.parse(String(value)));
+      expect(records.filter(record => record.event === 'ai.trace.started')).toEqual([
+        expect.objectContaining({
+          traceId: originMessageId,
+          originMessageId,
+          originalMessageText: 'Original saved message',
+        }),
+      ]);
+      expect(records.filter(record => record.originalMessageText !== undefined)).toHaveLength(1);
+    } finally {
+      info.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('does not substitute the app source for the same unavailable personal model', async () => {
+    mockSuccessfulChatSetup();
+    const response = await handleAiChatRequest(
+      chatRequest({ ...validBody, model: { ...validBody.model, source: 'byok' } })
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.resolveLanguageModelForUser).not.toHaveBeenCalled();
+    expect(mocks.streamText).not.toHaveBeenCalled();
+  });
+
+  it('stops after a provider limit without retries or persisting an incomplete answer', async () => {
+    mockSuccessfulChatSetup({
+      fullStream: (async function* () {
+        yield { type: 'text-delta', text: 'partial' };
+        yield { type: 'error', error: { statusCode: 429 } };
+        yield { type: 'text-delta', text: 'must not continue' };
+      })(),
+    });
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    const body = await response.text();
+    expect(body).toContain('ai_provider_rate_limited');
+    expect(body).not.toContain('must not continue');
+    const options = mocks.streamText.mock.calls[0][0];
+    expect(options.maxRetries).toBe(0);
+    expect(options.abortSignal.aborted).toBe(true);
+    await options.onFinish({ text: 'partial', toolResults: [] });
+    expect(mocks.persistAssistantMessage).not.toHaveBeenCalled();
+    expect(mocks.resolveLanguageModelForUser).toHaveBeenCalledTimes(1);
   });
 
   it('returns a structured 400 response for invalid input', async () => {
@@ -630,13 +714,14 @@ describe('AI chat route setup errors', () => {
 
     await streamOptions.onStepFinish({ toolResults: undefined });
     expect(errorSpy).toHaveBeenCalledWith(
-      'Failed to collect AI tool attachments:',
-      expect.any(Error)
+      expect.stringContaining('Failed to collect AI tool attachments:')
     );
 
     mocks.persistAssistantMessage.mockRejectedValueOnce(new Error('database failed'));
     await streamOptions.onFinish({ text: 'answer', toolResults: [] });
-    expect(errorSpy).toHaveBeenCalledWith('Failed to persist AI chat response:', expect.any(Error));
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to persist AI chat response:')
+    );
     errorSpy.mockRestore();
   });
 });

@@ -1,4 +1,12 @@
-import { streamText } from 'ai';
+import { streamText } from '@/server/ai-generation';
+import { startEditorAiTrace } from '@/server/ai-editor-trace';
+import {
+  traceAiRequest,
+  logAiEvent,
+  normalizeAiError,
+  type AiTraceContext,
+} from '@/server/ai-trace';
+import { aiErrorCode } from '@/lib/ai/errors';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
@@ -17,8 +25,7 @@ const aiCommandRequestSchema = z.object({
 });
 
 function getStreamErrorMessage(error: unknown): string {
-  console.error('AI editor command stream failed:', error);
-  return encodeAppError('ai_operation_failed');
+  return encodeAppError(aiErrorCode(error));
 }
 
 export const Route = createFileRoute('/api/ai/command')({
@@ -36,38 +43,63 @@ export const Route = createFileRoute('/api/ai/command')({
           return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
         }
         const body = parsedBody.data;
-        const catalog = await getAiCatalog(session.user.id);
-        const preferredModel = getPreferredDefaultAiModel(catalog.models);
+        let trace: AiTraceContext | undefined;
+        try {
+          const activeTrace = await startEditorAiTrace(
+            request,
+            session.user.id,
+            'editor_command',
+            body
+          );
+          trace = activeTrace;
+          return await traceAiRequest(activeTrace, async () => {
+            const catalog = await getAiCatalog(session.user.id);
+            const preferredModel = getPreferredDefaultAiModel(catalog.models);
 
-        if (!preferredModel) {
-          return Response.json(appErrorHttpBody('ai_model_unavailable'), { status: 400 });
+            if (!preferredModel) {
+              return Response.json(appErrorHttpBody('ai_model_unavailable'), { status: 400 });
+            }
+
+            const { model, providerOptions, credentialProvider } =
+              await resolveLanguageModelForUser(
+                session.user.id,
+                toAiModelDescriptor(preferredModel),
+                'medium'
+              );
+
+            const result = streamText({
+              model,
+              messages: body.messages,
+              allowSystemInMessages: true,
+              providerOptions,
+              onFinish: async ({ text }) => {
+                if (!text.trim() || !credentialProvider) {
+                  return;
+                }
+
+                try {
+                  await touchAiCredential(session.user.id, credentialProvider);
+                } catch (error) {
+                  logAiEvent('ai.operation.failed', {
+                    operation: 'Failed to update AI credential usage after editor command:',
+                    ...normalizeAiError(error),
+                  });
+                }
+              },
+            });
+
+            return result.toUIMessageStreamResponse({
+              onError: getStreamErrorMessage,
+              headers: { 'X-AI-Trace-Id': activeTrace.traceId },
+            });
+          });
+        } catch (error) {
+          logAiEvent('ai.editor.failed', normalizeAiError(error), trace);
+          return Response.json(appErrorHttpBody(aiErrorCode(error)), {
+            status: aiErrorCode(error) === 'permission_denied' ? 403 : 500,
+            headers: trace ? { 'X-AI-Trace-Id': trace.traceId } : {},
+          });
         }
-
-        const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
-          session.user.id,
-          toAiModelDescriptor(preferredModel),
-          'medium'
-        );
-
-        const result = streamText({
-          model,
-          messages: body.messages,
-          allowSystemInMessages: true,
-          providerOptions,
-          onFinish: async ({ text }) => {
-            if (!text.trim() || !credentialProvider) {
-              return;
-            }
-
-            try {
-              await touchAiCredential(session.user.id, credentialProvider);
-            } catch (error) {
-              console.error('Failed to update AI credential usage after editor command:', error);
-            }
-          },
-        });
-
-        return result.toUIMessageStreamResponse({ onError: getStreamErrorMessage });
       },
     },
   },

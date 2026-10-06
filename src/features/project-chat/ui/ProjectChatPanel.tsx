@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type PointerEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { MessageSquare, MessageSquarePlus, Minus } from 'lucide-react';
 import { queries } from '@/zero/queries';
@@ -14,21 +22,33 @@ export function ProjectChatPanel({
   context,
   conversationId,
   initialInstruction,
+  initiallyOpen = false,
 }: {
   scope: ProjectScope;
   context: EditorContext;
   conversationId?: string;
   initialInstruction?: string;
+  initiallyOpen?: boolean;
 }) {
   const zero = useZero(),
     { t } = useTranslation(),
     tr = (key: string) => t(`features.projectChat.${key}`);
   const [conversations, conversationsResult] = useQuery(queries.projectChat.conversations(scope));
   const [selected, setSelected] = useState(conversationId ?? ''),
-    [open, setOpen] = useState(false),
+    [open, setOpen] = useState(initiallyOpen),
     [error, setError] = useState(''),
     [creating, setCreating] = useState(false);
   const panelId = useId();
+  const panelRef = useRef<HTMLElement>(null);
+  const [size, setSize] = useState<{ width: number; height: number }>();
+  const drag = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    direction: 'width' | 'height' | 'both';
+  } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const restoreTriggerFocus = useRef(false);
   const autoCreateAttempt = useRef('');
@@ -100,6 +120,79 @@ export function ProjectChatPanel({
     restoreTriggerFocus.current = true;
     setOpen(false);
   };
+  const resize = (width: number, height: number) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const bounds = panel.getBoundingClientRect();
+    const maxWidth = Math.max(0, bounds.right - 16);
+    const maxHeight = Math.max(
+      0,
+      Math.min(bounds.bottom - 8, parseFloat(getComputedStyle(panel).maxHeight) || Infinity)
+    );
+    setSize({
+      width: Math.min(maxWidth, Math.max(280, width)),
+      height: Math.min(maxHeight, Math.max(320, height)),
+    });
+  };
+  const startResize = (
+    event: PointerEvent<HTMLButtonElement>,
+    direction: 'width' | 'height' | 'both'
+  ) => {
+    if (event.button !== 0 || !panelRef.current) return;
+    event.preventDefault();
+    const bounds = panelRef.current.getBoundingClientRect();
+    drag.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      width: bounds.width,
+      height: bounds.height,
+      direction,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const moveResize = (event: PointerEvent<HTMLButtonElement>) => {
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    resize(
+      current.width + (current.direction !== 'height' ? current.x - event.clientX : 0),
+      current.height + (current.direction !== 'width' ? current.y - event.clientY : 0)
+    );
+  };
+  const endResize = (event: PointerEvent<HTMLButtonElement>) => {
+    if (drag.current?.pointerId !== event.pointerId) return;
+    drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+  const keyboardResize = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    direction: 'width' | 'height' | 'both'
+  ) => {
+    const bounds = panelRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+    const step = event.shiftKey ? 40 : 10;
+    const dx =
+      direction === 'height'
+        ? undefined
+        : event.key === 'ArrowLeft'
+          ? step
+          : event.key === 'ArrowRight'
+            ? -step
+            : undefined;
+    const dy =
+      direction === 'width'
+        ? undefined
+        : event.key === 'ArrowUp'
+          ? step
+          : event.key === 'ArrowDown'
+            ? -step
+            : undefined;
+    if (dx === undefined && dy === undefined) return;
+    event.preventDefault();
+    resize(bounds.width + (dx ?? 0), bounds.height + (dy ?? 0));
+  };
   return (
     <div
       className="fixed right-[calc(max(var(--app-shell-desktop-right-offset,0rem),var(--app-shell-chat-dock-right-offset,0rem))+1rem)] bottom-[calc(max(var(--app-shell-mobile-bottom-offset,0rem),var(--app-shell-chat-dock-bottom-offset,0rem))+env(safe-area-inset-bottom,0px)+0.5rem)] z-30"
@@ -119,6 +212,7 @@ export function ProjectChatPanel({
         <span>{tr('title')}</span>
       </button>
       <section
+        ref={panelRef}
         id={panelId}
         role="dialog"
         aria-modal="false"
@@ -126,8 +220,37 @@ export function ProjectChatPanel({
         aria-hidden={!open}
         hidden={!open}
         inert={!open ? true : undefined}
-        className="bg-background flex h-[min(72dvh,42rem)] max-h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem)-1rem)] min-h-0 w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-t-xl border shadow-2xl md:h-[min(70dvh,42rem)] md:w-[25rem] md:rounded-t-lg"
+        style={size ? { width: size.width, height: size.height } : undefined}
+        className="bg-background relative flex h-[min(72dvh,42rem)] max-h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-max(var(--app-shell-mobile-bottom-offset,0rem),var(--app-shell-chat-dock-bottom-offset,0rem))-env(safe-area-inset-bottom,0px)-1rem)] min-h-0 w-[calc(100vw-2rem)] max-w-[calc(100vw-max(var(--app-shell-desktop-right-offset,0rem),var(--app-shell-chat-dock-right-offset,0rem))-2rem)] flex-col overflow-hidden rounded-t-xl border shadow-2xl md:h-[min(70dvh,42rem)] md:w-[25rem] md:rounded-t-lg"
       >
+        {(['width', 'height', 'both'] as const).map(direction => (
+          <button
+            key={direction}
+            type="button"
+            aria-label={tr(
+              direction === 'both'
+                ? 'resize'
+                : direction === 'width'
+                  ? 'resizeWidth'
+                  : 'resizeHeight'
+            )}
+            className={`focus-visible:bg-primary/20 hover:bg-primary/10 absolute z-10 touch-none select-none ${
+              direction === 'width'
+                ? 'top-3 bottom-0 left-0 w-1.5 cursor-ew-resize'
+                : direction === 'height'
+                  ? 'top-0 right-0 left-3 h-1.5 cursor-ns-resize'
+                  : 'top-0 left-0 size-3 cursor-nwse-resize'
+            }`}
+            onPointerDown={event => startResize(event, direction)}
+            onPointerMove={moveResize}
+            onPointerUp={endResize}
+            onPointerCancel={endResize}
+            onLostPointerCapture={() => {
+              drag.current = null;
+            }}
+            onKeyDown={event => keyboardResize(event, direction)}
+          />
+        ))}
         <header className="flex h-11 shrink-0 items-center gap-2 border-b px-3">
           <MessageSquare className="size-4" aria-hidden="true" />
           <select

@@ -1,19 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { consumePendingGoogleLanguage } from '@/features/auth/logic/authLanguage';
+import { consumeChatGptLinkUser } from '@/features/auth/logic/chatgptAuth';
 import {
   completeAuthCallback,
   type AuthCallbackGateway,
   type AuthCallbackUser,
+  type AuthCallbackOutcome,
 } from '@/features/auth/logic/authCallbackService';
 
 export function useAuthCallbackPageController() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const completion = useRef<Promise<AuthCallbackOutcome> | null>(null);
+  const linkUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -35,11 +39,16 @@ export function useAuthCallbackPageController() {
             return { error };
           },
         };
-        const outcome = await completeAuthCallback({
-          gateway,
-          pendingLanguage: consumePendingGoogleLanguage(),
-          search: window.location.search,
-        });
+        if (!completion.current) {
+          linkUserId.current = consumeChatGptLinkUser();
+          completion.current = completeAuthCallback({
+            gateway,
+            pendingLanguage: consumePendingGoogleLanguage(),
+            search: window.location.search,
+            expectedLinkUserId: linkUserId.current,
+          });
+        }
+        const outcome = await completion.current;
 
         if (!outcome.ok) {
           throw new Error(t('auth.callback.failed'));
@@ -50,7 +59,18 @@ export function useAuthCallbackPageController() {
         }
 
         if (isActive) {
-          navigate({ to: outcome.destination });
+          if (
+            new URLSearchParams(window.location.search).get('chatgpt') === 'link' &&
+            linkUserId.current
+          ) {
+            navigate({
+              to: '/user/$id/settings',
+              params: { id: linkUserId.current },
+              search: { tab: 'ai' },
+            });
+          } else {
+            navigate({ to: outcome.destination });
+          }
         }
       } catch (error) {
         console.error('Failed to complete auth callback:', error);

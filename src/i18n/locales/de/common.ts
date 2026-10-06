@@ -1,4 +1,25 @@
 export const commonTranslations = {
+  aiTrace: {
+    title: 'AI-Verlauf',
+    refresh: 'Aktualisieren',
+    loading: 'AI-Verlauf wird geladen …',
+    unavailable: 'Der AI-Verlauf konnte nicht geladen werden.',
+    empty: 'Für diesen Aufruf ist kein AI-Verlauf verfügbar.',
+    origin: 'Zur ursprünglichen Nachricht',
+    prompt: 'Ursprünglicher Prompt',
+    input: 'Eingabe',
+    output: 'Ergebnis',
+    error: 'Fehler',
+    metadata: 'Weitere Details',
+    attempt: 'Versuch',
+    status: {
+      running: 'Läuft',
+      completed: 'Abgeschlossen',
+      failed: 'Fehlgeschlagen',
+      cancelled: 'Abgebrochen',
+      queued: 'Wartet auf Bestätigung',
+    },
+  },
   workspace: {
     cardsView: 'Karten',
     collectionView: 'Ansicht',
@@ -221,6 +242,22 @@ export const commonTranslations = {
     contactHintFileIssue: 'ein Issue auf GitHub erstellen',
   },
   appErrors: {
+    ai_provider_rate_limited:
+      'Der Modellanbieter ist vorübergehend ausgelastet. Bitte versuche es später erneut.',
+    ai_invalid_identifier:
+      'Eine benötigte Projekt- oder Objekt-ID fehlt oder ist ungültig. Lies das Projekt erneut.',
+    ai_workspace_unavailable:
+      'Der ausgewählte Vorschlag ist nicht mehr verfügbar oder du hast keinen Zugriff.',
+    invalid_target:
+      'Der ausgewählte Kontext verweist auf kein passendes Element. Bitte erneut auswählen.',
+    target_ambiguous:
+      'Mehrere oder keine passenden Elemente gefunden. Bitte das gewünschte Element auswählen.',
+    target_locked: 'Das ausgewählte Element oder Frame ist gesperrt.',
+    context_stale: 'Der Editor-Kontext wurde geändert. Bitte erneut auswählen.',
+    repair_limit: 'Die Änderung ist erneut fehlgeschlagen. Bitte das gewünschte Ziel präzisieren.',
+    ai_workspace_invalid:
+      'Der ausgewählte Vorschlag kann nicht als AI-Bearbeitungsziel verwendet werden.',
+
     unknown: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
     action_blocked: 'Diese Aktion ist wegen eines Konflikts blockiert.',
     already_exists: 'Dieser Eintrag ist bereits vorhanden.',
@@ -259,6 +296,14 @@ export const commonTranslations = {
     tutorial_operation_failed: 'Die Tutorial-Aktion konnte nicht abgeschlossen werden.',
     ai_operation_failed: 'Die KI-Antwort konnte nicht abgeschlossen werden.',
     ai_model_unavailable: 'Das ausgewählte KI-Modell ist nicht verfügbar.',
+    ai_credentials_missing:
+      'Der gewählte persönliche KI-Zugang fehlt. Hinterlege deinen API-Key oder wähle ausdrücklich einen anderen Zugang.',
+    ai_credentials_invalid:
+      'Der gewählte KI-Zugang wurde abgelehnt. Prüfe deinen API-Key und die Berechtigungen oder wähle ausdrücklich einen anderen Zugang.',
+    ai_usage_limit:
+      'Der gewählte KI-Zugang hat ein Nutzungs- oder Abrechnungslimit erreicht. Prüfe dein Anbieterkonto oder wähle ausdrücklich einen anderen Zugang.',
+    ai_access_unavailable:
+      'Der gewählte KI-Zugang ist für Polity nicht freigeschaltet. Wähle ausdrücklich deinen API-Key oder ein kostenloses Polity-Modell.',
   },
   contactDialog: {
     title: 'Kontakt',

@@ -116,16 +116,17 @@ export function StudioInviteDialog({
           {tr('invite')}
         </Button>
       </DialogTrigger>
-      <ScrollableDialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="h-[40rem] max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{tr('inviteCollaborators')}</DialogTitle>
           <DialogDescription>{tr('inviteDescription')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="min-h-0 [scrollbar-gutter:stable] space-y-4 overflow-y-auto py-4">
           {loading || isLoading ? (
             <p role="status">{tr('loading')}</p>
           ) : (
             <TypeaheadSearch
+              className="[&_[data-typeahead-dropdown]]:static"
               items={items}
               multiple
               values={selected}

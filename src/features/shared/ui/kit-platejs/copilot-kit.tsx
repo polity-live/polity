@@ -6,6 +6,7 @@ import * as React from 'react';
 
 import { GhostText } from '@/features/shared/ui/ui-platejs/ghost-text.tsx';
 import { useAuth } from '@/providers/auth-provider';
+import { useAiEditorDocumentId } from './ai-editor-trace-context';
 
 import { MarkdownKit } from './markdown-kit.tsx';
 
@@ -68,10 +69,13 @@ export const CopilotKit = [
     },
     useHooks: () => {
       const { session } = useAuth();
+      const documentId = useAiEditorDocumentId();
 
       React.useEffect(() => {
         const completeOptions = getOption('completeOptions') ?? {};
         const headers = new Headers(completeOptions.headers);
+        if (documentId) headers.set('X-AI-Document-Id', documentId);
+        else headers.delete('X-AI-Document-Id');
 
         if (session?.access_token) {
           headers.set('Authorization', `Bearer ${session.access_token}`);
@@ -88,7 +92,7 @@ export const CopilotKit = [
           ...completeOptions,
           headers: headerObject,
         });
-      }, [getOption, session?.access_token, setOption]);
+      }, [getOption, session?.access_token, setOption, documentId]);
     },
     shortcuts: {
       accept: {

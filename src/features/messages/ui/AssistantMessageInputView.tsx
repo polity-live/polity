@@ -1,5 +1,7 @@
 'use client';
 
+import { ProjectContextChips } from '@/features/project-chat/ui/ProjectContextChips';
+
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
@@ -113,9 +115,7 @@ function parseAliases(value: string): string[] {
     .filter(Boolean);
 }
 
-function buildModelKey(model: { provider: string; id: string }): string {
-  return `${model.provider}:${model.id}`;
-}
+import { buildAiModelKey as buildModelKey } from '@/lib/ai/models';
 export interface AssistantMessageInputViewProps {
   assistantChat: any;
   t: any;
@@ -256,6 +256,10 @@ export function AssistantMessageInputView({
             </div>
           )}
 
+          <ProjectContextChips
+            references={assistantChat.projectContextReferences ?? []}
+            onRemove={assistantChat.removeProjectContext}
+          />
           {assistantChat.selectedAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {assistantChat.selectedAttachments.map((attachment: any) => (

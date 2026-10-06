@@ -180,38 +180,12 @@ describe('Studio HTTP authorization and transactional operations', () => {
     mocks.sql.mockResolvedValueOnce([]);
     expect((await request({ operation: 'cancel', id })).status).toBe(404);
   });
-  it('returns AI output only as a validated draft and never writes generated content without user adoption', async () => {
-    const draft = {
-      title: 'Entwurf',
-      posts: [
-        {
-          title: 'Termin',
-          action: '[TODO]',
-          instagram: 'Kurz',
-          linkedin: 'Ausführlich',
-          facebook: 'Gespräch',
-          slides: [{ title: 'Titel', text: 'Text' }],
-        },
-      ],
-    };
-    mocks.generate.mockResolvedValue({ text: '```json\n' + JSON.stringify(draft) + '\n```' });
+  it('does not expose the retired direct AI generation endpoint', async () => {
     const response = await request({ operation: 'generate', prompt: 'Nur bereitgestellte Fakten' });
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(draft);
-    expect(mocks.model).toHaveBeenCalledWith('actor', 'configured', 'low');
-    expect(mocks.generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: 'Nur bereitgestellte Fakten',
-        model: 'language-model',
-        maxOutputTokens: 6000,
-      })
-    );
+    expect(response.status).toBe(400);
+    expect(mocks.generate).not.toHaveBeenCalled();
     expect(mocks.transaction).not.toHaveBeenCalled();
     expect(mocks.createSelection).not.toHaveBeenCalled();
-    mocks.preferred.mockReturnValueOnce(null);
-    expect((await request({ operation: 'generate', prompt: 'Missing model' })).status).toBe(400);
-    mocks.generate.mockResolvedValueOnce({ text: '{"title":5,"posts":[]}' });
-    expect((await request({ operation: 'generate', prompt: 'Invalid output' })).status).toBe(400);
   });
   it('does not disclose internal service failures in public error responses', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);

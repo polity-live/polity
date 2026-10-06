@@ -1,3 +1,9 @@
+vi.mock('@/server/ai-trace-store', () => ({
+  insertAiTrace: vi.fn(),
+  insertAiOperation: vi.fn(),
+  finishAiOperation: vi.fn(),
+}));
+import { aiProviderFetch } from '../ai-provider-fetch';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -25,7 +31,12 @@ vi.mock('../ai-db', () => ({
   listAiCredentialSummaries: mocks.listAiCredentialSummaries,
 }));
 
-import { getAiCatalog, resolveLanguageModelForUser } from '../ai-models';
+import {
+  getAiCatalog,
+  resolveLanguageModelForUser,
+  resolveStudioFreeModel,
+  resolveStudioGenerationModelForUser,
+} from '../ai-models';
 
 const originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY;
 const originalViteAppUrl = process.env.VITE_APP_URL;
@@ -43,6 +54,56 @@ function createOpenAiProviderMock() {
 
   return { chatModel, provider, responseModel };
 }
+
+describe('Studio free model selection', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    globalThis.fetch = originalFetch;
+  });
+
+  it('uses the app key and confirms both prices instead of trusting a free suffix or paid preference', async () => {
+    vi.clearAllMocks();
+    vi.stubEnv('OPENROUTER_API_KEY', 'studio-confirmed-free-key');
+    vi.stubEnv('STUDIO_AI_MODEL_ID', 'paid/model');
+    const { provider } = createOpenAiProviderMock();
+    mocks.createOpenAI.mockReturnValue(provider);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            { id: 'unknown:free', pricing: { prompt: 'unknown', completion: 'unknown' } },
+            { id: 'paid/model', pricing: { prompt: '0.1', completion: '0' } },
+            {
+              id: 'confirmed/free',
+              pricing: { prompt: '0', completion: '0' },
+              supported_parameters: ['response_format'],
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+    expect(await resolveStudioFreeModel()).toMatchObject({
+      id: 'confirmed/free',
+      supportsStructuredOutput: true,
+    });
+    expect(provider.chat).toHaveBeenCalledWith('confirmed/free');
+    expect(mocks.getDecryptedAiCredential).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the catalog has no model with confirmed zero prices', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'studio-unconfirmed-free-key');
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [{ id: 'unknown:free', pricing: { prompt: 'unknown', completion: 'unknown' } }],
+        }),
+        { status: 200 }
+      )
+    );
+    await expect(resolveStudioFreeModel()).rejects.toThrow('No verified free Studio AI model');
+  });
+});
 
 function createAnthropicProviderMock() {
   const model = { transport: 'anthropic' };
@@ -97,6 +158,69 @@ describe('resolveLanguageModelForUser', () => {
     globalThis.fetch = originalFetch;
   });
 
+  it('uses only the requesting actor’s selected OpenAI access for Studio generation', async () => {
+    globalThis.fetch = vi.fn();
+    mocks.getDecryptedAiCredential.mockImplementation(async (actor, provider) =>
+      actor === 'requesting-actor' && provider === 'openai' ? 'actor-key' : null
+    );
+    const { provider, responseModel } = createOpenAiProviderMock();
+    mocks.createOpenAI.mockReturnValue(provider);
+    const result = await resolveStudioGenerationModelForUser(
+      'requesting-actor',
+      {
+        provider: 'openai',
+        id: 'gpt-4.1-mini',
+        source: 'byok',
+      },
+      'low'
+    );
+    expect(result).toEqual({
+      model: responseModel,
+      providerOptions: { openai: { reasoningEffort: 'low' } },
+      supportsStructuredOutput: true,
+    });
+    expect(mocks.createOpenAI).toHaveBeenCalledWith({
+      apiKey: 'actor-key',
+      fetch: aiProviderFetch,
+    });
+    expect(
+      mocks.getDecryptedAiCredential.mock.calls.every(([actor]) => actor === 'requesting-actor')
+    ).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not silently replace an unavailable personal Studio model with a free model', async () => {
+    process.env.OPENROUTER_API_KEY = 'studio-no-fallback';
+    mockOpenRouterCatalog('openrouter/free');
+    await expect(
+      resolveStudioGenerationModelForUser('actor', {
+        provider: 'openai',
+        id: 'gpt-4.1-mini',
+        source: 'byok',
+      })
+    ).rejects.toMatchObject({ code: 'ai_model_unavailable' });
+    expect(mocks.createOpenAI).not.toHaveBeenCalled();
+  });
+
+  it('rejects an app Studio model whose zero prices cannot be verified', async () => {
+    process.env.OPENROUTER_API_KEY = 'studio-unknown-prices';
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [{ id: 'unknown:free', pricing: { prompt: 'unknown', completion: 'unknown' } }],
+        })
+      )
+    );
+    await expect(
+      resolveStudioGenerationModelForUser('actor', {
+        provider: 'openrouter',
+        id: 'unknown:free',
+        source: 'app',
+      })
+    ).rejects.toMatchObject({ code: 'ai_model_unavailable' });
+    expect(mocks.createOpenAI).not.toHaveBeenCalled();
+  });
+
   it('uses OpenAI-compatible chat completions for app-level OpenRouter free models', async () => {
     process.env.OPENROUTER_API_KEY = 'app-openrouter-key';
     mockOpenRouterCatalog('openrouter/free');
@@ -112,6 +236,7 @@ describe('resolveLanguageModelForUser', () => {
 
     expect(mocks.createOpenAI).toHaveBeenCalledWith({
       apiKey: 'app-openrouter-key',
+      fetch: aiProviderFetch,
       baseURL: 'https://openrouter.ai/api/v1',
       headers: {
         'HTTP-Referer': 'http://localhost:3000',
@@ -140,6 +265,7 @@ describe('resolveLanguageModelForUser', () => {
 
     expect(mocks.createOpenAI).toHaveBeenCalledWith({
       apiKey: 'user-openrouter-key',
+      fetch: aiProviderFetch,
       baseURL: 'https://openrouter.ai/api/v1',
       headers: {
         'HTTP-Referer': 'http://localhost:3000',
@@ -166,7 +292,10 @@ describe('resolveLanguageModelForUser', () => {
       'low'
     );
 
-    expect(mocks.createOpenAI).toHaveBeenCalledWith({ apiKey: 'openai-key' });
+    expect(mocks.createOpenAI).toHaveBeenCalledWith({
+      apiKey: 'openai-key',
+      fetch: aiProviderFetch,
+    });
     expect(provider).toHaveBeenCalledWith('gpt-4.1-mini');
     expect(provider.chat).not.toHaveBeenCalled();
     expect(result).toEqual({
@@ -187,7 +316,10 @@ describe('resolveLanguageModelForUser', () => {
       'high'
     );
 
-    expect(mocks.createAnthropic).toHaveBeenCalledWith({ apiKey: 'anthropic-key' });
+    expect(mocks.createAnthropic).toHaveBeenCalledWith({
+      apiKey: 'anthropic-key',
+      fetch: aiProviderFetch,
+    });
     expect(provider).toHaveBeenCalledWith('claude-sonnet-4-5');
     expect(result).toEqual({
       model,
@@ -298,7 +430,12 @@ describe('getAiCatalog', () => {
       free: true,
       context_window: 128000,
     });
-    expect(catalog.models.filter(model => model.id === 'openrouter/free')).toHaveLength(1);
+    expect(
+      catalog.models
+        .filter(model => model.id === 'openrouter/free')
+        .map(model => model.source)
+        .sort()
+    ).toEqual(['app', 'byok']);
     expect(catalog.models).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'vendor/colon:free', free: true, context_window: 0 }),
@@ -353,12 +490,10 @@ describe('getAiCatalog', () => {
     const catalog = await getAiCatalog('user-1');
     expect(catalog.models.some(model => model.provider === 'openai')).toBe(true);
     expect(console.error).toHaveBeenCalledWith(
-      'Failed to load free OpenRouter models:',
-      expect.any(Error)
+      expect.stringContaining('Failed to load free OpenRouter models:')
     );
     expect(console.error).toHaveBeenCalledWith(
-      'Failed to load user OpenRouter models:',
-      expect.any(Error)
+      expect.stringContaining('Failed to load user OpenRouter models:')
     );
   });
 
@@ -427,6 +562,52 @@ describe('resolveLanguageModelForUser errors', () => {
     delete process.env.VITE_APP_URL;
     mocks.getDecryptedAiCredential.mockResolvedValue(null);
     globalThis.fetch = vi.fn();
+  });
+
+  it('never uses a saved personal key when the caller explicitly selects app access', async () => {
+    process.env.OPENROUTER_API_KEY = 'explicit-app-key';
+    mockOpenRouterCatalog('openrouter/free');
+    mocks.getDecryptedAiCredential.mockResolvedValue('personal-key');
+    const { provider } = createOpenAiProviderMock();
+    mocks.createOpenAI.mockReturnValue(provider);
+    await resolveLanguageModelForUser(
+      'actor-1',
+      { provider: 'openrouter', id: 'openrouter/free', source: 'app' },
+      'low'
+    );
+    expect(mocks.getDecryptedAiCredential).not.toHaveBeenCalled();
+    expect(mocks.createOpenAI).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'explicit-app-key' })
+    );
+  });
+
+  it('does not fall back to the app key if an explicitly selected personal key is missing', async () => {
+    process.env.OPENROUTER_API_KEY = 'available-app-key';
+    await expect(
+      resolveLanguageModelForUser(
+        'actor-2',
+        { provider: 'openrouter', id: 'openrouter/free', source: 'byok' },
+        'low'
+      )
+    ).rejects.toMatchObject({ code: 'ai_credentials_missing' });
+    expect(mocks.getDecryptedAiCredential).toHaveBeenCalledWith('actor-2', 'openrouter');
+    expect(mocks.createOpenAI).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects ChatGPT inference and invalid app sources even with personal credentials present', async () => {
+    mocks.getDecryptedAiCredential.mockResolvedValue('personal-key');
+    for (const source of ['app', 'chatgpt'] as const) {
+      await expect(
+        resolveLanguageModelForUser(
+          'actor-3',
+          { provider: 'openai', id: 'gpt-4.1', source },
+          'medium'
+        )
+      ).rejects.toMatchObject({ code: 'ai_access_unavailable' });
+    }
+    expect(mocks.getDecryptedAiCredential).not.toHaveBeenCalled();
+    expect(mocks.createOpenAI).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

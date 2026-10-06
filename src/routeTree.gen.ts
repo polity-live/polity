@@ -70,6 +70,7 @@ import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
 import { Route as ApiAiCommandRouteImport } from './routes/api/ai/command'
 import { Route as ApiAiCopilotRouteImport } from './routes/api/ai/copilot'
 import { Route as ApiAiCredentialsRouteImport } from './routes/api/ai/credentials'
+import { Route as ApiAiTracesRouteImport } from './routes/api/ai/traces'
 import { Route as ApiCurrencyCurrenciesRouteImport } from './routes/api/currency/currencies'
 import { Route as ApiCurrencyRatesRouteImport } from './routes/api/currency/rates'
 import { Route as ApiDatasetsArchiveRouteImport } from './routes/api/datasets/archive'
@@ -467,6 +468,11 @@ const ApiAiCopilotRoute = ApiAiCopilotRouteImport.update({
 const ApiAiCredentialsRoute = ApiAiCredentialsRouteImport.update({
   id: '/api/ai/credentials',
   path: '/api/ai/credentials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiTracesRoute = ApiAiTracesRouteImport.update({
+  id: '/api/ai/traces',
+  path: '/api/ai/traces',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCurrencyCurrenciesRoute = ApiCurrencyCurrenciesRouteImport.update({
@@ -1026,6 +1032,7 @@ export interface FileRoutesByFullPath {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -1172,6 +1179,7 @@ export interface FileRoutesByTo {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -1322,6 +1330,7 @@ export interface FileRoutesById {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -1478,6 +1487,7 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1624,6 +1634,7 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1773,6 +1784,7 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1893,6 +1905,7 @@ export interface RootRouteChildren {
   ApiAiCommandRoute: typeof ApiAiCommandRoute
   ApiAiCopilotRoute: typeof ApiAiCopilotRoute
   ApiAiCredentialsRoute: typeof ApiAiCredentialsRoute
+  ApiAiTracesRoute: typeof ApiAiTracesRoute
   ApiCurrencyCurrenciesRoute: typeof ApiCurrencyCurrenciesRoute
   ApiCurrencyRatesRoute: typeof ApiCurrencyRatesRoute
   ApiDatasetsArchiveRoute: typeof ApiDatasetsArchiveRoute
@@ -2345,6 +2358,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai/credentials'
       fullPath: '/api/ai/credentials'
       preLoaderRoute: typeof ApiAiCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/traces': {
+      id: '/api/ai/traces'
+      path: '/api/ai/traces'
+      fullPath: '/api/ai/traces'
+      preLoaderRoute: typeof ApiAiTracesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/currency/currencies': {
@@ -3436,6 +3456,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCommandRoute: ApiAiCommandRoute,
   ApiAiCopilotRoute: ApiAiCopilotRoute,
   ApiAiCredentialsRoute: ApiAiCredentialsRoute,
+  ApiAiTracesRoute: ApiAiTracesRoute,
   ApiCurrencyCurrenciesRoute: ApiCurrencyCurrenciesRoute,
   ApiCurrencyRatesRoute: ApiCurrencyRatesRoute,
   ApiDatasetsArchiveRoute: ApiDatasetsArchiveRoute,

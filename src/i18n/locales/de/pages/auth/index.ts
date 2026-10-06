@@ -1,4 +1,10 @@
 export const authPageTranslations = {
+  chatgpt: {
+    button: 'Continue with ChatGPT',
+    loading: 'Verbindung zu ChatGPT wird hergestellt…',
+    failed:
+      'Die ChatGPT-Anmeldung konnte nicht abgeschlossen werden. Dein KI-Zugang wurde nicht geändert.',
+  },
   login: {
     title: 'Bei Polity anmelden',
     description: 'Gib deine E-Mail-Adresse ein und wir senden dir einen sicheren Magic Code',

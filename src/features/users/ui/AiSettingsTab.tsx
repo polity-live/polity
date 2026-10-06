@@ -14,8 +14,10 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import type { AiProvider } from '@/lib/ai/schemas';
+import type { AiCredentialSource, AiProvider } from '@/lib/ai/schemas';
+import { buildAiModelKey, aiSourceTranslationKey } from '@/lib/ai/models';
 import { useAiSettingsTab } from '../hooks/useAiSettingsTab';
+import { ChatGptConnectionCard } from './ChatGptConnectionCard';
 function formatContextWindow(value: number | null | undefined): string {
   if (!value || value <= 0) {
     return 'n/a';
@@ -34,7 +36,7 @@ function formatContextWindow(value: number | null | undefined): string {
 
 function isAlwaysAvailableModel(model: {
   provider: AiProvider;
-  source: 'app' | 'byok';
+  source: AiCredentialSource;
   free: boolean;
 }): boolean {
   return model.provider === 'openrouter' && model.source === 'app' && model.free;
@@ -120,9 +122,7 @@ export function AiSettingsTab() {
         return (
           <div className="flex flex-wrap gap-1.5">
             <StatusBadge status={model.source} tone={model.source === 'app' ? 'info' : 'accent'}>
-              {model.source === 'app'
-                ? translateText('generated.inline.0177_app_7d104347')
-                : translateText('generated.inline.0178_byok_15b99395')}
+              {t(aiSourceTranslationKey(model.source))}
             </StatusBadge>
             {model.free ? (
               <StatusBadge status="free" tone="success">
@@ -406,7 +406,7 @@ export function AiSettingsTab() {
         <DataTable
           columns={modelColumns}
           data={ai.models}
-          getRowId={model => `${model.provider}:${model.id}`}
+          getRowId={model => buildAiModelKey(model)}
           enablePagination={false}
           emptyTitle={t('pages.user.ai.availableModelsTitle')}
           emptyDescription={t('pages.user.ai.noModels')}
@@ -431,6 +431,7 @@ export function AiSettingsTab() {
       builtInSkillColumns={builtInSkillColumns}
       customSkillColumns={customSkillColumns}
       aiSettingsOverviewCard={aiSettingsOverviewCard}
+      chatGptConnectionCard={<ChatGptConnectionCard />}
       availableModelsCard={availableModelsCard}
     />
   );

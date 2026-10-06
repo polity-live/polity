@@ -1,4 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react';
+import type { StudioCanvasHandle } from './KonvaStudioCanvas';
+import { toast } from '@/features/shared/ui/ui/sonner';
+import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
 import { useAuth } from '@/providers/auth-provider';
 import { createClient } from '@/lib/supabase/client';
 import { studioDocumentV3Schema, type StudioDocumentV3 } from '../logic/document-v3';
@@ -29,11 +32,17 @@ export function StudioProjectAccess({
   groupId,
   projectId,
   conversationId,
+  workspaceId,
+  focusNodeId,
+  onFocusHandled,
   open,
 }: {
   groupId: string | null;
   projectId: string;
   conversationId?: string;
+  workspaceId?: string;
+  focusNodeId?: string;
+  onFocusHandled?: (workspaceId?: string) => void;
   open: (id: string) => void;
 }) {
   const { user } = useAuth();
@@ -43,6 +52,10 @@ export function StudioProjectAccess({
   const [assets, setAssets] = useState<StudioAsset[]>([]);
   const [activeFrameId, setActiveFrameId] = useState('');
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [readerCanvas, setReaderCanvas] = useState<StudioCanvasHandle | null>(null);
+  const [readerSelection, setReaderSelection] = useState<string[]>([]);
+  const [readerFocused, setReaderFocused] = useState(false);
+  const readerAttempt = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +91,27 @@ export function StudioProjectAccess({
   const frameId = frames.some(frame => frame.id === activeFrameId)
     ? activeFrameId
     : (frames[0]?.id ?? '');
+
+  useEffect(() => {
+    if (!focusNodeId) {
+      readerAttempt.current = undefined;
+      return;
+    }
+    if (!snapshot || snapshot.project.canEdit || readerAttempt.current === focusNodeId) return;
+    if (workspaceId) {
+      readerAttempt.current = focusNodeId;
+      toast.error(t('features.projectChat.context.focusUnavailable'));
+      onFocusHandled?.(workspaceId);
+      return;
+    }
+    if (!readerCanvas || !document) return;
+    readerAttempt.current = focusNodeId;
+    setReaderFocused(true);
+    void readerCanvas
+      .execute({ type: 'focus', nodeId: focusNodeId })
+      .catch(() => toast.error(t('features.projectChat.context.focusUnavailable')))
+      .finally(() => onFocusHandled?.());
+  }, [snapshot, readerCanvas, document, focusNodeId, workspaceId, onFocusHandled, t]);
 
   useEffect(() => {
     if (!snapshot || snapshot.project.canEdit) return;
@@ -124,10 +158,13 @@ export function StudioProjectAccess({
         groupId={groupId}
         projectId={projectId}
         conversationId={conversationId}
+        workspaceId={workspaceId}
+        focusNodeId={focusNodeId}
+        onFocusHandled={onFocusHandled}
         open={open}
       />
     );
-  if (!document)
+  if (workspaceId || !document)
     return (
       <main role="alert" className="p-8">
         {t('features.studio.projectUnavailable')}
@@ -165,15 +202,26 @@ export function StudioProjectAccess({
         <div className="h-[70dvh] overflow-hidden rounded-lg border bg-[var(--surface-sunken)]">
           <Suspense fallback={<p className="p-4">{t('features.studio.loading')}</p>}>
             <KonvaStudioCanvas
+              ref={setReaderCanvas}
               document={document}
               activeFrameId={frameId}
               assets={assets}
-              selected={[]}
+              selected={readerSelection}
+              selectExact={setReaderSelection}
+              activateFrame={setActiveFrameId}
               editable={false}
-              fit="contain"
+              fit={focusNodeId || readerFocused ? undefined : 'contain'}
             />
           </Suspense>
         </div>
+      )}
+      {user && conversationId && (
+        <ProjectChatPanel
+          scope={{ kind: 'studio', projectId }}
+          context={{ surface: 'studio', pageId: frameId, elementIds: readerSelection }}
+          conversationId={conversationId}
+          initiallyOpen={Boolean(focusNodeId)}
+        />
       )}
       {user && cloneOpen && (
         <StudioCloneDialog sourceId={projectId} open={cloneOpen} onOpenChange={setCloneOpen} />

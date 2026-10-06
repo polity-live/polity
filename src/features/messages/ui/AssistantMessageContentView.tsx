@@ -6,6 +6,7 @@ import { AssistantMessageInput } from './AssistantMessageInput';
 import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 import type { AssistantChatController } from '../hooks/useAssistantChat';
 import type { ReactNode } from 'react';
+import { AiTraceDetails } from './AiTraceDetails';
 import type { MessageTimelineItem } from './MessageList';
 
 interface AssistantMessageContentViewProps {
@@ -91,6 +92,11 @@ export function AssistantMessageContentView({
           timelineItems={timelineItems}
         />
 
+        {assistantChat.activeTraceId ? (
+          <div className="px-4 py-2">
+            <AiTraceDetails traceId={assistantChat.activeTraceId} />
+          </div>
+        ) : null}
         <AssistantMessageInput assistantChat={assistantChat} compact={compact} />
       </div>
     </div>

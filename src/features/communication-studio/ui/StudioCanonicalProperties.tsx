@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { InlineCheckbox } from '@/features/shared/ui/form/InlineCheckbox';
 import type { StudioNode } from '../logic/document-v3';
 
 type NumericKey = 'x' | 'y' | 'width' | 'height' | 'rotation';
@@ -140,12 +141,11 @@ export function StudioCanonicalProperties({
         />
       )}
       <label className="flex items-center gap-2 text-xs">
-        <input
-          type="checkbox"
+        <InlineCheckbox
           checked={node.locked}
-          onChange={event =>
+          onCheckedChange={value =>
             update(target => {
-              target.locked = event.target.checked;
+              target.locked = value === true;
             })
           }
         />
@@ -153,12 +153,11 @@ export function StudioCanonicalProperties({
       </label>
       {node.type === 'frame' && (
         <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
+          <InlineCheckbox
             checked={node.clipContent}
-            onChange={event =>
+            onCheckedChange={value =>
               update(target => {
-                if (target.type === 'frame') target.clipContent = event.target.checked;
+                if (target.type === 'frame') target.clipContent = value === true;
               })
             }
           />
@@ -199,12 +198,11 @@ export function StudioCanonicalProperties({
             )}
           {(node.mediaType === 'audio' || node.mediaType === 'video') && (
             <label className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
+              <InlineCheckbox
                 checked={node.muted}
-                onChange={event =>
+                onCheckedChange={value =>
                   update(target => {
-                    if (target.type === 'media') target.muted = event.target.checked;
+                    if (target.type === 'media') target.muted = value === true;
                   })
                 }
               />

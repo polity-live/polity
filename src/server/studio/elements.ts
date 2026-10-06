@@ -7,6 +7,7 @@ import {
 } from '@/features/communication-studio/logic/element-library';
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { assertStudioAccess, studioSql, studioTransaction, StudioError } from './db';
+import { assertCanvasWorkspace } from './workspace-access';
 const bucket = 'studio';
 
 async function requireSet(userId: string, setId: string, edit: boolean) {
@@ -155,11 +156,58 @@ export async function createElementSet(
   }
 }
 
+/** Prepare media without exposing a project or draft before compilation succeeds. */
+export async function stageElementSetForAiProposal(
+  userId: string,
+  input: { setId: string; projectId: string; proposalId: string }
+) {
+  const set = await requireSet(userId, input.setId, false);
+  const snapshot = elementSetSnapshotSchema.parse(set.snapshot);
+  const sql = studioSql();
+  const sources =
+    await sql`select * from studio_element_set_asset where revision_id=${set.revision_id}`;
+  const assets: {
+    id: string;
+    source: string;
+    name: string;
+    mime: string;
+    size: number;
+    path: string;
+  }[] = [];
+  const storage = sources.length ? createClient().storage.from(bucket) : null;
+  try {
+    for (const source of sources) {
+      if (!storage) throw new StudioError('Library media storage is unavailable', 502);
+      const id = crypto.randomUUID();
+      const path = `${input.projectId}/proposals/${input.proposalId}/${id}`;
+      const result = await storage.copy(source.storage_path, path);
+      if (result.error) throw new StudioError('Cannot copy element media', 502);
+      assets.push({
+        id,
+        source: source.source_asset_id,
+        name: source.name,
+        mime: source.mime_type,
+        size: Number(source.byte_size),
+        path,
+      });
+    }
+    return {
+      revisionId: set.revision_id as string,
+      snapshot,
+      assetIds: Object.fromEntries(assets.map(asset => [asset.source, asset.id])),
+      assets,
+    };
+  } catch (error) {
+    if (assets.length && storage) await storage.remove(assets.map(asset => asset.path));
+    throw error;
+  }
+}
+
 export async function instantiateElementSetForProject(
   userId: string,
-  input: { setId: string; projectId: string }
+  input: { setId: string; projectId: string; workspaceId?: string }
 ) {
-  await assertStudioAccess(userId, input.projectId, true);
+  await assertCanvasWorkspace(userId, input.projectId, input.workspaceId, true, studioSql());
   const set = await requireSet(userId, input.setId, false);
   const snapshot = elementSetSnapshotSchema.parse(set.snapshot);
   const sql = studioSql();
@@ -199,11 +247,11 @@ export async function instantiateElementSetForProject(
       });
     }
     await studioTransaction(async tx => {
-      await assertStudioAccess(userId, input.projectId, true, tx);
+      await assertCanvasWorkspace(userId, input.projectId, input.workspaceId, true, tx);
       for (const asset of copied)
         await tx`
-          insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at)
-          values(${asset.id},${input.projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${Date.now()})`;
+          insert into studio_asset(id,project_id,workspace_id,name,mime_type,byte_size,storage_path,ready,created_at)
+          values(${asset.id},${input.projectId},${input.workspaceId ?? null},${asset.name},${asset.mime},${asset.size},${asset.path},true,${Date.now()})`;
     });
     return {
       setId: set.id,

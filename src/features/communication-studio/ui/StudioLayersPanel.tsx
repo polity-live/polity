@@ -1,4 +1,13 @@
-import { useMemo, useRef, useState, type ComponentType, type DragEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type DragEvent,
+} from 'react';
 import {
   ChartNoAxesColumn,
   Code2,
@@ -9,6 +18,7 @@ import {
   Image as ImageIcon,
   LockKeyhole,
   Pencil,
+  PencilLine,
   Shapes,
   Table2,
   Type,
@@ -113,6 +123,7 @@ export function StudioLayersPanel({
   onSetVisibility,
   onSetLocked,
   onMove,
+  onRename,
 }: {
   document: StudioDocumentV3;
   selectedNodeIds: string[];
@@ -122,8 +133,76 @@ export function StudioLayersPanel({
   onSetVisibility: (node: StudioNode, visible: boolean) => void;
   onSetLocked: (node: StudioNode, locked: boolean) => void;
   onMove: (nodeId: string, targetId: string, position: StudioLayerMovePosition) => void;
+  onRename: (nodeId: string, name: string) => void;
 }) {
   const [query, setQuery] = useState('');
+  interface RenameDraft {
+    nodeId: string;
+    originalName: string;
+    value: string;
+    error: boolean;
+  }
+  const [renameDraft, setRenameDraft] = useState<RenameDraft | null>(null);
+  const renameDraftRef = useRef<RenameDraft | null>(null);
+  const renameButtonRef = useRef<HTMLButtonElement | null>(null);
+  const errorId = useId();
+  const [renameNotice, setRenameNotice] = useState(false);
+  const updateRenameDraft = (draft: RenameDraft | null) => {
+    renameDraftRef.current = draft;
+    setRenameDraft(draft);
+  };
+  const focusNameInput = useCallback((input: HTMLInputElement | null) => {
+    input?.focus();
+    input?.select();
+  }, []);
+
+  useEffect(() => {
+    const draft = renameDraftRef.current;
+    if (!draft) return;
+    const node = document.nodes.find(candidate => candidate.id === draft.nodeId);
+    if (disabled || !node || node.locked || node.name !== draft.originalName) {
+      renameDraftRef.current = null;
+      setRenameDraft(null);
+      if (node && node.name !== draft.originalName) setRenameNotice(true);
+    }
+  }, [document, disabled]);
+
+  useEffect(() => {
+    if (!renameNotice) return;
+    const timer = setTimeout(() => setRenameNotice(false), 5000);
+    return () => clearTimeout(timer);
+  }, [renameNotice]);
+
+  const finishRename = (reason: 'enter' | 'blur' | 'escape') => {
+    const draft = renameDraftRef.current;
+    if (!draft) return;
+    const node = document.nodes.find(candidate => candidate.id === draft.nodeId);
+    const name = draft.value.trim();
+    const editable = !disabled && node && !node.locked && node.name === draft.originalName;
+    if (reason === 'enter' && editable && (!name || name.length > 200)) {
+      updateRenameDraft({ ...draft, error: true });
+      return;
+    }
+    const button = renameButtonRef.current;
+    // Clear synchronously before committing or focusing: either can trigger another blur.
+    updateRenameDraft(null);
+    if (reason !== 'escape' && editable && name && name.length <= 200 && name !== node.name)
+      onRename(draft.nodeId, name);
+    if (reason !== 'blur') button?.focus();
+  };
+
+  const beginRename = (entry: StudioLayerTreeEntry) => {
+    if (disabled || entry.node.locked || renameDraftRef.current?.nodeId === entry.node.id) return;
+    finishRename('blur');
+    setRenameNotice(false);
+    onSelect(entry.node, entry.rootFrameId);
+    updateRenameDraft({
+      nodeId: entry.node.id,
+      originalName: entry.node.name,
+      value: entry.node.name,
+      error: false,
+    });
+  };
   const draggedNodeIdRef = useRef<string | null>(null);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{
@@ -133,9 +212,11 @@ export function StudioLayersPanel({
   const entries = useMemo(() => buildStudioLayerTree(document, query), [document, query]);
 
   const resolveDropPosition = (event: DragEvent<HTMLDivElement>, target: StudioNode) => {
+    if (disabled || renameDraftRef.current?.nodeId === target.id) return null;
     const sourceId =
       draggedNodeIdRef.current || event.dataTransfer.getData('text/plain') || draggedNodeId;
     if (!sourceId) return null;
+    if (renameDraftRef.current?.nodeId === sourceId) return null;
     const source = document.nodes.find(node => node.id === sourceId);
     if (!source) return null;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -162,11 +243,17 @@ export function StudioLayersPanel({
         placeholder={tr('searchLayers')}
         onChange={event => setQuery(event.currentTarget.value)}
       />
+      {renameNotice && (
+        <p className="text-muted-foreground px-2 text-xs" role="status">
+          {tr('layerRenamedElsewhere')}
+        </p>
+      )}
       <div className="max-h-[min(32rem,70dvh)] space-y-0.5 overflow-auto" role="tree">
         {entries.map(entry => {
           const { node } = entry;
           const Icon = layerIcon(node);
           const selected = selectedNodeIds.includes(node.id);
+          const editing = renameDraft?.nodeId === node.id;
           return (
             <div
               key={node.id}
@@ -174,7 +261,7 @@ export function StudioLayersPanel({
               aria-level={entry.depth + 1}
               aria-expanded={entry.hasChildren ? true : undefined}
               aria-selected={selected}
-              draggable={!disabled && !node.locked}
+              draggable={!disabled && !node.locked && !editing}
               data-studio-layer-id={node.id}
               data-drop-position={dropTarget?.nodeId === node.id ? dropTarget.position : undefined}
               className={cn(
@@ -186,6 +273,10 @@ export function StudioLayersPanel({
                   'ring-primary bg-primary/10 ring-2 ring-inset'
               )}
               onDragStart={event => {
+                if (disabled || node.locked || editing) {
+                  event.preventDefault();
+                  return;
+                }
                 draggedNodeIdRef.current = node.id;
                 setDraggedNodeId(node.id);
                 setDropTarget(null);
@@ -234,14 +325,64 @@ export function StudioLayersPanel({
                   )}
                 />
               )}
+              {editing ? (
+                <div className="min-w-0 flex-1" style={{ paddingLeft: `${0.5 + entry.depth}rem` }}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="size-4 shrink-0" />
+                    <input
+                      data-studio-layer-name-input
+                      ref={focusNameInput}
+                      className="bg-background focus-visible:ring-ring h-8 w-full min-w-0 rounded-sm border px-1 focus-visible:ring-2 focus-visible:outline-none"
+                      aria-label={`${tr('layerName')}: ${renameDraft.originalName}`}
+                      aria-invalid={renameDraft.error || undefined}
+                      aria-describedby={renameDraft.error ? errorId : undefined}
+                      value={renameDraft.value}
+                      maxLength={200}
+                      onChange={event =>
+                        updateRenameDraft({
+                          ...renameDraft,
+                          value: event.currentTarget.value,
+                          error: false,
+                        })
+                      }
+                      onBlur={() => finishRename('blur')}
+                      onKeyDown={event => {
+                        event.stopPropagation();
+                        if (event.nativeEvent.isComposing) return;
+                        if (event.key === 'Enter' || event.key === 'Escape') {
+                          event.preventDefault();
+                          finishRename(event.key === 'Enter' ? 'enter' : 'escape');
+                        }
+                      }}
+                    />
+                  </div>
+                  {renameDraft.error && (
+                    <p id={errorId} className="text-destructive text-xs" role="alert">
+                      {tr('layerNameRequired')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="hover:bg-muted/60 flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-sm pr-1 text-left"
+                  style={{ paddingLeft: `${0.5 + entry.depth}rem` }}
+                  onClick={() => onSelect(node, entry.rootFrameId)}
+                  onDoubleClick={() => beginRename(entry)}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span className="truncate">{node.name}</span>
+                </button>
+              )}
               <button
+                ref={editing ? renameButtonRef : undefined}
                 type="button"
-                className="hover:bg-muted/60 flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-sm pr-1 text-left"
-                style={{ paddingLeft: `${0.5 + entry.depth}rem` }}
-                onClick={() => onSelect(node, entry.rootFrameId)}
+                className="hover:bg-muted focus-visible:ring-ring m-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
+                aria-label={`${tr('rename')}: ${node.name}`}
+                disabled={disabled || node.locked}
+                onClick={() => beginRename(entry)}
               >
-                <Icon className="size-4 shrink-0" />
-                <span className="truncate">{node.name}</span>
+                <PencilLine className="size-4" />
               </button>
               <button
                 type="button"

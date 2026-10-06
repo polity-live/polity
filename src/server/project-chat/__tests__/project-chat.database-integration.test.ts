@@ -6,12 +6,7 @@ import { projectChatSharedMutators } from '@/zero/project-chat/shared-mutators';
 import { requireProjectConversation, readContext } from '../context';
 import { executeProjectTool, undoProjectChange } from '../tools';
 import { rows, lockAuthority } from '@/server/transaction';
-import { createDocument } from '@/features/communication-studio/logic/templates';
-import {
-  legacyDocumentToV3,
-  v3DocumentToLegacy,
-} from '@/features/communication-studio/logic/v3-adapter';
-import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
+import { createStudioDocumentV5 } from '@/features/communication-studio/logic/document-v3';
 import { documentServerMutators } from '@/zero/documents/server-mutators';
 
 const url = new URL(
@@ -216,14 +211,13 @@ describe('shared project chat authority and atomic writes', () => {
         })
       ).rejects.toThrow('revision_conflict');
     }));
-  it('commits Studio changes through Zero and supports repeated conditional undo and redo', () =>
+  it('blocks legacy direct Studio AI writes', () =>
     fixture(async (tx, actor) => {
       const projectId = crypto.randomUUID(),
         chat = crypto.randomUUID(),
-        value = createDocument('single', 'Original');
-      const persisted = legacyDocumentToV3(value);
+        persisted = createStudioDocumentV5('Original', 'single');
       await tx.dbTransaction.query(
-        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Original','single',3,0,0)",
+        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Original','single',5,0,0)",
         [projectId, actor]
       );
       await tx.dbTransaction.query(
@@ -237,106 +231,24 @@ describe('shared project chat authority and atomic writes', () => {
       });
       const runId = await run(tx, actor, chat),
         snapshot = await readContext(tx, actor, runId, chat, 'studio', undefined);
-      const result = (await executeProjectTool(
-        tx,
-        actor,
-        runId,
-        chat,
-        'studio-call',
-        'studio_apply_actions',
-        {
+      await expect(
+        executeProjectTool(tx, actor, runId, chat, 'studio-call', 'studio_apply_actions', {
           snapshotId: snapshot.snapshotId,
           summary: 'Rename',
           actions: [{ type: 'project.patch', patch: { title: 'New' } }],
-        }
-      )) as { changeSetId: string };
-      expect((await tx.run(zql.studio_project.where('id', projectId).one()))?.title).toBe('New');
-      await undoProjectChange(tx, actor, result.changeSetId);
-      expect((await tx.run(zql.studio_project.where('id', projectId).one()))?.title).toBe(
-        'Original'
-      );
-      await undoProjectChange(tx, actor, result.changeSetId, true);
-      expect((await tx.run(zql.studio_project.where('id', projectId).one()))?.title).toBe('New');
-      await undoProjectChange(tx, actor, result.changeSetId);
-      expect((await tx.run(zql.studio_project.where('id', projectId).one()))?.title).toBe(
-        'Original'
-      );
-      const pageId = value.pages[0].id,
-        elementId = value.pages[0].elements.find(e => e.type === 'text')!.id;
-      const fresh = () => readContext(tx, actor, runId, chat, 'studio', undefined);
-      const format = await fresh();
-      const formatted = await executeProjectTool(
-        tx,
-        actor,
-        runId,
-        chat,
-        'format',
-        'studio_format_text',
-        {
-          snapshotId: format.snapshotId,
+        })
+      ).rejects.toThrow('Studio AI edits must create a reviewable suggestion');
+      await expect(
+        executeProjectTool(tx, actor, runId, chat, 'format', 'studio_format_text', {
+          snapshotId: snapshot.snapshotId,
           summary: 'Format heading',
-          pageId,
-          elementIds: [elementId],
-          patch: { bold: true, align: 'center' },
-        }
+          pageId: crypto.randomUUID(),
+          elementIds: [],
+          patch: { bold: true },
+        })
+      ).rejects.toThrow('Studio AI edits must create a reviewable suggestion');
+      expect((await tx.run(zql.studio_project.where('id', projectId).one()))?.title).toBe(
+        'Original'
       );
-      expect(formatted).toMatchObject({ status: 'applied' });
-      const loaded = await tx.run(zql.studio_state.where('project_id', projectId).one());
-      expect(
-        v3DocumentToLegacy(studioDocumentV3Schema.parse(loaded!.document)).pages[0].elements.find(
-          e => e.id === elementId
-        )
-      ).toMatchObject({
-        bold: true,
-        align: 'center',
-      });
-      const shapeInput = {
-        snapshotId: (await fresh()).snapshotId,
-        summary: 'Insert shape',
-        pageId,
-        ref: 'shape',
-        shape: 'rect',
-        width: 100,
-        height: 100,
-      };
-      const first = (await executeProjectTool(
-        tx,
-        actor,
-        runId,
-        chat,
-        'shape1',
-        'studio_insert_shape',
-        shapeInput
-      )) as { createdRefs: Record<string, string> };
-      const second = (await executeProjectTool(
-        tx,
-        actor,
-        runId,
-        chat,
-        'shape2',
-        'studio_insert_shape',
-        shapeInput
-      )) as { createdRefs: Record<string, string> };
-      expect(second.createdRefs).toEqual(first.createdRefs);
-      const afterShapes = await tx.run(zql.studio_state.where('project_id', projectId).one());
-      expect(
-        v3DocumentToLegacy(
-          studioDocumentV3Schema.parse(afterShapes!.document)
-        ).pages[0].elements.filter(e => e.id === first.createdRefs.shape)
-      ).toHaveLength(1);
-      await executeProjectTool(tx, actor, runId, chat, 'align', 'studio_align_elements', {
-        snapshotId: (await fresh()).snapshotId,
-        summary: 'Center shape',
-        pageId,
-        elementIds: [first.createdRefs.shape],
-        direction: 'center',
-        reference: 'page',
-      });
-      const stored = v3DocumentToLegacy(
-        studioDocumentV3Schema.parse(
-          (await tx.run(zql.studio_state.where('project_id', projectId).one()))!.document
-        )
-      );
-      expect(stored.pages[0].elements.find(e => e.id === first.createdRefs.shape)!.x).toBe(490);
     }));
 });

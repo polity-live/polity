@@ -27,8 +27,19 @@ export function CanvasGovernancePanel({
     [body, setBody] = useState('');
   const [commentEdit, setCommentEdit] = useState<{ id: string; body: string } | null>(null);
   const [adoptionGroup, setAdoptionGroup] = useState('');
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  const [comparisonView, setComparisonView] = useState<'original' | 'difference' | 'proposal'>(
+    'difference'
+  );
   const de = typeof document === 'undefined' || document.documentElement.lang !== 'en';
   const tr = (a: string, b: string) => (de ? a : b);
+  useEffect(() => {
+    setSelectedProposalId(
+      typeof window === 'undefined'
+        ? null
+        : new URLSearchParams(window.location.search).get('proposalId')
+    );
+  }, [projectId]);
   const refresh = async () =>
     setSession(await studioRequest<CanvasSession>('canvas', { projectId, action: 'session' }));
   useEffect(() => {
@@ -58,6 +69,8 @@ export function CanvasGovernancePanel({
         revision = await c.commit();
       if (['phase', 'restore', 'resolveDraft'].includes(action))
         revision = (await studioRequest<{ revision: number }>('load', { id: projectId })).revision;
+      if (['acceptPrivate', 'rejectPrivate'].includes(action))
+        revision = session.proposals.find(proposal => proposal.id === input.workspaceId)?.revision;
       const result = await studioRequest<{ workspaceId?: string }>('canvas', {
         projectId,
         action,
@@ -101,6 +114,16 @@ export function CanvasGovernancePanel({
       not_applicable: '—',
       superseded: tr('Durch neuen Beschluss geklärt', 'Resolved by a new decision'),
     })[state] ?? state;
+  const viewProposal = async (id: string, view: 'original' | 'difference' | 'proposal') => {
+    try {
+      await c.commit();
+      chooseWorkspace(view === 'proposal' ? id : undefined);
+      setSelectedProposalId(id);
+      setComparisonView(view);
+    } catch (cause) {
+      setError(String(cause));
+    }
+  };
   const button = 'rounded border bg-background px-2 py-1 text-sm disabled:opacity-40';
   const current = session?.proposals.find(p => p.id === workspaceId);
   return (
@@ -233,15 +256,29 @@ export function CanvasGovernancePanel({
             </button>
           </div>
         )}
-      <details open={!!workspaceId || session?.phase === 'vote_internal'}>
+      <details open={!!workspaceId || !!selectedProposalId || session?.phase === 'vote_internal'}>
         <summary>
           {tr('Änderungsanträge', 'Change requests')} ({session?.proposals.length ?? 0})
         </summary>
         <div className="grid gap-3 py-2 md:grid-cols-2">
           {session?.proposals.map(p => (
             <article key={p.id} className="space-y-2 rounded border p-3">
-              <strong>{p.title}</strong>
+              <strong>
+                {p.origin === 'ai' ? 'AI Suggestion · ' : ''}
+                {p.title}
+              </strong>
               <p>{p.reason}</p>
+              {p.origin === 'ai' && (
+                <p className="text-muted-foreground text-xs">
+                  {p.ai_mode === 'free'
+                    ? tr('Frei gestaltet', 'Free design')
+                    : tr('Vorlage', 'Template')}
+                  {p.ai_sources?.length
+                    ? ` · ${p.ai_sources.length} ${tr('Quellen', 'sources')}`
+                    : ''}
+                  {p.ai_warnings?.length ? ` · ${p.ai_warnings.join(', ')}` : ''}
+                </p>
+              )}
               {p.resolves_id && (
                 <p className="text-sm">
                   {tr(
@@ -261,20 +298,64 @@ export function CanvasGovernancePanel({
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
+                {p.origin === 'ai' && (
+                  <div
+                    role="group"
+                    aria-label={tr('Ansicht', 'View')}
+                    className="flex flex-wrap gap-2"
+                  >
+                    <button className={button} onClick={() => void viewProposal(p.id, 'original')}>
+                      {tr('Original', 'Original')}
+                    </button>
+                    <button
+                      className={button}
+                      onClick={() => void viewProposal(p.id, 'difference')}
+                    >
+                      {tr('Differenz', 'Difference')}
+                    </button>
+                    <button className={button} onClick={() => void viewProposal(p.id, 'proposal')}>
+                      {tr('Vorschlag', 'Proposal')}
+                    </button>
+                  </div>
+                )}
                 {p.state === 'draft' && (
                   <button className={button} disabled={busy} onClick={() => chooseWorkspace(p.id)}>
                     {tr('Entwurf bearbeiten', 'Edit draft')}
                   </button>
                 )}
-                {p.id === workspaceId && p.owner_id === user?.id && p.state === 'draft' && (
-                  <button
-                    className={button}
-                    disabled={busy}
-                    onClick={() => void run('submit', { workspaceId: p.id })}
-                  >
-                    {tr('Einreichen', 'Submit')}
-                  </button>
-                )}
+                {p.id === workspaceId &&
+                  p.owner_id === user?.id &&
+                  p.state === 'draft' &&
+                  p.origin !== 'ai' && (
+                    <button
+                      className={button}
+                      disabled={busy}
+                      onClick={() => void run('submit', { workspaceId: p.id })}
+                    >
+                      {tr('Einreichen', 'Submit')}
+                    </button>
+                  )}
+                {!workspaceId &&
+                  p.origin === 'ai' &&
+                  p.state === 'draft' &&
+                  session.capabilities.manage && (
+                    <>
+                      <button
+                        className={button}
+                        disabled={busy}
+                        onClick={() => void run('acceptPrivate', { workspaceId: p.id })}
+                      >
+                        {tr('Annehmen', 'Accept')}
+                      </button>
+                      <button
+                        className={button}
+                        disabled={busy}
+                        onClick={() => void run('rejectPrivate', { workspaceId: p.id })}
+                      >
+                        {tr('Ablehnen', 'Reject')}
+                      </button>
+                    </>
+                  )}
                 {p.owner_id === user?.id && ['draft', 'submitted'].includes(p.state) && (
                   <button
                     className={button}
@@ -384,7 +465,13 @@ export function CanvasGovernancePanel({
                 </fieldset>
               )}
               {p.changes?.length ? (
-                <details>
+                <details
+                  open={
+                    selectedProposalId === p.id &&
+                    p.origin === 'ai' &&
+                    comparisonView === 'difference'
+                  }
+                >
                   <summary>
                     {tr('Änderungen vergleichen', 'Compare changes')} ({p.changes.length})
                   </summary>

@@ -6,6 +6,7 @@ import {
   getPreferredDefaultAiModelKey,
   OPENROUTER_FREE_MODEL_ID,
   toAiModelDescriptor,
+  matchesAiModel,
 } from '../models';
 
 describe('AI model selection', () => {
@@ -71,9 +72,13 @@ describe('AI model selection', () => {
     };
     expect(getPreferredDefaultAiModel([model])).toBe(model);
     expect(getPreferredDefaultAiModel([])).toBeNull();
-    expect(getPreferredDefaultAiModelKey([model])).toBe('openai:gpt');
+    expect(getPreferredDefaultAiModelKey([model])).toBe('openai:byok:gpt');
     expect(getPreferredDefaultAiModelKey([])).toBeNull();
-    expect(buildAiModelKey(model)).toBe('openai:gpt');
-    expect(toAiModelDescriptor(model)).toEqual({ provider: 'openai', id: 'gpt' });
+    expect(buildAiModelKey(model)).toBe('openai:byok:gpt');
+    expect(toAiModelDescriptor(model)).toEqual({ provider: 'openai', id: 'gpt', source: 'byok' });
+    expect(buildAiModelKey({ provider: 'openai', id: 'gpt' })).toBe('openai:gpt');
+    expect(matchesAiModel(model, { provider: 'openai', id: 'gpt' })).toBe(true);
+    expect(matchesAiModel(model, { provider: 'openai', id: 'gpt', source: 'chatgpt' })).toBe(false);
+    expect(buildAiModelKey({ ...model, source: 'chatgpt' })).not.toBe(buildAiModelKey(model));
   });
 });

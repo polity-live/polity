@@ -1,6 +1,7 @@
 import {
   useProjectEditorBridge,
   projectTextSelection,
+  useProjectTextSelectionSnapshot,
 } from '@/features/project-chat/hooks/editor-bridge';
 /**
  * Unified Editor Hook
@@ -595,6 +596,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     [entityType, contentEntityId, mode, zero]
   );
 
+  const chatSelection = useProjectTextSelectionSnapshot(contentEntityId);
   useProjectEditorBridge(
     entityType === 'amendment' ? { kind: 'amendment', amendmentId: entityId } : null,
     async () => {
@@ -612,6 +614,28 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         branchId: effectiveProcessBranchId,
         contentRevision: baseRevision.current.revision,
       };
+    },
+    {
+      context: {
+        surface: 'amendment_text',
+        selection: chatSelection,
+        documentId: contentEntityId,
+        branchId: effectiveProcessBranchId,
+        contentRevision: baseRevision.current.revision,
+        references: [
+          { kind: 'amendment', id: entityId, label: title || 'Amendment', origin: 'automatic' },
+          ...(effectiveProcessBranchId
+            ? [
+                {
+                  kind: 'branch' as const,
+                  id: effectiveProcessBranchId,
+                  label: selectedProcessBranch?.title || effectiveProcessBranchId,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+        ],
+      },
     }
   );
 

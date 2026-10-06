@@ -1,3 +1,4 @@
+import { getCityDesignOsmFeatures } from '../logic/cityDesignOsm';
 import { useProjectEditorBridge } from '@/features/project-chat/hooks/editor-bridge';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
@@ -604,19 +605,86 @@ export function useCityDesignPageController(amendmentId: string, requestedBranch
     ]
   );
 
-  useProjectEditorBridge({ kind: 'amendment', amendmentId }, async () => {
-    if (invalidBranch) throw new Error('The selected branch is no longer available.');
-    if (isSaving) throw new Error('Wait until City Design has finished saving.');
-    if (editor.state.isDirty) await handleSave(true);
-    return {
-      surface: 'city_design',
-      branchId: selectedProcessBranch?.id ?? null,
-      cityDesignId: primaryCityDesign?.id,
-      objectIds: editor.state.selectedObjectId ? [editor.state.selectedObjectId] : [],
-      featureIds: editor.state.selectedOsmWayId ? [editor.state.selectedOsmWayId] : [],
-      contentRevision: cityBaseRevision.current,
-    };
-  });
+  useProjectEditorBridge(
+    { kind: 'amendment', amendmentId },
+    async () => {
+      if (invalidBranch) throw new Error('The selected branch is no longer available.');
+      if (isSaving) throw new Error('Wait until City Design has finished saving.');
+      if (editor.state.isDirty) await handleSave(true);
+      return {
+        surface: 'city_design',
+        branchId: selectedProcessBranch?.id ?? null,
+        cityDesignId: primaryCityDesign?.id,
+        objectIds: editor.state.selectedObjectId ? [editor.state.selectedObjectId] : [],
+        featureIds: editor.state.selectedOsmWayId ? [editor.state.selectedOsmWayId] : [],
+        contentRevision: cityBaseRevision.current,
+      };
+    },
+    {
+      context: {
+        surface: 'city_design',
+        branchId: selectedProcessBranch?.id ?? null,
+        cityDesignId: primaryCityDesign?.id,
+        objectIds: editor.state.selectedObjectId ? [editor.state.selectedObjectId] : [],
+        featureIds: editor.state.selectedOsmWayId ? [editor.state.selectedOsmWayId] : [],
+        contentRevision: cityBaseRevision.current,
+        references: [
+          {
+            kind: 'amendment',
+            id: amendmentId,
+            label: amendment?.title || 'Amendment',
+            origin: 'automatic',
+          },
+          ...(selectedProcessBranch?.id
+            ? [
+                {
+                  kind: 'branch' as const,
+                  id: selectedProcessBranch.id,
+                  label: selectedProcessBranch.title || selectedProcessBranch.id,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(primaryCityDesign?.id
+            ? [
+                {
+                  kind: 'city_design' as const,
+                  id: primaryCityDesign.id,
+                  label: 'City Design',
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(editor.state.selectedObjectId
+            ? [
+                {
+                  kind: 'city_object' as const,
+                  id: editor.state.selectedObjectId,
+                  label:
+                    editor.design.objects.find(
+                      object => object.id === editor.state.selectedObjectId
+                    )?.type || editor.state.selectedObjectId,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(editor.state.selectedOsmWayId
+            ? [
+                {
+                  kind: 'city_feature' as const,
+                  id: editor.state.selectedOsmWayId,
+                  label:
+                    getCityDesignOsmFeatures(editor.design.osmSnapshot).find(
+                      feature => feature.id === editor.state.selectedOsmWayId
+                    )?.label || editor.state.selectedOsmWayId,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+        ],
+      },
+    }
+  );
 
   const handleModeChange = useCallback(
     async (nextMode: NonTerminalEditingMode) => {

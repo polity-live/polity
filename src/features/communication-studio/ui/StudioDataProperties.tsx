@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { InlineCheckbox } from '@/features/shared/ui/form/InlineCheckbox';
 import type { StudioElement } from '../logic/document';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
@@ -82,12 +83,11 @@ export function StudioDataProperties({
                             </option>
                           ))}
                         </select>
-                        <label>
-                          <input
-                            type="checkbox"
+                        <label className="flex items-center gap-2">
+                          <InlineCheckbox
                             checked={cell.bold}
-                            onChange={ev =>
-                              editTable(t => (t.rows[r].cells[c].bold = ev.target.checked))
+                            onCheckedChange={value =>
+                              editTable(t => (t.rows[r].cells[c].bold = value === true))
                             }
                           />
                           {tr('bold')}
@@ -191,11 +191,10 @@ export function StudioDataProperties({
               </option>
             ))}
           </select>
-          <label>
-            <input
-              type="checkbox"
+          <label className="flex items-center gap-2">
+            <InlineCheckbox
               checked={chart.legend}
-              onChange={ev => editChart(c => (c.legend = ev.target.checked))}
+              onCheckedChange={value => editChart(c => (c.legend = value === true))}
             />
             {tr('legend')}
           </label>

@@ -16,6 +16,7 @@ import { buildProposalAnnotations } from '../logic/change-request-annotations';
 import type { useStudioController } from '../hooks/useStudioController';
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import { StudioPlateDiff, studioText } from './StudioPlateDiff';
+import { StudioProcedureComments, StudioProcedureTools } from './StudioProcedureTools';
 
 type Controller = ReturnType<typeof useStudioController>;
 const modes = ['edit', 'suggest_internal', 'vote_internal'] as const;
@@ -53,12 +54,18 @@ export function useStudioProcedure({
   const [comparisonView, setComparisonView] = useState<ComparisonView>('difference');
   const [title, setTitle] = useState('');
   const [reason, setReason] = useState('');
-  const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const de = typeof document === 'undefined' || document.documentElement.lang !== 'en';
   const tr = (german: string, english: string) => (de ? german : english);
   const request = c.actions.request;
+  useEffect(() => {
+    const id =
+      typeof window === 'undefined'
+        ? null
+        : new URLSearchParams(window.location.search).get('proposalId');
+    if (id) setSelectedId(id);
+  }, [projectId]);
   const refresh = async () => {
     const next = await request<CanvasSession>('canvas', { projectId, action: 'session' });
     if (next && !Array.isArray(next) && Array.isArray(next.proposals)) setSession(next);
@@ -155,13 +162,16 @@ export function useStudioProcedure({
   }, [projectId, selectedId, workspaceId]);
 
   const run = async (action: string, extra: Record<string, unknown> = {}) => {
-    if (!session || busy) return;
+    if (!session || busy) return false;
     setBusy(true);
     setError('');
     try {
       let revision: number | undefined;
-      if (['createDraft', 'submit', 'phase'].includes(action)) revision = await c.commit();
-      if (action === 'phase' || action === 'resolveDraft')
+      if (['createDraft', 'submit', 'phase', 'restore', 'share', 'adopt'].includes(action))
+        revision = await c.commit();
+      if (['acceptPrivate', 'rejectPrivate'].includes(action))
+        revision = session.proposals.find(item => item.id === extra.workspaceId)?.revision;
+      if (['phase', 'resolveDraft', 'restore'].includes(action))
         revision = (await request<{ revision: number }>('load', { id: projectId })).revision;
       const result = await request<{ workspaceId?: string }>('canvas', {
         projectId,
@@ -179,9 +189,12 @@ export function useStudioProcedure({
         setSelectedId(extra.workspaceId as string);
       }
       if (action === 'withdraw') setSelectedId(null);
-      if (action === 'comment') setComment('');
+      if (action === 'restore') chooseWorkspace();
+      if (action === 'adopt') location.assign(`/group/${extra.groupId}/studio/${projectId}`);
+      return true;
     } catch (cause) {
       setError(String(cause));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -281,6 +294,14 @@ export function useStudioProcedure({
     proposal?.state === 'voting' &&
     session.capabilities.vote &&
     proposal.electorate?.includes(user?.id ?? '');
+  const canEditProposal = (item: CanvasProposal) =>
+    !!session?.capabilities.suggest &&
+    item.state === 'draft' &&
+    (item.owner_id === user?.id || item.shared_ids.includes(user?.id ?? '')) &&
+    (['edit', 'suggest_internal'].includes(session.phase) ||
+      (session.phase === 'vote_internal' && !!item.resolves_id));
+  const draft = session?.proposals.find(item => item.id === workspaceId);
+  const draftEditable = c.canEdit && (!session || (!!draft && canEditProposal(draft)));
 
   const modeButton = session && (
     <EditingModeToolbarButton
@@ -301,6 +322,7 @@ export function useStudioProcedure({
   const canvasOverlay = session && (
     <>
       <CanvasChangeRequestList
+        collapsible
         items={visible}
         selectedId={selectedId ?? workspaceId ?? null}
         onSelect={setSelectedId}
@@ -353,7 +375,10 @@ export function useStudioProcedure({
           label={tr('Änderungsantrag', 'Change request')}
         >
           <div className="flex justify-between gap-2">
-            <strong>{proposal.title}</strong>
+            <strong>
+              {proposal.origin === 'ai' ? 'AI Suggestion · ' : ''}
+              {proposal.title}
+            </strong>
             <CanvasChangeRequestCloseButton
               actionId="communication-studio.procedure.close-details"
               onClose={() => setSelectedId(null)}
@@ -361,6 +386,17 @@ export function useStudioProcedure({
             />
           </div>
           <p>{proposal.reason}</p>
+          {proposal.origin === 'ai' && (
+            <p className="text-muted-foreground text-xs">
+              {proposal.ai_mode === 'free'
+                ? tr('Frei gestaltet', 'Free design')
+                : tr('Vorlage', 'Template')}
+              {proposal.ai_sources?.length
+                ? ` · ${proposal.ai_sources.length} ${tr('Quellen', 'sources')}`
+                : ''}
+              {proposal.ai_warnings?.length ? ` · ${proposal.ai_warnings.join(', ')}` : ''}
+            </p>
+          )}
           <p className="text-muted-foreground">
             {proposal.state}
             {proposal.decision && ` · ${proposal.decision}`}
@@ -369,22 +405,44 @@ export function useStudioProcedure({
           </p>
           {workspaceId === proposal.id &&
             proposal.state === 'draft' &&
+            (session.phase === 'suggest_internal' ||
+              (session.phase === 'vote_internal' && !!proposal.resolves_id) ||
+              (!session.groupId && session.phase === 'edit')) &&
             proposal.owner_id === user?.id && (
               <Button
-                disabled={busy}
+                disabled={busy || !draftEditable}
                 onClick={() => void run('submit', { workspaceId: proposal.id })}
               >
                 {tr('Einreichen', 'Submit')}
               </Button>
             )}
           {!workspaceId &&
+            !session.groupId &&
+            session.phase === 'edit' &&
+            proposal.origin === 'ai' &&
             proposal.state === 'draft' &&
-            session.phase === 'suggest_internal' &&
-            (proposal.owner_id === user?.id || proposal.shared_ids.includes(user?.id ?? '')) && (
-              <Button variant="outline" onClick={() => chooseWorkspace(proposal.id)}>
-                {tr('Entwurf bearbeiten', 'Edit draft')}
-              </Button>
+            session.capabilities.manage && (
+              <div className="flex gap-2">
+                <Button
+                  disabled={busy}
+                  onClick={() => void run('acceptPrivate', { workspaceId: proposal.id })}
+                >
+                  {tr('Annehmen', 'Accept')}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void run('rejectPrivate', { workspaceId: proposal.id })}
+                >
+                  {tr('Ablehnen', 'Reject')}
+                </Button>
+              </div>
             )}
+          {!workspaceId && canEditProposal(proposal) && (
+            <Button variant="outline" onClick={() => chooseWorkspace(proposal.id)}>
+              {tr('Entwurf bearbeiten', 'Edit draft')}
+            </Button>
+          )}
           {proposal.owner_id === user?.id &&
             (proposal.state === 'draft' || proposal.state === 'submitted') && (
               <Button
@@ -481,7 +539,9 @@ export function useStudioProcedure({
                 reject: tr('Nein', 'No'),
                 abstain: tr('Enthaltung', 'Abstain'),
               }}
-              onVote={choice => run('vote', { workspaceId: proposal.id, choice })}
+              onVote={async choice => {
+                await run('vote', { workspaceId: proposal.id, choice });
+              }}
             />
           )}
           {proposal.state === 'voting' && session.capabilities.manage && (
@@ -516,40 +576,50 @@ export function useStudioProcedure({
               {tr('Beschluss erneut anwenden', 'Retry decision')}
             </Button>
           )}
-          <div className="space-y-2 border-t pt-2">
-            <strong>{tr('Kommentare', 'Comments')}</strong>
-            {session.comments
-              .filter(item => item.proposal_id === proposal.id)
-              .map(item => (
-                <p key={item.id} className="rounded border p-2">
-                  {item.body}
-                </p>
-              ))}
-            <form
-              onSubmit={event => {
-                event.preventDefault();
-                if (comment.trim())
-                  void run('comment', {
-                    workspaceId: proposal.id,
-                    body: comment.trim(),
-                    elementId: c.selected[0] ?? null,
-                  });
-              }}
-            >
-              <textarea
-                className="w-full rounded border p-2"
-                aria-label={tr('Kommentar', 'Comment')}
-                value={comment}
-                onChange={event => setComment(event.target.value)}
-              />
-              <Button
-                type="submit"
-                disabled={busy || !comment.trim() || !session.capabilities.comment}
+          {workspaceId === proposal.id &&
+            proposal.state === 'draft' &&
+            proposal.owner_id === user?.id && (
+              <fieldset
+                disabled={busy || !canEditProposal(proposal)}
+                className="rounded border p-2"
               >
-                {tr('Kommentieren', 'Comment')}
-              </Button>
-            </form>
-          </div>
+                <legend>{tr('Privaten Entwurf teilen', 'Share private draft')}</legend>
+                <p>
+                  {tr(
+                    'Nur ausgewählte Personen können diesen Entwurf und seine Diskussion sehen.',
+                    'Only selected people can access this draft and its discussion.'
+                  )}
+                </p>
+                {session.members
+                  .filter(member => member.id !== user?.id)
+                  .map(member => (
+                    <label key={member.id} className="flex items-center gap-2 py-1">
+                      <input
+                        type="checkbox"
+                        checked={proposal.shared_ids.includes(member.id)}
+                        onChange={event =>
+                          void run('share', {
+                            workspaceId: proposal.id,
+                            userIds: event.target.checked
+                              ? [...proposal.shared_ids, member.id]
+                              : proposal.shared_ids.filter(id => id !== member.id),
+                          })
+                        }
+                      />
+                      {[member.first_name, member.last_name].filter(Boolean).join(' ') || member.id}
+                    </label>
+                  ))}
+              </fieldset>
+            )}
+          <StudioProcedureComments
+            key={proposal.id}
+            session={session}
+            workspaceId={proposal.id}
+            c={c}
+            busy={busy}
+            run={run}
+            tr={tr}
+          />
         </CanvasChangeRequestCard>
       )}
       {error && (
@@ -563,7 +633,36 @@ export function useStudioProcedure({
     </>
   );
 
+  const readOnlyReason = !session
+    ? null
+    : preview || (proposal && comparisonView !== 'difference')
+      ? 'proposalPreviewReadOnly'
+      : workspaceId
+        ? draftEditable
+          ? null
+          : 'proposalDraftReadOnly'
+        : session.canEditProject === false
+          ? 'readOnly'
+          : session.phase === 'suggest_internal'
+            ? 'suggestionPhaseReadOnly'
+            : session.phase === 'vote_internal'
+              ? 'votingPhaseReadOnly'
+              : !c.canEdit
+                ? 'readOnly'
+                : null;
   return {
+    tools: session && (
+      <StudioProcedureTools
+        session={session}
+        workspaceId={workspaceId}
+        c={c}
+        busy={busy}
+        run={run}
+        chooseWorkspace={chooseWorkspace}
+        tr={tr}
+      />
+    ),
+    readOnlyReason,
     modeButton,
     canvasOverlay,
     markers,
@@ -577,7 +676,7 @@ export function useStudioProcedure({
           : null,
     previewAssets: [...(comparisonView !== 'original' ? previewAssets : []), ...ghostAssets],
     editingAllowed:
-      (!!workspaceId || session?.phase === 'edit') &&
+      (workspaceId ? draftEditable : session ? session.phase === 'edit' : c.canEdit) &&
       (comparisonView === 'difference' || !proposal),
     selectProposal: setSelectedId,
   };

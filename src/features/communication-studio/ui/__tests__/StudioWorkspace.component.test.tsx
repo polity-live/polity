@@ -1,3 +1,4 @@
+import { focusProjectEditor } from '@/features/project-chat/hooks/editor-bridge';
 /* @vitest-environment jsdom */
 import { forwardRef, useEffect, useImperativeHandle, useReducer } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -31,6 +32,7 @@ const io = vi.hoisted(() => ({
   exports: [] as any[],
   loading: false,
   projectChat: vi.fn(),
+  procedureReason: undefined as string | null | undefined,
 }));
 vi.mock('@rocicorp/zero/react', () => ({
   useQuery: () => [[], { type: 'complete' }],
@@ -158,6 +160,8 @@ vi.mock('../StudioCloneDialog', () => ({
 }));
 vi.mock('../useStudioProcedure', () => ({
   useStudioProcedure: () => ({
+    readOnlyReason: io.procedureReason,
+    tools: <section aria-label="Shared procedure tools" />,
     modeButton: null,
     canvasOverlay: null,
     markers: [],
@@ -265,6 +269,7 @@ function setup(kind: Parameters<typeof createDocument>[0] = 'single') {
   };
 }
 beforeEach(() => {
+  io.procedureReason = undefined;
   vi.clearAllMocks();
   sessionStorage.clear();
   io.projects = [];
@@ -1075,6 +1080,51 @@ describe('Studio toolbar workflows', () => {
     expect(within(p).queryByLabelText('name')).toBeNull();
     expect(within(p).queryByRole('button', { name: 'addPage' })).toBeNull();
   });
+  it.each(['frame', 'richText'] as const)(
+    'renames a %s through Layers without modifying its content or geometry',
+    async type => {
+      setup('carousel');
+      let canonical = legacyDocumentToV3(value());
+      Object.defineProperty(io.editor, 'v3Value', { get: () => canonical });
+      io.editor.transactV3 = vi.fn((change: (document: typeof canonical) => void) => {
+        const next = structuredClone(canonical);
+        change(next);
+        canonical = studioDocumentV3Schema.parse(next);
+        ydoc = v3DocumentToLegacy(canonical);
+        notifyAll();
+      });
+      const before = structuredClone(canonical);
+      const target = before.nodes.find(node => node.type === type)!;
+      await show();
+      const p = panel('layers');
+      const row = within(p)
+        .getAllByRole('treeitem')
+        .find(row => row.getAttribute('data-studio-layer-id') === target.id)!;
+      fireEvent.click(within(row).getByRole('button', { name: `rename: ${target.name}` }));
+      const input = within(row).getByRole('textbox');
+      fireEvent.change(input, { target: { value: '  Campaign layer  ' } });
+      fireEvent.keyDown(input, { key: 'ArrowRight' });
+      fireEvent.keyDown(input, { key: 'Delete' });
+      expect(canonical).toEqual(before);
+      fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.blur(input);
+      expect(canonical).toEqual({
+        ...before,
+        nodes: before.nodes.map(node =>
+          node.id === target.id ? { ...node, name: 'Campaign layer' } : node
+        ),
+      });
+      expect(io.editor.transactV3).toHaveBeenCalledTimes(1);
+      const renamedRow = within(p)
+        .getAllByRole('treeitem')
+        .find(row => row.getAttribute('data-studio-layer-id') === target.id)!;
+      expect(renamedRow.getAttribute('aria-selected')).toBe('true');
+      fireEvent.change(within(p).getByRole('searchbox'), { target: { value: 'Campaign layer' } });
+      expect(within(p).getByRole('button', { name: 'Campaign layer' })).toBeTruthy();
+      expect(within(p).getByRole('button', { name: 'hide: Campaign layer' })).toBeTruthy();
+      expect(within(p).getByRole('button', { name: 'lock: Campaign layer' })).toBeTruthy();
+    }
+  );
   it('moves layers into frames and reorders root frames with drag and drop', async () => {
     setup('carousel');
     await show();
@@ -1361,6 +1411,18 @@ describe('Studio toolbar workflows', () => {
       true
     );
   });
+  it.each(['group', null])(
+    'renders the phase explanation and shared procedure tools for %s projects',
+    async groupId => {
+      io.editor.canEdit = false;
+      io.procedureReason = 'suggestionPhaseReadOnly';
+      await show({ projectId: 'project', groupId, open: vi.fn() });
+      expect(screen.getByText('suggestionPhaseReadOnly')).toBeTruthy();
+      expect(screen.queryByText('readOnly')).toBeNull();
+      panel('collaboration');
+      expect(screen.getByRole('region', { name: 'Shared procedure tools' })).toBeTruthy();
+    }
+  );
   it('routes keyboard copy, paste and cut through the canvas exactly once', async () => {
     await show();
     const e = selectText();
@@ -1579,4 +1641,67 @@ it('uses contextual group alignment and distribution with the shared reference',
   expect(
     new Set(ids.map(id => value().pages[0].elements.find(item => item.id === id)!.x)).size
   ).toBe(1);
+});
+
+const focusScope = { kind: 'studio' as const, projectId: 'project' };
+it('focuses repeatedly through the bridge and waits for a loaded workspace without remounting chat', async () => {
+  await show();
+  const nodeId = io.canvasProps.document.nodes.find((node: any) => node.type === 'richText').id;
+  let focus!: Promise<boolean>;
+  await act(async () => {
+    focus = focusProjectEditor(focusScope, { nodeId, workspaceId: null });
+  });
+  await focus;
+  expect(io.canvasExecute).toHaveBeenLastCalledWith({ type: 'focus', nodeId });
+  await act(async () => {
+    focus = focusProjectEditor(focusScope, { nodeId, workspaceId: null });
+  });
+  await focus;
+  expect(io.canvasExecute.mock.calls.filter(([cmd]) => cmd.type === 'focus')).toHaveLength(2);
+  const chat = screen.getByText('Shared project chat');
+  const commit = vi.fn().mockResolvedValue(1);
+  io.editor.collaboration.commit = commit;
+  await act(async () => {
+    focus = focusProjectEditor(focusScope, { nodeId, workspaceId: 'draft' });
+  });
+  await act(async () => {
+    await focus;
+  });
+  expect(commit).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('Shared project chat')).toBe(chat);
+  expect(io.projectChat.mock.lastCall?.[0].context.proposalId).toBe('draft');
+  await act(async () => {
+    focus = focusProjectEditor(focusScope, { nodeId, workspaceId: null });
+  });
+  await act(async () => {
+    await focus;
+  });
+  expect(commit).toHaveBeenCalledTimes(2);
+  expect(screen.getByText('Shared project chat')).toBe(chat);
+});
+it('keeps the current workspace and draft when saving before navigation fails', async () => {
+  await show();
+  const chat = screen.getByText('Shared project chat');
+  io.editor.collaboration.commit = vi.fn().mockRejectedValue(new Error('Save failed'));
+  await act(async () => {
+    await expect(
+      focusProjectEditor(focusScope, { nodeId: 'title', workspaceId: 'draft' })
+    ).rejects.toThrow('Save failed');
+  });
+  expect(io.canvasExecute).not.toHaveBeenCalledWith({ type: 'focus', nodeId: 'title' });
+  expect(io.projectChat.mock.lastCall?.[0].context.proposalId).toBeNull();
+  expect(screen.getByText('Shared project chat')).toBe(chat);
+});
+it('consumes route focus only after canvas availability and reports a missing target', async () => {
+  const handled = vi.fn();
+  io.canvasExecute.mockRejectedValueOnce(new Error('Target missing'));
+  await show({
+    projectId: 'project',
+    groupId: 'group',
+    open: vi.fn(),
+    focusNodeId: 'deleted',
+    onFocusHandled: handled,
+  });
+  await waitFor(() => expect(handled).toHaveBeenCalledWith(undefined));
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'focus', nodeId: 'deleted' });
 });

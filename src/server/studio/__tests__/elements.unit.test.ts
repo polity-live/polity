@@ -27,7 +27,7 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }));
 
-import { synchronizeProjectElementInstances } from '../elements';
+import { stageElementSetForAiProposal, synchronizeProjectElementInstances } from '../elements';
 
 const projectId = '00000000-0000-4000-8000-000000000101';
 const setId = '00000000-0000-4000-8000-000000000102';
@@ -71,6 +71,65 @@ beforeEach(() => {
 });
 
 describe('Studio Elements server synchronization', () => {
+  it('stages AI library media without creating database rows before proposal commit', async () => {
+    const { next } = fixtures();
+    io.sql.mockImplementation(async (parts: TemplateStringsArray) => {
+      const query = parts.join('?');
+      if (query.includes('from studio_element_set s'))
+        return [{ id: setId, revision_id: nextRevisionId, snapshot: next }];
+      if (query.includes('from studio_element_set_asset'))
+        return [
+          {
+            source_asset_id: sourceAssetId,
+            name: 'Photo.png',
+            mime_type: 'image/png',
+            byte_size: 64,
+            storage_path: 'libraries/photo',
+          },
+        ];
+      return [];
+    });
+    const prepared = await stageElementSetForAiProposal('reader', {
+      setId,
+      projectId,
+      proposalId: 'proposal',
+    });
+    expect(prepared.assets).toHaveLength(1);
+    expect(prepared.assetIds[sourceAssetId]).toBe(prepared.assets[0].id);
+    expect(io.copy).toHaveBeenCalledWith('libraries/photo', prepared.assets[0].path);
+    expect(prepared.assets[0].path).toContain(`${projectId}/proposals/proposal/`);
+    expect(io.transaction).not.toHaveBeenCalled();
+    expect(io.sql.mock.calls.some(([parts]) => parts.join('?').includes('insert into'))).toBe(
+      false
+    );
+  });
+
+  it('removes prepared AI media if a later storage copy fails', async () => {
+    const { next } = fixtures();
+    io.sql.mockImplementation(async (parts: TemplateStringsArray) => {
+      const query = parts.join('?');
+      if (query.includes('from studio_element_set s'))
+        return [{ id: setId, revision_id: nextRevisionId, snapshot: next }];
+      if (query.includes('from studio_element_set_asset'))
+        return [0, 1].map(index => ({
+          source_asset_id: sourceAssetId,
+          name: `Photo${index}.png`,
+          mime_type: 'image/png',
+          byte_size: 64,
+          storage_path: `libraries/photo${index}`,
+        }));
+      return [];
+    });
+    io.copy
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: { message: 'Copy failed' } });
+    await expect(
+      stageElementSetForAiProposal('reader', { setId, projectId, proposalId: 'proposal' })
+    ).rejects.toThrow('Cannot copy element media');
+    expect(io.remove).toHaveBeenCalledWith([io.copy.mock.calls[0][1]]);
+    expect(io.transaction).not.toHaveBeenCalled();
+  });
+
   it('copies media introduced by an upstream revision and remaps it into the linked instance', async () => {
     const { document, previous, next } = fixtures();
     io.sql.mockImplementation(async (parts: TemplateStringsArray | string[]) => {

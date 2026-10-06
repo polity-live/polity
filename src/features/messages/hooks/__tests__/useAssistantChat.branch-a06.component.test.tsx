@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   session: { access_token: 'token' } as any,
   skills: [] as any[],
   tools: [] as any[],
-  preferredModelKey: 'openai:model-a',
+  unstableCatalogue: false,
+  preferredModelKey: 'openai:byok:model-a',
   createSkill: vi.fn(),
   sendMessage: vi.fn(),
   selectedAttachments: [] as any[],
@@ -41,8 +42,13 @@ vi.mock('@/features/assistant/logic/defaultAiSkills', () => ({
 }));
 
 vi.mock('@/lib/ai/models', () => ({
-  buildAiModelKey: (model: any) => `${model.provider}:${model.id}`,
+  buildAiModelKey: (model: any) => `${model.provider}:${model.source}:${model.id}`,
   getPreferredDefaultAiModelKey: () => mocks.preferredModelKey,
+  toAiModelDescriptor: (model: any) => ({
+    provider: model.provider,
+    id: model.id,
+    source: model.source,
+  }),
 }));
 
 vi.mock('@/lib/ai/defaultAiTools', () => ({
@@ -69,7 +75,10 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/zero/ai/useAiState', () => ({
-  useAiState: () => ({ skills: mocks.skills, tools: mocks.tools }),
+  useAiState: () => ({
+    skills: mocks.unstableCatalogue ? [...mocks.skills] : mocks.skills,
+    tools: mocks.unstableCatalogue ? [...mocks.tools] : mocks.tools,
+  }),
 }));
 
 vi.mock('@/zero/ai/useAiActions', () => ({
@@ -134,7 +143,7 @@ function model(id = 'model-a') {
     provider: 'openai',
     id,
     label: id,
-    source: 'app',
+    source: 'byok',
     free: true,
     supports_reasoning_effort: true,
     context_window: 100,
@@ -187,7 +196,8 @@ describe('useAssistantChat branch coverage', () => {
     mocks.session = { access_token: 'token' };
     mocks.skills = [];
     mocks.tools = [];
-    mocks.preferredModelKey = 'openai:model-a';
+    mocks.unstableCatalogue = false;
+    mocks.preferredModelKey = 'openai:byok:model-a';
     mocks.createSkill.mockReset();
     mocks.sendMessage.mockReset().mockResolvedValue({ success: true });
     mocks.selectedAttachments = [];
@@ -217,6 +227,20 @@ describe('useAssistantChat branch coverage', () => {
     vi.unstubAllGlobals();
   });
 
+  it('settles when replicated skills/tools return fresh arrays on every render', async () => {
+    mocks.unstableCatalogue = true;
+    let renders = 0;
+    const { result, rerender } = renderHook(() => {
+      if (++renders > 30) throw new Error('Repeated state updates');
+      return useAssistantChat(conversation(), 'user-1');
+    });
+    await waitForCatalog(result);
+    const selected = result.current.selectedToolNames;
+    rerender();
+    expect(result.current.selectedToolNames).toEqual(selected);
+    expect(renders).toBeLessThan(30);
+  });
+
   it('handles an unauthenticated catalog and exposes tutorial state', async () => {
     mocks.session = null;
     const { result } = renderAssistant(conversation({ tutorial_run_id: 'tutorial' }));
@@ -230,17 +254,38 @@ describe('useAssistantChat branch coverage', () => {
     expect(result.current.models).toEqual([]);
   });
 
-  it('loads, selects, preserves, clears, and rejects catalog models', async () => {
+  it('requires a conscious source change when a selected personal key disappears', async () => {
+    const appModel = { ...model('openrouter/free'), provider: 'openrouter', source: 'app' };
+    const personalModel = { ...appModel, source: 'byok' };
+    mocks.preferredModelKey = 'openrouter:app:openrouter/free';
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(catalogResponse([appModel, personalModel]));
+    const { result } = renderAssistant();
+    await waitFor(() => expect(result.current.selectedModel?.source).toBe('app'));
+    act(() => result.current.setSelectedModelKey('openrouter:byok:openrouter/free'));
+    fetchMock.mockResolvedValueOnce(catalogResponse([appModel]));
+    await act(async () => result.current.refreshCatalog());
+    expect(result.current.selectedModelKey).toBe('openrouter:byok:openrouter/free');
+    expect(result.current.selectedModel).toBeNull();
+    const calls = fetchMock.mock.calls.length;
+    await expect(result.current.sendAssistantMessage('Continue')).resolves.toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(calls);
+    expect(mocks.sendMessage).not.toHaveBeenCalled();
+    act(() => result.current.setSelectedModelKey('openrouter:app:openrouter/free'));
+    expect(result.current.selectedModel?.source).toBe('app');
+  });
+
+  it('loads, selects, preserves and rejects catalog models', async () => {
     const fetchMock = vi.mocked(fetch);
     const { result } = renderAssistant();
     await waitFor(() => expect(result.current.models).toHaveLength(1));
-    expect(result.current.selectedModelKey).toBe('openai:model-a');
+    expect(result.current.selectedModelKey).toBe('openai:byok:model-a');
     expect(result.current.selectedModel?.id).toBe('model-a');
 
-    act(() => result.current.setSelectedModelKey('openai:model-a'));
+    act(() => result.current.setSelectedModelKey('openai:byok:model-a'));
     fetchMock.mockResolvedValueOnce(catalogResponse([model(), model('model-b')]));
     await act(async () => result.current.refreshCatalog());
-    expect(result.current.selectedModelKey).toBe('openai:model-a');
+    expect(result.current.selectedModelKey).toBe('openai:byok:model-a');
 
     mocks.preferredModelKey = '';
     act(() => result.current.setSelectedModelKey('missing'));
@@ -254,7 +299,7 @@ describe('useAssistantChat branch coverage', () => {
     } as any);
     await act(async () => result.current.refreshCatalog());
     expect(result.current.models).toEqual([]);
-    expect(result.current.selectedModelKey).toBe('');
+    expect(result.current.selectedModelKey).toBe('missing');
 
     fetchMock.mockResolvedValueOnce(failedResponse());
     await act(async () => result.current.refreshCatalog());
@@ -474,7 +519,7 @@ describe('useAssistantChat branch coverage', () => {
     expect(JSON.parse(String((chatRequest[1] as RequestInit).body))).toEqual(
       expect.objectContaining({
         conversationId: 'conversation-1',
-        model: { provider: 'openai', id: 'model-a' },
+        model: { provider: 'openai', id: 'model-a', source: 'byok' },
         timeZone: 'UTC',
         attachments: expect.arrayContaining([
           expect.objectContaining({ entityType: 'todo' }),

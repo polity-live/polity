@@ -1,5 +1,6 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export const DEFAULT_AI_TOOL_NAMES = [
+  'studio_generate_suggestion',
   'create_studio_project',
   'open_project_chat',
   'find_my_todos',
@@ -43,6 +44,12 @@ export interface DefaultAiToolDefinition {
 }
 
 export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
+  {
+    name: 'studio_generate_suggestion',
+    label: 'Studio-Entwurf erstellen',
+    kind: 'create',
+    description: 'Erstellt einen editierbaren KI-Vorschlag für Polity Studio.',
+  },
   {
     name: 'create_studio_project',
     label: translateText('features.projectChat.createStudio'),

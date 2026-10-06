@@ -2,6 +2,7 @@ import { createNotification } from '@/features/notifications/utils/notification-
 import { translate } from '@/features/shared/hooks/use-translation';
 import type postgres from 'postgres';
 import { studioTransaction, StudioError } from './db';
+import { assertProjectAiSourceSharing } from './ai-sources';
 
 interface ProjectRow {
   id: string;
@@ -56,6 +57,7 @@ export async function inviteStudioCollaborators(
   const { project, invitedIds } = await studioTransaction(async sql => {
     const project = await ownerProject(sql, actor, projectId);
     if (uniqueIds.includes(actor)) throw new StudioError('You cannot invite yourself');
+    await assertProjectAiSourceSharing(projectId, uniqueIds, 'private', sql);
     const invitedIds: string[] = [];
     for (const userId of uniqueIds) {
       const [user] = await sql`select id from "user" where id=${userId}`;
@@ -101,7 +103,7 @@ export async function respondStudioInvitation(
 ) {
   return studioTransaction(async sql => {
     const [invitation] = await sql`
-      select c.id,c.status,c.user_id,p.group_id,p.kind
+      select c.id,c.status,c.user_id,c.project_id,p.group_id,p.kind
       from studio_project_collaborator c join studio_project p on p.id=c.project_id
       where c.id=${invitationId} for update`;
     if (
@@ -111,6 +113,7 @@ export async function respondStudioInvitation(
       invitation.group_id
     )
       throw new StudioError('Studio invitation is no longer available', 403);
+    if (accept) await assertProjectAiSourceSharing(invitation.project_id, [actor], 'private', sql);
     await sql`update studio_project_collaborator
       set status=${accept ? 'active' : 'declined'},updated_at=${Date.now()}
       where id=${invitationId}`;

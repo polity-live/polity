@@ -1783,11 +1783,15 @@ export function buildAiTools(
   userId: string,
   timeZone = 'UTC',
   currentInstruction = '',
-  currentAttachments: readonly import('@/lib/ai/schemas').AiChatAttachment[] = []
+  currentAttachments: readonly import('@/lib/ai/schemas').AiChatAttachment[] = [],
+  aiAccess?: {
+    model?: import('@/lib/ai/schemas').AiModelDescriptor;
+    reasoningEffort?: import('@/lib/ai/schemas').AiReasoningEffort;
+  }
 ) {
   return {
     ...buildAiCreateTools(userId, timeZone),
-    ...buildProjectStarterTools(userId, currentInstruction, currentAttachments),
+    ...buildProjectStarterTools(userId, currentInstruction, currentAttachments, aiAccess),
     ...buildAiUpdateTools(userId, timeZone),
 
     present_findings: tool({

@@ -36,6 +36,20 @@ export const APP_ERROR_CODES = [
   'tutorial_operation_failed',
   'ai_operation_failed',
   'ai_model_unavailable',
+  'ai_credentials_missing',
+  'ai_credentials_invalid',
+  'ai_usage_limit',
+  'ai_provider_rate_limited',
+  'ai_invalid_identifier',
+  'ai_workspace_unavailable',
+  'ai_workspace_invalid',
+  'invalid_target',
+  'target_ambiguous',
+  'target_locked',
+  'context_stale',
+  'repair_limit',
+
+  'ai_access_unavailable',
 ] as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODES)[number];

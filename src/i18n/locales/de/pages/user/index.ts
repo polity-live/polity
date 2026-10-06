@@ -1,5 +1,15 @@
 export const userPageTranslations = {
   ai: {
+    chatgpt: {
+      title: 'ChatGPT',
+      description: 'Verbinde ChatGPT als Anmeldemethode mit deinem bestehenden Polity-Konto.',
+      connected: 'Polity-Anmeldung: ChatGPT verbunden.',
+      disconnected: 'Polity-Anmeldung: ChatGPT nicht verbunden.',
+      link: 'ChatGPT-Anmeldung verbinden',
+      loginUnavailable: 'Die ChatGPT-Anmeldung wartet auf die Freischaltung für Polity.',
+      planUnavailable:
+        'Die Nutzung deines ChatGPT-Abos ist in Polity noch nicht verfügbar. Eine verbundene Anmeldung erteilt keinen KI-Zugang. Deinen eigenen OpenAI-API-Key kannst du separat nutzen.',
+    },
     credentials: {
       delete: 'Zugangsdaten löschen',
     },

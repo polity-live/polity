@@ -308,7 +308,6 @@ describe('studio editing workflows', () => {
       hook.result.current.add('text');
       hook.result.current.duplicatePage();
       hook.result.current.removePage();
-      hook.result.current.acceptAI();
       hook.result.current.changeFormat('story');
       hook.result.current.movePage(1);
       hook.result.current.deleteSelected();
@@ -321,7 +320,6 @@ describe('studio editing workflows', () => {
     await act(async () => {
       await hook.result.current.upload(new File(['x'], 'image.png'));
       await hook.result.current.exportMedia();
-      await hook.result.current.ai();
       expect(await hook.result.current.savePhoto(new File(['x'], 'image.png'))).toBe(false);
     });
     expect(JSON.stringify(io.editor.value)).toBe(before);
@@ -486,31 +484,10 @@ describe('studio editing workflows', () => {
     expect(elements[1].x).toBe(b.x + 50);
     expect(elements[2].x).toBe(c.x);
   });
-  it('keeps generated copy as a proposal until explicitly accepted', async () => {
+  it('does not expose the retired direct AI acceptance path', () => {
     const { result } = renderHook(() => useStudioController(null, 'project', vi.fn()));
-    io.request.mockResolvedValue({
-      title: 'KI-Vorschlag',
-      posts: [
-        {
-          title: 'Neuer Titel',
-          action: 'Anmelden',
-          instagram: 'Instagram',
-          linkedin: 'LinkedIn',
-          facebook: 'Facebook',
-          slides: [{ title: 'Neue Überschrift', text: 'Neuer Text' }],
-        },
-      ],
-    });
-    await act(async () => {
-      await result.current.ai();
-    });
-    expect(io.editor.value.title).toBe('Manueller Entwurf');
-    expect(result.current.proposal?.posts[0].title).toBe('Neuer Titel');
-    act(() => result.current.acceptAI());
-    expect(io.editor.value.title).toBe('Manueller Entwurf');
-    expect(io.editor.value.posts[0].title).toBe('Neuer Titel');
-    expect(io.editor.value.posts[0].captions.linkedin).toBe('LinkedIn');
-    expect(result.current.proposal).toBeNull();
+    expect(result.current).not.toHaveProperty('acceptAI');
+    expect(result.current).not.toHaveProperty('ai');
   });
   it('does not add broken media after a failed upload', async () => {
     const { result } = renderHook(() => useStudioController(null, 'project', vi.fn()));

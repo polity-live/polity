@@ -1,4 +1,12 @@
 export const studioTranslations = {
+  suggestionPhaseReadOnly:
+    'The main document is locked during the suggestion phase. You can make changes in proposal drafts.',
+  votingPhaseReadOnly:
+    'The main document is locked during voting. You can review submitted proposals and vote.',
+  proposalPreviewReadOnly: 'You are viewing a read-only comparison of the proposal.',
+  proposalDraftReadOnly:
+    'You cannot edit this proposal draft with your access or in this procedure phase.',
+
   cloneProject: 'Clone project',
   cloneDestination: 'Destination',
   cloneFailed: 'Could not clone the project.',
@@ -58,6 +66,9 @@ export const studioTranslations = {
   layers: 'Layers',
   searchLayers: 'Search layers',
   noLayers: 'No layers found',
+  layerName: 'Layer name',
+  layerNameRequired: 'Enter a name with 1–200 characters.',
+  layerRenamedElsewhere: 'The layer name changed while you were editing. Your input was discarded.',
   hide: 'Hide',
   show: 'Show',
   top: 'Top',
@@ -182,6 +193,7 @@ export const studioTranslations = {
   single: 'Single post',
   event: 'Event',
   carousel: 'Carousel',
+  presentation: 'Presentation',
   story: 'Story',
   video: 'Short video',
   campaign: 'Campaign',

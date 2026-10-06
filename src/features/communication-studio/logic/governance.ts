@@ -11,6 +11,11 @@ export interface CanvasCapabilities {
 }
 export interface CanvasProposal {
   id: string;
+  origin?: 'human' | 'ai';
+  ai_mode?: 'template' | 'free' | null;
+  ai_status?: 'generating' | 'ready';
+  ai_sources?: { type: string; id: string; fetchedAt: number }[];
+  ai_warnings?: string[];
   title: string;
   reason: string;
   owner_id: string;
@@ -33,6 +38,7 @@ export interface CanvasProposal {
   votes: { user_id: string; choice: string }[];
 }
 export interface CanvasSession {
+  canEditProject: boolean;
   adoptionGroups: { id: string; name: string | null }[];
   groupId: string | null;
   phase: CanvasPhase;

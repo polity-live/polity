@@ -291,6 +291,11 @@ it('reorders shape, text, shape in Layers and preserves occlusion during direct 
           onSelect={() => undefined}
           onSetVisibility={() => undefined}
           onSetLocked={() => undefined}
+          onRename={(nodeId, name) =>
+            setDocument(current =>
+              applyStudioCommandV3(current, { type: 'updateNode', nodeId, patch: { name } })
+            )
+          }
           onMove={(nodeId, targetId, position) =>
             setDocument(current =>
               applyStudioCommandV3(current, {

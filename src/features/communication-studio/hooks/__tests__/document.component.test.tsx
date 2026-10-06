@@ -5,6 +5,7 @@ import { createDocument } from '../../logic/templates';
 import { mergeStudioV3 } from '../../logic/operations';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import { studioDocumentV3Schema } from '../../logic/document-v3';
+import { applyStudioCommandV3 } from '../../logic/commands-v3';
 const io = vi.hoisted(() => ({
   remote: undefined as any,
   server: undefined as any,
@@ -185,6 +186,69 @@ it('persists V3-only frame settings without losing the legacy canvas projection'
     clipContent: false,
   });
 });
+
+it.each(['frame', 'richText'] as const)(
+  'persists a renamed %s, undoes it in one step, and reloads it',
+  async type => {
+    const hook = renderHook(() => useStudioDocument(id, user));
+    await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+    const original = structuredClone(
+      hook.result.current.v3Value!.nodes.find(node => node.type === type)!
+    );
+    act(() =>
+      hook.result.current.transactV3(document => {
+        Object.assign(
+          document,
+          applyStudioCommandV3(document, {
+            type: 'updateNode',
+            nodeId: original.id,
+            patch: { name: 'Renamed layer' },
+          })
+        );
+      })
+    );
+    expect(hook.result.current.v3Value!.nodes.find(node => node.id === original.id)).toEqual({
+      ...original,
+      name: 'Renamed layer',
+    });
+    await act(() => hook.result.current.commit());
+    expect(io.server.nodes.find((node: { id: string }) => node.id === original.id).name).toBe(
+      'Renamed layer'
+    );
+    act(() => expect(hook.result.current.undo()).toBe(true));
+    expect(hook.result.current.v3Value!.nodes.find(node => node.id === original.id)?.name).toBe(
+      original.name
+    );
+    expect(hook.result.current.canUndo).toBe(false);
+    act(() => expect(hook.result.current.redo()).toBe(true));
+    expect(hook.result.current.v3Value!.nodes.find(node => node.id === original.id)?.name).toBe(
+      'Renamed layer'
+    );
+    expect(hook.result.current.canRedo).toBe(false);
+    await act(() => hook.result.current.commit());
+    hook.unmount();
+    localStorage.clear();
+    const reloaded = renderHook(() => useStudioDocument(id, user));
+    await waitFor(() => expect(reloaded.result.current.canEdit).toBe(true));
+    expect(reloaded.result.current.v3Value!.nodes.find(node => node.id === original.id)?.name).toBe(
+      'Renamed layer'
+    );
+    if (type === 'richText') {
+      const frameId = reloaded.result.current.value!.pages[0].id;
+      act(() =>
+        reloaded.result.current.patchElement(frameId, original.id, { text: 'Edited content' })
+      );
+      await act(() => reloaded.result.current.commit());
+      expect(io.server.nodes.find((node: { id: string }) => node.id === original.id).name).toBe(
+        'Renamed layer'
+      );
+      expect(
+        reloaded.result.current.value!.pages[0].elements.find(element => element.id === original.id)
+          ?.text
+      ).toBe('Edited content');
+    }
+  }
+);
 
 it('loads private media with the session token and exposes only revocable object URLs', async () => {
   const asset = {

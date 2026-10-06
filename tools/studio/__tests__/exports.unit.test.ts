@@ -118,6 +118,27 @@ const exportDoc = (
   cancel = vi.fn().mockResolvedValue(false)
 ) => render(doc, media, format, selected, temp, vi.fn().mockResolvedValue(undefined), cancel);
 describe('Studio export artifacts', () => {
+  it('exports a presentation deliverable as three editable widescreen slides in order', async () => {
+    const document = createStudioTemplateDocumentV5('presentation', 'Treffen', defaultBrand);
+    const frameIds = document.deliverables[0].frameIds;
+    const result = await render(
+      document,
+      {},
+      'pptx',
+      frameIds,
+      temp,
+      vi.fn().mockResolvedValue(undefined),
+      vi.fn().mockResolvedValue(false)
+    );
+    const deck = unzipSync(result.bytes);
+    expect(document.deliverables[0].kind).toBe('presentation');
+    expect(deck['ppt/slides/slide1.xml']).toBeDefined();
+    expect(deck['ppt/slides/slide2.xml']).toBeDefined();
+    expect(deck['ppt/slides/slide3.xml']).toBeDefined();
+    expect(deck['ppt/slides/slide4.xml']).toBeUndefined();
+    expect(strFromU8(deck['ppt/slides/slide1.xml'])).toContain('Treffen');
+    expect(strFromU8(deck['ppt/slides/slide1.xml'])).toContain('<p:sp>');
+  });
   it('keeps V5 shape-text-shape order and editable text in PowerPoint', async () => {
     const document = createStudioTemplateDocumentV5('single', 'V5 order', defaultBrand);
     const frame = document.nodes.find(node => node.type === 'frame')!;

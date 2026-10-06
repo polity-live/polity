@@ -1,3 +1,5 @@
+import { resolveStudioSource } from '@/server/studio/source';
+import { studioDocumentV5Schema } from '@/features/communication-studio/logic/document-v3';
 import { getCityDesignOsmFeatures } from '@/features/amendments/city-design/logic/cityDesignOsm';
 import type { ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
@@ -8,7 +10,6 @@ import { amendmentServerMutatorInternals } from '@/zero/amendments/server-mutato
 import { ProjectToolError, type EditorContext } from '@/features/project-chat/logic/contracts';
 import { textReferences, type TextNode } from '@/features/project-chat/logic/text-actions';
 import { documentSchema } from '@/features/communication-studio/logic/document';
-import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { v3DocumentToLegacy } from '@/features/communication-studio/logic/v3-adapter';
 import { textValue } from '@/features/shared/utils/document-value';
 import { cityProjectionSchema } from '@/features/amendments/city-design/logic/projection-schema';
@@ -34,30 +35,24 @@ export async function loadResource(
   const sql = sqlTransaction(tx);
   if (kind === 'studio') {
     if (!conversation.studio_project_id) throw new ProjectToolError('scope_mismatch');
-    const [stored] = await rows<{
-      document: unknown;
-      content_revision: number;
-      generation: string;
-      can_edit: boolean;
-    }>(
-      sql,
-      'select s.document,s.content_revision,c.generation,studio_access($1::uuid,$2::uuid,true) as can_edit from studio_state s join canvas_control c using(project_id) where s.project_id=$2 for update',
-      [actor, conversation.studio_project_id]
+    const source = await resolveStudioSource(
+      actor,
+      conversation.studio_project_id,
+      hints?.proposalId ?? null,
+      sql
     );
-    if (!stored) throw new ProjectToolError('not_found');
-    const persisted = studioDocumentV3Schema.parse(stored.document);
     return {
       kind,
       id: conversation.studio_project_id,
       branchId: null,
-      contentRevision: Number(stored.content_revision),
-      generation: stored.generation,
-      mode: stored.can_edit ? 'edit' : 'view',
-      value: v3DocumentToLegacy(persisted),
-      revision: String(stored.content_revision),
-      stored: persisted,
+      contentRevision: source.contentRevision,
+      generation: source.generation,
+      mode: source.canSuggest ? 'suggest' : 'view',
+      value: v3DocumentToLegacy(source.document),
+      revision: source.revision,
+      stored: source.document,
       amendment: null,
-      references: {},
+      references: { _studioSource: { workspaceId: source.workspaceId, revision: source.revision } },
     };
   }
 
@@ -196,13 +191,42 @@ export async function readContext(
   let data: unknown;
   if (kind === 'studio') {
     const doc = documentSchema.parse(resource.value);
-    const persisted = studioDocumentV3Schema.parse(resource.stored);
+    const persisted = studioDocumentV5Schema.parse(resource.stored);
     const { brand: _brand, source: _source, ...projection } = doc;
     void _brand;
     void _source;
+    const readableFrames = new Set(doc.pages.slice(offset, offset + limit).map(page => page.id));
+    const readableNodes = new Set(hints?.elementIds ?? []);
+    if (hints?.pageId) readableFrames.add(hints.pageId);
+    for (const ref of hints?.references ?? []) if (ref.kind === 'frame') readableFrames.add(ref.id);
     data = {
       ...projection,
       theme: persisted.theme,
+      workspaceId: hints?.proposalId ?? null,
+      nodes: persisted.nodes
+        .filter(
+          node =>
+            readableFrames.has(node.id) ||
+            readableNodes.has(node.id) ||
+            (node.parentFrameId && readableFrames.has(node.parentFrameId))
+        )
+        .map(node => ({
+          id: node.id,
+          type: node.type,
+          name: node.name,
+          parentFrameId: node.parentFrameId,
+          locked: node.locked,
+          ...(node.type === 'richText'
+            ? {
+                role: node.textRole,
+                text: node.content
+                  .map(block =>
+                    block.children.flatMap(child => ('text' in child ? [child.text] : [])).join('')
+                  )
+                  .join('\n'),
+              }
+            : {}),
+        })),
       pages: doc.pages.slice(offset, offset + limit),
       posts: doc.posts.slice(offset, offset + limit),
       totalPages: doc.pages.length,

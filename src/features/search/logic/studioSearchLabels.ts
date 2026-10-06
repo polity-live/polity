@@ -1,6 +1,14 @@
 import type { SearchDocument } from '../types/search-document.types';
 
-const STUDIO_KINDS = new Set(['single', 'event', 'carousel', 'story', 'video', 'campaign']);
+const STUDIO_KINDS = new Set([
+  'single',
+  'event',
+  'carousel',
+  'story',
+  'video',
+  'campaign',
+  'presentation',
+]);
 
 export function studioSearchKindLabel(
   document: Pick<SearchDocument, 'entity_type' | 'subtitle'>,

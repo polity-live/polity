@@ -1,11 +1,13 @@
+import { forwardRef, useImperativeHandle } from 'react';
 /* @vitest-environment jsdom */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const io = vi.hoisted(() => ({
   user: null as { id: string } | null,
   getSession: vi.fn(),
   fetch: vi.fn(),
+  focus: vi.fn().mockResolvedValue(undefined),
   translate: (key: string) => key,
 }));
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: io.user }) }));
@@ -21,7 +23,15 @@ vi.mock('../../logic/document-v3', () => ({
 vi.mock('../../logic/frame-order', () => ({
   getStudioRootFramesInLayerOrder: () => [{ id: 'frame' }],
 }));
-vi.mock('../KonvaStudioCanvas', () => ({ default: () => <div>Read-only canvas</div> }));
+vi.mock('../KonvaStudioCanvas', () => ({
+  default: forwardRef((_props, ref) => {
+    useImperativeHandle(ref, () => ({ execute: io.focus }), []);
+    return <div>Read-only canvas</div>;
+  }),
+}));
+vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
+  ProjectChatPanel: () => <div>Project chat</div>,
+}));
 vi.mock('../StudioWorkspace', () => ({ StudioWorkspace: () => <div>Editable workspace</div> }));
 vi.mock('../StudioCloneDialog', () => ({ StudioCloneDialog: () => <div>Clone dialog</div> }));
 
@@ -72,4 +82,37 @@ it('offers cloning to signed-in readers without loading the editor', async () =>
   expect(io.fetch).toHaveBeenCalledWith(`/api/studio/read/${projectId}`, {
     headers: { Authorization: 'Bearer token' },
   });
+});
+
+it('honors an element deep link in the read-only original and consumes it after focus', async () => {
+  const handled = vi.fn();
+  io.focus.mockResolvedValue(undefined);
+  render(
+    <StudioProjectAccess
+      groupId={null}
+      projectId={projectId}
+      open={vi.fn()}
+      focusNodeId="heading"
+      onFocusHandled={handled}
+    />
+  );
+  await waitFor(() => expect(io.focus).toHaveBeenCalledWith({ type: 'focus', nodeId: 'heading' }));
+  await waitFor(() => expect(handled).toHaveBeenCalledOnce());
+});
+it('rejects an inaccessible workspace instead of focusing a canonical element with the same ID', async () => {
+  const handled = vi.fn();
+  const workspaceId = '00000000-0000-4000-a000-000000000001';
+  render(
+    <StudioProjectAccess
+      groupId={null}
+      projectId={projectId}
+      open={vi.fn()}
+      workspaceId={workspaceId}
+      focusNodeId="heading"
+      onFocusHandled={handled}
+    />
+  );
+  expect(await screen.findByRole('alert')).toBeTruthy();
+  expect(io.focus).not.toHaveBeenCalled();
+  await waitFor(() => expect(handled).toHaveBeenCalledWith(workspaceId));
 });

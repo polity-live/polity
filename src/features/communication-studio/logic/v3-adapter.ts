@@ -160,6 +160,7 @@ function semanticNode(
     return {
       ...common,
       type: 'richText',
+      textRole: base?.type === 'richText' ? base.textRole : undefined,
       content: richContent(element, base),
       typography: {
         fontFamily: element.font,
@@ -359,6 +360,7 @@ function nativeNode(
     return {
       ...common,
       type: 'richText',
+      textRole: base?.type === 'richText' ? base.textRole : undefined,
       content: text.split('\n').map((value, index) => ({
         id: stableUuid(id, `paragraph:${index}`),
         type: 'p',

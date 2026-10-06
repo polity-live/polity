@@ -1,4 +1,12 @@
 export const studioTranslations = {
+  suggestionPhaseReadOnly:
+    'Das Hauptdokument ist während der Vorschlagsphase gesperrt. Änderungen sind in Vorschlagsentwürfen möglich.',
+  votingPhaseReadOnly:
+    'Das Hauptdokument ist während der Abstimmung gesperrt. Du kannst eingereichte Vorschläge prüfen und abstimmen.',
+  proposalPreviewReadOnly: 'Du siehst eine schreibgeschützte Vergleichsansicht des Vorschlags.',
+  proposalDraftReadOnly:
+    'Dieser Vorschlagsentwurf ist für dich oder in dieser Verfahrensphase nicht bearbeitbar.',
+
   cloneProject: 'Projekt klonen',
   cloneDestination: 'Ziel',
   cloneFailed: 'Projekt konnte nicht geklont werden.',
@@ -58,6 +66,10 @@ export const studioTranslations = {
   layers: 'Ebenen',
   searchLayers: 'Ebenen durchsuchen',
   noLayers: 'Keine Ebenen gefunden',
+  layerName: 'Ebenenname',
+  layerNameRequired: 'Gib einen Namen mit 1–200 Zeichen ein.',
+  layerRenamedElsewhere:
+    'Der Ebenenname wurde zwischenzeitlich geändert. Deine Eingabe wurde verworfen.',
   hide: 'Ausblenden',
   show: 'Einblenden',
   top: 'Oben',
@@ -182,6 +194,7 @@ export const studioTranslations = {
   single: 'Einzelpost',
   event: 'Veranstaltung',
   carousel: 'Karussell',
+  presentation: 'Präsentation',
   story: 'Story',
   video: 'Kurzvideo',
   campaign: 'Kampagne',

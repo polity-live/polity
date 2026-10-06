@@ -175,6 +175,126 @@ async function fixture(phase: 'edit' | 'suggest_internal' = 'edit') {
     });
   return { id, doc, session, command };
 }
+it('lets a private AI draft be reviewed and accepted only by the project owner', async () => {
+  const { id, doc, session, command } = await fixture();
+  await sql`update studio_project set group_id=null where id=${id}`;
+  await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)
+    values(${crypto.randomUUID()},${id},${member},${owner},'active',0,0)`;
+  const memberSession = await canvasCommand(member, { action: 'session', projectId: id });
+  expect(memberSession.capabilities.suggest).toBe(true);
+  const suggestionId = crypto.randomUUID();
+  const proposed = structuredClone(doc);
+  proposed.title = 'AI event post';
+  await sql`insert into canvas_proposal(id,project_id,owner_id,title,reason,base_document,
+    base_revision,base_generation,document,origin,ai_mode,ai_sources,created_at,updated_at)
+    values(${suggestionId},${id},${member},'AI event post','Create a post',
+      ${sql.json(JSON.parse(JSON.stringify(doc)))},0,${session.generation},
+      ${sql.json(JSON.parse(JSON.stringify(proposed)))},'ai','template','[]',0,0)`;
+  await expect(
+    command(member, 'acceptPrivate', { workspaceId: suggestionId, revision: 0 })
+  ).rejects.toThrow('not permitted');
+  const accepted = await command(owner, 'acceptPrivate', {
+    workspaceId: suggestionId,
+    revision: 0,
+  });
+  expect(accepted.decision).toBe('accepted');
+  const [state] =
+    await sql`select document,content_revision from studio_state where project_id=${id}`;
+  expect(state.document.title).toBe('AI event post');
+  expect(state.content_revision).toBe(1);
+  const [proposal] =
+    await sql`select state,application from canvas_proposal where id=${suggestionId}`;
+  expect(proposal).toMatchObject({ state: 'closed', application: 'applied' });
+});
+
+it('runs personal suggestions and voting with a frozen accepted-collaborator electorate', async () => {
+  const { id, doc, command } = await fixture();
+  await sql`update studio_project set group_id=null where id=${id}`;
+  for (const [actor, status] of [
+    [member, 'active'],
+    [outsider, 'invited'],
+  ] as const)
+    await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)
+      values(${crypto.randomUUID()},${id},${actor},${owner},${status},0,0)`;
+  const initial = await canvasCommand(member, { action: 'session', projectId: id });
+  expect(initial.canEditProject).toBe(true);
+  expect(initial.capabilities).toMatchObject({ edit: true, vote: true, manage: false });
+  expect(initial.members.map((m: { id: string }) => m.id).sort()).toEqual([owner, member].sort());
+  await expect(
+    command(member, 'phase', { revision: 0, phase: 'suggest_internal' })
+  ).rejects.toThrow('not permitted');
+  await expect(canvasCommand(outsider, { action: 'session', projectId: id })).rejects.toThrow();
+  await command(owner, 'phase', { revision: 0, phase: 'suggest_internal' });
+  const suggestionSession = await canvasCommand(owner, { action: 'session', projectId: id });
+  expect(suggestionSession.canEditProject).toBe(true);
+  expect(suggestionSession.capabilities.edit).toBe(false);
+  const { workspaceId } = await command(member, 'createDraft', {
+    revision: 0,
+    title: 'Personal vote',
+  });
+  await expect(command(owner, 'loadDraft', { workspaceId })).rejects.toThrow();
+  await command(member, 'share', { workspaceId, revision: 0, userIds: [owner] });
+  expect((await command(owner, 'loadDraft', { workspaceId })).canEdit).toBe(true);
+  const next = structuredClone(doc);
+  next.title = 'Personal voted title';
+  await command(member, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, next) });
+  await command(member, 'submit', { workspaceId, revision: 1 });
+  await command(owner, 'phase', { revision: 0, phase: 'vote_internal' });
+  await command(owner, 'startVote', { workspaceId });
+  await expect(command(member, 'startVote', { workspaceId })).rejects.toThrow('not permitted');
+  const [ballot] = await sql`select state,electorate from canvas_proposal where id=${workspaceId}`;
+  expect(ballot.state).toBe('voting');
+  expect(ballot.electorate.sort()).toEqual([owner, member].sort());
+  await sql`update studio_project_collaborator set status='active' where project_id=${id} and user_id=${outsider}`;
+  await expect(command(outsider, 'vote', { workspaceId, choice: 'accept' })).rejects.toThrow(
+    'not permitted'
+  );
+  await expect(command(owner, 'phase', { revision: 0, phase: 'edit' })).rejects.toThrow(
+    'active ballots'
+  );
+  await sql`delete from studio_project_collaborator where project_id=${id} and user_id=${member}`;
+  await expect(command(member, 'vote', { workspaceId, choice: 'accept' })).rejects.toThrow();
+  const [frozen] = await sql`select electorate from canvas_proposal where id=${workspaceId}`;
+  expect(frozen.electorate.sort()).toEqual([owner, member].sort());
+  await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)
+    values(${crypto.randomUUID()},${id},${member},${owner},'active',0,0)`;
+  await command(member, 'vote', { workspaceId, choice: 'accept' });
+  await command(owner, 'vote', { workspaceId, choice: 'accept' });
+  const [accepted] =
+    await sql`select state,decision,application from canvas_proposal where id=${workspaceId}`;
+  expect(accepted).toMatchObject({ state: 'closed', decision: 'accepted', application: 'applied' });
+  const [canonical] =
+    await sql`select document,content_revision from studio_state where project_id=${id}`;
+  expect(canonical.document.title).toBe(next.title);
+  await command(owner, 'phase', { revision: Number(canonical.content_revision), phase: 'edit' });
+});
+
+it('requires personal AI suggestions to use the ballot procedure outside edit mode', async () => {
+  const { id, doc, command } = await fixture();
+  await sql`update studio_project set group_id=null where id=${id}`;
+  const { workspaceId } = await command(owner, 'createDraft', {
+    revision: 0,
+    title: 'AI phase checks',
+  });
+  await sql`update canvas_proposal set origin='ai',ai_mode='template' where id=${workspaceId}`;
+  const next = structuredClone(doc);
+  next.title = 'Balloted AI title';
+  await command(owner, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, next) });
+  await command(owner, 'phase', { revision: 0, phase: 'suggest_internal' });
+  for (const action of ['acceptPrivate', 'rejectPrivate'])
+    await expect(command(owner, action, { workspaceId, revision: 1 })).rejects.toThrow(
+      'not permitted'
+    );
+  await command(owner, 'submit', { workspaceId, revision: 1 });
+  await command(owner, 'phase', { revision: 0, phase: 'vote_internal' });
+  for (const action of ['acceptPrivate', 'rejectPrivate'])
+    await expect(command(owner, action, { workspaceId, revision: 1 })).rejects.toThrow(
+      'not permitted'
+    );
+  await command(owner, 'vote', { workspaceId, choice: 'accept' });
+  const [state] = await sql`select document from studio_state where project_id=${id}`;
+  expect(state.document.title).toBe(next.title);
+});
 it('shares a personal project only through an explicit authorized adoption and invalidates its previous generation', async () => {
   const { id, command, session } = await fixture();
   await sql`update studio_project set group_id=null where id=${id}`;
@@ -276,107 +396,115 @@ it('opens all submitted group Studio ballots on the mode change and closes when 
       .title
   ).toBe('Title after the vote');
 });
-it('keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision', async () => {
-  const { id, doc, command } = await fixture('suggest_internal');
-  await expect(canvasCommand(outsider, { projectId: id, action: 'session' })).rejects.toThrow();
-  const make = async (title: string) => {
-    const { workspaceId } = await command(member, 'createDraft', { revision: 0, title });
-    expect(
-      (await canvasCommand(owner, { action: 'session', projectId: id })).proposals
-    ).not.toContainEqual(expect.objectContaining({ id: workspaceId }));
-    const edited = structuredClone(doc);
-    edited.title = title;
-    await command(member, 'saveDraft', {
-      workspaceId,
-      revision: 0,
-      changes: diffStudio(doc, edited),
-    });
-    await command(member, 'comment', { workspaceId, body: 'A private discussion' });
-    expect(
-      (await canvasCommand(owner, { action: 'session', projectId: id })).comments
-    ).not.toContainEqual(expect.objectContaining({ proposal_id: workspaceId }));
-    await command(member, 'submit', { workspaceId, revision: 1 });
+it.each([false, true])(
+  'keeps drafts private and preserves immutable decisions and conflict resolutions (personal=%s)',
+  async personal => {
+    const { id, doc, command } = await fixture('suggest_internal');
+    if (personal) {
+      await sql`update studio_project set group_id=null where id=${id}`;
+      await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)
+      values(${crypto.randomUUID()},${id},${member},${owner},'active',0,0)`;
+    }
+    await expect(canvasCommand(outsider, { projectId: id, action: 'session' })).rejects.toThrow();
+    const make = async (title: string) => {
+      const { workspaceId } = await command(member, 'createDraft', { revision: 0, title });
+      expect(
+        (await canvasCommand(owner, { action: 'session', projectId: id })).proposals
+      ).not.toContainEqual(expect.objectContaining({ id: workspaceId }));
+      const edited = structuredClone(doc);
+      edited.title = title;
+      await command(member, 'saveDraft', {
+        workspaceId,
+        revision: 0,
+        changes: diffStudio(doc, edited),
+      });
+      await command(member, 'comment', { workspaceId, body: 'A private discussion' });
+      expect(
+        (await canvasCommand(owner, { action: 'session', projectId: id })).comments
+      ).not.toContainEqual(expect.objectContaining({ proposal_id: workspaceId }));
+      await command(member, 'submit', { workspaceId, revision: 1 });
+      await expect(
+        command(member, 'saveDraft', { workspaceId, revision: 1, changes: diffStudio(doc, edited) })
+      ).rejects.toThrow();
+      return workspaceId;
+    };
+    const a = await make('Accepted A'),
+      b = await make('Conflicting B');
+    await command(owner, 'phase', { phase: 'vote_internal', revision: 0 });
+    for (const workspaceId of [a, b]) await command(owner, 'startVote', { workspaceId });
     await expect(
-      command(member, 'saveDraft', { workspaceId, revision: 1, changes: diffStudio(doc, edited) })
-    ).rejects.toThrow();
-    return workspaceId;
-  };
-  const a = await make('Accepted A'),
-    b = await make('Conflicting B');
-  await command(owner, 'phase', { phase: 'vote_internal', revision: 0 });
-  for (const workspaceId of [a, b]) await command(owner, 'startVote', { workspaceId });
-  await expect(
-    sql`update studio_state set document=jsonb_set(document,'{title}','"bypass"'),content_revision=content_revision+1 where project_id=${id}`
-  ).rejects.toThrow('locked');
-  for (const workspaceId of [a, b]) {
-    await command(owner, 'vote', { workspaceId, choice: 'accept' });
-    const op = crypto.randomUUID();
-    const input = { workspaceId, choice: 'accept', operationId: op };
-    await command(member, 'vote', input);
-    await command(member, 'vote', input);
+      sql`update studio_state set document=jsonb_set(document,'{title}','"bypass"'),content_revision=content_revision+1 where project_id=${id}`
+    ).rejects.toThrow('locked');
+    for (const workspaceId of [a, b]) {
+      await command(owner, 'vote', { workspaceId, choice: 'accept' });
+      const op = crypto.randomUUID();
+      const input = { workspaceId, choice: 'accept', operationId: op };
+      await command(member, 'vote', input);
+      await command(member, 'vote', input);
+    }
+    const session = await canvasCommand(owner, { action: 'session', projectId: id });
+    expect(session.proposals.find((p: any) => p.id === a)).toMatchObject({
+      decision: 'accepted',
+      application: 'applied',
+    });
+    expect(session.proposals.find((p: any) => p.id === b)).toMatchObject({
+      decision: 'accepted',
+      application: 'conflict',
+    });
+    const [stored] =
+      await sql`select document,content_revision from studio_state where project_id=${id}`;
+    expect(stored.document.title).toBe('Accepted A');
+    expect(stored.content_revision).toBe(1);
+    await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
+      'conflicts'
+    );
+    const originalVotes =
+      await sql`select user_id,choice from canvas_vote where proposal_id=${b} order by user_id`;
+    const resolve = async (title: string, choice: string) => {
+      const { workspaceId } = await command(member, 'resolveDraft', {
+        workspaceId: b,
+        revision: 1,
+        title,
+      });
+      const next = structuredClone(stored.document);
+      next.title = title;
+      await command(member, 'saveDraft', {
+        workspaceId,
+        revision: 0,
+        changes: diffStudio(stored.document, next),
+      });
+      await command(member, 'submit', { workspaceId, revision: 1 });
+      await command(owner, 'startVote', { workspaceId });
+      await command(owner, 'vote', { workspaceId, choice });
+      await command(member, 'vote', { workspaceId, choice });
+      return workspaceId;
+    };
+    await resolve('Rejected resolution', 'reject');
+    await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
+      'conflicts'
+    );
+    const resolution = await resolve('Resolved by a new decision', 'accept');
+    const resolved = await canvasCommand(owner, { action: 'session', projectId: id });
+    expect(resolved.proposals.find((p: any) => p.id === b)).toMatchObject({
+      decision: 'accepted',
+      application: 'superseded',
+    });
+    expect(resolved.proposals.find((p: any) => p.id === resolution)).toMatchObject({
+      decision: 'accepted',
+      application: 'applied',
+      resolves_id: b,
+    });
+    expect(
+      await sql`select user_id,choice from canvas_vote where proposal_id=${b} order by user_id`
+    ).toEqual(originalVotes);
+    await expect(command(owner, 'reapply', { workspaceId: b })).rejects.toThrow();
+    await command(owner, 'phase', { phase: 'edit', revision: 2 });
+    expect(
+      (await sql`select document->>'title' as title from studio_state where project_id=${id}`)[0]
+        .title
+    ).toBe('Resolved by a new decision');
   }
-  const session = await canvasCommand(owner, { action: 'session', projectId: id });
-  expect(session.proposals.find((p: any) => p.id === a)).toMatchObject({
-    decision: 'accepted',
-    application: 'applied',
-  });
-  expect(session.proposals.find((p: any) => p.id === b)).toMatchObject({
-    decision: 'accepted',
-    application: 'conflict',
-  });
-  const [stored] =
-    await sql`select document,content_revision from studio_state where project_id=${id}`;
-  expect(stored.document.title).toBe('Accepted A');
-  expect(stored.content_revision).toBe(1);
-  await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
-    'conflicts'
-  );
-  const originalVotes =
-    await sql`select user_id,choice from canvas_vote where proposal_id=${b} order by user_id`;
-  const resolve = async (title: string, choice: string) => {
-    const { workspaceId } = await command(member, 'resolveDraft', {
-      workspaceId: b,
-      revision: 1,
-      title,
-    });
-    const next = structuredClone(stored.document);
-    next.title = title;
-    await command(member, 'saveDraft', {
-      workspaceId,
-      revision: 0,
-      changes: diffStudio(stored.document, next),
-    });
-    await command(member, 'submit', { workspaceId, revision: 1 });
-    await command(owner, 'startVote', { workspaceId });
-    await command(owner, 'vote', { workspaceId, choice });
-    await command(member, 'vote', { workspaceId, choice });
-    return workspaceId;
-  };
-  await resolve('Rejected resolution', 'reject');
-  await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
-    'conflicts'
-  );
-  const resolution = await resolve('Resolved by a new decision', 'accept');
-  const resolved = await canvasCommand(owner, { action: 'session', projectId: id });
-  expect(resolved.proposals.find((p: any) => p.id === b)).toMatchObject({
-    decision: 'accepted',
-    application: 'superseded',
-  });
-  expect(resolved.proposals.find((p: any) => p.id === resolution)).toMatchObject({
-    decision: 'accepted',
-    application: 'applied',
-    resolves_id: b,
-  });
-  expect(
-    await sql`select user_id,choice from canvas_vote where proposal_id=${b} order by user_id`
-  ).toEqual(originalVotes);
-  await expect(command(owner, 'reapply', { workspaceId: b })).rejects.toThrow();
-  await command(owner, 'phase', { phase: 'edit', revision: 2 });
-  expect(
-    (await sql`select document->>'title' as title from studio_state where project_id=${id}`)[0]
-      .title
-  ).toBe('Resolved by a new decision');
-});
+);
 
 it('commits independent edits from ten distinct simultaneous editors and refuses stale generations', async () => {
   const { id, doc, session } = await fixture();

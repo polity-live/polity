@@ -36,7 +36,69 @@ beforeEach(() => {
     .mockReset()
     .mockReturnValue({ client: Promise.resolve(), server: Promise.resolve({ type: 'success' }) });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+it('resizes from edges and corner, clamps dimensions and retains size when reopened', () => {
+  vi.stubGlobal('PointerEvent', MouseEvent);
+  state.conversations = [{ id: 'one', name: 'First' }];
+  render(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'title' }));
+  const panel = screen.getByRole('dialog') as HTMLElement;
+  vi.spyOn(panel, 'getBoundingClientRect').mockImplementation(() => {
+    const width = parseFloat(panel.style.width) || 400;
+    const height = parseFloat(panel.style.height) || 500;
+    return {
+      width,
+      height,
+      right: 1000,
+      bottom: 800,
+      left: 1000 - width,
+      top: 800 - height,
+    } as DOMRect;
+  });
+  const pointer = (label: string, dx: number, dy: number, cancel = false) => {
+    const handle = screen.getByRole('button', { name: label });
+    handle.setPointerCapture = vi.fn();
+    handle.hasPointerCapture = () => true;
+    handle.releasePointerCapture = vi.fn();
+    fireEvent.pointerDown(handle, { button: 0, clientX: 400, clientY: 300 });
+    fireEvent.pointerMove(handle, { clientX: 400 + dx, clientY: 300 + dy });
+    if (cancel) fireEvent.pointerCancel(handle);
+    else fireEvent.pointerUp(handle);
+    const width = panel.style.width;
+    fireEvent.pointerMove(handle, { clientX: 0, clientY: 0 });
+    expect(panel.style.width).toBe(width);
+  };
+  pointer('resizeWidth', -100, -100);
+  expect(panel.style.width).toBe('500px');
+  expect(panel.style.height).toBe('500px');
+  pointer('resizeHeight', -100, -100, true);
+  expect(panel.style.width).toBe('500px');
+  expect(panel.style.height).toBe('600px');
+  pointer('resize', -100, -100);
+  expect(panel.style.width).toBe('600px');
+  expect(panel.style.height).toBe('700px');
+  pointer('resize', -2000, -2000);
+  expect(panel.style.width).toBe('984px');
+  expect(panel.style.height).toBe('792px');
+  pointer('resize', 2000, 2000);
+  expect(panel.style.width).toBe('280px');
+  expect(panel.style.height).toBe('320px');
+  fireEvent.keyDown(screen.getByRole('button', { name: 'resizeWidth' }), {
+    key: 'ArrowLeft',
+    shiftKey: true,
+  });
+  fireEvent.keyDown(screen.getByRole('button', { name: 'resizeHeight' }), { key: 'ArrowUp' });
+  expect(panel.style.width).toBe('320px');
+  expect(panel.style.height).toBe('330px');
+  fireEvent.click(screen.getByRole('button', { name: 'minimize' }));
+  fireEvent.click(screen.getByRole('button', { name: 'title' }));
+  expect(panel.style.width).toBe('320px');
+  expect(panel.style.height).toBe('330px');
+});
 it('keeps workspace content full width instead of creating a side-panel column', () => {
   const { container } = render(
     <ProjectChatWorkspace scope={scope} context={{ surface: 'studio' }}>

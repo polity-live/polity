@@ -5,7 +5,7 @@ import { Conversation } from '../types/message.types';
 import { hasUnreadConversationRequest } from '../logic/messageUtils';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/features/assistant/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { waitForClientApply, serverConfirmed } from '@/zero/mutate-with-server-check';
 import { trackMutationFinalization } from '@/features/notifications/utils/mutation-finalization';
 
 export function useMessageMutations() {
@@ -14,6 +14,7 @@ export function useMessageMutations() {
 
   interface SendMessageOptions {
     contextJson?: string;
+    confirmServer?: boolean;
   }
 
   interface SendAssistantMessageOptions {
@@ -36,7 +37,7 @@ export function useMessageMutations() {
     try {
       const messageId = crypto.randomUUID();
 
-      await waitForClientApply(
+      await (options?.confirmServer ? serverConfirmed : waitForClientApply)(
         actions.sendMessage({
           id: messageId,
           content,
