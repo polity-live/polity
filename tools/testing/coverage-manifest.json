@@ -19681,6 +19681,11 @@
           "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
           "project": "component",
           "caseId": "reports a missing paste destination and non-Error command failures"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "clears the clipboard when the active page disappeared and rejects a later paste"
         }
       ],
       "suggestedTestRefs": [
@@ -19721,6 +19726,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -19923,14 +19938,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -19952,14 +19967,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -19991,14 +20006,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20020,14 +20035,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20059,14 +20074,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20093,14 +20108,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20131,10 +20146,10 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts"
       ]
     },
     {
@@ -20221,14 +20236,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20288,6 +20303,56 @@
           "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
           "project": "unit",
           "caseId": "validates table and chart dimensions"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "aligns %s against the page and selection using transformed bounds"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "selects page and selection alignment defaults and accounts for rotated geometry"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "distributes %s elements with equal gaps and preserves the outer endpoints"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "arranges an element %s while preserving the relative order of unselected elements"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "groups, ungroups, locks and unlocks selected elements and duplicates with fresh identities"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects nonexistent pages, duplicate and unknown element IDs, and incompatible text targets"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "updates native %s data and rejects incompatible targets"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats a text range without changing surrounding runs or paragraphs and applies links and list modes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "initializes rich text, replaces a supplied rich-text payload and rejects invalid ranges and executable links"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "changes inline styling without replacing the paragraph list mode"
         }
       ],
       "suggestedTestRefs": [
@@ -20295,14 +20360,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20349,14 +20414,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20393,14 +20458,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20438,8 +20503,8 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts"
       ]
     },
     {
@@ -20461,14 +20526,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20510,14 +20575,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20544,14 +20609,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20578,14 +20643,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20608,13 +20673,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
       ]
     },
     {
@@ -20636,14 +20701,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20670,14 +20735,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20704,14 +20769,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20779,13 +20844,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
       ]
     },
     {
@@ -20807,14 +20872,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20861,14 +20926,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -20925,14 +20990,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21014,14 +21079,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21043,14 +21108,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21107,14 +21172,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21191,14 +21256,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21230,14 +21295,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21264,14 +21329,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21303,14 +21368,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21347,14 +21412,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21391,14 +21456,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21430,14 +21495,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21459,14 +21524,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -21494,13 +21559,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
       ]
     },
     {
@@ -21587,14 +21652,14 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -54416,6 +54481,21 @@
           "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
           "project": "unit",
           "caseId": "rejects missing resources, incomplete orderings, duplicates, protected groups and removal of the last page"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "inserts a populated page among existing pages with independent element identities"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an unknown page identifier and an order containing foreign elements"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "appends pages by default, duplicates ungrouped elements and preserves posts without a caption patch"
         }
       ],
       "suggestedTestRefs": [
@@ -78323,6 +78403,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
@@ -78333,8 +78414,7 @@
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
       ]
     },
     {
@@ -119687,6 +119767,16 @@
       "suggestedTestRefs": ["tools/deploy/__tests__/sync-vinxi-assets.unit.test.ts"]
     },
     {
+      "path": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+      "domain": "tools:dev",
+      "owner": "polity/tools:dev",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/dev/__tests__/local-stack.unit.test.ts",
       "domain": "tools:dev",
       "owner": "polity/tools:dev",
@@ -119723,9 +119813,97 @@
           "file": "tools/dev/__tests__/local-stack.unit.test.ts",
           "project": "unit",
           "caseId": "authenticates status requests and tolerates unavailable supervisors"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "stops only the local docker and Supabase stacks when no supervisor is available"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a reset with a test database or a running supervisor before invoking destructive commands"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "resets only after validating the local database and loads runtime and inherited environment settings"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects non-local Supabase coordinates %j before reset"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports command failures and rejects unknown commands without spawning services"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "authenticates supervisor status and reports service health without starting real processes"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "starts a hidden supervisor after checking ports and waits for every service to become ready"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not start a second supervisor or take over an occupied local application port"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "acknowledges %s supervisor shutdown only after its writers and database connection stop"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "restarts exited services and distinguishes stale worker heartbeats from readiness"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "clones a logical database snapshot and restores Zero event triggers when present (%s)"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "cleans up temporary clone files after a failed restore without publishing a test database"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates the test database name before constructing database URLs and replica paths"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "waits for a stopping supervisor before %s and authenticates stop requests"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "waits for previous shutdown, tolerates port-probe timeouts and waits for service readiness"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "fails a bounded startup when services never become ready"
+        },
+        {
+          "file": "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "cancels a scheduled restart after shutdown begins"
         }
       ],
-      "suggestedTestRefs": ["tools/dev/__tests__/local-stack.unit.test.ts"]
+      "suggestedTestRefs": [
+        "tools/dev/__tests__/local-stack-lifecycle.unit.test.ts",
+        "tools/dev/__tests__/local-stack.unit.test.ts"
+      ]
     },
     {
       "path": "tools/e2e/__tests__/build-provenance.unit.test.ts",

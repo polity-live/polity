@@ -16,6 +16,62 @@ function fixture() {
   return { document, page, first: page.elements[0], second: page.elements[1] };
 }
 describe('Studio project action semantics', () => {
+  it('inserts a populated page among existing pages with independent element identities', () => {
+    const { document } = fixture();
+    const extended = applyStudioActions(document, [
+      { type: 'page.add', ref: 'first', name: 'First addition', format: 'feed', template: 'blank' },
+    ]).value;
+    const changed = applyStudioActions(extended, [
+      {
+        type: 'page.add',
+        ref: 'second',
+        name: 'Second addition',
+        format: 'feed',
+        template: 'announcement',
+        index: 1,
+      },
+    ]).value;
+    expect(changed.pages.map(page => page.name)).toEqual([
+      document.pages[0].name,
+      'Second addition',
+      'First addition',
+    ]);
+    expect(changed.pages[1].elements.length).toBeGreaterThan(0);
+    expect(new Set(changed.pages.flatMap(page => page.elements.map(e => e.id))).size).toBe(
+      changed.pages.reduce((total, page) => total + page.elements.length, 0)
+    );
+    expect(changed.pages.map(page => page.order)).toEqual([0, 1, 2]);
+  });
+  it('rejects an unknown page identifier and an order containing foreign elements', () => {
+    const { document, page, first } = fixture();
+    expect(() =>
+      applyStudioActions(document, [
+        { type: 'page.patch', page: ref(crypto.randomUUID()), patch: { name: 'Missing' } },
+      ])
+    ).toThrow('invalid_reference');
+    expect(() =>
+      applyStudioActions(document, [
+        {
+          type: 'element.reorder',
+          page: ref(page.id),
+          elements: [ref(first.id), ref(crypto.randomUUID())],
+        },
+      ])
+    ).toThrow('Reorder must contain every resource');
+  });
+  it('appends pages by default, duplicates ungrouped elements and preserves posts without a caption patch', () => {
+    const { document, page } = fixture();
+    const result = applyStudioActions(document, [
+      { type: 'project.patch', patch: { title: 'Updated' } },
+      { type: 'page.add', ref: 'append', name: 'Appended', format: 'feed', template: 'blank' },
+      { type: 'page.duplicate', page: ref(page.id), ref: 'ungrouped' },
+      { type: 'post.patch', post: ref(document.posts[0].id), patch: { title: 'Retitled' } },
+    ]).value;
+    expect(result.title).toBe('Updated');
+    expect(result.pages.find(p => p.name === 'Appended')!.order).toBe(1);
+    expect(result.pages.at(-1)!.elements.every(e => e.group === null)).toBe(true);
+    expect(result.posts[0].captions).toEqual(document.posts[0].captions);
+  });
   it('applies only an authorized theme and preserves a caption-only post patch', () => {
     const { document } = fixture();
     const theme = DEFAULT_STUDIO_THEME;

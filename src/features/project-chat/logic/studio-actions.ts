@@ -97,8 +97,12 @@ export function applyStudioActions(
         copy.elements.forEach(e => {
           e.id = createId();
           if (e.group) {
-            if (!groups.has(e.group)) groups.set(e.group, createId());
-            e.group = groups.get(e.group) ?? null;
+            let groupId = groups.get(e.group);
+            if (groupId === undefined) {
+              groupId = createId();
+              groups.set(e.group, groupId);
+            }
+            e.group = groupId;
           }
         });
         value.pages.push(copy);
@@ -177,9 +181,10 @@ export function applyStudioActions(
         if (elements.some(e => !e || e.group))
           throw new ProjectToolError('invalid_action', 'Group requires ungrouped elements');
         const group = createId();
-        assertUnlocked(elements as StudioElement[]);
-        elements.forEach(e => {
-          if (e) e.group = group;
+        const ungroupedElements = elements as StudioElement[];
+        assertUnlocked(ungroupedElements);
+        ungroupedElements.forEach(e => {
+          e.group = group;
         });
         break;
       }

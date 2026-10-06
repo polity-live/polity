@@ -115,8 +115,18 @@ it('resumes after a committed write without duplicating messages or actions and 
     conversation = crypto.randomUUID(),
     personal = crypto.randomUUID();
   const ctx = createZeroContext(actor);
+  const assistantId = 'a12a0000-0000-4000-a000-000000000001';
+  let createdAssistant = false;
   await executeZeroTransaction(ctx, async tx => {
     const sql = sqlTransaction(tx);
+    createdAssistant =
+      (
+        await rows(
+          sql,
+          'insert into "user"(id) values($1) on conflict (id) do nothing returning id',
+          [assistantId]
+        )
+      ).length > 0;
     await sql.query('insert into "user"(id) values($1)', [actor]);
     await sql.query(
       "insert into amendment(id,created_by_id,title,visibility) values($1,$2,'Run test','private')",
@@ -291,6 +301,7 @@ it('resumes after a committed write without duplicating messages or actions and 
       await sql.query('delete from conversation where id in ($1,$2)', [conversation, personal]);
       await sql.query('delete from amendment where id=$1', [amendment]);
       await sql.query('delete from "user" where id=$1', [actor]);
+      if (createdAssistant) await sql.query('delete from "user" where id=$1', [assistantId]);
     });
   }
 });

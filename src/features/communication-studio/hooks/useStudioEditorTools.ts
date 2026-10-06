@@ -60,7 +60,7 @@ export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) 
                     )
                   )
                     throw new Error('Element no longer exists');
-                  c.setPageId(a.pageId ?? '');
+                  c.setPageId(a.pageId as string);
                   c.select(a.elementIds ?? []);
                   break;
                 case 'studio_preview':

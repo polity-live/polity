@@ -245,7 +245,7 @@ export function applyStudioCommand(
     els.forEach(
       e => (e.table = structuredClone(studioCommandSchemas.studio_update_table.parse(args).table))
     );
-  } else if (name === 'studio_update_chart') {
+  } else {
     if (els.some(e => e.type !== 'chart')) throw new Error('Select a chart');
     els.forEach(
       e => (e.chart = structuredClone(studioCommandSchemas.studio_update_chart.parse(args).chart))

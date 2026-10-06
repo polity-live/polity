@@ -82881,6 +82881,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
@@ -82891,8 +82892,7 @@
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

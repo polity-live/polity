@@ -119,6 +119,7 @@ export default defineConfig({
   webServer: [
     {
       command: appCommand,
+      stdout: 'pipe',
       env: {
         STUDIO_ENABLED: 'true',
         STUDIO_PILOT_USER_IDS: '',
@@ -131,6 +132,7 @@ export default defineConfig({
     },
     {
       command: zeroCommand,
+      stdout: 'pipe',
       // The Linux supervisor also reaps Zero's detached workers during teardown.
       env: {
         ZERO_ADMIN_PASSWORD: zeroAdminPassword,
@@ -153,6 +155,7 @@ export default defineConfig({
     },
     {
       command: 'pnpm run collaboration:server',
+      stdout: 'pipe',
       url: new URL('/health', collaborationUrl).href,
       env: { PORT: collaborationUrl.port || '1236' },
       reuseExistingServer,

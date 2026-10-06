@@ -63,6 +63,19 @@ async function run(
 const results = () =>
   io.request.mock.calls.filter(([op]) => op === 'editorResult').map(([, body]) => body.result);
 
+it('clears the clipboard when the active page disappeared and rejects a later paste', async () => {
+  const c = { ...controller(), page: undefined };
+  await run(c as unknown as ReturnType<typeof controller>, [
+    { name: 'studio_copy_selection', input: {} },
+    { name: 'studio_paste_selection', input: {} },
+  ]);
+  expect(results()).toEqual([
+    { status: 'completed', revision: 7 },
+    { status: 'failed', error: 'Copy a selection first' },
+  ]);
+  expect(c.transact).not.toHaveBeenCalled();
+});
+
 it('selects existing pages and elements, opens panels and toggles preview and guides before acknowledgement', async () => {
   const c = controller();
   const event = vi.spyOn(window, 'dispatchEvent');
