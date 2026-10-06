@@ -52,6 +52,7 @@ export function StudioProjectAccess({
   const [assets, setAssets] = useState<StudioAsset[]>([]);
   const [activeFrameId, setActiveFrameId] = useState('');
   const [cloneOpen, setCloneOpen] = useState(false);
+  const cloneTrigger = useRef<HTMLButtonElement | null>(null);
   const [readerCanvas, setReaderCanvas] = useState<StudioCanvasHandle | null>(null);
   const [readerSelection, setReaderSelection] = useState<string[]>([]);
   const [readerFocused, setReaderFocused] = useState(false);
@@ -125,7 +126,9 @@ export function StudioProjectAccess({
             headers: data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {},
           });
           if (!response.ok) throw new Error(t('features.studio.mediaUnavailable'));
-          const url = URL.createObjectURL(await response.blob());
+          const blob = await response.blob();
+          if (cancelled) return asset;
+          const url = URL.createObjectURL(blob);
           objectUrls.push(url);
           return { ...asset, url };
         })
@@ -180,6 +183,8 @@ export function StudioProjectAccess({
         </div>
         {user && (
           <button
+            data-action-id="studio.reader.clone.open"
+            ref={cloneTrigger}
             className="rounded-md border px-3 py-2 text-sm"
             onClick={() => setCloneOpen(true)}
           >
@@ -190,6 +195,9 @@ export function StudioProjectAccess({
       <div className="flex flex-wrap gap-2">
         {frames.map((frame, index) => (
           <button
+            data-action-id="studio.reader.frame.select"
+            data-action-kind="selection"
+            aria-pressed={frameId === frame.id}
             key={frame.id}
             className={`rounded-md border px-3 py-1 text-sm ${frameId === frame.id ? 'bg-primary text-primary-foreground' : ''}`}
             onClick={() => setActiveFrameId(frame.id)}
@@ -224,7 +232,12 @@ export function StudioProjectAccess({
         />
       )}
       {user && cloneOpen && (
-        <StudioCloneDialog sourceId={projectId} open={cloneOpen} onOpenChange={setCloneOpen} />
+        <StudioCloneDialog
+          sourceId={projectId}
+          open={cloneOpen}
+          onOpenChange={setCloneOpen}
+          restoreFocusRef={cloneTrigger}
+        />
       )}
     </main>
   );

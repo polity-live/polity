@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useNavigate } from '@tanstack/react-router';
 import { queries } from '@/zero/queries';
@@ -20,11 +20,13 @@ export function StudioCloneDialog({
   open,
   onOpenChange,
   beforeClone,
+  restoreFocusRef,
 }: {
   sourceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   beforeClone?: () => Promise<unknown>;
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -58,7 +60,16 @@ export function StudioCloneDialog({
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onCloseAutoFocus={
+          restoreFocusRef
+            ? event => {
+                event.preventDefault();
+                restoreFocusRef.current?.focus();
+              }
+            : undefined
+        }
+      >
         <DialogHeader>
           <DialogTitle>{t('features.studio.cloneProject')}</DialogTitle>
         </DialogHeader>

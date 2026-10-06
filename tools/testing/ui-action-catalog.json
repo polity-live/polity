@@ -21866,7 +21866,7 @@
       "actionId": "studio.project.clone.cancel",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 94,
+      "line": 105,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21911,7 +21911,7 @@
       "actionId": "studio.project.clone.destination",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 68,
+      "line": 79,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -21949,7 +21949,7 @@
       "actionId": "studio.project.clone.submit",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 103,
+      "line": 114,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -28036,13 +28036,13 @@
       "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioProjectAccess.tsx#communication-studio.studio-project-access.features-studio-clone-project",
-      "debtKey": "src/features/communication-studio/ui/StudioProjectAccess.tsx#button-4a39d9d0ab",
+      "key": "src/features/communication-studio/ui/StudioProjectAccess.tsx#studio.reader.clone.open",
+      "debtKey": "src/features/communication-studio/ui/StudioProjectAccess.tsx#button-795904c028",
       "file": "src/features/communication-studio/ui/StudioProjectAccess.tsx",
-      "actionId": "communication-studio.studio-project-access.features-studio-clone-project",
-      "identifierSource": "accessible-text",
+      "actionId": "studio.reader.clone.open",
+      "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 182,
+      "line": 185,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28050,7 +28050,14 @@
       "handler": "setCloneOpen",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the real clone dialog with the native keyboard and restores reader focus after %s",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -28065,24 +28072,31 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioProjectAccess.tsx#communication-studio.studio-project-access.set-active-frame-id",
-      "debtKey": "src/features/communication-studio/ui/StudioProjectAccess.tsx#button-1ccedca13f",
+      "key": "src/features/communication-studio/ui/StudioProjectAccess.tsx#studio.reader.frame.select",
+      "debtKey": "src/features/communication-studio/ui/StudioProjectAccess.tsx#button-cf9d615b70",
       "file": "src/features/communication-studio/ui/StudioProjectAccess.tsx",
-      "actionId": "communication-studio.studio-project-access.set-active-frame-id",
-      "identifierSource": "handler",
+      "actionId": "studio.reader.frame.select",
+      "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 192,
+      "line": 197,
       "column": 10,
-      "kind": "interaction",
+      "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "setActiveFrameId",
-      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and restores reader frames with native keyboard input while retaining the pressed state and focus",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -28097,7 +28111,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-overview.filter.all",

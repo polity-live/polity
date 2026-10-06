@@ -1207,6 +1207,26 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "project": "component",
         "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores reader frames with native keyboard input while retaining the pressed state and focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the real clone dialog with the native keyboard and restores reader focus after %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps public frame navigation available to guests while withholding cloning"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "closes a reader clone dialog safely if authentication disappears while it is open"
       }
     ],
     "src/features/communication-studio/ui/StudioInlineTextEditor.tsx": [
@@ -1795,6 +1815,76 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
         "project": "component",
         "caseId": "rejects an inaccessible workspace instead of focusing a canonical element with the same ID"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores reader frames with native keyboard input while retaining the pressed state and focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the real clone dialog with the native keyboard and restores reader focus after %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps public frame navigation available to guests while withholding cloning"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a read snapshot %s failure without exposing a workspace"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores a late snapshot %s after unmounting"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "handles a read-only document with %s frame data without mounting an editable canvas"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "passes an authorized proposal workspace to the editor rather than treating it as a reader"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and closes cloning, selects reader frames and retains exact chat selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "reports an unavailable reader focus target once and allows it again after the focus link resets"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects focusing a private proposal without requiring a completion callback"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "hydrates reader media for %s and revokes every allocated object URL"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a reader media %s failure without installing broken assets"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.lifecycle.component.test.tsx",
+        "project": "component",
+        "caseId": "does not allocate URLs or report errors when a reader media %s finishes after unmount"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "closes a reader clone dialog safely if authentication disappears while it is open"
       }
     ],
     "src/features/communication-studio/ui/StudioProjectOverview.tsx": [
@@ -7328,6 +7418,22 @@
         "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "edits text style typography and prevents saving invalid numeric values without losing its fields",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectAccess.tsx#studio.reader.frame.select": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores reader frames with native keyboard input while retaining the pressed state and focus",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectAccess.tsx#studio.reader.clone.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the real clone dialog with the native keyboard and restores reader focus after %s",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ]
