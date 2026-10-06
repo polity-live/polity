@@ -48,13 +48,6 @@
         "caseId": "drags a crop edge on the real canvas and saves the smaller frame"
       }
     ],
-    "src/features/communication-studio/ui/CanvasGovernancePanel.tsx": [
-      {
-        "file": "tools/e2e/studio/canvas.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
-      }
-    ],
     "src/zero/communication-studio/queries.ts": [
       {
         "file": "tools/e2e/studio/canvas.e2e.spec.ts",

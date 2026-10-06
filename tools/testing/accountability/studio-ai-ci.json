@@ -1658,6 +1658,96 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
         "project": "component",
         "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "submits a keyboard comment and clears the text only after success=%s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects blank comment submissions and binds canonical comments to no node when nothing is selected"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits a keyboard comment and keeps the edit open after success=%s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects blank edits and cancels without changing the existing discussion"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "enforces comment edit and resolution rights for %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "marks only missing node targets as orphaned (%s)"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps discussion controls disabled while saving and does not submit a duplicate"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "recovers the %s draft without replacing the canonical workspace"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows recovery with no stored fields and denies proposal recovery without suggestion rights"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "restores a revision, adopts the selected group and toggles every role capability in both directions"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "gates history, adoption and role controls for %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers a local draft through the real controller with %s and disables all duplicate recovery controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "downloads the retained draft with the native keyboard and keeps the recovery control focused"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the selected adoption group after a rejected native keyboard command (%s)"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses and clears a destination with native arrow keys and preserves select focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens and cancels comment editing with the native keyboard without submitting a command"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
       }
     ],
     "src/features/communication-studio/ui/StudioProjectAccess.tsx": [
@@ -1942,6 +2032,41 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
         "project": "component",
         "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers a local draft through the real controller with %s and disables all duplicate recovery controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "downloads the retained draft with the native keyboard and keeps the recovery control focused"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the selected adoption group after a rejected native keyboard command (%s)"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses and clears a destination with native arrow keys and preserves select focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens and cancels comment editing with the native keyboard without submitting a command"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
       }
     ],
     "src/features/create/hooks/useCreateStudioProjectForm.tsx": [
@@ -6152,6 +6277,273 @@
         "project": "component",
         "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure",
         "scenarios": ["disabled", "error"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.edit.submit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.edit.save": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.edit.body": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.edit.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens and cancels comment editing with the native keyboard without submitting a command",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps discussion controls disabled while saving and does not submit a duplicate",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.edit.cancel": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens and cancels comment editing with the native keyboard without submitting a command",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.resolve": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.create.submit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.create.send": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.comment.create.body": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.draft.download": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "downloads the retained draft with the native keyboard and keeps the recovery control focused",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.draft.recover": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers a local draft through the real controller with %s and disables all duplicate recovery controls",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows recovery with no stored fields and denies proposal recovery without suggestion rights",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.history.restore": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.group.choose": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses and clears a destination with native arrow keys and preserves select focus",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.group.adopt": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the selected adoption group after a rejected native keyboard command (%s)",
+        "scenarios": ["idle", "loading", "error", "unauthorized", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "restores a revision, adopts the selected group and toggles every role capability in both directions",
+        "scenarios": ["success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+        "project": "component",
+        "caseId": "gates history, adoption and role controls for %s",
+        "scenarios": ["disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides protected controls and keeps comment submission disabled without project capabilities",
+        "scenarios": ["unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx#studio.role.capability.toggle": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
       }
     ]
   },

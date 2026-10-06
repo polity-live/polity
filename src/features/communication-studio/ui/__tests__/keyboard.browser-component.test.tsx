@@ -51,9 +51,6 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),
 }));
 vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({ ImageEditorDialog: () => null }));
-vi.mock('../CanvasGovernancePanel', () => ({
-  CanvasGovernancePanel: () => <section aria-label="Procedure" />,
-}));
 vi.mock('../KonvaStudioCanvas', () => ({
   default: forwardRef(({ inspector }: any, ref) => {
     useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));

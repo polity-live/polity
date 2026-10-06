@@ -656,7 +656,7 @@ export function useStudioProcedure({
         session={session}
         workspaceId={workspaceId}
         c={c}
-        busy={busy}
+        busy={busy || c.busy}
         run={run}
         chooseWorkspace={chooseWorkspace}
         tr={tr}

@@ -37,6 +37,7 @@ export function StudioProcedureComments({
             <article key={comment.id} className="space-y-1 rounded border p-2">
               {editing?.id === comment.id ? (
                 <form
+                  data-action-id="studio.comment.edit.submit"
                   onSubmit={event => {
                     event.preventDefault();
                     if (editing.body.trim())
@@ -49,13 +50,25 @@ export function StudioProcedureComments({
                   }}
                 >
                   <textarea
+                    data-action-id="studio.comment.edit.body"
                     aria-label={tr('Kommentar bearbeiten', 'Edit comment')}
                     className="w-full rounded border p-2"
                     value={editing.body}
                     onChange={event => setEditing({ ...editing, body: event.target.value })}
                   />
-                  <Button disabled={busy || !editing.body.trim()}>{tr('Speichern', 'Save')}</Button>
-                  <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+                  <Button
+                    data-action-id="studio.comment.edit.save"
+                    disabled={busy || !editing.body.trim()}
+                  >
+                    {tr('Speichern', 'Save')}
+                  </Button>
+                  <Button
+                    data-action-id="studio.comment.edit.cancel"
+                    data-action-kind="interaction"
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditing(null)}
+                  >
                     {tr('Abbrechen', 'Cancel')}
                   </Button>
                 </form>
@@ -67,6 +80,8 @@ export function StudioProcedureComments({
               )}
               {session.capabilities.comment && comment.author_id === user?.id && (
                 <Button
+                  data-action-id="studio.comment.edit.open"
+                  data-action-kind="interaction"
                   variant="outline"
                   disabled={busy}
                   onClick={() => setEditing({ id: comment.id, body: comment.body })}
@@ -78,6 +93,7 @@ export function StudioProcedureComments({
                 !comment.resolved &&
                 (comment.author_id === user?.id || session.capabilities.manage) && (
                   <Button
+                    data-action-id="studio.comment.resolve"
                     variant="outline"
                     disabled={busy}
                     onClick={() => void run('resolveComment', { commentId: comment.id })}
@@ -90,6 +106,7 @@ export function StudioProcedureComments({
           );
         })}
       <form
+        data-action-id="studio.comment.create.submit"
         onSubmit={event => {
           event.preventDefault();
           if (body.trim())
@@ -103,12 +120,16 @@ export function StudioProcedureComments({
         }}
       >
         <textarea
+          data-action-id="studio.comment.create.body"
           aria-label={tr('Kommentar', 'Comment')}
           className="w-full rounded border p-2"
           value={body}
           onChange={event => setBody(event.target.value)}
         />
-        <Button disabled={busy || !body.trim() || !session.capabilities.comment}>
+        <Button
+          data-action-id="studio.comment.create.send"
+          disabled={busy || !body.trim() || !session.capabilities.comment}
+        >
           {tr('Kommentieren', 'Comment')}
         </Button>
       </form>
@@ -142,11 +163,16 @@ export function StudioProcedureTools({
       {['conflict', 'offline', 'unavailable', 'error'].includes(c.status) && (
         <details open>
           <summary>{tr('Lokalen Entwurf wiederherstellen', 'Recover local draft')}</summary>
-          <Button variant="outline" onClick={c.downloadLocalDraft}>
+          <Button
+            data-action-id="studio.draft.download"
+            variant="outline"
+            onClick={c.downloadLocalDraft}
+          >
             {tr('Entwurf herunterladen', 'Download draft')}
           </Button>
           {session.capabilities.suggest && (
             <Button
+              data-action-id="studio.draft.recover"
               disabled={busy}
               onClick={() => void c.run(async () => chooseWorkspace(await c.recoverAsProposal()))}
             >
@@ -176,6 +202,7 @@ export function StudioProcedureTools({
                 {revision.revision} · {new Date(Number(revision.created_at)).toLocaleString()}
               </span>
               <Button
+                data-action-id="studio.history.restore"
                 variant="outline"
                 disabled={busy || session.phase !== 'edit'}
                 onClick={() => void run('restore', { historyId: revision.id })}
@@ -196,6 +223,7 @@ export function StudioProcedureTools({
             )}
           </p>
           <select
+            data-action-id="studio.group.choose"
             aria-label={tr('Zielgruppe', 'Destination group')}
             value={group}
             onChange={event => setGroup(event.target.value)}
@@ -209,6 +237,7 @@ export function StudioProcedureTools({
             ))}
           </select>
           <Button
+            data-action-id="studio.group.adopt"
             disabled={busy || !group || session.phase !== 'edit'}
             onClick={() => void run('adopt', { groupId: group })}
           >
@@ -233,6 +262,7 @@ export function StudioProcedureTools({
               {(['suggest', 'comment', 'vote'] as const).map(capability => (
                 <label key={capability} className="flex gap-2">
                   <input
+                    data-action-id="studio.role.capability.toggle"
                     type="checkbox"
                     checked={role.capabilities[capability] !== false}
                     onChange={event =>

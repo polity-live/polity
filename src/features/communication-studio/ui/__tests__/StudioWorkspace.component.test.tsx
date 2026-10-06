@@ -190,9 +190,6 @@ vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
   useFixedToolbarController: () => ({ className: 'fixed' }),
 }));
 import { StudioWorkspace } from '../StudioWorkspace';
-vi.mock('../CanvasGovernancePanel', () => ({
-  CanvasGovernancePanel: () => <section aria-label="Procedure" />,
-}));
 let ydoc: StudioDocument;
 let cachedCanonical: ReturnType<typeof legacyDocumentToV3> | null | undefined;
 const listeners = new Set<() => void>();

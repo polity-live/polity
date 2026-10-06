@@ -46,7 +46,6 @@ vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
   ),
 }));
 vi.mock('../StudioEditor', () => ({ StudioEditor: () => null }));
-vi.mock('../CanvasGovernancePanel', () => ({ CanvasGovernancePanel: () => null }));
 
 afterEach(() => {
   cleanup();

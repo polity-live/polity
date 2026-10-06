@@ -22059,35 +22059,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "src/features/communication-studio/ui/CanvasGovernancePanel.tsx",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/e2e/studio/canvas.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ]
-    },
-    {
       "path": "src/features/communication-studio/ui/KonvaStudioCanvas.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -23022,6 +22993,96 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
           "project": "component",
           "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "submits a keyboard comment and clears the text only after success=%s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects blank comment submissions and binds canonical comments to no node when nothing is selected"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "edits a keyboard comment and keeps the edit open after success=%s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects blank edits and cancels without changing the existing discussion"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "enforces comment edit and resolution rights for %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "marks only missing node targets as orphaned (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps discussion controls disabled while saving and does not submit a duplicate"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "recovers the %s draft without replacing the canonical workspace"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "shows recovery with no stored fields and denies proposal recovery without suggestion rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "restores a revision, adopts the selected group and toggles every role capability in both directions"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+          "project": "component",
+          "caseId": "gates history, adoption and role controls for %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "recovers a local draft through the real controller with %s and disables all duplicate recovery controls"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "downloads the retained draft with the native keyboard and keeps the recovery control focused"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves the selected adoption group after a rejected native keyboard command (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "chooses and clears a destination with native arrow keys and preserves select focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and cancels comment editing with the native keyboard without submitting a command"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
         }
       ],
       "suggestedTestRefs": [
@@ -23647,6 +23708,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -23828,6 +23909,41 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
           "project": "component",
           "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "executes $action with native keyboard input through $outcome and blocks duplicate commands while pending"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "recovers a local draft through the real controller with %s and disables all duplicate recovery controls"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "downloads the retained draft with the native keyboard and keeps the recovery control focused"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves the selected adoption group after a rejected native keyboard command (%s)"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "chooses and clears a destination with native arrow keys and preserves select focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and cancels comment editing with the native keyboard without submitting a command"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "hides protected controls and keeps comment submission disabled without project capabilities"
         }
       ],
       "suggestedTestRefs": [
@@ -104194,6 +104310,8 @@
       "suggestedTestRefs": [
         "src/features/assistant/__tests__/assistant-tools.component-flow.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedureTools.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedureTools.component.test.tsx",
         "src/server/__tests__/ai-create-tools.contract.unit.test.ts",
         "src/server/__tests__/ai-create-tools.timestamps.unit.test.ts",
         "src/server/__tests__/ai-tools-findings.unit.test.ts",
@@ -104201,9 +104319,7 @@
         "src/server/__tests__/ai-update-tools.contract.unit.test.ts",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
-        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
-        "src/server/project-chat/__tests__/revisions.unit.test.ts",
-        "src/server/project-chat/__tests__/run.database-integration.test.ts"
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts"
       ]
     },
     {
