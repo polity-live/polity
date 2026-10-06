@@ -19335,6 +19335,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/hooks/useStudioController.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -19360,7 +19370,8 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx"
+        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
     },
     {
@@ -19394,7 +19405,8 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx"
+        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
     },
     {
@@ -19458,7 +19470,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "formats text through compact font, alignment, list and link menus"
+          "caseId": "formats selected text through the %s menu"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -19478,12 +19490,17 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "opens properties for every canonical canvas element type, including nodes without a legacy projection"
+          "caseId": "opens and edits properties for the canonical %s element"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "aligns, duplicates and deletes through selection tools"
+          "caseId": "aligns through selection tools using the chosen reference"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "duplicates and deletes through selection tools"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -19493,7 +19510,12 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "shares a chosen reference between alignment and distribution"
+          "caseId": "shares the %s reference from alignment to distribution"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shares the distribution reference with alignment and resets it on deselection"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -19578,7 +19600,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "changes object properties without moving other selected objects"
+          "caseId": "changes the %s property without moving other objects"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -19609,11 +19631,62 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
           "caseId": "consumes route focus only after canvas availability and reports a missing target"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "selects existing pages and elements, opens panels and toggles preview and guides before acknowledgement"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "copies selected elements into fresh ungrouped identities with an offset and commits project commands"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "acknowledges invalid %s commands as failures without changing the document"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects read-only %s commands"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "reports conflicts in %s without retrying the command"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "replays stored results without executing an action after an interrupted acknowledgement"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "does not poll a private proposal workspace or a controller without a project"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "waits for connectivity and prevents overlapping polls and commands after unmount"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "marks an action interrupted when the document is unavailable and retries network failures later"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+          "project": "component",
+          "caseId": "reports a missing paste destination and non-Error command failures"
         }
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx"
+        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx"
       ]
     },
     {
@@ -21746,7 +21819,12 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "aligns, duplicates and deletes through selection tools"
+          "caseId": "aligns through selection tools using the chosen reference"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "duplicates and deletes through selection tools"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -21771,7 +21849,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "changes object properties without moving other selected objects"
+          "caseId": "changes the %s property without moving other objects"
         }
       ],
       "suggestedTestRefs": [
@@ -22403,7 +22481,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+          "caseId": "supports native keyboard activation and focus restoration in the %s panel"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
@@ -22452,7 +22530,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+          "caseId": "supports native keyboard activation and focus restoration in the %s panel"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
@@ -22550,7 +22628,12 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "aligns, duplicates and deletes through selection tools"
+          "caseId": "aligns through selection tools using the chosen reference"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "duplicates and deletes through selection tools"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -22575,7 +22658,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "changes object properties without moving other selected objects"
+          "caseId": "changes the %s property without moving other objects"
         }
       ],
       "suggestedTestRefs": [
@@ -43655,6 +43738,21 @@
           "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
           "project": "component",
           "caseId": "activates stored Studio context from AI details with its original workspace"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves origin deep links through keyboard navigation and hides them while loading or failed"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+          "project": "component",
+          "caseId": "does not request private diagnostics without an authenticated session"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+          "project": "component",
+          "caseId": "aborts pending requests on unmount and tolerates responses without trace data"
         }
       ],
       "suggestedTestRefs": [
@@ -54021,6 +54119,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/project-chat/logic/city-actions.ts",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
@@ -54064,7 +54172,10 @@
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
         }
       ],
-      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/project-chat/logic/conditional-undo.ts",
@@ -54110,7 +54221,10 @@
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
         }
       ],
-      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/project-chat/logic/context-references.ts",
@@ -54156,7 +54270,10 @@
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
         }
       ],
-      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/project-chat/logic/contracts.ts",
@@ -54204,6 +54321,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "supabase/tests/permissions_contract.sql",
         "supabase/tests/schema_contract.sql",
         "tools/email/__tests__/template-cli-contracts.unit.test.ts",
@@ -54253,9 +54371,57 @@
           "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
           "project": "unit",
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies only an authorized theme and preserves a caption-only post patch"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "blocks %s when it would change a locked element"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "duplicates grouped pages with fresh identities and maintains post membership and page order"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "inserts and resizes a page and removes posts whose only page disappears"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "groups, reorders and ungroups elements without altering the source"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates native table cells and chart series with unique identifiers and removes an element"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates, edits, remaps and removes a post while preserving existing caption channels"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects the incompatible %s property atomically"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing resources, incomplete orderings, duplicates, protected groups and removal of the last page"
         }
       ],
-      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/project-chat/logic/text-actions.ts",
@@ -54301,7 +54467,10 @@
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
         }
       ],
-      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/project-chat/ui/ProjectChatPanel.tsx",
@@ -74492,13 +74661,13 @@
         "src/features/change-requests/ui/__tests__/CREditorPreviewView.spacing.component.test.tsx",
         "src/features/change-requests/ui/__tests__/EditorViewModeToggleView.contract.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/editor-realtime-version.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useEditor.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
-        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
-        "src/features/editor/hooks/__tests__/useEditorOperations.component.test.tsx"
+        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx"
       ]
     },
     {
@@ -102960,6 +103129,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/assistant/__tests__/assistant-tools.component-flow.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
         "src/server/__tests__/ai-create-tools.contract.unit.test.ts",
         "src/server/__tests__/ai-create-tools.timestamps.unit.test.ts",
         "src/server/__tests__/ai-tools-findings.unit.test.ts",
@@ -102969,8 +103139,7 @@
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
-        "src/server/project-chat/__tests__/run.database-integration.test.ts",
-        "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts"
+        "src/server/project-chat/__tests__/run.database-integration.test.ts"
       ]
     },
     {
@@ -120615,6 +120784,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/package-manager-contract.static-contract.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -121455,6 +121634,37 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/merge-coverage-projects.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges complementary real branch hits and keeps file summaries and counters"
+        },
+        {
+          "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects incomplete, missing, malformed and empty project reports"
+        },
+        {
+          "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+          "project": "unit",
+          "caseId": "writes aggregate reports when invoked from the CI command line"
+        },
+        {
+          "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+          "project": "unit",
+          "caseId": "executes the CLI entry point with the same reports and supports embedding without a script argument"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/migrate-test-names.mjs",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -121747,6 +121957,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "vitest.browser.coverage.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "vitest.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
@@ -121758,6 +121978,16 @@
     },
     {
       "path": "vitest.coverage.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "vitest.database.coverage.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",

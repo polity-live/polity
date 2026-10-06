@@ -136,7 +136,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "formats text through compact font, alignment, list and link menus"
+        "caseId": "formats selected text through the %s menu"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -156,12 +156,17 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "opens properties for every canonical canvas element type, including nodes without a legacy projection"
+        "caseId": "opens and edits properties for the canonical %s element"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools"
+        "caseId": "aligns through selection tools using the chosen reference"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -171,7 +176,12 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "shares a chosen reference between alignment and distribution"
+        "caseId": "shares the %s reference from alignment to distribution"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shares the distribution reference with alignment and resets it on deselection"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -256,7 +266,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects"
+        "caseId": "changes the %s property without moving other objects"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -287,6 +297,56 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
         "caseId": "consumes route focus only after canvas availability and reports a missing target"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects existing pages and elements, opens panels and toggles preview and guides before acknowledgement"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "copies selected elements into fresh ungrouped identities with an offset and commits project commands"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "acknowledges invalid %s commands as failures without changing the document"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects read-only %s commands"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "reports conflicts in %s without retrying the command"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "replays stored results without executing an action after an interrupted acknowledgement"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "does not poll a private proposal workspace or a controller without a project"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for connectivity and prevents overlapping polls and commands after unmount"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "marks an action interrupted when the document is unavailable and retries network failures later"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a missing paste destination and non-Error command failures"
       }
     ],
     "src/features/communication-studio/logic/ai-design.ts": [
@@ -1390,7 +1450,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
@@ -1417,7 +1477,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
@@ -1618,6 +1678,21 @@
         "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "project": "component",
         "caseId": "activates stored Studio context from AI details with its original workspace"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves origin deep links through keyboard navigation and hides them while loading or failed"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "does not request private diagnostics without an authenticated session"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "aborts pending requests on unmount and tolerates responses without trace data"
       }
     ],
     "src/features/project-chat/hooks/editor-bridge.ts": [
@@ -1857,6 +1932,51 @@
         "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "project": "unit",
         "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies only an authorized theme and preserves a caption-only post patch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "blocks %s when it would change a locked element"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "duplicates grouped pages with fresh identities and maintains post membership and page order"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "inserts and resizes a page and removes posts whose only page disappears"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "groups, reorders and ungroups elements without altering the source"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates native table cells and chart series with unique identifiers and removes an element"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates, edits, remaps and removes a post while preserving existing caption channels"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects the incompatible %s property atomically"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing resources, incomplete orderings, duplicates, protected groups and removal of the last page"
       }
     ],
     "src/features/project-chat/logic/text-actions.ts": [
@@ -3909,6 +4029,106 @@
         "file": "tools/studio/__tests__/worker.unit.test.ts",
         "project": "unit",
         "caseId": "rejects a missing encoder before announcing readiness or consuming jobs"
+      }
+    ],
+    "tools/testing/merge-coverage-projects.mjs": [
+      {
+        "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges complementary real branch hits and keeps file summaries and counters"
+      },
+      {
+        "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects incomplete, missing, malformed and empty project reports"
+      },
+      {
+        "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+        "project": "unit",
+        "caseId": "writes aggregate reports when invoked from the CI command line"
+      },
+      {
+        "file": "tools/testing/__tests__/merge-coverage-projects.unit.test.ts",
+        "project": "unit",
+        "caseId": "executes the CLI entry point with the same reports and supports embedding without a script argument"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/auth/ui/ChatGptLoginButton.tsx#auth.authenticate.chatgpt": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "starts %s by keyboard, retains focus and blocks duplicate submissions while redirecting",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "starts identity login only after activation and exposes the failure for retry",
+        "scenarios": ["error"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps login disabled and reports AI access separately before activation",
+        "scenarios": ["unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps identity login disabled when its parent form is busy",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/users/ui/ChatGptConnectionCard.tsx#users.ai.chatgpt.link": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "starts %s by keyboard, retains focus and blocks duplicate submissions while redirecting",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "explicitly links from the current Polity account and recovers after a rejected link",
+        "scenarios": ["error"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "disables account linking without an authenticated Polity user",
+        "scenarios": ["unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps login disabled and reports AI access separately before activation",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/messages/ui/AiTraceDetails.tsx#messages.ai-trace.refresh.default": [
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves origin deep links through keyboard navigation and hides them while loading or failed",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/messages/ui/AiTraceDetails.tsx#messages.ai-trace.origin.navigate": [
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves origin deep links through keyboard navigation and hides them while loading or failed",
+        "scenarios": [
+          "authorized",
+          "redirect",
+          "deep-link",
+          "loading",
+          "error",
+          "keyboard",
+          "focus"
+        ]
       }
     ]
   }

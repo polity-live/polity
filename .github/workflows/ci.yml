@@ -175,7 +175,15 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run test:browser-component
+      - run: pnpm exec vitest run --config vitest.browser.coverage.config.ts
+      - name: Upload browser coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-browser-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: coverage-browser/coverage-final.json
 
   coverage-shards:
     name: Coverage Shard ${{ matrix.shard }} of 4
@@ -214,16 +222,22 @@ jobs:
   coverage-ratchet:
     name: Coverage Ratchet
     if: always()
-    needs: coverage-shards
+    needs: [coverage-shards, browser-component-tests, database-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Require successful coverage shards
         env:
           COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}
+          BROWSER_RESULT: ${{ needs.browser-component-tests.result }}
+          DATABASE_RESULT: ${{ needs.database-tests.result }}
         run: |
           if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]; then
             echo "Coverage shards did not all succeed: $COVERAGE_SHARDS_RESULT"
+            exit 1
+          fi
+          if [[ "$BROWSER_RESULT" != "success" || "$DATABASE_RESULT" != "success" ]]; then
+            echo "Supplemental coverage tests failed: browser=$BROWSER_RESULT database=$DATABASE_RESULT"
             exit 1
           fi
       - uses: actions/checkout@v7
@@ -250,6 +264,22 @@ jobs:
             --merge-reports "$RUNNER_TEMP/coverage-blobs" \
             --coverage \
             "--coverage.reportsDirectory=coverage"
+      - name: Download browser coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-browser-${{ github.run_attempt }}
+          path: coverage-browser
+      - name: Download database coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-database-${{ github.run_attempt }}
+          path: coverage-database
+      - name: Merge browser and database execution evidence
+        run: >-
+          node tools/testing/merge-coverage-projects.mjs coverage
+          coverage/coverage-final.json
+          coverage-browser/coverage-final.json
+          coverage-database/coverage-final.json
       - name: Enforce repository and changed-code coverage
         run: |
           node tools/testing/check-coverage-ratchet.mjs
@@ -367,7 +397,15 @@ jobs:
       - name: Verify database coverage
         run: pnpm run test:db:coverage
       - name: Run application database integration tests
-        run: pnpm run test:database-integration
+        run: pnpm exec vitest run --config vitest.database.coverage.config.ts --project database-integration
+      - name: Upload database coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-database-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: coverage-database/coverage-final.json
       - name: Run pgTAP tests
         run: supabase test db --local
       - name: Run database concurrency tests

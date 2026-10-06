@@ -62,8 +62,8 @@ vi.mock('../KonvaStudioCanvas', () => ({
 }));
 import { StudioWorkspace } from '../StudioWorkspace';
 afterEach(cleanup);
-function model() {
-  const value = createDocument('campaign', 'Keyboard campaign', undefined, 1);
+function model(kind: 'campaign' | 'single' = 'campaign') {
+  const value = createDocument(kind, 'Keyboard campaign', undefined, 1);
   return new Proxy(
     {
       value,
@@ -133,13 +133,16 @@ async function keyboardControls(container: HTMLElement) {
       control.getAttribute('aria-label') === 'close' ||
       !control.isConnected ||
       control.disabled ||
+      control.getAttribute('aria-disabled') === 'true' ||
       control.closest('fieldset:disabled') ||
       !control.getClientRects().length
     )
       continue;
     control.focus();
     expect(document.activeElement).toBe(control);
-    expect(control.tabIndex).toBeGreaterThanOrEqual(0);
+    // Menu items use roving focus rather than each becoming a separate Tab stop.
+    if (!control.getAttribute('role')?.startsWith('menuitem'))
+      expect(control.tabIndex).toBeGreaterThanOrEqual(0);
     const changed = vi.fn();
     if (control.tagName === 'BUTTON' || control.getAttribute('role')?.startsWith('menuitem')) {
       control.addEventListener('click', changed);
@@ -171,20 +174,24 @@ async function keyboardControls(container: HTMLElement) {
   }
   return count;
 }
-it('exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation', async () => {
-  io.controller = model();
-  render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
-  await screen.findByRole('button', { name: 'table' });
-  for (const panel of [
-    'layers',
-    'elementAlignment',
-    'distribute',
-    'order',
-    'groupElements',
-    'text',
-    'exports',
-    'project',
-  ]) {
+it.each([
+  'layers',
+  'elementAlignment',
+  'distribute',
+  'order',
+  'groupElements',
+  'text',
+  'exports',
+  'project',
+])(
+  'supports native keyboard activation and focus restoration in the %s panel',
+  async panel => {
+    io.controller = model('single');
+    const ui = render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+    await screen.findByRole('button', { name: 'table' });
+    // Selecting follows the workspace's initial project-change reset.
+    io.controller.selected = [...io.controller.selected];
+    ui.rerender(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
     const triggers = screen.getAllByRole('button', { name: panel });
     const trigger = triggers.find(button => button.hasAttribute('aria-haspopup')) ?? triggers[0];
     trigger.focus();
@@ -208,12 +215,19 @@ it('exposes Studio creation, text, media, campaign and export controls to real k
       expect(screen.queryByRole(surface.getAttribute('role') as 'menu' | 'dialog')).toBeNull()
     );
     expect(document.activeElement).toBe(trigger);
-  }
+    if (panel === 'exports') expect(io.controller.exportMedia).toHaveBeenCalled();
+  },
+  30000
+);
+
+it('edits inline properties through native keyboard focus and activation', async () => {
+  io.controller = model();
+  render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  await screen.findByRole('button', { name: 'table' });
   expect(
     await keyboardControls(screen.getByRole('region', { name: 'properties' }))
   ).toBeGreaterThan(10);
   expect(io.controller.transactV3).toHaveBeenCalled();
-  expect(io.controller.exportMedia).toHaveBeenCalled();
 }, 30000);
 
 it('supports native keyboard focus and activation for table and chart controls', async () => {

@@ -187,7 +187,12 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools"
+        "caseId": "aligns through selection tools using the chosen reference"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -212,7 +217,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects"
+        "caseId": "changes the %s property without moving other objects"
       }
     ],
     "src/routes/_authed/group/$id/studio.tsx": [
@@ -533,7 +538,12 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools"
+        "caseId": "aligns through selection tools using the chosen reference"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -558,7 +568,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects"
+        "caseId": "changes the %s property without moving other objects"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -949,7 +959,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": []
       }
     ],
@@ -963,7 +973,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -977,7 +987,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -991,7 +1001,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -999,13 +1009,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1019,13 +1035,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1045,7 +1067,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1059,7 +1081,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1073,7 +1095,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1087,7 +1109,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1101,13 +1123,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1127,7 +1155,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1141,7 +1169,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1161,7 +1189,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1181,7 +1209,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1195,7 +1223,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1203,13 +1231,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1223,13 +1257,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1243,7 +1277,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1263,7 +1297,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1283,7 +1317,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1303,7 +1337,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1317,7 +1351,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1331,13 +1365,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1351,7 +1385,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1371,7 +1405,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": []
       }
     ],
@@ -1385,7 +1419,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1405,7 +1439,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1425,7 +1459,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1445,7 +1479,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1459,7 +1493,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1473,7 +1507,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1493,7 +1527,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1513,7 +1547,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1527,7 +1561,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1541,7 +1575,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1555,7 +1589,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1575,7 +1609,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1589,7 +1623,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1609,7 +1643,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1617,13 +1651,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1637,7 +1671,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1651,7 +1685,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1671,7 +1705,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1691,7 +1725,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1699,13 +1733,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1713,13 +1747,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1727,13 +1761,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1741,13 +1775,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1761,7 +1795,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1775,13 +1809,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1789,13 +1823,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1803,13 +1837,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1823,7 +1857,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1837,7 +1871,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1851,7 +1885,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1865,7 +1899,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1873,13 +1907,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1893,7 +1927,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1907,7 +1941,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1927,7 +1961,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1947,7 +1981,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1961,13 +1995,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1975,13 +2009,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1995,7 +2029,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2009,13 +2043,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2023,13 +2063,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "changes object properties without moving other selected objects",
+        "caseId": "changes the %s property without moving other objects",
         "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2043,7 +2083,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2063,7 +2103,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2083,7 +2123,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2103,7 +2143,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2117,13 +2157,19 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "aligns, duplicates and deletes through selection tools",
+        "caseId": "aligns through selection tools using the chosen reference",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates and deletes through selection tools",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2143,7 +2189,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2157,7 +2203,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
@@ -2165,7 +2211,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
@@ -2287,7 +2333,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2307,7 +2353,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2321,7 +2367,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2335,7 +2381,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2349,7 +2395,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2363,7 +2409,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2377,7 +2423,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2391,7 +2437,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2405,7 +2451,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -2419,7 +2465,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
         "scenarios": ["keyboard", "focus"]
       }
     ],

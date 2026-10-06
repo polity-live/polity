@@ -191,6 +191,16 @@ it('selects after zoom and pan, moves the selected shapes together, and deletes 
   drag([550, 300], [50, 50]);
   await waitFor(() => expect(selectedIds().sort()).toEqual([shapes[0].id, shapes[1].id].sort()));
   const start = worldToClient(170, 170);
+  // The viewport callback precedes Konva's batched canvas and hit-map redraw.
+  // Wait for the zoomed shape before using that position to initiate a drag.
+  await waitFor(() => {
+    const rect = surface.getBoundingClientRect();
+    const x = Math.floor(((start.clientX - rect.left) * surface.width) / rect.width);
+    const y = Math.floor(((start.clientY - rect.top) * surface.height) / rect.height);
+    const rgba = surface.getContext('2d')!.getImageData(x, y, 1, 1).data;
+    expect(rgba[0]).toBeGreaterThan(150);
+    expect(rgba[2]).toBeLessThan(100);
+  });
   fireEvent.mouseDown(surface, { ...start, button: 0 });
   fireEvent.mouseMove(window, {
     clientX: start.clientX + 20,

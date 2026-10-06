@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 const mocks = vi.hoisted(() => ({
   enabled: false,
   providers: [] as string[],
   start: vi.fn(),
   toast: vi.fn(),
+  authenticated: true,
 }));
 vi.mock('@/features/auth/logic/chatgptAuth', () => ({
   CHATGPT_AUTH_PROVIDER: 'custom:openai',
@@ -13,7 +15,9 @@ vi.mock('@/features/auth/logic/chatgptAuth', () => ({
   startChatGptAuth: mocks.start,
 }));
 vi.mock('@/providers/auth-provider', () => ({
-  useAuth: () => ({ user: { id: 'existing-user', linkedProviders: mocks.providers } }),
+  useAuth: () => ({
+    user: mocks.authenticated ? { id: 'existing-user', linkedProviders: mocks.providers } : null,
+  }),
 }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({}) }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -28,7 +32,55 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.enabled = false;
   mocks.providers = [];
+  mocks.authenticated = true;
   mocks.start.mockResolvedValue(undefined);
+});
+
+it('disables account linking without an authenticated Polity user', async () => {
+  mocks.enabled = true;
+  mocks.authenticated = false;
+  render(<ChatGptConnectionCard />);
+  const button = screen.getByRole('button', { name: 'pages.user.ai.chatgpt.link' });
+  expect(button).toHaveProperty('disabled', true);
+  fireEvent.click(button);
+  expect(mocks.start).not.toHaveBeenCalled();
+});
+
+it.each(['login', 'link'])(
+  'starts %s by keyboard, retains focus and blocks duplicate submissions while redirecting',
+  async mode => {
+    mocks.enabled = true;
+    let resolve!: () => void;
+    mocks.start.mockReturnValue(
+      new Promise<void>(done => {
+        resolve = done;
+      })
+    );
+    render(mode === 'login' ? <ChatGptLoginButton /> : <ChatGptConnectionCard />);
+    const button = screen.getByRole('button');
+    expect(button).toHaveProperty('disabled', false);
+    const user = userEvent.setup();
+    await user.tab();
+    expect(document.activeElement).toBe(button);
+    await user.keyboard('{Enter}');
+    expect(mocks.start).toHaveBeenCalledWith({}, expect.objectContaining({ mode }));
+    expect(button).toHaveProperty('disabled', true);
+    if (mode === 'login') expect(button.textContent).toBe('auth.chatgpt.loading');
+    await user.keyboard('{Enter}');
+    expect(mocks.start).toHaveBeenCalledTimes(1);
+    await act(async () => resolve());
+    expect(mocks.toast).not.toHaveBeenCalled();
+    expect(button).toHaveProperty('disabled', true);
+  }
+);
+
+it('keeps identity login disabled when its parent form is busy', () => {
+  mocks.enabled = true;
+  render(<ChatGptLoginButton disabled />);
+  const button = screen.getByRole('button');
+  expect(button).toHaveProperty('disabled', true);
+  fireEvent.click(button);
+  expect(mocks.start).not.toHaveBeenCalled();
 });
 
 it('keeps login disabled and reports AI access separately before activation', () => {

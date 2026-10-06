@@ -115,7 +115,12 @@ export function AiTraceDetails({
     >
       <summary className="cursor-pointer">{t('common.aiTrace.title')}</summary>
       <div className="text-foreground space-y-3 rounded border p-3">
-        <button type="button" className="underline" onClick={() => setRevision(value => value + 1)}>
+        <button
+          type="button"
+          className="underline"
+          data-action-id="messages.ai-trace.refresh.default"
+          onClick={() => setRevision(value => value + 1)}
+        >
           {t('common.aiTrace.refresh')}
         </button>
         {loading ? (
@@ -131,7 +136,11 @@ export function AiTraceDetails({
                 {trace.surface} · {trace.invocation} · {trace.id}
               </p>
               {trace.origin_message_id ? (
-                <a className="underline" href={`#message-${trace.origin_message_id}`}>
+                <a
+                  className="underline"
+                  data-action-id="messages.ai-trace.origin.navigate"
+                  href={`#message-${trace.origin_message_id}`}
+                >
                   {t('common.aiTrace.origin')}
                 </a>
               ) : null}

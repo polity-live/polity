@@ -191,24 +191,31 @@ vi.mock('../CanvasGovernancePanel', () => ({
   CanvasGovernancePanel: () => <section aria-label="Procedure" />,
 }));
 let ydoc: StudioDocument;
+let cachedCanonical: ReturnType<typeof legacyDocumentToV3> | null | undefined;
 const listeners = new Set<() => void>();
-const notifyAll = () => listeners.forEach(f => f());
+const notifyAll = () => {
+  cachedCanonical = undefined;
+  listeners.forEach(f => f());
+};
 function value() {
   return structuredClone(ydoc);
 }
 function setup(kind: Parameters<typeof createDocument>[0] = 'single') {
   ydoc = createDocument(kind, 'Editable campaign', undefined, 1);
+  cachedCanonical = undefined;
   io.editor = {
     get value() {
       return value();
     },
     get v3Value() {
+      if (cachedCanonical !== undefined) return cachedCanonical;
       try {
-        return legacyDocumentToV3(ydoc);
+        cachedCanonical = legacyDocumentToV3(ydoc);
       } catch {
         // The legacy mock permits intermediate edits that the real document hook validates.
-        return null;
+        cachedCanonical = null;
       }
+      return cachedCanonical;
     },
     canEdit: true,
     status: 'saved',
@@ -668,31 +675,39 @@ describe('Studio toolbar workflows', () => {
     expect(table?.table?.widths).toHaveLength(2);
     expect(screen.queryByRole('menu')).toBeNull();
   });
-  it('formats text through compact font, alignment, list and link menus', async () => {
-    await show();
-    const selected = selectText();
-    const current = () => value().pages[0].elements.find(element => element.id === selected.id)!;
+  it.each(['font', 'alignment', 'bulletList', 'numberedList', 'link'])(
+    'formats selected text through the %s menu',
+    async action => {
+      await show();
+      const selected = selectText();
+      const current = () => value().pages[0].elements.find(element => element.id === selected.id)!;
 
-    fireEvent.click(within(panel('font')).getByRole('menuitemradio', { name: 'Inter' }));
-    expect(current().font).toBe('Inter');
-    fireEvent.click(within(panel('alignment')).getByRole('menuitemradio', { name: 'right' }));
-    expect(current().align).toBe('right');
-
-    fireEvent.click(within(panel('text')).getByRole('menuitem', { name: 'bulletList' }));
-    expect(current().richText.every(paragraph => paragraph.list === 'bullet')).toBe(true);
-    fireEvent.click(within(panel('text')).getByRole('menuitem', { name: 'numberedList' }));
-    expect(current().richText.every(paragraph => paragraph.list === 'number')).toBe(true);
-
-    fireEvent.click(within(panel('text')).getByRole('menuitem', { name: 'link' }));
-    const url = screen.getByRole('textbox', { name: 'link' });
-    fireEvent.change(url, { target: { value: 'https://example.org' } });
-    fireEvent.keyDown(url, { key: 'Enter' });
-    expect(
-      current().richText.some(paragraph =>
-        paragraph.children.some(run => run.url === 'https://example.org')
-      )
-    ).toBe(true);
-  });
+      if (action === 'font') {
+        fireEvent.click(within(panel('font')).getByRole('menuitemradio', { name: 'Inter' }));
+        expect(current().font).toBe('Inter');
+      } else if (action === 'alignment') {
+        fireEvent.click(within(panel('alignment')).getByRole('menuitemradio', { name: 'right' }));
+        expect(current().align).toBe('right');
+      } else if (action === 'bulletList' || action === 'numberedList') {
+        fireEvent.click(within(panel('text')).getByRole('menuitem', { name: action }));
+        expect(
+          current().richText.every(
+            paragraph => paragraph.list === (action === 'bulletList' ? 'bullet' : 'number')
+          )
+        ).toBe(true);
+      } else {
+        fireEvent.click(within(panel('text')).getByRole('menuitem', { name: 'link' }));
+        const url = screen.getByRole('textbox', { name: 'link' });
+        fireEvent.change(url, { target: { value: 'https://example.org' } });
+        fireEvent.keyDown(url, { key: 'Enter' });
+        expect(
+          current().richText.some(paragraph =>
+            paragraph.children.some(run => run.url === 'https://example.org')
+          )
+        ).toBe(true);
+      }
+    }
+  );
   it('opens automation-targeted menus and returns focus on Escape', async () => {
     await show();
     selectText();
@@ -814,7 +829,19 @@ describe('Studio toolbar workflows', () => {
     expect(screen.queryByRole('button', { name: 'properties' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'properties' })).toBeNull();
   });
-  it('opens properties for every canonical canvas element type, including nodes without a legacy projection', async () => {
+  it.each([
+    'rect',
+    'arrow',
+    'text',
+    'image',
+    'table',
+    'chart',
+    'frame',
+    'audio',
+    'file',
+    'drawing',
+    'embed',
+  ])('opens and edits properties for the canonical %s element', async kind => {
     let canonical = legacyDocumentToV3(ydoc);
     const root = canonical.nodes.find(node => node.type === 'frame' && !node.parentFrameId)!;
     const base = createFrameNode('custom', {
@@ -887,41 +914,56 @@ describe('Studio toolbar workflows', () => {
       notifyAll();
     };
     await show();
-    for (const node of [...semantic, ...extra]) {
-      act(() => io.canvasProps.selectExact([node.id]));
-      expect(io.canvasProps.inspector, node.type).toBeTruthy();
-      const inspector = screen.getByRole('region', { name: 'properties' });
-      if (node.type === 'shape' && node.shape === 'arrow') {
-        fireEvent.change(within(inspector).getByLabelText('endArrowhead'), {
-          target: { value: 'bar' },
-        });
-        expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
-          endArrowhead: 'bar',
-        });
-      }
-      if (node.type === 'frame') {
-        fireEvent.change(within(inspector).getByLabelText('width'), { target: { value: '420' } });
-        expect(canonical.nodes.find(candidate => candidate.id === node.id)?.transform.width).toBe(
-          420
-        );
-      }
-      if (node.type === 'media' && node.mediaType === 'audio') {
-        fireEvent.change(within(inspector).getByLabelText('text'), {
-          target: { value: 'Interview' },
-        });
-        expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
-          alt: 'Interview',
-        });
-      }
-    }
-    const embed = extra.at(-1)!;
+    const node = [...semantic, ...extra][
+      [
+        'rect',
+        'arrow',
+        'text',
+        'image',
+        'table',
+        'chart',
+        'frame',
+        'audio',
+        'file',
+        'drawing',
+        'embed',
+      ].indexOf(kind)
+    ];
+    act(() => io.canvasProps.selectExact([node.id]));
+    expect(io.canvasProps.inspector, node.type).toBeTruthy();
     const inspector = screen.getByRole('region', { name: 'properties' });
-    fireEvent.change(within(inspector).getByLabelText('name'), {
-      target: { value: 'Updated embed' },
-    });
-    expect(canonical.nodes.find(node => node.id === embed.id)?.name).toBe('Updated embed');
+    if (node.type === 'shape' && node.shape === 'arrow') {
+      fireEvent.change(within(inspector).getByLabelText('endArrowhead'), {
+        target: { value: 'bar' },
+      });
+      expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
+        endArrowhead: 'bar',
+      });
+    }
+    if (node.type === 'frame') {
+      fireEvent.change(within(inspector).getByLabelText('width'), { target: { value: '420' } });
+      expect(canonical.nodes.find(candidate => candidate.id === node.id)?.transform.width).toBe(
+        420
+      );
+    }
+    if (node.type === 'media' && node.mediaType === 'audio') {
+      fireEvent.change(within(inspector).getByLabelText('text'), {
+        target: { value: 'Interview' },
+      });
+      expect(canonical.nodes.find(candidate => candidate.id === node.id)).toMatchObject({
+        alt: 'Interview',
+      });
+    }
+    if (kind === 'embed') {
+      fireEvent.change(within(inspector).getByLabelText('name'), {
+        target: { value: 'Updated embed' },
+      });
+      expect(canonical.nodes.find(candidate => candidate.id === node.id)?.name).toBe(
+        'Updated embed'
+      );
+    }
   });
-  it('aligns, duplicates and deletes through selection tools', async () => {
+  it('aligns through selection tools using the chosen reference', async () => {
     await show();
     selectText();
     const alignmentMenu = panel('elementAlignment');
@@ -936,6 +978,10 @@ describe('Studio toolbar workflows', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'center' }));
     const e = value().pages[0].elements.find(e => e.type === 'text')!;
     expect(e.x).toBe((100 + 900 - e.width) / 2);
+  });
+  it('duplicates and deletes through selection tools', async () => {
+    await show();
+    selectText();
     const count = value().pages[0].elements.length;
     click('duplicate');
     expect(value().pages[0].elements.length).toBe(count + 1);
@@ -994,16 +1040,26 @@ describe('Studio toolbar workflows', () => {
     expect(within(groupMenu).queryByRole('menuitem', { name: 'unlock' })).toBeNull();
     expect(within(toolbar).getByRole('button', { name: 'lock' })).toBeTruthy();
   });
-  it('shares a chosen reference between alignment and distribution', async () => {
+  it.each(['view', 'frame'])(
+    'shares the %s reference from alignment to distribution',
+    async reference => {
+      await show();
+      selectText();
+      fireEvent.click(
+        within(panel('elementAlignment')).getByRole('menuitemradio', { name: reference })
+      );
+      const distributeMenu = panel('distribute');
+      expect(
+        within(distributeMenu)
+          .getByRole('menuitemradio', { name: reference })
+          .getAttribute('aria-checked')
+      ).toBe('true');
+    }
+  );
+  it('shares the distribution reference with alignment and resets it on deselection', async () => {
     await show();
     selectText();
-    fireEvent.click(within(panel('elementAlignment')).getByRole('menuitemradio', { name: 'view' }));
     const distributeMenu = panel('distribute');
-    expect(
-      within(distributeMenu)
-        .getByRole('menuitemradio', { name: 'view' })
-        .getAttribute('aria-checked')
-    ).toBe('true');
     fireEvent.click(within(distributeMenu).getByRole('menuitemradio', { name: 'frame' }));
     expect(
       within(panel('elementAlignment'))
@@ -1521,35 +1577,33 @@ describe('Studio toolbar workflows', () => {
   });
 });
 
-it('changes object properties without moving other selected objects', async () => {
+it.each([
+  ['X', 'x', 20],
+  ['Y', 'y', 30],
+  ['width', 'width', 500],
+  ['height', 'height', 240],
+  ['rotation', 'rotation', 12],
+  ['opacity', 'opacity', 0.5],
+  ['order', 'order', 4],
+  ['fontSize', 'fontSize', 40],
+  ['strokeWidth', 'strokeWidth', 2],
+  ['lineHeight', 'lineHeight', 1.5],
+  ['font', 'font', 'Inter'],
+  ['alignment', 'align', 'right'],
+  ['verticalAlign', 'verticalAlign', 'bottom'],
+  ['text', 'text', 'Updated'],
+] as const)('changes the %s property without moving other objects', async (label, key, n) => {
   await show();
   const e = selectText();
+  const geometry = () =>
+    value()
+      .pages[0].elements.filter(x => x.id !== e.id)
+      .map(({ id, x, y, width, height, rotation }) => ({ id, x, y, width, height, rotation }));
+  const others = geometry();
   const props = screen.getByRole('region', { name: 'properties' });
-  for (const [label, key, n] of [
-    ['X', 'x', 20],
-    ['Y', 'y', 30],
-    ['width', 'width', 500],
-    ['height', 'height', 240],
-    ['rotation', 'rotation', 12],
-    ['opacity', 'opacity', 0.5],
-    ['order', 'order', 4],
-    ['fontSize', 'fontSize', 40],
-    ['strokeWidth', 'strokeWidth', 2],
-    ['lineHeight', 'lineHeight', 1.5],
-  ] as const) {
-    fireEvent.change(within(props).getByLabelText(label), { target: { value: String(n) } });
-    expect(value().pages[0].elements.find(x => x.id === e.id)?.[key]).toBe(n);
-  }
-  fireEvent.change(within(props).getByLabelText('font'), { target: { value: 'Inter' } });
-  fireEvent.change(within(props).getByLabelText('alignment'), { target: { value: 'right' } });
-  fireEvent.change(within(props).getByLabelText('verticalAlign'), { target: { value: 'bottom' } });
-  fireEvent.change(within(props).getByLabelText('text'), { target: { value: 'Updated' } });
-  expect(value().pages[0].elements.find(x => x.id === e.id)).toMatchObject({
-    font: 'Inter',
-    align: 'right',
-    verticalAlign: 'bottom',
-    text: 'Updated',
-  });
+  fireEvent.change(within(props).getByLabelText(label), { target: { value: String(n) } });
+  expect(value().pages[0].elements.find(x => x.id === e.id)?.[key]).toBe(n);
+  expect(geometry()).toEqual(others);
 });
 
 it('offers crop for one unlocked image or video and commits geometry in one transaction', async () => {
