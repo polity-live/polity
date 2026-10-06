@@ -1679,6 +1679,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           return (
             <Group
               key={node.id}
+              data-action-id="communication-studio.canvas.node.select"
+              data-action-kind="selection"
               id={showSelf ? node.id : undefined}
               x={t.x + t.width / 2}
               y={t.y + t.height / 2}
@@ -1942,6 +1944,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         style={props.fit === 'contain' ? { height: '100%' } : undefined}
         data-testid="studio-canvas"
         data-canvas-engine="konva"
+        tabIndex={props.editable ? 0 : undefined}
         onDragOverCapture={event => {
           if (
             !props.editable ||
@@ -2429,12 +2432,20 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                     const [a, b, c, d] = parent
                       ? worldMatrix(props.document, parent)
                       : [1, 0, 0, 1, 0, 0];
-                    const localDx = item.x() - (source.transform.x + source.transform.width / 2);
-                    const localDy = item.y() - (source.transform.y + source.transform.height / 2);
                     const width = Math.max(1, source.transform.width * Math.abs(item.scaleX()));
                     const height = Math.max(1, source.transform.height * Math.abs(item.scaleY()));
-                    item.scaleX(1);
-                    item.scaleY(1);
+                    // The node's x/y store its top-left; Konva positions this
+                    // group by its center. Account for the new dimensions when
+                    // translating the center back into a canonical top-left.
+                    const localDx = item.x() - width / 2 - source.transform.x;
+                    const localDy = item.y() - height / 2 - source.transform.y;
+                    // Transformer can decompose mirrored geometry into a rotation
+                    // and different scale signs. Persist those signs with the new
+                    // rotation so resizing preserves the rendered orientation.
+                    const flipX = item.scaleX() < 0;
+                    const flipY = item.scaleY() < 0;
+                    item.scaleX(flipX ? -1 : 1);
+                    item.scaleY(flipY ? -1 : 1);
                     return [
                       {
                         nodeId: source.id,
@@ -2444,8 +2455,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                           width,
                           height,
                           rotation: item.rotation(),
-                          flipX: source.transform.flipX,
-                          flipY: source.transform.flipY,
+                          flipX,
+                          flipY,
                         },
                       },
                     ];
@@ -2660,6 +2671,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           >
             <div className="polity-canvas-properties-header">
               <button
+                data-action-id="communication-studio.inspector.position.move"
+                data-action-kind="interaction"
                 type="button"
                 className="polity-canvas-properties-drag-handle"
                 aria-label={props.inspectorLabels?.move ?? 'Eigenschaften verschieben'}
@@ -2701,6 +2714,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 <span>{props.inspectorLabels?.title ?? 'Elementeigenschaften'}</span>
               </button>
               <button
+                data-action-id="communication-studio.inspector.visibility.toggle"
+                data-action-kind="selection"
                 type="button"
                 className="polity-canvas-properties-toggle"
                 aria-controls={inspectorBodyId}

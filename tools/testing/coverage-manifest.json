@@ -22243,6 +22243,121 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "drags a crop edge on the real canvas and saves the smaller frame"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "collapses and restores the native inspector with keyboard activation and retained focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "moves the inspector with native arrow keys and clamps movement to the viewport"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "drags the inspector using a real pointer and retains its selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores secondary inspector drags and cancels interrupted pointer movement"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders every geometric shape with real Konva primitives and painted pixels"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "paints drawing, table, chart, embed and missing-media nodes on the real canvas"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "searches nested rich text and focuses the matching frame"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "draws only peers on the active frame and uses readable fallback identity colors"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "decodes and crops a native recorded video, redraws after seeking and releases media on unmount"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reports missing assets and native image and video decoding failures without committing a crop"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects crop commands for readonly, locked, nonvisual and missing selections"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "composites nested master layouts in front and behind each destination frame"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resizes selected nodes with native handles without changing orientation (mirrorX=%s, mirrorY=%s)"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resizes root nodes without a parent transform and stops toolbar pointer events from selecting the canvas"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps foreground master content above the live inline text editor"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resizes media crops with every native edge and corner handle"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores touch zoom on text fields, handles cancelled fingers and resumes pointer selection after the touch cooldown"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "cancels delayed native font loading when the rich text node unmounts"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens selected text and clears selections from the keyboard-focusable canvas"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "fails stale focus handles safely after unmount and still returns finite scene coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects focus when an overlay covers the entire canvas viewport"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shows an error for a decoded image without usable natural dimensions"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "cancels an active native %s when a second finger starts a canvas gesture"
         }
       ],
       "suggestedTestRefs": [
@@ -22250,14 +22365,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22329,14 +22444,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22403,14 +22518,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22457,14 +22572,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22561,14 +22676,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22625,14 +22740,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22674,14 +22789,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22738,14 +22853,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22877,14 +22992,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -22941,14 +23056,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23040,14 +23155,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23089,14 +23204,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23303,14 +23418,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23417,14 +23532,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23446,14 +23561,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23475,14 +23590,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23574,14 +23689,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23623,14 +23738,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23692,14 +23807,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23741,14 +23856,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23810,14 +23925,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {
@@ -23852,6 +23967,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -24414,14 +24539,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
       ]
     },
     {

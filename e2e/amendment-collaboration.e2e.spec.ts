@@ -55,8 +55,12 @@ test('invites a collaborator, edits as the second actor, and shares the change @
     await waitForAppReady(collaboratorPage);
     const editor = collaboratorPage.locator('[data-slate-editor="true"][contenteditable="true"]');
     await expect(editor).toBeEditable();
+    // Wait for the persisted document to replace the editor's initial empty value.
+    // Starting a selection before hydration can move the caret during typing.
+    await expect(editor).toContainText(`${e2eRun.prefix} original document`);
     await editor.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
     await editor.pressSequentially(editedText);
+    await expect(editor).toContainText(editedText);
 
     await expect
       .poll(

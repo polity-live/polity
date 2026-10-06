@@ -5862,6 +5862,123 @@
         "project": "browser-component",
         "caseId": "creates and saves a personal preset with the native keyboard without attaching a group context"
       }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "collapses and restores the native inspector with keyboard activation and retained focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves the inspector with native arrow keys and clamps movement to the viewport"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drags the inspector using a real pointer and retains its selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores secondary inspector drags and cancels interrupted pointer movement"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders every geometric shape with real Konva primitives and painted pixels"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "paints drawing, table, chart, embed and missing-media nodes on the real canvas"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "searches nested rich text and focuses the matching frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "draws only peers on the active frame and uses readable fallback identity colors"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "decodes and crops a native recorded video, redraws after seeking and releases media on unmount"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports missing assets and native image and video decoding failures without committing a crop"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects crop commands for readonly, locked, nonvisual and missing selections"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "composites nested master layouts in front and behind each destination frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resizes selected nodes with native handles without changing orientation (mirrorX=%s, mirrorY=%s)"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resizes root nodes without a parent transform and stops toolbar pointer events from selecting the canvas"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps foreground master content above the live inline text editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resizes media crops with every native edge and corner handle"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores touch zoom on text fields, handles cancelled fingers and resumes pointer selection after the touch cooldown"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "cancels delayed native font loading when the rich text node unmounts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens selected text and clears selections from the keyboard-focusable canvas"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "fails stale focus handles safely after unmount and still returns finite scene coordinates"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects focus when an overlay covers the entire canvas viewport"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows an error for a decoded image without usable natural dimensions"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "cancels an active native %s when a second finger starts a canvas gesture"
+      }
     ]
   },
   "actionReferences": {
@@ -7435,6 +7552,42 @@
         "project": "browser-component",
         "caseId": "opens the real clone dialog with the native keyboard and restores reader focus after %s",
         "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.inspector.position.move": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves the inspector with native arrow keys and clamps movement to the viewport",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drags the inspector using a real pointer and retains its selection",
+        "scenarios": ["idle", "success"]
+      }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.inspector.visibility.toggle": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "collapses and restores the native inspector with keyboard activation and retained focus",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.canvas.node.select": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a whole group from the canvas and toggles it as one selection with Shift",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses nested rotated objects beside an open chat with native keyboard activation (mobile=%s)",
+        "scenarios": ["keyboard", "focus"]
       }
     ]
   },
