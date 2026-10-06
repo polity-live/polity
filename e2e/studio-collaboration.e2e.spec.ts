@@ -26,7 +26,7 @@ for (const scope of ['personal', 'group'] as const) {
         .locator('[data-create-action="set-form-style"][data-create-option="one_page"]')
         .click();
       await page
-        .getByRole('textbox', { name: 'Title', exact: true })
+        .getByRole('textbox', { name: /^Title(?:\s*\*)?$/ })
         .fill(`${e2eRun.prefix} Studio`);
       const created = page.waitForResponse(
         response =>

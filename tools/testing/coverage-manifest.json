@@ -22271,6 +22271,26 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
           "project": "component",
           "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "locks table dimension limits at %s rows and %s columns"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles %s formatting by keyboard in both selection states"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects out-of-range column widths and nonnumeric chart values and supports line charts"
         }
       ],
       "suggestedTestRefs": [
@@ -22340,6 +22360,21 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
           "caseId": "changes the %s property without moving other objects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats text from the main toolbar while preserving selection and unrelated objects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "activates history, chart insertion and guides through native keyboard focus"
         }
       ],
       "suggestedTestRefs": [
@@ -71273,6 +71308,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71308,6 +71344,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71343,6 +71380,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71350,8 +71388,7 @@
         "src/features/shared/ui/status/__tests__/TableTag.component.test.tsx",
         "src/features/shared/ui/status/__tests__/TopicPills.component.test.tsx",
         "src/features/shared/ui/status/__tests__/badgeClassNames.unit.test.ts",
-        "src/features/shared/ui/status/__tests__/status-wiki-tail.branch-a02.component.test.tsx",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
+        "src/features/shared/ui/status/__tests__/status-wiki-tail.branch-a02.component.test.tsx"
       ]
     },
     {
@@ -71431,12 +71468,23 @@
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
           "project": "component",
           "caseId": "renders tinted hidden overlays and invokes the optional color callback default"
+        },
+        {
+          "file": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and changes editing mode with native keyboard in standalone=%s label=%s"
+        },
+        {
+          "file": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the mode menu accessible in view-only mode and prevents unauthorized changes"
         }
       ],
       "suggestedTestRefs": [
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71472,6 +71520,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71507,6 +71556,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71542,6 +71592,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71577,6 +71628,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71612,6 +71664,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71644,6 +71697,16 @@
     },
     {
       "path": "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
       "kind": "test-infrastructure",
@@ -71757,6 +71820,7 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
         "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
@@ -71795,10 +71859,10 @@
         "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
         "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
-        "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
-        "src/features/shared/ui/status/__tests__/StatusBadges.component.test.tsx"
+        "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx"
       ]
     },
     {
@@ -77041,6 +77105,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/shared/hooks/__tests__/useModeToolbarButtonController.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/Editor.mobile-spacing.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/EditorStatic.preview-spacing.component.test.tsx",
@@ -77050,8 +77115,7 @@
         "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.accessibility.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/ai-menu.branch-a01.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/ai-toolbar-button.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ai-toolbar-view-tail.branch-a02.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/block-discussion.branch-a02.component.test.tsx"
+        "src/features/shared/ui/ui-platejs/__tests__/ai-toolbar-view-tail.branch-a02.component.test.tsx"
       ]
     },
     {
@@ -79191,6 +79255,7 @@
       "suggestedTestRefs": [
         "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
         "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
@@ -79199,8 +79264,7 @@
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
       ]
     },
     {
@@ -104637,6 +104701,121 @@
           "file": "src/server/studio/__tests__/elements.unit.test.ts",
           "project": "unit",
           "caseId": "rejects an upstream media addition before copying when the target quota is full"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "removes previously staged collection media when a later selected asset is unavailable"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "publishes nested Elements with source identities and clears bindings to detached descendants"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a missing synchronization target and leaves a project without linked instances unchanged"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "detaches a linked instance when its upstream library is %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "skips synchronization for %s without changing the project"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "reuses media already mapped into a linked instance while synchronizing its revision"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects upstream synchronization with %s before exposing the revision"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "removes newly copied synchronization media if a later copy fails"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "stages a media-free proposal and reports a first-copy failure without deleting existing library media"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the selected node name when no collection name is supplied and rolls back media-free creation failures"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "publishes a %s linked instance as an immutable next library revision"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "publishes linked media into the confirmed library revision and records its source identity"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not expose a new library revision after %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains library rollback semantics when publishing fails with %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports a library with no media without copying and rejects an unknown library before writing"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "cleans up only copied media after an import fails at %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "lists the accessible %s library with normalized numeric metadata"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires write access before %s and updates only the requested Elements entry"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates a %s Elements revision only after permission checks and media copying"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects creation before writing or copying when there is %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "instantiates library media into the %s workspace with a confirmed asset mapping"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an Elements media import beyond the existing quota %j"
+        },
+        {
+          "file": "src/server/studio/__tests__/elements.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects publishing a revision when there is %s"
         }
       ],
       "suggestedTestRefs": [

@@ -107,8 +107,9 @@ for (const personal of [false, true]) {
       await expect(
         reviewerPage.locator(`[data-studio-layer-id="${removalTarget.id}"]`)
       ).toHaveAttribute('aria-selected', 'true');
-      // Canvas shortcuts remain inactive inside the Layers popover.
-      await reviewerPage.keyboard.press('Escape');
+      // Close Layers without invoking the canvas Escape shortcut, which clears selection.
+      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+      await expect(reviewerPage.getByRole('tree')).toBeHidden();
       await reviewerPage.keyboard.press('Delete');
       await expect(
         reviewerPage

@@ -6,6 +6,9 @@ import { executeZeroTransaction, createZeroContext } from '../src/server/zero-mu
 import { executeProjectTool } from '../src/server/project-chat/tools';
 import { executeStudioChatSuggestion } from '../src/server/project-chat/studio-suggestions';
 
+// Provider fixtures must reach Playwright rather than the PWA service worker.
+test.use({ serviceWorkers: 'block' });
+
 test('shows Studio context and changes the subtitle through a reviewed suggestion @pr', async ({
   page,
   baseURL,

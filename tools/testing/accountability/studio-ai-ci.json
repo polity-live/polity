@@ -2539,6 +2539,16 @@
         "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
         "project": "component",
         "caseId": "renders tinted hidden overlays and invokes the optional color callback default"
+      },
+      {
+        "file": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and changes editing mode with native keyboard in standalone=%s label=%s"
+      },
+      {
+        "file": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the mode menu accessible in view-only mode and prevents unauthorized changes"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableSizePicker.tsx": [
@@ -3287,6 +3297,121 @@
         "file": "src/server/studio/__tests__/elements.unit.test.ts",
         "project": "unit",
         "caseId": "rejects an upstream media addition before copying when the target quota is full"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes previously staged collection media when a later selected asset is unavailable"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "publishes nested Elements with source identities and clears bindings to detached descendants"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a missing synchronization target and leaves a project without linked instances unchanged"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "detaches a linked instance when its upstream library is %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips synchronization for %s without changing the project"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses media already mapped into a linked instance while synchronizing its revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects upstream synchronization with %s before exposing the revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes newly copied synchronization media if a later copy fails"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "stages a media-free proposal and reports a first-copy failure without deleting existing library media"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the selected node name when no collection name is supplied and rolls back media-free creation failures"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "publishes a %s linked instance as an immutable next library revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "publishes linked media into the confirmed library revision and records its source identity"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not expose a new library revision after %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains library rollback semantics when publishing fails with %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "imports a library with no media without copying and rejects an unknown library before writing"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans up only copied media after an import fails at %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "lists the accessible %s library with normalized numeric metadata"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires write access before %s and updates only the requested Elements entry"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a %s Elements revision only after permission checks and media copying"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects creation before writing or copying when there is %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "instantiates library media into the %s workspace with a confirmed asset mapping"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an Elements media import beyond the existing quota %j"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects publishing a revision when there is %s"
       }
     ],
     "src/server/studio/export.ts": [
@@ -4705,6 +4830,45 @@
         "project": "unit",
         "caseId": "validates nested canvas style, roundness and group updates at the common boundary"
       }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats text from the main toolbar while preserving selection and unrelated objects"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "locks table dimension limits at %s rows and %s columns"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles %s formatting by keyboard in both selection states"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects out-of-range column widths and nonnumeric chart values and supports line charts"
+      }
     ]
   },
   "actionReferences": {
@@ -5091,6 +5255,97 @@
         "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.table.row.add": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "locks table dimension limits at %s rows and %s columns",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.table.row.remove": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "locks table dimension limits at %s rows and %s columns",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.table.column.add": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "locks table dimension limits at %s rows and %s columns",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.table.column.remove": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s through keyboard focus while preserving surviving cell identities",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "locks table dimension limits at %s rows and %s columns",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.table.bold.toggle": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles %s formatting by keyboard in both selection states",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#studio.data.chart.legend.toggle": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles %s formatting by keyboard in both selection states",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/status/EditingModeToolbarButton.tsx#shared.editing-mode.menu.open": [
+      {
+        "file": "src/features/shared/ui/status/__tests__/EditingModeToolbarButton.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and changes editing mode with native keyboard in standalone=%s label=%s",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
     ]
+  },
+  "actionDeclarations": {
+    "src/features/shared/ui/status/EditingModeToolbarButton.tsx#Button-9051f851f3": {
+      "actionId": "shared.editing-mode.menu.open"
+    },
+    "src/features/shared/ui/status/EditingModeToolbarButton.tsx#DropdownMenuTrigger-d96926603f": {
+      "actionId": "shared.editing-mode.menu.open"
+    },
+    "src/features/shared/ui/status/EditingModeToolbarButton.tsx#ToolbarButton-95ac40ac35": {
+      "actionId": "shared.editing-mode.menu.open"
+    }
   }
 }

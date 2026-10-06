@@ -131,7 +131,8 @@ export async function createElementSet(
   );
   try {
     const now = new Date();
-    const name = (input.name?.trim() || snapshot.nodes[0].name || 'Element').slice(0, 120);
+    // A validated snapshot contains at least one node with a nonempty name.
+    const name = (input.name?.trim() || snapshot.nodes[0].name).slice(0, 120);
     await studioTransaction(async tx => {
       await assertStudioAccess(userId, input.projectId, true, tx);
       await tx`
@@ -174,13 +175,13 @@ export async function stageElementSetForAiProposal(
     size: number;
     path: string;
   }[] = [];
-  const storage = sources.length ? createClient().storage.from(bucket) : null;
+  // Create storage lazily when media is copied, including rollback of those copies.
+  const storage = () => createClient().storage.from(bucket);
   try {
     for (const source of sources) {
-      if (!storage) throw new StudioError('Library media storage is unavailable', 502);
       const id = crypto.randomUUID();
       const path = `${input.projectId}/proposals/${input.proposalId}/${id}`;
-      const result = await storage.copy(source.storage_path, path);
+      const result = await storage().copy(source.storage_path, path);
       if (result.error) throw new StudioError('Cannot copy element media', 502);
       assets.push({
         id,
@@ -198,7 +199,7 @@ export async function stageElementSetForAiProposal(
       assets,
     };
   } catch (error) {
-    if (assets.length && storage) await storage.remove(assets.map(asset => asset.path));
+    if (assets.length) await storage().remove(assets.map(asset => asset.path));
     throw error;
   }
 }

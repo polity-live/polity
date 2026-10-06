@@ -1163,13 +1163,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "inserts all new element types from the insert menu",
+        "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -1203,13 +1203,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       }
     ],
@@ -1955,13 +1955,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "formats the first selected text and preserves selection when properties close",
-        "scenarios": ["selected", "unselected"]
+        "caseId": "formats text from the main toolbar while preserving selection and unrelated objects",
+        "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2023,13 +2023,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "formats the first selected text and preserves selection when properties close",
-        "scenarios": ["selected", "unselected"]
+        "caseId": "formats text from the main toolbar while preserving selection and unrelated objects",
+        "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2117,13 +2117,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2137,13 +2137,13 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar",
         "scenarios": ["idle", "success"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "supports native keyboard activation and focus restoration in the %s panel",
+        "caseId": "activates history, chart insertion and guides through native keyboard focus",
         "scenarios": ["keyboard", "focus"]
       },
       {
@@ -2485,119 +2485,14 @@
     ]
   },
   "actionDeclarations": {
-    "src/features/communication-studio/ui/StudioCanvas.tsx#Group-23d805b8bd": {
-      "actionId": "communication-studio.studio-canvas.activate.group-23d805b8bd"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-2591644817": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-2591644817"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-4f05e18a5a": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-4f05e18a5a"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-5619ced44f": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-5619ced44f"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-7a57c8fcfb": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-7a57c8fcfb"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-93f847c07b": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-93f847c07b"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-99756d2c36": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-99756d2c36"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-9a19093164": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-9a19093164"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-f56bde7e05": {
-      "actionId": "communication-studio.studio-data-properties.activate.button-f56bde7e05"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-019b52b855": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-019b52b855"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-0383aca720": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-0383aca720"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-1df3fcf7b8": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-1df3fcf7b8"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-3c45cc135e": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-3c45cc135e"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-445008570f": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-445008570f"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-6e61809cd7": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-6e61809cd7"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-7e8f3cb2d0": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-7e8f3cb2d0"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-8d97ae1e91": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-8d97ae1e91"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-9a80f856e5": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-9a80f856e5"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-da9dfdfba0": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-da9dfdfba0"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-dd2a076f14": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-dd2a076f14"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-1481c471ce": {
-      "actionId": "communication-studio.studio-data-properties.activate.select-1481c471ce"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-1f227bef7a": {
-      "actionId": "communication-studio.studio-data-properties.activate.select-1f227bef7a"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#a-dfa819da8b": {
-      "actionId": "communication-studio.studio-editor.activate.a-dfa819da8b"
-    },
     "src/features/communication-studio/ui/StudioEditor.tsx#button-1488e0d1c3": {
       "actionId": "communication-studio.studio-editor.activate.button-1488e0d1c3"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-1530b471fe": {
-      "actionId": "communication-studio.studio-editor.activate.button-1530b471fe"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-27730074b4": {
-      "actionId": "communication-studio.studio-editor.activate.button-27730074b4"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-80e5692fe0": {
-      "actionId": "communication-studio.studio-editor.activate.button-80e5692fe0"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-8c9e4701cb": {
-      "actionId": "communication-studio.studio-editor.activate.button-8c9e4701cb"
     },
     "src/features/communication-studio/ui/StudioEditor.tsx#button-9fe2f0396c": {
       "actionId": "communication-studio.studio-editor.activate.button-9fe2f0396c"
     },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-a413e386f5": {
-      "actionId": "communication-studio.studio-editor.activate.button-a413e386f5"
-    },
     "src/features/communication-studio/ui/StudioEditor.tsx#button-aa0b083391": {
       "actionId": "communication-studio.studio-editor.activate.button-aa0b083391"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-d4063e9cb1": {
-      "actionId": "communication-studio.studio-editor.activate.button-d4063e9cb1"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-e8118db4dd": {
-      "actionId": "communication-studio.studio-editor.activate.button-e8118db4dd"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#button-ee587f8114": {
-      "actionId": "communication-studio.studio-editor.activate.button-ee587f8114"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#input-21b047b74f": {
-      "actionId": "communication-studio.studio-editor.activate.input-21b047b74f"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#input-54b937c9e3": {
-      "actionId": "communication-studio.studio-editor.activate.input-54b937c9e3"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#input-6b4651ec8d": {
-      "actionId": "communication-studio.studio-editor.activate.input-6b4651ec8d"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#input-7010fff2d4": {
-      "actionId": "communication-studio.studio-editor.activate.input-7010fff2d4"
     },
     "src/features/communication-studio/ui/StudioEditor.tsx#input-922d2dbcbc": {
       "actionId": "communication-studio.studio-editor.activate.input-922d2dbcbc"
@@ -2605,44 +2500,65 @@
     "src/features/communication-studio/ui/StudioEditor.tsx#input-e7c5465a6d": {
       "actionId": "communication-studio.studio-editor.activate.input-e7c5465a6d"
     },
-    "src/features/communication-studio/ui/StudioEditor.tsx#input-f9d64640a1": {
-      "actionId": "communication-studio.studio-editor.activate.input-f9d64640a1"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#select-4ad05456fa": {
-      "actionId": "communication-studio.studio-editor.activate.select-4ad05456fa"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#select-86c00e5902": {
-      "actionId": "communication-studio.studio-editor.activate.select-86c00e5902"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#select-9875c0cfe8": {
-      "actionId": "communication-studio.studio-editor.activate.select-9875c0cfe8"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#select-9ed9ed58d6": {
-      "actionId": "communication-studio.studio-editor.activate.select-9ed9ed58d6"
-    },
     "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-13558298cb": {
       "actionId": "communication-studio.studio-editor.activate.toolbarbutton-13558298cb"
     },
     "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-30e1803505": {
       "actionId": "communication-studio.studio-editor.activate.toolbarbutton-30e1803505"
     },
-    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-4a8887d3a9": {
-      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-4a8887d3a9"
-    },
-    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-69d9939481": {
-      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-69d9939481"
-    },
-    "src/features/communication-studio/ui/StudioPanel.tsx#ToolbarButton-c5c28ba672": {
-      "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"
-    },
-    "src/features/communication-studio/ui/StudioCanvas.tsx#Rect-820a638cbc": {
-      "actionId": "communication-studio.studiocanvas.activate.rect-820a638cbc"
-    },
     "src/features/communication-studio/ui/StudioPanel.tsx#PopoverTrigger-e558429676": {
       "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"
     },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-e3bdd3d2be": {
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-58029951be": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-f56bde7e05"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-e65aba786d": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-4f05e18a5a"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-91fef3d35f": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-5619ced44f"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-abc1d27384": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-7a57c8fcfb"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-86919b96f5": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-6e61809cd7"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-801bd072e1": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-9a80f856e5"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-6a44c7ba31": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-1df3fcf7b8"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-0a9ca16a9a": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-019b52b855"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-581e5b6718": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-dd2a076f14"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-faf6b12c1a": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-3c45cc135e"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-f6f527f7fe": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-0383aca720"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-edd90504da": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-8d97ae1e91"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-ca2b57adc2": {
       "actionId": "communication-studio.studio-data-properties.activate.input-e3bdd3d2be"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-8f99952091": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-da9dfdfba0"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-bac312eb9b": {
+      "actionId": "communication-studio.studio-data-properties.activate.select-1481c471ce"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-ff210d962d": {
+      "actionId": "communication-studio.studio-data-properties.activate.select-1f227bef7a"
+    },
+    "src/features/communication-studio/ui/StudioPanel.tsx#ToolbarButton-c0046f9db8": {
+      "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"
     }
   }
 }

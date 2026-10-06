@@ -3,6 +3,9 @@ import { test, expect } from './fixtures/test';
 import { db } from './fixtures/db';
 import { waitForAppReady } from './fixtures/readiness';
 
+// Provider fixtures must reach Playwright rather than the PWA service worker.
+test.use({ serviceWorkers: 'block' });
+
 test('keeps Studio interactive while project chat receives messages and awaits AI @pr @resilience', async ({
   page,
   baseURL,

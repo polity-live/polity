@@ -20,14 +20,18 @@ export function StudioDataProperties({
   const tr = (k: string) => t('features.studio.' + k);
   const table = e.table,
     chart = e.chart;
-  const editTable = (fn: (v: NonNullable<StudioElement['table']>) => void) => {
-    if (!table) return;
+  const editTable = (
+    table: NonNullable<StudioElement['table']>,
+    fn: (v: NonNullable<StudioElement['table']>) => void
+  ) => {
     const next = structuredClone(table);
     fn(next);
     patch({ table: next });
   };
-  const editChart = (fn: (v: NonNullable<StudioElement['chart']>) => void) => {
-    if (!chart) return;
+  const editChart = (
+    chart: NonNullable<StudioElement['chart']>,
+    fn: (v: NonNullable<StudioElement['chart']>) => void
+  ) => {
     const next = structuredClone(chart);
     fn(next);
     patch({ chart: next });
@@ -49,7 +53,7 @@ export function StudioDataProperties({
                           value={cell.text}
                           onFocus={() => setActiveCell({ row: r, column: c })}
                           onChange={ev =>
-                            editTable(t => (t.rows[r].cells[c].text = ev.target.value))
+                            editTable(table, t => (t.rows[r].cells[c].text = ev.target.value))
                           }
                         />
                         <input
@@ -57,7 +61,7 @@ export function StudioDataProperties({
                           type="color"
                           value={cell.fill}
                           onChange={ev =>
-                            editTable(t => (t.rows[r].cells[c].fill = ev.target.value))
+                            editTable(table, t => (t.rows[r].cells[c].fill = ev.target.value))
                           }
                         />
                         <input
@@ -65,7 +69,7 @@ export function StudioDataProperties({
                           type="color"
                           value={cell.color}
                           onChange={ev =>
-                            editTable(t => (t.rows[r].cells[c].color = ev.target.value))
+                            editTable(table, t => (t.rows[r].cells[c].color = ev.target.value))
                           }
                         />
                         <select
@@ -73,6 +77,7 @@ export function StudioDataProperties({
                           value={cell.align}
                           onChange={ev =>
                             editTable(
+                              table,
                               t => (t.rows[r].cells[c].align = ev.target.value as typeof cell.align)
                             )
                           }
@@ -85,9 +90,10 @@ export function StudioDataProperties({
                         </select>
                         <label className="flex items-center gap-2">
                           <InlineCheckbox
+                            data-action-id="studio.data.table.bold.toggle"
                             checked={cell.bold}
                             onCheckedChange={value =>
-                              editTable(t => (t.rows[r].cells[c].bold = value === true))
+                              editTable(table, t => (t.rows[r].cells[c].bold = value === true))
                             }
                           />
                           {tr('bold')}
@@ -101,12 +107,16 @@ export function StudioDataProperties({
           </div>
           <div className="flex flex-wrap gap-2">
             <button
+              data-action-id="studio.data.table.row.add"
+              data-action-kind="interaction"
               disabled={table.rows.length >= 50}
               onClick={() => patch({ table: insertTableRow(table, table.rows.length) })}
             >
               {tr('addRow')}
             </button>
             <button
+              data-action-id="studio.data.table.row.remove"
+              data-action-kind="interaction"
               disabled={table.rows.length <= 1}
               onClick={() =>
                 patch({
@@ -122,12 +132,16 @@ export function StudioDataProperties({
               {tr('removeRow')}
             </button>
             <button
+              data-action-id="studio.data.table.column.add"
+              data-action-kind="interaction"
               disabled={table.widths.length >= 20}
               onClick={() => patch({ table: insertTableColumn(table, table.widths.length) })}
             >
               {tr('addColumn')}
             </button>
             <button
+              data-action-id="studio.data.table.column.remove"
+              data-action-kind="interaction"
               disabled={table.widths.length <= 1}
               onClick={() =>
                 patch({
@@ -154,7 +168,7 @@ export function StudioDataProperties({
                 value={w}
                 onChange={ev => {
                   const n = ev.target.valueAsNumber;
-                  if (n >= 0.01 && n <= 1) editTable(t => (t.widths[c] = n));
+                  if (n >= 0.01 && n <= 1) editTable(table, t => (t.widths[c] = n));
                 }}
               />
             </label>
@@ -164,7 +178,7 @@ export function StudioDataProperties({
             <input
               type="color"
               value={table.border}
-              onChange={ev => editTable(t => (t.border = ev.target.value))}
+              onChange={ev => editTable(table, t => (t.border = ev.target.value))}
             />
           </label>
         </>
@@ -176,7 +190,7 @@ export function StudioDataProperties({
             value={chart.kind}
             onChange={ev => {
               const kind = ev.target.value as typeof chart.kind;
-              editChart(c => {
+              editChart(chart, c => {
                 c.kind = kind;
                 if (kind === 'pie') {
                   c.series = c.series.slice(0, 1);
@@ -193,8 +207,9 @@ export function StudioDataProperties({
           </select>
           <label className="flex items-center gap-2">
             <InlineCheckbox
+              data-action-id="studio.data.chart.legend.toggle"
               checked={chart.legend}
-              onCheckedChange={value => editChart(c => (c.legend = value === true))}
+              onCheckedChange={value => editChart(chart, c => (c.legend = value === true))}
             />
             {tr('legend')}
           </label>
@@ -203,13 +218,13 @@ export function StudioDataProperties({
               <input
                 aria-label={tr('series')}
                 value={s.name}
-                onChange={ev => editChart(c => (c.series[j].name = ev.target.value))}
+                onChange={ev => editChart(chart, c => (c.series[j].name = ev.target.value))}
               />
               <input
                 aria-label={tr('color')}
                 type="color"
                 value={s.color}
-                onChange={ev => editChart(c => (c.series[j].color = ev.target.value))}
+                onChange={ev => editChart(chart, c => (c.series[j].color = ev.target.value))}
               />
             </div>
           ))}
@@ -219,7 +234,7 @@ export function StudioDataProperties({
                 aria-label={tr('label')}
                 className="w-24 min-w-0"
                 value={label}
-                onChange={ev => editChart(c => (c.labels[i] = ev.target.value))}
+                onChange={ev => editChart(chart, c => (c.labels[i] = ev.target.value))}
               />
               {chart.kind === 'pie' && (
                 <input
@@ -236,7 +251,7 @@ export function StudioDataProperties({
                     ])[i % (chart.colors?.length ?? 6)]
                   }
                   onChange={ev =>
-                    editChart(c => {
+                    editChart(chart, c => {
                       c.colors = c.labels.map(
                         (_, index) =>
                           (c.colors ?? [
@@ -264,6 +279,7 @@ export function StudioDataProperties({
                     const n = ev.target.valueAsNumber;
                     if (Number.isFinite(n))
                       editChart(
+                        chart,
                         c => (c.series[j].values[i] = c.kind === 'pie' ? Math.max(0.01, n) : n)
                       );
                   }}
@@ -274,7 +290,7 @@ export function StudioDataProperties({
           <button
             disabled={chart.labels.length >= 100}
             onClick={() =>
-              editChart(c => {
+              editChart(chart, c => {
                 c.labels.push(String(c.labels.length + 1));
                 c.series.forEach(s => s.values.push(1));
               })
@@ -285,7 +301,7 @@ export function StudioDataProperties({
           <button
             disabled={chart.labels.length <= 1}
             onClick={() =>
-              editChart(c => {
+              editChart(chart, c => {
                 c.labels.pop();
                 c.series.forEach(s => s.values.pop());
               })
@@ -296,7 +312,7 @@ export function StudioDataProperties({
           <button
             disabled={chart.kind === 'pie' || chart.series.length >= 10}
             onClick={() =>
-              editChart(c =>
+              editChart(chart, c =>
                 c.series.push({
                   id: crypto.randomUUID(),
                   name: tr('series'),
@@ -311,7 +327,7 @@ export function StudioDataProperties({
           <button
             disabled={chart.series.length <= 1}
             onClick={() =>
-              editChart(c => {
+              editChart(chart, c => {
                 c.series.pop();
               })
             }

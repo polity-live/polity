@@ -123,21 +123,5 @@
       }
     ]
   },
-  "actionDeclarations": {
-    "src/features/project-chat/ui/ProjectChatPanel.tsx#button-598a1a97f5": {
-      "actionId": "project-chat.projectchatpanel.activate.button-598a1a97f5"
-    },
-    "src/features/project-chat/ui/ProjectChatPanel.tsx#button-87b7613f8e": {
-      "actionId": "project-chat.projectchatpanel.activate.button-87b7613f8e"
-    },
-    "src/features/project-chat/ui/ProjectChatPanel.tsx#button-98e2f3d436": {
-      "actionId": "project-chat.projectchatpanel.activate.button-98e2f3d436"
-    },
-    "src/features/project-chat/ui/ProjectChatPanel.tsx#button-cf59481bd9": {
-      "actionId": "project-chat.projectchatpanel.activate.button-cf59481bd9"
-    },
-    "src/features/project-chat/ui/ProjectChatPanel.tsx#select-34cebf65e8": {
-      "actionId": "project-chat.projectchatpanel.activate.select-34cebf65e8"
-    }
-  }
+  "actionDeclarations": {}
 }

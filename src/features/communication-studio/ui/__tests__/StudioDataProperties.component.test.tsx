@@ -1,16 +1,18 @@
 /* @vitest-environment jsdom */
 import { useState } from 'react';
+import userEvent from '@testing-library/user-event';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { element, documentSchema } from '../../logic/document';
 import { createDocument } from '../../logic/templates';
+import { createTableData } from '../../logic/table-operations';
 import { StudioDataProperties } from '../StudioDataProperties';
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key.split('.').at(-1) }),
 }));
 afterEach(cleanup);
-function show(type: 'table' | 'chart') {
-  let current = element(type);
+function show(type: 'table' | 'chart', initial = element(type)) {
+  let current = initial;
   function View() {
     const [value, setValue] = useState(current);
     return (
@@ -30,6 +32,81 @@ function show(type: 'table' | 'chart') {
   return () => current;
 }
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+it.each(['addRow', 'removeRow', 'addColumn', 'removeColumn'])(
+  'changes table dimensions with %s through keyboard focus while preserving surviving cell identities',
+  async action => {
+    const value = show('table');
+    const before = structuredClone(value().table!);
+    const button = screen.getByRole('button', { name: action });
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    expect(button).toHaveProperty('disabled', false);
+    await userEvent.setup().keyboard('{Enter}');
+    const after = value().table!;
+    const delta = action.startsWith('add') ? 1 : -1;
+    expect(after.rows.length).toBe(before.rows.length + (action.endsWith('Row') ? delta : 0));
+    expect(after.widths.length).toBe(
+      before.widths.length + (action.endsWith('Column') ? delta : 0)
+    );
+    const beforeIds = before.rows.flatMap(row => row.cells.map(cell => cell.id));
+    const afterIds = after.rows.flatMap(row => row.cells.map(cell => cell.id));
+    expect(afterIds.filter(id => beforeIds.includes(id))).toHaveLength(
+      Math.min(beforeIds.length, afterIds.length)
+    );
+  }
+);
+it.each([
+  [50, 1, 'addRow', 'removeColumn'],
+  [1, 20, 'addColumn', 'removeRow'],
+] as const)(
+  'locks table dimension limits at %s rows and %s columns',
+  async (rowCount, colCount, maximum, minimum) => {
+    const value = show(
+      'table',
+      element('table', { table: createTableData({ rowCount, colCount }) })
+    );
+    const before = structuredClone(value());
+    for (const name of [maximum, minimum]) {
+      const button = screen.getByRole('button', { name });
+      expect(button).toHaveProperty('disabled', true);
+      await userEvent.setup().click(button);
+    }
+    expect(value()).toEqual(before);
+  }
+);
+it.each(['table', 'chart'] as const)(
+  'toggles %s formatting by keyboard in both selection states',
+  async type => {
+    const value = show(type);
+    const label = type === 'table' ? 'bold' : 'legend';
+    const checkbox = screen.getAllByRole('checkbox', { name: label })[0];
+    const selected = () =>
+      type === 'table' ? value().table!.rows[0].cells[0].bold : value().chart!.legend;
+    const before = selected();
+    checkbox.focus();
+    expect(document.activeElement).toBe(checkbox);
+    const user = userEvent.setup();
+    await user.keyboard(' ');
+    expect(selected()).toBe(!before);
+    await user.keyboard(' ');
+    expect(selected()).toBe(before);
+  }
+);
+it('rejects out-of-range column widths and nonnumeric chart values and supports line charts', () => {
+  const table = show('table');
+  const width = table().table!.widths[0];
+  fireEvent.change(screen.getByLabelText('columnWidth 1'), { target: { value: '0' } });
+  expect(table().table!.widths[0]).toBe(width);
+  cleanup();
+  const chart = show('chart');
+  fireEvent.change(screen.getByLabelText('chartType'), { target: { value: 'line' } });
+  expect(chart().chart!.kind).toBe('line');
+  const values = [...chart().chart!.series[0].values];
+  fireEvent.change(screen.getByLabelText(`${chart().chart!.series[0].name} A`), {
+    target: { value: '' },
+  });
+  expect(chart().chart!.series[0].values).toEqual(values);
+});
 it('edits cells and selected row or column structure while keeping stable identities', () => {
   const value = show('table'),
     first = value().table!.rows[0].id;

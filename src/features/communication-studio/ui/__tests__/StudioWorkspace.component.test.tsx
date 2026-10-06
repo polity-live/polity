@@ -1458,12 +1458,70 @@ describe('Studio toolbar workflows', () => {
     click('keepRemote');
     expect(io.editor.resolveConflicts).toHaveBeenCalledWith(false);
   });
+  it('formats text from the main toolbar while preserving selection and unrelated objects', async () => {
+    await show();
+    const selected = selectText();
+    // The legacy fixture acquires canonical paragraph IDs on its first V3 write.
+    const unrelated = () =>
+      value()
+        .pages[0].elements.filter(item => item.id !== selected.id)
+        .map(({ richText: _richText, ...item }) => item);
+    const untouched = unrelated();
+    const fontSize = document.querySelector<HTMLInputElement>(
+      '[data-action-id="communication-studio.studio-editor.activate.input-f9d64640a1"]'
+    )!;
+    const color = document.querySelector<HTMLInputElement>(
+      '[data-action-id="communication-studio.studio-editor.activate.input-6b4651ec8d"]'
+    )!;
+    expect(fontSize.value).toBe(String(selected.fontSize));
+    expect(color.value).toBe(selected.fill.toLowerCase());
+    fontSize.focus();
+    expect(document.activeElement).toBe(fontSize);
+    fireEvent.change(fontSize, { target: { value: '40' } });
+    color.focus();
+    expect(document.activeElement).toBe(color);
+    fireEvent.change(color, { target: { value: '#123456' } });
+    const changed = value().pages[0].elements.find(item => item.id === selected.id)!;
+    expect(changed.fontSize).toBe(40);
+    expect(changed.richText[0].children[0]).toMatchObject({ color: '#123456' });
+    fireEvent.change(fontSize, { target: { value: '7' } });
+    expect(value().pages[0].elements.find(item => item.id === selected.id)?.fontSize).toBe(40);
+    expect(unrelated()).toEqual(untouched);
+    expect(io.canvasProps.selected).toEqual([selected.id]);
+  });
+  it('dispatches history, inserts a chart and toggles guides from the main toolbar', async () => {
+    await show();
+    const nodes = value().pages[0].elements;
+    click('undo');
+    click('redo');
+    expect(io.editor.undo).toHaveBeenCalledOnce();
+    expect(io.editor.redo).toHaveBeenCalledOnce();
+    click('chart');
+    const inserted = value().pages[0].elements.filter(
+      item => !nodes.some(old => old.id === item.id)
+    );
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0].type).toBe('chart');
+    const guides = screen.getByRole('button', { name: 'guides' });
+    expect(guides.getAttribute('aria-pressed')).toBe('true');
+    click('guides');
+    expect(guides.getAttribute('aria-pressed')).toBe('false');
+    click('guides');
+    expect(guides.getAttribute('aria-pressed')).toBe('true');
+  });
   it('disables writes in read-only mode but keeps menus accessible', async () => {
     io.editor.canEdit = false;
     await show();
     expect(screen.getByText('readOnly')).toBeTruthy();
-    for (const name of ['chart', 'table', 'upload']) {
+    selectText();
+    for (const name of ['chart', 'table', 'upload', 'undo', 'redo']) {
       expect(screen.getByRole('button', { name }).getAttribute('aria-disabled')).toBe('true');
+    }
+    for (const id of ['input-f9d64640a1', 'input-6b4651ec8d']) {
+      const input = document.querySelector<HTMLInputElement>(
+        `[data-action-id="communication-studio.studio-editor.activate.${id}"]`
+      )!;
+      expect(input.disabled).toBe(true);
     }
     panel('exports');
     expect((screen.getByRole('button', { name: 'export' }) as HTMLButtonElement).disabled).toBe(

@@ -1999,6 +1999,8 @@ function StudioEditorReady({
               </DropdownMenuRadioGroup>
             </StudioToolbarMenu>
             <input
+              data-action-kind="interaction"
+              data-action-id="communication-studio.studio-editor.activate.input-f9d64640a1"
               aria-label={tr('fontSize')}
               className="w-16"
               type="number"
@@ -2050,6 +2052,8 @@ function StudioEditorReady({
               <Highlighter />
             </ToolbarButton>
             <input
+              data-action-kind="interaction"
+              data-action-id="communication-studio.studio-editor.activate.input-6b4651ec8d"
               aria-label={tr('color')}
               type="color"
               className="w-8"

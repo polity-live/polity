@@ -4664,12 +4664,6 @@
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#DropdownMenuSubTrigger-9cbf07bcb0": {
       "actionId": "shared.table-toolbar-button-view.activate.plate-js-toolbar-table-title"
     },
-    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#div-fbfab4075c": {
-      "actionId": "shared.table-toolbar-button-view.activate.x"
-    },
-    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#TablePicker-641eaf4743": {
-      "actionId": "shared.table-toolbar-button-view.activate.table-picker"
-    },
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#ToolbarButton-83016eb961": {
       "actionId": "shared.table-toolbar-button-view.activate.toolbar-button"
     },

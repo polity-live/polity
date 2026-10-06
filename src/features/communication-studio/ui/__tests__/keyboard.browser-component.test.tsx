@@ -220,6 +220,52 @@ it.each([
   30000
 );
 
+it('activates history, chart insertion and guides through native keyboard focus', async () => {
+  const controller = model('single');
+  controller.transactV3 = vi.fn(change => change(controller.v3Value));
+  io.controller = controller;
+  const ui = render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  await screen.findByRole('button', { name: 'chart' });
+  controller.selected = [...controller.selected];
+  ui.rerender(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  for (const [name, callback, args] of [
+    ['undo', 'undo', []],
+    ['redo', 'redo', []],
+    ['chart', 'add', ['chart']],
+    ['guides', 'setGuides', [false]],
+  ] as const) {
+    const button = screen.getByRole<HTMLButtonElement>('button', { name });
+    controller[callback].mockClear();
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    await userEvent.keyboard('{Enter}');
+    expect(controller[callback]).toHaveBeenCalledOnce();
+    if (args.length) expect(controller[callback]).toHaveBeenCalledWith(...args);
+  }
+  const fontSize = document.querySelector<HTMLInputElement>(
+    '[data-action-id="communication-studio.studio-editor.activate.input-f9d64640a1"]'
+  )!;
+  fontSize.focus();
+  expect(document.activeElement).toBe(fontSize);
+  const change = vi.fn();
+  fontSize.addEventListener('input', change);
+  const previousSize = Number(fontSize.value);
+  await userEvent.keyboard('{ArrowUp}');
+  expect(change).toHaveBeenCalled();
+  expect(controller.transactV3).toHaveBeenCalled();
+  const changedText = controller.v3Value.nodes.find(
+    (node: any) => node.id === controller.active.id
+  );
+  expect(changedText.typography.fontSize).toBe(previousSize + 1);
+  const color = document.querySelector<HTMLInputElement>(
+    '[data-action-id="communication-studio.studio-editor.activate.input-6b4651ec8d"]'
+  )!;
+  color.focus();
+  expect(document.activeElement).toBe(color);
+  await userEvent.keyboard('{Tab}');
+  expect(document.activeElement).not.toBe(color);
+});
+
 it('edits inline properties through native keyboard focus and activation', async () => {
   io.controller = model();
   render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
