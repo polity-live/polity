@@ -327,6 +327,137 @@ it('navigates icon-only Studio menus with arrow keys and returns focus on Escape
   expect(document.activeElement).toBe(trigger);
 });
 
+it.each([
+  ['shapes', 'rectangle', { type: 'setTool', tool: 'rectangle', locked: false }],
+  ['shapes', 'ellipse', { type: 'setTool', tool: 'ellipse', locked: false }],
+  ['shapes', 'diamond', { type: 'setTool', tool: 'diamond', locked: false }],
+  [
+    'shapes',
+    'roundedRectangle',
+    { type: 'setTool', tool: 'rectangle', locked: false, rounded: true },
+  ],
+  ['line', 'arrow', { type: 'setTool', tool: 'arrow', locked: false }],
+  ['line', 'line', { type: 'setTool', tool: 'line', locked: false }],
+  ['draw', 'draw', { type: 'setTool', tool: 'draw', locked: false }],
+  ['draw', 'eraser', { type: 'setTool', tool: 'eraser', locked: false }],
+  ['draw', 'laser', { type: 'setTool', tool: 'laser', locked: false }],
+  ['frame', 'freeFrame', { type: 'setTool', tool: 'frame', locked: false }],
+  ['zoom 100%', '+', { type: 'zoom', mode: 'in' }],
+  ['zoom 100%', '−', { type: 'zoom', mode: 'out' }],
+  ['zoom 100%', '100 %', { type: 'zoom', mode: 'reset' }],
+  ['zoom 100%', 'fitSelection', { type: 'zoom', mode: 'selection' }],
+  ['zoom 100%', 'fitAll', { type: 'zoom', mode: 'all' }],
+] as const)(
+  'dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus',
+  async (menuName, itemName, command) => {
+    io.controller = model('single');
+    render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+    const trigger = screen.getByRole<HTMLButtonElement>('button', { name: menuName });
+    io.canvasExecute.mockClear();
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    await userEvent.keyboard('{Enter}');
+    const menu = await screen.findByRole('menu');
+    const item = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      element => element.getAttribute('aria-label') === itemName
+    )!;
+    expect(item).toBeTruthy();
+    item.focus();
+    expect(document.activeElement).toBe(item);
+    await userEvent.keyboard('{Enter}');
+    expect(io.canvasExecute).toHaveBeenCalledExactlyOnceWith(command);
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  }
+);
+
+it.each([
+  ['square · 1080 × 1080', 'square'],
+  ['portrait · 1080 × 1350', 'feed'],
+  ['story · 1080 × 1920', 'story'],
+  ['widescreen · 1920 × 1080', 'widescreen'],
+  ['standard · 1440 × 1080', 'standard'],
+  ['single', 'single'],
+  ['carousel', 'carousel'],
+  ['story', 'story'],
+  ['video', 'video'],
+  [document.documentElement.lang === 'en' ? 'Presentation' : 'Präsentation', 'presentation'],
+] as const)(
+  'inserts frame choice %s by keyboard exactly once and restores focus',
+  async (itemName, kind) => {
+    const controller = model('single');
+    io.controller = controller;
+    render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+    const trigger = screen.getByRole<HTMLButtonElement>('button', { name: 'frame' });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    const item = await screen.findByRole<HTMLElement>('menuitem', { name: itemName });
+    item.focus();
+    expect(document.activeElement).toBe(item);
+    await userEvent.keyboard('{Enter}');
+    const callback = itemName.includes(' · ') ? controller.insertFrame : controller.insertFrameSet;
+    expect(callback).toHaveBeenCalledExactlyOnceWith(kind);
+    const other = itemName.includes(' · ') ? controller.insertFrameSet : controller.insertFrame;
+    expect(other).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  }
+);
+
+it('prevents frame insertion in read-only mode while retaining navigation and drawing-tool access', async () => {
+  const controller = model('single');
+  controller.canEdit = false;
+  io.controller = controller;
+  render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+  const trigger = screen.getByRole<HTMLButtonElement>('button', { name: 'frame' });
+  trigger.focus();
+  await userEvent.keyboard('{Enter}');
+  const menu = await screen.findByRole('menu');
+  const inserts = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter(
+    item => item.getAttribute('aria-label') !== 'freeFrame'
+  );
+  expect(inserts).toHaveLength(10);
+  for (const item of inserts) {
+    expect(item.getAttribute('aria-disabled')).toBe('true');
+    await userEvent.click(item, { force: true });
+  }
+  expect(controller.insertFrame).not.toHaveBeenCalled();
+  expect(controller.insertFrameSet).not.toHaveBeenCalled();
+  expect(
+    screen.getByRole('menuitem', { name: 'freeFrame' }).getAttribute('aria-disabled')
+  ).toBeNull();
+  await userEvent.keyboard('{Escape}');
+  expect(document.activeElement).toBe(trigger);
+  const textTool = screen
+    .getAllByRole('button', { name: 'text' })
+    .find(button => !button.hasAttribute('aria-haspopup'))!;
+  expect(textTool.getAttribute('aria-disabled')).toBe('true');
+});
+
+it.each(['selection', 'hand', 'text'] as const)(
+  'switches the %s canvas tool by native keyboard without changing the document',
+  async tool => {
+    const controller = model('single');
+    io.controller = controller;
+    const before = structuredClone(controller.v3Value);
+    render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
+    const button = screen
+      .getAllByRole<HTMLButtonElement>('button', { name: tool })
+      .find(candidate => !candidate.hasAttribute('aria-haspopup'))!;
+    io.canvasExecute.mockClear();
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    await userEvent.keyboard('{Enter}');
+    expect(io.canvasExecute).toHaveBeenCalledExactlyOnceWith({
+      type: 'setTool',
+      tool,
+      locked: false,
+    });
+    expect(document.activeElement).toBe(button);
+    expect(controller.v3Value).toEqual(before);
+  }
+);
+
 it('keeps a partial editor selection when a text-menu action takes focus', async () => {
   const patch = vi.fn();
   let editor: StudioTextSelectionEditor | null = null;
@@ -367,4 +498,22 @@ it('keeps a partial editor selection when a text-menu action takes focus', async
   const richText = patch.mock.lastCall?.[0]?.richText;
   expect(richText?.[0]?.children?.[0]).toMatchObject({ text: 'He', url: 'https://example.org' });
   expect(richText?.[0]?.children?.[1]?.text).toBe('llo');
+});
+
+it('prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback', async () => {
+  const select = vi.fn();
+  render(
+    <Toolbar>
+      <StudioToolbarMenu label="Unavailable formatting" icon={<Type />} disabled>
+        <StudioMenuItem label="Apply formatting" icon={<Type />} onSelect={select} />
+      </StudioToolbarMenu>
+    </Toolbar>
+  );
+  const trigger = screen.getByRole<HTMLElement>('button', { name: 'Unavailable formatting' });
+  expect(trigger.getAttribute('aria-disabled')).toBe('true');
+  trigger.focus();
+  expect(document.activeElement).toBe(trigger);
+  await userEvent.keyboard('{Enter} ');
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(select).not.toHaveBeenCalled();
 });

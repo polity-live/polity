@@ -1505,6 +1505,7 @@ function StudioEditorReady({
           <StudioToolbarMenu panelKey="project" label={tr('project')} icon={<FolderOpen />}>
             {(groupId || c.project?.owner_id === c.identity.id) && (
               <StudioMenuItem
+                data-action-kind="interaction"
                 label={tr('saveTemplate')}
                 icon={<Library />}
                 disabled={disabled}
@@ -1517,12 +1518,14 @@ function StudioEditorReady({
               />
             )}
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('duplicateProject')}
               icon={<Copy />}
               onSelect={() => setCloneOpen(true)}
             />
             {(groupId || c.project?.owner_id === c.identity.id) && (
               <StudioMenuItem
+                data-action-kind="interaction"
                 label={t('pages.create.common.visibility')}
                 icon={<FolderOpen />}
                 onSelect={() => setVisibilityOpen(true)}
@@ -1569,6 +1572,7 @@ function StudioEditorReady({
               ] as const
             ).map(([label, format]) => (
               <StudioMenuItem
+                data-action-kind="interaction"
                 key={label}
                 label={`${label} · ${formats[format].join(' × ')}`}
                 icon={<Frame />}
@@ -1579,6 +1583,7 @@ function StudioEditorReady({
             <DropdownMenuSeparator />
             {(['single', 'carousel', 'story', 'video', 'presentation'] as const).map(kind => (
               <StudioMenuItem
+                data-action-kind="interaction"
                 key={kind}
                 label={
                   kind === 'presentation'
@@ -1594,6 +1599,7 @@ function StudioEditorReady({
             ))}
             <DropdownMenuSeparator />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('freeFrame')}
               icon={<Frame />}
               onSelect={() => canvasCommand('tool', 'frame')}
@@ -1613,6 +1619,7 @@ function StudioEditorReady({
               ] as const
             ).map(([tool, Icon]) => (
               <StudioMenuItem
+                data-action-kind="interaction"
                 key={tool}
                 label={tr(tool)}
                 icon={<Icon />}
@@ -1621,6 +1628,7 @@ function StudioEditorReady({
               />
             ))}
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('roundedRectangle')}
               icon={<SquareRoundCorner />}
               iconOnly
@@ -1642,11 +1650,13 @@ function StudioEditorReady({
             pressed={activeTool === 'line' || activeTool === 'arrow'}
           >
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('arrow')}
               icon={<ArrowRight />}
               onSelect={() => canvasCommand('tool', 'arrow')}
             />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('line')}
               icon={<Minus />}
               onSelect={() => canvasCommand('tool', 'line')}
@@ -1659,16 +1669,19 @@ function StudioEditorReady({
             pressed={['draw', 'eraser', 'laser'].includes(activeTool)}
           >
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('draw')}
               icon={<Pencil />}
               onSelect={() => canvasCommand('tool', 'draw')}
             />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('eraser')}
               icon={<Eraser />}
               onSelect={() => canvasCommand('tool', 'eraser')}
             />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('laser')}
               icon={<Sparkles />}
               onSelect={() => canvasCommand('tool', 'laser')}
@@ -1688,20 +1701,33 @@ function StudioEditorReady({
             label={`${tr('zoom')} ${Math.round(canvasState.zoom * 100)}%`}
             icon={<span className="font-mono text-xs">{Math.round(canvasState.zoom * 100)}%</span>}
           >
-            <StudioMenuItem label="+" icon={<Plus />} onSelect={() => canvasCommand('zoomIn')} />
-            <StudioMenuItem label="−" icon={<Minus />} onSelect={() => canvasCommand('zoomOut')} />
             <StudioMenuItem
+              data-action-kind="interaction"
+              label="+"
+              icon={<Plus />}
+              onSelect={() => canvasCommand('zoomIn')}
+            />
+            <StudioMenuItem
+              data-action-kind="interaction"
+              label="−"
+              icon={<Minus />}
+              onSelect={() => canvasCommand('zoomOut')}
+            />
+            <StudioMenuItem
+              data-action-kind="interaction"
               label="100 %"
               icon={<Search />}
               onSelect={() => canvasCommand('zoom100')}
             />
             <DropdownMenuSeparator />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('fitSelection')}
               icon={<MousePointer2 />}
               onSelect={() => canvasCommand('fitSelection')}
             />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={tr('fitAll')}
               icon={<Frame />}
               onSelect={() => canvasCommand('fitAll')}
@@ -1904,6 +1930,7 @@ function StudioEditorReady({
                 ] as const
               ).map(([direction, Icon]) => (
                 <StudioMenuItem
+                  data-action-kind="interaction"
                   key={direction}
                   label={tr(direction)}
                   icon={<Icon />}
@@ -1920,6 +1947,7 @@ function StudioEditorReady({
             {referenceOptions()}
             <DropdownMenuLabel>{tr('distribute')}</DropdownMenuLabel>
             <StudioMenuItem
+              data-action-kind="interaction"
               label={`${tr('distribute')} ${tr('horizontal')}`}
               icon={<MoveHorizontal />}
               disabled={
@@ -1931,6 +1959,7 @@ function StudioEditorReady({
               onSelect={() => distributeSelection('horizontal')}
             />
             <StudioMenuItem
+              data-action-kind="interaction"
               label={`${tr('distribute')} ${tr('vertical')}`}
               icon={<MoveVertical />}
               disabled={
@@ -1953,6 +1982,7 @@ function StudioEditorReady({
               ] as const
             ).map(([action, Icon]) => (
               <StudioMenuItem
+                data-action-kind="interaction"
                 key={action}
                 label={tr(action)}
                 icon={<Icon />}
@@ -1970,6 +2000,7 @@ function StudioEditorReady({
             <DropdownMenuLabel>{tr('groupElements')}</DropdownMenuLabel>
             {(['group', 'ungroup'] as const).map(action => (
               <StudioMenuItem
+                data-action-kind="interaction"
                 key={action}
                 label={action === 'group' ? tr('groupElements') : tr(action)}
                 icon={<Layers3 />}
@@ -2114,6 +2145,7 @@ function StudioEditorReady({
                     }}
                   >
                     <StudioMenuItem
+                      data-action-kind="interaction"
                       label={tr('bulletList')}
                       icon={<List />}
                       onSelect={() => {
@@ -2122,6 +2154,7 @@ function StudioEditorReady({
                       }}
                     />
                     <StudioMenuItem
+                      data-action-kind="interaction"
                       label={tr('numberedList')}
                       icon={<ListOrdered />}
                       onSelect={() => {
@@ -2131,6 +2164,7 @@ function StudioEditorReady({
                     />
                     <DropdownMenuSeparator />
                     <StudioMenuItem
+                      data-action-kind="interaction"
                       label={tr('link')}
                       icon={<Link2 />}
                       onSelect={() => {

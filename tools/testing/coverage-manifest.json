@@ -22375,6 +22375,26 @@
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "activates history, chart insertion and guides through native keyboard focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "inserts frame choice %s by keyboard exactly once and restores focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "switches the %s canvas tool by native keyboard without changing the document"
         }
       ],
       "suggestedTestRefs": [
@@ -23043,6 +23063,61 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
           "project": "component",
           "caseId": "moves focus into a newly appended row"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "sets %s borders with keyboard activation while retaining toolbar focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "dispatches %s once using keyboard and does not modify table contents"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "selects %s by keyboard and changes the selected cells without modifying the rest"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "edits cells with keyboard focus, wraps Tab, restores selection on Escape and isolates history shortcuts"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "extends cell selection with Shift arrows, clamps navigation at table edges and stops pointer dragging after release or cancellation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "ends cell editing on blur and dismisses the editor from the outside scrim"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "renders German tools and flipped geometry and preserves visible borders for legacy cells"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "renders no table editor for a non-table element"
         }
       ],
       "suggestedTestRefs": [
@@ -23141,6 +23216,21 @@
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "keeps a partial editor selection when a text-menu action takes focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback"
         }
       ],
       "suggestedTestRefs": [

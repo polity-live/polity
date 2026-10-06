@@ -1604,6 +1604,61 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "project": "component",
         "caseId": "moves focus into a newly appended row"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "sets %s borders with keyboard activation while retaining toolbar focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches %s once using keyboard and does not modify table contents"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "selects %s by keyboard and changes the selected cells without modifying the rest"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells with keyboard focus, wraps Tab, restores selection on Escape and isolates history shortcuts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "extends cell selection with Shift arrows, clamps navigation at table edges and stops pointer dragging after release or cancellation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "ends cell editing on blur and dismisses the editor from the outside scrim"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "renders German tools and flipped geometry and preserves visible borders for legacy cells"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "renders no table editor for a non-table element"
       }
     ],
     "src/features/communication-studio/ui/StudioTextEditor.tsx": [
@@ -1658,6 +1713,21 @@
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "keeps a partial editor selection when a text-menu action takes focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback"
       }
     ],
     "src/features/communication-studio/ui/StudioVisibilityDialog.tsx": [
@@ -4846,6 +4916,26 @@
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "activates history, chart insertion and guides through native keyboard focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts frame choice %s by keyboard exactly once and restores focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "switches the %s canvas tool by native keyboard without changing the document"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -5335,6 +5425,360 @@
         "caseId": "opens and changes editing mode with native keyboard in standalone=%s label=%s",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.insert-frame": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts frame choice %s by keyboard exactly once and restores focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.insert-frame-set": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts frame choice %s by keyboard exactly once and restores focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.set-tool": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-10ee17ceb1": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-28ad060596": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-2b460b552e": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-54d83a3825": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-66c9f87b00": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-80ae783095": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-8990b1b229": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-ac6599da75": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-c2ff45f97e": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-c5319378ab": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-d1e85167c3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.studiomenuitem-ded0999a54": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.toolbarbutton-008fcc9c86": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "switches the %s canvas tool by native keyboard without changing the document",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.canvas.activate.toolbarbutton-1675c4b11a": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "switches the %s canvas tool by native keyboard without changing the document",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#communication-studio.toolbar.item.activate": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents frame insertion in read-only mode while retaining navigation and drawing-tool access",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#communication-studio.toolbar.menu.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-f5842d59c6": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-2a544cbc66": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-7d6b108c56": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-0bf5499462": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-cb1f0426c4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-c121a41b3c": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes table dimensions with %s by keyboard, preserves remaining cells and focuses the resulting selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "disables dimension changes at %s rows and %s columns without emitting a document change",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-2c05ecc09b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-f9d5dcc509": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "sets %s borders with keyboard activation while retaining toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.studio-table-editor.on-delete": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches %s once using keyboard and does not modify table contents",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.studio-table-editor.on-close": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches %s once using keyboard and does not modify table contents",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-e3d4a7f996": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "selects %s by keyboard and changes the selected cells without modifying the rest",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-768875f921": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "selects %s by keyboard and changes the selected cells without modifying the rest",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.activate.button-0f3d824a76": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells with keyboard focus, wraps Tab, restores selection on Escape and isolates history shortcuts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.edit.input-00f1a4dd73": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.edit.input-8b9d8d9ca8": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.edit.input-c76170931b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells with keyboard focus, wraps Tab, restores selection on Escape and isolates history shortcuts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#communication-studio.table.edit.select-d143581360": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "changes selected cell formatting by keyboard, toggles bold in both states and leaves other cells unchanged",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
     ]
   },
   "actionDeclarations": {
@@ -5346,6 +5790,102 @@
     },
     "src/features/shared/ui/status/EditingModeToolbarButton.tsx#ToolbarButton-95ac40ac35": {
       "actionId": "shared.editing-mode.menu.open"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-10ee17ceb1": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-10ee17ceb1"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-28ad060596": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-28ad060596"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-2b460b552e": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-2b460b552e"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-54d83a3825": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-54d83a3825"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-66c9f87b00": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-66c9f87b00"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-80ae783095": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-80ae783095"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-8990b1b229": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-8990b1b229"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ac6599da75": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-ac6599da75"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c2ff45f97e": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-c2ff45f97e"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c5319378ab": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-c5319378ab"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-d1e85167c3": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-d1e85167c3"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ded0999a54": {
+      "actionId": "communication-studio.canvas.activate.studiomenuitem-ded0999a54"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-008fcc9c86": {
+      "actionId": "communication-studio.canvas.activate.toolbarbutton-008fcc9c86"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-1675c4b11a": {
+      "actionId": "communication-studio.canvas.activate.toolbarbutton-1675c4b11a"
+    },
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#DropdownMenuItem-d33bc95769": {
+      "actionId": "communication-studio.toolbar.item.activate"
+    },
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#DropdownMenuTrigger-d96926603f": {
+      "actionId": "communication-studio.toolbar.menu.open"
+    },
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#ToolbarButton-e9b3bf1eb8": {
+      "actionId": "communication-studio.toolbar.menu.open"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-f5842d59c6": {
+      "actionId": "communication-studio.table.activate.button-f5842d59c6"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-2a544cbc66": {
+      "actionId": "communication-studio.table.activate.button-2a544cbc66"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-7d6b108c56": {
+      "actionId": "communication-studio.table.activate.button-7d6b108c56"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-0bf5499462": {
+      "actionId": "communication-studio.table.activate.button-0bf5499462"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-cb1f0426c4": {
+      "actionId": "communication-studio.table.activate.button-cb1f0426c4"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-c121a41b3c": {
+      "actionId": "communication-studio.table.activate.button-c121a41b3c"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-2c05ecc09b": {
+      "actionId": "communication-studio.table.activate.button-2c05ecc09b"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-f9d5dcc509": {
+      "actionId": "communication-studio.table.activate.button-f9d5dcc509"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-e3d4a7f996": {
+      "actionId": "communication-studio.table.activate.button-e3d4a7f996"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-768875f921": {
+      "actionId": "communication-studio.table.activate.button-768875f921"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#button-0f3d824a76": {
+      "actionId": "communication-studio.table.activate.button-0f3d824a76"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#input-00f1a4dd73": {
+      "actionId": "communication-studio.table.edit.input-00f1a4dd73"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#input-8b9d8d9ca8": {
+      "actionId": "communication-studio.table.edit.input-8b9d8d9ca8"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#input-c76170931b": {
+      "actionId": "communication-studio.table.edit.input-c76170931b"
+    },
+    "src/features/communication-studio/ui/StudioTableEditor.tsx#select-d143581360": {
+      "actionId": "communication-studio.table.edit.select-d143581360"
     }
   }
 }

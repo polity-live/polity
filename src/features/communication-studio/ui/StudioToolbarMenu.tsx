@@ -43,6 +43,7 @@ export function StudioToolbarMenu({
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
+          data-action-kind="interaction"
           type="button"
           aria-label={label}
           tooltip={tooltip}
@@ -82,6 +83,7 @@ export function StudioMenuItem({
 }) {
   return (
     <DropdownMenuItem
+      data-action-kind="interaction"
       aria-label={label}
       title={iconOnly ? label : undefined}
       disabled={disabled}

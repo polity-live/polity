@@ -95,7 +95,7 @@ it('selects a whole group from the canvas and toggles it as one selection with S
     );
   });
   const surface = stage.querySelector<HTMLCanvasElement>('canvas')!;
-  const click = (id: string, shiftKey = false) => {
+  const point = (id: string) => {
     const node = document.nodes.find(candidate => candidate.id === id)!;
     const nodeBounds = worldBounds(document, node);
     const bounds = stage.getBoundingClientRect();
@@ -110,6 +110,16 @@ it('selects a whole group from the canvas and toggles it as one selection with S
       bounds.height / 2 +
       ((nodeBounds.top + nodeBounds.bottom) / 2 - (frameBounds.top + frameBounds.bottom) / 2) *
         zoom;
+    return { clientX, clientY };
+  };
+  // The fitted transform is published before Konva's scheduled draw. Wait for
+  // the red group member to be painted so its hit canvas is ready as well.
+  await waitFor(() => {
+    const { clientX, clientY } = point(occluder.id);
+    expect(pixel(surface, clientX, clientY)).toEqual([255, 0, 0, 255]);
+  });
+  const click = (id: string, shiftKey = false) => {
+    const { clientX, clientY } = point(id);
     fireEvent.mouseDown(surface, { clientX, clientY, shiftKey });
     fireEvent.mouseUp(surface, { clientX, clientY, shiftKey });
     fireEvent.click(surface, { clientX, clientY, shiftKey });

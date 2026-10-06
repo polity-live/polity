@@ -110,10 +110,8 @@ for (const scope of ['personal', 'group'] as const) {
           await tx`set local session_replication_role = replica`;
           await tx`delete from studio_revision where project_id=${projectId}`;
           await tx`delete from studio_state where project_id=${projectId}`;
-          await tx`delete from collaboration_command where document_id in (select id from collaboration_document where kind='studio' and entity_id=${projectId})`;
-          await tx`delete from collaboration_outbox where document_id in (select id from collaboration_document where kind='studio' and entity_id=${projectId})`;
-          await tx`delete from collaboration_revision where document_id in (select id from collaboration_document where kind='studio' and entity_id=${projectId})`;
-          await tx`delete from collaboration_document where kind='studio' and entity_id=${projectId}`;
+          await tx`delete from studio_operation where project_id=${projectId}`;
+          await tx`delete from studio_editor_action where project_id=${projectId}`;
           await tx`delete from studio_project where id=${projectId}`;
         });
       }

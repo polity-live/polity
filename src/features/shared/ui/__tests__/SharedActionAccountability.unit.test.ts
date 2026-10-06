@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { extractTestCases } from '../../../../../tools/testing/accountability-scope.mjs';
 
 interface ActionEntry {
   actionId?: string;
@@ -24,17 +25,23 @@ const sharedDeclarations = catalog.entries.filter(
     entry.classification === 'canonical-action'
 );
 
-const testSourceByFile = new Map<string, string>();
+const testCasesByFile = new Map<string, Set<string>>();
 
 function declaresConcreteTestCase(reference: ActionEntry['testRefs'][number]) {
   const testFile = path.resolve(reference.file);
   if (!fs.existsSync(testFile)) {
     return false;
   }
-  const source = testSourceByFile.get(testFile) ?? fs.readFileSync(testFile, 'utf8');
-  testSourceByFile.set(testFile, source);
-  const escapedCaseId = reference.caseId.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-  return new RegExp(`\\b(?:it|test)\\s*\\(\\s*(["'])${escapedCaseId}\\1`, 'u').test(source);
+  let cases = testCasesByFile.get(testFile);
+  if (!cases) {
+    // Use the repository's AST inventory so parameterized cases are checked
+    // with the same exact identities as ordinary cases.
+    const result = extractTestCases(fs.readFileSync(testFile, 'utf8'), reference.file);
+    if (result.parseError) return false;
+    cases = new Set(result.cases.map(testCase => testCase.caseId));
+    testCasesByFile.set(testFile, cases);
+  }
+  return cases.has(reference.caseId);
 }
 
 function expectAccounted(entries: ActionEntry[]) {

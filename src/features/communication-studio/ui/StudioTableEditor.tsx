@@ -123,9 +123,9 @@ function StudioTableEditorReady({
       cellButtons.current.get(key(current.focusRow, current.focusColumn))?.focus()
     );
   }, [table.rows.length, table.widths.length]);
-  const apply = (change: StudioTable) => {
-    if (change !== table) onChange(change);
-  };
+  // Dimension limits are enforced by the disabled controls; every enabled
+  // operation constructs a new table value.
+  const apply = onChange;
   const startEdit = (row: number, column: number) => {
     setEditing({ row, column });
     setSelection({ anchorRow: row, anchorColumn: column, focusRow: row, focusColumn: column });
@@ -188,6 +188,8 @@ function StudioTableEditorReady({
   const selectedCells = table.rows
     .slice(bounds.minRow, bounds.maxRow + 1)
     .flatMap(row => row.cells.slice(bounds.minColumn, bounds.maxColumn + 1));
+  // A normalized selection in a schema-valid table always contains a cell.
+  const selectedCell = table.rows[bounds.minRow].cells[bounds.minColumn];
   const cellStyle = (row: number, column: number): CSSProperties => {
     const cell = table.rows[row].cells[column];
     const edges = cell.borders ?? { top: true, right: true, bottom: true, left: true };
@@ -282,9 +284,10 @@ function StudioTableEditorReady({
         <label>
           {label('Füllung', 'Fill')}{' '}
           <input
+            data-action-kind="interaction"
             aria-label={label('Zellfüllung', 'Cell fill')}
             type="color"
-            value={selectedCells[0]?.fill ?? '#FFFFFF'}
+            value={selectedCell.fill}
             onChange={event =>
               apply(formatTableCells(table, current, { fill: event.target.value }))
             }
@@ -293,9 +296,10 @@ function StudioTableEditorReady({
         <label>
           {label('Textfarbe', 'Text color')}{' '}
           <input
+            data-action-kind="interaction"
             aria-label={label('Zelltextfarbe', 'Cell text color')}
             type="color"
-            value={selectedCells[0]?.color ?? '#12362D'}
+            value={selectedCell.color}
             onChange={event =>
               apply(formatTableCells(table, current, { color: event.target.value }))
             }
@@ -316,7 +320,7 @@ function StudioTableEditorReady({
           {label('Ausrichtung', 'Alignment')}{' '}
           <select
             aria-label={label('Zellausrichtung', 'Cell alignment')}
-            value={selectedCells[0]?.align ?? 'left'}
+            value={selectedCell.align}
             onChange={event =>
               apply(
                 formatTableCells(table, current, {
@@ -454,6 +458,7 @@ function StudioTableEditorReady({
                     >
                       {isEditing ? (
                         <input
+                          data-action-kind="interaction"
                           ref={inputRef}
                           aria-label={`${label('Zelle', 'Cell')} ${rowIndex + 1}, ${columnIndex + 1}`}
                           value={cell.text}
