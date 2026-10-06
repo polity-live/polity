@@ -56,10 +56,20 @@ export function StudioVisibilityDialog({
           </p>
         )}
         <DialogFooter>
-          <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+          <Button
+            data-action-id="studio.project.visibility.cancel"
+            data-action-kind="interaction"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onOpenChange(false)}
+          >
             {t('common.cancel')}
           </Button>
-          <Button disabled={busy} onClick={() => void save()}>
+          <Button
+            data-action-id="studio.project.visibility.submit"
+            disabled={busy}
+            onClick={() => void save()}
+          >
             {t('common.actions.save')}
           </Button>
         </DialogFooter>

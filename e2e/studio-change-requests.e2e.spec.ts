@@ -104,6 +104,11 @@ for (const personal of [false, true]) {
       await projectTitle(reviewerPage).fill('Voted group design');
       await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
       await reviewerPage.getByRole('button', { name: 'Remove this accent', exact: true }).click();
+      await expect(
+        reviewerPage.locator(`[data-studio-layer-id="${removalTarget.id}"]`)
+      ).toHaveAttribute('aria-selected', 'true');
+      // Canvas shortcuts remain inactive inside the Layers popover.
+      await reviewerPage.keyboard.press('Escape');
       await reviewerPage.keyboard.press('Delete');
       await expect(
         reviewerPage

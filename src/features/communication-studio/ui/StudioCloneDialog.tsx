@@ -66,6 +66,7 @@ export function StudioCloneDialog({
           <label className="block space-y-1 text-sm">
             <span>{t('features.studio.cloneDestination')}</span>
             <select
+              data-action-id="studio.project.clone.destination"
               className="bg-background w-full rounded-md border px-3 py-2"
               value={groupId ?? ''}
               onChange={event => setGroupId(event.target.value || null)}
@@ -90,10 +91,20 @@ export function StudioCloneDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+          <Button
+            data-action-id="studio.project.clone.cancel"
+            data-action-kind="interaction"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onOpenChange(false)}
+          >
             {t('common.cancel')}
           </Button>
-          <Button disabled={busy} onClick={() => void clone()}>
+          <Button
+            data-action-id="studio.project.clone.submit"
+            disabled={busy}
+            onClick={() => void clone()}
+          >
             {t('features.studio.cloneProject')}
           </Button>
         </DialogFooter>

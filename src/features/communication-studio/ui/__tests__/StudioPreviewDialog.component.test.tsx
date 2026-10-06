@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { createDocument } from '../../logic/templates';
 import { getStudioRootFramesInLayerOrder } from '../../logic/frame-order';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
@@ -55,6 +56,103 @@ function PreviewHarness({
 afterEach(cleanup);
 
 describe('Studio fullscreen preview', () => {
+  it('preserves the previewed frame when selection changes and clears it when collaborators hide all frames', async () => {
+    const document = legacyDocumentToV3(createDocument('carousel', 'Preview'));
+    const frames = getStudioRootFramesInLayerOrder(document);
+    const view = render(<PreviewHarness document={document} activeFrameId={frames[0].id} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    await screen.findByTestId('preview-canvas');
+    fireEvent.click(screen.getByRole('button', { name: 'nextFrame' }));
+    view.rerender(<PreviewHarness document={document} activeFrameId={frames[2].id} />);
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[1].id);
+    const hidden = structuredClone(document);
+    hidden.nodes.forEach(node => {
+      node.visible = false;
+    });
+    view.rerender(<PreviewHarness document={hidden} activeFrameId={frames[2].id} />);
+    expect(screen.getByRole('status')).toHaveProperty('textContent', 'noVisibleFrames');
+    expect(screen.queryByTestId('preview-canvas')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'closePreview' }));
+    view.rerender(<PreviewHarness document={document} activeFrameId={frames[2].id} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect((await screen.findByTestId('preview-canvas')).getAttribute('data-page-id')).toBe(
+      frames[2].id
+    );
+  });
+  it('advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal', async () => {
+    const document = legacyDocumentToV3(createDocument('carousel', 'Preview'));
+    const frames = getStudioRootFramesInLayerOrder(document);
+    const before = JSON.stringify(document);
+    render(<PreviewHarness document={document} activeFrameId={frames[0].id} />);
+    const user = userEvent.setup();
+    const opener = screen.getByRole('button', { name: 'Open' });
+    opener.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByTestId('preview-canvas');
+    const previous = screen.getByRole('button', { name: 'previousFrame' });
+    const next = screen.getByRole('button', { name: 'nextFrame' });
+    const advance = screen.getByRole('button', { name: 'advancePreview' });
+    expect(previous).toHaveProperty('disabled', true);
+    expect(next).toHaveProperty('disabled', false);
+    next.focus();
+    expect(globalThis.document.activeElement).toBe(next);
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[1].id);
+    previous.focus();
+    expect(globalThis.document.activeElement).toBe(previous);
+    await user.keyboard(' ');
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(frames[0].id);
+    advance.focus();
+    expect(globalThis.document.activeElement).toBe(advance);
+    for (let index = 1; index < frames.length; index++) {
+      await user.keyboard('{Enter}');
+      expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(
+        frames[index].id
+      );
+    }
+    expect(advance).toHaveProperty('disabled', true);
+    expect(next).toHaveProperty('disabled', true);
+    await user.click(advance);
+    await user.click(next);
+    expect(screen.getByTestId('preview-canvas').getAttribute('data-page-id')).toBe(
+      frames.at(-1)!.id
+    );
+    const close = screen.getByRole('button', { name: 'closePreview' });
+    close.focus();
+    expect(globalThis.document.activeElement).toBe(close);
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(globalThis.document.activeElement).toBe(opener);
+    expect(JSON.stringify(document)).toBe(before);
+  });
+  it('keeps an empty preview inert when collaborators hide every frame', async () => {
+    const document = legacyDocumentToV3(createDocument('single', 'Empty preview'));
+    document.nodes.forEach(node => {
+      node.visible = false;
+    });
+    const change = vi.fn();
+    const view = render(
+      <StudioPreviewDialog
+        document={document}
+        assets={[]}
+        activeFrameId={null}
+        open
+        onOpenChange={change}
+        tr={tr}
+      />
+    );
+    const dialog = await screen.findByRole('dialog');
+    expect(screen.getByRole('status')).toHaveProperty('textContent', 'noVisibleFrames');
+    expect(screen.queryByTestId('preview-canvas')).toBeNull();
+    fireEvent.keyDown(dialog, { key: 'ArrowRight' });
+    fireEvent.keyDown(dialog, { key: 'ArrowLeft' });
+    expect(
+      screen.getAllByRole('button').filter(button => button.hasAttribute('disabled'))
+    ).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: 'closePreview' }));
+    expect(change).toHaveBeenCalledWith(false);
+    view.unmount();
+  });
   it('starts at the active frame, skips hidden frames and navigates without mutating the document', async () => {
     const document = legacyDocumentToV3(createDocument('carousel', 'Preview'));
     const frames = getStudioRootFramesInLayerOrder(document);

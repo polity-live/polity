@@ -105,9 +105,7 @@ export function useStudioDocument(
   const assetScope = `${id ?? ''}:${workspaceId ?? 'canonical'}`;
   const currentAssetScope = useRef(assetScope);
   currentAssetScope.current = assetScope;
-  const persist = () => {
-    if (draft.current) localStorage.setItem(storageKey, JSON.stringify(draft.current));
-  };
+  const persist = (snapshot: Draft) => localStorage.setItem(storageKey, JSON.stringify(snapshot));
   const clearAssetObjectUrls = useCallback(() => {
     for (const asset of assetObjectUrls.current.values()) URL.revokeObjectURL(asset.url);
     assetObjectUrls.current.clear();
@@ -247,7 +245,7 @@ export function useStudioDocument(
           draft.current.generation = result.generation;
           if (workspaceId)
             setWorkspaceRemote({ document: result.document, content_revision: result.revision });
-          persist();
+          persist(draft.current);
           setValue(v3DocumentToLegacy(draft.current.value));
           setCanEdit(result.canEdit);
           setStatus(
@@ -314,7 +312,7 @@ export function useStudioDocument(
       revision: remote.content_revision,
     };
     setValue(v3DocumentToLegacy(merged.value));
-    persist();
+    persist(draft.current);
   }, [remote, status]);
   useEffect(() => {
     if (!workspaceId && remoteStatus?.type === 'complete' && !remote && draft.current) {
@@ -457,7 +455,7 @@ export function useStudioDocument(
           generation: confirmed.generation,
         };
         setValue(v3DocumentToLegacy(merged.value));
-        persist();
+        persist(draft.current);
         setStatus(edits.length ? 'unsaved' : 'saved');
         return confirmed.revision;
       })();
@@ -481,7 +479,7 @@ export function useStudioDocument(
     if (!canEdit && !d.pending) throw new Error('Studio is read-only');
     const pending = d.pending ?? { operationId: crypto.randomUUID(), changes };
     d.pending = pending;
-    persist();
+    persist(d);
     const sentValue = mergeStudioV3(d.base, changes).value;
     setStatus('saving');
     setError('');
@@ -519,7 +517,7 @@ export function useStudioDocument(
         blocked.current = true;
         setConflicts(receipt.conflicts);
         setStatus('conflict');
-        persist();
+        persist(latest);
         throw new Error('Studio changes conflict');
       }
       const trailing = diffStudio(sentValue, latest.value),
@@ -535,7 +533,7 @@ export function useStudioDocument(
       setValue(v3DocumentToLegacy(draft.current.value));
       setConflicts(merged.conflicts);
       setStatus(merged.conflicts.length ? 'conflict' : trailing.length ? 'unsaved' : 'saved');
-      persist();
+      persist(draft.current);
       return receipt.revision;
     })();
     flight.current = operation;
@@ -583,7 +581,7 @@ export function useStudioDocument(
       }
       d.value = converted;
       setValue(parsed);
-      persist();
+      persist(d);
       setStatus(blocked.current ? 'conflict' : navigator.onLine ? 'unsaved' : 'offline');
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(
@@ -613,7 +611,7 @@ export function useStudioDocument(
       }
       d.value = parsed;
       setValue(v3DocumentToLegacy(parsed));
-      persist();
+      persist(d);
       setStatus(blocked.current ? 'conflict' : navigator.onLine ? 'unsaved' : 'offline');
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(
@@ -641,7 +639,7 @@ export function useStudioDocument(
     target.current.push(changes);
     draft.current.value = merged.value;
     setValue(v3DocumentToLegacy(merged.value));
-    persist();
+    persist(draft.current);
     setStatus(blocked.current ? 'conflict' : navigator.onLine ? 'unsaved' : 'offline');
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => void commitRef.current().catch(() => undefined), 400);
@@ -679,7 +677,7 @@ export function useStudioDocument(
     setValue(v3DocumentToLegacy(merged.value));
     setConflicts([]);
     setError('');
-    persist();
+    persist(draft.current);
     await commitRef.current();
   };
   return {

@@ -63,13 +63,18 @@ export function StudioInvitations() {
           </div>
           <div className="flex gap-2">
             <Button
+              data-action-id="studio.invitation.respond.decline"
               variant="outline"
               disabled={busyId !== null}
               onClick={() => void respond(invitation.id, false)}
             >
               {tr('declineInvitation')}
             </Button>
-            <Button disabled={busyId !== null} onClick={() => void respond(invitation.id, true)}>
+            <Button
+              data-action-id="studio.invitation.respond.accept"
+              disabled={busyId !== null}
+              onClick={() => void respond(invitation.id, true)}
+            >
               {tr('acceptInvitation')}
             </Button>
           </div>

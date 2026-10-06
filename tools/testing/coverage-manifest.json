@@ -19626,6 +19626,21 @@
           "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
           "project": "component",
           "caseId": "renders non-Error mutation failures without dropping the local draft"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "reports a restored draft autosave failure without discarding its cached changes"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "leaves a newly opened project saved when the previous operation fails after the switch"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "fences navigation immediately after authority confirmation before the commit returns"
         }
       ],
       "suggestedTestRefs": [
@@ -22207,6 +22222,21 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
           "project": "component",
           "caseId": "preserves the dialog and shows a copy error"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "selects and clears a destination with native focus and keeps the private default without manageable groups"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s"
         }
       ],
       "suggestedTestRefs": [
@@ -22402,12 +22432,27 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
           "project": "component",
-          "caseId": "accepts a personal Studio invitation from the overview"
+          "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
           "project": "component",
-          "caseId": "declines a personal Studio invitation without opening the project"
+          "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "renders a non-Error response failure and keeps invitations available"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "shows invitation loading failures without exposing actions for %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores invitation loading after unmount when successful=%s"
         }
       ],
       "suggestedTestRefs": [
@@ -22437,6 +22482,41 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
           "project": "component",
           "caseId": "selects multiple users and submits one personal project invitation request"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores late collaborator loading after closing when successful=%s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "reports a collaborator loading failure and keeps an empty invitation disabled"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "labels available users and existing collaborators from names, handles, email and the anonymous-name fallback"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "displays a non-Error collaborator update failure without losing the selected users"
         }
       ],
       "suggestedTestRefs": [
@@ -22668,6 +22748,21 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
           "project": "component",
           "caseId": "falls back to the first visible frame when the active frame is hidden"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the previewed frame when selection changes and clears it when collaborators hide all frames"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps an empty preview inert when collaborators hide every frame"
         }
       ],
       "suggestedTestRefs": [
@@ -23050,6 +23145,16 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "saves visibility by keyboard and disables both actions while awaiting the server"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s"
         }
       ],
       "suggestedTestRefs": [
@@ -23348,6 +23453,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -55034,6 +55149,26 @@
           "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
           "project": "component",
           "caseId": "rejects a workspace switch while the editor save is in flight"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "activates repeatedly without removing and keeps structural context noninteractive"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "allows an explicit callback and source workspace while remaining readable without one"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps canonical and text-selection labels readable without navigation or removal and renders nothing for empty context"
         }
       ],
       "suggestedTestRefs": [
@@ -108663,14 +108798,14 @@
         "src/features/auth/hooks/__tests__/useEntityVisibilityGuardController.component.test.tsx",
         "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
         "src/features/calendar/logic/__tests__/calendarEventVisibility.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
         "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/discussions/ui/__tests__/DiscussionActionVisibility.component.test.tsx",
         "src/features/shared/ui/form/__tests__/VisibilitySelector.component.test.tsx",
         "src/routes/__tests__/entityVisibilityLayouts.component.test.tsx",
         "src/zero/change-requests/__tests__/document-integrity.unit.test.ts",
         "src/zero/change-requests/__tests__/event-suggestions.unit.test.ts",
-        "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
-        "src/zero/change-requests/__tests__/server-resolution.city-design.unit.test.ts"
+        "src/zero/change-requests/__tests__/internal-voting.unit.test.ts"
       ]
     },
     {

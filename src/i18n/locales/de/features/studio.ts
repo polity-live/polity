@@ -8,6 +8,7 @@ export const studioTranslations = {
     'Dieser Vorschlagsentwurf ist für dich oder in dieser Verfahrensphase nicht bearbeitbar.',
 
   cloneProject: 'Projekt klonen',
+  advancePreview: 'Vorschau weiterblättern',
   cloneDestination: 'Ziel',
   cloneFailed: 'Projekt konnte nicht geklont werden.',
   personalStudio: 'Persönliches Studio',

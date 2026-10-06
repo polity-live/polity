@@ -22826,21 +22826,34 @@
       "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#communication-studio.studio-clone-dialog.common-cancel",
-      "debtKey": "src/features/communication-studio/ui/StudioCloneDialog.tsx#Button-280c7d60e3",
+      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.cancel",
+      "debtKey": "src/features/communication-studio/ui/StudioCloneDialog.tsx#Button-f1610292c2",
       "file": "src/features/communication-studio/ui/StudioCloneDialog.tsx",
-      "actionId": "communication-studio.studio-clone-dialog.common-cancel",
-      "identifierSource": "accessible-text",
+      "actionId": "studio.project.clone.cancel",
+      "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 93,
+      "line": 94,
       "column": 10,
-      "kind": "async-action",
+      "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onOpenChange",
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates",
+          "scenarios": ["disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -22855,45 +22868,14 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#communication-studio.studio-clone-dialog.features-studio-clone-project",
-      "debtKey": "src/features/communication-studio/ui/StudioCloneDialog.tsx#Button-edfeb9bc30",
-      "file": "src/features/communication-studio/ui/StudioCloneDialog.tsx",
-      "actionId": "communication-studio.studio-clone-dialog.features-studio-clone-project",
-      "identifierSource": "accessible-text",
-      "tag": "Button",
-      "line": 96,
-      "column": 10,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#communication-studio.studio-clone-dialog.features-studio-personal-studio",
+      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.destination",
       "debtKey": "src/features/communication-studio/ui/StudioCloneDialog.tsx#select-1141bba9b4",
       "file": "src/features/communication-studio/ui/StudioCloneDialog.tsx",
-      "actionId": "communication-studio.studio-clone-dialog.features-studio-personal-studio",
-      "identifierSource": "accessible-text",
+      "actionId": "studio.project.clone.destination",
+      "identifierSource": "data-action-id",
       "tag": "select",
       "line": 68,
       "column": 12,
@@ -22902,7 +22884,14 @@
       "accessibilityIssues": [],
       "scenarios": ["selected", "unselected", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "selects and clears a destination with native focus and keeps the private default without manageable groups",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -22917,7 +22906,51 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.submit",
+      "debtKey": "src/features/communication-studio/ui/StudioCloneDialog.tsx#Button-edfeb9bc30",
+      "file": "src/features/communication-studio/ui/StudioCloneDialog.tsx",
+      "actionId": "studio.project.clone.submit",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 103,
+      "column": 10,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioDataProperties.tsx#button-24b38b1eee",
@@ -27147,19 +27180,33 @@
       "accountabilityStatus": "new-gap"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioInvitations.tsx#Button-080722f820",
+      "key": "src/features/communication-studio/ui/StudioInvitations.tsx#studio.invitation.respond.accept",
       "debtKey": "src/features/communication-studio/ui/StudioInvitations.tsx#Button-080722f820",
       "file": "src/features/communication-studio/ui/StudioInvitations.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "studio.invitation.respond.accept",
+      "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 72,
+      "line": 73,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27174,13 +27221,14 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioInvitations.tsx#Button-1ce07f29a4",
+      "key": "src/features/communication-studio/ui/StudioInvitations.tsx#studio.invitation.respond.decline",
       "debtKey": "src/features/communication-studio/ui/StudioInvitations.tsx#Button-1ce07f29a4",
       "file": "src/features/communication-studio/ui/StudioInvitations.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "studio.invitation.respond.decline",
+      "identifierSource": "data-action-id",
       "tag": "Button",
       "line": 65,
       "column": 12,
@@ -27189,7 +27237,20 @@
       "accessibilityIssues": [],
       "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+          "project": "component",
+          "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27204,109 +27265,14 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#communication-studio.studio-invite-dialog.common-cancel",
-      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-c06c434a5e",
-      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
-      "actionId": "communication-studio.studio-invite-dialog.common-cancel",
-      "identifierSource": "accessible-text",
-      "tag": "Button",
-      "line": 185,
-      "column": 10,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "setOpen",
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#communication-studio.studio-invite-dialog.remove",
-      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-a617a74b6e",
-      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
-      "actionId": "communication-studio.studio-invite-dialog.remove",
-      "identifierSource": "handler",
-      "tag": "Button",
-      "line": 165,
-      "column": 22,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "remove",
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#communication-studio.studio-invite-dialog.resend",
-      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-f04ccda462",
-      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
-      "actionId": "communication-studio.studio-invite-dialog.resend",
-      "identifierSource": "handler",
-      "tag": "Button",
-      "line": 156,
-      "column": 24,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "handler": "resend",
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#DialogTrigger-7d69d2d0a7",
+      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator-invite.open",
       "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#DialogTrigger-7d69d2d0a7",
       "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "studio.collaborator-invite.open",
+      "identifierSource": "data-action-id",
       "tag": "DialogTrigger",
       "line": 113,
       "column": 6,
@@ -27316,7 +27282,14 @@
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27331,7 +27304,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "merged-alias"
     },
     {
       "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator-invite.open",
@@ -27347,7 +27320,14 @@
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27362,7 +27342,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator-invite.submit",
@@ -27371,7 +27351,7 @@
       "actionId": "studio.collaborator-invite.submit",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 188,
+      "line": 196,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -27379,7 +27359,20 @@
       "handler": "invite",
       "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27394,7 +27387,142 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.access.remove",
+      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-a617a74b6e",
+      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
+      "actionId": "studio.collaborator.access.remove",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 166,
+      "column": 22,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "remove",
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.dialog.cancel",
+      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-cbcb68d0de",
+      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
+      "actionId": "studio.collaborator.dialog.cancel",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 187,
+      "column": 10,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setOpen",
+      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+          "scenarios": ["disabled"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.invitation.resend",
+      "debtKey": "src/features/communication-studio/ui/StudioInviteDialog.tsx#Button-f04ccda462",
+      "file": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
+      "actionId": "studio.collaborator.invitation.resend",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 156,
+      "column": 24,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "resend",
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#communication-studio.studio-layers-panel.begin-rename",
@@ -27694,20 +27822,66 @@
       "accountabilityStatus": "new-gap"
     },
     {
+      "key": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.advance",
+      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-18b0ccd699",
+      "file": "src/features/communication-studio/ui/StudioPreviewDialog.tsx",
+      "actionId": "communication-studio.preview.advance",
+      "identifierSource": "data-action-id",
+      "tag": "button",
+      "line": 124,
+      "column": 12,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "move",
+      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+          "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
       "key": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.close",
       "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-ea56a6792a",
       "file": "src/features/communication-studio/ui/StudioPreviewDialog.tsx",
       "actionId": "communication-studio.preview.close",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 116,
+      "line": 112,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27722,16 +27896,16 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.next",
-      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-466093f1dd",
+      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-e4dda7d48e",
       "file": "src/features/communication-studio/ui/StudioPreviewDialog.tsx",
       "actionId": "communication-studio.preview.next",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 164,
+      "line": 166,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27739,7 +27913,14 @@
       "handler": "move",
       "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+          "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27754,16 +27935,16 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.previous",
-      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-18273cd86e",
+      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#button-32c1055c73",
       "file": "src/features/communication-studio/ui/StudioPreviewDialog.tsx",
       "actionId": "communication-studio.preview.previous",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 154,
+      "line": 155,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27771,7 +27952,14 @@
       "handler": "move",
       "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+          "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27786,43 +27974,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.studio-preview-dialog.move",
-      "debtKey": "src/features/communication-studio/ui/StudioPreviewDialog.tsx#div-bbd95fb8f3",
-      "file": "src/features/communication-studio/ui/StudioPreviewDialog.tsx",
-      "actionId": "communication-studio.studio-preview-dialog.move",
-      "identifierSource": "handler",
-      "tag": "div",
-      "line": 128,
-      "column": 12,
-      "kind": "interaction",
-      "classification": "canonical-action",
-      "accessibilityIssues": [
-        "click-target-missing-role",
-        "click-target-missing-tab-index",
-        "click-target-missing-keyboard-handler"
-      ],
-      "handler": "move",
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioProcedureTools.tsx#Button-5ed7528e2c",
@@ -29249,52 +29401,34 @@
       "accountabilityStatus": "new-gap"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#communication-studio.studio-visibility-dialog.common-actions-save",
-      "debtKey": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#Button-e2717d07a3",
+      "key": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#studio.project.visibility.cancel",
+      "debtKey": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#Button-f1610292c2",
       "file": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx",
-      "actionId": "communication-studio.studio-visibility-dialog.common-actions-save",
-      "identifierSource": "accessible-text",
-      "tag": "Button",
-      "line": 62,
-      "column": 10,
-      "kind": "async-action",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#communication-studio.studio-visibility-dialog.common-cancel",
-      "debtKey": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#Button-280c7d60e3",
-      "file": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx",
-      "actionId": "communication-studio.studio-visibility-dialog.common-cancel",
-      "identifierSource": "accessible-text",
+      "actionId": "studio.project.visibility.cancel",
+      "identifierSource": "data-action-id",
       "tag": "Button",
       "line": 59,
       "column": 10,
-      "kind": "async-action",
+      "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onOpenChange",
-      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "saves visibility by keyboard and disables both actions while awaiting the server",
+          "scenarios": ["disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -29309,7 +29443,51 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#studio.project.visibility.submit",
+      "debtKey": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#Button-e2717d07a3",
+      "file": "src/features/communication-studio/ui/StudioVisibilityDialog.tsx",
+      "actionId": "studio.project.visibility.submit",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 68,
+      "column": 10,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "saves visibility by keyboard and disables both actions while awaiting the server",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s",
+          "scenarios": ["error", "unauthorized"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/useStudioProcedure.tsx#Button-176bbd66c1",
@@ -63286,20 +63464,27 @@
       "handler": "activate",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/project-chat/ui/ProjectContextChips.tsx#project-chat.project-context-chips.on-remove",
+      "key": "src/features/project-chat/ui/ProjectContextChips.tsx#project-chat.context.reference.remove",
       "debtKey": "src/features/project-chat/ui/ProjectContextChips.tsx#button-b02182f0e0",
       "file": "src/features/project-chat/ui/ProjectContextChips.tsx",
-      "actionId": "project-chat.project-context-chips.on-remove",
-      "identifierSource": "handler",
+      "actionId": "project-chat.context.reference.remove",
+      "identifierSource": "data-action-id",
       "tag": "button",
       "line": 70,
       "column": 12,
@@ -63309,13 +63494,20 @@
       "handler": "onRemove",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+          "project": "component",
+          "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-messages",

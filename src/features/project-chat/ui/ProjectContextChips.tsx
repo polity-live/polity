@@ -68,6 +68,7 @@ export function ProjectContextChips({
           )}
           {onRemove && !fixedContextReference(ref) ? (
             <button
+              data-action-id="project-chat.context.reference.remove"
               type="button"
               className="hover:bg-muted rounded p-1"
               onClick={() => onRemove(ref)}

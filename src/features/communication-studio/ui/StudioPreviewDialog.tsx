@@ -70,15 +70,11 @@ export function StudioPreviewDialog({
   const move = (offset: -1 | 1) => {
     if (currentIndex < 0) return;
     const nextIndex = Math.max(0, Math.min(frames.length - 1, currentIndex + offset));
-    setCurrentFrameId(frames[nextIndex]?.id ?? null);
-  };
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) setCurrentFrameId(null);
-    onOpenChange(nextOpen);
+    setCurrentFrameId(frameIds[nextIndex]);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="fixed inset-0 top-0 left-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 bg-black p-0 text-white shadow-none sm:max-w-none"
@@ -112,7 +108,7 @@ export function StudioPreviewDialog({
                 {currentIndex + 1} / {frames.length}
               </output>
             )}
-            <DialogClose asChild>
+            <DialogClose asChild data-action-id="communication-studio.preview.close">
               <button
                 type="button"
                 data-action-id="communication-studio.preview.close"
@@ -125,7 +121,12 @@ export function StudioPreviewDialog({
           </header>
 
           <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-            <div
+            <button
+              type="button"
+              data-action-id="communication-studio.preview.advance"
+              data-action-kind="interaction"
+              aria-label={tr('advancePreview')}
+              disabled={!hasNext}
               data-testid="preview-advance-surface"
               className={`flex h-full w-full items-center justify-center ${hasNext ? 'cursor-pointer' : ''}`}
               onClick={() => move(1)}
@@ -148,12 +149,13 @@ export function StudioPreviewDialog({
                   {tr('noVisibleFrames')}
                 </p>
               )}
-            </div>
+            </button>
 
             <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3">
               <button
                 type="button"
                 data-action-id="communication-studio.preview.previous"
+                data-action-kind="interaction"
                 className="inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={tr('previousFrame')}
                 disabled={!hasPrevious}
@@ -164,6 +166,7 @@ export function StudioPreviewDialog({
               <button
                 type="button"
                 data-action-id="communication-studio.preview.next"
+                data-action-kind="interaction"
                 className="inline-flex size-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={tr('nextFrame')}
                 disabled={!hasNext}

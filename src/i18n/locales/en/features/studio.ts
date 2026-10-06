@@ -8,6 +8,7 @@ export const studioTranslations = {
     'You cannot edit this proposal draft with your access or in this procedure phase.',
 
   cloneProject: 'Clone project',
+  advancePreview: 'Advance preview',
   cloneDestination: 'Destination',
   cloneFailed: 'Could not clone the project.',
   personalStudio: 'Personal Studio',

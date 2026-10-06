@@ -1192,6 +1192,21 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "project": "component",
         "caseId": "preserves the dialog and shows a copy error"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and clears a destination with native focus and keeps the private default without manageable groups"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s"
       }
     ],
     "src/features/communication-studio/ui/StudioInlineTextEditor.tsx": [
@@ -1240,12 +1255,27 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
         "project": "component",
-        "caseId": "accepts a personal Studio invitation from the overview"
+        "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
         "project": "component",
-        "caseId": "declines a personal Studio invitation without opening the project"
+        "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a non-Error response failure and keeps invitations available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "shows invitation loading failures without exposing actions for %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores invitation loading after unmount when successful=%s"
       }
     ],
     "src/features/communication-studio/ui/StudioInviteDialog.tsx": [
@@ -1253,6 +1283,41 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "project": "component",
         "caseId": "selects multiple users and submits one personal project invitation request"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores late collaborator loading after closing when successful=%s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a collaborator loading failure and keeps an empty invitation disabled"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "labels available users and existing collaborators from names, handles, email and the anonymous-name fallback"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "displays a non-Error collaborator update failure without losing the selected users"
       }
     ],
     "src/features/communication-studio/ui/StudioLayersPanel.tsx": [
@@ -1396,6 +1461,21 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
         "project": "component",
         "caseId": "falls back to the first visible frame when the active frame is hidden"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the previewed frame when selection changes and clears it when collaborators hide all frames"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps an empty preview inert when collaborators hide every frame"
       }
     ],
     "src/features/communication-studio/ui/StudioProcedureTools.tsx": [
@@ -1595,6 +1675,16 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "saves visibility by keyboard and disables both actions while awaiting the server"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s"
       }
     ],
     "src/features/communication-studio/ui/useStudioProcedure.tsx": [
@@ -2168,6 +2258,26 @@
         "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
         "project": "component",
         "caseId": "rejects a workspace switch while the editor save is in flight"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "activates repeatedly without removing and keeps structural context noninteractive"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "allows an explicit callback and source workspace while remaining readable without one"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps canonical and text-selection labels readable without navigation or removal and renders nothing for empty context"
       }
     ],
     "src/features/project-chat/ui/ProjectContextNavigation.tsx": [
@@ -4557,6 +4667,21 @@
         "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
         "project": "component",
         "caseId": "renders non-Error mutation failures without dropping the local draft"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a restored draft autosave failure without discarding its cached changes"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "leaves a newly opened project saved when the previous operation fails after the switch"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "fences navigation immediately after authority confirmation before the commit returns"
       }
     ],
     "src/features/communication-studio/logic/operations.ts": [
@@ -4760,6 +4885,210 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "project": "component",
         "caseId": "edits embed content by keyboard without changing node geometry",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.submit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.cancel": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "retains a failed clone for keyboard cancellation when the server rejects %s",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "clones by keyboard, prevents repeat submission and cancellation while awaiting confirmation, then closes and navigates",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCloneDialog.tsx#studio.project.clone.destination": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and clears a destination with native focus and keeps the private default without manageable groups",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#studio.project.visibility.submit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "saves visibility by keyboard and disables both actions while awaiting the server",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioVisibilityDialog.tsx#studio.project.visibility.cancel": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps failed visibility edits available for retry and keyboard cancellation after %s",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioVisibilityDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "saves visibility by keyboard and disables both actions while awaiting the server",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInvitations.tsx#studio.invitation.respond.accept": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInvitations.tsx#studio.invitation.respond.decline": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "responds with accept=%s by keyboard, blocks repeated actions while saving and removes only the answered invitation",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "retains an invitation after an unauthorized accept=%s response and permits a successful retry",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator-invite.submit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.invitation.resend": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.access.remove": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+        "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the dialog after unauthorized %s and permits keyboard cancellation",
+        "scenarios": ["error", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator-invite.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx#studio.collaborator.dialog.cancel": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "opens and cancels using native keyboard focus while collaborator loading is pending",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "performs %s by keyboard, disables repeat actions while awaiting the API and refreshes collaborators",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.close": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.advance": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.previous": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPreviewDialog.tsx#communication-studio.preview.next": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "advances and returns through native keyboard controls, disables boundary actions and restores focus after keyboard dismissal",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectContextChips.tsx#project-chat.context.focus": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectContextChips.tsx#project-chat.context.reference.remove": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses a referenced canvas item and removes its chip using native keyboard activation without changing structural context",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ]

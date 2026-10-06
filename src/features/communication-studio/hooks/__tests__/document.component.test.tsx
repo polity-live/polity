@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 import { act, renderHook, waitFor, cleanup } from '@testing-library/react';
 import { vi, beforeEach, afterEach, it, expect } from 'vitest';
+import { flushSync } from 'react-dom';
 import { createDocument } from '../../logic/templates';
 import { mergeStudioV3 } from '../../logic/operations';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
@@ -553,6 +554,7 @@ it('publishes bounded canvas selection, receives peer broadcasts and tears down 
   await act(() => vi.advanceTimersByTimeAsync(5000));
   hook.unmount();
   expect(io.removeChannel).toHaveBeenCalledWith(channel);
+  act(() => hook.result.current.cursor('closed', 0, 0));
   const published = io.request.mock.calls.length;
   await act(() => vi.advanceTimersByTimeAsync(10_000));
   expect(io.request.mock.calls).toHaveLength(published);
@@ -610,6 +612,14 @@ it('uses legacy presence only when the server disables native canvas presence', 
     })
   );
   expect(hook.result.current.peers[0]).toMatchObject({ cursor: { x: 8, y: 9 } });
+  act(() =>
+    channel.listeners.get('broadcast:cursor')({
+      payload: { userId: 'missing', cursor: { x: 90, y: 90 } },
+    })
+  );
+  expect(hook.result.current.peers[0]).toMatchObject({ cursor: { x: 8, y: 9 } });
+  act(() => channel.subscribe.mock.calls[0][0]('TIMED_OUT'));
+  expect(channel.track).not.toHaveBeenCalled();
   act(() => channel.subscribe.mock.calls[0][0]('SUBSCRIBED'));
   expect(channel.track).toHaveBeenCalledWith(expect.objectContaining({ userId: user.id }));
   act(() => hook.result.current.cursor('frame', 4, 5));
@@ -743,8 +753,10 @@ it('merges later Zero revisions with independent local changes and refuses a con
   expect(hook.result.current.value?.title).toBe('Untracked replacement');
 });
 it('exposes conflicts from Zero updates and rebases chosen local transforms onto the latest revision', async () => {
+  vi.useFakeTimers();
   const hook = renderHook(() => useStudioDocument(id, user));
-  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(hook.result.current.canEdit).toBe(true);
   const target = hook.result.current.v3Value!.nodes[0].id;
   act(() =>
     hook.result.current.transactV3(d => {
@@ -756,7 +768,9 @@ it('exposes conflicts from Zero updates and rebases chosen local transforms onto
   io.revision = 2;
   io.remote = { document: structuredClone(io.server), content_revision: 2 };
   hook.rerender();
-  await waitFor(() => expect(hook.result.current.status).toBe('conflict'));
+  expect(hook.result.current.status).toBe('conflict');
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(hook.result.current.status).toBe('conflict');
   await act(async () => {
     await expect(hook.result.current.commit()).rejects.toThrow('Resolve Studio conflicts first');
   });
@@ -1407,4 +1421,73 @@ it('renders non-Error mutation failures without dropping the local draft', async
   });
   expect(hook.result.current.error).toBe('Database unavailable');
   expect(hook.result.current.value?.title).toBe('Retained');
+});
+it('reports a restored draft autosave failure without discarding its cached changes', async () => {
+  const local = structuredClone(io.server);
+  local.title = 'Retained restored draft';
+  localStorage.setItem(
+    `studio:v4:${user.id}:${id}:canonical`,
+    JSON.stringify({ base: io.server, value: local, revision: 0, canEdit: true })
+  );
+  vi.useFakeTimers();
+  io.mutate.mockImplementation(() => ({
+    server: Promise.reject(new Error('Restored save failed')),
+  }));
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await act(() => vi.advanceTimersByTimeAsync(400));
+  expect(hook.result.current.error).toBe('Restored save failed');
+  expect(hook.result.current.value?.title).toBe('Retained restored draft');
+  expect(localStorage.getItem(`studio:v4:${user.id}:${id}:canonical`)).toContain(
+    'Retained restored draft'
+  );
+});
+it('leaves a newly opened project saved when the previous operation fails after the switch', async () => {
+  const hook = renderHook(({ project }) => useStudioDocument(project, user), {
+    initialProps: { project: id },
+  });
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  let reject!: (reason: Error) => void;
+  io.mutate.mockImplementationOnce(() => ({
+    server: new Promise((_resolve, fail) => {
+      reject = fail;
+    }),
+  }));
+  act(() => hook.result.current.meta('title', 'Old failure'));
+  let saving!: Promise<number>;
+  act(() => {
+    saving = hook.result.current.commit();
+  });
+  io.server = legacyDocumentToV3(createDocument('single', 'New project'));
+  hook.rerender({ project: crypto.randomUUID() });
+  await waitFor(() => expect(hook.result.current.value?.title).toBe('New project'));
+  await act(async () => {
+    const rejected = expect(saving).rejects.toThrow('Old server failed');
+    reject(new Error('Old server failed'));
+    await rejected;
+  });
+  expect(hook.result.current.status).toBe('saved');
+  expect(hook.result.current.error).toBe('');
+});
+it('fences navigation immediately after authority confirmation before the commit returns', async () => {
+  const hook = renderHook(({ project }) => useStudioDocument(project, user), {
+    initialProps: { project: id },
+  });
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  let resolve!: (result: unknown) => void;
+  const response = new Promise(complete => {
+    resolve = complete;
+  });
+  io.request.mockReturnValueOnce(response);
+  let confirming!: Promise<number>;
+  act(() => {
+    confirming = hook.result.current.commit();
+  });
+  void response.then(() => flushSync(() => hook.rerender({ project: crypto.randomUUID() })));
+  await act(async () => {
+    const rejected = expect(confirming).rejects.toThrow('Studio changed while confirming');
+    resolve({ document: io.server, revision: 0, canEdit: true });
+    await rejected;
+  });
+  expect(hook.result.current.status).toBe('saved');
+  expect(hook.result.current.error).toBe('');
 });

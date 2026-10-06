@@ -110,7 +110,7 @@ export function StudioInviteDialog({
     });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild data-action-id="studio.collaborator-invite.open">
         <Button variant="outline" size="sm" data-action-id="studio.collaborator-invite.open">
           <UserPlus className="mr-2 h-4 w-4" />
           {tr('invite')}
@@ -154,6 +154,7 @@ export function StudioInviteDialog({
                     <span className="flex gap-1">
                       {c.status === 'invited' && (
                         <Button
+                          data-action-id="studio.collaborator.invitation.resend"
                           variant="ghost"
                           size="sm"
                           disabled={busy}
@@ -163,6 +164,7 @@ export function StudioInviteDialog({
                         </Button>
                       )}
                       <Button
+                        data-action-id="studio.collaborator.access.remove"
                         variant="ghost"
                         size="sm"
                         disabled={busy}
@@ -182,7 +184,13 @@ export function StudioInviteDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>
+          <Button
+            data-action-id="studio.collaborator.dialog.cancel"
+            data-action-kind="interaction"
+            variant="outline"
+            disabled={busy}
+            onClick={() => setOpen(false)}
+          >
             {t('common.cancel')}
           </Button>
           <Button
