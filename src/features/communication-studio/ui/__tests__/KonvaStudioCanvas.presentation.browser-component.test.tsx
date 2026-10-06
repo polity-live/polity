@@ -1731,6 +1731,13 @@ it('opens media cropping after a native double tap and cancels it with the canva
   );
   const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
   await waitFor(() => expect(group.findOne('Image')).toBeTruthy());
+  await waitFor(() =>
+    expect(
+      stage()
+        .getIntersection(group.getAbsoluteTransform().point({ x: 80, y: 50 }))
+        ?.findAncestor(`#${media.id}`)
+    ).toBe(group)
+  );
   doubleTap(group, { x: 80, y: 50 });
   await screen.findByRole('toolbar', { name: 'Crop' });
   screen.getByTestId('studio-canvas').focus();

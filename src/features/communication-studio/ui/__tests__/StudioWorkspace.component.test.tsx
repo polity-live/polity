@@ -1,13 +1,12 @@
+import { io, ydoc, notifyAll, value, setup, show, setDocument } from './StudioWorkspace.fixture';
 import { focusProjectEditor } from '@/features/project-chat/hooks/editor-bridge';
 /* @vitest-environment jsdom */
-import { forwardRef, useEffect, useImperativeHandle, useReducer } from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 // The complete editor renders hundreds of controls. Instrumented CI runs need
 // time for jsdom's accessibility queries as well as the interaction assertions.
 vi.setConfig({ testTimeout: 15_000 });
-import { element, type StudioDocument } from '../../logic/document';
-import { createDocument } from '../../logic/templates';
+import { element } from '../../logic/document';
 import {
   createFrameNode,
   drawingNodeSchema,
@@ -22,291 +21,10 @@ import {
   setProjectStudioClipboard,
 } from '../../logic/studio-clipboard';
 import { legacyDocumentToV3, v3DocumentToLegacy } from '../../logic/v3-adapter';
-import * as shared from '../../logic/collaboration';
-const io = vi.hoisted(() => ({
-  request: vi.fn(),
-  upload: vi.fn(),
-  notifyError: vi.fn(),
-  canvasExecute: vi.fn().mockResolvedValue(undefined),
-  canvasProps: null as any,
-  editor: {} as any,
-  projects: [] as any[],
-  project: null as any,
-  exports: [] as any[],
-  loading: false,
-  projectChat: vi.fn(),
-  procedureReason: undefined as string | null | undefined,
-}));
-vi.mock('@rocicorp/zero/react', () => ({
-  useQuery: () => [[], { type: 'complete' }],
-  useZero: () => ({
-    mutate: () => ({ client: Promise.resolve(), server: Promise.resolve({ type: 'success' }) }),
-  }),
-}));
-vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
-  ProjectChatPanel: (props: any) => {
-    io.projectChat(props);
-    return <button data-project-chat-dock>Shared project chat</button>;
-  },
-}));
-vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
-  SmartLink: ({ href, children, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
-}));
-vi.mock('@/providers/auth-provider', () => ({
-  useAuth: () => ({ user: { id: 'author', email: 'author@polity.test' } }),
-}));
-vi.mock('@/zero/users/useUserState', () => ({
-  useUserState: () => ({
-    currentUser: {
-      id: 'author',
-      first_name: 'Ada',
-      last_name: 'Lovelace',
-      handle: 'ada',
-      avatar: null,
-    },
-  }),
-}));
-vi.mock('@/zero/communication-studio/useStudioState', () => ({
-  useStudioState: () => ({
-    projects: io.projects,
-    project: io.project,
-    exports: io.exports,
-    isLoading: io.loading,
-  }),
-}));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({
-  useStudioApi: () => io,
-  studioRequest: io.request,
-}));
-vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
-  CollaborationStatus: () => <span>Shared connection status</span>,
-}));
-vi.mock('../../hooks/useStudioDocument', () => ({
-  useStudioDocument: () => {
-    const [, notify] = useReducer(n => n + 1, 0);
-    useEffect(() => {
-      listeners.add(notify);
-      return () => {
-        listeners.delete(notify);
-      };
-    }, []);
-    return { ...io.editor };
-  },
-}));
-vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string) => key,
-  useTranslation: () => ({
-    t: (key: string) => {
-      if (key === 'features.studio.format') return 'Format';
-      if (key === 'features.editor.header.allSaved') return 'All changes saved';
-      if (key === 'common.actions.share') return 'Share';
-      return key.replace('features.studio.', '');
-    },
-  }),
-}));
-vi.mock('../KonvaStudioCanvas', () => ({
-  default: forwardRef((p: any, ref) => {
-    io.canvasProps = p;
-    const canvasPage = p.document
-      ? v3DocumentToLegacy(p.document).pages.find(page => page.id === p.activeFrameId)!
-      : ydoc.pages.find(page => page.id === p.activeFrameId)!;
-    useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));
-    useEffect(
-      () => p.onGeometry?.({ left: 100, top: 150, right: 350, bottom: 450, interacting: false }),
-      []
-    );
-    useEffect(() => {
-      p.onCanvasStateChange?.({
-        activeTool: 'selection',
-        toolLocked: false,
-        zoom: 1,
-        viewBounds: { left: 100, top: 200, right: 900, bottom: 1000 },
-      });
-    }, []);
-    return (
-      <div data-testid="canvas" data-canvas-engine="konva" data-page-id={p.activeFrameId}>
-        {p.inspector && (
-          <section aria-label="properties" className="polity-inspector-extension">
-            {p.inspector}
-          </section>
-        )}
-        <button onClick={() => p.cursor(12, 24)}>Move cursor</button>
-        <button onClick={() => p.selectExact(canvasPage.elements.map((e: any) => e.id))}>
-          Select all
-        </button>
-        {canvasPage.elements.map((e: any) => (
-          <button
-            key={e.id}
-            onClick={() => p.selectExact([e.id])}
-          >{`Select ${e.type} ${e.id}`}</button>
-        ))}
-      </div>
-    );
-  }),
-}));
-vi.mock('../StudioPreviewDialog', () => ({
-  StudioPreviewDialog: (props: any) =>
-    props.open ? (
-      <div role="dialog" aria-label="previewTitle">
-        <button onClick={() => props.onOpenChange(false)}>closePreview</button>
-      </div>
-    ) : null,
-}));
-vi.mock('../StudioCloneDialog', () => ({
-  StudioCloneDialog: ({ beforeClone }: { beforeClone: () => Promise<unknown> }) => (
-    <button onClick={() => void beforeClone()}>confirmClone</button>
-  ),
-}));
-vi.mock('../useStudioProcedure', () => ({
-  useStudioProcedure: () => ({
-    readOnlyReason: io.procedureReason,
-    tools: <section aria-label="Shared procedure tools" />,
-    modeButton: null,
-    canvasOverlay: null,
-    markers: [],
-    previewDocument: null,
-    previewAssets: [],
-    editingAllowed: true,
-    selectProposal: vi.fn(),
-  }),
-}));
-vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({
-  ImageEditorDialog: (p: any) =>
-    p.open ? (
-      <div role="dialog">
-        <button onClick={() => p.onOpenChange(true)}>Keep image open</button>
-        <button onClick={() => p.onSave(new File(['edit'], 'edited.png', { type: 'image/png' }))}>
-          Save image
-        </button>
-        <button onClick={() => p.onOpenChange(false)}>Close image</button>
-      </div>
-    ) : null,
-}));
-vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
-  useFixedToolbarController: () => ({ className: 'fixed' }),
-}));
 import { StudioWorkspace } from '../StudioWorkspace';
-let ydoc: StudioDocument;
-let cachedCanonical: ReturnType<typeof legacyDocumentToV3> | null | undefined;
-const listeners = new Set<() => void>();
-const notifyAll = () => {
-  cachedCanonical = undefined;
-  listeners.forEach(f => f());
-};
-function value() {
-  return structuredClone(ydoc);
-}
-function setup(kind: Parameters<typeof createDocument>[0] = 'single') {
-  ydoc = createDocument(kind, 'Editable campaign', undefined, 1);
-  cachedCanonical = undefined;
-  io.editor = {
-    get value() {
-      return value();
-    },
-    get v3Value() {
-      if (cachedCanonical !== undefined) return cachedCanonical;
-      try {
-        cachedCanonical = legacyDocumentToV3(ydoc);
-      } catch {
-        // The legacy mock permits intermediate edits that the real document hook validates.
-        cachedCanonical = null;
-      }
-      return cachedCanonical;
-    },
-    canEdit: true,
-    status: 'saved',
-    error: '',
-    peers: [
-      {
-        userId: 'peer',
-        user: { id: 'peer', name: 'Peer', firstName: 'Peer', color: '#123456' },
-      },
-    ],
-    assets: [],
-    sources: [],
-    transact: (fn: (d: StudioDocument) => void) =>
-      (() => {
-        fn(ydoc);
-        notifyAll();
-      })(),
-    transactV3: (fn: (d: ReturnType<typeof legacyDocumentToV3>) => void) =>
-      (() => {
-        const document = legacyDocumentToV3(ydoc);
-        fn(document);
-        ydoc = v3DocumentToLegacy(studioDocumentV3Schema.parse(document));
-        notifyAll();
-      })(),
-    patchElement: (p: string, id: string, change: any) => {
-      shared.patchElement(ydoc, p, id, change, 'local');
-      notifyAll();
-    },
-    patchPage: (id: string, p: any) => {
-      shared.patchPage(ydoc, id, p);
-      notifyAll();
-    },
-    patchPost: (id: string, p: any) => {
-      shared.patchPost(ydoc, id, p);
-      notifyAll();
-    },
-    insertElement: (p: string, e: any) => {
-      shared.insertElement(ydoc, p, e);
-      notifyAll();
-    },
-    removeElement: (p: string, id: string) => {
-      shared.removeElement(ydoc, p, id);
-      notifyAll();
-    },
-    meta: (k: string, v: any) =>
-      (() => {
-        Object.assign(ydoc, { [k]: v });
-        notifyAll();
-      })(),
-    commit: async () => 0,
-    collaboration: { commit: async () => 0 },
-    conflicts: [],
-    retry: vi.fn(),
-    refreshAssets: vi.fn().mockResolvedValue(undefined),
-    undo: vi.fn(),
-    redo: vi.fn(),
-    cursor: vi.fn(),
-  };
-}
-beforeEach(() => {
-  io.procedureReason = undefined;
-  vi.clearAllMocks();
-  sessionStorage.clear();
-  io.projects = [];
-  io.project = null;
-  io.exports = [];
-  io.loading = false;
-  io.canvasProps = null;
-  io.request.mockImplementation(async (op: string) => {
-    if (op === 'create') return { id: 'saved' };
-    if (op === 'export') return { id: 'new-job' };
-    if (op === 'exportStatus')
-      return { id: 'new-job', format: 'png', status: 'queued', progress: 0, error: null };
-    return [];
-  });
-  setup();
-});
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-});
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 const change = (name: string, v: string) =>
   fireEvent.change(screen.getByLabelText(name, { exact: true }), { target: { value: v } });
-async function show(props: any = { projectId: 'project', groupId: 'group', open: vi.fn() }) {
-  let ui: any;
-  await act(async () => {
-    ui = render(<StudioWorkspace {...props} />);
-  });
-  return ui;
-}
 const menuNames = new Set([
   'project',
   'frame',
@@ -1146,7 +864,7 @@ describe('Studio toolbar workflows', () => {
         const next = structuredClone(canonical);
         change(next);
         canonical = studioDocumentV3Schema.parse(next);
-        ydoc = v3DocumentToLegacy(canonical);
+        setDocument(v3DocumentToLegacy(canonical));
         notifyAll();
       });
       const before = structuredClone(canonical);

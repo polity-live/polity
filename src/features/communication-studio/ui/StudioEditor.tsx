@@ -995,7 +995,7 @@ function StudioEditorReady({
       if (ev.key === 'Escape') {
         return;
       }
-      if (!c.canEdit) return;
+      if (disabled) return;
       if (mod && ['c', 'v', 'x'].includes(ev.key.toLowerCase())) {
         ev.preventDefault();
         ev.stopPropagation();
@@ -1047,7 +1047,7 @@ function StudioEditorReady({
     };
     window.addEventListener('keydown', key, true);
     return () => window.removeEventListener('keydown', key, true);
-  }, [c, page, active]);
+  }, [c, page, active, disabled]);
   const field = (label: string, children: ReactNode) => (
     <label key={label} className="block space-y-1 text-xs">
       <span>{tr(label)}</span>
@@ -1124,6 +1124,7 @@ function StudioEditorReady({
                 {(['bold', 'italic', 'underline'] as const).map(style => (
                   <button
                     key={style}
+                    data-action-id="communication-studio.text.inspector.toggle-mark"
                     type="button"
                     className="polity-style-button"
                     aria-label={tr(style)}
@@ -1160,6 +1161,7 @@ function StudioEditorReady({
                     .map(([role, color]) => (
                       <button
                         key={role}
+                        data-action-id="communication-studio.text.color.select-role"
                         type="button"
                         className="h-7 w-7 rounded border"
                         style={{ backgroundColor: color }}
@@ -1268,6 +1270,7 @@ function StudioEditorReady({
                   field(
                     key,
                     <select
+                      data-action-id="communication-studio.shape.arrowhead.select"
                       className={input}
                       value={activeNode[key]}
                       onChange={event =>
@@ -1295,6 +1298,7 @@ function StudioEditorReady({
               {field(
                 'horizontalConstraint',
                 <select
+                  data-action-id="communication-studio.node.constraint.horizontal"
                   className={input}
                   value={activeNode.constraints.horizontal}
                   onChange={event =>
@@ -1316,6 +1320,7 @@ function StudioEditorReady({
               {field(
                 'verticalConstraint',
                 <select
+                  data-action-id="communication-studio.node.constraint.vertical"
                   className={input}
                   value={activeNode.constraints.vertical}
                   onChange={event =>
@@ -1351,6 +1356,7 @@ function StudioEditorReady({
               {field(
                 'verticalAlign',
                 <select
+                  data-action-id="communication-studio.text.vertical-align.select"
                   className={input}
                   value={active.verticalAlign}
                   onChange={ev => c.patch(active.id, { verticalAlign: ev.target.value as 'top' })}
@@ -1536,6 +1542,7 @@ function StudioEditorReady({
         {modeButton && <ToolbarGroup>{modeButton}</ToolbarGroup>}
         <ToolbarGroup>
           <ToolbarButton
+            data-action-id="communication-studio.selection.lock.toggle"
             data-action-kind="interaction"
             tooltip={selectionFullyLocked ? tr('unlock') : tr('lock')}
             pressed={selectionFullyLocked}
@@ -1896,6 +1903,7 @@ function StudioEditorReady({
         </ToolbarGroup>
         <ToolbarGroup>
           <ToolbarButton
+            data-action-id="communication-studio.selection.copy.duplicate"
             data-action-kind="interaction"
             tooltip={tr('duplicate')}
             disabled={disabled || !c.selected.length}
@@ -1904,6 +1912,7 @@ function StudioEditorReady({
             <Copy />
           </ToolbarButton>
           <ToolbarButton
+            data-action-id="communication-studio.selection.remove.delete"
             data-action-kind="interaction"
             tooltip={tr('remove')}
             disabled={disabled || !c.selected.length}
@@ -2023,7 +2032,11 @@ function StudioEditorReady({
                 onValueChange={v => formatText('font', v)}
               >
                 {fontFamilies.map(font => (
-                  <DropdownMenuRadioItem key={font} value={font}>
+                  <DropdownMenuRadioItem
+                    data-action-id="communication-studio.text.font.select"
+                    key={font}
+                    value={font}
+                  >
                     {font}
                   </DropdownMenuRadioItem>
                 ))}
@@ -2053,6 +2066,7 @@ function StudioEditorReady({
               ] as const
             ).map(([mark, Icon]) => (
               <ToolbarButton
+                data-action-id="communication-studio.text.toolbar.toggle-mark"
                 data-action-kind="interaction"
                 key={mark}
                 tooltip={tr(mark)}
@@ -2065,6 +2079,7 @@ function StudioEditorReady({
               </ToolbarButton>
             ))}
             <ToolbarButton
+              data-action-id="communication-studio.text.mark-code.apply"
               data-action-kind="interaction"
               tooltip={tr('code')}
               disabled={disabled}
@@ -2074,6 +2089,7 @@ function StudioEditorReady({
               <Code2 />
             </ToolbarButton>
             <ToolbarButton
+              data-action-id="communication-studio.text.mark-highlight.apply"
               data-action-kind="interaction"
               tooltip={tr('highlight')}
               disabled={disabled}
@@ -2121,6 +2137,7 @@ function StudioEditorReady({
                   ] as const
                 ).map(([value, Icon]) => (
                   <DropdownMenuRadioItem
+                    data-action-id="communication-studio.text.alignment.select"
                     key={value}
                     value={value}
                     aria-label={tr(value)}
@@ -2430,6 +2447,7 @@ function StudioEditorReady({
                 </button>
               </div>
               <input
+                data-action-id="communication-studio.export.frames.search"
                 className="bg-background h-8 w-full rounded-md border px-2 text-sm"
                 type="search"
                 aria-label={tr('searchExportFrames')}
@@ -2438,10 +2456,16 @@ function StudioEditorReady({
                 onChange={event => setExportQuery(event.currentTarget.value)}
               />
               <div className="flex gap-1">
-                <button type="button" className={button} onClick={c.markAllExportFrames}>
+                <button
+                  data-action-id="communication-studio.export.frames.select-all"
+                  type="button"
+                  className={button}
+                  onClick={c.markAllExportFrames}
+                >
                   {tr('markAllFrames')}
                 </button>
                 <button
+                  data-action-id="communication-studio.export.frames.select-current"
                   type="button"
                   className={button}
                   disabled={!c.exportFrames.some(frame => frame.id === c.selected[0])}
@@ -2465,6 +2489,7 @@ function StudioEditorReady({
                       className="hover:bg-muted/60 flex min-h-8 cursor-pointer items-center gap-2 rounded-sm px-2 text-sm"
                     >
                       <input
+                        data-action-id="communication-studio.export.frame.toggle"
                         type="checkbox"
                         checked={c.exportFrameIds.includes(frame.id)}
                         onChange={() => c.toggleExportFrame(frame.id)}
@@ -2577,6 +2602,7 @@ function StudioEditorReady({
           aria-label={tr('projectStatus')}
         >
           <input
+            data-action-id="communication-studio.project.title.edit"
             aria-label={tr('name')}
             className={input + ' h-8 max-w-sm min-w-40 flex-1 font-semibold'}
             value={value.title}
