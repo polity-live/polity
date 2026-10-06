@@ -27765,7 +27765,7 @@
       "actionId": "communication-studio.studio-layers-panel.begin-rename",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 377,
+      "line": 379,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27773,7 +27773,20 @@
       "handler": "beginRename",
       "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "renames a layer using keyboard entry, selects its old name and returns focus after committing",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "disables write controls for %s layers while keeping selection accessible",
+          "scenarios": ["disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27788,7 +27801,7 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#communication-studio.studio-layers-panel.on-select",
@@ -27797,7 +27810,7 @@
       "actionId": "communication-studio.studio-layers-panel.on-select",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 366,
+      "line": 368,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27805,7 +27818,14 @@
       "handler": "onSelect",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "searches layers, selects a row and clears the search with native keyboard focus",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27820,24 +27840,37 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#communication-studio.studio-layers-panel.on-set-locked",
-      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#button-3f35bcc0b8",
+      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#button-11436dbefc",
       "file": "src/features/communication-studio/ui/StudioLayersPanel.tsx",
       "actionId": "communication-studio.studio-layers-panel.on-set-locked",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 397,
+      "line": 400,
       "column": 14,
-      "kind": "interaction",
+      "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onSetLocked",
-      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
+      "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles layer %s in both directions with keyboard and retains focus",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "disables write controls for %s layers while keeping selection accessible",
+          "scenarios": ["disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27852,24 +27885,37 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#communication-studio.studio-layers-panel.on-set-visibility",
-      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#button-c42de80e56",
+      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#button-d2501ce592",
       "file": "src/features/communication-studio/ui/StudioLayersPanel.tsx",
       "actionId": "communication-studio.studio-layers-panel.on-set-visibility",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 387,
+      "line": 389,
       "column": 14,
-      "kind": "interaction",
+      "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
       "handler": "onSetVisibility",
-      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
+      "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles layer %s in both directions with keyboard and retains focus",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "disables write controls for %s layers while keeping selection accessible",
+          "scenarios": ["disabled"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27884,52 +27930,30 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
-      "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-ab6665841a",
-      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-ab6665841a",
+      "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#studio.layers.name.edit",
+      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-01b796a96f",
       "file": "src/features/communication-studio/ui/StudioLayersPanel.tsx",
-      "identifierSource": "unidentified",
-      "tag": "input",
-      "line": 238,
-      "column": 6,
-      "kind": "selection",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["selected", "unselected", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-bf62eac11d",
-      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-bf62eac11d",
-      "file": "src/features/communication-studio/ui/StudioLayersPanel.tsx",
-      "identifierSource": "unidentified",
+      "actionId": "studio.layers.name.edit",
+      "identifierSource": "data-action-id",
       "tag": "input",
       "line": 332,
       "column": 20,
-      "kind": "selection",
+      "kind": "interaction",
       "classification": "canonical-action",
       "accessibilityIssues": [],
-      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "renames a layer using keyboard entry, selects its old name and returns focus after committing",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27944,7 +27968,45 @@
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/communication-studio/ui/StudioLayersPanel.tsx#studio.layers.search",
+      "debtKey": "src/features/communication-studio/ui/StudioLayersPanel.tsx#input-2972e2d596",
+      "file": "src/features/communication-studio/ui/StudioLayersPanel.tsx",
+      "actionId": "studio.layers.search",
+      "identifierSource": "data-action-id",
+      "tag": "input",
+      "line": 238,
+      "column": 6,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "searches layers, selects a row and clears the search with native keyboard focus",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioPanel.tsx#communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672",

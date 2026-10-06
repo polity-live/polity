@@ -28,6 +28,14 @@ function documentWith(nodes: StudioNode[], masterFrameId: string | null = null) 
 }
 
 describe('Studio Layers tree', () => {
+  it('orders equal-depth unframed layers with stable IDs and handles an empty document', () => {
+    const document = documentWith([
+      node('z', 'Last', 'shape', null, 1),
+      node('a', 'First', 'shape', null, 1),
+    ]);
+    expect(buildStudioLayerTree(document).map(entry => entry.node.id)).toEqual(['a', 'z']);
+    expect(buildStudioLayerTree(documentWith([]))).toEqual([]);
+  });
   it('lists frame branches first and unframed layers afterwards with stable depth', () => {
     const document = documentWith([
       node('frame-a', 'Frame A', 'frame', null, 2),

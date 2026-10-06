@@ -4,7 +4,7 @@ import { Toolbar } from '@/features/shared/ui/layout';
 import { StudioDataProperties } from '../StudioDataProperties';
 import { StudioTextEditor, type StudioTextSelectionEditor } from '../StudioTextEditor';
 import { StudioMenuItem, StudioToolbarMenu } from '../StudioToolbarMenu';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { createDocument } from '../../logic/templates';
@@ -516,4 +516,29 @@ it('prevents keyboard opening of a disabled Studio toolbar menu and preserves it
   await userEvent.keyboard('{Enter} ');
   expect(screen.queryByRole('menu')).toBeNull();
   expect(select).not.toHaveBeenCalled();
+});
+
+it('opens only the requested Studio menu from a panel event and removes its listener on unmount', async () => {
+  const select = vi.fn();
+  const view = render(
+    <Toolbar>
+      <StudioToolbarMenu label="Requested menu" panelKey="target" icon={<Type />}>
+        <StudioMenuItem label="Apply" icon={<Type />} onSelect={select} />
+      </StudioToolbarMenu>
+    </Toolbar>
+  );
+  const trigger = screen.getByRole<HTMLButtonElement>('button', { name: 'Requested menu' });
+  trigger.focus();
+  act(() => window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: 'other' })));
+  expect(screen.queryByRole('menu')).toBeNull();
+  act(() => window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: 'target' })));
+  const item = await screen.findByRole<HTMLElement>('menuitem', { name: 'Apply' });
+  item.focus();
+  await userEvent.keyboard('{Enter}');
+  expect(select).toHaveBeenCalledOnce();
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+  expect(document.activeElement).toBe(trigger);
+  view.unmount();
+  act(() => window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: 'target' })));
+  expect(screen.queryByRole('menu')).toBeNull();
 });

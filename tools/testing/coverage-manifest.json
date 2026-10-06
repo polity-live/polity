@@ -22606,6 +22606,111 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
           "project": "unit",
           "caseId": "keeps matching ancestors and excludes the master-layout branch"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "selects the layer, focuses and selects its name, and commits once on Enter plus blur"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "commits on blur and allows an existing layer name"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "does not commit %s and restores the name button"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "shows an accessible validation error and accepts a corrected name"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "enforces the name limit for %i characters"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores Enter during IME composition"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps only one editor when switching layers"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "prevents renaming a %s layer"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "discards the draft when the layer is %s during editing"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "retains the draft across unrelated document updates and preserves row actions"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "searches layers, selects a row and clears the search with native keyboard focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "renames a layer using keyboard entry, selects its old name and returns focus after committing"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles layer %s in both directions with keyboard and retains focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "disables write controls for %s layers while keeping selection accessible"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "moves a layer %s using its actual drag payload and clears the drop preview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "expires a remote rename notice and cancels its timer on unmount"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "renders every semantic layer type with its corresponding icon and supports an empty document"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects drag starts for %s layers without providing a move payload"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects a %s drop while retaining document order"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "accepts a transferred external layer payload with unknown pointer coordinates and clears previews when leaving a target"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders equal-depth unframed layers with stable IDs and handles an empty document"
         }
       ],
       "suggestedTestRefs": [
@@ -23231,6 +23336,11 @@
           "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens only the requested Studio menu from a panel event and removes its listener on unmount"
         }
       ],
       "suggestedTestRefs": [

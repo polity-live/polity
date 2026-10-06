@@ -1,10 +1,29 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFrameNode, createStudioDocumentV3 } from '../../logic/document-v3';
+import {
+  createFrameNode,
+  createStudioDocumentV3,
+  drawingNodeSchema,
+  embedNodeSchema,
+  mediaNodeSchema,
+} from '../../logic/document-v3';
 import { StudioLayersPanel } from '../StudioLayersPanel';
+import { createStudioNodeFromElement } from '../../logic/create-studio-node';
+import { element } from '../../logic/document';
 
 afterEach(cleanup);
+
+afterEach(() => vi.useRealTimers());
 
 function setup() {
   const document = createStudioDocumentV3('Campaign');
@@ -178,4 +197,307 @@ describe('Studio layer renaming', () => {
     expect(props.onSetVisibility).toHaveBeenCalledWith(next.nodes[0], false);
     expect(props.onSetLocked).toHaveBeenCalledWith(next.nodes[0], true);
   });
+});
+
+it('searches layers, selects a row and clears the search with native keyboard focus', async () => {
+  const user = userEvent.setup();
+  const { props, rerender } = setup();
+  const search = screen.getByRole<HTMLInputElement>('searchbox', { name: 'searchLayers' });
+  search.focus();
+  expect(document.activeElement).toBe(search);
+  await user.type(search, 'second');
+  expect(screen.getAllByRole('treeitem')).toHaveLength(1);
+  const name = screen.getByRole<HTMLButtonElement>('button', { name: 'Second' });
+  name.focus();
+  await user.keyboard('{Enter}');
+  expect(props.onSelect).toHaveBeenCalledExactlyOnceWith(
+    props.document.nodes[1],
+    props.document.nodes[1].id
+  );
+  expect(document.activeElement).toBe(name);
+  rerender(<StudioLayersPanel {...props} selectedNodeIds={[props.document.nodes[1].id]} />);
+  expect(
+    screen.getByRole('treeitem', { selected: true }).getAttribute('data-studio-layer-id')
+  ).toBe(props.document.nodes[1].id);
+  search.focus();
+  await user.clear(search);
+  expect(screen.getAllByRole('treeitem')).toHaveLength(2);
+  await user.type(search, 'no matching layer');
+  expect(screen.queryAllByRole('treeitem')).toHaveLength(0);
+  expect(screen.getByRole('status').textContent).toBe('noLayers');
+});
+
+it('renames a layer using keyboard entry, selects its old name and returns focus after committing', async () => {
+  const user = userEvent.setup();
+  const { props } = setup();
+  const button = screen.getByRole<HTMLButtonElement>('button', { name: 'rename: First' });
+  button.focus();
+  await user.keyboard('{Enter}');
+  const input = nameInput();
+  expect(document.activeElement).toBe(input);
+  expect([input.selectionStart, input.selectionEnd]).toEqual([0, 5]);
+  await user.keyboard('Keyboard frame{Enter}');
+  expect(props.onRename).toHaveBeenCalledExactlyOnceWith(
+    props.document.nodes[0].id,
+    'Keyboard frame'
+  );
+  expect(screen.queryByRole('textbox')).toBeNull();
+  expect(document.activeElement).toBe(button);
+});
+
+it.each(['visibility', 'lock'] as const)(
+  'toggles layer %s in both directions with keyboard and retains focus',
+  async mode => {
+    const user = userEvent.setup();
+    const { props, rerender } = setup();
+    const node = props.document.nodes[0];
+    const button = screen.getByRole<HTMLButtonElement>('button', {
+      name: `${mode === 'visibility' ? 'hide' : 'lock'}: First`,
+    });
+    const callback = mode === 'visibility' ? props.onSetVisibility : props.onSetLocked;
+    button.focus();
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    await user.keyboard(' ');
+    expect(callback).toHaveBeenCalledExactlyOnceWith(node, mode !== 'visibility');
+    const next = structuredClone(props.document);
+    if (mode === 'visibility') next.nodes[0].visible = false;
+    else next.nodes[0].locked = true;
+    rerender(<StudioLayersPanel {...props} document={next} />);
+    expect(document.activeElement).toBe(button);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    callback.mockClear();
+    await user.keyboard('{Enter}');
+    expect(callback).toHaveBeenCalledExactlyOnceWith(next.nodes[0], mode === 'visibility');
+    if (mode === 'visibility') next.nodes[0].visible = true;
+    else next.nodes[0].locked = false;
+    rerender(<StudioLayersPanel {...props} document={structuredClone(next)} />);
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(document.activeElement).toBe(button);
+  }
+);
+
+it.each(['locked', 'read-only'] as const)(
+  'disables write controls for %s layers while keeping selection accessible',
+  async mode => {
+    const user = userEvent.setup();
+    const { props, rerender } = setup();
+    const next = structuredClone(props.document);
+    next.nodes[0].locked = mode === 'locked';
+    rerender(<StudioLayersPanel {...props} document={next} disabled={mode === 'read-only'} />);
+    for (const action of ['rename', 'hide', ...(mode === 'read-only' ? ['lock'] : [])]) {
+      const button = screen.getByRole<HTMLButtonElement>('button', { name: `${action}: First` });
+      expect(button.disabled).toBe(true);
+      await user.click(button);
+    }
+    expect(props.onRename).not.toHaveBeenCalled();
+    expect(props.onSetVisibility).not.toHaveBeenCalled();
+    expect(props.onSetLocked).not.toHaveBeenCalled();
+    const select = screen.getByRole<HTMLButtonElement>('button', { name: 'First' });
+    select.focus();
+    await user.keyboard('{Enter}');
+    expect(props.onSelect).toHaveBeenCalledExactlyOnceWith(next.nodes[0], next.nodes[0].id);
+    expect(document.activeElement).toBe(select);
+  }
+);
+
+function dragEvent(
+  type: 'dragStart' | 'dragOver' | 'dragLeave' | 'drop' | 'dragEnd',
+  row: HTMLElement,
+  dataTransfer: any,
+  clientY?: number,
+  relatedTarget?: HTMLElement
+) {
+  const event = createEvent[type](row, { dataTransfer, bubbles: true, cancelable: true });
+  if (clientY !== undefined) Object.defineProperty(event, 'clientY', { value: clientY });
+  if (relatedTarget !== undefined)
+    Object.defineProperty(event, 'relatedTarget', { value: relatedTarget });
+  fireEvent(row, event);
+  return event;
+}
+
+it.each(['before', 'after', 'inside'] as const)(
+  'moves a layer %s using its actual drag payload and clears the drop preview',
+  position => {
+    const { props, rerender } = setup();
+    const document = structuredClone(props.document);
+    const child = createStudioNodeFromElement(element('rect'), document.nodes[0].id, 0);
+    child.name = 'Child';
+    document.nodes.push(child);
+    rerender(<StudioLayersPanel {...props} document={document} />);
+    const source = screen
+      .getAllByRole('treeitem')
+      .find(
+        row =>
+          row.getAttribute('data-studio-layer-id') ===
+          (position === 'inside' ? child.id : document.nodes[0].id)
+      )!;
+    const target = screen
+      .getAllByRole('treeitem')
+      .find(row => row.getAttribute('data-studio-layer-id') === document.nodes[1].id)!;
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ top: 0, height: 100 } as DOMRect);
+    let payload = '';
+    const transfer = {
+      setData: vi.fn((_type, value) => {
+        payload = value;
+      }),
+      getData: vi.fn(() => payload),
+      effectAllowed: '',
+      dropEffect: '',
+    };
+    dragEvent('dragStart', source, transfer);
+    expect(payload).toBe(position === 'inside' ? child.id : document.nodes[0].id);
+    const y = position === 'before' ? 10 : position === 'after' ? 90 : 50;
+    dragEvent('dragOver', target, transfer, y);
+    dragEvent('dragOver', target, transfer, y);
+    expect(target.getAttribute('data-drop-position')).toBe(position);
+    dragEvent(
+      'dragLeave',
+      target,
+      transfer,
+      y,
+      within(target).getByRole('button', { name: 'Second' })
+    );
+    expect(target.getAttribute('data-drop-position')).toBe(position);
+    dragEvent('drop', target, transfer, y);
+    expect(props.onMove).toHaveBeenCalledExactlyOnceWith(payload, document.nodes[1].id, position);
+    expect(target.getAttribute('data-drop-position')).toBeNull();
+    dragEvent('dragEnd', source, transfer);
+  }
+);
+
+it('expires a remote rename notice and cancels its timer on unmount', async () => {
+  vi.useFakeTimers();
+  const { props, rerender, unmount } = setup();
+  start();
+  const next = structuredClone(props.document);
+  next.nodes[0].name = 'Remote';
+  rerender(<StudioLayersPanel {...props} document={next} />);
+  expect(screen.getByRole('status').textContent).toBe('layerRenamedElsewhere');
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(5000);
+  });
+  expect(screen.queryByRole('status')).toBeNull();
+  unmount();
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it('renders every semantic layer type with its corresponding icon and supports an empty document', () => {
+  const { props, rerender } = setup();
+  const document = structuredClone(props.document);
+  const frame = document.nodes[0];
+  document.nodes.push(
+    ...(['text', 'image', 'video', 'table', 'chart'] as const).map((type, index) =>
+      createStudioNodeFromElement(
+        element(type, { assetId: crypto.randomUUID() }),
+        frame.id,
+        index + 1
+      )
+    )
+  );
+  document.nodes.push(
+    drawingNodeSchema.parse({
+      ...createFrameNode('square'),
+      parentFrameId: frame.id,
+      type: 'drawing',
+      points: [],
+    }),
+    embedNodeSchema.parse({
+      ...createFrameNode('square'),
+      parentFrameId: frame.id,
+      type: 'embed',
+      provider: 'supported',
+      value: 'https://example.org',
+    }),
+    ...(['audio', 'file'] as const).map(mediaType =>
+      mediaNodeSchema.parse({
+        ...createFrameNode('square'),
+        parentFrameId: frame.id,
+        type: 'media',
+        mediaType,
+        assetId: crypto.randomUUID(),
+      })
+    )
+  );
+  rerender(<StudioLayersPanel {...props} document={document} />);
+  expect(screen.getAllByRole('treeitem')).toHaveLength(11);
+  const frameRow = screen
+    .getAllByRole('treeitem')
+    .find(row => row.getAttribute('data-studio-layer-id') === frame.id)!;
+  expect(frameRow.getAttribute('aria-expanded')).toBe('true');
+  expect(screen.getAllByRole('treeitem').some(row => row.getAttribute('aria-level') === '2')).toBe(
+    true
+  );
+  rerender(<StudioLayersPanel {...props} document={createStudioDocumentV3('Empty')} />);
+  expect(screen.queryAllByRole('treeitem')).toHaveLength(0);
+  expect(screen.getByRole('status').textContent).toBe('noLayers');
+});
+
+it.each(['read-only', 'locked', 'editing'] as const)(
+  'rejects drag starts for %s layers without providing a move payload',
+  mode => {
+    const { props, rerender } = setup();
+    const document = structuredClone(props.document);
+    document.nodes[0].locked = mode === 'locked';
+    rerender(<StudioLayersPanel {...props} document={document} disabled={mode === 'read-only'} />);
+    if (mode === 'editing') start();
+    const row = screen
+      .getAllByRole('treeitem')
+      .find(item => item.getAttribute('data-studio-layer-id') === document.nodes[0].id)!;
+    const transfer = { setData: vi.fn(), getData: vi.fn(() => ''), effectAllowed: '' };
+    const event = dragEvent('dragStart', row, transfer);
+    expect(event.defaultPrevented).toBe(true);
+    expect(transfer.setData).not.toHaveBeenCalled();
+    expect(row.getAttribute('draggable')).toBe('false');
+    expect(props.onMove).not.toHaveBeenCalled();
+  }
+);
+
+it.each([
+  'read-only',
+  'editing-target',
+  'editing-source',
+  'missing-source',
+  'empty-payload',
+  'self-target',
+] as const)('rejects a %s drop while retaining document order', mode => {
+  const { props, rerender } = setup();
+  const source = props.document.nodes[0];
+  const target = props.document.nodes[1];
+  if (mode === 'read-only') rerender(<StudioLayersPanel {...props} disabled />);
+  if (mode === 'editing-target')
+    fireEvent.click(screen.getByRole('button', { name: 'rename: Second' }));
+  if (mode === 'editing-source') start();
+  const row = screen
+    .getAllByRole('treeitem')
+    .find(item => item.getAttribute('data-studio-layer-id') === target.id)!;
+  const payload =
+    mode === 'missing-source'
+      ? crypto.randomUUID()
+      : mode === 'empty-payload'
+        ? ''
+        : mode === 'self-target'
+          ? target.id
+          : source.id;
+  const transfer = { getData: vi.fn(() => payload), dropEffect: '' };
+  dragEvent('dragOver', row, transfer);
+  expect(row.getAttribute('data-drop-position')).toBeNull();
+  dragEvent('drop', row, transfer);
+  expect(props.onMove).not.toHaveBeenCalled();
+});
+
+it('accepts a transferred external layer payload with unknown pointer coordinates and clears previews when leaving a target', () => {
+  const { props } = setup();
+  const [source, target] = props.document.nodes;
+  const rows = screen.getAllByRole('treeitem');
+  const row = rows.find(item => item.getAttribute('data-studio-layer-id') === target.id)!;
+  const otherRow = rows.find(item => item !== row)!;
+  const transfer = { getData: vi.fn(() => source.id), dropEffect: '' };
+  dragEvent('dragOver', row, transfer);
+  expect(row.getAttribute('data-drop-position')).toBe('after');
+  dragEvent('dragLeave', otherRow, transfer);
+  expect(row.getAttribute('data-drop-position')).toBe('after');
+  dragEvent('dragLeave', row, transfer);
+  expect(row.getAttribute('data-drop-position')).toBeNull();
+  dragEvent('drop', row, transfer);
+  expect(props.onMove).toHaveBeenCalledExactlyOnceWith(source.id, target.id, 'after');
 });

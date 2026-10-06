@@ -213,8 +213,8 @@ export function StudioLayersPanel({
 
   const resolveDropPosition = (event: DragEvent<HTMLDivElement>, target: StudioNode) => {
     if (disabled || renameDraftRef.current?.nodeId === target.id) return null;
-    const sourceId =
-      draggedNodeIdRef.current || event.dataTransfer.getData('text/plain') || draggedNodeId;
+    // The ref is the current payload; rendered drag state is only visual.
+    const sourceId = draggedNodeIdRef.current || event.dataTransfer.getData('text/plain');
     if (!sourceId) return null;
     if (renameDraftRef.current?.nodeId === sourceId) return null;
     const source = document.nodes.find(node => node.id === sourceId);
@@ -236,6 +236,8 @@ export function StudioLayersPanel({
   return (
     <div className="space-y-2">
       <input
+        data-action-id="studio.layers.search"
+        data-action-kind="interaction"
         className="bg-background h-8 w-full rounded-md border px-2 text-sm"
         type="search"
         aria-label={tr('searchLayers')}
@@ -301,9 +303,7 @@ export function StudioLayersPanel({
               onDrop={event => {
                 const position = resolveDropPosition(event, node);
                 const sourceId =
-                  draggedNodeIdRef.current ||
-                  event.dataTransfer.getData('text/plain') ||
-                  draggedNodeId;
+                  draggedNodeIdRef.current || event.dataTransfer.getData('text/plain');
                 event.preventDefault();
                 if (sourceId && position) onMove(sourceId, node.id, position);
                 draggedNodeIdRef.current = null;
@@ -330,6 +330,8 @@ export function StudioLayersPanel({
                   <div className="flex items-center gap-2">
                     <Icon className="size-4 shrink-0" />
                     <input
+                      data-action-id="studio.layers.name.edit"
+                      data-action-kind="interaction"
                       data-studio-layer-name-input
                       ref={focusNameInput}
                       className="bg-background focus-visible:ring-ring h-8 w-full min-w-0 rounded-sm border px-1 focus-visible:ring-2 focus-visible:outline-none"
@@ -389,6 +391,7 @@ export function StudioLayersPanel({
                 className="hover:bg-muted focus-visible:ring-ring m-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
                 aria-label={`${node.visible ? tr('hide') : tr('show')}: ${node.name}`}
                 aria-pressed={!node.visible}
+                data-action-kind="selection"
                 disabled={disabled || node.locked}
                 onClick={() => onSetVisibility(node, !node.visible)}
               >
@@ -399,6 +402,7 @@ export function StudioLayersPanel({
                 className="hover:bg-muted focus-visible:ring-ring m-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
                 aria-label={`${node.locked ? tr('unlock') : tr('lock')}: ${node.name}`}
                 aria-pressed={node.locked}
+                data-action-kind="selection"
                 disabled={disabled}
                 onClick={() => onSetLocked(node, !node.locked)}
               >
