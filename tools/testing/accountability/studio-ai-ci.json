@@ -5897,7 +5897,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "searches nested rich text and focuses the matching frame"
+        "caseId": "searches nested rich text and selects its matching node"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",

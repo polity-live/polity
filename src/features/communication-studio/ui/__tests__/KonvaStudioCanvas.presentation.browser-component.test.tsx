@@ -300,7 +300,7 @@ it('paints drawing, table, chart, embed and missing-media nodes on the real canv
   }
 });
 
-it('searches nested rich text and focuses the matching frame', async () => {
+it('searches nested rich text and selects its matching node', async () => {
   const { studio, frame } = fixture();
   const text = createStudioNodeFromElement(
     element('text', { text: 'placeholder', x: 80, y: 100, width: 160, height: 80 }),

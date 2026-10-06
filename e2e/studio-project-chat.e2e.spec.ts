@@ -101,6 +101,7 @@ test('keeps Studio interactive while project chat receives messages and awaits A
     const prompt = page.locator('[data-action-id="messages.assistant.prompt.change"]');
     const send = page.locator('[data-action-id="messages.assistant.send"]');
     const minimize = page.locator('[data-action-id="project-chat.dock.minimize"]');
+    const messages = page.locator('[data-tutorial-anchor="tutorial-assistant-chat"]');
 
     for (let round = 1; round <= 2; round++) {
       requestReceived = new Promise<void>(resolve => {
@@ -112,7 +113,7 @@ test('keeps Studio interactive while project chat receives messages and awaits A
       await requestReceived;
       await expect(page.getByText(/is thinking/)).toBeVisible();
       await expect(
-        page.getByText(`Local responsiveness check ${round}`, { exact: true })
+        messages.getByText(`Local responsiveness check ${round}`, { exact: true })
       ).toBeVisible({ timeout: 30_000 });
       await expect
         .poll(
