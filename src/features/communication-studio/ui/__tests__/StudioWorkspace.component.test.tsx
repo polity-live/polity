@@ -3,6 +3,9 @@ import { focusProjectEditor } from '@/features/project-chat/hooks/editor-bridge'
 import { forwardRef, useEffect, useImperativeHandle, useReducer } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// The complete editor renders hundreds of controls. Instrumented CI runs need
+// time for jsdom's accessibility queries as well as the interaction assertions.
+vi.setConfig({ testTimeout: 15_000 });
 import { element, type StudioDocument } from '../../logic/document';
 import { createDocument } from '../../logic/templates';
 import {

@@ -17,8 +17,6 @@ const zeroAdminPassword = process.env.ZERO_ADMIN_PASSWORD || 'polity-e2e-local-o
 // The cache child and global readiness probe must use the same credential.
 process.env.ZERO_ADMIN_PASSWORD = zeroAdminPassword;
 const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
-const collaborationBaseUrl = process.env.E2E_COLLABORATION_URL ?? 'http://127.0.0.1:1236';
-const collaborationUrl = new URL(collaborationBaseUrl);
 const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
 const configuredGlobalTimeout = process.env.E2E_GLOBAL_TIMEOUT_MS;
 const globalTimeout =
@@ -123,7 +121,6 @@ export default defineConfig({
       env: {
         STUDIO_ENABLED: 'true',
         STUDIO_PILOT_USER_IDS: '',
-        COLLABORATION_WEBSOCKET_URL: collaborationBaseUrl.replace(/^http/, 'ws'),
       },
       url: appBaseUrl,
       reuseExistingServer,
@@ -151,15 +148,6 @@ export default defineConfig({
       url: zeroKeepaliveUrl,
       reuseExistingServer,
       timeout: zeroStartupTimeout,
-      gracefulShutdown: webServerGracefulShutdown,
-    },
-    {
-      command: 'pnpm run collaboration:server',
-      stdout: 'pipe',
-      url: new URL('/health', collaborationUrl).href,
-      env: { PORT: collaborationUrl.port || '1236' },
-      reuseExistingServer,
-      timeout: 60_000,
       gracefulShutdown: webServerGracefulShutdown,
     },
   ],

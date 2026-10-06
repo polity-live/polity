@@ -15,19 +15,14 @@ export function drawStudioElement(ctx: CanvasRenderingContext2D, e: StudioElemen
     w: number,
     size = e.fontSize,
     color = e.fill,
-    align = 'left',
+    align: 'left' | 'center' = 'left',
     bold = e.bold
   ) => {
     ctx.font = `${bold ? 'bold ' : ''}${size}px "${e.font}"`;
     ctx.fillStyle = color;
     ctx.textBaseline = 'top';
     const tw = ctx.measureText(text).width;
-    ctx.fillText(
-      text,
-      x + (align === 'center' ? (w - tw) / 2 : align === 'right' ? w - tw : 0),
-      y,
-      w
-    );
+    ctx.fillText(text, x + (align === 'center' ? (w - tw) / 2 : 0), y, w);
   };
   if (e.type === 'text') {
     interface Run {
@@ -148,7 +143,7 @@ export function drawStudioElement(ctx: CanvasRenderingContext2D, e: StudioElemen
         ctx.fillRect(x, r * height, w, height);
         ctx.strokeStyle = t.border;
         ctx.lineWidth = 1;
-        const edges = cell.borders ?? { top: true, right: true, bottom: true, left: true };
+        const edges = cell.borders;
         const y = r * height;
         ctx.beginPath();
         if (r === 0 && edges.top) {

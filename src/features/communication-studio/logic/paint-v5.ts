@@ -4,6 +4,7 @@ import { paintStudioRichText } from './rich-text-paint';
 import { drawStudioElement } from './draw-element';
 import { semanticElement } from './v3-adapter';
 import { studioMediaGeometry } from './studio-crop';
+import type { StudioElement } from './document';
 
 function pathForShape(ctx: CanvasRenderingContext2D, node: Extract<StudioNode, { type: 'shape' }>) {
   const { width, height } = node.transform;
@@ -70,7 +71,6 @@ async function paintNode(
   media: Record<string, string>,
   time: number
 ): Promise<void> {
-  if (!node.visible) return;
   const { x, y, width, height, rotation, flipX, flipY } = node.transform;
   ctx.save();
   ctx.translate(x + width / 2, y + height / 2);
@@ -141,8 +141,8 @@ async function paintNode(
     ctx.clip();
     ctx.drawImage(source, placement.x, placement.y, placement.width, placement.height);
   } else if (node.type === 'table' || node.type === 'chart') {
-    const element = semanticElement(node);
-    if (element) drawStudioElement(ctx, { ...element, x: 0, y: 0, rotation: 0, opacity: 1 });
+    const element = semanticElement(node) as StudioElement;
+    drawStudioElement(ctx, { ...element, x: 0, y: 0, rotation: 0, opacity: 1 });
   } else if (node.type === 'embed') {
     ctx.fillStyle = node.style.fill ?? '#EEEEEE';
     ctx.fillRect(0, 0, width, height);

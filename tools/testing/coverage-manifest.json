@@ -19755,6 +19755,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -19786,6 +19796,26 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -19940,12 +19970,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -19969,12 +19999,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20008,12 +20038,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20037,12 +20067,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20076,12 +20106,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20110,12 +20140,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20148,8 +20178,8 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts"
       ]
     },
     {
@@ -20238,12 +20268,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20362,12 +20392,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20416,12 +20446,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20460,12 +20490,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20519,6 +20549,41 @@
           "file": "src/features/communication-studio/logic/__tests__/table-rendering.unit.test.ts",
           "project": "unit",
           "caseId": "draws visible edges and omits disabled edges in the shared raster renderer"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "omits hidden objects and reflects visible geometry without leaking canvas state"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "renders %s paths with filled shapes and stroked lines"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "wraps and %s-aligns text without dropping whitespace or long words"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "renders list markers, run-specific typography and links while preserving explicit false styles"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "wraps rich-text paragraphs that inherit the element alignment"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "draws table cell boundaries and clips independent left-, center- and right-aligned content"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+          "project": "unit",
+          "caseId": "renders native %s chart values, labels and optional legends"
         }
       ],
       "suggestedTestRefs": [
@@ -20528,12 +20593,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20577,12 +20642,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20611,12 +20676,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20645,12 +20710,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20675,11 +20740,11 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
       ]
     },
     {
@@ -20703,12 +20768,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20737,12 +20802,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20771,12 +20836,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20846,11 +20911,11 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
       ]
     },
     {
@@ -20865,6 +20930,51 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "shows the same cropped source in Konva preview and PNG rendering"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "exports a transformed %s using the native path and stroke"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves sibling order, skips invisible nodes and paints both master placements at the frame scale"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "renders nested frame clipping, drawings, rich text, native tables and charts, and embed backgrounds"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses document and theme background fallbacks and accepts frames without clipping or strokes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "draws shapes without a fill or stroke and decodes image placement while skipping missing assets"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "seeks video within its duration, supports its first frame and rejects failed media decoding"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing frames and unavailable canvases without publishing a PNG"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "exports actual PNG pixels in sibling and master-layout order while excluding hidden nodes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "decodes an image into the exported frame with centered cover cropping"
         }
       ],
       "suggestedTestRefs": [
@@ -20874,12 +20984,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20928,12 +21038,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -20992,12 +21102,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21081,12 +21191,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21110,12 +21220,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21174,12 +21284,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21258,12 +21368,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21297,12 +21407,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21331,12 +21441,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21370,12 +21480,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21414,12 +21524,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21458,12 +21568,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21497,12 +21607,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21526,12 +21636,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21561,11 +21671,11 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
       ]
     },
     {
@@ -21654,12 +21764,12 @@
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
       ]
     },
     {
@@ -21708,13 +21818,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21742,13 +21852,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21773,6 +21883,46 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits the %s geometry using keyboard focus while rejecting empty and out-of-range values"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits the %s value using keyboard focus and preserves valid state after invalid input"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits a name using keyboard selection and ignores a blank name"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles %s in both directions by keyboard and retains focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "activates the %s picker by keyboard and applies native selections without retaining theme bindings"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits media descriptions by keyboard, changes image fitting and toggles video muting"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits embed content by keyboard without changing node geometry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores stale type-specific edits after a collaborator replaces the node type"
         }
       ],
       "suggestedTestRefs": [
@@ -21781,13 +21931,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21820,13 +21970,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21854,13 +22004,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21923,13 +22073,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -21987,13 +22137,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22021,13 +22171,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22050,13 +22200,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22084,13 +22234,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22148,13 +22298,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22247,13 +22397,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22281,13 +22431,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22380,13 +22530,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22424,13 +22574,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22453,13 +22603,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22482,13 +22632,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22526,13 +22676,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22575,13 +22725,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22624,13 +22774,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22663,13 +22813,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22732,13 +22882,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {
@@ -22783,6 +22933,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -23081,13 +23241,13 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx"
       ]
     },
     {

@@ -25,6 +25,8 @@ export function StudioCanonicalProperties({
     field(
       label,
       <input
+        data-action-id="studio.node.geometry.edit"
+        data-action-kind="interaction"
         className={input}
         type="number"
         min={min}
@@ -44,6 +46,8 @@ export function StudioCanonicalProperties({
       {field(
         'name',
         <input
+          data-action-id="studio.node.name.edit"
+          data-action-kind="interaction"
           className={input}
           value={node.name}
           maxLength={200}
@@ -64,6 +68,8 @@ export function StudioCanonicalProperties({
         {field(
           'opacity',
           <input
+            data-action-id="studio.node.opacity.edit"
+            data-action-kind="interaction"
             className={input}
             type="number"
             min={0}
@@ -82,6 +88,8 @@ export function StudioCanonicalProperties({
         {field(
           'order',
           <input
+            data-action-id="studio.node.order.edit"
+            data-action-kind="interaction"
             className={input}
             type="number"
             min={-1000000}
@@ -99,6 +107,8 @@ export function StudioCanonicalProperties({
         {field(
           'strokeWidth',
           <input
+            data-action-id="studio.node.stroke-width.edit"
+            data-action-kind="interaction"
             className={input}
             type="number"
             min={0}
@@ -117,6 +127,8 @@ export function StudioCanonicalProperties({
       {field(
         'color',
         <input
+          data-action-id="studio.node.fill.edit"
+          data-action-kind="interaction"
           type="color"
           value={node.style.fill ?? '#ffffff'}
           onChange={event =>
@@ -130,6 +142,8 @@ export function StudioCanonicalProperties({
       {field(
         'border',
         <input
+          data-action-id="studio.node.stroke.edit"
+          data-action-kind="interaction"
           type="color"
           value={node.style.stroke ?? '#000000'}
           onChange={event =>
@@ -142,6 +156,7 @@ export function StudioCanonicalProperties({
       )}
       <label className="flex items-center gap-2 text-xs">
         <InlineCheckbox
+          data-action-id="studio.node.lock.toggle"
           checked={node.locked}
           onCheckedChange={value =>
             update(target => {
@@ -154,6 +169,7 @@ export function StudioCanonicalProperties({
       {node.type === 'frame' && (
         <label className="flex items-center gap-2 text-xs">
           <InlineCheckbox
+            data-action-id="studio.node.clipping.toggle"
             checked={node.clipContent}
             onCheckedChange={value =>
               update(target => {
@@ -169,6 +185,8 @@ export function StudioCanonicalProperties({
           {field(
             'text',
             <input
+              data-action-id="studio.node.description.edit"
+              data-action-kind="interaction"
               className={input}
               value={node.alt}
               maxLength={2000}
@@ -183,6 +201,7 @@ export function StudioCanonicalProperties({
             field(
               'fit',
               <select
+                data-action-id="studio.node.fitting.select"
                 className={input}
                 value={node.fit}
                 onChange={event =>
@@ -199,6 +218,7 @@ export function StudioCanonicalProperties({
           {(node.mediaType === 'audio' || node.mediaType === 'video') && (
             <label className="flex items-center gap-2 text-xs">
               <InlineCheckbox
+                data-action-id="studio.node.muting.toggle"
                 checked={node.muted}
                 onCheckedChange={value =>
                   update(target => {
@@ -215,6 +235,7 @@ export function StudioCanonicalProperties({
         field(
           'embedContent',
           <textarea
+            data-action-id="studio.node.embed.edit"
             className={input}
             rows={5}
             value={node.value}
