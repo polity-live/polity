@@ -82,6 +82,7 @@ vi.mock('../BlogListTab', () => ({ BlogListTab: () => null }));
 vi.mock('../GroupListTab', () => ({ GroupsListTab: () => null }));
 vi.mock('../AmendmentListTab', () => ({ AmendmentListTab: () => null }));
 vi.mock('../StatementListTab', () => ({ StatementListTab: () => null }));
+vi.mock('../StudioProjectsTab', () => ({ StudioProjectsTab: () => null }));
 vi.mock('@/features/statements/ui/StatementStoryCarousel', () => ({
   StatementStoryCarousel: () => null,
 }));

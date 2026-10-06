@@ -1,0 +1,3915 @@
+{
+  "version": 1,
+  "sourceReferenceAdditions": {
+    "src/features/amendments/city-design/logic/projection-schema.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/auth/logic/chatgptAuth.ts": [
+      {
+        "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
+        "project": "unit",
+        "caseId": "is disabled by default and does not start an OAuth request"
+      },
+      {
+        "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
+        "project": "unit",
+        "caseId": "requests identity scopes only and keeps the existing Supabase callback"
+      },
+      {
+        "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
+        "project": "unit",
+        "caseId": "links a different-email identity to the authenticated Polity account"
+      },
+      {
+        "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not link without a verified session and clears failed linking attempts"
+      }
+    ],
+    "src/features/auth/ui/ChatGptLoginButton.tsx": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps login disabled and reports AI access separately before activation"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "a linked login never appears as usable ChatGPT plan access"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "explicitly links from the current Polity account and recovers after a rejected link"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "starts identity login only after activation and exposes the failure for retry"
+      }
+    ],
+    "src/features/communication-studio/hooks/useStudioEditorTools.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows compact Elements rows with accessible actions and a native drag source"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "copies canvas selection onto the Elements sidebar button and preserves normal moves elsewhere"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "copies a canvas node dropped into the open Elements menu"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts a dropped library element at frame-local coordinates on a shifted canvas frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps project overview and creation available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows storage status and peers without a permanent sidebar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "opens collaborator invitations only for the owner of a personal Studio project"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "renders one icon toolbar and a separate compact project status row"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches canvas tools and zoom through the typed canvas handle"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps line tools in their menu and inserts charts and sized tables from toolbar buttons"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats text through compact font, alignment, list and link menus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "opens automation-targeted menus and returns focus on Escape"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "anchors secondary-navigation panels to the right sidebar and keeps only one open"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats selected text in the inline inspector without a second properties menu"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "opens properties for every canonical canvas element type, including nodes without a legacy projection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "embeds shared references in alignment and distribution menus and disables unavailable choices"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shares a chosen reference between alignment and distribution"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "searches and operates the canonical frame tree through the Layers popover"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "renames a %s through Layers without modifying its content or geometry"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "moves layers into frames and reorders root frames with drag and drop"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "uploads media from its toolbar button and keeps a failed image edit open"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "searches frames, marks the selected frame, and exports only checked frames"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows preparation immediately and then animates queued and running progress"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "downloads a newly completed export once and keeps manual download available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the API reason in the export dropdown when queueing fails"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "renders the phase explanation and shared procedure tools for %s projects"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "routes keyboard copy, paste and cut through the canvas exactly once"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "persists frame geometry and fill in one V3 transaction"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "restores the only cut frame and its deliverable from the project clipboard"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "offers crop for one unlocked image or video and commits geometry in one transaction"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes contextual text and image actions through the canvas toolbar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "uses contextual group alignment and distribution with the shared reference"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses repeatedly through the bridge and waits for a loaded workspace without remounting chat"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the current workspace and draft when saving before navigation fails"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "consumes route focus only after canvas availability and reports a missing target"
+      }
+    ],
+    "src/features/communication-studio/logic/ai-design.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates ordered editable presentation frames and native text nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "converts free layout elements and an authorized library set into native nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects edits to locked nodes and overflowing text"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "limits follow-up additions, recoloring and removal to the selected frame"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-focus.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves nested rotated frames from the live hierarchy and allows locked objects"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "finds the largest free rectangle beside desktop chat and above mobile chat"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-layers.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves mixed layer order, groups adjacent native objects and excludes hidden objects"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-schema.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves nested rotated frames from the live hierarchy and allows locked objects"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "finds the largest free rectangle beside desktop chat and above mobile chat"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      }
+    ],
+    "src/features/communication-studio/logic/change-request-annotations.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "project": "unit",
+        "caseId": "classifies complete node additions, removals and edits without duplicating a node marker"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps nested added nodes anchored to their proposed frame and selects one proposal"
+      }
+    ],
+    "src/features/communication-studio/logic/commands-v3.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the shared frame preset registry and 8px grid defaults"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults reflection axes and preserves them across V3 and legacy projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults frame backgrounds to the project value and supports explicit overrides"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the project master out of pages and deliverables across legacy transactions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects master elements into every export frame without changing the editor pages"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "promotes drawings outside a frame to persistent root canvas nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing parents and circular frame hierarchies"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "reparents nodes but prevents moving a frame into its descendant"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "moves layers between stacking contexts while preserving their world position"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects locked and structurally invalid layer moves"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies frame constraints and scales content only when requested"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps stacking order local to a parent frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "deletes frame descendants and removes empty deliverables atomically"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "round-trips existing Studio content through the V3 node model"
+      }
+    ],
+    "src/features/communication-studio/logic/create-studio-node.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows the same cropped source in Konva preview and PNG rendering"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies a crop once and discards an abandoned crop"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drags a crop edge on the real canvas and saves the smaller frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drags an image corner inward to save a smaller frame and source crop"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "pans a crop on the real canvas within the source bounds"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses and activates crop controls with the keyboard"
+      }
+    ],
+    "src/features/communication-studio/logic/document-v3.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates ordered editable presentation frames and native text nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "converts free layout elements and an authorized library set into native nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects edits to locked nodes and overflowing text"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "project": "unit",
+        "caseId": "limits follow-up additions, recoloring and removal to the selected frame"
+      }
+    ],
+    "src/features/communication-studio/logic/draw-element.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-rendering.unit.test.ts",
+        "project": "unit",
+        "caseId": "draws visible edges and omits disabled edges in the shared raster renderer"
+      }
+    ],
+    "src/features/communication-studio/logic/editor-commands.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/features/communication-studio/logic/element-library.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes a selection and instantiates it with fresh node and group ids"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "records local overrides and local deletion tombstones on linked instances"
+      }
+    ],
+    "src/features/communication-studio/logic/frame-order.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "project": "unit",
+        "caseId": "lists frame branches first and unframed layers afterwards with stable depth"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps matching ancestors and excludes the master-layout branch"
+      }
+    ],
+    "src/features/communication-studio/logic/media-geometry.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps an Excalidraw crop at its original scale instead of fitting the full image again"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains the existing contain and cover placement without a native crop"
+      }
+    ],
+    "src/features/communication-studio/logic/media-projection.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
+        "project": "unit",
+        "caseId": "replaces a pending media placeholder when the protected media is ready"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps non-media projections stable"
+      }
+    ],
+    "src/features/communication-studio/logic/paint.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates correctly sized canvases and renders layers in stable order with shapes and scene fades"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "wraps paragraphs, clips overflowing text and aligns plain text without interpreting markup"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads and reuses media, applies crop and fit, seeks video within its duration and ignores absent assets"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports a native crop without rescaling the complete source into the cropped bounds"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies horizontal and vertical reflection to structured and media exports"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails failed decoding and bounded media or video waits instead of exporting blank successful frames"
+      }
+    ],
+    "src/features/communication-studio/logic/panel-events.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a whole group from the canvas and toggles it as one selection with Shift"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses a new text node as soon as it reaches the canvas document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "lets a user type into an existing text node after one click"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the contextual toolbar above the selected node while the canvas pans"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps selected text properties available while editing and lets the panel collapse"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops an Elements row onto a zoomed canvas and places its visible copy inside a shifted frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      }
+    ],
+    "src/features/communication-studio/logic/patch-schema.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges independent properties without losing either author"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports the original, local and remote values for an overlapping edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not resurrect deleted elements and refuses deleting a modified element"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps remote fields when undoing an independent local edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects prototype paths"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves V5 %s formatting as a JSON operation and restores it with undo"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "drops undefined object properties but rejects undefined array values"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates nested canvas style, roundness and group updates at the common boundary"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges separate rich-text paragraphs and table cells"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies all six alignments against the page"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes bounding boxes evenly and rejects fewer than three elements"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats text and protects locked resources"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates table and chart dimensions"
+      }
+    ],
+    "src/features/communication-studio/logic/patch-studio-node.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps Plate marks and shape geometry when panel properties change"
+      }
+    ],
+    "src/features/communication-studio/logic/rich-text-paint.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a whole group from the canvas and toggles it as one selection with Shift"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses a new text node as soon as it reaches the canvas document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "lets a user type into an existing text node after one click"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the contextual toolbar above the selected node while the canvas pans"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps selected text properties available while editing and lets the panel collapse"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops an Elements row onto a zoomed canvas and places its visible copy inside a shifted frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      }
+    ],
+    "src/features/communication-studio/logic/selection-geometry.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "groups root frames and root elements, nests groups, and ungroups one level"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects groups across parents and partial regrouping"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "filters selected frame descendants and aligns across frames in world coordinates"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "aligns a rotated child using its visual bounds and converts world deltas to parent coordinates"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes grouped units with equal gaps while preserving the outer edges"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "aligns the members of a lone complete group to the selection edges and centers"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a group together when other objects are selected"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes the members of a lone group on both axes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "distinguishes a nested parent frame from the visible canvas and spans two objects"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the visible canvas for objects with different parent frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves nested semantic group IDs through legacy edits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "project": "unit",
+        "caseId": "duplicates a frame with its descendants as one independent hierarchy"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-clipboard.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies a complete V3 frame hierarchy and inserts the new frame beside its source"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "restores deliverable metadata after cutting its only frame and targets another frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "restores multiple cut frames at their original deliverable positions"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-scene.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates starter text as semantic rich text and reorders it between shapes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps descendants in their frame stacking context"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
+        "project": "unit",
+        "caseId": "duplicates rich text with independent Plate IDs and formatting"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-selection.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+        "project": "unit",
+        "caseId": "toggles outer groups, drills into nested groups, and skips locked nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+        "project": "unit",
+        "caseId": "selects fully enclosed visible unlocked nodes in either drag direction and adds to a previous selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a complete editable group and includes enclosed frame descendants"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+        "project": "unit",
+        "caseId": "selects and shift-toggles complete canvas groups while retaining locked members"
+      }
+    ],
+    "src/features/communication-studio/logic/table-operations.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates valid dimensions and stable distinct IDs while rejecting limits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "inserts and removes selected rows and columns without mutating existing content"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats rectangular selections and mirrors shared borders"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads legacy cells without borders, round-trips V3, and merges independent cell edits"
+      }
+    ],
+    "src/features/communication-studio/logic/templates-v5.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves nested rotated frames from the live hierarchy and allows locked objects"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "finds the largest free rectangle beside desktop chat and above mobile chat"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      }
+    ],
+    "src/features/communication-studio/logic/theme.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/theme-v4.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves light and dark palette roles and keeps explicit overrides"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/theme-v4.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies a combined text style and its semantic color token"
+      }
+    ],
+    "src/features/communication-studio/logic/v3-adapter.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the shared frame preset registry and 8px grid defaults"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults reflection axes and preserves them across V3 and legacy projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults frame backgrounds to the project value and supports explicit overrides"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the project master out of pages and deliverables across legacy transactions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects master elements into every export frame without changing the editor pages"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "promotes drawings outside a frame to persistent root canvas nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing parents and circular frame hierarchies"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "reparents nodes but prevents moving a frame into its descendant"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "moves layers between stacking contexts while preserving their world position"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects locked and structurally invalid layer moves"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies frame constraints and scales content only when requested"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps stacking order local to a parent frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "deletes frame descendants and removes empty deliverables atomically"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "project": "unit",
+        "caseId": "round-trips existing Studio content through the V3 node model"
+      }
+    ],
+    "src/features/communication-studio/state/studio-viewport-store.ts": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renames layers at %ipx with real keyboard and blur events without triggering canvas shortcuts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCanonicalProperties.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renames layers at %ipx with real keyboard and blur events without triggering canvas shortcuts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCloneDialog.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "clones into the personal studio as private by default"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "clones into a manageable group with selected visibility"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves the dialog and shows a copy error"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInlineTextEditor.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a whole group from the canvas and toggles it as one selection with Shift"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses a new text node as soon as it reaches the canvas document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "lets a user type into an existing text node after one click"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the contextual toolbar above the selected node while the canvas pans"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps selected text properties available while editing and lets the panel collapse"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops an Elements row onto a zoomed canvas and places its visible copy inside a shifted frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInvitations.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "accepts a personal Studio invitation from the overview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "project": "component",
+        "caseId": "declines a personal Studio invitation without opening the project"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioInviteDialog.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "selects multiple users and submits one personal project invitation request"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLayersPanel.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "project": "unit",
+        "caseId": "lists frame branches first and unframed layers afterwards with stable depth"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps matching ancestors and excludes the master-layout branch"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPanel.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a whole group from the canvas and toggles it as one selection with Shift"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "focuses a new text node as soon as it reaches the canvas document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "lets a user type into an existing text node after one click"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the contextual toolbar above the selected node while the canvas pans"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reorders shape, text, shape in Layers and preserves occlusion during direct Plate editing"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps selected text properties available while editing and lets the panel collapse"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops an Elements row onto a zoomed canvas and places its visible copy inside a shifted frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPlateDiff.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the same mode and change-request controls for project group %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "explains the %s phase independently of admin rights"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "distinguishes missing project rights and locked proposal drafts from phase locks"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps an authorized proposal draft editable during the suggestion phase"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "locks an ordinary draft immediately when the procedure enters voting"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "restricts personal AI direct decisions in %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves canonical comments, revision history and group adoption in the shared tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shares a private draft with personal project participants through the shared proposal card"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "groups a proposal with several changed fields under one canvas node marker"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "puts the labeled mode button in the toolbar with only the three Studio modes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "opens a canvas request, records a comment and casts a vote using the shared controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a new suggestion private until its canvas draft is explicitly submitted"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shows inserted and removed text in a read-only Plate preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "marks private draft additions immediately against its protected base document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPreviewDialog.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "starts at the active frame, skips hidden frames and navigates without mutating the document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "project": "component",
+        "caseId": "falls back to the first visible frame when the active frame is hidden"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProcedureTools.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the same mode and change-request controls for project group %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "explains the %s phase independently of admin rights"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "distinguishes missing project rights and locked proposal drafts from phase locks"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps an authorized proposal draft editable during the suggestion phase"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "locks an ordinary draft immediately when the procedure enters voting"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "restricts personal AI direct decisions in %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves canonical comments, revision history and group adoption in the shared tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shares a private draft with personal project participants through the shared proposal card"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "groups a proposal with several changed fields under one canvas node marker"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "puts the labeled mode button in the toolbar with only the three Studio modes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "opens a canvas request, records a comment and casts a vote using the shared controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a new suggestion private until its canvas draft is explicitly submitted"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shows inserted and removed text in a read-only Plate preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "marks private draft additions immediately against its protected base document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectAccess.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a public project to guests as a read-only canvas without cloning"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "offers cloning to signed-in readers without loading the editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "honors an element deep link in the read-only original and consumes it after focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects an inaccessible workspace instead of focusing a canonical element with the same ID"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves focus and selection through Studio ownership tabs with the keyboard"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTableEditor.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "selects a range, formats it, and inserts or deletes around the selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cell text, navigates with Tab, keeps undo in Studio, and closes with Escape"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "selects complete rows and columns using their handles"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+        "project": "component",
+        "caseId": "moves focus into a newly appended row"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioTextEditor.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens image crop with native keyboard focus and activation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "navigates icon-only Studio menus with arrow keys and returns focus on Escape"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps a partial editor selection when a text-menu action takes focus"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens image crop with native keyboard focus and activation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "navigates icon-only Studio menus with arrow keys and returns focus on Escape"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps a partial editor selection when a text-menu action takes focus"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioVisibilityDialog.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renames layers at %ipx with real keyboard and blur events without triggering canvas shortcuts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+      }
+    ],
+    "src/features/communication-studio/ui/useStudioProcedure.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the same mode and change-request controls for project group %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "explains the %s phase independently of admin rights"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "distinguishes missing project rights and locked proposal drafts from phase locks"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps an authorized proposal draft editable during the suggestion phase"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "locks an ordinary draft immediately when the procedure enters voting"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "restricts personal AI direct decisions in %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves canonical comments, revision history and group adoption in the shared tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shares a private draft with personal project participants through the shared proposal card"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "groups a proposal with several changed fields under one canvas node marker"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "puts the labeled mode button in the toolbar with only the three Studio modes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "opens a canvas request, records a comment and casts a vote using the shared controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a new suggestion private until its canvas draft is explicitly submitted"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "shows inserted and removed text in a read-only Plate preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "marks private draft additions immediately against its protected base document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      }
+    ],
+    "src/features/create/hooks/useCreateStudioProjectForm.tsx": [
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "validates the title and opens a confirmed personal project"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the draft when an optional prefilled group changes"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves group context, project template, theme and campaign settings"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "restores a statement draft and retries AI chat setup without creating another project"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the form open when project creation fails"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a briefing only in AI mode"
+      }
+    ],
+    "src/features/editor/ui/EditorSaveStatus.tsx": [
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "short-circuits each optional capability input independently"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders all controls, avatar variants, singular/plural presence, and overflow"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "computes an empty share URL during server rendering"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "edits through change, blur, Enter, Escape, and ignored keys"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders every save state and both saving causes"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "selects each tutorial anchor and validates no-op and authorization paths"
+      },
+      {
+        "file": "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "awaits successful mode changes and reports failures"
+      }
+    ],
+    "src/features/messages/ui/AiTraceDetails.tsx": [
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "loads on demand and presents prompt, nested tool failures and origin link after reload"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a recoverable loading failure"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "activates stored Studio context from AI details with its original workspace"
+      }
+    ],
+    "src/features/project-chat/hooks/editor-bridge.ts": [
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "shows automatic context and removes it from the actual request"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates pinned context and preserves it when editor selection changes"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "freezes the visible selection across asynchronous saving"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps Amendment text and City Design publications separate"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects a workspace switch while the editor save is in flight"
+      }
+    ],
+    "src/features/project-chat/hooks/useProjectComposerContext.ts": [
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "shows automatic context and removes it from the actual request"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates pinned context and preserves it when editor selection changes"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "freezes the visible selection across asynchronous saving"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps Amendment text and City Design publications separate"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects a workspace switch while the editor save is in flight"
+      }
+    ],
+    "src/features/project-chat/logic/city-actions.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/logic/conditional-undo.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/logic/context-references.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/logic/contracts.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/logic/studio-actions.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/logic/text-actions.ts": [
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects arbitrary executable properties and empty action batches"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves only earlier local references, and rolls back the whole invalid batch"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects locked elements when applying text actions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recalculates costs, translates geometry and leaves input untouched"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not corrupt block references after inserting earlier blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects existing annotations and produces native resolvable suggestions"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      }
+    ],
+    "src/features/project-chat/ui/ProjectContextChips.tsx": [
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "shows automatic context and removes it from the actual request"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates pinned context and preserves it when editor selection changes"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "freezes the visible selection across asynchronous saving"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps Amendment text and City Design publications separate"
+      },
+      {
+        "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects a workspace switch while the editor save is in flight"
+      }
+    ],
+    "src/features/project-chat/ui/ProjectContextNavigation.tsx": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "activates repeatedly without removing and keeps structural context noninteractive"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "project": "component",
+        "caseId": "allows an explicit callback and source workspace while remaining readable without one"
+      }
+    ],
+    "src/features/search/logic/studioSearchLabels.ts": [
+      {
+        "file": "src/features/search/logic/__tests__/studioSearchLabels.unit.test.ts",
+        "project": "unit",
+        "caseId": "translates the kind of a Studio search result"
+      },
+      {
+        "file": "src/features/search/logic/__tests__/studioSearchLabels.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves subtitles of other search result types"
+      }
+    ],
+    "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders an empty canvas list without a selected close action"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "covers title keyboard actions, compact layout, reject projection, and recorded votes"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders collaborator, current-user, and fallback comment authors and rich text"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "formats object, geometry, value, vote, discussion, author, and tone alternatives"
+      }
+    ],
+    "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx": [
+      {
+        "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "toggles with mouse and keyboard, preserves selection and stays collapsed after updates"
+      },
+      {
+        "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "collapses an empty list and starts expanded again after remounting"
+      },
+      {
+        "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the existing static list when collapsing is not enabled"
+      },
+      {
+        "file": "src/features/shared/ui/change-requests/__tests__/CanvasChangeRequestList.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "fits a narrow canvas with its trigger and close button visible"
+      }
+    ],
+    "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "shows semantic OSM mapping and imports an exact feature as a planned change"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "does not show the OSM loading bar by default"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "shows an optimistic loading bar while OSM data is loading"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a taller scroll-friendly canvas"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders non-interactive remote cursors with their presence identity"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a delete action for a selected placed object"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches selected-object popover actions through stable intents"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches selected-object property choices through stable popover actions"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "shows path placement controls while drawing curves"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders an accordion legend with placement presets"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders visible existing OSM feature layers in the legend"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps existing OSM filtering while placement presets remain visible"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles legend entries through the accordion button"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders selectable spatial change request overlays"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "places change request popovers inward near canvas edges"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "projects canvas anchors from the current scene camera pose"
+      }
+    ],
+    "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders an empty canvas list without a selected close action"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "covers title keyboard actions, compact layout, reject projection, and recorded votes"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "renders collaborator, current-user, and fallback comment authors and rich text"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "project": "component",
+        "caseId": "formats object, geometry, value, vote, discussion, author, and tone alternatives"
+      }
+    ],
+    "src/features/shared/ui/kit-platejs/ai-editor-trace-context.tsx": [
+      {
+        "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not request suggestions for short prompts"
+      },
+      {
+        "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.unit.test.ts",
+        "project": "unit",
+        "caseId": "requests suggestions once the normalized prompt has enough context"
+      },
+      {
+        "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes markdown and whitespace before checking prompt length"
+      }
+    ],
+    "src/features/shared/ui/status/EditingModeToolbarButton.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "handles global city design actions from the fixed icon toolbar"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "hides the selected OSM way through a stable topbar action"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders section insert buttons, layers, objects, comparison, and status picker"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches layer, object, comparison, and editing menu actions"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "dispatches editing-mode choices through the stable mode action"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders the map selector as a full-screen dialog when open"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps global tutorial controls interactive while the map selector is open"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes stable tutorial targets for map selection and deciduous trees"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps object suggestions available while hiding map-context mutations"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders secondary share, invite, change request, and overlay controls"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders empty object and change-request menus and enables collaboration invitations"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "handles bare section tools and every change-request tone"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders read-only, container, error, hidden-object, and missing-selection alternatives"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders tinted hidden overlays and invokes the optional color callback default"
+      }
+    ],
+    "src/features/shared/ui/ui-platejs/TableSizePicker.tsx": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.component.test.tsx",
+        "project": "component",
+        "caseId": "selects dimensions by pointer or keyboard and never inserts 0 x 0"
+      }
+    ],
+    "src/features/shared/ui/ui-platejs/suggestion-mark-style.ts": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "labels the full-text internal vote close action clearly"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "does not offer vote actions for a completed suggestion"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "asks the author to submit pending event suggestions even with a persisted row"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "lets the author discard pending event suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "shows submitted vote pending status instead of the submit prompt for confirmed event suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "resolves data view block suggestions without throwing"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "falls back for unknown custom block suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the fill translucent so inserted block suggestions do not cover pasted text"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses red styling for removed block suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses green styling for inserted static preview block suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses red styling for removed static preview block suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses green styling for inserted static preview line breaks"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses red styling for removed static preview line breaks"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses green styling for inserted inline suggestions"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-suggestion.component.test.tsx",
+        "project": "component",
+        "caseId": "uses red styling for removed inline suggestions"
+      }
+    ],
+    "src/features/shared/utils/document-value.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/features/users/ui/ChatGptConnectionCard.tsx": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps login disabled and reports AI access separately before activation"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "a linked login never appears as usable ChatGPT plan access"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "explicitly links from the current Polity account and recovers after a rejected link"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "project": "component",
+        "caseId": "starts identity login only after activation and exposes the failure for retry"
+      }
+    ],
+    "src/features/users/ui/StudioProjectsTab.tsx": [
+      {
+        "file": "src/features/users/ui/__tests__/profile-content.branch-a07.component.test.tsx",
+        "project": "component",
+        "caseId": "resolves profile tabs and forwards all basic/location/media callbacks"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/profile-content.branch-a07.component.test.tsx",
+        "project": "component",
+        "caseId": "covers submitting and billing customer/loading alternatives"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/profile-content.branch-a07.component.test.tsx",
+        "project": "component",
+        "caseId": "builds all wiki tab queries, grid alternatives and search callbacks"
+      }
+    ],
+    "src/i18n/locales/de/features/projectChat.ts": [
+      {
+        "file": "src/i18n/__tests__/locale-legacy-keys.unit.test.ts",
+        "project": "unit",
+        "caseId": "%s does not expose legacy timeline aliases"
+      }
+    ],
+    "src/i18n/locales/en/features/projectChat.ts": [
+      {
+        "file": "src/i18n/__tests__/locale-legacy-keys.unit.test.ts",
+        "project": "unit",
+        "caseId": "%s does not expose legacy timeline aliases"
+      }
+    ],
+    "src/lib/ai/errors.ts": [
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "maps rejected credentials (%s) without exposing a provider payload"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "maps billing and usage limits (%s)"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves application errors and terminates cyclic/unknown causes"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not turn a project tool permission failure into an invalid API key"
+      }
+    ],
+    "src/lib/zero-api-url.ts": [
+      {
+        "file": "src/lib/__tests__/zero-client.unit.test.ts",
+        "project": "unit",
+        "caseId": "constructs an authenticated client with exact query, mutation, schema, and cache boundaries"
+      }
+    ],
+    "src/routes/_authed/create/studio-project.tsx": [
+      {
+        "file": "src/routes/__tests__/studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "validates group identifiers and renders personal or group creation with the selected context"
+      },
+      {
+        "file": "src/routes/__tests__/studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the request and project identifier to the authorized Studio reader"
+      }
+    ],
+    "src/routes/api/ai/traces.ts": [
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "persists lineage for reload and only returns the requesting actor’s diagnostics"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+      }
+    ],
+    "src/routes/api/studio/read/$id.ts": [
+      {
+        "file": "src/routes/__tests__/studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "validates group identifiers and renders personal or group creation with the selected context"
+      },
+      {
+        "file": "src/routes/__tests__/studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the request and project identifier to the authorized Studio reader"
+      }
+    ],
+    "src/server/ai-editor-trace.ts": [
+      {
+        "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+        "project": "unit",
+        "caseId": "selects the last editor user message, without logging system or assistant context"
+      },
+      {
+        "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the copilot input unchanged and keeps system context in the stored payload only"
+      },
+      {
+        "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not substitute a system message when there is no user input"
+      }
+    ],
+    "src/server/ai-generation.ts": [
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "parents actual SDK provider requests to the corresponding model step"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses actual SDK callbacks to link model → tool → nested model and final answer"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "records invalid tool input without executing a write"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "records accepted-stream errors without leaking the raw exception to console"
+      }
+    ],
+    "src/server/ai-provider-fetch.ts": [
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "parents actual SDK provider requests to the corresponding model step"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses actual SDK callbacks to link model → tool → nested model and final answer"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "records invalid tool input without executing a write"
+      },
+      {
+        "file": "src/server/__tests__/ai-generation.unit.test.ts",
+        "project": "unit",
+        "caseId": "records accepted-stream errors without leaking the raw exception to console"
+      }
+    ],
+    "src/server/ai-trace-store.ts": [
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "persists lineage for reload and only returns the requesting actor’s diagnostics"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+      }
+    ],
+    "src/server/ai-trace.ts": [
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "persists lineage for reload and only returns the requesting actor’s diagnostics"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+      }
+    ],
+    "src/server/checksum.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/server/project-chat/attachments.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "shares only authorized server sources and discards supplied prompt/card content"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps plain messages readable when their optional context is invalid"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not copy private chat uploads into a shared project message"
+      }
+    ],
+    "src/server/project-chat/context.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/server/project-chat/editor-context.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "charges only the requesting collaborator and stops at limits in a shared project chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "resumes after a committed write without duplicating messages or actions and never loads personal history"
+      }
+    ],
+    "src/server/project-chat/history.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/history.unit.test.ts",
+        "project": "unit",
+        "caseId": "drops old turns without breaking tool call/result pairs in the current turn"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/history.unit.test.ts",
+        "project": "unit",
+        "caseId": "compacts older tool outputs but keeps the latest result and current instruction"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/history.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an oversized current result instead of silently truncating it"
+      }
+    ],
+    "src/server/project-chat/revisions.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/revisions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing content and stale revisions while locking the selected row"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/revisions.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a revision once an amendment uses project chat and permits untracked saves"
+      }
+    ],
+    "src/server/project-chat/run.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "charges only the requesting collaborator and stops at limits in a shared project chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "resumes after a committed write without duplicating messages or actions and never loads personal history"
+      }
+    ],
+    "src/server/project-chat/starter-tools.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts",
+        "project": "unit",
+        "caseId": "takes the actor and model source from trusted chat context, not tool arguments"
+      }
+    ],
+    "src/server/project-chat/studio-suggestions.ts": [
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses the requesting actor and selected personal key for native Studio suggestions without a free fallback"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a private native V5 proposal, edits its heading and applies it only on acceptance"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "prepares a group AI draft in edit phase but waits for the suggestion phase to submit"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "leaves no project or proposal when the free model returns invalid data twice"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a private AI suggestion without changing the canonical document"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks sharing and acceptance when a private source is not readable by the project audience"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a free native composition and preserves its mode on a targeted followup"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "proposes an explicit theme-only change without a model call or direct canvas write"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses a normal workspace as a source, preserves it, and honors explicit new-frame creation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "logs direct Studio input once and preserves a parent chat prompt for nested Studio generation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+      }
+    ],
+    "src/server/project-chat/tools.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/server/project-chat/upload-attachments.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "rebuilds an owned upload from storage metadata and bounded text content"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects another user’s object and malformed upload paths"
+      }
+    ],
+    "src/server/studio/ai-sources.ts": [
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates commands and forwards only the authenticated actor to shared project and media services"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "forwards clone destination and visibility after validation"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "hands off only completed single image or video exports using their immutable revision and story pages"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not expose the retired direct AI generation endpoint"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not disclose internal service failures in public error responses"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves shared collaboration denials and revision conflicts at the Studio HTTP boundary"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns published group themes from the same transaction that checks access"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects group access before querying themes and never serializes an undefined success"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects cross-origin, anonymous, disabled and malformed operations before writes"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "serializes export cancellation and template changes with current project rights"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves projects whose media is published or whose export is still running"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not let an active personal collaborator manage the project"
+      }
+    ],
+    "src/server/studio/ai-suggestions.ts": [
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses the requesting actor and selected personal key for native Studio suggestions without a free fallback"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a private native V5 proposal, edits its heading and applies it only on acceptance"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "prepares a group AI draft in edit phase but waits for the suggestion phase to submit"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "leaves no project or proposal when the free model returns invalid data twice"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a private AI suggestion without changing the canonical document"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks sharing and acceptance when a private source is not readable by the project audience"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a free native composition and preserves its mode on a targeted followup"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "proposes an explicit theme-only change without a model call or direct canvas write"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses a normal workspace as a source, preserves it, and honors explicit new-frame creation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "logs direct Studio input once and preserves a parent chat prompt for nested Studio generation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+      }
+    ],
+    "src/server/studio/assets.ts": [
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves the requested subtitle ahead of a selected title"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains semantic roles when element names contain the actual text"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not expose model-controlled workspace identifiers"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "asks about ambiguous roles and rejects wrong kinds, missing and locked targets"
+      }
+    ],
+    "src/server/studio/chat-media.ts": [
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies a verified shared upload to project storage and returns its ready asset ID"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unshared, traversing or unauthorized uploads before touching Storage"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses a completed media import and rejects a mismatched file signature"
+      }
+    ],
+    "src/server/studio/collaborators.ts": [
+      {
+        "file": "src/server/studio/__tests__/collaborators.unit.test.ts",
+        "project": "unit",
+        "caseId": "lets only the personal project owner invite valid other users"
+      },
+      {
+        "file": "src/server/studio/__tests__/collaborators.unit.test.ts",
+        "project": "unit",
+        "caseId": "deduplicates, requires acceptance, supports reinvitation, and revokes access"
+      }
+    ],
+    "src/server/studio/elements.ts": [
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "stages AI library media without creating database rows before proposal commit"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes prepared AI media if a later storage copy fails"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies media introduced by an upstream revision and remaps it into the linked instance"
+      },
+      {
+        "file": "src/server/studio/__tests__/elements.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an upstream media addition before copying when the target quota is full"
+      }
+    ],
+    "src/server/studio/export.ts": [
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "queues an export even when an element lies outside the selected frame"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a clear client error for an invalid selected frame"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "queues a ZIP when its video is too long for MP4 but its frames are valid"
+      }
+    ],
+    "src/server/studio/project-targets.ts": [
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves the requested subtitle ahead of a selected title"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains semantic roles when element names contain the actual text"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not expose model-controlled workspace identifiers"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "asks about ambiguous roles and rejects wrong kinds, missing and locked targets"
+      }
+    ],
+    "src/server/studio/published-media.ts": [
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "authenticates native media cookies and falls back to current public visibility when cookie renewal returns no user"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns private no-store redirects only after statement visibility is established"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "serves archived published media through statement visibility after its Whiteboard is deleted"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates ranges using current storage metadata even when the application database is an isolated copy"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not disclose media or storage metadata after group access is revoked and no visible publication exists"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "hides missing or unsupported exports and missing storage objects without issuing a URL"
+      },
+      {
+        "file": "src/server/studio/__tests__/published-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows an authorized private project reader but still fails closed when URL signing fails"
+      }
+    ],
+    "src/server/studio/read.ts": [
+      {
+        "file": "src/server/studio/__tests__/read.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a guest to load a public canonical document without editor authority"
+      },
+      {
+        "file": "src/server/studio/__tests__/read.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns no project metadata when access is denied"
+      },
+      {
+        "file": "src/server/studio/__tests__/read.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the authenticated identity to check a private document"
+      }
+    ],
+    "src/server/studio/source.ts": [
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses the requesting actor and selected personal key for native Studio suggestions without a free fallback"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a private native V5 proposal, edits its heading and applies it only on acceptance"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "prepares a group AI draft in edit phase but waits for the suggestion phase to submit"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "leaves no project or proposal when the free model returns invalid data twice"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a private AI suggestion without changing the canonical document"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks sharing and acceptance when a private source is not readable by the project audience"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates a free native composition and preserves its mode on a targeted followup"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "proposes an explicit theme-only change without a model call or direct canvas write"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses a normal workspace as a source, preserves it, and honors explicit new-frame creation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "logs direct Studio input once and preserves a parent chat prompt for nested Studio generation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+      }
+    ],
+    "src/server/transaction.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/zero/change-requests/vote-result.ts": [
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "finalizes once every active collaborator has voted"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "finalizes expired minute-based votes and rejects ties"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes the removed event-transition option to the default close trigger"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes close triggers and voting durations at every boundary"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps only the latest eligible vote, removes duplicates, and counts abstentions"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns early for missing or completed direct resolutions"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "deduplicates eligible collaborators and honors scoped vote rights"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "initializes deadlines only for open requests in the requested branch scope"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns early for ineligible automatic-finalization states"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not finalize all-collaborator voting with no voters or an incomplete ballot"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores missing/wrong-trigger amendments and resolves only expired open votes"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not treat legacy created_in_mode values as internal change requests"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "finalizes open internal CRs on event transition with one shared document state"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "finalizes city design internal CRs on event transition through the generic resolver"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the durable suggestion id when branch discussions no longer contain the link"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies duplicated logical CRs only once using the voted row as canonical"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "repairs resolved internal CRs by replaying canonical results from the pre-event version"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports every missing repair prerequisite"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns an empty repair result for malformed discussions and no eligible records"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "repairs unlinked final rows in deterministic CR, time, and title order"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "repairs a durable synthetic discussion even when its marker snapshot is absent"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns no event-transition work for a missing amendment or no canonical requests"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects event-transition rows without a document or linked suggestion"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists branch-scoped discussions and uses a first document version"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses eligibility for a later CityDesign CR and ignores a null resolver result"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "orders timestamp-less CityDesign requests by stable ids and display titles"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps unrelated discussions when a durable suggestion has no discussion row"
+      },
+      {
+        "file": "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not close internal CRs on event transition when the document marker is missing"
+      }
+    ],
+    "src/zero/communication-studio/access.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "offers only manageable groups as clone and create targets"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "shows group creation only to the owner or a role with projects:manage"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "scopes lists to the requested workspace (%s) and requires project rights for group members"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "limits unauthenticated identity %s to public projects"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects each export through its parent project and caps the recent job list"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "never exposes a legacy document through a direct project lookup"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "restricts operation receipts to their actor and current project access"
+      }
+    ],
+    "src/zero/communication-studio/schema.ts": [
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates commands and forwards only the authenticated actor to shared project and media services"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "forwards clone destination and visibility after validation"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "hands off only completed single image or video exports using their immutable revision and story pages"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not expose the retired direct AI generation endpoint"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not disclose internal service failures in public error responses"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves shared collaboration denials and revision conflicts at the Studio HTTP boundary"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns published group themes from the same transaction that checks access"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects group access before querying themes and never serializes an undefined success"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects cross-origin, anonymous, disabled and malformed operations before writes"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "serializes export cancellation and template changes with current project rights"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves projects whose media is published or whose export is still running"
+      },
+      {
+        "file": "src/server/studio/__tests__/api.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not let an active personal collaborator manage the project"
+      }
+    ],
+    "src/zero/communication-studio/server-mutators.ts": [
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads shared and server mutator registries without a database"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "forces profile updates onto the authenticated user id"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not mutate when authentication rejects a shared mutator"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults AI skill fields and stamps ownership without DB access"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "upserts user preferences when a preference row already exists"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks calendar subscription ownership before deleting on the server"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks group visibility before creating a group-scoped PQL filter"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "stamps user ownership on follows and checks it before unfollowing"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips the ownership lookup for optimistic client unfollows"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers the complete AI skill and tool ownership lifecycle"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips AI ownership lookups only for optimistic client updates"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers calendar subscription create, update and delete contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers PQL update and delete ownership contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "recovers preference creation after a parallel unique-key race"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable group appearance themes before updating preferences"
+      }
+    ],
+    "src/zero/communication-studio/shared-mutators.ts": [
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads shared and server mutator registries without a database"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "forces profile updates onto the authenticated user id"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not mutate when authentication rejects a shared mutator"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults AI skill fields and stamps ownership without DB access"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "upserts user preferences when a preference row already exists"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks calendar subscription ownership before deleting on the server"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks group visibility before creating a group-scoped PQL filter"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "stamps user ownership on follows and checks it before unfollowing"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips the ownership lookup for optimistic client unfollows"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers the complete AI skill and tool ownership lifecycle"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips AI ownership lookups only for optimistic client updates"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers calendar subscription create, update and delete contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers PQL update and delete ownership contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "recovers preference creation after a parallel unique-key race"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable group appearance themes before updating preferences"
+      }
+    ],
+    "src/zero/communication-studio/table.ts": [
+      {
+        "file": "src/zero/__tests__/registry-smoke.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads the composed schema, query registry, and mutator registries without a database"
+      }
+    ],
+    "src/zero/communication-studio/useStudioState.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/state.component.test.tsx",
+        "project": "component",
+        "caseId": "does not request private exports before selecting a project, then tracks its confirmed result"
+      }
+    ],
+    "src/zero/project-chat/access.ts": [
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "persists lineage for reload and only returns the requesting actor’s diagnostics"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors"
+      },
+      {
+        "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+      }
+    ],
+    "src/zero/project-chat/queries.ts": [
+      {
+        "file": "src/zero/__tests__/registry-smoke.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads the composed schema, query registry, and mutator registries without a database"
+      }
+    ],
+    "src/zero/project-chat/server-mutators.ts": [
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads shared and server mutator registries without a database"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "forces profile updates onto the authenticated user id"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not mutate when authentication rejects a shared mutator"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults AI skill fields and stamps ownership without DB access"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "upserts user preferences when a preference row already exists"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks calendar subscription ownership before deleting on the server"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks group visibility before creating a group-scoped PQL filter"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "stamps user ownership on follows and checks it before unfollowing"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips the ownership lookup for optimistic client unfollows"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers the complete AI skill and tool ownership lifecycle"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips AI ownership lookups only for optimistic client updates"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers calendar subscription create, update and delete contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers PQL update and delete ownership contracts"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "recovers preference creation after a parallel unique-key race"
+      },
+      {
+        "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable group appearance themes before updating preferences"
+      }
+    ],
+    "src/zero/project-chat/shared-mutators.ts": [
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not equate public amendment visibility or former chat participation with membership"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "saves text with a revision, records an inverse and rejects stale snapshots"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates native proposals in suggestion mode and cannot edit during voting"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "checks manual writes against AI revisions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "blocks legacy direct Studio AI writes"
+      }
+    ],
+    "src/zero/project-chat/table.ts": [
+      {
+        "file": "src/zero/__tests__/registry-smoke.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads the composed schema, query registry, and mutator registries without a database"
+      }
+    ],
+    "tools/dev/local-stack.mjs": [
+      {
+        "file": "tools/dev/__tests__/local-stack.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports stopped status when the state file is absent without starting services"
+      },
+      {
+        "file": "tools/dev/__tests__/local-stack.unit.test.ts",
+        "project": "unit",
+        "caseId": "authenticates status requests and tolerates unavailable supervisors"
+      }
+    ],
+    "tools/studio/cleanup-whiteboard-storage.ts": [
+      {
+        "file": "tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes only unpublished manifest objects and marks them after storage confirms removal"
+      },
+      {
+        "file": "tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "refuses to remove published media and closes the database on failure"
+      },
+      {
+        "file": "tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the manifest when storage rejects removal and requires server configuration"
+      }
+    ],
+    "tools/studio/editable-v5-layers.ts": [
+      {
+        "file": "tools/studio/__tests__/editable-v5-layers.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses Layers panel order for shape, rich text, shape"
+      }
+    ],
+    "tools/studio/launch.ts": [
+      {
+        "file": "tools/studio/__tests__/launch.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads local environment files while preserving inherited worker settings"
+      },
+      {
+        "file": "tools/studio/__tests__/launch.unit.test.ts",
+        "project": "unit",
+        "caseId": "launches production without reading local credentials and rejects unknown targets"
+      }
+    ],
+    "tools/studio/reset-storage.ts": [
+      {
+        "file": "tools/studio/__tests__/reset-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects remote storage before creating a client"
+      },
+      {
+        "file": "tools/studio/__tests__/reset-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "marks reset objects only after removal and reports the removed count"
+      },
+      {
+        "file": "tools/studio/__tests__/reset-storage.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps failed cleanup retryable and always closes its connection"
+      }
+    ],
+    "tools/studio/studio-v5-render-bundle.ts": [
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports a presentation deliverable as three editable widescreen slides in order"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps V5 shape-text-shape order and editable text in PowerPoint"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps disabled table edges editable and hidden in PowerPoint"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails an unavailable raster canvas without returning a misleading completed Canva export"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "renders selected PNG pages at the original campaign index and returns a single image directly"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports multi-page PNG archives and PDF pages with their exact requested dimensions"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps PowerPoint text and shapes editable and embeds media in one presentation"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a multi-frame PPTX directly with one slide per selected frame"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps frame order and centers a square frame on the first frame’s portrait slide"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps all selected frames in the single presentation inside the Canva package"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "packages Canva import instructions and raster video posters in editable PowerPoint slides"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports cropped images as picture objects and cropped video posters with the original video beside the PPTX"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a complete campaign archive with media, channel captions, calendar and presentation"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "limits every ZIP artifact and its project backup to marked frames"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "includes one PPTX and one Canva deck for mixed frame formats"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps ZIP usable and explains when a selected video exceeds the MP4 limit"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "encodes portrait frames with optional trimmed audio and reports progress"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "supports silent clips and the portrait fallback sequence without claiming missing audio exists"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "includes video posts in campaign archives and enforces duration and portrait constraints"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "honors cancellation before rendering and during video generation and always closes Chromium"
+      },
+      {
+        "file": "tools/studio/__tests__/exports.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports encoder diagnostics and process-start failures without returning a fabricated video"
+      }
+    ],
+    "tools/studio/studio-v5-render-entry.ts": [
+      {
+        "file": "tools/studio/__tests__/render-entry.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports the canonical V5 frame renderer used by the editor and export bundle"
+      }
+    ],
+    "tools/studio/worker.ts": [
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "polls an idle queue repeatedly without running media cleanup on every poll"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "claims a leased job, renders its immutable snapshot, renews the lease and publishes only the finished artifact"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "waits when the queue is empty and shuts down without inventing jobs or temporary files"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails closed before rendering after permission revocation or unavailable media"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports missing media and refuses to publish a partial artifact"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks cancellation and current access during rendering and once again before publication"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "records storage failures and always releases the rendering temporary directory"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes non-Error failures and refuses unsafe temporary cleanup paths"
+      },
+      {
+        "file": "tools/studio/__tests__/worker.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a missing encoder before announcing readiness or consuming jobs"
+      }
+    ]
+  }
+}

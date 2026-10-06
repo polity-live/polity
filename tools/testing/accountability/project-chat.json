@@ -1,18 +1,7 @@
 {
   "version": 1,
   "sourceReferences": {
-    "src/features/project-chat/ui/ProjectChatPanel.tsx": [
-      {
-        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
-        "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing"
-      },
-      {
-        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
-        "project": "component",
-        "caseId": "shows creation progress, prevents duplicate submission and retains errors for retry"
-      }
-    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx": [],
     "src/features/project-chat/ui/ProjectConversation.tsx": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",

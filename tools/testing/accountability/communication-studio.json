@@ -16,21 +16,6 @@
         "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
         "project": "component",
         "caseId": "prevents a carousel from exceeding thirty pages"
-      },
-      {
-        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "project": "component",
-        "caseId": "applies group brand settings while preserving custom colors"
-      },
-      {
-        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps generated copy as a proposal until explicitly accepted"
-      },
-      {
-        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "project": "component",
-        "caseId": "queues the selected page and the current shared state for export"
       }
     ],
     "src/features/communication-studio/logic/document.ts": [
@@ -76,16 +61,6 @@
         "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
         "project": "component",
         "caseId": "moves selected elements together while leaving locked companions in place"
-      },
-      {
-        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "project": "component",
-        "caseId": "applies group brand settings while preserving custom colors"
-      },
-      {
-        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
-        "project": "component",
-        "caseId": "reuses the group logo on every page without flattening the layout"
       },
       {
         "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
@@ -212,27 +187,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "inserts all new element types from the insert menu"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "formats the first selected text and preserves selection when properties close"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
         "caseId": "aligns, duplicates and deletes through selection tools"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads media from the insert panel and keeps a failed image edit open"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -253,21 +208,6 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
         "caseId": "disables writes in read-only mode but keeps menus accessible"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "supports keyboard copy/paste, movement, undo and preview"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits brand and imports authorized sources through the tools dialog"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits channel captions and campaign scheduling in the captions dialog"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -370,11 +310,6 @@
       {
         "file": "src/server/studio/__tests__/service.unit.test.ts",
         "project": "unit",
-        "caseId": "duplicates a project without inventing a missing brand logo"
-      },
-      {
-        "file": "src/server/studio/__tests__/service.unit.test.ts",
-        "project": "unit",
         "caseId": "creates editable JSON documents atomically and rechecks group authority inside the transaction"
       },
       {
@@ -416,11 +351,6 @@
         "file": "src/server/studio/__tests__/service.unit.test.ts",
         "project": "unit",
         "caseId": "serves authorized media and export proxy URLs only after access checks"
-      },
-      {
-        "file": "src/server/studio/__tests__/service.unit.test.ts",
-        "project": "unit",
-        "caseId": "copies private assets before exposing a new project and remaps image and logo references"
       },
       {
         "file": "src/server/studio/__tests__/service.unit.test.ts",
@@ -484,13 +414,7 @@
         }
       }
     ],
-    "src/server/studio/sources.ts": [
-      {
-        "file": "src/server/studio/__tests__/sources.unit.test.ts",
-        "project": "unit",
-        "caseId": "returns only approved descriptive amendment fields and never imports private discussions or vote metadata"
-      }
-    ],
+    "src/server/studio/sources.ts": [],
     "src/features/communication-studio/logic/operations.ts": [
       {
         "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
@@ -609,27 +533,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "inserts all new element types from the insert menu"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "formats the first selected text and preserves selection when properties close"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
         "caseId": "aligns, duplicates and deletes through selection tools"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads media from the insert panel and keeps a failed image edit open"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -650,21 +554,6 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
         "caseId": "disables writes in read-only mode but keeps menus accessible"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "supports keyboard copy/paste, movement, undo and preview"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits brand and imports authorized sources through the tools dialog"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits channel captions and campaign scheduling in the captions dialog"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",

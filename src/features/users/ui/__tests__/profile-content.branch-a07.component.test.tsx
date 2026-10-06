@@ -148,6 +148,7 @@ vi.mock('../AmendmentListTab', () => ({
   AmendmentListTab: capture('amendments', 'amendments-tab'),
 }));
 vi.mock('../BlogListTab', () => ({ BlogListTab: capture('blogs', 'blogs-tab') }));
+vi.mock('../StudioProjectsTab', () => ({ StudioProjectsTab: capture('studio', 'studio-tab') }));
 vi.mock('../GroupListTab', () => ({ GroupsListTab: capture('groups', 'groups-tab') }));
 vi.mock('../StatementListTab', () => ({
   StatementListTab: capture('statements', 'statements-tab'),

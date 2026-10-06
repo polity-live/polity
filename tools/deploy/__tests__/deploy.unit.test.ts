@@ -22,9 +22,17 @@ describe('deployment CLI dry-run', () => {
     expect(section).toBeDefined();
     expect(section).toContain('public = false');
     expect(section).toContain('file_size_limit = "100MiB"');
-    expect(section).toContain(
-      'allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "video/mp4"]'
-    );
+    const mimeTypes = JSON.parse(section!.match(/allowed_mime_types\s*=\s*(\[[^\]]*\])/)![1]);
+    expect(mimeTypes).toEqual([
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+      'video/mp4',
+      'application/pdf',
+      'application/zip',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ]);
   });
 
   it('prints migrations, bucket provisioning, and production seed in order without executing them', async () => {

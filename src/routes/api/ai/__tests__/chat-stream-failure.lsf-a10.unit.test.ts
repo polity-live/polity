@@ -111,8 +111,11 @@ it('serializes an error when the AI stream iterator throws', async () => {
 
   const body = await response.text();
   expect(body).toContain('"type":"error"');
-  expect(errorSpy).toHaveBeenCalledWith(
-    'AI chat stream failed after response started:',
-    expect.any(Error)
-  );
+  expect(
+    errorSpy.mock.calls.some(([entry]) => {
+      const event = JSON.parse(String(entry));
+      return event.event === 'ai.chat.failed' && event.code === 'ai_operation_failed';
+    })
+  ).toBe(true);
+  errorSpy.mockRestore();
 });

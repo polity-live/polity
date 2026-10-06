@@ -1956,6 +1956,26 @@
       ]
     },
     {
+      "file": "src/routes/api/ai/traces.ts",
+      "routePath": "/api/ai/traces",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "file": "src/routes/api/collaboration.ts",
       "routePath": "/api/collaboration",
       "access": "public",

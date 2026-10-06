@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1806,
-  'all 1806 application columns are installed'
+  1814,
+  'all 1814 application columns are installed'
 );
 
 SELECT is(
@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  148,
-  'all 148 business CHECK constraints are installed'
+  153,
+  'all 153 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -132,8 +132,8 @@ SELECT is(
       AND index_definition.indisunique
       AND constraint_definition.oid IS NULL
   ),
-  29,
-  'all 29 standalone and partial uniqueness rules are installed'
+  30,
+  'all 30 standalone and partial uniqueness rules are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  709,
-  'all 709 application indexes are installed'
+  710,
+  'all 710 application indexes are installed'
 );
 
 SELECT is(
@@ -160,8 +160,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  84,
-  'all 84 application functions are installed'
+  89,
+  'all 89 application functions are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  76,
-  'all 76 privileged functions are SECURITY DEFINER'
+  81,
+  'all 81 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  75,
-  'all 75 application triggers are installed'
+  83,
+  'all 83 application triggers are installed'
 );
 
 SELECT is(

@@ -2,8 +2,17 @@ import type { RichTextNode, StudioPlateChild } from './document-v3';
 
 type Leaf = Extract<StudioPlateChild, { text: string }>;
 type Run = Leaf & { url?: string };
-interface Token { run: Run; width: number }
-interface Line { tokens: Token[]; width: number; height: number; align: string; last: boolean }
+interface Token {
+  run: Run;
+  width: number;
+}
+interface Line {
+  tokens: Token[];
+  width: number;
+  height: number;
+  align: string;
+  last: boolean;
+}
 
 function leaves(children: StudioPlateChild[], url?: string): Run[] {
   return children.flatMap(child =>

@@ -177,10 +177,15 @@ describe('AI editor command route', () => {
 
     mocks.touchCredential.mockRejectedValueOnce(new Error('database failed'));
     await options.onFinish({ text: 'Another completion' });
-    expect(errorSpy).toHaveBeenCalledWith(
-      'Failed to update AI credential usage after editor command:',
-      expect.any(Error)
-    );
+    expect(
+      errorSpy.mock.calls.some(([entry]) => {
+        const event = JSON.parse(String(entry));
+        return (
+          event.event === 'ai.operation.failed' &&
+          event.operation === 'Failed to update AI credential usage after editor command:'
+        );
+      })
+    ).toBe(true);
     errorSpy.mockRestore();
   });
 });

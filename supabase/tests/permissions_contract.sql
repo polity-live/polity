@@ -87,6 +87,7 @@ SELECT set_eq(
       ('resolve_notification_recipients(uuid)'::TEXT),
       ('studio_access(uuid,uuid,boolean)'::TEXT),
       ('studio_group_access(uuid,uuid,boolean)'::TEXT),
+      ('studio_collaboration_access(uuid,uuid)'::TEXT),
       ('project_content_revision()'::TEXT),
       ('canvas_record_revision()'::TEXT),
       ('canvas_manage(uuid,uuid)'::TEXT),

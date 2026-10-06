@@ -109,6 +109,11 @@ describe('appearance theme mutator authorization and publication', () => {
         group_id: '00000000-0000-4000-8000-000000000088',
       })
       .mockResolvedValueOnce({
+        id: '00000000-0000-4000-8000-000000000010',
+        kind: 'group',
+        group_id: '00000000-0000-4000-8000-000000000088',
+      })
+      .mockResolvedValueOnce({
         id: '00000000-0000-4000-8000-000000000011',
         light_palette: {
           ...POLITY_THEME.light,

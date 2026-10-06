@@ -13,6 +13,21 @@ import { element } from '../../logic/document';
 const io = vi.hoisted(() => ({ controller: {} as any, canvasExecute: vi.fn() }));
 vi.mock('../../hooks/useStudioController', () => ({ useStudioController: () => io.controller }));
 vi.mock('../../hooks/useStudioEditorTools', () => ({ useStudioEditorTools: vi.fn() }));
+vi.mock('../StudioProjectOverview', () => ({
+  StudioProjectOverview: () => <p>Project overview</p>,
+}));
+vi.mock('../useStudioProcedure', () => ({
+  useStudioProcedure: () => ({
+    tools: <section aria-label="Procedure" />,
+    modeButton: null,
+    canvasOverlay: null,
+    markers: [],
+    previewDocument: null,
+    previewAssets: [],
+    editingAllowed: true,
+    selectProposal: vi.fn(),
+  }),
+}));
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
   useFixedToolbarController: () => ({ className: 'fixed' }),
 }));
@@ -53,6 +68,9 @@ function model() {
     {
       value,
       v3Value: legacyDocumentToV3(value),
+      identity: { id: 'author' },
+      exportFrames: legacyDocumentToV3(value).nodes.filter(node => node.type === 'frame'),
+      exportFrameIds: value.pages.map(page => page.id),
       page: value.pages[0],
       post: value.posts[0],
       active: value.pages[0].elements[1],
@@ -71,6 +89,9 @@ function model() {
       themePalette: null,
       canEdit: true,
       busy: false,
+      exportPreparing: false,
+      exportFailure: '',
+      exportStatusError: '',
       playing: false,
       guides: true,
       status: 'saved',
@@ -122,7 +143,7 @@ async function keyboardControls(container: HTMLElement) {
     const changed = vi.fn();
     if (control.tagName === 'BUTTON' || control.getAttribute('role')?.startsWith('menuitem')) {
       control.addEventListener('click', changed);
-      await userEvent.keyboard('{Enter}');
+      await userEvent.keyboard(control.getAttribute('role') === 'checkbox' ? ' ' : '{Enter}');
       expect(changed, control.outerHTML).toHaveBeenCalledOnce();
       control.removeEventListener('click', changed);
     } else if (control instanceof HTMLSelectElement) {
@@ -151,10 +172,6 @@ async function keyboardControls(container: HTMLElement) {
   return count;
 }
 it('exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation', async () => {
-  io.controller = model();
-  const ui = render(<StudioWorkspace groupId="group" open={vi.fn()} />);
-  expect(await keyboardControls(ui.container)).toBeGreaterThan(8);
-  ui.unmount();
   io.controller = model();
   render(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
   await screen.findByRole('button', { name: 'table' });

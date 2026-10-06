@@ -194,7 +194,6 @@
     "@standard-schema/spec": "^1.1.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
-    "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
@@ -273,6 +272,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@axe-core/playwright": "^4.13.0",
     "@babel/parser": "^8.0.4",
     "@fast-check/vitest": "^0.4.1",

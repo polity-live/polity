@@ -31,6 +31,7 @@ describe('unauthenticated entity secondary navigation', () => {
 
     expect(items?.map(item => item.id)).toEqual([
       'overview',
+      'studio',
       'events',
       'amendments',
       'blogs-and-statements',

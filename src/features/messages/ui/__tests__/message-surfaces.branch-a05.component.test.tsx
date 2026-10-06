@@ -33,6 +33,7 @@ vi.mock('../AiContextCards', () => ({
     return <div>context</div>;
   },
 }));
+vi.mock('../AiTraceDetails', () => ({ AiTraceDetails: () => <div>trace details</div> }));
 vi.mock('../../logic/messageUtils', () => ({
   formatTime: (value: unknown) => `time:${String(value)}`,
 }));

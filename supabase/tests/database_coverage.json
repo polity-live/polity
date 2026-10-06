@@ -1,23 +1,23 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 185,
-    "columns": 1924,
-    "primaryKeys": 186,
-    "checks": 172,
-    "foreignKeys": 445,
+    "tables": 187,
+    "columns": 1931,
+    "primaryKeys": 188,
+    "checks": 178,
+    "foreignKeys": 454,
     "uniqueConstraints": 72,
-    "uniqueIndexes": 29,
-    "uniqueRules": 101,
-    "indexes": 730,
-    "functions": 120,
-    "triggers": 113,
-    "policies": 165,
+    "uniqueIndexes": 30,
+    "uniqueRules": 102,
+    "indexes": 739,
+    "functions": 124,
+    "triggers": 114,
+    "policies": 167,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 114,
-    "uniqueViolations": 87
+    "checkViolations": 119,
+    "uniqueViolations": 88
   },
   "globalTests": {
     "catalog": "schema_contract.sql",
@@ -382,6 +382,18 @@
       "source": "70_studio_visibility_discovery.sql",
       "behavior": ["studio_visibility_discovery.sql"],
       "securityBehavior": ["studio_visibility_discovery.sql"]
+    },
+    {
+      "source": "71_studio_ai_suggestions.sql",
+      "behavior": ["studio_ai_procedures.sql"]
+    },
+    {
+      "source": "72_studio_personal_procedures.sql",
+      "behavior": ["studio_ai_procedures.sql"]
+    },
+    {
+      "source": "73_ai_traces.sql",
+      "behavior": ["ai_diagnostics.sql"]
     }
   ]
 }

@@ -5,14 +5,14 @@
       {
         "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "project": "database-integration",
-        "caseId": "keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision"
+        "caseId": "keeps drafts private and preserves immutable decisions and conflict resolutions (personal=%s)"
       }
     ],
     "src/features/communication-studio/logic/governance.ts": [
       {
         "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "project": "database-integration",
-        "caseId": "keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision"
+        "caseId": "keeps drafts private and preserves immutable decisions and conflict resolutions (personal=%s)"
       }
     ],
     "src/server/studio/presence.ts": [
