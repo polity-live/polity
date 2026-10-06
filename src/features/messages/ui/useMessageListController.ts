@@ -50,6 +50,7 @@ interface MessageListProps {
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: StreamingAssistantMessage;
   timelineItems?: MessageTimelineItem[];
+  active?: boolean;
 }
 
 function isNearBottom(element: HTMLElement, threshold = 96) {
@@ -66,6 +67,7 @@ export function useMessageListController({
   resolveAttachmentCardData,
   streamingAssistantMessage,
   timelineItems = [],
+  active = true,
 }: MessageListProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -86,7 +88,9 @@ export function useMessageListController({
   const virtualList = usePolityZeroList<typeof listContextParams, Message, MessageStart>({
     scrollStateKey: `messages-thread-${conversation.id}`,
     listContextParams,
-    getScrollElement: useCallback(() => scrollRef.current, []),
+    // A minimized dock keeps the conversation mounted, but has no viewport.
+    // Detach its virtualizer so zero-height geometry cannot drive pagination.
+    getScrollElement: useCallback(() => (active ? scrollRef.current : null), [active]),
     estimateSize: useCallback(() => 92, []),
     overscan: 10,
     getRowKey: message => message.id,
@@ -112,7 +116,7 @@ export function useMessageListController({
     ),
     permalinkID: initialAnchorRef.current.messageId ?? undefined,
   });
-  useStickToBottom(virtualList);
+  useStickToBottom(virtualList, { enabled: active });
 
   const otherUser =
     conversation.type === 'project_ai'
@@ -138,11 +142,14 @@ export function useMessageListController({
     const messageRows = rows.filter(
       (row): row is Extract<VirtualMessageRow, { type: 'message' }> => row.type === 'message'
     );
-    const resolvedRows = messageRows.filter(row => row.message);
+    const resolvedRows = messageRows.filter(
+      (row): row is Extract<VirtualMessageRow, { type: 'message' }> & { message: Message } =>
+        Boolean(row.message)
+    );
     for (const item of [...timelineItems].sort((a, b) => a.createdAt - b.createdAt)) {
       const preceding = [...resolvedRows]
         .reverse()
-        .find(row => Number(row.message?.created_at ?? 0) <= item.createdAt);
+        .find(row => Number(row.message.created_at) <= item.createdAt);
       if (preceding) {
         preceding.timelineAfter = [...(preceding.timelineAfter ?? []), item];
       } else if (resolvedRows[0]) {

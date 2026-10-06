@@ -45839,6 +45839,41 @@
             "coveredStatements": 55,
             "totalStatements": 55
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "configures virtualization, anchors conversations, and maps all row kinds"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "uses explicit messages, null anchors, and participant-name fallbacks"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "detaches a minimized conversation viewport and resumes the same message rows when reopened"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the project assistant identity and places review events around the correct messages"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "orders consecutive review events and defers them while no message row is loaded"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "handles missing and present scroll elements plus near-bottom thresholds"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/useMessageListController.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "scrolls new own or end-position messages and flags unseen remote messages"
         }
       ],
       "suggestedTestRefs": [
@@ -55344,12 +55379,74 @@
           "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
           "project": "component",
           "caseId": "shows the automatically created chat when it arrives in the conversation query"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes conversations with native arrow keys and restores dock focus after keyboard minimization"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "submits chat creation once from native keyboard and keeps its control focused through acknowledgement"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "returns focus after a rejected keyboard creation and allows a native keyboard retry"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps focus on the dock when a pending creation completes after minimization"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes the %s resize handle with native arrow keys and keeps focus on the handle"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
     },
     {
@@ -55407,9 +55504,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
     },
     {
@@ -55432,9 +55531,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
     },
     {
@@ -55464,13 +55565,80 @@
           "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
           "project": "component",
           "caseId": "links to the project and review and saves the selected amendment surface"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "cancels only the actor run and preserves interrupted request identity and streaming tool previews"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the anonymous project title fallback and preserves amendment branch deep links"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "opens canonical and proposal node references using the available source context %s"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores non-node context references and reports a rejected navigation without losing the conversation"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "reports absent conversations and non-project conversations without mounting a composer"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "joins a missing participant once and leaves unauthenticated visitors out of the conversation"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "loads older windows up to the bounded limit and delegates externally supplied pagination"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "pins, renames and confirms deletion with the complete stored message and participant identifiers"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "restores the participant surface %s and persists a subsequent surface choice"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the local surface fallback and renders the same project header on the server without browser storage"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
+          "project": "component",
+          "caseId": "starts an empty conversation briefing once and waits for a model and an idle assistant"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
@@ -55494,6 +55662,16 @@
     },
     {
       "path": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
       "kind": "test-infrastructure",
@@ -92780,6 +92958,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/studio-project-chat.e2e.spec.ts",
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "tools/testing/accountability/project-chat.json"
@@ -94625,6 +94804,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/studio-project-chat.e2e.spec.ts",
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "tools/testing/accountability/project-chat.json"

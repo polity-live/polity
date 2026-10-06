@@ -31,6 +31,7 @@ interface AssistantMessageContentViewProps {
   canManage?: boolean;
   contextActions?: ReactNode;
   timelineItems?: MessageTimelineItem[];
+  active?: boolean;
 }
 
 export function AssistantMessageContentView({
@@ -55,6 +56,7 @@ export function AssistantMessageContentView({
   canManage = true,
   contextActions,
   timelineItems,
+  active = true,
 }: AssistantMessageContentViewProps) {
   return (
     <div
@@ -79,6 +81,7 @@ export function AssistantMessageContentView({
         {contextActions ? <div className="border-b px-4 py-2 text-sm">{contextActions}</div> : null}
 
         <MessageList
+          active={active}
           conversation={conversation}
           messages={messages}
           hasMoreOlderMessages={hasMoreOlderMessages}

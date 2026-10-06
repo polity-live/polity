@@ -39,7 +39,6 @@ export function ProjectChatPanel({
     [error, setError] = useState(''),
     [creating, setCreating] = useState(false);
   const panelId = useId();
-  const panelRef = useRef<HTMLElement>(null);
   const [size, setSize] = useState<{ width: number; height: number }>();
   const drag = useRef<{
     pointerId: number;
@@ -120,9 +119,9 @@ export function ProjectChatPanel({
     restoreTriggerFocus.current = true;
     setOpen(false);
   };
-  const resize = (width: number, height: number) => {
-    const panel = panelRef.current;
-    if (!panel) return;
+  // Resize handles are direct children of the panel. Measure the mounted
+  // event target's panel instead of retaining a separate nullable DOM ref.
+  const resize = (panel: HTMLElement, width: number, height: number) => {
     const bounds = panel.getBoundingClientRect();
     const maxWidth = Math.max(0, bounds.right - 16);
     const maxHeight = Math.max(
@@ -138,9 +137,9 @@ export function ProjectChatPanel({
     event: PointerEvent<HTMLButtonElement>,
     direction: 'width' | 'height' | 'both'
   ) => {
-    if (event.button !== 0 || !panelRef.current) return;
+    if (event.button !== 0) return;
     event.preventDefault();
-    const bounds = panelRef.current.getBoundingClientRect();
+    const bounds = (event.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
     drag.current = {
       pointerId: event.pointerId,
       x: event.clientX,
@@ -155,6 +154,7 @@ export function ProjectChatPanel({
     const current = drag.current;
     if (!current || current.pointerId !== event.pointerId) return;
     resize(
+      event.currentTarget.parentElement as HTMLElement,
       current.width + (current.direction !== 'height' ? current.x - event.clientX : 0),
       current.height + (current.direction !== 'width' ? current.y - event.clientY : 0)
     );
@@ -170,8 +170,8 @@ export function ProjectChatPanel({
     event: ReactKeyboardEvent<HTMLButtonElement>,
     direction: 'width' | 'height' | 'both'
   ) => {
-    const bounds = panelRef.current?.getBoundingClientRect();
-    if (!bounds) return;
+    const panel = event.currentTarget.parentElement as HTMLElement;
+    const bounds = panel.getBoundingClientRect();
     const step = event.shiftKey ? 40 : 10;
     const dx =
       direction === 'height'
@@ -191,7 +191,7 @@ export function ProjectChatPanel({
             : undefined;
     if (dx === undefined && dy === undefined) return;
     event.preventDefault();
-    resize(bounds.width + (dx ?? 0), bounds.height + (dy ?? 0));
+    resize(panel, bounds.width + (dx ?? 0), bounds.height + (dy ?? 0));
   };
   return (
     <div
@@ -212,7 +212,6 @@ export function ProjectChatPanel({
         <span>{tr('title')}</span>
       </button>
       <section
-        ref={panelRef}
         id={panelId}
         role="dialog"
         aria-modal="false"
@@ -254,6 +253,7 @@ export function ProjectChatPanel({
         <header className="flex h-11 shrink-0 items-center gap-2 border-b px-3">
           <MessageSquare className="size-4" aria-hidden="true" />
           <select
+            data-action-id="project-chat.conversation.choose"
             aria-label={tr('choose')}
             value={current ?? ''}
             onChange={e => choose(e.target.value)}
@@ -274,7 +274,17 @@ export function ProjectChatPanel({
             aria-label={tr('new')}
             disabled={creating || conversationsResult.type === 'unknown'}
             data-action-id="project-chat.conversation.create"
-            onClick={() => void create()}
+            data-action-kind="async-action"
+            onClick={async event => {
+              const button = event.currentTarget;
+              await create();
+              // Native disabled buttons lose focus while the request is pending.
+              // Restore it after React enables the button, without moving focus
+              // away from another control the user has chosen in the meantime.
+              requestAnimationFrame(() => {
+                if (document.activeElement === document.body) button.focus();
+              });
+            }}
           >
             <MessageSquarePlus className="size-4" aria-hidden="true" />
           </button>

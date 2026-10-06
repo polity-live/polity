@@ -63895,26 +63895,78 @@
       "accountabilityStatus": "accounted"
     },
     {
+      "key": "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.conversation.choose",
+      "debtKey": "src/features/project-chat/ui/ProjectChatPanel.tsx#select-13a61c62d5",
+      "file": "src/features/project-chat/ui/ProjectChatPanel.tsx",
+      "actionId": "project-chat.conversation.choose",
+      "identifierSource": "data-action-id",
+      "tag": "select",
+      "line": 255,
+      "column": 10,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes conversations with native arrow keys and restores dock focus after keyboard minimization",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
       "key": "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.conversation.create",
-      "debtKey": "src/features/project-chat/ui/ProjectChatPanel.tsx#button-f97575c9b1",
+      "debtKey": "src/features/project-chat/ui/ProjectChatPanel.tsx#button-474f857c13",
       "file": "src/features/project-chat/ui/ProjectChatPanel.tsx",
       "actionId": "project-chat.conversation.create",
       "identifierSource": "data-action-id",
       "tag": "button",
       "line": 271,
       "column": 10,
-      "kind": "interaction",
+      "kind": "async-action",
       "classification": "canonical-action",
       "accessibilityIssues": [],
-      "scenarios": ["idle", "success", "disabled", "keyboard", "focus"],
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "submits chat creation once from native keyboard and keeps its control focused through acknowledgement",
+          "scenarios": ["idle", "loading", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "returns focus after a rejected keyboard creation and allows a native keyboard retry",
+          "scenarios": ["error", "unauthorized", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure",
+          "scenarios": ["disabled", "error"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.dock.minimize",
@@ -63923,7 +63975,7 @@
       "actionId": "project-chat.dock.minimize",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 281,
+      "line": 291,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -63931,13 +63983,22 @@
       "handler": "minimize",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes conversations with native arrow keys and restores dock focus after keyboard minimization",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.project-chat-panel.keyboard-resize",
@@ -63946,7 +64007,7 @@
       "actionId": "project-chat.project-chat-panel.keyboard-resize",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 227,
+      "line": 226,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -63954,34 +64015,22 @@
       "handler": "keyboardResize",
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes the %s resize handle with native arrow keys and keeps focus on the handle",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
-      "accountabilityStatus": "new-gap"
-    },
-    {
-      "key": "src/features/project-chat/ui/ProjectChatPanel.tsx#select-13a61c62d5",
-      "debtKey": "src/features/project-chat/ui/ProjectChatPanel.tsx#select-13a61c62d5",
-      "file": "src/features/project-chat/ui/ProjectChatPanel.tsx",
-      "identifierSource": "unidentified",
-      "tag": "select",
-      "line": 256,
-      "column": 10,
-      "kind": "selection",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["selected", "unselected", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
-      ],
-      "accountabilityStatus": "new-gap"
+      "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/project-chat/ui/ProjectContextChips.tsx#project-chat.context.focus",
@@ -64007,9 +64056,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64037,9 +64088,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64050,7 +64103,7 @@
       "actionId": "project-chat.project-conversation.features-project-chat-messages",
       "identifierSource": "accessible-text",
       "tag": "Link",
-      "line": 458,
+      "line": 459,
       "column": 8,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -64066,9 +64119,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64079,7 +64134,7 @@
       "actionId": "project-chat.project-conversation.features-project-chat-project",
       "identifierSource": "accessible-text",
       "tag": "a",
-      "line": 454,
+      "line": 455,
       "column": 6,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -64095,9 +64150,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64108,7 +64165,7 @@
       "actionId": "project-chat.project-conversation.features-project-chat-review",
       "identifierSource": "accessible-text",
       "tag": "a",
-      "line": 492,
+      "line": 493,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -64124,9 +64181,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64137,7 +64196,7 @@
       "actionId": "project-chat.project-conversation.features-project-chat-text-features-project-chat-city-design",
       "identifierSource": "accessible-text",
       "tag": "select",
-      "line": 428,
+      "line": 429,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -64153,9 +64212,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64166,7 +64227,7 @@
       "actionId": "project-chat.project-conversation.features-project-chat-undo",
       "identifierSource": "accessible-text",
       "tag": "Button",
-      "line": 478,
+      "line": 479,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -64182,9 +64243,11 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -64195,7 +64258,7 @@
       "actionId": "project-chat.project-conversation.set-context-dismissed",
       "identifierSource": "handler",
       "tag": "button",
-      "line": 417,
+      "line": 418,
       "column": 6,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -64205,9 +64268,11 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ],
       "accountabilityStatus": "new-gap"
     },

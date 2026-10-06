@@ -210,6 +210,7 @@ export function ProjectConversation(props: ProjectConversationProps) {
 }
 
 function LoadedProjectConversation({
+  active = true,
   conversation,
   scope,
   context,
@@ -503,6 +504,7 @@ function LoadedProjectConversation({
       value={scope.kind === 'studio' ? activateContext : undefined}
     >
       <AssistantMessageContentView
+        active={active}
         conversation={conversation}
         messages={messages}
         hasMoreOlderMessages={hasMoreOlderMessages ?? internalHasMore}

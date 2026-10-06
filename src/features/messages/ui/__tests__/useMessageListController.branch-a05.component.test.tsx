@@ -136,7 +136,7 @@ describe('useMessageListController branch coverage', () => {
       'conversation-request',
     ]);
     expect(result.current.spaceBefore).toBe(10);
-    expect(mocks.stick).toHaveBeenCalledWith(mocks.virtual);
+    expect(mocks.stick).toHaveBeenCalledWith(mocks.virtual, { enabled: true });
 
     rerender(props);
     expect(mocks.listOptions.permalinkID).toBe('one');
@@ -161,6 +161,110 @@ describe('useMessageListController branch coverage', () => {
     expect(mocks.listOptions.permalinkID).toBe('two');
     expect(result.current.otherParticipantName).toBe('Solo');
     expect(result.current.virtualRows.every(row => row.type === 'message')).toBe(true);
+  });
+
+  it('detaches a minimized conversation viewport and resumes the same message rows when reopened', () => {
+    mocks.virtual.items = [{ index: 0, key: 'one', row: message('one') }];
+    const initial = controllerProps({ active: true });
+    const { result, rerender } = renderHook(values => useMessageListController(values), {
+      initialProps: initial,
+    });
+    const element = document.createElement('div');
+    result.current.scrollRef.current = element;
+    expect(mocks.listOptions.getScrollElement()).toBe(element);
+    const rows = result.current.virtualRows;
+    rerender({ ...initial, active: false });
+    expect(mocks.listOptions.getScrollElement()).toBeNull();
+    expect(mocks.stick).toHaveBeenLastCalledWith(mocks.virtual, { enabled: false });
+    expect(result.current.scrollRef.current).toBe(element);
+    expect(result.current.virtualRows).toStrictEqual(rows);
+    rerender({ ...initial, active: true });
+    expect(mocks.listOptions.getScrollElement()).toBe(element);
+    expect(mocks.stick).toHaveBeenLastCalledWith(mocks.virtual, { enabled: true });
+  });
+
+  it('uses the project assistant identity and places review events around the correct messages', () => {
+    const first = { ...message('first'), created_at: 100 };
+    const last = { ...message('last'), created_at: 200 };
+    mocks.virtual.items = [
+      { index: 0, key: 'first', row: first },
+      { index: 1, key: 'placeholder', row: undefined },
+      { index: 2, key: 'last', row: last },
+    ];
+    const early = { id: 'early', createdAt: 50, content: 'Earlier change' };
+    const middle = { id: 'middle', createdAt: 150, content: 'Middle change' };
+    const late = { id: 'late', createdAt: 250, content: 'Later change' };
+    const { result } = renderHook(() =>
+      useMessageListController(
+        controllerProps({
+          conversation: conversation({ type: 'project_ai' }),
+          timelineItems: [late, middle, early],
+        })
+      )
+    );
+    expect(result.current.otherUser).toEqual({
+      id: 'a12a0000-0000-4000-a000-000000000001',
+      first_name: 'Aria & Kai',
+      last_name: null,
+      avatar: '/avatars/aria-kai-avatar-256.webp',
+      handle: 'aria-kai',
+    });
+    expect(result.current.otherParticipantName).toBe('Aria & Kai');
+    expect(result.current.virtualRows[0]).toEqual({
+      type: 'message',
+      index: 0,
+      key: 'first',
+      message: first,
+      timelineBefore: [early],
+      timelineAfter: [middle],
+    });
+    expect(result.current.virtualRows[1]).toEqual({
+      type: 'message',
+      index: 1,
+      key: 'placeholder',
+      message: undefined,
+    });
+    expect(result.current.virtualRows[2]).toEqual({
+      type: 'message',
+      index: 2,
+      key: 'last',
+      message: last,
+      timelineAfter: [late],
+    });
+  });
+
+  it('orders consecutive review events and defers them while no message row is loaded', () => {
+    mocks.virtual.rowsEmpty = true;
+    const before = { id: 'before', createdAt: 1, content: 'Before' };
+    const after = { id: 'after', createdAt: 2, content: 'After' };
+    const props = controllerProps({ timelineItems: [after, before] });
+    const { result, rerender } = renderHook(values => useMessageListController(values), {
+      initialProps: props,
+    });
+    expect(result.current.virtualRows).toEqual([]);
+    expect(result.current.rowsEmpty).toBe(false);
+    const row = { ...message('loaded'), created_at: 0 };
+    mocks.virtual.items = [{ index: 0, key: 'loaded', row }];
+    rerender(props);
+    expect(result.current.virtualRows[0]).toEqual({
+      type: 'message',
+      index: 0,
+      key: 'loaded',
+      message: row,
+      timelineAfter: [before, after],
+    });
+    row.created_at = 3;
+    rerender({ ...props, timelineItems: [before, after] });
+    expect(result.current.virtualRows[0]).toEqual({
+      type: 'message',
+      index: 0,
+      key: 'loaded',
+      message: row,
+      timelineBefore: [before, after],
+    });
+    mocks.virtual.items = [];
+    rerender({ ...props, timelineItems: [] });
+    expect(result.current.rowsEmpty).toBe(true);
   });
 
   it('handles missing and present scroll elements plus near-bottom thresholds', () => {

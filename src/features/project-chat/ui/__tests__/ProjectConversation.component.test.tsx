@@ -159,7 +159,11 @@ vi.mock('@/features/messages/hooks/useAssistantChat', async () => {
 });
 vi.mock('@/features/messages/ui/AssistantMessageContentView', () => ({
   AssistantMessageContentView: (props: any) => (
-    <section data-testid="shared-assistant-chat" data-compact={String(props.compact)}>
+    <section
+      data-testid="shared-assistant-chat"
+      data-compact={String(props.compact)}
+      data-active={String(props.active)}
+    >
       <button
         type="button"
         disabled={props.assistantChat.isSending}
@@ -285,6 +289,8 @@ it('keeps a minimized conversation mounted without marking messages as read', as
   const ui = render(
     <ProjectConversation conversationId={chatId} context={{ surface: 'studio' }} active={false} />
   );
+  const content = screen.getByTestId('shared-assistant-chat');
+  expect(content.getAttribute('data-active')).toBe('false');
   expect(state.mutate).not.toHaveBeenCalledWith(
     expect.objectContaining({ markRead: expect.anything() })
   );
@@ -292,6 +298,8 @@ it('keeps a minimized conversation mounted without marking messages as read', as
   ui.rerender(
     <ProjectConversation conversationId={chatId} context={{ surface: 'studio' }} active />
   );
+  expect(screen.getByTestId('shared-assistant-chat')).toBe(content);
+  expect(content.getAttribute('data-active')).toBe('true');
   await waitFor(() =>
     expect(state.mutate).toHaveBeenCalledWith({
       markRead: { id: 'participant', last_read_at: expect.any(Number) },

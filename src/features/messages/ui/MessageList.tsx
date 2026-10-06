@@ -29,6 +29,7 @@ interface MessageListProps {
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: StreamingAssistantMessage;
   timelineItems?: MessageTimelineItem[];
+  active?: boolean;
 }
 
 import { useMessageListController } from './useMessageListController';
@@ -46,8 +47,10 @@ export function MessageList({
   resolveAttachmentCardData,
   streamingAssistantMessage,
   timelineItems,
+  active = true,
 }: MessageListProps) {
   const viewProps = useMessageListController({
+    active,
     conversation,
     messages,
     hasMoreOlderMessages,
