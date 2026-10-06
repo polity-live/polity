@@ -1501,7 +1501,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         x: ((clientX - bounds.left) * stageNode.width()) / bounds.width,
         y: ((clientY - bounds.top) * stageNode.height()) / bounds.height,
       };
-      const inverse = group.getAbsoluteTransform(stageNode).copy().invert();
+      const inverse = group.getAbsoluteTransform().copy().invert();
       const local = inverse.point(point);
       let resolvedKind = kind;
       if (kind === 'pan') {
@@ -1705,6 +1705,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 })
               }
               onPointerDown={event => {
+                if (!(event.evt.target instanceof HTMLCanvasElement)) return;
                 if (
                   activeTool === 'text' &&
                   node.type === 'richText' &&
@@ -1736,7 +1737,12 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               }}
               onClick={event => {
                 event.cancelBubble = true;
-                if (suppressTextClick.current || spacePressedRef.current || touchSuppressed.current)
+                if (
+                  !(event.evt.target instanceof HTMLCanvasElement) ||
+                  suppressTextClick.current ||
+                  spacePressedRef.current ||
+                  touchSuppressed.current
+                )
                   return;
                 if (activeTool === 'eraser') props.onDeleteNodes?.([node.id]);
                 else if (
@@ -1756,7 +1762,12 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               }}
               onDblClick={event => {
                 event.cancelBubble = true;
-                if (suppressTextClick.current || spacePressedRef.current || touchSuppressed.current)
+                if (
+                  !(event.evt.target instanceof HTMLCanvasElement) ||
+                  suppressTextClick.current ||
+                  spacePressedRef.current ||
+                  touchSuppressed.current
+                )
                   return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
@@ -1771,8 +1782,13 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 )
                   void startCrop(node.id);
               }}
-              onDblTap={() => {
-                if (suppressTextClick.current || touchSuppressed.current) return;
+              onDblTap={event => {
+                if (
+                  !(event.evt.target instanceof HTMLCanvasElement) ||
+                  suppressTextClick.current ||
+                  touchSuppressed.current
+                )
+                  return;
                 if (node.type === 'richText' && props.editable && !node.locked) {
                   props.selectExact?.([node.id]);
                   setPendingTextEdit(node.id);
@@ -2054,6 +2070,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             }
           }}
           onPointerDown={event => {
+            if (!(event.evt.target instanceof HTMLCanvasElement)) return;
             suppressTextClick.current = false;
             if (textGesture.current && textGesture.current.pointerId !== event.evt.pointerId)
               return;
@@ -2066,7 +2083,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               if (stageNode && group) {
                 const bounds = stageNode.container().getBoundingClientRect();
                 const local = group
-                  .getAbsoluteTransform(stageNode)
+                  .getAbsoluteTransform()
                   .copy()
                   .invert()
                   .point({

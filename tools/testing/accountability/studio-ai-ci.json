@@ -5978,6 +5978,51 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "cancels an active native %s when a second finger starts a canvas gesture"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "delegates element-set drops only when editing and the supported payload are available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "awaits clipboard commands and propagates failures while missing delegates remain safe"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the view when zoom-to-selection has no selected targets"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders text when the font loading API is unavailable"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens media cropping on native double-click and pans its source inside the frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "filters missing, hidden, distant and other-frame proposal references while drawing neutral update ghosts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens text after a native double tap and keeps inline pointer selection inside the editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens media cropping after a native double tap and cancels it with the canvas keyboard"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "erases a node with native pointer activation and tolerates a missing delete delegate"
       }
     ]
   },

@@ -8,6 +8,7 @@ import { createStudioNodeFromElement } from '../../logic/create-studio-node';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
 import { moveByWorldDelta } from '../../logic/selection-geometry';
 import type { StudioNode } from '../../logic/document-v3';
+import type { StudioChangeRequestAnnotation } from '../../logic/change-request-annotations';
 import KonvaStudioCanvas, { type StudioCanvasHandle } from '../KonvaStudioCanvas';
 
 afterEach(() => vi.restoreAllMocks());
@@ -1349,3 +1350,429 @@ it.each(['resize', 'drag'])(
     }
   }
 );
+
+it('delegates element-set drops only when editing and the supported payload are available', async () => {
+  const { studio, frame } = fixture();
+  const ref = createRef<StudioCanvasHandle>();
+  const drop = vi.fn();
+  const wrap = (editable: boolean, callback = true) => (
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        ref={ref}
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable={editable}
+        onElementSetDrop={callback ? drop : undefined}
+      />
+    </div>
+  );
+  const view = render(wrap(true));
+  const host = screen.getByTestId('studio-canvas');
+  await waitFor(() => expect(stage().width()).toBe(700));
+  const dataTransfer = new DataTransfer();
+  dataTransfer.setData('application/x-polity-element-set', 'native-element-set');
+  const rect = host.getBoundingClientRect();
+  const point = { clientX: rect.left + 240, clientY: rect.top + 200 };
+  const send = (type: string, dataTransfer: DataTransfer) =>
+    host.dispatchEvent(
+      new DragEvent(type, { dataTransfer, ...point, bubbles: true, cancelable: true })
+    );
+  expect(send('dragover', dataTransfer)).toBe(false);
+  expect(send('drop', dataTransfer)).toBe(false);
+  expect(drop).toHaveBeenCalledExactlyOnceWith(
+    'native-element-set',
+    ref.current!.scenePoint(point.clientX, point.clientY)
+  );
+  const unsupported = new DataTransfer();
+  unsupported.setData('text/plain', 'native-element-set');
+  expect(send('dragover', unsupported)).toBe(true);
+  expect(send('drop', unsupported)).toBe(true);
+  for (const options of [
+    [false, true],
+    [true, false],
+  ]) {
+    view.rerender(wrap(options[0], options[1]));
+    expect(send('dragover', dataTransfer)).toBe(true);
+    expect(send('drop', dataTransfer)).toBe(true);
+  }
+  expect(drop).toHaveBeenCalledTimes(1);
+});
+
+it('awaits clipboard commands and propagates failures while missing delegates remain safe', async () => {
+  const { studio, frame } = fixture();
+  const ref = createRef<StudioCanvasHandle>();
+  let complete!: () => void;
+  const gate = new Promise<void>(resolve => {
+    complete = resolve;
+  });
+  const clipboard = vi
+    .fn()
+    .mockImplementationOnce(() => gate)
+    .mockResolvedValueOnce(undefined)
+    .mockRejectedValueOnce(new Error('Clipboard permission denied'));
+  const wrap = (callback = true) => (
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        ref={ref}
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable
+        onClipboard={callback ? clipboard : undefined}
+      />
+    </div>
+  );
+  const view = render(wrap());
+  let done = false;
+  const copy = ref.current!.execute({ type: 'clipboard', action: 'copy' }).then(() => {
+    done = true;
+  });
+  await Promise.resolve();
+  expect(done).toBe(false);
+  complete();
+  await copy;
+  expect(done).toBe(true);
+  await ref.current!.execute({ type: 'clipboard', action: 'cut' });
+  await expect(ref.current!.execute({ type: 'clipboard', action: 'paste' })).rejects.toThrow(
+    'Clipboard permission denied'
+  );
+  expect(clipboard.mock.calls.map(([action]) => action)).toEqual(['copy', 'cut', 'paste']);
+  view.rerender(wrap(false));
+  await expect(
+    ref.current!.execute({ type: 'clipboard', action: 'copy' })
+  ).resolves.toBeUndefined();
+});
+
+it('preserves the view when zoom-to-selection has no selected targets', async () => {
+  const { studio, frame } = fixture();
+  const ref = createRef<StudioCanvasHandle>();
+  render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        ref={ref}
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable
+      />
+    </div>
+  );
+  await waitFor(() => expect(stage().width()).toBe(700));
+  await act(async () => {
+    await ref.current!.execute({ type: 'zoom', mode: 'reset' });
+  });
+  const original = stage().getAbsoluteTransform().getMatrix();
+  await act(async () => {
+    await ref.current!.execute({ type: 'zoom', mode: 'selection' });
+  });
+  expect(stage().getAbsoluteTransform().getMatrix()).toEqual(original);
+});
+
+it('renders text when the font loading API is unavailable', async () => {
+  const { studio, frame } = fixture();
+  const text = createStudioNodeFromElement(
+    element('text', { text: 'Font fallback', x: 80, y: 100, width: 200, height: 80 }),
+    frame.id,
+    1
+  );
+  studio.nodes.push(text);
+  vi.spyOn(document, 'fonts', 'get').mockReturnValue(undefined as unknown as FontFaceSet);
+  const view = render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable={false}
+        fit="contain"
+      />
+    </div>
+  );
+  await waitFor(() =>
+    expect(stage().findOne<Konva.Group>(`#${text.id}`)?.findOne('Shape')).toBeTruthy()
+  );
+  expect(stage().toCanvas().toDataURL()).toMatch(/^data:image\/png/);
+  view.unmount();
+});
+
+it('opens media cropping on native double-click and pans its source inside the frame', async () => {
+  const { studio, frame } = fixture();
+  const assetId = crypto.randomUUID();
+  const media = createStudioNodeFromElement(
+    element('image', { assetId, x: 120, y: 110, width: 160, height: 100 }),
+    frame.id,
+    1
+  );
+  studio.nodes.push(media);
+  const url = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="320" height="200" fill="red"/></svg>')}`;
+  const commit = vi.fn();
+  render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[{ id: assetId, name: 'red.svg', mime: 'image/svg+xml', url }]}
+        selected={[media.id]}
+        editable
+        fit="contain"
+        onCropCommit={commit}
+      />
+    </div>
+  );
+  const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
+  await waitFor(() => expect(group.findOne('Image')).toBeTruthy());
+  const point = canvasPoint(group, { x: 80, y: 50 });
+  await userEvent.dblClick(point.surface, { position: { x: point.x, y: point.y } } as never);
+  await screen.findByRole('toolbar', { name: 'Crop' });
+  const slider = screen.getByRole<HTMLInputElement>('slider');
+  slider.focus();
+  await userEvent.keyboard('{End}');
+  const cropX = Number(screen.getByRole('toolbar', { name: 'Crop' }).getAttribute('data-crop-x'));
+  const overlay = group.find('Rect').find(node => node.getAttr('opacity') === 0.08)!;
+  const observed = vi.fn();
+  overlay.on('pointerdown', observed);
+  await waitFor(() =>
+    expect(stage().getIntersection(overlay.getAbsoluteTransform().point({ x: 80, y: 50 }))).toBe(
+      overlay
+    )
+  );
+  const drag = canvasPoint(overlay, { x: 80, y: 50 });
+  await userEvent.dragAndDrop(drag.surface, drag.surface, {
+    sourcePosition: { x: drag.x, y: drag.y },
+    targetPosition: { x: drag.x + 10, y: drag.y + 5 },
+  } as never);
+  expect(observed).toHaveBeenCalledTimes(1);
+  await waitFor(() =>
+    expect(
+      Number(screen.getByRole('toolbar', { name: 'Crop' }).getAttribute('data-crop-x'))
+    ).not.toBe(cropX)
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(commit).toHaveBeenCalledTimes(1);
+});
+
+it('filters missing, hidden, distant and other-frame proposal references while drawing neutral update ghosts', async () => {
+  const { studio, frame, shape } = fixture();
+  const source = structuredClone(studio);
+  const ghost = {
+    ...structuredClone(shape),
+    id: crypto.randomUUID(),
+    parentFrameId: crypto.randomUUID(),
+    transform: { ...shape.transform, x: 220, y: 140, flipX: true, flipY: true },
+  };
+  source.nodes.push(ghost);
+  const hidden = { ...structuredClone(shape), id: crypto.randomUUID(), visible: false };
+  const distant = [
+    [-10000, 0],
+    [0, -10000],
+    [10000, 0],
+    [0, 10000],
+  ].map(([x, y]) => ({
+    ...structuredClone(shape),
+    id: crypto.randomUUID(),
+    transform: { ...shape.transform, x, y },
+  }));
+  source.nodes.push(hidden, ...distant);
+  const marker = (nodeId: string, selected = false): StudioChangeRequestAnnotation => ({
+    id: nodeId,
+    proposalId: 'request-update',
+    nodeId,
+    selected,
+    label: 'Neutral change',
+    tone: 'update',
+    sourceDocument: source,
+  });
+  const annotations = [
+    marker(ghost.id),
+    marker(hidden.id),
+    marker(crypto.randomUUID()),
+    ...distant.map(node => marker(node.id)),
+  ];
+  const selected = vi.fn();
+  const view = render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable
+        changeRequestMarkers={annotations}
+        onChangeRequestSelect={selected}
+      />
+    </div>
+  );
+  const outline = await screen.findByTestId(`studio-change-outline-${ghost.id}`);
+  expect(outline.dataset.changeRequestGhost).toBe('true');
+  expect(outline.style.border).toContain('rgb(245, 158, 11)');
+  await waitFor(() =>
+    expect(screen.getAllByRole('button', { name: 'Neutral change' })).toHaveLength(1)
+  );
+  const button = screen.getByRole('button', { name: 'Neutral change' });
+  button.focus();
+  await userEvent.keyboard('{Enter}');
+  expect(selected).toHaveBeenCalledExactlyOnceWith('request-update');
+  view.rerender(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable={false}
+        fit="contain"
+        changeRequestMarkers={annotations}
+      />
+    </div>
+  );
+  expect(screen.queryByTestId(`studio-change-outline-${ghost.id}`)).toBeNull();
+});
+
+function doubleTap(node: Konva.Node, local: { x: number; y: number }) {
+  const point = canvasPoint(node, local);
+  const rect = point.surface.getBoundingClientRect();
+  for (const identifier of [1, 2]) {
+    const touch = new Touch({
+      identifier,
+      target: point.surface,
+      clientX: rect.left + point.x,
+      clientY: rect.top + point.y,
+    });
+    point.surface.dispatchEvent(
+      new TouchEvent('touchstart', {
+        touches: [touch],
+        targetTouches: [touch],
+        changedTouches: [touch],
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    point.surface.dispatchEvent(
+      new TouchEvent('touchend', {
+        touches: [],
+        targetTouches: [],
+        changedTouches: [touch],
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  }
+}
+
+it('opens text after a native double tap and keeps inline pointer selection inside the editor', async () => {
+  const { studio, frame } = fixture();
+  const text = createStudioNodeFromElement(
+    element('text', { text: 'Double tap text', x: 180, y: 130, width: 200, height: 100 }),
+    frame.id,
+    2
+  );
+  studio.nodes.push(text);
+  const select = vi.fn();
+  render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[text.id]}
+        selectExact={select}
+        editable
+        fit="contain"
+      />
+    </div>
+  );
+  const group = stage().findOne<Konva.Group>(`#${text.id}`)!;
+  await waitFor(() =>
+    expect(
+      stage()
+        .getIntersection(group.getAbsoluteTransform().point({ x: 80, y: 30 }))
+        ?.getParent()
+    ).toBe(group)
+  );
+  doubleTap(group, { x: 80, y: 30 });
+  const editor = await screen.findByLabelText('Text');
+  expect(select).toHaveBeenCalledWith([text.id]);
+  select.mockClear();
+  await userEvent.click(editor);
+  expect(select).not.toHaveBeenCalled();
+  expect(document.activeElement).toBe(editor);
+  await userEvent.keyboard('!');
+  expect(editor).toHaveTextContent('!');
+});
+
+it('opens media cropping after a native double tap and cancels it with the canvas keyboard', async () => {
+  const { studio, frame } = fixture();
+  const assetId = crypto.randomUUID();
+  const media = createStudioNodeFromElement(
+    element('image', { assetId, x: 120, y: 110, width: 160, height: 100 }),
+    frame.id,
+    1
+  );
+  studio.nodes.push(media);
+  const url = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="320" height="200" fill="red"/></svg>')}`;
+  const commit = vi.fn();
+  render(
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[{ id: assetId, name: 'red.svg', mime: 'image/svg+xml', url }]}
+        selected={[media.id]}
+        editable
+        fit="contain"
+        onCropCommit={commit}
+      />
+    </div>
+  );
+  const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
+  await waitFor(() => expect(group.findOne('Image')).toBeTruthy());
+  doubleTap(group, { x: 80, y: 50 });
+  await screen.findByRole('toolbar', { name: 'Crop' });
+  screen.getByTestId('studio-canvas').focus();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('toolbar', { name: 'Crop' })).toBeNull();
+  expect(commit).not.toHaveBeenCalled();
+});
+
+it('erases a node with native pointer activation and tolerates a missing delete delegate', async () => {
+  const { studio, frame, shape } = fixture();
+  const ref = createRef<StudioCanvasHandle>();
+  const remove = vi.fn();
+  const wrap = (callback = true) => (
+    <div style={{ width: 700, height: 500 }}>
+      <KonvaStudioCanvas
+        ref={ref}
+        document={studio}
+        activeFrameId={frame.id}
+        assets={[]}
+        selected={[]}
+        editable
+        fit="contain"
+        onDeleteNodes={callback ? remove : undefined}
+      />
+    </div>
+  );
+  const view = render(wrap());
+  await act(async () => {
+    await ref.current!.execute({ type: 'setTool', tool: 'eraser' });
+  });
+  const node = stage().findOne<Konva.Group>(`#${shape.id}`)!;
+  await waitFor(() =>
+    expect(
+      stage()
+        .getIntersection(node.getAbsoluteTransform().point({ x: 50, y: 40 }))
+        ?.getParent()
+    ).toBe(node)
+  );
+  const point = canvasPoint(node, { x: 50, y: 40 });
+  await userEvent.click(point.surface, { position: { x: point.x, y: point.y } } as never);
+  expect(remove).toHaveBeenCalledExactlyOnceWith([shape.id]);
+  view.rerender(wrap(false));
+  await userEvent.click(point.surface, { position: { x: point.x, y: point.y } } as never);
+  expect(remove).toHaveBeenCalledTimes(1);
+});

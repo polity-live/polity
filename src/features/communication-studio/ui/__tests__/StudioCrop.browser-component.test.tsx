@@ -85,7 +85,7 @@ function pointerOnMedia(canvas: HTMLCanvasElement, mediaId: string, x: number, y
   const stage = Konva.stages.find(item => item.container().contains(canvas));
   const node = stage?.findOne(`#${mediaId}`);
   if (!node) throw new Error(`Media ${mediaId} is not on the canvas`);
-  const point = node.getAbsoluteTransform(stage).point({ x, y });
+  const point = node.getAbsoluteTransform().point({ x, y });
   const rect = canvas.getBoundingClientRect();
   return {
     clientX: rect.left + (point.x * rect.width) / canvas.width,
@@ -292,26 +292,19 @@ it('pans a crop on the real canvas within the source bounds', async () => {
   const { clientX: centerX, clientY: centerY } = await waitFor(() =>
     pointerOnMedia(controls, media.id, 50, 50)
   );
-  await act(async () => {
-    fireEvent.pointerDown(controls, {
-      clientX: centerX,
-      clientY: centerY,
-      pointerId: 2,
-      button: 0,
-    });
-    fireEvent.pointerMove(controls, {
-      clientX: centerX + 30,
-      clientY: centerY,
-      pointerId: 2,
-      button: 0,
-    });
-    fireEvent.pointerUp(controls, {
-      clientX: centerX + 30,
-      clientY: centerY,
-      pointerId: 2,
-      button: 0,
-    });
-  });
+  const stage = Konva.stages.find(item => item.container().contains(controls))!;
+  const bounds = controls.getBoundingClientRect();
+  await waitFor(() =>
+    expect(
+      stage
+        .getIntersection({ x: centerX - bounds.left, y: centerY - bounds.top })
+        ?.getAttr('opacity')
+    ).toBe(0.08)
+  );
+  await userEvent.dragAndDrop(controls, controls, {
+    sourcePosition: { x: centerX - bounds.left, y: centerY - bounds.top },
+    targetPosition: { x: centerX - bounds.left + 30, y: centerY - bounds.top },
+  } as never);
   await waitFor(() =>
     expect(
       Number(screen.getByRole('toolbar', { name: 'Crop' }).getAttribute('data-crop-x'))
