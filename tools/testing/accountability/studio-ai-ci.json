@@ -4331,6 +4331,255 @@
         "project": "browser-component",
         "caseId": "decodes an image into the exported frame with centered cover cropping"
       }
+    ],
+    "src/features/communication-studio/hooks/useStudioDocument.ts": [
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a server-authorized draft editable while its Zero workspace query is still empty"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "persists V3-only frame settings without losing the legacy canvas projection"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "persists a renamed %s, undoes it in one step, and reloads it"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "loads private media with the session token and exposes only revocable object URLs"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "does not create a draft or publish operations without a project"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a read-only document unchanged and rechecks server authority on confirmation"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "reports failed document loading with online state %s and ignores late results after unmount"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects invalid edits, ignores no-op transactions and exposes a complete local undo and redo history"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "updates page, post and element helpers without losing canonical object identities"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "retains offline changes and saves them when the browser reconnects"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "downloads and recovers an old-generation draft into a new proposal without overwriting the current document"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "publishes bounded canvas selection, receives peer broadcasts and tears down heartbeats"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps canvas presence quiet while offline, coalesces busy updates and clears failed peer reads"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "uses legacy presence only when the server disables native canvas presence"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "does not subscribe without a session or after unmount during authentication"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "revokes replaced and removed private media URLs without downloading cached media twice"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects private media without a session or a successful response and cleans partial object URLs"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "revokes an in-flight media response when the active project changes"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "merges later Zero revisions with independent local changes and refuses a conflicting undo"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes conflicts from Zero updates and rebases chosen local transforms onto the latest revision"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "checks canonical query authority and workspace authority before accepting more edits"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "saves workspace changes through the review API and keeps canonical Zero mutations untouched"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "restores a cached offline draft and ignores corrupt cache data"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "serializes overlapping confirmations and preserves edits made while a confirmation is pending"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects a changed generation during a clean confirmation and retains the local snapshot"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "applies sequential edits in one React event without discarding the first edit"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "automatically saves restored and newly edited drafts and reports failed timed saves"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "refreshes media periodically and tolerates an unavailable asset list"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores a clean confirmation after switching projects and preserves the new draft"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "saves edits queued during a pending mutation in a second operation"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps edits that conflict with the receipt instead of silently overwriting them"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "leaves a deleted ancestor conflicted when local edits cannot be recovered into it"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "retains pending edits when a later authority check makes the project read-only"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores an asset list that arrives after switching projects before downloading private files"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores a workspace authority %s after unmount and revokes failed access while mounted"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "receives a complete Zero workspace document without revoking authorized draft access"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps legacy subscriptions inactive when authenticated=%s and authentication finishes after teardown"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects edits that conflict with a clean confirmation instead of overwriting remote changes"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "reports a failed clean confirmation according to the current connectivity and preserves unsaved history"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a new project intact when the receipt of an older pending mutation arrives"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "fences an earlier pending mutation when the active %s changes"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores native presence responses after unmount when successful=%s"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "does not subscribe a native channel if teardown happens while setting its authentication"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "retains a higher authority revision when an overlapping explicit refresh finishes first"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "renders non-Error mutation failures without dropping the local draft"
+      }
+    ],
+    "src/features/communication-studio/logic/operations.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads atomic geometry, transforms and resource order with the same path rules used for conflicts"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves V5 %s formatting as a JSON operation and restores it with undo"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "drops undefined object properties but rejects undefined array values"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates nested canvas style, roundness and group updates at the common boundary"
+      }
     ]
   },
   "actionReferences": {

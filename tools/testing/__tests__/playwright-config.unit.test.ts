@@ -41,6 +41,8 @@ describe('Playwright run budgets', () => {
         expect.objectContaining({
           env: expect.objectContaining({
             STUDIO_ENABLED: 'true',
+            STUDIO_V3_ENABLED: 'true',
+            CANVAS_ENABLED: 'true',
           }),
         }),
       ])

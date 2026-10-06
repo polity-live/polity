@@ -168,7 +168,7 @@ export function diffStudio(before: unknown, after: unknown, path: string[] = [])
   }
   return [{ path, before: entry(before), after: entry(after) }];
 }
-function locate(root: unknown, path: string[]): unknown {
+export function studioValueAtPath(root: unknown, path: string[]): unknown {
   let value = root;
   for (const key of path) {
     if (key === '@geometry')
@@ -197,7 +197,7 @@ function mergeChanges<T>(
   const source = current;
   const conflicts: StudioConflict[] = [];
   for (const change of changes) {
-    const actual = entry(locate(current, change.path));
+    const actual = entry(studioValueAtPath(current, change.path));
     if (
       stableJson(actual) !== stableJson(change.before) &&
       stableJson(actual) !== stableJson(change.after)
@@ -209,7 +209,10 @@ function mergeChanges<T>(
         remote: actual.value,
       });
     // A changed/deleted ancestor cannot be silently recreated by a leaf edit.
-    if (change.path.length > 1 && locate(current, change.path.slice(0, -1)) === undefined)
+    if (
+      change.path.length > 1 &&
+      studioValueAtPath(current, change.path.slice(0, -1)) === undefined
+    )
       conflicts.push({
         path: change.path,
         base: change.before.value,
@@ -220,7 +223,8 @@ function mergeChanges<T>(
   if (conflicts.length) return { value: source, conflicts };
   const next = structuredClone(current);
   for (const { path, after } of changes) {
-    const parent = locate(next, path.slice(0, -1)) as Record<string, unknown> | unknown[];
+    const parent = studioValueAtPath(next, path.slice(0, -1)) as
+      Record<string, unknown> | unknown[];
     const key = path[path.length - 1];
     if (key === '@geometry' && parent && !Array.isArray(parent)) {
       for (const field of geometryKeys) Reflect.deleteProperty(parent, field);

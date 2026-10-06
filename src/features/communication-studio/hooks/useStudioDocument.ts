@@ -18,6 +18,7 @@ import {
   isStudioValidationError,
   mergeStudioV3,
   inverseChanges,
+  studioValueAtPath,
   type StudioChange,
   type StudioConflict,
 } from '../logic/operations';
@@ -98,8 +99,7 @@ export function useStudioDocument(
   const publishPresence = useRef<() => void>(() => {
     /* No active canvas session. */
   });
-  const current = useRef(id);
-  current.current = id;
+  const session = useRef(0);
   const blocked = useRef(false);
   const storageKey = `studio:v4:${user.id}:${id}:${workspaceId ?? 'canonical'}`;
   const assetScope = `${id ?? ''}:${workspaceId ?? 'canonical'}`;
@@ -189,6 +189,7 @@ export function useStudioDocument(
     }
   }, [workspaceId, remoteWorkspace, workspaceStatus?.type]);
   useEffect(() => {
+    session.current++;
     draft.current = null;
     blocked.current = false;
     history.current = [];
@@ -285,6 +286,7 @@ export function useStudioDocument(
       240000
     );
     return () => {
+      session.current++;
       disposed = true;
       clearInterval(authorityCheck);
       window.removeEventListener('online', reconnect);
@@ -419,6 +421,7 @@ export function useStudioDocument(
     if (timer.current) clearTimeout(timer.current);
     const d = draft.current;
     if (!id || !d) throw new Error('Studio not loaded');
+    const activeSession = session.current;
     if (blocked.current) throw new Error('Resolve Studio conflicts first');
     const changes = d.pending?.changes ?? diffStudio(d.base, d.value);
     if (!navigator.onLine) {
@@ -429,13 +432,13 @@ export function useStudioDocument(
       setStatus('saving');
       const confirmation = (async () => {
         const confirmed = await loadDocument();
+        if (session.current !== activeSession) throw new Error('Studio changed while confirming');
         if (d.generation !== confirmed.generation) {
           blocked.current = true;
           throw new Error('Canvas generation changed');
         }
-        if (current.current !== id) throw new Error('Studio changed while confirming');
-        const latest = draft.current;
-        if (!latest) throw new Error('Studio draft unavailable');
+        // The session check guarantees the loaded draft has not been reset.
+        const latest = draft.current as Draft;
         if (confirmed.revision < latest.revision) return latest.revision;
         const edits = diffStudio(latest.base, latest.value),
           merged = mergeStudioV3(confirmed.document, edits);
@@ -462,22 +465,20 @@ export function useStudioDocument(
       try {
         await confirmation;
       } catch (e) {
-        setError(String(e));
-        setStatus(s => (s === 'conflict' ? s : navigator.onLine ? 'error' : 'offline'));
+        if (session.current === activeSession) {
+          setError(String(e));
+          setStatus(s => (s === 'conflict' ? s : navigator.onLine ? 'error' : 'offline'));
+        }
         throw e;
       } finally {
         flight.current = null;
       }
-      const latest = draft.current;
-      if (!latest) throw new Error('Studio draft unavailable');
+      if (session.current !== activeSession) throw new Error('Studio changed while confirming');
+      const latest = draft.current as Draft;
       if (diffStudio(latest.base, latest.value).length) return commit();
       return latest.revision;
     }
     if (!canEdit && !d.pending) throw new Error('Studio is read-only');
-    if (!navigator.onLine) {
-      setStatus('offline');
-      throw new Error('Offline');
-    }
     const pending = d.pending ?? { operationId: crypto.randomUUID(), changes };
     d.pending = pending;
     persist();
@@ -511,9 +512,8 @@ export function useStudioDocument(
           id: pending.operationId,
         });
       }
-      if (current.current !== id) return receipt.revision;
-      const latest = draft.current;
-      if (!latest) throw new Error('Studio draft unavailable');
+      if (session.current !== activeSession) return receipt.revision;
+      const latest = draft.current as Draft;
       if (receipt.status === 'conflict') {
         delete latest.pending;
         blocked.current = true;
@@ -542,15 +542,16 @@ export function useStudioDocument(
     try {
       await operation;
     } catch (e) {
-      setError(studioErrorMessage(e));
-      setStatus(s => (s === 'conflict' ? s : 'error'));
+      if (session.current === activeSession) {
+        setError(studioErrorMessage(e));
+        setStatus(s => (s === 'conflict' ? s : 'error'));
+      }
       throw e;
     } finally {
       flight.current = null;
     }
-    if (current.current !== id) return d.revision;
-    const latest = draft.current;
-    if (!latest) throw new Error('Studio draft unavailable');
+    if (session.current !== activeSession) return d.revision;
+    const latest = draft.current as Draft;
     if (diffStudio(latest.base, latest.value).length && !blocked.current) return commit();
     return latest.revision;
   };
@@ -569,7 +570,7 @@ export function useStudioDocument(
     const d = draft.current;
     if (!d || !canEdit) return;
     try {
-      const next = value ? structuredClone(value) : v3DocumentToLegacy(d.value);
+      const next = v3DocumentToLegacy(d.value);
       fn(next);
       const parsed = documentSchema.parse(next),
         converted = legacyDocumentToV3(parsed, d.value),
@@ -654,45 +655,11 @@ export function useStudioDocument(
       throw new Error(
         'Recover an old-generation draft into a new proposal; overwriting is not allowed'
       );
-    const get = (root: unknown, path: string[]) =>
-      path.reduce<unknown>(
-        (v, k) =>
-          k === '@geometry' && v && typeof v === 'object'
-            ? Object.fromEntries(
-                [
-                  'x',
-                  'y',
-                  'width',
-                  'height',
-                  'angle',
-                  'rotation',
-                  'points',
-                  'startBinding',
-                  'endBinding',
-                  'frameId',
-                  'groupIds',
-                ]
-                  .filter(key => key in v)
-                  .map(key => [key, (v as Record<string, unknown>)[key]])
-              )
-            : k === '@transform' && v && typeof v === 'object'
-              ? (v as Record<string, unknown>).transform
-              : k === '@order' && Array.isArray(v)
-                ? v.map(x => x.id)
-                : k.startsWith('#')
-                  ? Array.isArray(v)
-                    ? v.find(x => x.id === k.slice(1))
-                    : undefined
-                  : v && typeof v === 'object'
-                    ? (v as Record<string, unknown>)[k]
-                    : undefined,
-        root
-      );
     const changes = diffStudio(d.base, d.value).filter(
       c => keepLocal || !conflicts.some(f => JSON.stringify(f.path) === JSON.stringify(c.path))
     );
     for (const c of changes) {
-      const v = get(latest.document, c.path);
+      const v = studioValueAtPath(latest.document, c.path);
       c.before = v === undefined ? { exists: false } : { exists: true, value: z.json().parse(v) };
     }
     const merged = mergeStudioV3(latest.document, changes);

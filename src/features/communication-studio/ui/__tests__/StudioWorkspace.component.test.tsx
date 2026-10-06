@@ -1362,7 +1362,7 @@ describe('Studio toolbar workflows', () => {
         expect.objectContaining({ pageIds: [ydoc.pages[1].id] })
       )
     );
-  }, 10000);
+  });
   it('shows preparation immediately and then animates queued and running progress', async () => {
     let confirm!: (revision: number) => void;
     io.editor.commit = vi.fn().mockImplementation(

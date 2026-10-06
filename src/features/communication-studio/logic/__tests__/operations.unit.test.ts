@@ -7,6 +7,7 @@ import {
   inverseChanges,
   studioOperationSchema,
   stableJson,
+  studioValueAtPath,
 } from '../operations';
 import { applyStudioCommand, studioCommandSchemas } from '../commands';
 import { formatStudioRichText } from '../patch-studio-node';
@@ -14,6 +15,40 @@ import { createStudioTemplateDocumentV5 } from '../templates-v5';
 import { defaultBrand } from '../document';
 import { mergeStudioV3 } from '../operations';
 describe('Studio Zero operations', () => {
+  it('reads atomic geometry, transforms and resource order with the same path rules used for conflicts', () => {
+    const geometry = {
+      id: 'old',
+      x: 10,
+      y: 20,
+      width: 30,
+      height: 40,
+      points: [[1, 2]],
+      color: '#FF0000',
+    };
+    const transform = { x: 0, y: 0, width: 100, height: 100 };
+    const document = { nodes: [geometry, { id: 'native', transform }], title: 'Current' };
+    expect(studioValueAtPath(document, ['nodes', '#old', '@geometry'])).toEqual({
+      x: 10,
+      y: 20,
+      width: 30,
+      height: 40,
+      points: [[1, 2]],
+    });
+    expect(studioValueAtPath(document, ['nodes', '#native', '@transform'])).toEqual(transform);
+    expect(studioValueAtPath(document, ['nodes', '@order'])).toEqual(['old', 'native']);
+    expect(studioValueAtPath(document, ['title'])).toBe('Current');
+    for (const path of [
+      ['missing', 'value'],
+      ['title', '@geometry'],
+      ['missing', '@geometry'],
+      ['title', '@transform'],
+      ['missing', '@transform'],
+      ['title', '@order'],
+      ['title', '#old'],
+      ['nodes', '#missing'],
+    ])
+      expect(studioValueAtPath(document, path)).toBeUndefined();
+  });
   it('merges independent properties without losing either author', () => {
     const base = createDocument('single', 'Test'),
       a = structuredClone(base),

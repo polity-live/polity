@@ -21,6 +21,10 @@ for (const scope of ['personal', 'group'] as const) {
     try {
       await page.goto(route);
       await waitForAppReady(page);
+      await page.getByRole('link', { name: 'Create project', exact: true }).click();
+      await page
+        .locator('[data-create-action="set-form-style"][data-create-option="one_page"]')
+        .click();
       await page
         .getByRole('textbox', { name: 'Title', exact: true })
         .fill(`${e2eRun.prefix} Studio`);
@@ -29,13 +33,14 @@ for (const scope of ['personal', 'group'] as const) {
           response.url().endsWith('/api/studio') &&
           response.request().postDataJSON()?.operation === 'create'
       );
-      await page.getByRole('button', { name: 'Create project', exact: true }).click();
+      await page.locator('[data-create-action="submit"]').click();
       const response = await created;
-      expect(response.ok()).toBe(true);
+      expect(response.ok(), await response.text()).toBe(true);
       projectId = (await response.json()).id;
       expect(projectId).toEqual(expect.any(String));
-      const projectRoute = `${route}?project=${projectId}`;
-      await expect(page).toHaveURL(new RegExp(`project=${projectId}`));
+      e2eRun.registerEntityId(projectId!);
+      const projectRoute = `${route}/${projectId}`;
+      await expect(page).toHaveURL(new RegExp(`${route}/${projectId}/?$`));
       const title = page.locator('header').getByRole('textbox', { name: 'Title', exact: true });
       await expect(title).toBeEnabled();
       await title.fill('Persisted studio title');
@@ -53,8 +58,8 @@ for (const scope of ['personal', 'group'] as const) {
       if (scope === 'personal') {
         const denied = peerPage.waitForResponse(
           response =>
-            response.url().endsWith('/api/collaboration') &&
-            response.request().postDataJSON()?.operation === 'session'
+            response.url().endsWith('/api/studio') &&
+            response.request().postDataJSON()?.operation === 'load'
         );
         await peerPage.goto(projectRoute);
         expect((await denied).status()).toBe(403);
@@ -86,13 +91,8 @@ for (const scope of ['personal', 'group'] as const) {
         await sql`update group_membership set status='admin' where group_id=${seed.groupId} and user_id=${peer.id}`;
         await peerPage.reload();
         await expect(peerTitle).toBeEnabled();
-        // Permission changes fence existing document generations. Reconnect
-        // explicitly so the owner also joins the newly authorized session.
-        await page
-          .locator(
-            '[data-action-id="collaboration.collaboration-status.features-collaboration-reconnect"]'
-          )
-          .click();
+        // Reload joins the generation created by the permission change.
+        await page.reload();
         await expect(title).toBeEnabled();
         await peerTitle.fill('Shared group edit');
         await expect(title).toHaveValue('Shared group edit');
@@ -100,7 +100,7 @@ for (const scope of ['personal', 'group'] as const) {
         await expect(title).toHaveValue('Shared group edit');
       }
     } finally {
-      await context.setOffline(false);
+      await context.setOffline(false).catch(() => undefined);
       await peerContext.close();
       await removeActorAuthState(peer);
       if (projectId) {
