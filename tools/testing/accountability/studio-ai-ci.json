@@ -5740,6 +5740,38 @@
         "project": "component",
         "caseId": "retains text styles when the document contains no selectable nodes"
       }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "adds and deletes a local text style with native keyboard activation and retains the other styles"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables adding beyond the supported fifty text styles without mutating the theme"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores the text style %s using native arrow keys and saves its actual value"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "toggles the %s text style mark in both directions with the native keyboard and saves the selected mark"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits text style typography and prevents saving invalid numeric values without losing its fields"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "creates and saves a personal preset with the native keyboard without attaching a group context"
+      }
     ]
   },
   "actionReferences": {
@@ -7235,6 +7267,68 @@
         "project": "browser-component",
         "caseId": "selects and clears the %s marker using native keyboard input and prevents canvas pointer propagation",
         "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.add": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "adds and deletes a local text style with native keyboard activation and retains the other styles",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables adding beyond the supported fifty text styles without mutating the theme",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.remove": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "adds and deletes a local text style with native keyboard activation and retains the other styles",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.font": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores the text style %s using native arrow keys and saves its actual value",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.color": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores the text style %s using native arrow keys and saves its actual value",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.alignment": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and restores the text style %s using native arrow keys and saves its actual value",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.mark": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "toggles the %s text style mark in both directions with the native keyboard and saves the selected mark",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupThemeSettings.tsx#groups.themes.text-style.number": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits text style typography and prevents saving invalid numeric values without losing its fields",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ]
   },

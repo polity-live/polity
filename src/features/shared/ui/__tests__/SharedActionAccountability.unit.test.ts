@@ -52,12 +52,12 @@ function expectAccounted(entries: ActionEntry[]) {
     expect(entry.accessibilityIssues ?? [], `${entry.file}#${entry.actionId}`).toEqual([]);
     const references = entry.testRefs.filter(declaresConcreteTestCase);
     // The repository accountability contract permits separate behavior cases for
-    // loading, failure and keyboard interaction. Every scenario still needs evidence.
+    // loading, failure and native browser keyboard interaction. Every scenario still needs evidence.
     for (const scenario of entry.scenarios) {
       const reference = references.find(candidate => candidate.scenarios?.includes(scenario));
       expect(reference, `${entry.file}#${entry.actionId}:${scenario}`).toBeDefined();
       expect(reference?.project, `${entry.file}#${entry.actionId}:${scenario}:project`).toMatch(
-        /^(?:component|unit)$/u
+        /^(?:component|unit|browser-component)$/u
       );
     }
   }

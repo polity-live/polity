@@ -242,6 +242,37 @@ function PaletteEditor({
   );
 }
 
+function TextStyleNumberInput({
+  initialValue,
+  min,
+  max,
+  step = 1,
+  onValueChange,
+}: {
+  initialValue: number;
+  min: number;
+  max: number;
+  step?: number;
+  onValueChange: (value: number) => void;
+}) {
+  const [input, setInput] = useState(String(initialValue));
+  return (
+    <Input
+      data-action-id="groups.themes.text-style.number"
+      data-action-kind="interaction"
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={input}
+      onChange={event => {
+        setInput(event.currentTarget.value);
+        onValueChange(event.currentTarget.valueAsNumber);
+      }}
+    />
+  );
+}
+
 export function GroupThemeSettings({ groupId = null }: { groupId?: string | null }) {
   const { t } = useTranslation();
   const zero = useZero();
@@ -445,6 +476,8 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
               type="button"
               variant="outline"
               disabled={editor.textStyles.length >= 50}
+              data-action-id="groups.themes.text-style.add"
+              data-action-kind="interaction"
               onClick={() =>
                 setEditor({
                   ...editor,
@@ -489,6 +522,7 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
                     onChange={event => update({ name: event.currentTarget.value })}
                   />
                   <Button
+                    data-action-id="groups.themes.text-style.remove"
                     type="button"
                     size="icon"
                     variant="ghost"
@@ -507,6 +541,7 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.font')}</span>
                     <select
+                      data-action-id="groups.themes.text-style.font"
                       className="border-input bg-card h-9 w-full rounded-md border px-2"
                       value={style.font}
                       onChange={event => update({ font: event.currentTarget.value as FontId })}
@@ -521,6 +556,7 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.color')}</span>
                     <select
+                      data-action-id="groups.themes.text-style.color"
                       className="border-input bg-card h-9 w-full rounded-md border px-2"
                       value={style.color}
                       onChange={event =>
@@ -538,41 +574,37 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
                   </label>
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.size')}</span>
-                    <Input
-                      type="number"
+                    <TextStyleNumberInput
                       min={8}
                       max={300}
-                      value={style.size}
-                      onChange={event => update({ size: event.currentTarget.valueAsNumber })}
+                      initialValue={style.size}
+                      onValueChange={size => update({ size })}
                     />
                   </label>
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.lineHeight')}</span>
-                    <Input
-                      type="number"
+                    <TextStyleNumberInput
                       min={0.5}
                       max={4}
                       step={0.05}
-                      value={style.lineHeight}
-                      onChange={event => update({ lineHeight: event.currentTarget.valueAsNumber })}
+                      initialValue={style.lineHeight}
+                      onValueChange={lineHeight => update({ lineHeight })}
                     />
                   </label>
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.letterSpacing')}</span>
-                    <Input
-                      type="number"
+                    <TextStyleNumberInput
                       min={-20}
                       max={100}
                       step={0.1}
-                      value={style.letterSpacing}
-                      onChange={event =>
-                        update({ letterSpacing: event.currentTarget.valueAsNumber })
-                      }
+                      initialValue={style.letterSpacing}
+                      onValueChange={letterSpacing => update({ letterSpacing })}
                     />
                   </label>
                   <label className="space-y-1 text-xs">
                     <span>{t('pages.group.themes.textStyles.alignment')}</span>
                     <select
+                      data-action-id="groups.themes.text-style.alignment"
                       className="border-input bg-card h-9 w-full rounded-md border px-2"
                       value={style.align}
                       onChange={event =>
@@ -591,6 +623,7 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
                   {(['bold', 'italic', 'underline'] as const).map(mark => (
                     <label key={mark} className="flex items-center gap-2">
                       <input
+                        data-action-id="groups.themes.text-style.mark"
                         type="checkbox"
                         checked={style[mark]}
                         onChange={event => update({ [mark]: event.currentTarget.checked })}

@@ -41182,6 +41182,36 @@
             "coveredStatements": 90,
             "totalStatements": 90
           }
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "adds and deletes a local text style with native keyboard activation and retains the other styles"
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables adding beyond the supported fifty text styles without mutating the theme"
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and restores the text style %s using native arrow keys and saves its actual value"
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "toggles the %s text style mark in both directions with the native keyboard and saves the selected mark"
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "edits text style typography and prevents saving invalid numeric values without losing its fields"
+        },
+        {
+          "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "creates and saves a personal preset with the native keyboard without attaching a group context"
         }
       ],
       "suggestedTestRefs": [
@@ -42713,6 +42743,16 @@
     },
     {
       "path": "src/features/groups/ui/__tests__/GroupThemeSettings.actions.component.test.tsx",
+      "domain": "features:groups",
+      "owner": "polity/features:groups",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
       "domain": "features:groups",
       "owner": "polity/features:groups",
       "kind": "test-infrastructure",
