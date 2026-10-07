@@ -13,6 +13,20 @@ export interface Bounds {
 type Matrix = [number, number, number, number, number, number];
 const identity: Matrix = [1, 0, 0, 1, 0, 0];
 
+/** Invert an affine transform, including scaled transforms supplied by export callers. */
+export function invertTransformMatrix([a, b, c, d, x, y]: Matrix): Matrix {
+  const determinant = a * d - b * c;
+  if (Math.abs(determinant) < 1e-8) throw new Error('Invalid Studio transform');
+  return [
+    d / determinant,
+    -b / determinant,
+    -c / determinant,
+    a / determinant,
+    (c * y - d * x) / determinant,
+    (b * x - a * y) / determinant,
+  ];
+}
+
 function multiply(a: Matrix, b: Matrix): Matrix {
   return [
     a[0] * b[0] + a[2] * b[1],
@@ -67,8 +81,9 @@ export function worldMatrix(document: StudioDocumentV3, node: StudioNode): Matri
     if (visited.has(current.id)) throw new Error('Circular frame hierarchy');
     visited.add(current.id);
     chain.unshift(current);
-    current = current.parentFrameId
-      ? document.nodes.find(candidate => candidate.id === current?.parentFrameId)
+    const parentFrameId: string | null = current.parentFrameId;
+    current = parentFrameId
+      ? document.nodes.find(candidate => candidate.id === parentFrameId)
       : undefined;
   }
   return chain.reduce((matrix, item) => multiply(matrix, nodeMatrix(item)), identity);
@@ -81,13 +96,7 @@ export function worldToLocalPoint(
 ): Point {
   const parent = document.nodes.find(node => node.id === parentFrameId);
   if (!parent) return value;
-  const [a, b, c, d, x, y] = worldMatrix(document, parent);
-  const determinant = a * d - b * c;
-  if (Math.abs(determinant) < 1e-8) throw new Error('Invalid parent transform');
-  return {
-    x: (d * (value.x - x) - c * (value.y - y)) / determinant,
-    y: (-b * (value.x - x) + a * (value.y - y)) / determinant,
-  };
+  return point(invertTransformMatrix(worldMatrix(document, parent)), value);
 }
 
 export function worldBounds(document: StudioDocumentV3, node: StudioNode): Bounds {
@@ -126,11 +135,9 @@ export function moveByWorldDelta(document: StudioDocumentV3, node: StudioNode, d
     node.transform.y += delta.y;
     return;
   }
-  const matrix = worldMatrix(document, parent);
-  const determinant = matrix[0] * matrix[3] - matrix[1] * matrix[2];
-  if (Math.abs(determinant) < 1e-8) throw new Error('Invalid parent transform');
-  node.transform.x += (matrix[3] * delta.x - matrix[2] * delta.y) / determinant;
-  node.transform.y += (-matrix[1] * delta.x + matrix[0] * delta.y) / determinant;
+  const inverse = invertTransformMatrix(worldMatrix(document, parent));
+  node.transform.x += inverse[0] * delta.x + inverse[2] * delta.y;
+  node.transform.y += inverse[1] * delta.x + inverse[3] * delta.y;
 }
 
 export function isDescendantOf(
@@ -193,8 +200,9 @@ export function arrangementUnits(
 ): SelectionUnit[] {
   const grouped = selectionUnits(document, ids, groupDepth);
   if (grouped.length !== 1 || grouped[0].ids.length < 2) return grouped;
-  const groupId = document.nodes.find(node => node.id === grouped[0].ids[0])?.groupIds[groupDepth];
-  if (!groupId) return grouped;
+  // selectionUnits verified the IDs, and a unit with multiple members was formed by a group.
+  const first = document.nodes.find(node => node.id === grouped[0].ids[0]) as StudioNode;
+  const groupId = first.groupIds[groupDepth];
   const chosen = new Set(ids);
   const members = document.nodes.filter(node => node.groupIds[groupDepth] === groupId);
   if (members.length !== chosen.size || members.some(node => !chosen.has(node.id))) return grouped;

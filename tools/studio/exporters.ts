@@ -272,7 +272,8 @@ export async function render(
       for (const p of pages)
         files[
           'PNG/' +
-            pageFile(p, originalPageIndex.get(p.id) ?? doc.pages.findIndex(x => x.id === p.id))
+            // Every selected frame belongs to the original root-frame index.
+            pageFile(p, originalPageIndex.get(p.id) as number)
         ] = images[p.id];
     };
     const addPdf = async () => {
@@ -338,33 +339,31 @@ export async function render(
           };
           if (e.type === 'text')
             slide.addText(
-              e.richText.length
-                ? e.richText.flatMap((p, i) =>
-                    p.children.map((r, j) => ({
-                      text: r.text,
-                      options: {
-                        align: p.align ?? e.align,
-                        bold: r.bold ?? e.bold,
-                        italic: r.italic ?? e.italic,
-                        underline:
-                          (r.underline ?? e.underline) ? { style: 'sng' as const } : undefined,
-                        strike:
-                          (r.strikethrough ?? e.strikethrough) ? ('sngStrike' as const) : undefined,
-                        color: (r.color ?? e.fill).slice(1),
-                        fontFace: r.fontFamily ?? e.font,
-                        fontSize: ((r.fontSize ?? e.fontSize) * scale) / 2,
-                        hyperlink: r.url ? { url: r.url } : undefined,
-                        breakLine: j === p.children.length - 1 && i < e.richText.length - 1,
-                        bullet:
-                          p.list === 'bullet'
-                            ? {}
-                            : p.list === 'number'
-                              ? { type: 'number' as const }
-                              : undefined,
-                      },
-                    }))
-                  )
-                : e.text,
+              // semanticElement preserves at least one paragraph from the validated V5 node.
+              e.richText.flatMap((p, i) =>
+                p.children.map((r, j) => ({
+                  text: r.text,
+                  options: {
+                    align: p.align ?? e.align,
+                    bold: r.bold ?? e.bold,
+                    italic: r.italic ?? e.italic,
+                    underline: (r.underline ?? e.underline) ? { style: 'sng' as const } : undefined,
+                    strike:
+                      (r.strikethrough ?? e.strikethrough) ? ('sngStrike' as const) : undefined,
+                    color: (r.color ?? e.fill).slice(1),
+                    fontFace: r.fontFamily ?? e.font,
+                    fontSize: ((r.fontSize ?? e.fontSize) * scale) / 2,
+                    hyperlink: r.url ? { url: r.url } : undefined,
+                    breakLine: j === p.children.length - 1 && i < e.richText.length - 1,
+                    bullet:
+                      p.list === 'bullet'
+                        ? {}
+                        : p.list === 'number'
+                          ? { type: 'number' as const }
+                          : undefined,
+                  },
+                }))
+              ),
               {
                 ...box,
                 fontFace: e.font,
@@ -415,22 +414,23 @@ export async function render(
                 autoPage: false,
               }
             );
-          } else if (e.type === 'chart' && e.chart)
+          } else if (e.type === 'chart' && e.chart) {
+            const chart = e.chart;
             slide.addChart(
-              e.chart.kind,
-              e.chart.series.map(s => ({
+              chart.kind,
+              chart.series.map(s => ({
                 name: s.name,
-                labels: e.chart?.labels ?? [],
+                labels: chart.labels,
                 values: s.values,
               })),
               {
                 ...box,
-                showLegend: e.chart.legend,
+                showLegend: chart.legend,
                 showTitle: false,
                 chartColors:
-                  e.chart.kind === 'pie'
+                  chart.kind === 'pie'
                     ? (
-                        e.chart.colors ?? [
+                        chart.colors ?? [
                           '#B88A3B',
                           '#12362D',
                           '#588DB2',
@@ -439,13 +439,13 @@ export async function render(
                           '#D46E48',
                         ]
                       ).map(c => c.slice(1))
-                    : e.chart.series.map(s => s.color.slice(1)),
+                    : chart.series.map(s => s.color.slice(1)),
                 showValue: false,
                 catAxisLabelFontSize: 10 * scale,
                 valAxisLabelFontSize: 10 * scale,
               }
             );
-          else if (e.type === 'line' || e.type === 'arrow')
+          } else if (e.type === 'line' || e.type === 'arrow')
             slide.addShape(ppt.ShapeType.line, {
               ...box,
               line: {

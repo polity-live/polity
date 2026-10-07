@@ -7,7 +7,10 @@ import type {
   StudioDocumentV3,
   StudioNode,
 } from '../../src/features/communication-studio/logic/document-v3';
-import { worldMatrix } from '../../src/features/communication-studio/logic/selection-geometry';
+import {
+  worldMatrix,
+  invertTransformMatrix as invert,
+} from '../../src/features/communication-studio/logic/selection-geometry';
 import { studioSceneChildren } from '../../src/features/communication-studio/logic/studio-scene';
 import { semanticElement } from '../../src/features/communication-studio/logic/v3-adapter';
 
@@ -20,18 +23,6 @@ function multiply(a: Matrix, b: Matrix): Matrix {
     a[1] * b[2] + a[3] * b[3],
     a[0] * b[4] + a[2] * b[5] + a[4],
     a[1] * b[4] + a[3] * b[5] + a[5],
-  ];
-}
-function invert([a, b, c, d, x, y]: Matrix): Matrix {
-  const determinant = a * d - b * c;
-  if (Math.abs(determinant) < 1e-8) throw new Error('Invalid Studio frame transform');
-  return [
-    d / determinant,
-    -b / determinant,
-    -c / determinant,
-    a / determinant,
-    (c * y - d * x) / determinant,
-    (b * x - a * y) / determinant,
   ];
 }
 function projectedGeometry(node: StudioNode, matrix: Matrix) {
@@ -120,9 +111,11 @@ export function editableV5Layers(document: StudioDocumentV3, frameId: string): E
     : null;
   const paintMaster = (placement: 'background' | 'foreground') => {
     if (!master || !masterPrefix) return;
-    for (const child of studioSceneChildren(document, master.id))
-      if ((document.masterLayout.placements[child.id] ?? 'foreground') === placement)
-        visit(child, multiply(masterPrefix, invert(worldMatrix(document, master))), 1);
+    const children = studioSceneChildren(document, master.id).filter(
+      child => (document.masterLayout.placements[child.id] ?? 'foreground') === placement
+    );
+    for (const child of children)
+      visit(child, multiply(masterPrefix, invert(worldMatrix(document, master))), 1);
   };
   paintMaster('background');
   for (const child of studioSceneChildren(document, root.id)) visit(child, inverseRoot, 1);

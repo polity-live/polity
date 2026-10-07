@@ -36,7 +36,12 @@ vi.mock('node:fs/promises', async original => {
     },
   };
 });
-import { ffmpeg, pageFile, render } from '../exporters';
+import { ffmpeg, pageFile, render, selectStudioExportDocument } from '../exporters';
+import {
+  createFrameNode,
+  createStudioDocumentV5,
+  drawingNodeSchema,
+} from '../../../src/features/communication-studio/logic/document-v3';
 const imageId = '11111111-1111-4111-8111-111111111111',
   videoId = '22222222-2222-4222-8222-222222222222';
 const png = Buffer.from(
@@ -117,7 +122,422 @@ const exportDoc = (
   selected: string[] = [],
   cancel = vi.fn().mockResolvedValue(false)
 ) => render(doc, media, format, selected, temp, vi.fn().mockResolvedValue(undefined), cancel);
+
+function installMediaDecoderBoundary(
+  options: { duration?: number; failDecode?: boolean; failCanvas?: number } = {}
+) {
+  const seek = vi.fn();
+  let canvases = 0;
+  class ImageSource {
+    naturalWidth = 100;
+    naturalHeight = 200;
+    onerror?: () => void;
+    onload?: () => void;
+    set src(_url: string) {
+      queueMicrotask(() => (options.failDecode ? this.onerror?.() : this.onload?.()));
+    }
+  }
+  class VideoSource extends ImageSource {
+    videoWidth = 100;
+    videoHeight = 200;
+    duration = options.duration ?? 10;
+    onloadeddata?: () => void;
+    onseeked?: () => void;
+    set src(_url: string) {
+      queueMicrotask(() => (options.failDecode ? this.onerror?.() : this.onloadeddata?.()));
+    }
+    set currentTime(time: number) {
+      seek(time);
+      queueMicrotask(() => this.onseeked?.());
+    }
+  }
+  vi.stubGlobal('Image', ImageSource);
+  vi.stubGlobal('HTMLVideoElement', VideoSource);
+  vi.stubGlobal('document', {
+    fonts: { load: vi.fn().mockResolvedValue(undefined) },
+    createElement: (tag: string) =>
+      tag === 'video'
+        ? new VideoSource()
+        : {
+            width: 0,
+            height: 0,
+            getContext: () => (++canvases === options.failCanvas ? null : { drawImage: vi.fn() }),
+            toDataURL: () => pngUrl,
+          },
+  });
+  vi.stubGlobal('window', { PolityStudioV5Renderer: { renderFrame: io.paint } });
+  return { seek };
+}
 describe('Studio export artifacts', () => {
+  it.each(['image', 'video'] as const)(
+    'loads an uncached %s before writing a raster poster into the Canva deck',
+    async type => {
+      const decoder = installMediaDecoderBoundary();
+      const id = type === 'video' ? videoId : imageId;
+      const doc = createDocument('single', 'Loaded poster');
+      doc.pages[0].elements = [element(type, { assetId: id, trimStart: 1 })];
+      const result = await exportDoc(doc, 'canva', {
+        [id]: { mime: type === 'video' ? 'video/mp4' : 'image/png', bytes: png, name: 'source' },
+      });
+      const deck = unzipSync(unzipSync(result.bytes)['Loaded-poster.pptx']);
+      expect(
+        Object.keys(deck).some(file => file.startsWith('ppt/media/') && file.endsWith('.png'))
+      ).toBe(true);
+      if (type === 'video') expect(decoder.seek).toHaveBeenCalledWith(2);
+      else expect(decoder.seek).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does not seek past the beginning of a video whose decoded duration is zero', async () => {
+    const decoder = installMediaDecoderBoundary({ duration: 0 });
+    const doc = createDocument('single', 'Zero duration');
+    doc.pages[0].elements = [element('video', { assetId: videoId })];
+    await exportDoc(doc, 'canva', { [videoId]: { mime: 'video/mp4', bytes: png, name: 'source' } });
+    expect(decoder.seek).not.toHaveBeenCalled();
+  });
+
+  it.each(['decode', 'raster-canvas', 'poster-canvas'] as const)(
+    'rejects %s failures and closes the isolated export browser',
+    async failure => {
+      installMediaDecoderBoundary({
+        failDecode: failure === 'decode',
+        failCanvas: failure === 'raster-canvas' ? 1 : failure === 'poster-canvas' ? 2 : undefined,
+      });
+      const doc = createDocument('single', 'Failed poster');
+      doc.pages[0].elements = [element('image', { assetId: imageId })];
+      await expect(
+        exportDoc(doc, 'canva', { [imageId]: { mime: 'image/png', bytes: png, name: 'source' } })
+      ).rejects.toThrow(failure === 'decode' ? 'Media could not be decoded' : 'Canvas unavailable');
+      expect(io.close).toHaveBeenCalledOnce();
+    }
+  );
+
+  it('keeps a missing media source out of the editable slide without inventing an image', async () => {
+    const doc = createDocument('single', 'Unavailable media');
+    doc.pages[0].elements = [element('image', { assetId: imageId })];
+    const deck = unzipSync((await exportDoc(doc, 'pptx')).bytes);
+    expect(strFromU8(deck['ppt/slides/slide1.xml'])).not.toContain('<p:pic>');
+  });
+
+  it('exports marks shared by every text run and preserves transparent shape outlines', async () => {
+    const document = createStudioTemplateDocumentV5('single', 'Uniform marks', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    shape.style.strokeWidth = 0;
+    text.content = [
+      {
+        id: crypto.randomUUID(),
+        type: 'p',
+        children: [
+          {
+            id: crypto.randomUUID(),
+            text: 'Uniform',
+            bold: true,
+            italic: true,
+            underline: true,
+            strikethrough: true,
+          },
+        ],
+      },
+    ];
+    const files = unzipSync(
+      (
+        await render(
+          document,
+          {},
+          'pptx',
+          [],
+          temp,
+          async () => undefined,
+          async () => false
+        )
+      ).bytes
+    );
+    const xml = strFromU8(files['ppt/slides/slide1.xml']);
+    expect(xml).toContain('sngStrike');
+    expect(xml).toContain('u="sng"');
+    expect(xml).toContain('<a:alpha val="0"/>');
+  });
+
+  it('uses the default pie palette when the current chart defines no colors', async () => {
+    const doc = createDocument('single', 'Default palette');
+    const chart = element('chart');
+    chart.chart!.kind = 'pie';
+    chart.chart!.series = [chart.chart!.series[0]];
+    delete chart.chart!.colors;
+    doc.pages[0].elements = [chart];
+    const files = unzipSync((await exportDoc(doc, 'pptx')).bytes);
+    const xml = strFromU8(
+      Object.entries(files).find(([file]) => /^ppt\/charts\/chart\d+\.xml$/.test(file))![1]
+    );
+    expect(xml).toContain('B88A3B');
+  });
+
+  it('rejects a native two-frame video longer than the MP4 limit', async () => {
+    const document = createStudioTemplateDocumentV5('presentation', 'Long sequence', defaultBrand);
+    document.deliverables[0].kind = 'video';
+    for (const node of document.nodes) if (node.type === 'frame') node.duration = 31;
+    await expect(
+      render(
+        document,
+        {},
+        'mp4',
+        [],
+        temp,
+        async () => undefined,
+        async () => false
+      )
+    ).rejects.toThrow('exceeds 60 seconds');
+  });
+
+  it('includes chart source files and original video bytes only when referenced by the selected project', async () => {
+    const doc = createDocument('single', 'Referenced originals');
+    const chart = element('chart');
+    doc.pages[0].elements = [chart, element('video', { assetId: videoId })];
+    const document = legacyDocumentToV3(doc);
+    document.nodes.find(node => node.type === 'chart')!.sourceAssetId = imageId;
+    const files = unzipSync(
+      (
+        await render(
+          document,
+          {
+            [imageId]: { mime: 'image/png', bytes: png, name: 'source' },
+            [videoId]: { mime: 'video/mp4', bytes: png, name: 'video' },
+          },
+          'zip',
+          [],
+          temp,
+          async () => undefined,
+          async () => false
+        )
+      ).bytes
+    );
+    expect(files[`Medien/${imageId}.png`]).toEqual(new Uint8Array(png));
+    expect(files[`Medien/${videoId}.mp4`]).toEqual(new Uint8Array(png));
+  });
+  it('rejects missing, nested and master frame selections and an empty exportable document', () => {
+    const document = createStudioDocumentV5('Empty');
+    expect(() => selectStudioExportDocument(document, [])).toThrow('Select at least one frame');
+    const root = createFrameNode();
+    const nested = createFrameNode('square', { parentFrameId: root.id });
+    const master = createFrameNode();
+    document.nodes = [root, nested, master];
+    document.masterLayout.frameId = master.id;
+    for (const invalid of [crypto.randomUUID(), nested.id, master.id])
+      expect(() => selectStudioExportDocument(document, [invalid])).toThrow('cannot be exported');
+    expect(() => selectStudioExportDocument(document, [root.id])).not.toThrow();
+  });
+
+  it('retains selected descendants, master content and only component instances used by the selection', () => {
+    const document = createStudioTemplateDocumentV5('single', 'Selection', defaultBrand);
+    const root = document.nodes.find(node => node.type === 'frame')!;
+    const master = createFrameNode();
+    document.nodes.push(master);
+    document.masterLayout.frameId = master.id;
+    const child = createFrameNode('square', { parentFrameId: root.id });
+    document.nodes.push(child);
+    document.componentInstances = [
+      {
+        id: crypto.randomUUID(),
+        setId: crypto.randomUUID(),
+        revisionId: crypto.randomUUID(),
+        sourceToInstance: { [crypto.randomUUID()]: child.id },
+        localOverrides: {},
+        localDeletions: [],
+        detachedNodes: [],
+      },
+      {
+        id: crypto.randomUUID(),
+        setId: crypto.randomUUID(),
+        revisionId: crypto.randomUUID(),
+        sourceToInstance: { [crypto.randomUUID()]: crypto.randomUUID() },
+        localOverrides: {},
+        localDeletions: [],
+        detachedNodes: [],
+      },
+    ];
+    const result = selectStudioExportDocument(document, [root.id]);
+    expect(result.nodes.map(node => node.id)).toEqual(
+      expect.arrayContaining([root.id, child.id, master.id])
+    );
+    expect(result.componentInstances.map(item => item.id)).toEqual([
+      document.componentInstances[0].id,
+    ]);
+    expect(document.componentInstances).toHaveLength(2);
+  });
+
+  it('exports native freehand strokes and all editable shape variants into a real PPTX archive', async () => {
+    const document = createStudioTemplateDocumentV5('single', 'Drawings', defaultBrand);
+    const root = document.nodes.find(node => node.type === 'frame')!;
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    document.nodes = [
+      root,
+      ...(['ellipse', 'diamond', 'rounded-rectangle', 'line', 'arrow'] as const).map(
+        (kind, index) => ({
+          ...structuredClone(shape),
+          id: crypto.randomUUID(),
+          shape: kind,
+          style: { ...shape.style, strokeWidth: 3 },
+          zIndex: index,
+        })
+      ),
+    ];
+    for (const [index, stroke] of [null, '#ff0000'].entries())
+      document.nodes.push(
+        drawingNodeSchema.parse({
+          ...structuredClone(shape),
+          id: crypto.randomUUID(),
+          type: 'drawing',
+          zIndex: 10 + index,
+          style: { ...shape.style, stroke },
+          points: [
+            [0, 0],
+            [30, 50],
+          ],
+        })
+      );
+    const result = await render(
+      document,
+      {},
+      'pptx',
+      [],
+      temp,
+      async () => undefined,
+      async () => false
+    );
+    const files = unzipSync(result.bytes);
+    const xml = strFromU8(files['ppt/slides/slide1.xml']);
+    for (const preset of ['ellipse', 'diamond', 'roundRect', 'line'])
+      expect(xml).toContain(`prst="${preset}"`);
+    expect(xml).toContain('type="triangle"');
+    const drawings = Object.entries(files).filter(
+      ([file]) => file.startsWith('ppt/media/') && file.endsWith('.svg')
+    );
+    expect(drawings).toHaveLength(2);
+    expect(strFromU8(drawings[0][1])).toContain('polyline');
+    expect(drawings.map(([, bytes]) => strFromU8(bytes)).join('\n')).toContain('#ff0000');
+  });
+
+  it.each(['bar', 'line', 'pie'] as const)(
+    'exports native %s charts with labels, values, legends and colors',
+    async kind => {
+      const doc = createDocument('single', `Chart ${kind}`);
+      const chart = element('chart');
+      chart.chart = {
+        kind,
+        labels: ['First', 'Second'],
+        legend: false,
+        series: [{ id: crypto.randomUUID(), name: 'Series', color: '#ff0000', values: [1, 2] }],
+        ...(kind === 'pie' ? { colors: ['#00ff00', '#0000ff'] } : {}),
+      };
+      doc.pages[0].elements = [chart];
+      const files = unzipSync((await exportDoc(doc, 'pptx')).bytes);
+      const chartEntry = Object.entries(files).find(([file]) =>
+        /^ppt\/charts\/chart\d+\.xml$/.test(file)
+      );
+      expect(chartEntry).toBeDefined();
+      const xml = strFromU8(chartEntry![1]);
+      expect(xml).toContain('First');
+      expect(xml).toContain('Second');
+      expect(xml).toContain('Series');
+      expect(xml).toContain(kind === 'pie' ? '00FF00' : 'FF0000');
+    }
+  );
+
+  it('exports rich-text marks, hyperlinks, numbered and bulleted paragraphs into editable slide text', async () => {
+    const document = createStudioTemplateDocumentV5('single', 'Marks', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    text.typography.horizontalAlign = 'center';
+    text.content = [
+      {
+        id: crypto.randomUUID(),
+        type: 'p',
+        list: 'bullet',
+        align: 'right',
+        children: [
+          {
+            id: crypto.randomUUID(),
+            type: 'a',
+            url: 'https://example.com',
+            children: [
+              {
+                id: crypto.randomUUID(),
+                text: 'Styled',
+                bold: true,
+                italic: true,
+                underline: true,
+                strikethrough: true,
+                color: '#ff0000',
+                fontFamily: 'Inter',
+                fontSize: 30,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'p',
+        list: 'number',
+        children: [{ id: crypto.randomUUID(), text: 'Numbered' }],
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'p',
+        children: [
+          { id: crypto.randomUUID(), text: 'Plain', underline: false, strikethrough: false },
+        ],
+      },
+    ];
+    const files = unzipSync(
+      (
+        await render(
+          document,
+          {},
+          'pptx',
+          [],
+          temp,
+          async () => undefined,
+          async () => false
+        )
+      ).bytes
+    );
+    const xml = strFromU8(files['ppt/slides/slide1.xml']);
+    expect(xml).toContain('Styled');
+    expect(xml).toContain('Numbered');
+    expect(xml).toContain('Plain');
+    expect(xml).toContain('sngStrike');
+    expect(xml).toContain('FF0000');
+    expect(xml).toContain('buAutoNum');
+    expect(strFromU8(files['ppt/slides/_rels/slide1.xml.rels'])).toContain('https://example.com');
+  });
+
+  it.each(['image/jpeg', 'image/webp'])(
+    'keeps the original %s file beside a campaign backup',
+    async mime => {
+      const doc = createDocument('single', 'Media');
+      doc.pages[0].elements.push(element('image', { assetId: imageId }));
+      const files = unzipSync(
+        (await exportDoc(doc, 'zip', { [imageId]: { mime, bytes: png, name: 'original' } })).bytes
+      );
+      expect(files[`Medien/${imageId}.${mime === 'image/jpeg' ? 'jpg' : 'webp'}`]).toEqual(
+        new Uint8Array(png)
+      );
+    }
+  );
+
+  it('rejects mixed-size MP4 sequences and includes a useful omission note in ZIP exports', async () => {
+    const doc = createDocument('video', 'Mixed video');
+    doc.pages = doc.pages.slice(0, 2);
+    doc.pages[0].duration = 1;
+    doc.pages[1].duration = 1;
+    doc.pages[1].format = 'square';
+    doc.posts[0].pageIds = doc.pages.map(page => page.id);
+    await expect(exportDoc(doc, 'mp4')).rejects.toThrow('same format');
+    const files = unzipSync((await exportDoc(doc, 'zip')).bytes);
+    expect(strFromU8(files['Video-Hinweis.md'])).toContain('unterschiedlichen Formaten');
+    expect(Object.keys(files).some(file => file.endsWith('.mp4'))).toBe(false);
+  });
   it('exports a presentation deliverable as three editable widescreen slides in order', async () => {
     const document = createStudioTemplateDocumentV5('presentation', 'Treffen', defaultBrand);
     const frameIds = document.deliverables[0].frameIds;

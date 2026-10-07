@@ -6,6 +6,12 @@ import {
   arrangementUnits,
   selectionUnits,
   worldBounds,
+  worldMatrix,
+  worldToLocalPoint,
+  moveByWorldDelta,
+  invertTransformMatrix,
+  isDescendantOf,
+  unionBounds,
 } from '../selection-geometry';
 import { createDocument } from '../templates';
 import { legacyDocumentToV3, v3DocumentToLegacy } from '../v3-adapter';
@@ -29,6 +35,104 @@ function scene(): StudioDocumentV3 {
 }
 
 describe('Studio selection geometry and commands', () => {
+  it('round-trips world positions through rotated and reflected native parents', () => {
+    const document = scene();
+    const parent = document.nodes[0];
+    parent.transform.rotation = 90;
+    parent.transform.flipX = true;
+    parent.transform.flipY = true;
+    const matrix = worldMatrix(document, parent);
+    const local = { x: 12, y: 34 };
+    const world = {
+      x: matrix[0] * local.x + matrix[2] * local.y + matrix[4],
+      y: matrix[1] * local.x + matrix[3] * local.y + matrix[5],
+    };
+    const restored = worldToLocalPoint(document, parent.id, world);
+    expect(restored.x).toBeCloseTo(local.x);
+    expect(restored.y).toBeCloseTo(local.y);
+  });
+
+  it('rejects missing selections and empty unions and returns no reference for an empty selection', () => {
+    const document = scene();
+    expect(() => unionBounds([])).toThrow('Selection is empty');
+    expect(() => selectionUnits(document, [crypto.randomUUID()])).toThrow('Node not found');
+    expect(arrangementReferenceBounds(document, [], 'selection')).toBeNull();
+    expect(
+      arrangementReferenceBounds(
+        document,
+        selectionUnits(document, [document.nodes[0].id]),
+        'frame'
+      )
+    ).toBeNull();
+  });
+
+  it.each([
+    null,
+    { left: NaN, top: 0, right: 100, bottom: 100 },
+    { left: 100, top: 0, right: 100, bottom: 100 },
+    { left: 0, top: 100, right: 100, bottom: 100 },
+  ])(
+    'rejects unavailable, nonfinite and degenerate visible-canvas reference bounds (%j)',
+    bounds => {
+      const document = scene();
+      const units = selectionUnits(document, [document.nodes[0].id]);
+      expect(arrangementReferenceBounds(document, units, 'view', bounds)).toBeNull();
+    }
+  );
+  it('inverts scaled, translated and reflected affine transforms and rejects singular transforms', () => {
+    expect(invertTransformMatrix([2, 0, 0, -4, 10, 20])).toEqual([0.5, 0, 0, -0.25, -5, 5]);
+    expect(() => invertTransformMatrix([0, 0, 0, 1, 0, 0])).toThrow('Invalid Studio transform');
+    expect(() => invertTransformMatrix([1, 2, 2, 4, 5, 6])).toThrow('Invalid Studio transform');
+  });
+
+  it('preserves unparented world coordinates and moves nodes with a missing parent by the native delta', () => {
+    const document = scene();
+    const node = document.nodes[1];
+    const position = { x: 12, y: 34 };
+    expect(worldToLocalPoint(document, null, position)).toBe(position);
+    expect(worldToLocalPoint(document, crypto.randomUUID(), position)).toBe(position);
+    node.parentFrameId = crypto.randomUUID();
+    const before = structuredClone(node.transform);
+    moveByWorldDelta(document, node, { x: 3, y: -4 });
+    expect(node.transform).toMatchObject({ x: before.x + 3, y: before.y - 4 });
+    expect(isDescendantOf(document, node, document.nodes[0].id)).toBe(false);
+  });
+
+  it('detects circular world transforms without modifying the native hierarchy', () => {
+    const document = scene();
+    const [root, , child] = document.nodes;
+    root.parentFrameId = child.id;
+    expect(() => worldMatrix(document, child)).toThrow('Circular frame hierarchy');
+    expect(root.parentFrameId).toBe(child.id);
+  });
+
+  it('keeps incomplete groups atomic when only some direct members are selected', () => {
+    const document = scene();
+    const groupId = crypto.randomUUID();
+    const members = document.nodes.slice(2);
+    for (const member of members) member.groupIds = [groupId];
+    expect(
+      arrangementUnits(
+        document,
+        members.slice(0, 2).map(node => node.id)
+      )
+    ).toHaveLength(1);
+    const units = selectionUnits(document, [members[0].id]);
+    expect(
+      arrangementReferenceBounds(
+        document,
+        [{ ...units[0], parentFrameId: document.nodes[1].id }],
+        'frame'
+      )
+    ).toEqual(worldBounds(document, document.nodes[1]));
+    expect(
+      arrangementReferenceBounds(
+        document,
+        [{ ...units[0], parentFrameId: crypto.randomUUID() }],
+        'frame'
+      )
+    ).toBeNull();
+  });
   it('groups root frames and root elements, nests groups, and ungroups one level', () => {
     const document = scene();
     const [frame, root] = document.nodes;
