@@ -300,7 +300,7 @@ describe('StudioDocumentV3', () => {
       scaleContent: false,
     });
     expect(constrained.nodes.find(node => node.id === child.id)?.transform).toMatchObject({
-      x: 1100,
+      x: 1000,
       y: 365,
       width: 100,
       height: 100,
@@ -312,7 +312,7 @@ describe('StudioDocumentV3', () => {
       scaleContent: true,
     });
     expect(scaled.nodes.find(node => node.id === child.id)?.transform).toMatchObject({
-      x: 2200,
+      x: 2000,
       y: 182.5,
       width: 200,
       height: 50,

@@ -20276,6 +20276,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20670,13 +20680,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20699,13 +20709,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20738,13 +20748,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20767,13 +20777,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20826,13 +20836,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20860,13 +20870,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -20898,9 +20908,9 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts"
       ]
     },
     {
@@ -20980,6 +20990,111 @@
           "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
           "project": "unit",
           "caseId": "round-trips existing Studio content through the V3 node model"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "snaps %s grid values without corrupting invalid numbers"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates fresh nodes and transforms multiple selected nodes without changing its input"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects updateNode identity field %s in favor of dedicated commands"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "updates editable node properties and retains all unrelated nodes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects duplicate creation, duplicate selection, unknown nodes and locked mutations"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "checks every structural layer move boundary including project masters"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "detaches an element %s a root frame and preserves its world origin"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "sorts tied root frames and tied element siblings deterministically"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "reparents to a root canvas and repairs a stale source parent while preserving known coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a corrupt incoming cyclic parent chain before moving a selected leaf"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "resizes with horizontal=%s and vertical=%s constraints"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "scales content explicitly, clamps stretched dimensions and recovers a zero-size old frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "reorders selection %s without losing siblings"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects mixed-parent stacking and resolves equal sibling z-index values"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "groups complete existing groups, rejects partial groups and mismatched enclosing groups"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "updates visible, locked and nullable group state and ungroups all selected group members"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "duplicates table, chart and rich-text identities and remaps both selected and external shape bindings"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "aligns using %s reference and rejects unavailable references"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "distributes %s against a view and rejects insufficient or unavailable selections"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "updates and deletes a deliverable while retaining other delivery plans"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects malformed command payloads before touching the input document"
         }
       ],
       "suggestedTestRefs": [
@@ -20988,13 +21103,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21112,13 +21227,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21166,13 +21281,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21230,13 +21345,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21295,7 +21410,7 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts"
       ]
     },
     {
@@ -21353,13 +21468,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21402,13 +21517,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21436,13 +21551,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21470,13 +21585,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21500,12 +21615,12 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts"
       ]
     },
     {
@@ -21528,13 +21643,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21562,13 +21677,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21596,13 +21711,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21776,12 +21891,12 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts"
       ]
     },
     {
@@ -21849,13 +21964,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21903,13 +22018,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21967,13 +22082,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22056,13 +22171,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22085,13 +22200,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22149,13 +22264,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22233,13 +22348,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22272,13 +22387,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22306,13 +22421,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22345,13 +22460,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22389,13 +22504,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22433,13 +22548,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22472,13 +22587,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22501,13 +22616,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22601,12 +22716,12 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts"
       ]
     },
     {
@@ -22869,13 +22984,13 @@
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -81692,6 +81807,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
@@ -81702,8 +81818,7 @@
         "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx"
       ]
     },
     {

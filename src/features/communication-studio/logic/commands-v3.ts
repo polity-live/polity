@@ -193,14 +193,10 @@ function reparentNodes(
   nodes: StudioNode[],
   parentFrameId: string | null
 ) {
-  const positions = new Map(nodes.map(node => [node.id, worldOrigin(document, node)]));
-  const target = parentFrameId
-    ? (document.nodes.find(node => node.id === parentFrameId) ?? null)
-    : null;
+  const positions = nodes.map(node => ({ node, origin: worldOrigin(document, node) }));
+  const target = document.nodes.find(node => node.id === parentFrameId) ?? null;
   const targetOrigin = worldOrigin(document, target);
-  for (const node of nodes) {
-    const origin = positions.get(node.id);
-    if (!origin) throw new Error('Node position unavailable');
+  for (const { node, origin } of positions) {
     node.parentFrameId = parentFrameId;
     node.transform.x = origin.x - targetOrigin.x;
     node.transform.y = origin.y - targetOrigin.y;
@@ -219,7 +215,7 @@ function constrainAxis(
     return [position * ratio, size * ratio];
   }
   if (constraint === 'right' || constraint === 'bottom')
-    return [newParentSize - (oldParentSize - position - size), size];
+    return [position + newParentSize - oldParentSize, size];
   if (constraint === 'left-right' || constraint === 'top-bottom')
     return [position, Math.max(1, size + newParentSize - oldParentSize)];
   if (constraint === 'center') return [position + (newParentSize - oldParentSize) / 2, size];
@@ -260,11 +256,10 @@ export function applyStudioCommandV3(
         command.transforms.map(item => item.nodeId)
       );
       assertEditable(nodes);
-      for (const item of command.transforms) {
-        const node = nodes.find(candidate => candidate.id === item.nodeId);
-        if (!node) throw new Error('Node not found');
-        node.transform = item.transform;
-      }
+      // selectedNodes retains the validated transform list's identity and order.
+      command.transforms.forEach((item, index) => {
+        nodes[index].transform = item.transform;
+      });
       break;
     }
     case 'reparentNodes': {
@@ -313,8 +308,6 @@ export function applyStudioCommandV3(
               ? 0
               : siblings.length
             : targetIndex + (command.position === 'after' ? 1 : 0);
-      if (command.position !== 'inside' && !detachToRoot && targetIndex < 0)
-        throw new Error('Layer target is outside the stacking context');
       siblings.splice(insertAt, 0, source);
       siblings.forEach((node, index) => {
         node.zIndex = rootFrames ? index : siblings.length - index - 1;
@@ -400,13 +393,12 @@ export function applyStudioCommandV3(
         if (node.type === 'frame')
           for (const child of descendantsOf(document, node.id)) chosen.add(child.id);
       const sources = document.nodes.filter(node => chosen.has(node.id));
-      const idMap = new Map(sources.map(node => [node.id, crypto.randomUUID()]));
+      const copies = sources.map(node => ({ node, id: crypto.randomUUID() }));
+      const idMap = new Map(copies.map(({ node, id }) => [node.id, id]));
       const groupMap = new Map<string, string>();
-      const clones = sources.map(node => {
+      const clones = copies.map(({ node, id }) => {
         const copy = structuredClone(node);
-        const copyId = idMap.get(node.id);
-        if (!copyId) throw new Error('Duplicate node ID unavailable');
-        copy.id = copyId;
+        copy.id = id;
         copy.parentFrameId = node.parentFrameId
           ? (idMap.get(node.parentFrameId) ?? node.parentFrameId)
           : null;
@@ -487,7 +479,6 @@ export function applyStudioCommandV3(
       const nodes = selectedNodes(document, command.nodeIds);
       assertEditable(nodes);
       const units = arrangementUnits(document, command.nodeIds, command.groupDepth);
-      if (!units.length) break;
       const reference = command.reference === 'parent' ? 'frame' : command.reference;
       const bounds = arrangementReferenceBounds(document, units, reference, command.viewBounds);
       if (!bounds) throw new Error('Alignment reference is unavailable for this selection');
@@ -509,10 +500,8 @@ export function applyStudioCommandV3(
               : command.direction === 'bottom'
                 ? bounds.bottom - box.bottom
                 : 0;
-        for (const id of unit.ids) {
-          const node = nodes.find(candidate => candidate.id === id);
-          if (node) moveByWorldDelta(document, node, { x: dx, y: dy });
-        }
+        for (const node of nodes.filter(candidate => unit.ids.includes(candidate.id)))
+          moveByWorldDelta(document, node, { x: dx, y: dy });
       }
       break;
     }
@@ -542,15 +531,12 @@ export function applyStudioCommandV3(
       let cursor = start;
       for (const unit of ordered) {
         const delta = cursor - unit.bounds[coordinate];
-        for (const id of unit.ids) {
-          const node = nodes.find(candidate => candidate.id === id);
-          if (node)
-            moveByWorldDelta(
-              document,
-              node,
-              command.axis === 'horizontal' ? { x: delta, y: 0 } : { x: 0, y: delta }
-            );
-        }
+        for (const node of nodes.filter(candidate => unit.ids.includes(candidate.id)))
+          moveByWorldDelta(
+            document,
+            node,
+            command.axis === 'horizontal' ? { x: delta, y: 0 } : { x: 0, y: delta }
+          );
         cursor += unit.bounds[far] - unit.bounds[coordinate] + gap;
       }
       break;
