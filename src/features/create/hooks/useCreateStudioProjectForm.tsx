@@ -157,6 +157,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
     <label className="block space-y-1 text-sm">
       <span>{tr(label)}</span>
       <select
+        data-action-id="create.studio.option.select"
         className={selectClass}
         value={value}
         onChange={event => onChange(event.target.value)}
@@ -213,6 +214,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
                 {(['template', 'ai'] as const).map(value => (
                   <label key={value} className="flex items-center gap-2 text-sm">
                     <input
+                      data-action-id="create.studio.mode.select"
                       type="radio"
                       name="studio-mode"
                       checked={mode === value}
@@ -298,6 +300,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
                   <label className="block space-y-1 text-sm">
                     <span>{item.label}</span>
                     <input
+                      data-action-id="create.studio.campaign.edit-count"
                       className={selectClass}
                       type="number"
                       min={item.min}

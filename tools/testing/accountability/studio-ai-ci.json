@@ -80,6 +80,26 @@
         "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
         "project": "component",
         "caseId": "starts identity login only after activation and exposes the failure for retry"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
       }
     ],
     "src/features/communication-studio/hooks/useStudioEditorTools.ts": [
@@ -2449,6 +2469,51 @@
         "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
         "project": "component",
         "caseId": "requires a briefing only in AI mode"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "changes and restores every project option through native keyboard selections and submits the selected template"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "switches AI and template modes with native radio keys and requires the typed briefing before opening the conversation"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "clamps campaign counts at both bounds while preserving native input focus and submits the final counts"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps built-in themes after a failed theme request and ignores a late response after unmount"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "rejects an invalid saved draft and restores defaults for an empty statement draft"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "accepts only manageable group candidates and preserves an unresolved group in the summary"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "validates the review for AI briefings and resumes a saved conversation after navigation fails"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves selected template and theme identifiers if their sources disappear before review"
+      },
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the briefing conversation name fallback for an empty restored title"
       }
     ],
     "src/features/editor/ui/EditorSaveStatus.tsx": [
@@ -3484,6 +3549,26 @@
         "file": "src/features/users/ui/__tests__/profile-content.branch-a07.component.test.tsx",
         "project": "component",
         "caseId": "builds all wiki tab queries, grid alternatives and search callbacks"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides project navigation while loading and after a query failure even with cached projects"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders the empty state when the owner has no visible Studio projects"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the personal Studio deep link through real native keyboard navigation"
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the group Studio deep link through real native pointer navigation"
       }
     ],
     "src/i18n/locales/de/features/projectChat.ts": [
@@ -5852,6 +5937,11 @@
         "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
         "project": "component",
         "caseId": "starts an empty conversation briefing once and waits for a model and an idle assistant"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dismisses the project context toolbar with native %s activation and continues keyboard focus in the composer"
       }
     ],
     "src/features/communication-studio/hooks/useStudioController.ts": [
@@ -6215,6 +6305,76 @@
         "file": "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "inserts pointer-selected grid dimensions into the real Plate editor without duplicate tables"
+      }
+    ],
+    "src/features/users/ui/UserWikiContentTabs.tsx": [
+      {
+        "file": "src/features/users/ui/__tests__/UserWikiContentTabs.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and leaves the Studio profile tab with native keyboard navigation and retained focus"
+      }
+    ],
+    "src/features/auth/ui/SignInFormView.tsx": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
+      }
+    ],
+    "src/features/auth/ui/SignUpFormView.tsx": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignChangeRequestPanel.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "closes the actual city-design request card with native keyboard activation and returns focus to its opener"
+      }
+    ],
+    "src/features/amendments/AmendmentWikiView.tsx": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the public target group deep link through native keyboard focus and shows its actual route loading state"
+      },
+      {
+        "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows a failed target group route after native pointer navigation without rendering a successful group page"
       }
     ]
   },
@@ -8052,6 +8212,128 @@
         "caseId": "inserts native keyboard table dimensions into the real Plate document and focuses the editor",
         "scenarios": ["selected", "unselected", "keyboard", "focus"]
       }
+    ],
+    "src/features/create/hooks/useCreateStudioProjectForm.tsx#create.studio.option.select": [
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "changes and restores every project option through native keyboard selections and submits the selected template",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/create/hooks/useCreateStudioProjectForm.tsx#create.studio.mode.select": [
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "switches AI and template modes with native radio keys and requires the typed briefing before opening the conversation",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/create/hooks/useCreateStudioProjectForm.tsx#create.studio.campaign.edit-count": [
+      {
+        "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "clamps campaign counts at both bounds while preserving native input focus and submits the final counts",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/users/ui/StudioProjectsTab.tsx#users.studio-project.open.link": [
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "hides project navigation while loading and after a query failure even with cached projects",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the personal Studio deep link through real native keyboard navigation",
+        "scenarios": ["authorized", "redirect", "deep-link", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the group Studio deep link through real native pointer navigation",
+        "scenarios": ["authorized", "redirect", "deep-link"]
+      }
+    ],
+    "src/features/users/ui/UserWikiContentTabs.tsx#users.content-tab.studio": [
+      {
+        "file": "src/features/users/ui/__tests__/UserWikiContentTabs.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects and leaves the Studio profile tab with native keyboard navigation and retained focus",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/auth/ui/SignInFormView.tsx#auth.sign-in.chatgpt.authenticate": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable",
+        "scenarios": ["unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement",
+        "scenarios": ["idle", "loading", "success", "keyboard", "focus", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry",
+        "scenarios": ["error"]
+      }
+    ],
+    "src/features/auth/ui/SignUpFormView.tsx#auth.sign-up.chatgpt.authenticate": [
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable",
+        "scenarios": ["unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement",
+        "scenarios": ["idle", "loading", "success", "keyboard", "focus", "disabled"]
+      },
+      {
+        "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry",
+        "scenarios": ["error"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignChangeRequestPanel.tsx#amendments.city-request.details.close": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "closes the actual city-design request card with native keyboard activation and returns focus to its opener",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.context-toolbar.dismiss.button": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dismisses the project context toolbar with native %s activation and continues keyboard focus in the composer",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/AmendmentWikiView.tsx#amendments.target-group.open.link": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the public target group deep link through native keyboard focus and shows its actual route loading state",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows a failed target group route after native pointer navigation without rendering a successful group page",
+        "scenarios": ["error"]
+      }
     ]
   },
   "actionDeclarations": {
@@ -8180,6 +8462,15 @@
     },
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#TableSizePicker-83ad558d6d": {
       "actionId": "editor.table-picker.dimensions.insert"
+    },
+    "src/features/auth/ui/SignInFormView.tsx#ChatGptLoginButton-f3783121aa": {
+      "actionId": "auth.sign-in.chatgpt.authenticate"
+    },
+    "src/features/auth/ui/SignUpFormView.tsx#ChatGptLoginButton-f3783121aa": {
+      "actionId": "auth.sign-up.chatgpt.authenticate"
+    },
+    "src/features/amendments/city-design/ui/CityDesignChangeRequestPanel.tsx#CanvasChangeRequestCloseButton-d292d491aa": {
+      "actionId": "amendments.city-request.details.close"
     }
   }
 }

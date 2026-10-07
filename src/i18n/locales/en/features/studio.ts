@@ -13,6 +13,7 @@ export const studioTranslations = {
   cloneFailed: 'Could not clone the project.',
   personalStudio: 'Personal Studio',
   projectUnavailable: 'This Studio project is unavailable.',
+  projectsUnavailable: 'Studio projects could not be loaded.',
   mediaUnavailable: 'Project media could not be loaded.',
   canvasPreviewRequired:
     'This project requires the canvas preview. Enable it to keep all saved content and procedures available.',

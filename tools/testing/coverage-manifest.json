@@ -6313,6 +6313,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
         "src/features/amendments/__tests__/AmendmentTextPage.spacing.component.test.tsx",
         "src/features/amendments/__tests__/AmendmentWiki.a04.component.test.tsx",
         "src/features/amendments/__tests__/AmendmentWikiView.component.test.tsx",
@@ -6341,9 +6342,20 @@
             "coveredStatements": 45,
             "totalStatements": 45
           }
+        },
+        {
+          "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the public target group deep link through native keyboard focus and shows its actual route loading state"
+        },
+        {
+          "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shows a failed target group route after native pointer navigation without rendering a successful group page"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
         "src/features/amendments/__tests__/AmendmentTextPage.spacing.component.test.tsx",
         "src/features/amendments/__tests__/AmendmentWiki.a04.component.test.tsx",
         "src/features/amendments/__tests__/AmendmentWikiView.component.test.tsx",
@@ -6351,6 +6363,16 @@
         "src/features/amendments/__tests__/amendment-forwarding.component-flow.test.tsx",
         "src/features/amendments/__tests__/wrappers.lsf-a04.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/amendments/__tests__/AmendmentTextPage.spacing.component.test.tsx",
@@ -7807,6 +7829,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7815,8 +7838,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -7838,11 +7860,17 @@
             "coveredStatements": 165,
             "totalStatements": 165
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "closes the actual city-design request card with native keyboard activation and returns focus to its opener"
         }
       ],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7851,8 +7879,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -7879,6 +7906,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7887,8 +7915,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -7915,6 +7942,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7923,8 +7951,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -7951,6 +7978,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7959,8 +7987,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -7987,6 +8014,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -7995,8 +8023,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8023,6 +8050,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8031,8 +8059,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8059,6 +8086,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8067,8 +8095,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8095,6 +8122,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8103,8 +8131,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8131,6 +8158,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8139,8 +8167,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8167,6 +8194,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8175,8 +8203,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8203,6 +8230,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8211,8 +8239,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8239,6 +8266,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8247,8 +8275,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8275,6 +8302,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8283,8 +8311,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8299,6 +8326,16 @@
     },
     {
       "path": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
       "kind": "test-infrastructure",
@@ -8611,6 +8648,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8619,8 +8657,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -8647,6 +8684,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
@@ -8655,8 +8693,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
       ]
     },
     {
@@ -15352,6 +15389,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15382,6 +15420,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15411,6 +15450,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15442,12 +15482,33 @@
           "file": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
           "project": "component",
           "caseId": "starts identity login only after activation and exposes the failure for retry"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
         }
       ],
       "suggestedTestRefs": [
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15477,6 +15538,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15499,6 +15561,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15521,6 +15584,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15543,6 +15607,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15572,6 +15637,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15594,6 +15660,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15624,6 +15691,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15647,12 +15715,33 @@
             "coveredStatements": 1,
             "totalStatements": 2
           }
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
         }
       ],
       "suggestedTestRefs": [
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15683,6 +15772,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15699,12 +15789,33 @@
           "file": "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
           "project": "component",
           "caseId": "handles sign-up field, submit, provider, magic-link, and navigation actions"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables ChatGPT login in the busy %s form and removes it when the provider is unavailable"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "starts ChatGPT login once from the %s form with native keyboard focus and retains its loading state after redirect acknowledgement"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reports failed ChatGPT login in the %s form and accepts a native keyboard retry"
+        },
+        {
+          "file": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves another focused field in the %s form when a pending ChatGPT login fails"
         }
       ],
       "suggestedTestRefs": [
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15735,6 +15846,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15757,6 +15869,7 @@
         "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
         "src/features/auth/ui/__tests__/AuthFormViews.component.test.tsx",
         "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+        "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
         "src/features/auth/ui/__tests__/LoginForm.contract.component.test.tsx",
         "src/features/auth/ui/__tests__/auth-ui-rest-partition.branch-a08.component.test.tsx"
       ]
@@ -15783,6 +15896,16 @@
     },
     {
       "path": "src/features/auth/ui/__tests__/ChatGptAccess.component.test.tsx",
+      "domain": "features:auth",
+      "owner": "polity/features:auth",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/auth/ui/__tests__/ChatGptForms.browser-component.test.tsx",
       "domain": "features:auth",
       "owner": "polity/features:auth",
       "kind": "test-infrastructure",
@@ -24983,6 +25106,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
       "domain": "features:create",
       "owner": "polity/features:create",
@@ -25471,6 +25604,51 @@
           "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
           "project": "component",
           "caseId": "requires a briefing only in AI mode"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes and restores every project option through native keyboard selections and submits the selected template"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "switches AI and template modes with native radio keys and requires the typed briefing before opening the conversation"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "clamps campaign counts at both bounds while preserving native input focus and submits the final counts"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps built-in themes after a failed theme request and ignores a late response after unmount"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects an invalid saved draft and restores defaults for an empty statement draft"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "accepts only manageable group candidates and preserves an unresolved group in the summary"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "validates the review for AI briefings and resumes a saved conversation after navigation fails"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves selected template and theme identifiers if their sources disappear before review"
+        },
+        {
+          "file": "src/features/create/hooks/__tests__/useCreateStudioProjectForm.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the briefing conversation name fallback for an empty restored title"
         }
       ],
       "suggestedTestRefs": [
@@ -56424,6 +56602,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
@@ -56486,6 +56665,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
@@ -56513,6 +56693,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
@@ -56599,12 +56780,18 @@
           "file": "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx",
           "project": "component",
           "caseId": "starts an empty conversation briefing once and waits for a model and an idle assistant"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "dismisses the project context toolbar with native %s activation and continues keyboard focus in the composer"
         }
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectConversation.lifecycle.component.test.tsx"
       ]
@@ -56631,6 +56818,16 @@
     },
     {
       "path": "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/ui/__tests__/ProjectConversation.browser-component.test.tsx",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
       "kind": "test-infrastructure",
@@ -71786,6 +71983,7 @@
       "suggestedTestRefs": [
         "src/features/agendas/ui/__tests__/MergeVariantComparisonPanel.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
         "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanel.a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
@@ -71794,8 +71992,7 @@
         "src/features/amendments/ui/__tests__/useSupportConfirmationPanelController.a04.component.test.tsx",
         "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
-        "src/features/events/ui/__tests__/DelegateAssemblyCompositionPanel.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts"
       ]
     },
     {
@@ -89983,8 +90180,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90020,7 +90217,7 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx"
       ]
     },
     {
@@ -90055,8 +90252,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90091,8 +90288,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90128,7 +90325,7 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx"
       ]
     },
     {
@@ -90163,8 +90360,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90199,8 +90396,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90236,7 +90433,7 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx"
       ]
     },
     {
@@ -90271,8 +90468,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90307,8 +90504,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90343,8 +90540,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90379,8 +90576,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90415,8 +90612,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90451,8 +90648,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90487,8 +90684,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90523,8 +90720,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90567,8 +90764,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90603,8 +90800,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90639,8 +90836,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90675,8 +90872,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90711,8 +90908,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90747,8 +90944,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90783,8 +90980,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90819,8 +91016,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90855,8 +91052,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90891,8 +91088,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90927,8 +91124,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90963,8 +91160,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -90999,8 +91196,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91035,8 +91232,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91071,8 +91268,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91107,8 +91304,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91143,8 +91340,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91215,8 +91412,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91241,6 +91438,26 @@
           "file": "src/features/users/ui/__tests__/profile-content.branch-a07.component.test.tsx",
           "project": "component",
           "caseId": "builds all wiki tab queries, grid alternatives and search callbacks"
+        },
+        {
+          "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "hides project navigation while loading and after a query failure even with cached projects"
+        },
+        {
+          "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renders the empty state when the owner has no visible Studio projects"
+        },
+        {
+          "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the personal Studio deep link through real native keyboard navigation"
+        },
+        {
+          "file": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the group Studio deep link through real native pointer navigation"
         }
       ],
       "suggestedTestRefs": [
@@ -91254,8 +91471,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91290,8 +91507,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91326,8 +91543,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91362,8 +91579,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91398,8 +91615,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91434,8 +91651,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91470,8 +91687,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91506,8 +91723,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91542,8 +91759,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91565,6 +91782,11 @@
             "coveredStatements": 14,
             "totalStatements": 27
           }
+        },
+        {
+          "file": "src/features/users/ui/__tests__/UserWikiContentTabs.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects and leaves the Studio profile tab with native keyboard navigation and retained focus"
         }
       ],
       "suggestedTestRefs": [
@@ -91578,8 +91800,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91614,8 +91836,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91650,8 +91872,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91687,7 +91909,7 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx"
       ]
     },
     {
@@ -91722,8 +91944,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91758,8 +91980,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91794,8 +92016,8 @@
         "src/features/users/ui/__tests__/MembershipStatusTable.component.test.tsx",
         "src/features/users/ui/__tests__/StatementCarousel.branch-a07.component.test.tsx",
         "src/features/users/ui/__tests__/StatementListTab.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
-        "src/features/users/ui/__tests__/UserEditSubscriptionLoading.component.test.tsx"
+        "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+        "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -91899,6 +92121,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/users/ui/__tests__/StudioProjectsTab.browser-component.test.tsx",
+      "domain": "features:users",
+      "owner": "polity/features:users",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/users/ui/__tests__/UserContentLists.branch-a07.component.test.tsx",
       "domain": "features:users",
       "owner": "polity/features:users",
@@ -91970,6 +92202,16 @@
     },
     {
       "path": "src/features/users/ui/__tests__/UserProfileEditForm.actions.component.test.tsx",
+      "domain": "features:users",
+      "owner": "polity/features:users",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/users/ui/__tests__/UserWikiContentTabs.browser-component.test.tsx",
       "domain": "features:users",
       "owner": "polity/features:users",
       "kind": "test-infrastructure",
@@ -106997,6 +107239,16 @@
     },
     {
       "path": "src/test/__tests__/uiActionScope.unit.test.ts",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/test/browser-server-boundary.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
       "kind": "test-infrastructure",

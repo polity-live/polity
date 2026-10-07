@@ -7,12 +7,15 @@ export function StudioProjectsTab({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const [projects, result] = useQuery(queries.studio.byOwner({ ownerId: userId }));
   if (result.type === 'unknown') return <p role="status">{t('features.studio.loading')}</p>;
+  if (result.type === 'error')
+    return <p role="alert">{t('features.studio.projectsUnavailable')}</p>;
   if (!projects.length)
     return <p className="text-muted-foreground py-8 text-center">{t('features.studio.empty')}</p>;
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map(project => (
         <SmartLink
+          data-action-id="users.studio-project.open.link"
           key={project.id}
           href={
             project.group_id

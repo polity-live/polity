@@ -15,7 +15,8 @@ export function ChatGptLoginButton({ disabled = false }: { disabled?: boolean })
       type="button"
       disabled={disabled || redirecting}
       data-action-id="auth.authenticate.chatgpt"
-      onClick={async () => {
+      onClick={async event => {
+        const button = event.currentTarget;
         setRedirecting(true);
         try {
           await startChatGptAuth(createClient(), {
@@ -25,6 +26,9 @@ export function ChatGptLoginButton({ disabled = false }: { disabled?: boolean })
         } catch {
           setRedirecting(false);
           toast.error(t('auth.chatgpt.failed'));
+          requestAnimationFrame(() => {
+            if (document.activeElement === document.body) button.focus();
+          });
         }
       }}
     >

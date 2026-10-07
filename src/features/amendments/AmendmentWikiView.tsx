@@ -316,6 +316,7 @@ export function AmendmentWikiView({
           )}
           {targetGroup && (
             <Link
+              data-action-id="amendments.target-group.open.link"
               to="/group/$id"
               params={{ id: targetGroup.id }}
               className="flex items-center gap-3 transition-opacity hover:opacity-80"

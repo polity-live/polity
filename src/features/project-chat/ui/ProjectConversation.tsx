@@ -416,6 +416,7 @@ function LoadedProjectConversation({
   const contextActions: ReactNode = contextDismissed ? null : (
     <div className="relative flex flex-wrap items-center justify-end gap-3 pr-7">
       <button
+        data-action-id="project-chat.context-toolbar.dismiss.button"
         type="button"
         className="hover:bg-muted absolute top-0 right-0 rounded p-1"
         aria-label={t('features.projectChat.dismissContext')}
