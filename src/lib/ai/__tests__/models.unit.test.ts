@@ -10,6 +10,9 @@ import {
 } from '../models';
 
 describe('AI model selection', () => {
+  it('leaves model selection unset when no accessible models exist', () => {
+    expect(getPreferredDefaultAiModelKey([])).toBeNull();
+  });
   it('prefers the app OpenRouter free router over alphabetically earlier free models', () => {
     const cohereFreeModel = {
       provider: 'openrouter' as const,

@@ -13533,6 +13533,66 @@
             "coveredStatements": 41,
             "totalStatements": 41
           }
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "completes authorization once when React replays its mount effect"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "returns a verified linked identity to the original account AI settings"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "exchanges an authorization code and respects the validated destination"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "uses an existing session when no authorization code is present"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "falls back to the current session when code exchange is %s as failed"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "waits once for Supabase to publish a delayed session"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "returns to sign-in when no session appears after the retry"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "synchronizes a changed language selected before Google OAuth"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "does not rewrite metadata for pending=%s and current=%s"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "continues authentication when language synchronization is rejected"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "marks onboarding only for a session created %i ms ago"
+        },
+        {
+          "file": "src/features/auth/hooks/__tests__/useAuthCallbackPageController.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "does not navigate or toast after unmounting during a failed callback"
         }
       ],
       "suggestedTestRefs": [
@@ -14380,6 +14440,26 @@
           "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
           "project": "service-integration",
           "caseId": "normalizes an external redirect to the repository-safe home destination"
+        },
+        {
+          "file": "src/features/auth/__tests__/chatgpt-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "rejects an aborted ChatGPT callback despite an existing Polity session (%s)"
+        },
+        {
+          "file": "src/features/auth/__tests__/chatgpt-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "never falls back to an old session after a failed ChatGPT code exchange"
+        },
+        {
+          "file": "src/features/auth/__tests__/chatgpt-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "rejects a thrown ChatGPT exchange without trusting an existing session"
+        },
+        {
+          "file": "src/features/auth/__tests__/chatgpt-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "requires the verified ChatGPT identity and retains the original Polity account when linking"
         }
       ],
       "suggestedTestRefs": [
@@ -24053,6 +24133,46 @@
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "abandons an active crop when %s access changes before applying"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects an in-flight focus when the canvas is disconnected before its layout settles"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "lets the latest focus request supersede an earlier request without changing its selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps pending text editing closed after a %s collaboration update"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "searches actual text content and zooms out through the public canvas commands"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens rich text after a native %s double activation and a committed selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ends a space-pan gesture on key release and preserves its resulting view"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores touch pointer input during a native pinch and clears selection after an outside touch release"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "drags a real selected shape with a %s without changing unrendered siblings"
         }
       ],
       "suggestedTestRefs": [
@@ -48392,6 +48512,16 @@
             "coveredStatements": 1,
             "totalStatements": 1
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/message-search-wrappers.lsf-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "renders context actions and opens the active trace through the real diagnostics surface"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/message-search-wrappers.lsf-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "connects spatial and virtual search controllers to their views"
         }
       ],
       "suggestedTestRefs": [
@@ -48642,6 +48772,31 @@
             "coveredStatements": 30,
             "totalStatements": 37
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "explains shared project conversation context when its information popover opens"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "renames an assistant conversation and exposes information through stable actions"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "runs header and list-item selection, pin, delete, and back effects"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "confirms and cancels deletion without conflating dialog effects"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "selects new-conversation users and preserves link-preview navigation"
         }
       ],
       "suggestedTestRefs": [
@@ -48678,6 +48833,36 @@
             "coveredStatements": 3,
             "totalStatements": 3
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "explains shared project conversation context when its information popover opens"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "renames an assistant conversation and exposes information through stable actions"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "navigates to conversation entities and opens collective members explicitly"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "runs header and list-item selection, pin, delete, and back effects"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "confirms and cancels deletion without conflating dialog effects"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/MessageConversationActions.component.test.tsx",
+          "project": "component",
+          "caseId": "selects new-conversation users and preserves link-preview navigation"
         }
       ],
       "suggestedTestRefs": [
@@ -48966,6 +49151,26 @@
             "coveredStatements": 5,
             "totalStatements": 5
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiChatEntityPreviews.component.test.tsx",
+          "project": "component",
+          "caseId": "suppresses Polity previews while the AI response is streaming"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiChatEntityPreviews.component.test.tsx",
+          "project": "component",
+          "caseId": "renders persisted output cards with assistant text and without text"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiChatEntityPreviews.component.test.tsx",
+          "project": "component",
+          "caseId": "activates the exact stored element context from a sent message"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AiChatEntityPreviews.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the stored project outcome %s while preserving the message content"
         }
       ],
       "suggestedTestRefs": [
@@ -49197,6 +49402,16 @@
             "coveredStatements": 3,
             "totalStatements": 7
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/message-surfaces.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "renders empty, own, flat assistant, normal and error bubbles"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/message-surfaces.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "renders empty, assistant, loading and loaded message views"
         }
       ],
       "suggestedTestRefs": [
@@ -51222,6 +51437,31 @@
             "coveredStatements": 118,
             "totalStatements": 118
           }
+        },
+        {
+          "file": "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+          "project": "unit",
+          "caseId": "shows group Studio to non-members when the feature is enabled"
+        },
+        {
+          "file": "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps Studio hidden in production unless explicitly enabled"
+        },
+        {
+          "file": "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+          "project": "unit",
+          "caseId": "performs exactly one navigation for a primary item click"
+        },
+        {
+          "file": "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every route dispatcher outcome and optional default"
+        },
+        {
+          "file": "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+          "project": "unit",
+          "caseId": "defers primary navigation in a browser environment"
         }
       ],
       "suggestedTestRefs": [
@@ -62502,6 +62742,11 @@
           "file": "src/features/search/logic/__tests__/studioSearchLabels.unit.test.ts",
           "project": "unit",
           "caseId": "preserves subtitles of other search result types"
+        },
+        {
+          "file": "src/features/search/logic/__tests__/studioSearchLabels.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves custom Studio kinds and leaves a missing kind unlabeled"
         }
       ],
       "suggestedTestRefs": [
@@ -62911,6 +63156,51 @@
             "coveredStatements": 116,
             "totalStatements": 127
           }
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "projects tutorial search cards immediately while preserving equal normal user data"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "renders an immediately navigable, fixed-cell preview without loading the dynamic card"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "passes compact search card classes without stretching cards to the virtual row height"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps an explicit user bio from the search document summary"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "passes a canonical native href for $name search cards"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "links unsupported fallback cards to their search result permalink"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "passes election agenda navigation context from indexed search payloads"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "shows translated Studio labels without raw index text"
+        },
+        {
+          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+          "project": "component",
+          "caseId": "labels an interactive Studio fallback card without displaying raw indexed text"
         }
       ],
       "suggestedTestRefs": [
@@ -72227,6 +72517,21 @@
             "coveredStatements": 14,
             "totalStatements": 14
           }
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/PlateEditorView.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "shows document diagnostics only for a persisted document identifier"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/PlateEditorView.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores empty plain text and inserts non-empty suggestion text"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/PlateEditorView.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "renders optional remote cursors and settings and logs focus"
         }
       ],
       "suggestedTestRefs": [
@@ -73288,6 +73593,21 @@
             "coveredStatements": 28,
             "totalStatements": 28
           }
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects empty and sentinel completions but accepts normal text"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "updates authorization headers for signed-out and signed-in sessions"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/copilot-kit.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "scopes completion diagnostics to the current document and removes a stale document header"
         }
       ],
       "suggestedTestRefs": [
@@ -74440,6 +74760,31 @@
             "coveredStatements": 114,
             "totalStatements": 114
           }
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
+          "project": "component",
+          "caseId": "publishes the current editor selection for its document and releases it on unmount"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
+          "project": "component",
+          "caseId": "uses uncontrolled defaults, floating toolbar configuration, and guarded local changes"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
+          "project": "component",
+          "caseId": "covers missing collaborative inputs and empty initial discussions"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
+          "project": "component",
+          "caseId": "polls, filters orphaned discussion ids, and reports unchanged sets"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
+          "project": "component",
+          "caseId": "synchronizes controlled values across no-op, success, and error paths"
         }
       ],
       "suggestedTestRefs": [
@@ -74918,6 +75263,46 @@
             "coveredStatements": 68,
             "totalStatements": 68
           }
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "converts legacy text messages to AI SDK 7 message parts"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves existing AI SDK message parts without reusing the mutable array"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "handles invalid system bodies and non-text legacy parts"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes append input without unsafe message casts"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "supports signed-out headers, functional messages, empty appends, and form submission"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "sends authenticated editor requests and appends streamed responses"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "sends a scoped editor request with its current document diagnostics header"
+        },
+        {
+          "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+          "project": "component",
+          "caseId": "supports legacy setMessages updates and regeneration"
         }
       ],
       "suggestedTestRefs": [
@@ -101021,6 +101406,26 @@
             "coveredStatements": 19,
             "totalStatements": 19
           }
+        },
+        {
+          "file": "src/lib/ai/__tests__/models.unit.test.ts",
+          "project": "unit",
+          "caseId": "leaves model selection unset when no accessible models exist"
+        },
+        {
+          "file": "src/lib/ai/__tests__/models.unit.test.ts",
+          "project": "unit",
+          "caseId": "prefers the app OpenRouter free router over alphabetically earlier free models"
+        },
+        {
+          "file": "src/lib/ai/__tests__/models.unit.test.ts",
+          "project": "unit",
+          "caseId": "recognizes a labeled router before generic free models"
+        },
+        {
+          "file": "src/lib/ai/__tests__/models.unit.test.ts",
+          "project": "unit",
+          "caseId": "falls back to the first model or null and builds public descriptors"
         }
       ],
       "suggestedTestRefs": [
@@ -107030,6 +107435,101 @@
             "coveredStatements": 1,
             "totalStatements": 163
           }
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "lists rows and builds summaries for present and absent providers"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports list errors and decrypts only existing credentials"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "upserts, deletes and touches credentials and reports provider-specific failures"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads conversations, preserves nulls and reports lookup errors"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "sets only valid default titles and returns whether a row changed"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads ordered message history with optional limits and filters error contexts"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "persists messages, updates timestamps and keeps both failures observable"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "links a persisted assistant response to the actual originating trace"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "records answer persistence failures under the originating prompt"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads one skill, returns null, and reports errors"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "short-circuits empty lists and loads configured skill and tool rows"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "identifies the assistant sender exactly"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "short-circuits empty and unsupported attachments and parses context JSON"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses event prompt fallbacks and catches event and agenda lookup errors"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "builds rich and sparse event prompt sections"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses amendment fallbacks and catches every query boundary failure"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "builds amendment document, change-request, thread and comment sections"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "catches comment lookup errors after threads are found"
+        },
+        {
+          "file": "src/server/__tests__/ai-db.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "treats a null comment result as an empty discussion comment list"
         }
       ],
       "suggestedTestRefs": []

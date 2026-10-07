@@ -401,4 +401,26 @@ describe('SearchResultCard', () => {
     expect(screen.getByText('Studio-Projekt')).toBeTruthy();
     expect(screen.getByText('Einzelpost')).toBeTruthy();
   });
+
+  it('labels an interactive Studio fallback card without displaying raw indexed text', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          entity_type: 'studio',
+          entity_id: crypto.randomUUID(),
+          title: 'Shared campaign',
+          subtitle: 'campaign',
+          summary: null,
+          search_text: 'INTERNAL_INDEX_SENTINEL',
+          card_payload: { type: 'studio' },
+        })}
+      />
+    );
+    expect(screen.getByText('Studio project')).toBeTruthy();
+    expect(screen.getByText('Campaign')).toBeTruthy();
+    expect(screen.queryByText('INTERNAL_INDEX_SENTINEL')).toBeNull();
+    expect(screen.getByRole('link', { name: /Shared campaign/ }).getAttribute('href')).toContain(
+      '/studio/'
+    );
+  });
 });

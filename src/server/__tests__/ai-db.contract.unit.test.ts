@@ -286,6 +286,38 @@ describe('assistant conversations and messages', () => {
   });
 });
 
+it('links a persisted assistant response to the actual originating trace', async () => {
+  const trace = {
+    traceId: crypto.randomUUID(),
+    originMessageId: crypto.randomUUID(),
+    actorId: crypto.randomUUID(),
+    surface: 'chat',
+    invocation: 'assistant_chat',
+  };
+  respond('message', {});
+  respond('conversation', {});
+  await withAiTrace(trace, () =>
+    persistAssistantMessage('conversation-1', 'Saved answer', {
+      version: 1,
+      attachments: [],
+      presentations: [],
+    })
+  );
+  const insertion = mocks.builders
+    .find(builder => builder.table === 'message')!
+    .calls.find(([method]) => method === 'insert')![1][0] as {
+    id: string;
+    context_json: string;
+    content: string;
+  };
+  expect(insertion.content).toBe('Saved answer');
+  expect(JSON.parse(insertion.context_json).aiTrace).toEqual({
+    traceId: trace.traceId,
+    originMessageId: trace.originMessageId,
+  });
+  expect(diagnostics.linkAiResponse).toHaveBeenCalledExactlyOnceWith(trace.traceId, insertion.id);
+});
+
 it('records answer persistence failures under the originating prompt', async () => {
   respond('message', failure('insert failed'));
   const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);

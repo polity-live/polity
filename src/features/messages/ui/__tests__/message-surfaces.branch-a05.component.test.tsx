@@ -179,6 +179,19 @@ describe('message bubble and view exhaustive branches', () => {
     const rendered = render(<MessageView {...viewProps()} />);
     expect(document.body.textContent).toContain('features.messages.conversation.selectDescription');
 
+    rendered.rerender(
+      <MessageView
+        {...viewProps({
+          conversation: { ...conversation, type: 'project_ai' },
+          className: 'project-chat',
+        })}
+      />
+    );
+    expect(mocks.views.at(-1)?.[0]).toBe('project-assistant');
+    expect(mocks.views.at(-1)?.[1]).toEqual(
+      expect.objectContaining({ conversationId: conversation.id, className: 'project-chat' })
+    );
+
     mocks.assistantConversation = true;
     rendered.rerender(<MessageView {...viewProps({ conversation, className: 'custom' })} />);
     expect(mocks.views.at(-1)?.[0]).toBe('assistant');

@@ -2,6 +2,8 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import { AiEditorTraceContext } from '../ai-editor-trace-context';
 
 const mocks = vi.hoisted(() => ({ session: { access_token: 'session-token' } as any }));
 
@@ -150,6 +152,20 @@ describe('editor AI chat adapter', () => {
         expect.objectContaining({ role: 'assistant', content: 'Done' }),
       ]);
     });
+  });
+
+  it('sends a scoped editor request with its current document diagnostics header', async () => {
+    const documentId = crypto.randomUUID();
+    const { result } = renderHook(() => useChat(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <AiEditorTraceContext.Provider value={documentId}>{children}</AiEditorTraceContext.Provider>
+      ),
+    });
+    await act(async () => result.current.append({ role: 'user', content: 'Review this document' }));
+    const request = vi.mocked(globalThis.fetch).mock.calls[0][1];
+    expect(new Headers(request?.headers).get('X-AI-Document-Id')).toBe(documentId);
+    expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer session-token');
+    await waitFor(() => expect(result.current.messages.at(-1)?.content).toBe('Done'));
   });
 
   it('supports legacy setMessages updates and regeneration', async () => {

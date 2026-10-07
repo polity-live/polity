@@ -46,6 +46,12 @@ it('shares only authorized server sources and discards supplied prompt/card cont
 
 it('keeps plain messages readable when their optional context is invalid', () => {
   expect(sharedUserContent('Instruction', 'invalid json')).toBe('Instruction');
+  expect(sharedUserContent('Instruction')).toBe('Instruction');
+  expect(sharedUserContent('Instruction', null)).toBe('Instruction');
+  expect(sharedUserContent('Instruction', JSON.stringify({ attachments: [] }))).toBe('Instruction');
+  expect(sharedUserContent('Instruction', JSON.stringify({ attachments: 'malformed' }))).toBe(
+    'Instruction'
+  );
 });
 
 it('does not copy private chat uploads into a shared project message', async () => {

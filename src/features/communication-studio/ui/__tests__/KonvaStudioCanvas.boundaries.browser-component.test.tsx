@@ -79,6 +79,64 @@ it('rejects late focus after the canvas unmounts and still calculates finite sce
   expect(Number.isFinite(point.y)).toBe(true);
 });
 
+it('rejects an in-flight focus when the canvas is disconnected before its layout settles', async () => {
+  const { frame, ref, view } = await mount();
+  const pending = ref.current!.execute({ type: 'focus', nodeId: frame!.id });
+  const result = expect(pending).rejects.toThrow('Canvas unavailable');
+  view.unmount();
+  await result;
+});
+
+it('lets the latest focus request supersede an earlier request without changing its selection', async () => {
+  const { document, frame, ref, select } = await mount();
+  const text = document.nodes.find(node => node.type === 'richText')!;
+  await act(async () => {
+    const first = ref.current!.execute({ type: 'focus', nodeId: frame!.id });
+    const latest = ref.current!.execute({ type: 'focus', nodeId: text.id });
+    await Promise.all([first, latest]);
+  });
+  expect(select.mock.calls.map(([ids]) => ids)).toEqual([[frame!.id], [text.id]]);
+  expect(select).toHaveBeenLastCalledWith([text.id]);
+});
+
+it.each(['readonly', 'selection', 'replaced'] as const)(
+  'keeps pending text editing closed after a %s collaboration update',
+  async update => {
+    const document = createStudioTemplateDocumentV5('single', 'Pending text', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    document.nodes = document.nodes.filter(node => node.type === 'frame' || node.id === text.id);
+    const { host, select, rerender } = await mount({ document });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const node = stage.findOne(`#${text.id}`)!;
+    const point = node.getAbsoluteTransform().point({ x: 10, y: 10 });
+    await waitFor(() => expect(stage.getIntersection(point)?.getParent()).toBe(node));
+    const surfaceBounds = surface.getBoundingClientRect();
+    await userEvent.click(surface, {
+      position: {
+        x: (point.x * surfaceBounds.width) / stage.width(),
+        y: (point.y * surfaceBounds.height) / stage.height(),
+      },
+    } as never);
+    await waitFor(() => expect(select).toHaveBeenCalledWith([text.id]));
+    expect(screen.queryByTestId('studio-inline-text-layer')).toBeNull();
+    const next = structuredClone(document);
+    if (update === 'replaced') {
+      next.nodes = next.nodes.filter(candidate => candidate.id !== text.id);
+      const replacement = structuredClone(shape);
+      replacement.id = text.id;
+      next.nodes.push(replacement);
+    }
+    rerender({
+      document: next,
+      selected: update === 'selection' ? [] : [text.id],
+      editable: update !== 'readonly',
+    });
+    expect(screen.queryByTestId('studio-inline-text-layer')).toBeNull();
+  }
+);
+
 it('keeps empty-document zoom, search, clipboard and crop commands safe without invoking missing callbacks', async () => {
   const document = createStudioTemplateDocumentV5('single', 'Empty canvas', defaultBrand);
   document.nodes = [];
@@ -96,6 +154,195 @@ it('keeps empty-document zoom, search, clipboard and crop commands safe without 
   expect(select).not.toHaveBeenCalled();
   expect(screen.queryByRole('alert')).toBeNull();
 });
+
+it('searches actual text content and zooms out through the public canvas commands', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'Canvas commands', defaultBrand);
+  const text = document.nodes.find(node => node.type === 'richText')!;
+  text.name = 'Unrelated name';
+  if (text.type !== 'richText') throw new Error('Expected canonical rich text');
+  const leaf = text.content[0].children[0];
+  if (!('text' in leaf)) throw new Error('Expected template text leaf');
+  leaf.text = 'Unique searchable phrase';
+  const { ref, state, select } = await mount({ document });
+  await act(() => ref.current!.execute({ type: 'search', query: 'searchable phrase' }));
+  expect(select).toHaveBeenLastCalledWith([text.id]);
+  await act(() => ref.current!.execute({ type: 'search', query: 'never matches any node' }));
+  expect(select).toHaveBeenCalledTimes(1);
+  await act(() => ref.current!.execute({ type: 'zoom', mode: 'reset' }));
+  await act(() => ref.current!.execute({ type: 'zoom', mode: 'out' }));
+  expect(state.current!.zoom).toBeCloseTo(1 / 1.2);
+});
+
+it.each(['mouse', 'touch'] as const)(
+  'opens rich text after a native %s double activation and a committed selection',
+  async input => {
+    const document = createStudioTemplateDocumentV5('single', 'Double activation', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    document.nodes = document.nodes.filter(node => node.type === 'frame' || node.id === text.id);
+    const { host, select, rerender } = await mount({ document });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${text.id}`)!;
+    const point = group.getAbsoluteTransform().point({ x: 10, y: 10 });
+    await waitFor(() => expect(stage.getIntersection(point)?.getParent()).toBe(group));
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    const x = (point.x * bounds.width) / stage.width();
+    const y = (point.y * bounds.height) / stage.height();
+    if (input === 'mouse') {
+      await userEvent.dblClick(surface, { position: { x, y } } as never);
+    } else {
+      for (const identifier of [1, 2]) {
+        const finger = new Touch({
+          identifier,
+          target: surface,
+          clientX: bounds.left + x,
+          clientY: bounds.top + y,
+        });
+        fireEvent(
+          surface,
+          new TouchEvent('touchstart', {
+            bubbles: true,
+            cancelable: true,
+            touches: [finger],
+            targetTouches: [finger],
+            changedTouches: [finger],
+          })
+        );
+        fireEvent(
+          surface,
+          new TouchEvent('touchend', {
+            bubbles: true,
+            cancelable: true,
+            touches: [],
+            targetTouches: [],
+            changedTouches: [finger],
+          })
+        );
+      }
+    }
+    expect(select).toHaveBeenLastCalledWith([text.id]);
+    rerender({ selected: [text.id] });
+    expect(await screen.findByTestId('studio-inline-text-layer')).toBeTruthy();
+  }
+);
+
+it('ends a space-pan gesture on key release and preserves its resulting view', async () => {
+  const { host, ref, changes, select } = await mount();
+  host.focus();
+  await userEvent.keyboard('[Space>]');
+  const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+  const bounds = surface.getBoundingClientRect();
+  const pointer = (type: string, x: number) =>
+    fireEvent(
+      surface,
+      new PointerEvent(type, {
+        bubbles: true,
+        pointerId: 71,
+        pointerType: 'mouse',
+        button: 0,
+        clientX: bounds.left + x,
+        clientY: bounds.top + 10,
+      })
+    );
+  await act(() => pointer('pointerdown', 10));
+  await act(() => pointer('pointermove', 50));
+  const before = ref.current!.scenePoint(bounds.left, bounds.top);
+  await userEvent.keyboard('[/Space]');
+  await act(() => pointer('pointermove', 100));
+  expect(ref.current!.scenePoint(bounds.left, bounds.top)).toEqual(before);
+  expect(changes).not.toHaveBeenCalled();
+  expect(select).not.toHaveBeenCalled();
+});
+
+it('ignores touch pointer input during a native pinch and clears selection after an outside touch release', async () => {
+  const { host, select, changes } = await mount();
+  const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+  const bounds = surface.getBoundingClientRect();
+  const fingers = [100, 200].map(
+    clientX =>
+      new Touch({
+        identifier: clientX,
+        target: surface,
+        clientX: bounds.left + clientX,
+        clientY: bounds.top + 30,
+      })
+  );
+  fireEvent(
+    surface,
+    new TouchEvent('touchstart', {
+      bubbles: true,
+      cancelable: true,
+      touches: fingers,
+      targetTouches: fingers,
+      changedTouches: fingers,
+    })
+  );
+  const pointer = (type: string) =>
+    fireEvent(
+      surface,
+      new PointerEvent(type, {
+        bubbles: true,
+        pointerType: 'touch',
+        pointerId: 57,
+        clientX: bounds.left + 10,
+        clientY: bounds.top + 10,
+      })
+    );
+  pointer('pointerdown');
+  pointer('pointermove');
+  pointer('pointerup');
+  expect(select).not.toHaveBeenCalled();
+  expect(changes).not.toHaveBeenCalled();
+  fireEvent(
+    surface,
+    new TouchEvent('touchend', {
+      bubbles: true,
+      cancelable: true,
+      touches: [],
+      targetTouches: [],
+      changedTouches: fingers,
+    })
+  );
+  await new Promise(resolve => setTimeout(resolve, 400));
+  pointer('pointerup');
+  expect(select).toHaveBeenLastCalledWith([]);
+});
+
+it.each(['root', 'hidden follower'] as const)(
+  'drags a real selected shape with a %s without changing unrendered siblings',
+  async mode => {
+    const document = createStudioTemplateDocumentV5('single', 'Drag boundaries', defaultBrand);
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    shape.parentFrameId = null;
+    Object.assign(shape.transform, { x: 1200, y: 100, width: 100, height: 80 });
+    const follower = structuredClone(shape);
+    follower.id = crypto.randomUUID();
+    follower.transform.x += 180;
+    follower.visible = mode !== 'hidden follower';
+    document.nodes.push(follower);
+    const { host, changes } = await mount({ document, selected: [shape.id, follower.id] });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${shape.id}`)!;
+    const point = group.getAbsoluteTransform().point({ x: 30, y: 30 });
+    await waitFor(() => expect(stage.getIntersection(point)?.getParent()).toBe(group));
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    const x = (point.x * bounds.width) / stage.width();
+    const y = (point.y * bounds.height) / stage.height();
+    await userEvent.dragAndDrop(surface, surface, {
+      sourcePosition: { x, y },
+      targetPosition: { x: x + 30, y: y + 20 },
+    } as never);
+    expect(changes).toHaveBeenCalledTimes(1);
+    const moves = changes.mock.calls[0][0];
+    expect(moves.map((item: { nodeId: string }) => item.nodeId).sort()).toEqual(
+      [shape.id, follower.id].sort()
+    );
+    expect(moves[0].transform.dx).toBeGreaterThan(0);
+    expect(follower.transform.x).toBe(1380);
+    expect(group.position()).toEqual({ x: 1250, y: 140 });
+  }
+);
 
 it('clears context bounds and avoids fitting a selected node that has been removed from the canonical document', async () => {
   const missing = crypto.randomUUID();

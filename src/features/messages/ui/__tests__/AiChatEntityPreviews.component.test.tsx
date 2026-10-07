@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { MessageBubble } from '../MessageBubble';
 import { StreamingBubble } from '../MessageListView';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ session: null }) }));
 vi.mock('@tanstack/react-router', () => ({
@@ -143,3 +144,25 @@ it('activates the exact stored element context from a sent message', () => {
   fireEvent.click(screen.getByRole('button', { name: /Heading/ }));
   expect(activate).toHaveBeenCalledWith(reference, editorContext);
 });
+
+it.each(['proposed', 'needs_clarification', 'failed'] as const)(
+  'renders the stored project outcome %s while preserving the message content',
+  outcome => {
+    render(
+      <MessageBubble
+        message={
+          {
+            ...message,
+            content: 'Stored project response',
+            context_json: JSON.stringify({ project: { outcome } }),
+          } as never
+        }
+        isOwnMessage={false}
+      />
+    );
+    expect(screen.getByText('Stored project response')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(
+      translate(`features.projectChat.context.${outcome}`)
+    );
+  }
+);

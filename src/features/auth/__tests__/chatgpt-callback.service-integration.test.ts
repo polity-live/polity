@@ -59,6 +59,19 @@ describe('ChatGPT callback service integration', () => {
     expect(gateway.getUser).not.toHaveBeenCalled();
   });
 
+  it('rejects a thrown ChatGPT exchange without trusting an existing session', async () => {
+    gateway.exchangeCodeForSession.mockRejectedValue(new Error('OAuth transport failed'));
+    await expect(
+      completeAuthCallback({ gateway, pendingLanguage: null, search: '?chatgpt=login&code=broken' })
+    ).resolves.toEqual({
+      ok: false,
+      destination: '/auth/sign-in',
+      reason: 'code-exchange-failed',
+    });
+    expect(gateway.getUser).not.toHaveBeenCalled();
+    expect(gateway.updateLanguage).not.toHaveBeenCalled();
+  });
+
   it('requires the verified ChatGPT identity and retains the original Polity account when linking', async () => {
     gateway.getUser.mockResolvedValue({
       user: { ...callbackUser(), identities: [{ provider: 'custom:openai' }] },

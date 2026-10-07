@@ -2,8 +2,10 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 const mocks = vi.hoisted(() => ({ editorProps: null as any, debug: vi.fn() }));
+vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ session: null }) }));
 
 vi.mock('platejs/react', () => ({ Plate: ({ children }: any) => <div>{children}</div> }));
 vi.mock('@/features/charts/context/ChartDatasetContext', () => ({
@@ -58,6 +60,12 @@ function paste(types: string[], text = 'text') {
 }
 
 describe('PlateEditorView branches', () => {
+  it('shows document diagnostics only for a persisted document identifier', () => {
+    const view = render(<PlateEditorView {...makeProps({ documentId: crypto.randomUUID() })} />);
+    expect(screen.getByText(translate('common.aiTrace.title'))).toBeTruthy();
+    view.rerender(<PlateEditorView {...makeProps({ documentId: 'temporary-editor' })} />);
+    expect(screen.queryByText(translate('common.aiTrace.title'))).toBeNull();
+  });
   it('guards non-suggestion and rich paste paths', () => {
     const view = render(<PlateEditorView {...makeProps()} />);
     paste(['text/plain']);

@@ -20,6 +20,11 @@ describe('navItemsAuthenticated', () => {
     expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
       false
     );
+    expect(
+      navItemsAuthenticated(vi.fn())
+        .getGroupSecondaryNavItems('group-1')
+        .some(item => item.id === 'studio')
+    ).toBe(false);
     vi.stubEnv('VITE_STUDIO_ENABLED', 'true');
     expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
       true
