@@ -22,6 +22,21 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   preferred: vi.fn(),
   generate: vi.fn(),
+  sharing: vi.fn(),
+  presence: vi.fn(),
+  canvas: vi.fn(),
+  collaborators: vi.fn(),
+  invitations: vi.fn(),
+  invite: vi.fn(),
+  respond: vi.fn(),
+  remove: vi.fn(),
+  elementSets: vi.fn(),
+  createSet: vi.fn(),
+  instantiateSet: vi.fn(),
+  renameSet: vi.fn(),
+  archiveSet: vi.fn(),
+  publishSet: vi.fn(),
+  json: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ getSession: mocks.session }));
 vi.mock('../db', async original => ({
@@ -52,6 +67,24 @@ vi.mock('@/lib/ai/models', () => ({
   toAiModelDescriptor: (model: unknown) => model,
 }));
 vi.mock('ai', () => ({ generateText: mocks.generate }));
+vi.mock('../ai-sources', () => ({ assertProjectAiSourceSharing: mocks.sharing }));
+vi.mock('../presence', () => ({ canvasPresence: mocks.presence }));
+vi.mock('../governance', () => ({ canvasCommand: mocks.canvas }));
+vi.mock('../collaborators', () => ({
+  listStudioCollaborators: mocks.collaborators,
+  listMyStudioInvitations: mocks.invitations,
+  inviteStudioCollaborators: mocks.invite,
+  respondStudioInvitation: mocks.respond,
+  removeStudioCollaborator: mocks.remove,
+}));
+vi.mock('../elements', () => ({
+  listElementSets: mocks.elementSets,
+  createElementSet: mocks.createSet,
+  instantiateElementSetForProject: mocks.instantiateSet,
+  renameElementSet: mocks.renameSet,
+  archiveElementSet: mocks.archiveSet,
+  publishElementSetRevision: mocks.publishSet,
+}));
 import { handleStudio } from '../api';
 import { StudioError } from '../db';
 const id = '0c386bc0-aed7-4d94-ac67-e3fb1bbcfce1';
@@ -69,6 +102,9 @@ beforeEach(() => {
   mocks.enabled.mockReturnValue(true);
   mocks.transaction.mockImplementation(body => body(mocks.sql));
   mocks.sql.mockResolvedValue([]);
+  mocks.json.mockImplementation(value => value);
+  Object.assign(mocks.sql, { json: mocks.json });
+  mocks.sharing.mockResolvedValue(undefined);
   mocks.access.mockResolvedValue(undefined);
   mocks.group.mockResolvedValue(undefined);
   for (const handler of [
@@ -79,6 +115,19 @@ beforeEach(() => {
     mocks.duplicate,
     mocks.beginUpload,
     mocks.finishUpload,
+    mocks.presence,
+    mocks.canvas,
+    mocks.collaborators,
+    mocks.invitations,
+    mocks.invite,
+    mocks.respond,
+    mocks.remove,
+    mocks.elementSets,
+    mocks.createSet,
+    mocks.instantiateSet,
+    mocks.renameSet,
+    mocks.archiveSet,
+    mocks.publishSet,
   ])
     handler.mockResolvedValue({ id });
   mocks.catalog.mockResolvedValue({ models: ['configured'] });
@@ -86,6 +135,149 @@ beforeEach(() => {
   mocks.model.mockResolvedValue({ model: 'language-model', providerOptions: {} });
 });
 describe('Studio HTTP authorization and transactional operations', () => {
+  it.each([
+    ['collaborators', 'collaborators', { projectId: id }, ['actor', id]],
+    ['myInvitations', 'invitations', {}, ['actor']],
+    ['inviteCollaborators', 'invite', { projectId: id, userIds: [id] }, ['actor', id, [id]]],
+    ['respondInvitation', 'respond', { invitationId: id, accept: true }, ['actor', id, true]],
+    ['removeCollaborator', 'remove', { projectId: id, userId: id }, ['actor', id, id]],
+    ['elementSets', 'elementSets', {}, ['actor', null]],
+    ['elementSets', 'elementSets', { groupId: id }, ['actor', id]],
+    [
+      'elementSetCreate',
+      'createSet',
+      { projectId: id, selectedIds: [id] },
+      ['actor', { projectId: id, groupId: null, selectedIds: [id], name: undefined }],
+    ],
+    [
+      'elementSetCreate',
+      'createSet',
+      { projectId: id, groupId: id, selectedIds: [id], name: ' Named set ' },
+      ['actor', { projectId: id, groupId: id, selectedIds: [id], name: 'Named set' }],
+    ],
+    [
+      'elementSetInstantiate',
+      'instantiateSet',
+      { projectId: id, setId: id },
+      ['actor', { projectId: id, setId: id }],
+    ],
+    ['elementSetRename', 'renameSet', { setId: id, name: ' Renamed ' }, ['actor', id, 'Renamed']],
+    ['elementSetArchive', 'archiveSet', { setId: id }, ['actor', id]],
+    [
+      'elementSetPublish',
+      'publishSet',
+      { projectId: id, instanceId: id },
+      ['actor', { projectId: id, instanceId: id }],
+    ],
+  ] as const)(
+    'validates and dispatches %s through trusted service %s',
+    async (operation, handler, payload, args) => {
+      const response = await request({ operation, actor: 'forged', ...payload });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ id });
+      expect(mocks[handler]).toHaveBeenCalledWith(...args);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+    }
+  );
+
+  it.each(['canvasPresence', 'canvas'] as const)(
+    'passes the authenticated actor to the dynamic %s boundary',
+    async operation => {
+      const body = { operation, projectId: id, actor: 'forged', command: 'status' };
+      const response = await request(body);
+      expect(response.status).toBe(200);
+      expect(operation === 'canvas' ? mocks.canvas : mocks.presence).toHaveBeenCalledWith(
+        'actor',
+        body
+      );
+    }
+  );
+
+  it('claims only current actor editor actions and stores a validated result from the claiming editor client', async () => {
+    const actions = [{ id, name: 'studio_element_add', input: { projectId: id } }];
+    mocks.sql.mockResolvedValueOnce(actions);
+    const response = await request({
+      operation: 'editorActions',
+      projectId: id,
+      clientId: id,
+      actor: 'forged',
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(actions);
+    expect(mocks.access).toHaveBeenCalledWith('actor', id, mocks.sql);
+    const claim = mocks.sql.mock.calls[0];
+    expect(claim[0].join('')).toContain('for update skip locked');
+    expect(claim.slice(1)).toContain('actor');
+    expect(claim.slice(1)).not.toContain('forged');
+    const result = { status: 'completed', revision: 12, projectId: id, actor: 'forged' };
+    const acknowledged = await request({
+      operation: 'editorResult',
+      id,
+      projectId: id,
+      clientId: id,
+      result,
+    });
+    expect(acknowledged.status).toBe(200);
+    expect(await acknowledged.json()).toEqual({ status: 'acknowledged' });
+    expect(mocks.json).toHaveBeenCalledWith({ status: 'completed', revision: 12, projectId: id });
+    const updated = mocks.sql.mock.lastCall!;
+    expect(updated[0].join('')).toContain('claimed_by=');
+    expect(updated.slice(1)).toContain('actor');
+  });
+
+  it('returns only the authorized actor operation receipt and rejects missing receipts', async () => {
+    mocks.sql.mockResolvedValueOnce([{ result: { status: 'applied', revision: 3 } }]);
+    const response = await request({ operation: 'receipt', projectId: id, id });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: 'applied', revision: 3 });
+    expect(mocks.access).toHaveBeenCalledWith('actor', id, mocks.sql);
+    expect(mocks.sql.mock.calls[0].slice(1)).toEqual([id, id, 'actor']);
+    expect((await request({ operation: 'receipt', projectId: id, id })).status).toBe(404);
+  });
+
+  it.each([
+    undefined,
+    { owner_id: 'other', group_id: null },
+    { owner_id: 'actor', group_id: null },
+    { owner_id: 'other', group_id: id },
+  ])(
+    'checks current ownership and every shared AI source before changing visibility: %j',
+    async project => {
+      mocks.sql.mockResolvedValueOnce(project ? [project] : []);
+      const response = await request({ operation: 'visibility', id, visibility: 'public' });
+      const allowed = project && (project.group_id !== null || project.owner_id === 'actor');
+      expect(response.status).toBe(allowed ? 200 : 403);
+      if (allowed) {
+        expect(await response.json()).toEqual({ ok: true });
+        expect(mocks.sharing).toHaveBeenCalledWith(id, [], 'public', mocks.sql);
+        expect(mocks.sql.mock.lastCall?.[0].join('')).toContain('update studio_project');
+      } else {
+        expect(mocks.sharing).not.toHaveBeenCalled();
+        expect(mocks.sql).toHaveBeenCalledOnce();
+      }
+    }
+  );
+
+  it('keeps private source audience failures and revoked editor access from producing writes', async () => {
+    mocks.sql.mockResolvedValueOnce([{ owner_id: 'actor', group_id: null }]);
+    mocks.sharing.mockRejectedValueOnce(new StudioError('Source not public', 403));
+    expect((await request({ operation: 'visibility', id, visibility: 'public' })).status).toBe(403);
+    expect(mocks.sql).toHaveBeenCalledOnce();
+    mocks.sql.mockClear();
+    mocks.access.mockRejectedValueOnce(new StudioError('Revoked', 403));
+    expect(
+      (await request({ operation: 'editorActions', projectId: id, clientId: id })).status
+    ).toBe(403);
+    expect(mocks.sql).not.toHaveBeenCalled();
+  });
+
+  it('accepts the request origin and personal themes without a group context', async () => {
+    expect(
+      (await request({ operation: 'config' }, { origin: 'http://localhost:3000' })).status
+    ).toBe(200);
+    expect((await request({ operation: 'themes' })).status).toBe(200);
+    expect(mocks.group).not.toHaveBeenCalled();
+  });
   it('validates commands and forwards only the authenticated actor to shared project and media services', async () => {
     expect(await (await request({ operation: 'config' })).json()).toEqual({ enabled: true });
     const createInput = {

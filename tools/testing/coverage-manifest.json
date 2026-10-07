@@ -106269,6 +106269,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/project-chat/__tests__/context.unit.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
       "domain": "server:project-chat",
       "owner": "polity/server:project-chat",
@@ -106366,6 +106376,7 @@
         "src/features/messages/__tests__/contextAttachments.unit.test.ts",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106407,6 +106418,101 @@
           "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "blocks legacy direct Studio AI writes"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a denied project conversation and a disappeared allowed conversation"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads canonical Studio resources with canSuggest=%s and server revision metadata"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "passes only the selected workspace ID to the authorized Studio source resolver"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a conversation without the project needed for %s"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing amendments and process runs that require a branch choice"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads text using the %s and verifies its amendment lineage"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts a branch belonging to the %s amendment lineage"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a branch belonging to another amendment and propagates editing-mode denial"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a document target with %s"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "fills absent amendment metadata and discussion fields while keeping sorted authorized hashtags"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains text selection anchors only for current revision %i"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires a saved City Design, rejects another target, and parses a current design"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects corrupt persisted City Design data"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads a paginated Studio snapshot and includes explicit frames and root selections without exposing brand source data"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads default Studio pagination without context hints"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns bounded amendment blocks with selectionStale for revision %i"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads amendment text without a selection"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads City Design objects or OSM features with features=%s"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects oversized %s context instead of truncating geometry or anchors"
         }
       ],
       "suggestedTestRefs": [
@@ -106540,6 +106646,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106578,14 +106685,14 @@
         "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
         "src/lib/ai/__tests__/historyCompression.unit.test.ts",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
         "src/server/project-chat/__tests__/run.database-integration.test.ts",
         "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts",
-        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
-        "src/zero/groups/__tests__/groupSharedMutators.role-holder-history-auth.unit.test.ts"
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
       ]
     },
     {
@@ -106609,6 +106716,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106639,6 +106747,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106664,6 +106773,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106739,6 +106849,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -106793,8 +106904,8 @@
         "src/server/__tests__/ai-tools.contract.unit.test.ts",
         "src/server/__tests__/ai-update-tools.contract.unit.test.ts",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
-        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
-        "src/server/project-chat/__tests__/history.unit.test.ts"
+        "src/server/project-chat/__tests__/context.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts"
       ]
     },
     {
@@ -106818,6 +106929,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
@@ -107134,6 +107246,16 @@
       "suggestedTestRefs": ["src/server/__tests__/stripe-webhook.unit.test.ts"]
     },
     {
+      "path": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
@@ -107360,9 +107482,105 @@
           "file": "src/server/studio/__tests__/api.unit.test.ts",
           "project": "unit",
           "caseId": "does not let an active personal collaborator manage the project"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not resolve or enrich empty references for a personal request"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "resolves a source for the full %s audience"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a missing %s project before reading sources"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an actor outside the project audience even when no sources were requested"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses canonical enrichment instead of the fallback search payload when available"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps a document source to its owning amendment for audience checks while retaining its document reference"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a document without a readable parent amendment: %j"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects invalid UUID references and unavailable search rows"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects source visibility %s/%s before sharing the canonical payload"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows public audience visibility %s/%s without a private ACL lookup"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires every current reader in a private ACL and never enriches a rejected source"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "limits one model request to twenty validated and enriched references"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "checks existing project and active AI proposal sources while ignoring nonarray metadata"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "checks all sources before a project visibility upgrade"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts no-reader private source checks and string-normalized SQL reader IDs"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not query a proposal audience without source references"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "checks proposal sources for trusted or anonymous actor %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a proposal actor outside the current project audience"
+        },
+        {
+          "file": "src/server/studio/__tests__/ai-sources.unit.test.ts",
+          "project": "unit",
+          "caseId": "propagates SQL and canonical resolver failures without returning partial shared sources"
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107373,8 +107591,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107442,6 +107659,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107452,8 +107670,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107468,9 +107685,100 @@
           "file": "src/server/studio/__tests__/api.unit.test.ts",
           "project": "unit",
           "caseId": "returns published group themes from the same transaction that checks access"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates and dispatches %s through trusted service %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "passes the authenticated actor to the dynamic %s boundary"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "claims only current actor editor actions and stores a validated result from the claiming editor client"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns only the authorized actor operation receipt and rejects missing receipts"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "checks current ownership and every shared AI source before changing visibility: %j"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps private source audience failures and revoked editor access from producing writes"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts the request origin and personal themes without a group context"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates commands and forwards only the authenticated actor to shared project and media services"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "forwards clone destination and visibility after validation"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "hands off only completed single image or video exports using their immutable revision and story pages"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not expose the retired direct AI generation endpoint"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not disclose internal service failures in public error responses"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves shared collaboration denials and revision conflicts at the Studio HTTP boundary"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects group access before querying themes and never serializes an undefined success"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects cross-origin, anonymous, disabled and malformed operations before writes"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "serializes export cancellation and template changes with current project rights"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves projects whose media is published or whose export is still running"
+        },
+        {
+          "file": "src/server/studio/__tests__/api.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not let an active personal collaborator manage the project"
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107481,8 +107789,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107516,6 +107823,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/pwa/__tests__/manifestAssets.static-contract.test.ts",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107525,8 +107833,7 @@
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts"
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts"
       ]
     },
     {
@@ -107554,6 +107861,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107564,8 +107872,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107594,12 +107901,12 @@
         "src/features/amendments/collaborators/ui/__tests__/CollaboratorsView.a04.component.test.tsx",
         "src/features/amendments/collaborators/ui/__tests__/CollaboratorsView.component.test.tsx",
         "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.unit.test.ts",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
-        "src/server/studio/__tests__/collaborators.unit.test.ts",
-        "src/server/studio/__tests__/db.unit.test.ts"
+        "src/server/studio/__tests__/collaborators.unit.test.ts"
       ]
     },
     {
@@ -107632,6 +107939,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107642,8 +107950,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107793,6 +108100,7 @@
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts",
         "src/features/shared/hooks/__tests__/useTocElementStaticController.component.test.tsx",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107801,8 +108109,7 @@
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
-        "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts"
+        "src/server/studio/__tests__/media-range.unit.test.ts"
       ]
     },
     {
@@ -107834,14 +108141,14 @@
         "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx",
         "src/features/shared/ui/calendar/__tests__/CalendarExportButton.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/export-toolbar-button.component.test.tsx",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
-        "src/server/studio/__tests__/elements.unit.test.ts",
-        "src/server/studio/__tests__/export.unit.test.ts"
+        "src/server/studio/__tests__/elements.unit.test.ts"
       ]
     },
     {
@@ -107860,6 +108167,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/fixtures/domains/governance.ts",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107869,8 +108177,7 @@
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts"
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts"
       ]
     },
     {
@@ -107898,6 +108205,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107908,8 +108216,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -107933,12 +108240,12 @@
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
         "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useEditorOperations.component.test.tsx",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
-        "src/server/studio/__tests__/collaborators.unit.test.ts",
-        "src/server/studio/__tests__/db.unit.test.ts"
+        "src/server/studio/__tests__/collaborators.unit.test.ts"
       ]
     },
     {
@@ -107960,14 +108267,14 @@
         "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
         "src/presence/__tests__/presence-server.unit.test.ts",
         "src/presence/__tests__/usePresence.component.test.tsx",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
-        "src/server/studio/__tests__/elements.unit.test.ts",
-        "src/server/studio/__tests__/export.unit.test.ts"
+        "src/server/studio/__tests__/elements.unit.test.ts"
       ]
     },
     {
@@ -107985,6 +108292,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -107995,8 +108303,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -108029,6 +108336,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -108039,8 +108347,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -108088,6 +108395,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -108098,8 +108406,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -108127,6 +108434,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -108137,8 +108445,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -108291,6 +108598,7 @@
       ],
       "suggestedTestRefs": [
         "src/i18n/__tests__/source-ui-copy-guard.static-contract.test.ts",
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -108300,8 +108608,7 @@
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts"
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts"
       ]
     },
     {
@@ -108319,6 +108626,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/server/studio/__tests__/ai-sources.unit.test.ts",
         "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
@@ -108329,8 +108637,7 @@
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
         "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
