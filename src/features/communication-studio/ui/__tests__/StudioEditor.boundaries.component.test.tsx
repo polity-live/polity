@@ -18,6 +18,40 @@ function Harness({ projectId = 'project' }: { projectId?: string }) {
   return <StudioEditor c={controller} projectId={projectId} groupId="group" open={vi.fn()} />;
 }
 
+it('reports an empty project clipboard when the browser exposes no clipboard API', async () => {
+  useCanonicalDocument();
+  io.editor.transactV3((document: { nodes: unknown[]; deliverables: unknown[] }) => {
+    document.nodes = [];
+    document.deliverables = [];
+  });
+  render(<Harness projectId={crypto.randomUUID()} />);
+  fireEvent.keyDown(document.body, { key: 'v', ctrlKey: true });
+  await screen.findByText('The Studio clipboard is empty.');
+  expect(io.editor.v3Value.nodes).toEqual([]);
+});
+
+it('shows Canva export guidance and the server error for a failed full archive', async () => {
+  useCanonicalDocument();
+  io.exports = [
+    {
+      id: 'failed-archive',
+      format: 'zip',
+      status: 'failed',
+      progress: 30,
+      error: 'Archive interrupted',
+    },
+  ];
+  await show();
+  await screen.findByTestId('canvas');
+  fireEvent.click(screen.getByRole('button', { name: 'exports' }));
+  fireEvent.change(await screen.findByRole('combobox', { name: /^format$/i }), {
+    target: { value: 'canva' },
+  });
+  expect(await screen.findByText('canvaHint')).toBeTruthy();
+  expect(screen.getByText('Archive interrupted').getAttribute('role')).toBe('alert');
+  expect(screen.getByText('ALL · failed · 30%')).toBeTruthy();
+});
+
 it.each([null, 'group'] as const)(
   'hands a completed image export to the statement composer for group %s',
   async groupId => {

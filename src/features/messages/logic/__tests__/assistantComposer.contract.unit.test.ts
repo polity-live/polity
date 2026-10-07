@@ -35,6 +35,19 @@ import {
 
 const createdAt = new Date('2026-01-01T00:00:00.000Z');
 
+it.each(['frame', 'element'] as const)(
+  'recognizes a project %s mention as an editor reference',
+  kind => {
+    const value = `@${kind}@heading`;
+    expect(parseActiveMentionQuery(value, value.length)).toMatchObject({
+      entityType: kind,
+      searchText: 'heading',
+      start: 0,
+      end: value.length,
+    });
+  }
+);
+
 function item(
   type: SearchContentItem['type'],
   overrides: Partial<SearchContentItem> = {}

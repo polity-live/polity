@@ -45,6 +45,19 @@ function node(id: string): StudioNode {
 function frame() {
   return canonical().nodes.find(candidate => candidate.type === 'frame')!;
 }
+
+it('activates another canonical frame through the canvas without modifying its document', async () => {
+  await mount();
+  const other = structuredClone(frame());
+  other.id = crypto.randomUUID();
+  other.name = 'Canvas destination';
+  other.transform.x += 1600;
+  await act(() => io.editor.transactV3((document: StudioDocumentV3) => document.nodes.push(other)));
+  const before = structuredClone(canonical());
+  await act(() => io.canvasProps.activateFrame(other.id));
+  await waitFor(() => expect(io.canvasProps.activeFrameId).toBe(other.id));
+  expect(canonical()).toEqual(before);
+});
 async function select(id: string) {
   await act(() => io.canvasProps.selectExact([id]));
   await waitFor(() => expect(io.canvasProps.selected).toEqual([id]));
@@ -53,6 +66,25 @@ async function activate(control: HTMLElement) {
   control.focus();
   await userEvent.keyboard('{Enter}');
 }
+
+it('ignores duplicate and paste shortcuts with an empty selection and no project clipboard', async () => {
+  useCanonicalDocument();
+  await show({ projectId: crypto.randomUUID(), groupId: 'group', open: vi.fn() });
+  await screen.findByTestId('canvas', {}, { timeout: 10000 });
+  await act(() => io.canvasProps.selectExact([]));
+  const before = structuredClone(canonical());
+  vi.spyOn(navigator.clipboard, 'readText').mockResolvedValue('Ordinary clipboard text');
+  const canvas = screen.getByTestId('canvas');
+  canvas.focus();
+  await userEvent.keyboard('{Control>}d{/Control}');
+  await userEvent.keyboard('{Control>}v{/Control}');
+  await waitFor(() =>
+    expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'clipboard', action: 'paste' })
+  );
+  await act(() => io.canvasProps.onClipboard('paste'));
+  expect(canonical()).toEqual(before);
+  expect(io.canvasProps.selected).toEqual([]);
+});
 async function menu(label: string) {
   const trigger = screen
     .getAllByRole('button', { name: label })

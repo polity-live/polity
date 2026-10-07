@@ -14601,6 +14601,11 @@
           "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
           "project": "unit",
           "caseId": "does not link without a verified session and clears failed linking attempts"
+        },
+        {
+          "file": "src/features/auth/logic/__tests__/chatgptAuth.unit.test.ts",
+          "project": "unit",
+          "caseId": "clears a pending identity link when the OAuth gateway rejects before returning a result"
         }
       ],
       "suggestedTestRefs": [
@@ -24854,6 +24859,26 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "updates custom colors, borders and media fitting through real canonical inspector controls"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores duplicate and paste shortcuts with an empty selection and no project clipboard"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "reports an empty project clipboard when the browser exposes no clipboard API"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "shows Canva export guidance and the server error for a failed full archive"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "activates another canonical frame through the canvas without modifying its document"
         }
       ],
       "suggestedTestRefs": [
@@ -42771,6 +42796,56 @@
             "coveredStatements": 42,
             "totalStatements": 42
           }
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns null without a usable status"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves accepted versus approved badge states and collapses supported to accepted"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies rejected, withdrawn, approved, accepted, and pending precedence"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns null without a badge status"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps supported and approved states to accepted display group"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "prefers rejected when mixed statuses are present"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves withdrawn and pending display states"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps unrecognized decisions and absent process runs pending"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the target step status without an event and leaves its source pending"
+        },
+        {
+          "file": "src/features/groups/logic/__tests__/groupAmendmentStatus.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the group decision ahead of process status"
         }
       ],
       "suggestedTestRefs": [
@@ -47872,6 +47947,56 @@
             "coveredStatements": 36,
             "totalStatements": 122
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "waits for actual server confirmation before returning a committed message"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "sends regular and assistant messages with default and explicit contexts"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "returns deterministic send failures and restores loading"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "creates regular conversations with optional group and handles failure"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "creates assistant conversations with default/custom names and handles failure"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "deletes messages and accepts conversations on success and error"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "marks unread messages and both participant identity shapes as read"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "continues safely without a participant and catches mark-read failures"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles pin/name values and covers their errors"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "tracks reject/delete success and distinguishes pre/post-finalization errors"
         }
       ],
       "suggestedTestRefs": [
@@ -48062,6 +48187,91 @@
             "coveredStatements": 147,
             "totalStatements": 147
           }
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "recognizes a project %s mention as an editor reference"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "publishes all supported attachment tokens with translated labels"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "builds a rich $type option and serializable card payload"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses fallback subtitle fields and count sources"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unsupported search results and unusable card mappings"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "replaces only the selected text range"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "parses plain, typed, unknown, and invalid mention tokens"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "parses skill commands only at the beginning and before arguments"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "parses tool tokens after supported boundaries"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "normalizes skill names and strips surrounding separators"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects indexes outside the current value"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns null when no panel width is available"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the available width and clamps the left edge"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "caps the panel width and clamps the right edge at an end anchor"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses final decisions, primary text, dates, and voter count"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "falls back to indicative decisions and amendment text"
+        },
+        {
+          "file": "src/features/messages/logic/__tests__/assistantComposer.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses translated and preamble fallbacks when choices and decisions are absent"
         }
       ],
       "suggestedTestRefs": [
@@ -101426,6 +101636,11 @@
           "file": "src/lib/ai/__tests__/models.unit.test.ts",
           "project": "unit",
           "caseId": "falls back to the first model or null and builds public descriptors"
+        },
+        {
+          "file": "src/lib/ai/__tests__/models.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves an unspecified credential source in a legacy model descriptor"
         }
       ],
       "suggestedTestRefs": [
@@ -105305,6 +105520,11 @@
           "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "withholds a conversation diagnostic if its conversation is deleted between reading traces and checking access"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns an unfinished diagnostic operation without assigning a completion time"
         }
       ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
@@ -107994,6 +108214,46 @@
           "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns an unfinished diagnostic operation without assigning a completion time"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects anonymous requests before opening a diagnostic transaction"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects invalid or ambiguous diagnostic selector %s"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rechecks current %s access before exposing persisted diagnostics"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "requires every resource referenced by a diagnostic to remain accessible"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "uses the registered HTTP handler and returns empty diagnostics for another actor"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a safe noncacheable error when diagnostic database access fails"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "withholds a conversation diagnostic if its conversation is deleted between reading traces and checking access"
         }
       ],
       "suggestedTestRefs": []
@@ -115233,6 +115493,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+      "domain": "zero:amendments",
+      "owner": "polity/zero:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
       "domain": "zero:amendments",
       "owner": "polity/zero:amendments",
@@ -115484,8 +115754,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115520,8 +115790,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115590,8 +115860,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115629,8 +115899,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115668,8 +115938,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115702,8 +115972,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115738,8 +116008,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115774,8 +116044,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115808,8 +116078,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115852,8 +116122,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -115947,6 +116217,26 @@
             "coveredStatements": 604,
             "totalStatements": 610
           }
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "commits city design content once at the expected revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects a stale city design save without replacing committed content"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "updates city design metadata without advancing its content revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "changes document editing mode without replacing content or advancing its revision"
         }
       ],
       "suggestedTestRefs": [
@@ -115983,6 +116273,41 @@
             "coveredStatements": 216,
             "totalStatements": 261
           }
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "commits city design content once at the expected revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects a stale city design save without replacing committed content"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "updates city design metadata without advancing its content revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "changes document editing mode without replacing content or advancing its revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates every request inside the batch mutator transaction"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the optimistic revision %s before a city design is present in the client cache"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not persist the process branch authorization context"
         }
       ],
       "suggestedTestRefs": [
@@ -116068,8 +116393,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -116104,8 +116429,8 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
-        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts",
-        "src/zero/amendments/__tests__/event-mode-transition.branch-a04.unit.test.ts"
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -119027,6 +119352,26 @@
             "coveredStatements": 18,
             "totalStatements": 93
           }
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "commits city design content once at the expected revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects a stale city design save without replacing committed content"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "updates city design metadata without advancing its content revision"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "changes document editing mode without replacing content or advancing its revision"
         }
       ],
       "suggestedTestRefs": [
@@ -129825,6 +130170,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/studio/__tests__/renderer-bundle-boundaries.unit.test.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/studio/__tests__/reset-storage.unit.test.ts",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
@@ -129876,6 +130231,11 @@
           "file": "tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts",
           "project": "unit",
           "caseId": "preserves the manifest when storage rejects removal and requires server configuration"
+        },
+        {
+          "file": "tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the Zero upstream database when no dedicated Studio database is configured"
         }
       ],
       "suggestedTestRefs": ["tools/studio/__tests__/cleanup-whiteboard-storage.unit.test.ts"]
@@ -130284,6 +130644,16 @@
           "file": "tools/studio/__tests__/exports.unit.test.ts",
           "project": "unit",
           "caseId": "reports encoder diagnostics and process-start failures without returning a fabricated video"
+        },
+        {
+          "file": "tools/studio/__tests__/renderer-bundle-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns a single emitted renderer chunk and shares concurrent build requests"
+        },
+        {
+          "file": "tools/studio/__tests__/renderer-bundle-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects %s build output without returning a renderer"
         }
       ],
       "suggestedTestRefs": []

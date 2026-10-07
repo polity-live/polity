@@ -7,7 +7,7 @@ import {
 import * as zeroRuntime from '@/server/zero-mutate';
 import { rows, sqlTransaction } from '@/server/transaction';
 import { studioSql } from '@/server/studio/db';
-import { insertAiTrace } from '@/server/ai-trace-store';
+import { findAiTraces, insertAiOperation, insertAiTrace } from '@/server/ai-trace-store';
 import { projectChatSharedMutators } from '@/zero/project-chat/shared-mutators';
 const auth = vi.hoisted(() => ({ actor: '' }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -101,6 +101,33 @@ async function trace(
   });
   return id;
 }
+
+it('returns an unfinished diagnostic operation without assigning a completion time', async () => {
+  const id = await trace();
+  const operationId = crypto.randomUUID();
+  await insertAiOperation({
+    id: operationId,
+    trace_id: id,
+    parent_operation_id: null,
+    kind: 'model',
+    name: 'Pending model',
+    status: 'running',
+    tool_call_id: null,
+    attempt: 1,
+    input: null,
+    metadata: {},
+    created_at: Date.now(),
+    finished_at: null,
+    output: null,
+    error: null,
+  });
+  const result = await findAiTraces(actor, { traceId: id });
+  expect(result).toHaveLength(1);
+  expect(result[0].operations).toMatchObject([
+    { id: operationId, status: 'running', finished_at: null },
+  ]);
+  expect(typeof result[0].operations[0].created_at).toBe('number');
+});
 
 it('rejects anonymous requests before opening a diagnostic transaction', async () => {
   auth.actor = '';

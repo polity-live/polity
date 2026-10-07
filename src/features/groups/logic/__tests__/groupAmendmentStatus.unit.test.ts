@@ -78,6 +78,21 @@ describe('groupAmendmentsByDisplayStatus', () => {
 });
 
 describe('getGroupAmendmentDisplayStatusForGroup', () => {
+  it('keeps unrecognized decisions and absent process runs pending', () => {
+    expect(
+      getGroupAmendmentDisplayStatusForGroup(
+        { id: 'amendment', group_decisions: [{ group_id: 'group', status: null }] },
+        'group'
+      )
+    ).toBe('pending');
+    expect(getGroupAmendmentDisplayStatusForGroup({ id: 'amendment' }, 'group')).toBe('pending');
+    expect(
+      getGroupAmendmentDisplayStatusForGroup(
+        { id: 'amendment', current_process_run: null },
+        'group'
+      )
+    ).toBe('pending');
+  });
   it('uses the target step status without an event and leaves its source pending', () => {
     const amendment = {
       id: 'a',

@@ -38,14 +38,14 @@ export async function startChatGptAuth(
       redirectTo: getAuthRedirectUrl(`/auth/callback?chatgpt=${options.mode}`),
     },
   };
-  try {
-    const result =
-      options.mode === 'link'
-        ? await supabase.auth.linkIdentity(request)
-        : await supabase.auth.signInWithOAuth(request);
-    if (result.error) throw result.error;
-  } catch (error) {
+  const fail = (error: unknown): never => {
     window.sessionStorage.removeItem(LINK_USER_KEY);
     throw error;
-  }
+  };
+  const response =
+    options.mode === 'link'
+      ? supabase.auth.linkIdentity(request)
+      : supabase.auth.signInWithOAuth(request);
+  const result = await response.catch(fail);
+  if (result.error) fail(result.error);
 }

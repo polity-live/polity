@@ -12,6 +12,14 @@ beforeEach(() => {
   io.remove.mockResolvedValue({ error: null });
 });
 afterEach(() => vi.unstubAllEnvs());
+it('uses the Zero upstream database when no dedicated Studio database is configured', async () => {
+  vi.stubEnv('STUDIO_DATABASE_URL', '');
+  vi.stubEnv('ZERO_UPSTREAM_DB', 'postgresql://local/zero');
+  io.sql.mockResolvedValueOnce([]);
+  await import('../cleanup-whiteboard-storage');
+  expect(io.remove).not.toHaveBeenCalled();
+  expect(io.end).toHaveBeenCalledOnce();
+});
 it('removes only unpublished manifest objects and marks them after storage confirms removal', async () => {
   const item = { bucket_id: 'studio', storage_path: 'retired/private' };
   io.sql

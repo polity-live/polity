@@ -13,6 +13,13 @@ describe('AI model selection', () => {
   it('leaves model selection unset when no accessible models exist', () => {
     expect(getPreferredDefaultAiModelKey([])).toBeNull();
   });
+
+  it('preserves an unspecified credential source in a legacy model descriptor', () => {
+    expect(toAiModelDescriptor({ provider: 'openai', id: 'legacy-model' })).toEqual({
+      provider: 'openai',
+      id: 'legacy-model',
+    });
+  });
   it('prefers the app OpenRouter free router over alphabetically earlier free models', () => {
     const cohereFreeModel = {
       provider: 'openrouter' as const,

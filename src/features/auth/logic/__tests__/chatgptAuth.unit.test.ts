@@ -58,4 +58,11 @@ describe('ChatGPT identity-only authentication', () => {
     ).rejects.toThrow('denied');
     expect(consumeChatGptLinkUser()).toBeNull();
   });
+  it('clears a pending identity link when the OAuth gateway rejects before returning a result', async () => {
+    auth.linkIdentity.mockRejectedValueOnce(new Error('Gateway unavailable'));
+    await expect(
+      startChatGptAuth(client, { mode: 'link', language: 'en', enabled: true })
+    ).rejects.toThrow('Gateway unavailable');
+    expect(consumeChatGptLinkUser()).toBeNull();
+  });
 });
