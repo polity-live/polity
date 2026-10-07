@@ -10738,6 +10738,68 @@
         "project": "component",
         "caseId": "adopts genuinely different remote content outside voting modes"
       }
+    ],
+    "src/server/ai-tools.ts": [
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "loads a public %s attachment from canonical database rows"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "loads an authenticated %s attachment for the requesting signed-in actor"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a private %s attachment when its actor has no qualifying relationship"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "returns no %s attachment for a missing canonical identity"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "allows a private %s attachment belonging to the requesting actor"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "allows a private %s attachment with a current active relationship"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "allows a private todo assigned to the actor while preserving its canonical creator"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "preserves valid legacy role statuses for private %s attachments"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "denies a private %s attachment after its relationship is pending or removed"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a document with no current amendment and uses a readable title when its canonical amendment is unnamed"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not invent canonical content for attachment types without a supported row resolver"
+      },
+      {
+        "file": "src/server/__tests__/ai-attachment.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "returns no document content when its canonical amendment disappears between the two database reads"
+      }
     ]
   },
   "actionReferences": {

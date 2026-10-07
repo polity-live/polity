@@ -109,7 +109,7 @@ it('persists native canvas content without SDK clocks, undefined values or gener
     { ...canvasElement, id: 'projection', customData: { polityElement: 'legacy-node' } },
   ];
   expect(durableElements(input)).toEqual([{ ...canvasElement, link: '/studio' }]);
-  expect(input[0].version).toBe(7);
+  expect(input[0]).toHaveProperty('version', 7);
   expect(emptyCanvasScene()).toEqual({ version: 1, elements: [], files: {} });
 });
 

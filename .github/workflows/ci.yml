@@ -376,14 +376,22 @@ jobs:
         run: supabase start
       - name: Apply migrations
         run: supabase db reset --local --no-seed
-      - name: Export local database URL
+      - name: Export local database and API access
         run: |
-          database_url="$(supabase status -o env | sed -n 's/^DB_URL="\(.*\)"$/\1/p')"
-          if [[ -z "$database_url" ]]; then
-            echo "Could not determine the local database URL"
+          eval "$(supabase status -o env)"
+          if [[ -z "${DB_URL:-}" || -z "${API_URL:-}" || -z "${SERVICE_ROLE_KEY:-}" || -z "${ANON_KEY:-}" ]]; then
+            echo "Could not determine local database and API access"
             exit 1
           fi
-          echo "SUPABASE_DB_URL=$database_url" >> "$GITHUB_ENV"
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          echo "::add-mask::$ANON_KEY"
+          {
+            echo "SUPABASE_DB_URL=$DB_URL"
+            echo "ZERO_UPSTREAM_DB=$DB_URL"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+          } >> "$GITHUB_ENV"
       - name: Lint database
         run: supabase db lint --local --schema public --level warning --fail-on warning
       - name: Verify declarative schemas match migrations

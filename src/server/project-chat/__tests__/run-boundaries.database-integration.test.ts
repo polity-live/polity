@@ -931,6 +931,7 @@ it('persists enabled custom and built-in skills and prunes disabled, unknown and
       skillSlugs: ['custom', 'disabled', 'unknown', DEFAULT_AI_SKILLS[0].slug],
       toolNames: ['find_my_todos', 'read_polity_docs'],
     });
+    expect(response?.status).toBe(200);
     await response!.text();
     const configuration = (
       await f.query('select configuration from ai_run where conversation_id=$1', [f.conversationId])

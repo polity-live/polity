@@ -813,11 +813,27 @@ function buildToolSummary(prefix: string, attachments: readonly AiChatAttachment
 async function loadRelationshipSets(userId: string): Promise<RelationshipSets> {
   return executeZeroRead(async tx => {
     const [groupsData, eventsData, todosData, amendmentsData, blogsData] = await Promise.all([
-      tx.run(zql.group_membership.where('user_id', userId)),
-      tx.run(zql.event_participant.where('user_id', userId)),
+      tx.run(
+        zql.group_membership
+          .where('user_id', userId)
+          .where('status', 'IN', ['active', 'member', 'admin'])
+      ),
+      tx.run(
+        zql.event_participant
+          .where('user_id', userId)
+          .where('status', 'IN', ['active', 'confirmed', 'member', 'admin'])
+      ),
       tx.run(zql.todo_assignment.where('user_id', userId)),
-      tx.run(zql.amendment_collaborator.where('user_id', userId)),
-      tx.run(zql.blog_blogger.where('user_id', userId)),
+      tx.run(
+        zql.amendment_collaborator
+          .where('user_id', userId)
+          .where('status', 'IN', ['active', 'collaborator', 'member', 'admin'])
+      ),
+      tx.run(
+        zql.blog_blogger
+          .where('user_id', userId)
+          .where('status', 'IN', ['active', 'owner', 'admin', 'member', 'writer'])
+      ),
     ]);
 
     return {
