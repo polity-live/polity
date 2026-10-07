@@ -2,6 +2,11 @@
 
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  flushProjectEditor,
+  useProjectEditorSnapshot,
+} from '@/features/project-chat/hooks/editor-bridge';
+import osmFixture from '@/features/app-tutorial/fixtures/euckenstrasse-38-osm.json';
 
 const mocks = vi.hoisted(() => ({
   auth: null as any,
@@ -100,7 +105,8 @@ vi.mock('../../logic/cityDesignChangeRequestDiff', () => ({
   createCityDesignChangeRequestPayloads: (...args: unknown[]) => mocks.createPayloads(...args),
   createCityDesignPersistenceSnapshot: (...args: unknown[]) => mocks.createPersistence(...args),
 }));
-vi.mock('../../logic/cityDesignOsm', () => ({
+vi.mock('../../logic/cityDesignOsm', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../logic/cityDesignOsm')>()),
   getCityDesignOsmLayerVisibility: (value: unknown) => value ?? { roads: true },
   isCityDesignFallbackSnapshot: () => mocks.fallbackSnapshot,
 }));
@@ -256,6 +262,165 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('useCityDesignPageController A04 branch accountability', () => {
+  it('publishes selected objects and real OSM features to project chat and flushes their current identities', async () => {
+    mocks.auth = { user: { id: 'user' } };
+    mocks.access.canEditDirectly = true;
+    mocks.userState = { user: { first_name: 'Ada', last_name: 'Lovelace' } };
+    setDocumentMode('edit');
+    const snapshot = structuredClone(osmFixture.snapshot);
+    const feature = snapshot.features[0];
+    mocks.editor.design = makeDesign({
+      objects: [{ id: 'object', type: 'tree' }],
+      osmSnapshot: snapshot,
+    });
+    mocks.editor.state.selectedObjectId = 'object';
+    mocks.editor.state.selectedOsmWayId = feature.id;
+    const scope = { kind: 'amendment' as const, amendmentId: 'amendment' };
+    const controller = renderHook(() => useCityDesignPageController('amendment'));
+    const publication = renderHook(() => useProjectEditorSnapshot(scope, 'city_design'));
+    expect(controller.result.current.currentUserDisplayName).toBe('Ada Lovelace');
+    expect(publication.result.current?.context.references).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'city_object', id: 'object', label: 'tree' }),
+        expect.objectContaining({
+          kind: 'city_feature',
+          id: feature.id,
+          label: feature.label || feature.id,
+        }),
+      ])
+    );
+    expect(await flushProjectEditor(scope, { surface: 'city_design' })).toMatchObject({
+      objectIds: ['object'],
+      featureIds: [feature.id],
+      branchId: null,
+    });
+    mocks.editor.state.selectedObjectId = 'deleted-object';
+    mocks.editor.state.selectedOsmWayId = 'deleted-feature';
+    controller.rerender();
+    expect(publication.result.current?.context.references).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'city_object', label: 'deleted-object' }),
+        expect.objectContaining({ kind: 'city_feature', label: 'deleted-feature' }),
+      ])
+    );
+  });
+
+  it('flushes clean city designs without saving and persists dirty drafts before supplying AI context', async () => {
+    mocks.access.canEditDirectly = true;
+    setDocumentMode('edit');
+    const controller = renderHook(() => useCityDesignPageController('amendment'));
+    const scope = { kind: 'amendment' as const, amendmentId: 'amendment' };
+    expect(await flushProjectEditor(scope, { surface: 'city_design' })).toMatchObject({
+      objectIds: [],
+      featureIds: [],
+    });
+    expect(mocks.actions.createCityDesign).not.toHaveBeenCalled();
+    mocks.editor.state.isDirty = true;
+    controller.rerender();
+    let context;
+    await act(async () => {
+      context = await flushProjectEditor(scope, { surface: 'city_design' });
+    });
+    expect(context).toMatchObject({ surface: 'city_design' });
+    expect(mocks.actions.createCityDesign).toHaveBeenCalledOnce();
+    expect(mocks.serverConfirmed).toHaveBeenCalledOnce();
+    expect(mocks.editor.replaceDesign).toHaveBeenLastCalledWith(expect.anything(), false);
+    const rejected = new Error('Server rejected revision');
+    mocks.serverConfirmed.mockRejectedValueOnce(rejected);
+    await act(async () => {
+      await expect(flushProjectEditor(scope, { surface: 'city_design' })).rejects.toBe(rejected);
+    });
+  });
+
+  it('refuses AI context for a removed process branch', async () => {
+    renderHook(() => useCityDesignPageController('amendment', 'removed'));
+    await expect(
+      flushProjectEditor(
+        { kind: 'amendment', amendmentId: 'amendment' },
+        { surface: 'city_design' }
+      )
+    ).rejects.toThrow('no longer available');
+    expect(mocks.actions.createCityDesign).not.toHaveBeenCalled();
+  });
+
+  it.each(['current', 'removed'])(
+    'rechecks requested branch %s against current process branches before publishing AI context',
+    async requested => {
+      mocks.access.canEditDirectly = true;
+      setDocumentMode('edit', {
+        current_process_run: {
+          active_branch_id: 'current',
+          branches: [
+            { id: 'earlier', title: 'Earlier', editing_mode: 'edit' },
+            { id: 'current', title: 'Current', editing_mode: 'edit' },
+          ],
+        },
+      });
+      const controller = renderHook(() => useCityDesignPageController('amendment', requested));
+      expect(controller.result.current.readOnly).toBe(requested === 'removed');
+      const scope = { kind: 'amendment' as const, amendmentId: 'amendment' };
+      if (requested === 'removed') {
+        await expect(flushProjectEditor(scope, { surface: 'city_design' })).rejects.toThrow(
+          'no longer available'
+        );
+      } else {
+        expect(await flushProjectEditor(scope, { surface: 'city_design' })).toMatchObject({
+          branchId: 'current',
+        });
+      }
+    }
+  );
+
+  it('refuses AI context while a city-design save is awaiting confirmation', async () => {
+    mocks.access.canEditDirectly = true;
+    setDocumentMode('edit');
+    let accept!: () => void;
+    mocks.serverConfirmed.mockReturnValueOnce(
+      new Promise<void>(resolve => {
+        accept = resolve;
+      })
+    );
+    const controller = renderHook(() => useCityDesignPageController('amendment'));
+    let saving!: Promise<void>;
+    await act(async () => {
+      saving = controller.result.current.onSave();
+      await Promise.resolve();
+    });
+    await expect(
+      flushProjectEditor(
+        { kind: 'amendment', amendmentId: 'amendment' },
+        { surface: 'city_design' }
+      )
+    ).rejects.toThrow('finished saving');
+    await act(async () => {
+      accept();
+      await saving;
+    });
+    expect(
+      await flushProjectEditor(
+        { kind: 'amendment', amendmentId: 'amendment' },
+        { surface: 'city_design' }
+      )
+    ).toMatchObject({ surface: 'city_design' });
+  });
+
+  it('propagates rejected suggestion saves instead of allowing AI to act on an unconfirmed draft', async () => {
+    mocks.access.canSuggestInternally = true;
+    setDocumentMode('suggest_internal');
+    mocks.editor.state.isDirty = true;
+    mocks.serverConfirmed.mockRejectedValueOnce(new Error('Suggestion rejected'));
+    renderHook(() => useCityDesignPageController('amendment'));
+    await act(async () => {
+      await expect(
+        flushProjectEditor(
+          { kind: 'amendment', amendmentId: 'amendment' },
+          { surface: 'city_design' }
+        )
+      ).rejects.toThrow('Suggestion rejected');
+    });
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+
   it('normalizes helper inputs and collaborator fallbacks', () => {
     const helpers = cityDesignPageControllerInternals;
     expect(helpers.originFromCenter({ lat: 1, lon: 2 }, 'Center')).toEqual({

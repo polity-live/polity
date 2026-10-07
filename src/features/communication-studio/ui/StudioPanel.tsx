@@ -163,7 +163,7 @@ export function StudioPanel({
             open={toolbarOpen}
             onOpenChange={next => {
               if (next) change(true, 'toolbar');
-              else if (placement === 'toolbar') change(false);
+              else change(false);
             }}
           >
             <PopoverTrigger asChild>
@@ -194,11 +194,9 @@ export function StudioPanel({
 
       <Popover
         open={sidebarOpen}
-        onOpenChange={next => {
-          if (!next && placement === 'sidebar') {
-            restoreNavigationFocus.current = true;
-            change(false);
-          }
+        onOpenChange={() => {
+          restoreNavigationFocus.current = true;
+          change(false);
         }}
       >
         <PopoverAnchor virtualRef={navigationAnchor} />
@@ -234,12 +232,7 @@ export function StudioPanel({
       </Popover>
 
       {mobile || mobileOpen ? (
-        <Sheet
-          open={(toolbarOpen && mobile) || mobileOpen}
-          onOpenChange={next => {
-            if (!next && (placement === 'toolbar' || placement === 'mobile')) change(false);
-          }}
-        >
+        <Sheet open={(toolbarOpen && mobile) || mobileOpen} onOpenChange={() => change(false)}>
           <SheetContent
             data-canvas-focus-occluder
             onEscapeKeyDown={preserveLayerRenameOnEscape}
@@ -252,12 +245,7 @@ export function StudioPanel({
           </SheetContent>
         </Sheet>
       ) : large ? (
-        <Dialog
-          open={toolbarOpen}
-          onOpenChange={next => {
-            if (!next && placement === 'toolbar') change(false);
-          }}
-        >
+        <Dialog open={toolbarOpen} onOpenChange={() => change(false)}>
           <DialogContent
             data-canvas-focus-occluder
             onEscapeKeyDown={preserveLayerRenameOnEscape}

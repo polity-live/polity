@@ -6571,6 +6571,76 @@
             "coveredStatements": 220,
             "totalStatements": 221
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "publishes selected objects and real OSM features to project chat and flushes their current identities"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "flushes clean city designs without saving and persists dirty drafts before supplying AI context"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "refuses AI context for a removed process branch"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "rechecks requested branch %s against current process branches before publishing AI context"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "refuses AI context while a city-design save is awaiting confirmation"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "propagates rejected suggestion saves instead of allowing AI to act on an unconfirmed draft"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes helper inputs and collaborator fallbacks"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "returns safe read-only defaults and guards mutation handlers"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "handles OSM failures and tutorial snapshots"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "saves updates and suggestions, votes, finalizes, and persists comments"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "uses process-branch fallbacks for mode changes and discussions"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "covers terminal, event-suggestion, selection, placement, and empty mode targets"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "reports tutorial load/save failures and both save error forms"
+        },
+        {
+          "file": "src/features/amendments/city-design/hooks/__tests__/useCityDesignPageController.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves unrelated discussions while appending an existing thread"
         }
       ],
       "suggestedTestRefs": [
@@ -24754,6 +24824,86 @@
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "retains a desktop fallback when media-query detection is unavailable"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and closes the toolbar popover by keyboard and restores trigger focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves a layer rename on Escape while permitting normal panel dismissal"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "anchors a compact sidebar panel to the visible right navigation and restores its focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps a sidebar panel open during canvas interactions and dismisses it outside the canvas"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "dismisses a sidebar on canvas interactions when keeping it open is disabled"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "hands sidebar focus to the next navigation item without restoring the previous item"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores malformed requests and unrelated toolbar requests while an existing sidebar stays open"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "falls back to the toolbar for unavailable navigation anchor %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "uses a bottom sheet for horizontal navigation and preserves content when placement changes"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens a large desktop dialog and closes it through its native close button"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "uses a wide sidebar for large panels without turning it into a modal dialog"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens a mobile toolbar sheet and switches back to a desktop popover on viewport changes"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "supports sidebar-only panels while refusing a toolbar request without a toolbar trigger"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "notifies the workspace when an open panel is unmounted"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioPanel.ssr.unit.test.ts",
+          "project": "unit",
+          "caseId": "renders the closed toolbar on the server without allocating a DOM portal or exposing panel content"
         }
       ],
       "suggestedTestRefs": [
@@ -26052,6 +26202,26 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioPanel.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioPanel.ssr.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
