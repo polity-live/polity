@@ -120,7 +120,6 @@ import {
   type ArrangementReference,
 } from '../logic/selection-geometry';
 import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
-import { v3DocumentToLegacy } from '../logic/v3-adapter';
 import { paletteColor, themeFontFamily } from '../logic/theme';
 import { formatStudioRichText } from '../logic/patch-studio-node';
 import {
@@ -280,8 +279,6 @@ export function StudioEditor({
       if (!payload) throw new Error('The Studio clipboard is empty.');
       if (payload.projectId !== projectId)
         throw new Error('Elements can only be pasted within the same Studio project.');
-      if (payload.version !== 2)
-        throw new Error('This legacy clipboard selection needs an active canvas for pasting.');
       let selectedNodeIds: string[] = [];
       c.transactV3(document => {
         const pasted = pasteStudioV3Clipboard({ document, payload, projectId });
@@ -476,17 +473,7 @@ function StudioEditorReady({
   );
   const [selectionState, setSelectionState] = useState<StudioSelectionState>(emptyStudioSelection);
   const selectionProjectId = useRef(projectId);
-  const [masterMode] = useState(false);
   const [tableInsertCount, setTableInsertCount] = useState(0);
-  const masterPage = useMemo(() => {
-    if (!c.v3Value || !masterFrame) return null;
-    const projected = v3DocumentToLegacy({
-      ...c.v3Value,
-      masterLayout: { frameId: null, placements: {} },
-    });
-    return projected.pages.find(candidate => candidate.id === masterFrame.id) ?? null;
-  }, [c.v3Value, masterFrame]);
-  const canvasPage = masterMode && masterPage ? masterPage : page;
   const selectedNodeIds = selectionState.nodeIds.filter(id =>
     c.v3Value?.nodes.some(node => node.id === id)
   );
@@ -652,13 +639,8 @@ function StudioEditorReady({
                   ? { type: 'setNodeState' as const, ...base, locked: action === 'lock' }
                   : action === 'duplicate'
                     ? { type: 'duplicateNodes' as const, ...base }
-                    : action === 'front' ||
-                        action === 'back' ||
-                        action === 'forward' ||
-                        action === 'backward'
-                      ? { type: 'reorderNodes' as const, ...base, action }
-                      : null;
-      if (v3Command) Object.assign(document, applyStudioCommandV3(document, v3Command));
+                    : { type: 'reorderNodes' as const, ...base, action };
+      Object.assign(document, applyStudioCommandV3(document, v3Command));
     });
     if (action === 'delete' || action === 'hide') c.selectExact([]);
   };
@@ -974,7 +956,7 @@ function StudioEditorReady({
       /* Use project clipboard. */
     }
     const parsed = parseStudioClipboard(clipboard) ?? getProjectStudioClipboard(projectId);
-    if (parsed?.version !== 2) return;
+    if (!parsed) return;
     const ids = pasteV3Clipboard(parsed, page.id);
     c.selectExact(ids);
   };
@@ -1075,7 +1057,7 @@ function StudioEditorReady({
     };
     window.addEventListener('keydown', key, true);
     return () => window.removeEventListener('keydown', key, true);
-  }, [c, page, active, disabled]);
+  }, [c, page, active, disabled, selectionState]);
   const field = (label: string, children: ReactNode) => (
     <label key={label} className="block space-y-1 text-xs">
       <span>{tr(label)}</span>
@@ -2767,12 +2749,12 @@ function StudioEditorReady({
           <Suspense fallback={<p>{tr('loading')}</p>}>
             <KonvaStudioCanvas
               ref={attachCanvas}
-              key={`${projectId}:${masterMode ? 'master' : 'content'}`}
+              key={`${projectId}:content`}
               document={canvasDocument}
               changeRequestMarkers={changeRequestMarkers}
               changeRequestOverlay={canvasOverlay}
               onChangeRequestSelect={onChangeRequestSelect}
-              activeFrameId={canvasPage.id}
+              activeFrameId={page.id}
               onCreateNode={createCanvasNode}
               onDeleteNodes={cutV3Clipboard}
               onTextChange={changeCanvasText}
@@ -2794,7 +2776,7 @@ function StudioEditorReady({
               selectExact={c.selectExact}
               editable={!disabled && !previewDocument}
               peers={c.peers}
-              cursor={(x, y) => c.cursor(canvasPage.id, x, y, c.selected)}
+              cursor={(x, y) => c.cursor(page.id, x, y, c.selected)}
               guides={c.guides}
               onCanvasStateChange={handleCanvasStateChange}
               onCropCommit={(nodeId, state) =>
@@ -2822,7 +2804,7 @@ function StudioEditorReady({
                 loading: tr('cropLoading'),
                 failed: tr('cropFailed'),
               }}
-              inspector={!masterMode && activeNode ? props : undefined}
+              inspector={activeNode ? props : undefined}
               inspectorLabels={{
                 title: tr('properties'),
                 collapse: tr('collapseProperties'),

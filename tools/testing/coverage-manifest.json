@@ -21957,6 +21957,31 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
           "project": "unit",
           "caseId": "keeps matching ancestors and excludes the master-layout branch"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "restores a prior value when the accepted and current optional values are both absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders valid root frames deterministically when their z-indices are equal"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps small tool results while compacting a larger sibling result without altering the original history"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid diagnostic identity when optional presentation context is absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats project conversation name %s without treating participants as a direct recipient"
         }
       ],
       "suggestedTestRefs": [
@@ -24409,6 +24434,106 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "opens group theme settings from its focused native link with the correct query while exposing destination loading and access errors"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "persists the real canvas %s creation event as a validated canonical node with local geometry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "creates unrounded shapes outside frames and refuses late creation after access is revoked"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "persists nested rich text and empty text while ignoring delayed edits for deleted and non-text nodes"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "moves frames and their children once, applies real resize constraints, and ignores locked or deleted drag targets"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "clears frame theme bindings only for changed paint fields and removes an override when paint is reset"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "copies, pastes and cuts through %s browser clipboard access using real project serialization"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects a foreign project clipboard payload without changing the document or its selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves native text focus on pointer formatting controls and persists all text marks"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps retry and both conflict-resolution failures visible without an unhandled rejection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "changes video animation and mute state through native inspector controls"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "edits table cells through the native inspector and writes the resulting canonical table"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens and closes the image editor only with an %s asset URL"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "activates every drawing tool and zoom action through native keyboard menu selection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "formats the actual selected Plate editor text through Studio marks, alignment, lists, links and theme style actions"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reorders a complete group through actual canvas context buttons and preserves text focus on its formatting action"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resets the previous project selection when the existing editor switches project identity"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "commits full-source and partial media crops and ignores locked, removed and cancelled crop targets"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "saves a canvas drag to the real Elements navigation drop target with a %s response"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores unavailable and out-of-bounds element drag targets and instantiates only an available library set"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "routes native canvas keyboard duplicate, history, formatting, movement and deletion commands while guarding unrelated editing controls"
         }
       ],
       "suggestedTestRefs": [
@@ -26382,6 +26507,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -47671,6 +47806,31 @@
             "coveredStatements": 48,
             "totalStatements": 53
           }
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "restores a prior value when the accepted and current optional values are both absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders valid root frames deterministically when their z-indices are equal"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps small tool results while compacting a larger sibling result without altering the original history"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid diagnostic identity when optional presentation context is absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats project conversation name %s without treating participants as a direct recipient"
         }
       ],
       "suggestedTestRefs": [
@@ -58521,6 +58681,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
@@ -58667,6 +58837,7 @@
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -58713,11 +58884,37 @@
           "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
           "project": "unit",
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "restores a prior value when the accepted and current optional values are both absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders valid root frames deterministically when their z-indices are equal"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps small tool results while compacting a larger sibling result without altering the original history"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid diagnostic identity when optional presentation context is absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats project conversation name %s without treating participants as a direct recipient"
         }
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -58769,6 +58966,7 @@
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -58870,6 +59068,7 @@
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
         "supabase/tests/permissions_contract.sql",
@@ -58986,6 +59185,7 @@
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -59122,6 +59322,7 @@
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -79642,11 +79843,11 @@
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
         "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/editor-realtime-version.branch-a03.component.test.tsx",
-        "src/features/editor/hooks/__tests__/useEditor.branch-a03.component.test.tsx",
-        "src/features/editor/hooks/__tests__/useEditor.component.test.tsx"
+        "src/features/editor/hooks/__tests__/useEditor.branch-a03.component.test.tsx"
       ]
     },
     {
@@ -100483,6 +100684,31 @@
             "coveredStatements": 35,
             "totalStatements": 35
           }
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "restores a prior value when the accepted and current optional values are both absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders valid root frames deterministically when their z-indices are equal"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps small tool results while compacting a larger sibling result without altering the original history"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid diagnostic identity when optional presentation context is absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats project conversation name %s without treating participants as a direct recipient"
         }
       ],
       "suggestedTestRefs": [
@@ -108925,7 +109151,7 @@
         "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
         "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx"
+        "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts"
       ]
     },
     {
@@ -109079,6 +109305,31 @@
           "file": "src/server/project-chat/__tests__/history.unit.test.ts",
           "project": "unit",
           "caseId": "rejects an oversized current result instead of silently truncating it"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "restores a prior value when the accepted and current optional values are both absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders valid root frames deterministically when their z-indices are equal"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps small tool results while compacting a larger sibling result without altering the original history"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid diagnostic identity when optional presentation context is absent"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats project conversation name %s without treating participants as a direct recipient"
         }
       ],
       "suggestedTestRefs": [
@@ -115080,6 +115331,41 @@
             "coveredStatements": 18,
             "totalStatements": 32
           }
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects ordinary message insertion into a project chat for actor %s"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows the project chat creator to rename the shared conversation"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks current project access before allowing conversation management"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "denies a project owner who is not the shared conversation creator and leaves its title intact"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "keeps durable project messages immutable even for their original sender"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects creating a project conversation through the ordinary conversation mutator"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "creates and edits a personal appearance theme with %s optional fields using native Zero transactions"
         }
       ],
       "suggestedTestRefs": [
@@ -119594,6 +119880,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+      "domain": "zero:messages",
+      "owner": "polity/zero:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
       "domain": "zero:messages",
       "owner": "polity/zero:messages",
@@ -119671,10 +119967,10 @@
         "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
         "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx"
+        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts"
       ]
     },
     {
@@ -119744,9 +120040,9 @@
         "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
         "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts"
+        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts"
       ]
     },
     {
@@ -119804,6 +120100,41 @@
             "coveredStatements": 54,
             "totalStatements": 98
           }
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects ordinary message insertion into a project chat for actor %s"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows the project chat creator to rename the shared conversation"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks current project access before allowing conversation management"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "denies a project owner who is not the shared conversation creator and leaves its title intact"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "keeps durable project messages immutable even for their original sender"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects creating a project conversation through the ordinary conversation mutator"
+        },
+        {
+          "file": "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "creates and edits a personal appearance theme with %s optional fields using native Zero transactions"
         }
       ],
       "suggestedTestRefs": [
@@ -119882,6 +120213,7 @@
         "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
         "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
@@ -119914,6 +120246,7 @@
         "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
         "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
