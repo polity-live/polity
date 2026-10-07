@@ -12,7 +12,7 @@ import { flushProjectEditor, useProjectEditorSnapshot } from './editor-bridge';
 export function contextWithReferences(
   context: EditorContext,
   references: ProjectContextReference[]
-): EditorContext {
+): EditorContext & { references: ProjectContextReference[] } {
   return {
     ...context,
     references,
@@ -34,12 +34,13 @@ export function useProjectComposerContext(
   const { t } = useTranslation();
   const publication = useProjectEditorSnapshot(scope, fallback.surface);
   const live = publication?.context ?? fallback;
+  const scopeId = scope.kind === 'studio' ? scope.projectId : scope.amendmentId;
   const automatic = useMemo<ProjectContextReference[]>(() => {
     const references = live.references ?? [];
     const root: ProjectContextReference =
       scope.kind === 'studio'
-        ? { kind: 'studio_project', id: scope.projectId, label: title, origin: 'automatic' }
-        : { kind: 'amendment', id: scope.amendmentId, label: title, origin: 'automatic' };
+        ? { kind: 'studio_project', id: scopeId, label: title, origin: 'automatic' }
+        : { kind: 'amendment', id: scopeId, label: title, origin: 'automatic' };
     const refs = references.length ? [...references] : [root];
     const add = (ref: ProjectContextReference) => {
       if (!refs.some(item => item.kind === ref.kind && item.id === ref.id)) refs.push(ref);
@@ -95,13 +96,13 @@ export function useProjectComposerContext(
       )
         add({
           kind: 'text_selection',
-          id: live.documentId ?? scope.amendmentId,
+          id: live.documentId ?? scopeId,
           label: t('features.projectChat.context.selection'),
           origin: 'automatic',
         });
     }
     return refs;
-  }, [live, scope.kind, title, t]);
+  }, [live, scope.kind, scopeId, title, t]);
   const fingerprint = JSON.stringify([
     fallback.surface,
     live.proposalId ?? null,
@@ -156,7 +157,7 @@ export function useProjectComposerContext(
         throw new Error('The editor context changed. Choose the context again.');
       return contextWithReferences(
         { ...saved, ...frozen, contentRevision: saved.contentRevision },
-        frozen.references ?? []
+        frozen.references
       );
     },
   };

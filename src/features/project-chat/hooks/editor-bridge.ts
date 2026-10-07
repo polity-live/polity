@@ -129,9 +129,10 @@ export function useProjectEditorBridge(
     const editor = editors.get(key);
     if (
       editor?.owner === owner.current &&
+      publication &&
       JSON.stringify(editor.publication) !== JSON.stringify(publication)
     ) {
-      editor.publication = publication ? structuredClone(publication) : undefined;
+      editor.publication = structuredClone(publication);
       notify();
     }
   });

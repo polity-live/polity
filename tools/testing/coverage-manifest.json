@@ -46319,6 +46319,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+      "domain": "features:messages",
+      "owner": "polity/features:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
       "domain": "features:messages",
       "owner": "polity/features:messages",
@@ -46427,10 +46437,86 @@
             "coveredStatements": 315,
             "totalStatements": 315
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "removes selected project tools when the server withdraws them from the current scope"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "clears a missing model list when refreshing an expired catalog response"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "freezes editor context, uses only project tools and acknowledges the accepted send (skip persistence=%s)"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "retains the draft when the editor flush fails before constructing a request"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps retry disabled while an externally owned project run is active"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "cancels the native request and invokes durable project cancellation without leaving a retry error"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "allows durable cancellation when no local request exists"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the anonymous project draft key when signed out and never fetches the catalog"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "resumes the exact persisted run and updates compression, tool, text and persistence states"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves an unknown or absent resumed tool label (%s)"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the persisted run identity when the server omits a trace header and the response is empty"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "settles a failed resumption and keeps its durable retry available (%s)"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "refuses a second retry while the first stream is still active"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "does not resume without a current session"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
+          "project": "component",
+          "caseId": "cancels a resumed native request without turning cancellation into a stream error"
         }
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46465,6 +46551,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46499,6 +46586,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46533,6 +46621,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46567,6 +46656,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46601,6 +46691,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46635,6 +46726,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46669,6 +46761,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -46703,6 +46796,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/messages/hooks/__tests__/conversation-data-rest.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useAssistantChat-project.component.test.tsx",
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
@@ -57457,7 +57551,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
       "kind": "test-infrastructure",
@@ -57498,10 +57612,57 @@
           "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
           "project": "component",
           "caseId": "rejects a workspace switch while the editor save is in flight"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "uses a caller fallback for unavailable editors and keeps both server-rendered snapshots empty"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "flushes a legacy editor under its actual current callback and returns no native focus target"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "publishes immutable updated editor context, retains equal snapshots, and clears a removed publication"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "retains the newer owner when an older editor with the same surface unmounts or republishes"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "forwards native node focus through the latest registered callback and rejects a removed canvas callback"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects a %s switch while the editor is saving and leaves the published replacement intact"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "captures native text ranges without republishing equal selections and clears only its owned document on unmount"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a newer document selection registration after an older editor unmounts and ignores missing documents"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps amendment text and city editor publications separate when a nullable bridge acquires a scope"
         }
       ],
       "suggestedTestRefs": [
-        "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx"
+        "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+        "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx"
       ]
     },
     {
@@ -57536,10 +57697,52 @@
           "file": "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
           "project": "component",
           "caseId": "rejects a workspace switch while the editor save is in flight"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "replaces the automatic project identity when the scope changes under the same stable fallback and translation function"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "projects only referenced frame, element, city and text selections into the request context"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "builds amendment context from the active branch, city entities and expanded text selection (document=%s)"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "omits collapsed text selection and absent city context, and retains labels from existing references"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps fixed context, deduplicates manual pins, removes optional manual references and resets them after sending"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects a pinned reference from a different workspace before saving or sending editor context"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects a saved %s differing from the frozen send context"
+        },
+        {
+          "file": "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "exposes published context options and allows legacy pins without a workspace identity"
         }
       ],
       "suggestedTestRefs": [
-        "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx"
+        "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
+        "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
+        "src/features/project-chat/hooks/__tests__/editor-bridge.component.test.tsx"
       ]
     },
     {
@@ -107428,10 +107631,10 @@
         "src/features/messages/logic/__tests__/shareContextAttachment.unit.test.ts",
         "src/features/messages/ui/__tests__/AiContextCards.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AiContextCards.component.test.tsx",
+        "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
         "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/context-link.branch-a01.component.test.tsx",
-        "src/lib/ai/__tests__/messageContext.unit.test.ts"
+        "src/features/shared/ui/ui-platejs/__tests__/context-link.branch-a01.component.test.tsx"
       ]
     },
     {

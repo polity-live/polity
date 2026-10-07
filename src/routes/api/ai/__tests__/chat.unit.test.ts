@@ -370,10 +370,18 @@ describe('AI chat route setup errors', () => {
     expect(streamOptions.system).toContain('Do not use Markdown');
     expect(mocks.stepCountIs).toHaveBeenCalledWith(5);
 
+    await streamOptions.onStepStart({
+      modelId: 'openrouter/free',
+      provider: 'openrouter',
+      stepNumber: 0,
+      messages: [],
+    });
+
     await expect(
-      streamOptions.tools.set_chat_title.execute({
-        title: 'Kommunale Beteiligung verbessern',
-      })
+      streamOptions.tools.set_chat_title.execute(
+        { title: 'Kommunale Beteiligung verbessern' },
+        { toolCallId: 'title-success', messages: [], abortSignal: new AbortController().signal }
+      )
     ).resolves.toEqual({ updated: true });
     expect(mocks.setAssistantConversationTitle).toHaveBeenCalledWith(
       'user-1',
@@ -514,8 +522,17 @@ describe('AI chat route setup errors', () => {
 
     const response = await handleAiChatRequest(chatRequest(validBody));
 
+    await streamOptions.onStepStart({
+      modelId: 'openrouter/free',
+      provider: 'openrouter',
+      stepNumber: 0,
+      messages: [],
+    });
     await expect(
-      streamOptions.tools.set_chat_title.execute({ title: 'Sinnvoller Titel' })
+      streamOptions.tools.set_chat_title.execute(
+        { title: 'Sinnvoller Titel' },
+        { toolCallId: 'title-failure', messages: [], abortSignal: new AbortController().signal }
+      )
     ).resolves.toEqual({ updated: false });
     expect(await response.text()).toBe(
       '{"type":"text-delta","text":"Antwort trotz Titelfehler"}\n'

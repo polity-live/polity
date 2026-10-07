@@ -724,7 +724,7 @@ export function useAssistantChat(
   );
 
   const retryLastAssistantMessage = useCallback(async (): Promise<boolean> => {
-    if (isSending) {
+    if (isSending || controllerOptions.project?.externallyBusy) {
       return false;
     }
 
@@ -763,10 +763,14 @@ export function useAssistantChat(
           if (event.type === 'text-delta') {
             finalText += event.text;
             setStreamingText(current => current + event.text);
+            setIsCompressing(false);
             setIsThinking(false);
             setIsToolCalling(false);
+            setActiveToolName(null);
+            setActiveToolCall(null);
           } else if (event.type === 'tool-call') {
             const label = availableTools.find(tool => tool.name === event.toolName)?.label;
+            setIsCompressing(false);
             setIsThinking(false);
             setIsToolCalling(true);
             setActiveToolName(label ?? event.toolName);
@@ -775,6 +779,7 @@ export function useAssistantChat(
               preview: buildToolCallPreview(event.toolName, event.args),
             });
           } else if (event.type === 'tool-result') {
+            setIsCompressing(false);
             setIsToolCalling(false);
             setIsThinking(true);
             setActiveToolName(null);
@@ -792,12 +797,20 @@ export function useAssistantChat(
             handleEvent(event);
           }
         }
-        for (const event of streamDecoder.push(decoder.decode())) handleEvent(event);
+        // UTF-8 finalization can only append a replacement character, never an NDJSON newline.
+        // The last unterminated event is emitted by finish() below.
+        streamDecoder.push(decoder.decode());
         for (const event of streamDecoder.finish()) handleEvent(event);
         if (finalText.trim()) setAwaitingPersistenceText(finalText.trim());
         setStreamError(null);
         return true;
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          setStreamingText('');
+          setAwaitingPersistenceText(null);
+          setStreamError(null);
+          return false;
+        }
         const message =
           error instanceof Error ? error.message : t('features.messages.ai.sendFailed');
         setStreamError(message);
@@ -808,6 +821,8 @@ export function useAssistantChat(
         setIsThinking(false);
         setIsToolCalling(false);
         setIsCompressing(false);
+        setActiveToolName(null);
+        setActiveToolCall(null);
       }
     }
 
@@ -821,6 +836,7 @@ export function useAssistantChat(
     availableTools,
     conversation.id,
     controllerOptions.project?.resumeRequestId,
+    controllerOptions.project?.externallyBusy,
     isSending,
     lastFailedRequest,
     sendAssistantMessage,
