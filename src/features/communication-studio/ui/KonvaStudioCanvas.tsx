@@ -1648,18 +1648,22 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   suppressTextClick.current ||
                   spacePressedRef.current ||
                   touchSuppressed.current
-                )
+                ) {
                   return;
-                openNode(node);
+                } else {
+                  openNode(node);
+                }
               }}
               onDblTap={event => {
                 if (
                   !(event.evt.target instanceof HTMLCanvasElement) ||
                   suppressTextClick.current ||
                   touchSuppressed.current
-                )
+                ) {
                   return;
-                openNode(node);
+                } else {
+                  openNode(node);
+                }
               }}
               onDragStart={event => {
                 if (event.target !== event.currentTarget || touchSuppressed.current) return;
