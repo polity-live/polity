@@ -24,11 +24,21 @@ export function TableSizePicker({
   };
   return (
     <div
+      data-action-id="shared.table-size.dimensions.choose"
       className="m-0 flex flex-col p-1"
       role="button"
       tabIndex={0}
       aria-label={`${label}: ${size.rowCount} x ${size.colCount}`}
-      onClick={select}
+      onClick={event => {
+        const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-table-size-row]');
+        if (cell && event.currentTarget.contains(cell)) {
+          event.stopPropagation();
+          onSelect({
+            rowCount: Number(cell.dataset.tableSizeRow),
+            colCount: Number(cell.dataset.tableSizeColumn),
+          });
+        } else select();
+      }}
       onKeyDown={event => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -69,15 +79,13 @@ export function TableSizePicker({
           return (
             <div
               key={index}
+              data-table-size-row={row + 1}
+              data-table-size-column={column + 1}
               className={cn(
                 'bg-secondary size-3 border border-solid',
                 row < size.rowCount && column < size.colCount && 'bg-primary/20 border-current'
               )}
               onMouseMove={() => setSize({ rowCount: row + 1, colCount: column + 1 })}
-              onClick={event => {
-                event.stopPropagation();
-                onSelect({ rowCount: row + 1, colCount: column + 1 });
-              }}
             />
           );
         })}

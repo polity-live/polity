@@ -1787,7 +1787,7 @@ function StudioEditorReady({
             <Grid3X3 />
           </ToolbarButton>
           <StudioToolbarMenu
-            key={tableInsertCount}
+            resetKey={tableInsertCount}
             panelKey="table"
             label={tr('table')}
             icon={<Table2 />}
@@ -1795,6 +1795,7 @@ function StudioEditorReady({
             className="p-1"
           >
             <TableSizePicker
+              key={tableInsertCount}
               label={tr('tableSize')}
               onSelect={dimensions => {
                 const id = c.addTable(dimensions);

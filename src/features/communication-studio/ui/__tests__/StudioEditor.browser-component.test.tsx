@@ -450,3 +450,27 @@ it('searches export frames and toggles all and current selections using native k
   ).toBe(true);
   expect(document.activeElement).toBe(selected);
 });
+
+it('inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar', async () => {
+  await mount();
+  const before = io.editor.v3Value.nodes.filter((node: any) => node.type === 'table').length;
+  const opened = await menu('table');
+  const picker = opened.menu.getByRole('button', { name: 'tableSize: 0 x 0' });
+  picker.focus();
+  expect(document.activeElement).toBe(picker);
+  await userEvent.keyboard('{Enter}');
+  expect(io.editor.v3Value.nodes.filter((node: any) => node.type === 'table')).toHaveLength(before);
+  await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowDown}{Enter}');
+  await waitFor(() =>
+    expect(io.editor.v3Value.nodes.filter((node: any) => node.type === 'table')).toHaveLength(
+      before + 1
+    )
+  );
+  const table = io.editor.v3Value.nodes.find((node: any) => node.type === 'table');
+  expect(table.data.rows).toHaveLength(2);
+  expect(table.data.rows.every((row: any) => row.cells.length === 3)).toBe(true);
+  expect(io.canvasProps.selected).toEqual([table.id]);
+  await waitFor(() =>
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'table' }))
+  );
+});

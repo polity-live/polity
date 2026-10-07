@@ -2043,6 +2043,91 @@
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "opens only the requested Studio menu from a panel event and removes its listener on unmount"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits selected text through native inspector keyboard controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "toggles inspector text marks with native keyboard focus and retains the selected node"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses and clears native font menu radio selections and restores trigger focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "changes all paragraph alignment radio choices with native keyboard activation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates every horizontal and vertical constraint through native select keyboard controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects every arrowhead on both ends using native keyboard controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies palette colors with native keyboard focus and exposes the selected color"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables text and constraint controls when collaboration editing permission is revoked"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "toggles text toolbar marks through native keyboard activation without altering other nodes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies code and highlight marks from the native toolbar while retaining keyboard focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "locks and unlocks the selected node with native keyboard activation and updates inspector availability"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "duplicates and deletes through the native toolbar while preserving other nodes and clearing removed selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables lock duplicate and delete for empty selection and revoked editing rights"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects document keyboard shortcuts while procedure editing is disabled"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits the project title with native keyboard focus and blocks title changes after permission revocation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "searches export frames and toggles all and current selections using native keyboard focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar"
       }
     ],
     "src/features/communication-studio/ui/StudioVisibilityDialog.tsx": [
@@ -3246,6 +3331,16 @@
         "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.component.test.tsx",
         "project": "component",
         "caseId": "selects dimensions by pointer or keyboard and never inserts 0 x 0"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses table dimensions with native keyboard focus and never inserts an empty selection"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects actual hovered and clicked grid cells without bubbling a second insertion"
       }
     ],
     "src/features/shared/ui/ui-platejs/suggestion-mark-style.ts": [
@@ -5636,6 +5731,11 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "rejects document keyboard shortcuts while procedure editing is disabled"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -6103,6 +6203,18 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "erases a node with native pointer activation and tolerates a missing delete delegate"
+      }
+    ],
+    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts native keyboard table dimensions into the real Plate document and focuses the editor"
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts pointer-selected grid dimensions into the real Plate editor without duplicate tables"
       }
     ]
   },
@@ -7902,6 +8014,44 @@
         "caseId": "searches export frames and toggles all and current selections using native keyboard focus",
         "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
       }
+    ],
+    "src/features/shared/ui/ui-platejs/TableSizePicker.tsx#shared.table-size.dimensions.choose": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "chooses table dimensions with native keyboard focus and never inserts an empty selection",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects actual hovered and clicked grid cells without bubbling a second insertion",
+        "scenarios": ["idle", "success"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.table.dimensions.insert": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#editor.table-picker.menu.select-size": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts native keyboard table dimensions into the real Plate document and focuses the editor",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#editor.table-picker.dimensions.insert": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "inserts native keyboard table dimensions into the real Plate document and focuses the editor",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
     ]
   },
   "actionDeclarations": {
@@ -8021,6 +8171,15 @@
     },
     "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-294759a95e": {
       "actionId": "shared.canvas-change-request.marker.select"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-cb0524a2fd": {
+      "actionId": "communication-studio.table.dimensions.insert"
+    },
+    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#PlateTablePicker-c84d5e64ea": {
+      "actionId": "editor.table-picker.menu.select-size"
+    },
+    "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#TableSizePicker-83ad558d6d": {
+      "actionId": "editor.table-picker.dimensions.insert"
     }
   }
 }

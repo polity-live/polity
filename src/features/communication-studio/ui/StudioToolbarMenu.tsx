@@ -18,6 +18,7 @@ export function StudioToolbarMenu({
   children,
   className,
   onCloseAutoFocus,
+  resetKey,
 }: {
   label: string;
   tooltip?: string;
@@ -28,8 +29,12 @@ export function StudioToolbarMenu({
   children: ReactNode;
   className?: string;
   onCloseAutoFocus?: ComponentProps<typeof DropdownMenuContent>['onCloseAutoFocus'];
+  resetKey?: number;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (resetKey !== undefined) setOpen(false);
+  }, [resetKey]);
   useEffect(() => {
     if (!panelKey) return;
     const listener = (event: Event) => {
