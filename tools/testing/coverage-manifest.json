@@ -131878,16 +131878,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/testing/__tests__/check-pr-pipeline-p95.unit.test.ts",
-      "domain": "tools:testing",
-      "owner": "polity/tools:testing",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "tools/testing/__tests__/check-security-audit.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -132595,16 +132585,6 @@
     },
     {
       "path": "tools/testing/check-flow-test-campaign.mjs",
-      "domain": "tools:testing",
-      "owner": "polity/tools:testing",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/testing/check-pr-pipeline-p95.mjs",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",
