@@ -7807,6 +7807,335 @@
         "project": "unit",
         "caseId": "does not let an active personal collaborator manage the project"
       }
+    ],
+    "src/server/studio/governance.ts": [
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects disabled canvas and invalid input before opening a transaction"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a missing %s row"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects inaccessible workspace with missing row %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "stops immediately after collaboration access is revoked"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns server-computed session capabilities for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads draft editability for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a ready workspace for loading a draft and supports read-only library browsing"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires an operation ID and current generation for every write"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "replays an identical receipt and rejects another actor or another input"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a reviewable %s from the current canonical state"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects draft creation for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects draft writes for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves compatible draft changes and returns conflicts without overwriting newer edits"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "shares a draft with authorized readers %s and verifies AI sources"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a shared editor to save but reserves sharing and submission for the owner"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "submits a %s proposal with an immutable checksum"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects submission without changes, without resolution voters or outside the group suggestion phase"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "withdraws an owned %s and cleans staged media"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies withdrawal for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "changes phase only after checking revision, pending conflicts and ballot integrity"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a phase change for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "supports an empty ballot-opening phase and repeated phase updates"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "opens a submitted ballot with minutes %s and tolerates repeated start requests"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects ballot opening for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies ineligible voting for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "records or finalizes a vote with deadline %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "finalizes %s ballots without bypassing the electorate"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects finalization for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "decides a personal AI suggestion as %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects private AI acceptance for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects applying an accepted ballot from %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "reapplies an accepted resolution and retains deduplicated AI provenance"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies reapplication for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "adds a comment associated with workspace %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates an authorized %s including proposal access checks"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies comment changes for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a manager to resolve another author’s canonical comment but denies commenting without the capability"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "restores a validated historical document with a fresh generation and revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects restoration for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves an owned reusable library and checks current project edit authority"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "sets a valid group role capability to %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies role capability changes for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "adopts a personal project only after checking group rights and every source reader"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects project adoption for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "logs cleanup failures after returning a successful withdrawn operation"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates proposal media and chart files in the locked transaction before moving them into canonical scope"
+      },
+      {
+        "file": "src/server/studio/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "shares a manual draft without requesting AI-source audience checks"
+      }
+    ],
+    "src/server/studio/service.ts": [
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves the built-in theme in %s mode without database reads"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates a published custom theme with description %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a missing or invalid custom theme before creating storage objects"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a built-in project with group %s and the chosen theme"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies a saved template for group %s with media and chart remapping"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults missing template references to an empty list"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a missing saved template or revoked template and group rights before copying"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans already copied template assets after a later storage failure"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans a failed template transaction with copied assets %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans template assets when destination audience access changes inside the transaction"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads canonical document revision and current server editing capabilities"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads no document after permission revocation and rejects malformed canonical state"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates chart source assets and ignores charts without a source file"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "handles upload signing errors without a status code"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a deleted duplication source and remaps copied chart data sources"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "duplicates a V4 project without reintroducing removed brand data"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports export progress only to a user with current project access"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies private assets before exposing a new project and remaps media references"
+      }
     ]
   },
   "actionReferences": {

@@ -126,17 +126,15 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
         path,
       });
     }
-    document.nodes = document.nodes.filter(
-      node =>
-        input.template.kind !== 'project' || node.type !== 'media' || replacements.has(node.assetId)
-    );
-    document.nodes.forEach(node => {
+    document.nodes = document.nodes.filter(node => {
       if (node.type === 'media') {
         const replacement = replacements.get(node.assetId);
-        if (replacement) node.assetId = replacement;
+        if (!replacement) return false;
+        node.assetId = replacement;
       }
       if (node.type === 'chart' && node.sourceAssetId)
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
+      return true;
     });
     studioDocumentV3Schema.parse(document);
     const now = Date.now();
@@ -395,17 +393,15 @@ export async function duplicateProject(
       });
       replacements.set(row.id, assetId);
     }
-    value.nodes = value.nodes.filter(
-      node => node.type !== 'media' || replacements.has(node.assetId)
-    );
-    value.nodes.forEach(node => {
+    value.nodes = value.nodes.filter(node => {
       if (node.type === 'media') {
         const replacement = replacements.get(node.assetId);
-        if (!replacement) throw new StudioError('Cannot resolve copied media');
+        if (!replacement) return false;
         node.assetId = replacement;
       }
       if (node.type === 'chart' && node.sourceAssetId)
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
+      return true;
     });
     await assertStudioAccess(userId, id);
     const now = Date.now();
