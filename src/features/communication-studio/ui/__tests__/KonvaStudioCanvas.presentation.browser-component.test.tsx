@@ -1142,6 +1142,7 @@ it('cancels delayed native font loading when the rich text node unmounts', async
     release();
     await Promise.all(load.mock.results.map(result => result.value));
   });
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
   expect(Konva.stages.every(stage => !stage.container().isConnected)).toBe(true);
 });
 

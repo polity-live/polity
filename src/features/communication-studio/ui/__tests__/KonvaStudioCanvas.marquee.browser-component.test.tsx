@@ -1,5 +1,6 @@
 import { createRef, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import Konva from 'konva';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { defaultBrand } from '../../logic/document';
 import { applyStudioCommandV3 } from '../../logic/commands-v3';
@@ -111,6 +112,21 @@ async function harness() {
   };
   const selectedIds = () =>
     screen.getByTestId('selected-ids').textContent?.split(',').filter(Boolean) ?? [];
+  const canvasStage = Konva.stages.find(item => item.content === stage)!;
+  await waitFor(() => {
+    const border = worldToClient(1, 350);
+    const bounds = surface.getBoundingClientRect();
+    let hit: Konva.Node | null = canvasStage.getIntersection({
+      x: ((border.clientX - bounds.left) * canvasStage.width()) / bounds.width,
+      y: ((border.clientY - bounds.top) * canvasStage.height()) / bounds.height,
+    });
+    const ancestors: string[] = [];
+    while (hit) {
+      ancestors.push(hit.id());
+      hit = hit.getParent();
+    }
+    expect(ancestors).toContain(frame.id);
+  });
   return {
     frame,
     shapes,
@@ -241,6 +257,36 @@ it('selects after zoom and pan, moves the selected shapes together, and deletes 
   expect(remaining).not.toContain(shapes[0].id);
   expect(remaining).not.toContain(shapes[1].id);
   expect(remaining).toContain(shapes[2].id);
+});
+
+it('cancels a focused marquee before React effects settle and permits the next selection', async () => {
+  const { surface, worldToClient, drag, selectedIds } = await harness();
+  const host = screen.getByTestId('studio-canvas');
+  host.focus();
+  act(() => {
+    fireEvent.pointerDown(surface, {
+      ...worldToClient(50, 50),
+      pointerId: 10,
+      pointerType: 'mouse',
+      button: 0,
+    });
+    fireEvent.pointerMove(surface, {
+      ...worldToClient(550, 300),
+      pointerId: 10,
+      pointerType: 'mouse',
+      button: 0,
+    });
+    fireEvent.keyDown(host, { key: 'Escape' });
+    fireEvent.pointerUp(surface, {
+      ...worldToClient(550, 300),
+      pointerId: 10,
+      pointerType: 'mouse',
+      button: 0,
+    });
+  });
+  expect(selectedIds()).toEqual([]);
+  drag([50, 50], [550, 300]);
+  expect(selectedIds().length).toBeGreaterThan(0);
 });
 
 it('cancels a marquee on Escape and on a second touch without changing the selection', async () => {

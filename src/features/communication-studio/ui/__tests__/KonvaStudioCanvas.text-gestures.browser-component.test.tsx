@@ -79,8 +79,39 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
     if (type === 'up') fireEvent.pointerUp(surface, event);
     if (type === 'cancel') fireEvent.pointerCancel(surface, event);
   };
-  return { ref, state, surface, create, pointer, client, text };
+  return { ref, state, surface, create, pointer, client, text, frame, document, host };
 }
+
+it.each(['click', 'drag', 'cancel'] as const)(
+  'handles text creation on blank frame space with a %s gesture',
+  async action => {
+    const { ref, state, surface, create, frame, document, host } = await harness();
+    const bounds = host.querySelector<HTMLElement>('.konvajs-content')!.getBoundingClientRect();
+    const origin = ref.current!.scenePoint(bounds.left, bounds.top);
+    const frameBounds = worldBounds(document, frame);
+    const clientX = bounds.left + (frameBounds.left + 40 - origin.x) * state.current!.zoom;
+    const clientY = bounds.top + (frameBounds.top + 40 - origin.y) * state.current!.zoom;
+    const pointer = { pointerId: 29, pointerType: 'mouse', button: 0, clientX, clientY };
+    fireEvent.pointerDown(surface, pointer);
+    if (action === 'drag')
+      fireEvent.pointerMove(surface, { ...pointer, clientX: clientX + 40, clientY: clientY + 30 });
+    if (action === 'cancel') fireEvent.pointerCancel(surface, pointer);
+    fireEvent.pointerUp(surface, {
+      ...pointer,
+      clientX: clientX + (action === 'drag' ? 40 : 0),
+      clientY: clientY + (action === 'drag' ? 30 : 0),
+    });
+    expect(screen.queryByLabelText('Text')).toBeNull();
+    if (action === 'cancel') expect(create).not.toHaveBeenCalled();
+    else {
+      expect(create).toHaveBeenCalledOnce();
+      expect(create.mock.calls[0][0]).toBe('text');
+      const [, start, end] = create.mock.calls[0];
+      expect(end.x - start.x).toBeCloseTo(action === 'drag' ? 40 / state.current!.zoom : 0);
+      expect(end.y - start.y).toBeCloseTo(action === 'drag' ? 30 / state.current!.zoom : 0);
+    }
+  }
+);
 
 it.each(['initial', 'zoomed'] as const)(
   'uses a four-screen-pixel drag threshold at %s zoom',

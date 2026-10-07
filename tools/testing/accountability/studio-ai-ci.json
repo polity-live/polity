@@ -10265,6 +10265,76 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "keeps native double activation from editing text in %s mode"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "handles text creation on blank frame space with a %s gesture"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "uses a four-screen-pixel drag threshold at %s zoom"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps Shift-click selection and locked-text clicks without opening an editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "cancels overlapping text creation on %s and allows the next gesture"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores other pointers while dragging and creates once for the initiating pointer"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps the text tool active after creation when the tool is locked"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "does not create text in a read-only canvas"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows a marquee inside a frame, selects contained shapes, extends with Shift, and preserves frame-border selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves a selected frame and child only once when dragged from the frame border"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects after zoom and pan, moves the selected shapes together, and deletes the same selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "cancels a focused marquee before React effects settle and permits the next selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "cancels a marquee on Escape and on a second touch without changing the selection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders and selects a selected %s proposal for a mirrored nested ghost"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders unclipped nested frames and master contents with inherited text fonts"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [

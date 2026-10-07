@@ -453,15 +453,15 @@ function NodeContent({
 
 function ChangeRequestGhost({
   annotation,
+  node,
   assets,
   frameBackground,
 }: {
   annotation: StudioChangeRequestAnnotation;
+  node: StudioNode;
   assets: StudioAsset[];
   frameBackground: string;
 }) {
-  const node = annotation.sourceDocument.nodes.find(item => item.id === annotation.nodeId);
-  if (!node) return null;
   const chain: StudioNode[] = [node];
   let parentId = node.parentFrameId;
   while (parentId) {
@@ -776,7 +776,6 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       };
     }, [props.editable, props.fit]);
     useEffect(() => {
-      if (!marquee) return;
       const cancel = (event: KeyboardEvent) => {
         if (event.key !== 'Escape' || !marqueeRef.current) return;
         event.preventDefault();
@@ -786,7 +785,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       };
       window.addEventListener('keydown', cancel, true);
       return () => window.removeEventListener('keydown', cancel, true);
-    }, [!!marquee]);
+    }, []);
     const paintOrder = useMemo(
       () =>
         studioScenePaintOrder(
@@ -1944,6 +1943,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       return [
         {
           annotation,
+          node,
           left,
           top,
           width: Math.max(8, right - left),
@@ -2007,12 +2007,6 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               textGesture.current = null;
               suppressTextClick.current = true;
               setGesture(null);
-              return;
-            }
-            if (marqueeRef.current) {
-              event.preventDefault();
-              marqueeRef.current = null;
-              setMarquee(null);
               return;
             }
             setEditing(null);
@@ -2358,6 +2352,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   <ChangeRequestGhost
                     key={item.annotation.id}
                     annotation={item.annotation}
+                    node={item.node}
                     assets={props.assets}
                     frameBackground={frameBackground}
                   />

@@ -66,6 +66,123 @@ async function mount(
   return { document, frame, ref, select, changes, state, view, host, rerender };
 }
 
+it.each(['add', 'remove', 'update'] as const)(
+  'renders and selects a selected %s proposal for a mirrored nested ghost',
+  async tone => {
+    const document = createStudioTemplateDocumentV5('single', 'Ghost boundaries', defaultBrand);
+    const frame = document.nodes.find(node => node.type === 'frame')!;
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    document.nodes = [frame];
+    const sourceDocument = structuredClone(document);
+    const nested = structuredClone(frame);
+    nested.id = crypto.randomUUID();
+    nested.parentFrameId = frame.id;
+    nested.clipContent = false;
+    nested.transform = { ...nested.transform, x: 80, y: 80, width: 250, height: 200 };
+    const ghost = structuredClone(shape);
+    ghost.id = crypto.randomUUID();
+    ghost.parentFrameId = nested.id;
+    ghost.transform = {
+      ...ghost.transform,
+      x: 20,
+      y: 20,
+      width: 100,
+      height: 80,
+      flipX: true,
+      flipY: true,
+    };
+    sourceDocument.nodes.push(nested, ghost);
+    studioDocumentV3Schema.parse(sourceDocument);
+    const proposalId = crypto.randomUUID();
+    const annotationId = crypto.randomUUID();
+    const selected = vi.fn();
+    const { host } = await mount({
+      document,
+      canvasProps: {
+        changeRequestMarkers: [
+          {
+            id: annotationId,
+            nodeId: ghost.id,
+            proposalId,
+            sourceDocument,
+            tone,
+            label: 'Nested proposal',
+            selected: true,
+          },
+        ],
+        onChangeRequestSelect: selected,
+      },
+    });
+    const outline = await screen.findByTestId(`studio-change-outline-${annotationId}`);
+    expect(outline.getAttribute('data-change-request-selected')).toBe('true');
+    expect(outline.getAttribute('data-change-request-ghost')).toBe('true');
+    expect(screen.queryByTestId(`studio-change-strike-${annotationId}`) !== null).toBe(
+      tone === 'remove'
+    );
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    await waitFor(() =>
+      expect(stage.find('Group').some(group => group.opacity() === 0.45)).toBe(true)
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Nested proposal' }));
+    expect(selected).toHaveBeenCalledExactlyOnceWith(proposalId);
+  }
+);
+
+it('renders unclipped nested frames and master contents with inherited text fonts', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'Unclipped frames', defaultBrand);
+  const frame = document.nodes.find(node => node.type === 'frame')!;
+  const text = document.nodes.find(node => node.type === 'richText')!;
+  frame.clipContent = false;
+  const nested = structuredClone(frame);
+  nested.id = crypto.randomUUID();
+  nested.parentFrameId = frame.id;
+  nested.transform = {
+    ...nested.transform,
+    x: 70,
+    y: 70,
+    width: 200,
+    height: 180,
+    flipX: true,
+    flipY: true,
+  };
+  text.parentFrameId = nested.id;
+  text.transform = { ...text.transform, x: 30, y: 30, width: 250, height: 80 };
+  text.content = [
+    {
+      id: crypto.randomUUID(),
+      type: 'p',
+      children: [{ id: crypto.randomUUID(), text: 'Inherited font outside a frame' }],
+    },
+  ];
+  const master = structuredClone(frame);
+  master.id = crypto.randomUUID();
+  const masterNested = structuredClone(nested);
+  masterNested.id = crypto.randomUUID();
+  masterNested.parentFrameId = master.id;
+  const masterText = structuredClone(text);
+  masterText.id = crypto.randomUUID();
+  masterText.parentFrameId = masterNested.id;
+  document.nodes = [frame, nested, text, master, masterNested, masterText];
+  document.masterLayout = {
+    ...document.masterLayout,
+    frameId: master.id,
+    placements: { [masterNested.id]: 'background' },
+  };
+  const { host } = await mount({ document });
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  const renderedFrame = stage.findOne<Konva.Group>(`#${nested.id}`)!;
+  expect(renderedFrame.scaleX()).toBe(-1);
+  expect(renderedFrame.scaleY()).toBe(-1);
+  expect(renderedFrame.findOne('Shape')).toBeTruthy();
+  expect(
+    renderedFrame
+      .getChildren()
+      .filter(child => child instanceof Konva.Group)
+      .every(child => child.getAttr('clipWidth') === undefined)
+  ).toBe(true);
+  expect(stage.find('Shape').length).toBeGreaterThanOrEqual(2);
+});
+
 it('rejects late focus after the canvas unmounts and still calculates finite scene coordinates', async () => {
   const { frame, ref, view } = await mount();
   const handle = ref.current!;

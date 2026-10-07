@@ -586,10 +586,12 @@ function StudioEditorReady({
     return () => window.removeEventListener('studio-preview', updatePreview);
   }, []);
   const canvasCommand = (
-    action: 'tool' | 'zoomIn' | 'zoomOut' | 'zoom100' | 'fitSelection' | 'fitAll',
-    tool?: StudioTool
+    ...args:
+      | [action: 'tool', tool: StudioTool]
+      | [action: 'zoomIn' | 'zoomOut' | 'zoom100' | 'fitSelection' | 'fitAll']
   ) => {
-    if (action === 'tool' && tool) {
+    const [action, tool] = args;
+    if (action === 'tool') {
       setTool(tool);
       void canvasRef.current?.execute({
         type: 'setTool',
@@ -605,21 +607,10 @@ function StudioEditorReady({
       fitSelection: 'selection',
       fitAll: 'all',
     } as const;
-    if (action !== 'tool') void canvasRef.current?.execute({ type: 'zoom', mode: modes[action] });
+    void canvasRef.current?.execute({ type: 'zoom', mode: modes[action] });
   };
   const arrangeSelection = (
-    action:
-      | 'front'
-      | 'back'
-      | 'forward'
-      | 'backward'
-      | 'group'
-      | 'ungroup'
-      | 'lock'
-      | 'unlock'
-      | 'duplicate'
-      | 'hide'
-      | 'delete'
+    action: 'front' | 'back' | 'forward' | 'backward' | 'group' | 'ungroup' | 'duplicate' | 'delete'
   ) => {
     if (!selectedNodeIds.length || !c.v3Value) return;
     const depth = selectionState.groupDepth;
@@ -633,16 +624,12 @@ function StudioEditorReady({
             ? { type: 'ungroupNodes' as const, ...effective, depth }
             : action === 'delete'
               ? { type: 'deleteNodes' as const, ...base }
-              : action === 'hide'
-                ? { type: 'setNodeState' as const, ...base, visible: false }
-                : action === 'lock' || action === 'unlock'
-                  ? { type: 'setNodeState' as const, ...base, locked: action === 'lock' }
-                  : action === 'duplicate'
-                    ? { type: 'duplicateNodes' as const, ...base }
-                    : { type: 'reorderNodes' as const, ...base, action };
+              : action === 'duplicate'
+                ? { type: 'duplicateNodes' as const, ...base }
+                : { type: 'reorderNodes' as const, ...base, action };
       Object.assign(document, applyStudioCommandV3(document, v3Command));
     });
-    if (action === 'delete' || action === 'hide') c.selectExact([]);
+    if (action === 'delete') c.selectExact([]);
   };
   const toggleSelectionLock = () => {
     const locked = !selectionFullyLocked;
