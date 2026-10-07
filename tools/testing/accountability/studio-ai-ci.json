@@ -531,6 +531,16 @@
         "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "project": "unit",
         "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "focuses a root object without assigning a frame and rejects orphaned or disconnected cyclic targets"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects viewport rectangles with either nonpositive width or nonpositive height"
       }
     ],
     "src/features/communication-studio/logic/canvas-layers.ts": [
@@ -575,6 +585,56 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
         "project": "unit",
         "caseId": "uses the selected language when a validator and registry were imported before the language changed"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts direct frame children by stacking order and stable identity without including grandchildren"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate selections, absent nodes, locked nodes and invalid reparenting destinations before changing the tree"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates canvas links against web, local and fragment destinations while excluding unsafe schemes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate canvas identities and excessive aggregate embedded media independently of individual file limits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists native canvas content without SDK clocks, undefined values or generated template projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts legacy content with stable identity ties while preserving the original ordering"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a long-video export with a missing page instead of accepting an incomplete duration calculation"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires actual element properties for a patch and actual text marks for formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a pie chart to have one matching nonnegative series containing a positive value"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a complete long video to export through its carousel validation projection without changing the saved video"
       }
     ],
     "src/features/communication-studio/logic/change-request-annotations.ts": [
@@ -587,6 +647,16 @@
         "file": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "project": "unit",
         "caseId": "keeps nested added nodes anchored to their proposed frame and selects one proposal"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps legacy unaddressed changes and absent transform snapshots from altering canonical annotation geometry"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the selected live workspace for edits and ignores malformed whole-node snapshots and non-node metadata"
       }
     ],
     "src/features/communication-studio/logic/commands-v3.ts": [
@@ -838,6 +908,56 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
         "project": "unit",
         "caseId": "uses the selected language when a validator and registry were imported before the language changed"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts direct frame children by stacking order and stable identity without including grandchildren"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate selections, absent nodes, locked nodes and invalid reparenting destinations before changing the tree"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates canvas links against web, local and fragment destinations while excluding unsafe schemes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate canvas identities and excessive aggregate embedded media independently of individual file limits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists native canvas content without SDK clocks, undefined values or generated template projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts legacy content with stable identity ties while preserving the original ordering"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a long-video export with a missing page instead of accepting an incomplete duration calculation"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires actual element properties for a patch and actual text marks for formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a pie chart to have one matching nonnegative series containing a positive value"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a complete long video to export through its carousel validation projection without changing the saved video"
       }
     ],
     "src/features/communication-studio/logic/draw-element.ts": [
@@ -3990,6 +4110,56 @@
         "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "project": "unit",
         "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts direct frame children by stacking order and stable identity without including grandchildren"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate selections, absent nodes, locked nodes and invalid reparenting destinations before changing the tree"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates canvas links against web, local and fragment destinations while excluding unsafe schemes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate canvas identities and excessive aggregate embedded media independently of individual file limits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists native canvas content without SDK clocks, undefined values or generated template projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts legacy content with stable identity ties while preserving the original ordering"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a long-video export with a missing page instead of accepting an incomplete duration calculation"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires actual element properties for a patch and actual text marks for formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a pie chart to have one matching nonnegative series containing a positive value"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a complete long video to export through its carousel validation projection without changing the saved video"
       }
     ],
     "src/features/project-chat/logic/studio-actions.ts": [
@@ -9374,6 +9544,56 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
         "project": "unit",
         "caseId": "uses the selected language when a validator and registry were imported before the language changed"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts direct frame children by stacking order and stable identity without including grandchildren"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate selections, absent nodes, locked nodes and invalid reparenting destinations before changing the tree"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates canvas links against web, local and fragment destinations while excluding unsafe schemes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate canvas identities and excessive aggregate embedded media independently of individual file limits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists native canvas content without SDK clocks, undefined values or generated template projections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "sorts legacy content with stable identity ties while preserving the original ordering"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a long-video export with a missing page instead of accepting an incomplete duration calculation"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires actual element properties for a patch and actual text marks for formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a pie chart to have one matching nonnegative series containing a positive value"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows a complete long video to export through its carousel validation projection without changing the saved video"
       }
     ],
     "src/server/studio/api.ts": [

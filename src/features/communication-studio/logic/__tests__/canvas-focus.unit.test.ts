@@ -53,3 +53,21 @@ it('retains zoom for small elements and reduces it to fit large elements with pa
   expect(large.pan.y + 500 * large.zoom).toBeCloseTo(250);
   expect(() => canvasFocusView(small, { left: 0, top: 0, right: 20, bottom: 20 }, 1)).toThrow();
 });
+
+it('focuses a root object without assigning a frame and rejects orphaned or disconnected cyclic targets', () => {
+  const document = createStudioTemplateDocumentV5('single', 'Root object', defaultBrand);
+  const node = document.nodes.find(node => node.type === 'richText')!;
+  node.parentFrameId = null;
+  expect(canvasFocusTarget(document, node.id)).toMatchObject({ node, frameId: undefined });
+  node.parentFrameId = crypto.randomUUID();
+  expect(() => canvasFocusTarget(document, node.id)).toThrow('Canvas focus target unavailable');
+  const frame = document.nodes.find(node => node.type === 'frame')!;
+  frame.parentFrameId = frame.id;
+  node.parentFrameId = frame.id;
+  expect(() => canvasFocusTarget(document, node.id)).toThrow('Canvas focus target unavailable');
+});
+
+it('rejects viewport rectangles with either nonpositive width or nonpositive height', () => {
+  expect(freeCanvasRectangle({ left: 10, right: 10, top: 0, bottom: 100 }, [])).toBeNull();
+  expect(freeCanvasRectangle({ left: 0, right: 100, top: 10, bottom: 5 }, [])).toBeNull();
+});

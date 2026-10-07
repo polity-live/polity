@@ -1,23 +1,19 @@
 import type { StudioDocumentV3 } from './document-v3';
-import { studioScenePaintOrder } from './studio-scene';
+import { studioSceneChildren, studioScenePaintOrder } from './studio-scene';
 import { worldBounds, type Bounds } from './selection-geometry';
 
 export function canvasFocusTarget(document: StudioDocumentV3, nodeId: string) {
-  const node = studioScenePaintOrder(document).find(item => item.id === nodeId);
-  if (!node) throw new Error('Canvas focus target unavailable');
-  let root = node;
-  const visited = new Set([node.id]);
-  while (root.parentFrameId) {
-    const parent = document.nodes.find(item => item.id === root.parentFrameId);
-    if (!parent || visited.has(parent.id)) throw new Error('Canvas focus target unavailable');
-    visited.add(parent.id);
-    root = parent;
+  for (const root of studioSceneChildren(document, null)) {
+    const painted = root.type === 'frame' ? studioScenePaintOrder(document, root.id) : [root];
+    const node = painted.find(item => item.id === nodeId);
+    if (node)
+      return {
+        node,
+        frameId: root.type === 'frame' ? root.id : undefined,
+        bounds: worldBounds(document, node),
+      };
   }
-  return {
-    node,
-    frameId: root.type === 'frame' ? root.id : undefined,
-    bounds: worldBounds(document, node),
-  };
+  throw new Error('Canvas focus target unavailable');
 }
 
 /** A largest empty rectangle has its edges on the viewport or an obstacle edge. */

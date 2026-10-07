@@ -91,3 +91,71 @@ it('keeps nested added nodes anchored to their proposed frame and selects one pr
     nestedFrame.transform.x
   );
 });
+
+it('keeps legacy unaddressed changes and absent transform snapshots from altering canonical annotation geometry', () => {
+  const document = createStudioTemplateDocumentV5('single', 'Legacy changes', defaultBrand);
+  const node = document.nodes.find(node => node.type === 'richText')!;
+  const changes = [
+    { path: ['nodes'], before: { exists: false }, after: { exists: false } },
+    { path: ['nodes', 'legacy-index'], before: { exists: false }, after: { exists: false } },
+    {
+      path: ['nodes', `#${node.id}`, '@transform'],
+      before: { exists: false },
+      after: { exists: false },
+    },
+    {
+      path: ['nodes', '#removed-node', '@transform'],
+      before: { exists: true, value: node.transform },
+      after: { exists: true, value: node.transform },
+    },
+  ];
+  const annotations = buildProposalAnnotations({
+    proposal: proposal('legacy'),
+    changes,
+    canonicalDocument: document,
+    displayedDocument: document,
+    selected: false,
+  });
+  expect(annotations).toHaveLength(2);
+  expect(
+    annotations.find(annotation => annotation.nodeId === node.id)?.sourceDocument.nodes
+  ).toContainEqual(node);
+  expect(document.nodes.find(candidate => candidate.id === node.id)?.transform).toEqual(
+    node.transform
+  );
+});
+
+it('uses the selected live workspace for edits and ignores malformed whole-node snapshots and non-node metadata', () => {
+  const document = createStudioTemplateDocumentV5('single', 'Selected changes', defaultBrand);
+  const node = document.nodes.find(node => node.type === 'richText')!;
+  const displayed = structuredClone(document);
+  displayed.nodes.find(candidate => candidate.id === node.id)!.name = 'Selected edit';
+  const changes = [
+    {
+      path: ['title'],
+      before: { exists: true, value: document.title },
+      after: { exists: true, value: 'New title' },
+    },
+    {
+      path: ['nodes', `#${node.id}`],
+      before: { exists: true, value: { id: 'wrong-node', transform: node.transform } },
+      after: { exists: true, value: { id: node.id } },
+    },
+  ];
+  const annotations = buildProposalAnnotations({
+    proposal: proposal('selected-edit'),
+    changes,
+    canonicalDocument: document,
+    displayedDocument: displayed,
+    selected: true,
+  });
+  expect(annotations).toHaveLength(1);
+  expect(annotations[0]).toMatchObject({
+    tone: 'update',
+    selected: true,
+    sourceDocument: displayed,
+  });
+  expect(document.nodes.find(candidate => candidate.id === node.id)!.name).not.toBe(
+    'Selected edit'
+  );
+});
