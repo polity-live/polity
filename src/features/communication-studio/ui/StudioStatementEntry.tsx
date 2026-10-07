@@ -7,12 +7,6 @@ export function StudioStatementEntry({
   form: Record<string, unknown>;
 }) {
   const { t } = useTranslation();
-  if (
-    !import.meta.env.DEV &&
-    (import.meta.env.VITE_STUDIO_ENABLED !== 'true' ||
-      import.meta.env.VITE_STUDIO_V3_ENABLED !== 'true')
-  )
-    return null;
   return (
     <button
       type="button"

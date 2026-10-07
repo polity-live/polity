@@ -1,3 +1,5 @@
+import { copyStudioAsset, removeFailedStudioCopies } from './storage';
+import { studioId } from './context';
 import { createClient } from '@/lib/supabase/server';
 import {
   createElementSetSnapshot,
@@ -23,34 +25,6 @@ async function requireSet(userId: string, setId: string, edit: boolean) {
   return set;
 }
 
-export async function listElementSets(userId: string, groupId: string | null) {
-  const sql = studioSql();
-  const rows = groupId
-    ? await sql`
-        select s.id,s.name,'group' as scope,r.id as revision_id,r.version,r.width,r.height,
-          extract(epoch from s.updated_at)*1000 as updated_at
-        from studio_element_set s join studio_element_set_revision r on r.id=s.current_revision_id
-        where s.group_id=${groupId} and s.archived_at is null
-          and studio_group_access(${userId}::uuid,s.group_id,false)
-        order by s.updated_at desc`
-    : await sql`
-        select s.id,s.name,'personal' as scope,r.id as revision_id,r.version,r.width,r.height,
-          extract(epoch from s.updated_at)*1000 as updated_at
-        from studio_element_set s join studio_element_set_revision r on r.id=s.current_revision_id
-        where s.owner_id=${userId} and s.archived_at is null
-        order by s.updated_at desc`;
-  return rows.map(row => ({
-    id: row.id,
-    name: row.name,
-    scope: row.scope,
-    revisionId: row.revision_id,
-    version: Number(row.version),
-    width: Number(row.width),
-    height: Number(row.height),
-    updatedAt: Number(row.updated_at),
-  }));
-}
-
 async function copyProjectAssetsToRevision(
   projectId: string,
   scopePath: string,
@@ -73,9 +47,9 @@ async function copyProjectAssetsToRevision(
         select id,name,mime_type,byte_size,storage_path from studio_asset
         where id=${asset.sourceAssetId} and project_id=${projectId} and ready=true`;
       if (!source) throw new StudioError('An element media file is unavailable', 422);
-      const id = crypto.randomUUID();
+      const id = studioId(`asset:${source.id}`);
       const path = `${scopePath}/${revisionId}/${id}`;
-      const result = await storage.copy(source.storage_path, path);
+      const result = await copyStudioAsset(storage, source.storage_path, path);
       if (result.error) throw new StudioError('Cannot copy element media', 502);
       copied.push({
         id,
@@ -88,7 +62,11 @@ async function copyProjectAssetsToRevision(
     }
     return copied;
   } catch (error) {
-    if (copied.length) await storage.remove(copied.map(asset => asset.path));
+    if (copied.length)
+      await removeFailedStudioCopies(
+        storage,
+        copied.map(asset => asset.path)
+      );
     throw error;
   }
 }
@@ -118,8 +96,8 @@ export async function createElementSet(
     input.selectedIds,
     assets.map(asset => ({ id: asset.id, name: asset.name, mime: asset.mime_type }))
   );
-  const setId = crypto.randomUUID();
-  const revisionId = crypto.randomUUID();
+  const setId = studioId();
+  const revisionId = studioId();
   const scopePath = input.groupId
     ? `libraries/groups/${input.groupId}/sets/${setId}`
     : `libraries/users/${userId}/sets/${setId}`;
@@ -150,9 +128,10 @@ export async function createElementSet(
     return { id: setId, revisionId, name, version: 1 };
   } catch (error) {
     if (copied.length)
-      await createClient()
-        .storage.from(bucket)
-        .remove(copied.map(a => a.path));
+      await removeFailedStudioCopies(
+        createClient().storage.from(bucket),
+        copied.map(a => a.path)
+      );
     throw error;
   }
 }
@@ -179,9 +158,9 @@ export async function stageElementSetForAiProposal(
   const storage = () => createClient().storage.from(bucket);
   try {
     for (const source of sources) {
-      const id = crypto.randomUUID();
+      const id = studioId();
       const path = `${input.projectId}/proposals/${input.proposalId}/${id}`;
-      const result = await storage().copy(source.storage_path, path);
+      const result = await copyStudioAsset(storage(), source.storage_path, path);
       if (result.error) throw new StudioError('Cannot copy element media', 502);
       assets.push({
         id,
@@ -199,7 +178,11 @@ export async function stageElementSetForAiProposal(
       assets,
     };
   } catch (error) {
-    if (assets.length) await storage().remove(assets.map(asset => asset.path));
+    if (assets.length)
+      await removeFailedStudioCopies(
+        storage(),
+        assets.map(asset => asset.path)
+      );
     throw error;
   }
 }
@@ -234,9 +217,9 @@ export async function instantiateElementSetForProject(
     )
       throw new StudioError('Project media limit: 100 files / 500 MB');
     for (const source of libraryAssets) {
-      const id = crypto.randomUUID();
+      const id = studioId(`asset:${source.id}`);
       const path = `${input.projectId}/assets/${id}`;
-      const result = await storage.copy(source.storage_path, path);
+      const result = await copyStudioAsset(storage, source.storage_path, path);
       if (result.error) throw new StudioError('Cannot copy element media', 502);
       copied.push({
         id,
@@ -262,7 +245,10 @@ export async function instantiateElementSetForProject(
     };
   } catch (error) {
     if (copied.length) {
-      await storage.remove(copied.map(asset => asset.path));
+      await removeFailedStudioCopies(
+        storage,
+        copied.map(asset => asset.path)
+      );
       await sql`delete from studio_asset where id in ${sql(copied.map(asset => asset.id))}`;
     }
     throw error;
@@ -329,7 +315,7 @@ export async function publishElementSetRevision(
     next.componentRef = null;
     return next;
   });
-  const revisionId = crypto.randomUUID();
+  const revisionId = studioId();
   const scopePath = set.group_id
     ? `libraries/groups/${set.group_id}/sets/${set.id}`
     : `libraries/users/${set.owner_id}/sets/${set.id}`;
@@ -354,9 +340,10 @@ export async function publishElementSetRevision(
     return { revisionId, version };
   } catch (error) {
     if (copied.length)
-      await createClient()
-        .storage.from(bucket)
-        .remove(copied.map(a => a.path));
+      await removeFailedStudioCopies(
+        createClient().storage.from(bucket),
+        copied.map(a => a.path)
+      );
     throw error;
   }
 }
@@ -431,9 +418,9 @@ export async function synchronizeProjectElementInstances(userId: string, project
           const size = Number(source.byte_size);
           if (assetCount + 1 > 100 || assetBytes + size > 500 * 1024 * 1024)
             throw new StudioError('Project media limit: 100 files / 500 MB');
-          const assetId = crypto.randomUUID();
+          const assetId = studioId();
           const path = `${projectId}/assets/${assetId}`;
-          const result = await storage.copy(source.storage_path, path);
+          const result = await copyStudioAsset(storage, source.storage_path, path);
           if (result.error) throw new StudioError('Cannot copy element media', 502);
           copiedPaths.push(path);
           await tx`
@@ -457,7 +444,7 @@ export async function synchronizeProjectElementInstances(userId: string, project
       return { document, revision: nextRevision };
     });
   } catch (error) {
-    if (copiedPaths.length) await storage.remove(copiedPaths);
+    if (copiedPaths.length) await removeFailedStudioCopies(storage, copiedPaths);
     throw error;
   }
 }

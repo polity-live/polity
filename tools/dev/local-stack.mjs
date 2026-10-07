@@ -117,7 +117,6 @@ function localEnvironment() {
     ZERO_MUTATE_URL: 'http://host.docker.internal:3000/api/mutate',
     __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: 'host.docker.internal',
     POLITY_VITE_CACHE_DIR: path.join(directory, 'vite-cache'),
-    STUDIO_ENABLED: 'true',
   });
   if (process.env.ZERO_TEST_DATABASE) {
     if (!/^polity_zero_[a-z0-9_]+$/.test(process.env.ZERO_TEST_DATABASE))
@@ -127,10 +126,7 @@ function localEnvironment() {
     process.env.ZERO_CVR_DB = db.toString();
     process.env.ZERO_CHANGE_DB = db.toString();
     process.env.STUDIO_DATABASE_URL = db.toString();
-    process.env.ZERO_REPLICA_FILE = path.join(
-      directory,
-      `${process.env.ZERO_TEST_DATABASE}.db`
-    );
+    process.env.ZERO_REPLICA_FILE = path.join(directory, `${process.env.ZERO_TEST_DATABASE}.db`);
   }
   const containerDatabase = new URL(process.env.ZERO_UPSTREAM_DB);
   containerDatabase.hostname = 'host.docker.internal';
@@ -383,10 +379,9 @@ if (command === 'clone') {
         let diagnostics;
         if (ready && s.port) {
           try {
-            const response = await fetch(
-              `http://127.0.0.1:${s.port}`,
-              { signal: AbortSignal.timeout(2000) }
-            );
+            const response = await fetch(`http://127.0.0.1:${s.port}`, {
+              signal: AbortSignal.timeout(2000),
+            });
             ready = response.ok;
           } catch {
             ready = false;

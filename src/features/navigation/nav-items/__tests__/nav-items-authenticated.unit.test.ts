@@ -6,30 +6,12 @@ import { navItemsAuthenticated } from '../nav-items-authenticated';
 describe('navItemsAuthenticated', () => {
   it('shows group Studio to non-members when the feature is enabled', () => {
     vi.stubEnv('DEV', false);
-    vi.stubEnv('VITE_STUDIO_ENABLED', 'true');
-    vi.stubEnv('VITE_STUDIO_V3_ENABLED', 'true');
     const items = navItemsAuthenticated(vi.fn()).getGroupSecondaryNavItems('group-1', false, false);
     expect(items.some(item => item.id === 'studio' && item.href === '/group/group-1/studio')).toBe(
       true
     );
   });
-  it('keeps Studio hidden in production unless explicitly enabled', () => {
-    vi.stubEnv('DEV', false);
-    vi.stubEnv('VITE_STUDIO_V3_ENABLED', 'true');
-    vi.stubEnv('VITE_STUDIO_ENABLED', 'false');
-    expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
-      false
-    );
-    expect(
-      navItemsAuthenticated(vi.fn())
-        .getGroupSecondaryNavItems('group-1')
-        .some(item => item.id === 'studio')
-    ).toBe(false);
-    vi.stubEnv('VITE_STUDIO_ENABLED', 'true');
-    expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
-      true
-    );
-  });
+
   it('performs exactly one navigation for a primary item click', () => {
     const navigate = vi.fn();
     const searchItem = navItemsAuthenticated(navigate).primaryNavItems.find(

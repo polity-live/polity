@@ -1,18 +1,18 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 187,
-    "columns": 1931,
-    "primaryKeys": 188,
+    "tables": 188,
+    "columns": 1941,
+    "primaryKeys": 189,
     "checks": 178,
-    "foreignKeys": 454,
+    "foreignKeys": 455,
     "uniqueConstraints": 72,
     "uniqueIndexes": 30,
     "uniqueRules": 102,
-    "indexes": 739,
-    "functions": 124,
-    "triggers": 114,
-    "policies": 167,
+    "indexes": 744,
+    "functions": 128,
+    "triggers": 117,
+    "policies": 169,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
@@ -394,6 +394,11 @@
     {
       "source": "73_ai_traces.sql",
       "behavior": ["ai_diagnostics.sql"]
+    },
+    {
+      "source": "74_studio_zero_commands.sql",
+      "behavior": ["studio_zero_commands.sql"],
+      "securityBehavior": ["studio_zero_commands.sql"]
     }
   ]
 }

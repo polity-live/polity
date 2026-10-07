@@ -71,6 +71,16 @@ jobs:
       - uses: ./.github/actions/setup-project
       - name: Run unit tests
         run: pnpm run test:unit
+      - name: Enforce 100 percent coverage for Studio Zero commands
+        run: pnpm run studio:test:coverage
+      - name: Upload Studio coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-studio-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: coverage-studio/
 
   component-tests:
     name: Component Integration Tests
@@ -144,7 +154,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
-      - run: pnpm exec playwright install --with-deps chromium
+      - name: Install Chromium with bounded Ubuntu mirror access
+        run: |
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
+          pnpm exec playwright install --with-deps chromium
       - run: pnpm exec vitest run --config vitest.browser.coverage.config.ts
       - name: Upload browser coverage
         if: always()
@@ -471,7 +485,10 @@ jobs:
         with:
           version: 2.115.0
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
+          pnpm exec playwright install --with-deps chromium
       - name: Start and reset isolated Supabase stack
         run: |
           supabase start

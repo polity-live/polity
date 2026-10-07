@@ -1,0 +1,368 @@
+{
+  "version": 1,
+  "transports": [
+    {
+      "previous": "src/server/studio/__tests__/api.unit.test.ts",
+      "cases": [
+        "claims only current actor editor actions and stores a validated result from the claiming editor client",
+        "returns only the authorized actor operation receipt and rejects missing receipts",
+        "keeps private source audience failures and revoked editor access from producing writes",
+        "accepts the request origin and personal themes without a group context",
+        "validates commands and forwards only the authenticated actor to shared project and media services",
+        "forwards clone destination and visibility after validation",
+        "hands off only completed single image or video exports using their immutable revision and story pages",
+        "does not expose the retired direct AI generation endpoint",
+        "does not disclose internal service failures in public error responses",
+        "preserves shared collaboration denials and revision conflicts at the Studio HTTP boundary",
+        "returns published group themes from the same transaction that checks access",
+        "rejects group access before querying themes and never serializes an undefined success",
+        "rejects cross-origin, anonymous, disabled and malformed operations before writes",
+        "serializes export cancellation and template changes with current project rights",
+        "preserves projects whose media is published or whose export is still running",
+        "does not let an active personal collaborator manage the project"
+      ],
+      "caseMappings": [
+        {
+          "previousCase": "claims only current actor editor actions and stores a validated result from the claiming editor client",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/project-commands.unit.test.ts",
+              "caseId": "requires export edit rights and uses atomic claims and claim-owner checks for editor results"
+            }
+          ]
+        },
+        {
+          "previousCase": "returns only the authorized actor operation receipt and rejects missing receipts",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+              "caseId": "restricts operation receipts to their actor and current project access"
+            }
+          ]
+        },
+        {
+          "previousCase": "keeps private source audience failures and revoked editor access from producing writes",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/project-commands.unit.test.ts",
+              "caseId": "preserves owner and group authorization for visibility and templates including AI audience validation"
+            }
+          ]
+        },
+        {
+          "previousCase": "accepts the request origin and personal themes without a group context",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "reads authorized document and procedure projections, with no mutations during queries"
+            }
+          ]
+        },
+        {
+          "previousCase": "validates commands and forwards only the authenticated actor to shared project and media services",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+              "caseId": "routes every typed command to its domain service and receipt in the supplied transaction"
+            }
+          ]
+        },
+        {
+          "previousCase": "forwards clone destination and visibility after validation",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+              "caseId": "routes every typed command to its domain service and receipt in the supplied transaction"
+            }
+          ]
+        },
+        {
+          "previousCase": "hands off only completed single image or video exports using their immutable revision and story pages",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "derives media handoff only from completed single-page or video exports"
+            }
+          ]
+        },
+        {
+          "previousCase": "does not expose the retired direct AI generation endpoint",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+              "caseId": "requires action-specific canvas inputs and keeps every client write free of canonical changes"
+            }
+          ]
+        },
+        {
+          "previousCase": "does not disclose internal service failures in public error responses",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/command-receipts.unit.test.ts",
+              "caseId": "preserves structured errors and translates domain and unknown failures without persisting success"
+            }
+          ]
+        },
+        {
+          "previousCase": "preserves shared collaboration denials and revision conflicts at the Studio HTTP boundary",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/command-receipts.unit.test.ts",
+              "caseId": "preserves structured errors and translates domain and unknown failures without persisting success"
+            }
+          ]
+        },
+        {
+          "previousCase": "returns published group themes from the same transaction that checks access",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "reads authorized document and procedure projections, with no mutations during queries"
+            }
+          ]
+        },
+        {
+          "previousCase": "rejects group access before querying themes and never serializes an undefined success",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/command-receipts.unit.test.ts",
+              "caseId": "writes private results in the exact Zero transaction with upload expiry and serializable null"
+            }
+          ]
+        },
+        {
+          "previousCase": "rejects cross-origin, anonymous, disabled and malformed operations before writes",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+              "caseId": "requires action-specific canvas inputs and keeps every client write free of canonical changes"
+            }
+          ],
+          "removedConstraints": [
+            "Origin-Prüfung der entfernten JSON-Route",
+            "Studio-/Canvas-Rolloutflags"
+          ]
+        },
+        {
+          "previousCase": "serializes export cancellation and template changes with current project rights",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/project-commands.unit.test.ts",
+              "caseId": "preserves owner and group authorization for visibility and templates including AI audience validation"
+            }
+          ]
+        },
+        {
+          "previousCase": "preserves projects whose media is published or whose export is still running",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/project-commands.unit.test.ts",
+              "caseId": "refuses deleting published media and pending exports but deletes an unused owned project"
+            }
+          ]
+        },
+        {
+          "previousCase": "does not let an active personal collaborator manage the project",
+          "replacements": [
+            {
+              "file": "src/server/studio/__tests__/project-commands.unit.test.ts",
+              "caseId": "preserves owner and group authorization for visibility and templates including AI audience validation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "previous": "src/zero/communication-studio/__tests__/api.unit.test.ts",
+      "cases": [
+        "uses a safe fallback for unsuccessful responses and non-Error notifications",
+        "only confirms an export after the server acknowledges its request",
+        "surfaces rejected writes instead of reporting success",
+        "requires a session before sending a private upload",
+        "uploads the file directly and only returns it after verification",
+        "cancels the reservation if the storage upload fails",
+        "preserves a verification error when cancellation also fails"
+      ],
+      "caseMappings": [
+        {
+          "previousCase": "uses a safe fallback for unsuccessful responses and non-Error notifications",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uses every concrete mutator including explicit identifiers and propagates server and expiry failures"
+            }
+          ],
+          "removedConstraints": ["HTTP-Response-Decoding"]
+        },
+        {
+          "previousCase": "only confirms an export after the server acknowledges its request",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "waits for server acknowledgement and a replicated result, retaining identifiers for ambiguous retries"
+            }
+          ]
+        },
+        {
+          "previousCase": "surfaces rejected writes instead of reporting success",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uses every concrete mutator including explicit identifiers and propagates server and expiry failures"
+            }
+          ]
+        },
+        {
+          "previousCase": "requires a session before sending a private upload",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uploads directly to signed Storage, cancels failures and preserves the original error"
+            }
+          ]
+        },
+        {
+          "previousCase": "uploads the file directly and only returns it after verification",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uploads directly to signed Storage, cancels failures and preserves the original error"
+            }
+          ]
+        },
+        {
+          "previousCase": "cancels the reservation if the storage upload fails",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uploads directly to signed Storage, cancels failures and preserves the original error"
+            }
+          ]
+        },
+        {
+          "previousCase": "preserves a verification error when cancellation also fails",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "uploads directly to signed Storage, cancels failures and preserves the original error"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "previous": "src/server/studio/__tests__/read.unit.test.ts",
+      "cases": [
+        "allows a guest to load a public canonical document without editor authority",
+        "returns no project metadata when access is denied",
+        "uses the authenticated identity to check a private document"
+      ],
+      "caseMappings": [
+        {
+          "previousCase": "allows a guest to load a public canonical document without editor authority",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+              "caseId": "filters owner and document projections by current identity %s"
+            }
+          ]
+        },
+        {
+          "previousCase": "returns no project metadata when access is denied",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+              "caseId": "filters owner and document projections by current identity %s"
+            }
+          ]
+        },
+        {
+          "previousCase": "uses the authenticated identity to check a private document",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+              "caseId": "filters owner and document projections by current identity %s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "previous": "src/server/studio/__tests__/presence.unit.test.ts",
+      "cases": [
+        "requires preview enablement, valid input and current workspace and collaboration rights",
+        "publishes private per-user peers with cursor and selection while excluding each recipient",
+        "expires inactive peers and empty rooms while isolating projects and workspaces",
+        "removes revoked peers before broadcasting their presence",
+        "removes broadcast channels after failed delivery and thrown transport errors"
+      ],
+      "caseMappings": [
+        {
+          "previousCase": "requires preview enablement, valid input and current workspace and collaboration rights",
+          "replacements": [
+            {
+              "file": "src/features/communication-studio/logic/__tests__/studio-realtime-presence.unit.test.ts",
+              "caseId": "uses private workspace channels, throttles cursors, expires positions and cleans up with connected=%s"
+            },
+            {
+              "file": "supabase/tests/studio_zero_commands.sql",
+              "scope": "Private Kanalpolicies, Workspace-Zugriff und widerrufene Collaboration-Rechte"
+            }
+          ]
+        },
+        {
+          "previousCase": "publishes private per-user peers with cursor and selection while excluding each recipient",
+          "replacements": [
+            {
+              "file": "src/features/communication-studio/logic/__tests__/studio-realtime-presence.unit.test.ts",
+              "caseId": "uses private workspace channels, throttles cursors, expires positions and cleans up with connected=%s"
+            }
+          ]
+        },
+        {
+          "previousCase": "expires inactive peers and empty rooms while isolating projects and workspaces",
+          "replacements": [
+            {
+              "file": "src/features/communication-studio/logic/__tests__/studio-realtime-presence.unit.test.ts",
+              "caseId": "uses private workspace channels, throttles cursors, expires positions and cleans up with connected=%s"
+            }
+          ]
+        },
+        {
+          "previousCase": "removes revoked peers before broadcasting their presence",
+          "replacements": [
+            {
+              "file": "src/features/communication-studio/logic/__tests__/studio-realtime-presence.unit.test.ts",
+              "caseId": "uses private workspace channels, throttles cursors, expires positions and cleans up with connected=%s"
+            }
+          ]
+        },
+        {
+          "previousCase": "removes broadcast channels after failed delivery and thrown transport errors",
+          "replacements": [
+            {
+              "file": "src/features/communication-studio/logic/__tests__/studio-realtime-presence.unit.test.ts",
+              "caseId": "uses private workspace channels, throttles cursors, expires positions and cleans up with connected=%s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "previous": "src/server/studio/__tests__/elements.unit.test.ts",
+      "cases": ["lists the accessible %s library with normalized numeric metadata"],
+      "caseMappings": [
+        {
+          "previousCase": "lists the accessible %s library with normalized numeric metadata",
+          "replacements": [
+            {
+              "file": "src/zero/communication-studio/__tests__/client.component.test.tsx",
+              "caseId": "reads authorized document and procedure projections, with no mutations during queries"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "domainTests": "Retain and adapt service, governance, collaborators, elements, assets, export and database workflow tests."
+}

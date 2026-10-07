@@ -27,7 +27,10 @@ vi.mock('@/zero/users/useUserState', () => ({
 vi.mock('@/zero/communication-studio/useStudioState', () => ({
   useStudioState: () => ({ projects: [], exports: io.exports, isLoading: false }),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ useStudioApi: () => io }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('../useStudioDocument', () => ({
   useStudioDocument: (...args: unknown[]) => {
     io.document(...args);
@@ -163,7 +166,7 @@ it('selects exact frames, merges explicit export selections and resets selection
 });
 
 it.each(['completed', 'failed', 'cancelled'])(
-  'polls an export to %s, deduplicates stored jobs and downloads completed jobs exactly once',
+  'subscribes to an export reaching %s, deduplicates jobs and downloads completed jobs once',
   async status => {
     vi.useFakeTimers();
     const click = vi
@@ -184,6 +187,12 @@ it.each(['completed', 'failed', 'cancelled'])(
     await flush();
     await act(() => hook.result.current.exportMedia());
     await flush();
+    io.exports = [
+      { id: 'export', status, progress: 100, format: 'png', file_name: 'final.png' },
+      io.exports[1],
+    ];
+    hook.rerender();
+    await flush();
     expect(hook.result.current.exports).toHaveLength(2);
     expect(hook.result.current.exports[0]).toMatchObject({ id: 'export', status, progress: 100 });
     expect(hook.result.current.exportStatusError).toBe(false);
@@ -203,37 +212,13 @@ it.each(['completed', 'failed', 'cancelled'])(
   }
 );
 
-it('retains failed status polling, retries without overlapping requests and ignores late results after unmount', async () => {
-  vi.useFakeTimers();
-  let resolve!: (value: unknown) => void;
-  let reject!: (value: unknown) => void;
-  io.request.mockImplementation(async operation =>
-    operation === 'export'
-      ? { id: 'export' }
-      : operation === 'exportStatus'
-        ? new Promise((done, fail) => {
-            resolve = done;
-            reject = fail;
-          })
-        : []
-  );
+it('keeps a confirmed queued export while its replicated status is pending', async () => {
   const hook = mount();
   await flush();
   await act(() => hook.result.current.exportMedia());
-  await flush();
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(3000);
-  });
-  expect(io.request.mock.calls.filter(([op]) => op === 'exportStatus')).toHaveLength(1);
-  await act(async () => reject(new Error('Status offline')));
-  expect(hook.result.current.exportStatusError).toBe(true);
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(1500);
-  });
-  expect(io.request.mock.calls.filter(([op]) => op === 'exportStatus')).toHaveLength(2);
+  expect(hook.result.current.exports[0]).toMatchObject({ id: 'export', status: 'queued' });
+  expect(io.request.mock.calls.filter(([op]) => op === 'exportStatus')).toHaveLength(0);
   hook.unmount();
-  await act(async () => resolve({ id: 'export', status: 'completed' }));
-  expect(vi.getTimerCount()).toBe(0);
 });
 
 it('downloads a manually selected export with encoded identifiers and no optional filename', async () => {
@@ -700,4 +685,33 @@ it('retains text styles when the document contains no selectable nodes', async (
   act(() => hook.result.current.applyTextStyle(canonical.theme.textStyles[0].id));
   expect(canonical.nodes).toEqual([]);
   expect(hook.result.current.failure).toBe('');
+});
+
+it('updates a subscribed export when only progress, error or filename changes and ignores identical rows', async () => {
+  io.request.mockImplementation(async op => (op === 'export' ? { id: 'export' } : []));
+  const hook = mount();
+  await flush();
+  await act(() => hook.result.current.exportMedia());
+  io.exports = [
+    {
+      id: 'export',
+      status: 'queued',
+      progress: 0,
+      format: 'png',
+      error: null,
+      file_name: undefined,
+    },
+  ];
+  hook.rerender();
+  await flush();
+  for (const patch of [{ progress: 20 }, { error: 'Retrying' }, { file_name: 'preview.png' }, {}]) {
+    io.exports = [{ ...io.exports[0], ...patch }];
+    hook.rerender();
+    await flush();
+    expect(hook.result.current.exports[0]).toMatchObject({
+      progress: io.exports[0].progress,
+      error: io.exports[0].error,
+      fileName: io.exports[0].file_name,
+    });
+  }
 });

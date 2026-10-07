@@ -30,8 +30,6 @@ vi.mock('../db', async original => ({
   ...(await original<typeof import('../db')>()),
   studioSql: () => io.sql,
   studioTransaction: io.transaction,
-  studioEnabled: () => io.studio,
-  canvasEnabled: () => io.canvas,
 }));
 vi.mock('../source', () => ({ resolveStudioSource: io.source }));
 vi.mock('../ai-sources', () => ({
@@ -177,8 +175,6 @@ function planFromRequest(request: { prompt: string; system: string }) {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.stubEnv('STUDIO_AI_ENABLED', 'true');
-  io.studio = true;
-  io.canvas = true;
   io.context = { traceId: 'existing-trace', invocation: 'project_chat' };
   const document = legacyDocumentToV3(createDocument('single', 'Canonical'));
   source = {
@@ -282,9 +278,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe('Studio AI plans, snapshots, persistence and cleanup', () => {
-  it.each(['studio', 'canvas', 'ai-env'])('denies generation when %s is disabled', async flag => {
-    if (flag === 'studio') io.studio = false;
-    if (flag === 'canvas') io.canvas = false;
+  it.each(['ai-env'])('denies generation when %s is disabled', async flag => {
     if (flag === 'ai-env') vi.stubEnv('STUDIO_AI_ENABLED', 'false');
     await expect(generateStudioSuggestion(actor, input())).rejects.toMatchObject({ status: 404 });
     expect(io.generate).not.toHaveBeenCalled();

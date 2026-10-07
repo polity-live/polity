@@ -60,7 +60,11 @@ function notifyBroadcast(managed: ManagedChannel, event: string, payload: Record
   }
 }
 
-export function acquire(roomId: string, presenceKey: string): ManagedChannel {
+export function acquire(
+  roomId: string,
+  presenceKey: string,
+  privateChannel = false
+): ManagedChannel {
   const existing = channels.get(roomId);
   if (existing) {
     existing.refCount++;
@@ -69,7 +73,7 @@ export function acquire(roomId: string, presenceKey: string): ManagedChannel {
 
   const supabase = createClient();
   const channel = supabase.channel(`presence:${roomId}`, {
-    config: { presence: { key: presenceKey } },
+    config: { presence: { key: presenceKey }, private: privateChannel },
   });
 
   const managed: ManagedChannel = {

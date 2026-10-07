@@ -136,6 +136,7 @@ export const groupMembershipRole = table('group_membership_role')
   .columns({
     id: string(),
     group_membership_id: string(),
+    group_id: string().optional(),
     role_id: string(),
     assigned_at: number(),
     assigned_by_id: string().optional(),

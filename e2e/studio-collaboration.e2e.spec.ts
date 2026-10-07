@@ -11,12 +11,20 @@ for (const scope of ['personal', 'group'] as const) {
     seed,
     e2eRun,
   }) => {
+    test.setTimeout(300_000);
     const sql = db();
     const peer = e2eRun.actor('studio-peer');
     await authenticateActor(browser, peer);
     const peerContext = await browser.newContext({ storageState: peer.storageStatePath });
     const peerPage = await peerContext.newPage();
     const route = scope === 'group' ? `/group/${seed.groupId}/studio` : '/studio';
+    const obsoleteRequests: string[] = [];
+    for (const target of [page, peerPage])
+      target.on('request', request => {
+        const path = new URL(request.url()).pathname;
+        if (path === '/api/studio' || path.startsWith('/api/studio/read/'))
+          obsoleteRequests.push(path);
+      });
     let projectId: string | undefined;
     try {
       await page.goto(route);
@@ -28,17 +36,13 @@ for (const scope of ['personal', 'group'] as const) {
       await page
         .getByRole('textbox', { name: /^Title(?:\s*\*)?$/ })
         .fill(`${e2eRun.prefix} Studio`);
-      const created = page.waitForResponse(
-        response =>
-          response.url().endsWith('/api/studio') &&
-          response.request().postDataJSON()?.operation === 'create'
-      );
       await page.locator('[data-create-action="submit"]').click();
-      const response = await created;
-      expect(response.ok(), await response.text()).toBe(true);
-      projectId = (await response.json()).id;
-      expect(projectId).toEqual(expect.any(String));
-      e2eRun.registerEntityId(projectId!);
+      await expect(page).toHaveURL(/\/studio\/[a-f0-9-]{36}\/?$/, { timeout: 60_000 });
+      projectId = new URL(page.url()).pathname.split('/').filter(Boolean).at(-1)!;
+      e2eRun.registerEntityId(projectId);
+      expect((await sql`select title from studio_project where id=${projectId}`)[0].title).toBe(
+        `${e2eRun.prefix} Studio`
+      );
       const projectRoute = `${route}/${projectId}`;
       await expect(page).toHaveURL(new RegExp(`${route}/${projectId}/?$`));
       const title = page.locator('header').getByRole('textbox', { name: 'Title', exact: true });
@@ -60,13 +64,14 @@ for (const scope of ['personal', 'group'] as const) {
       await expect(title).toBeEnabled();
 
       if (scope === 'personal') {
-        const denied = peerPage.waitForResponse(response =>
-          response.url().endsWith(`/api/studio/read/${projectId}`)
-        );
         await peerPage.goto(projectRoute);
-        // The read endpoint conceals private projects from unauthorized actors.
-        expect((await denied).status()).toBe(404);
-        await expect(peerPage.getByRole('alert')).toHaveText('This Studio project is unavailable.');
+        await waitForAppReady(peerPage);
+        await expect(peerPage.getByRole('alert')).toHaveText(
+          'This Studio project is unavailable.',
+          {
+            timeout: 30_000,
+          }
+        );
         await expect(peerPage.getByRole('textbox', { name: 'Title', exact: true })).toHaveCount(0);
 
         await context.setOffline(true);
@@ -105,17 +110,8 @@ for (const scope of ['personal', 'group'] as const) {
           await tx`insert into group_membership_role(group_membership_id,role_id) values(${membershipId},${roleId})`;
           await tx`insert into action_right(resource,action,role_id,group_id) values('projects','view',${roleId},${seed.groupId})`;
         });
-        const read = peerPage.waitForResponse(response =>
-          response.url().endsWith(`/api/studio/read/${projectId}`)
-        );
         await peerPage.goto(projectRoute);
         await waitForAppReady(peerPage);
-        const snapshot = await read;
-        expect(snapshot.status()).toBe(200);
-        expect(await snapshot.json()).toMatchObject({
-          project: { canEdit: false },
-          document: { title: 'Persisted studio title' },
-        });
         await expect(
           peerPage.getByText('You can view this project.', { exact: true })
         ).toBeVisible();
@@ -137,10 +133,16 @@ for (const scope of ['personal', 'group'] as const) {
         await waitForAppReady(page);
         await expect(title).toHaveValue('Shared group edit');
       }
+      expect(obsoleteRequests).toEqual([]);
     } finally {
       await context.setOffline(false).catch(() => undefined);
       await peerContext.close();
       await removeActorAuthState(peer);
+      if (!projectId) {
+        const [created] =
+          await sql`select id from studio_project where owner_id=${seed.userId} and title=${`${e2eRun.prefix} Studio`}`;
+        projectId = created?.id as string | undefined;
+      }
       if (projectId) {
         // Only this test's project/history is removed. The transaction-local
         // replication mode permits teardown of immutable evidence on the test DB.

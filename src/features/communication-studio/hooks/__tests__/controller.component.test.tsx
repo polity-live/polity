@@ -35,7 +35,10 @@ vi.mock('@/zero/users/useUserState', () => ({
 vi.mock('@/zero/communication-studio/useStudioState', () => ({
   useStudioState: () => ({ projects: [], exports: [], isLoading: false }),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ useStudioApi: () => io }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('../useStudioDocument', () => ({ useStudioDocument: () => ({ ...io.editor }) }));
 import { useStudioController } from '../useStudioController';
 

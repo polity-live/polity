@@ -190,6 +190,12 @@ describe('source i18n audit', () => {
     expect(
       auditSourceText(`function helper() { return 'No visible AI copy'; }`, 'src/lib/ai/helper.ts')
     ).toEqual([]);
+    expect(
+      auditSourceText(
+        `function helper() { return 'Model instructions only'; }`,
+        'src/features/shared/ui/kit-platejs/ai-editor-context.ts'
+      )
+    ).toEqual([]);
   });
 });
 

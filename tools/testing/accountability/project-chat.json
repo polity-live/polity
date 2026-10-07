@@ -1,6 +1,18 @@
 {
   "version": 1,
   "sourceReferences": {
+    "src/features/shared/ui/kit-platejs/ai-editor-context.ts": [
+      {
+        "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+        "project": "component",
+        "caseId": "uses snapshot text and exact reversed selection boundaries, preserving existing system and history"
+      },
+      {
+        "file": "src/features/shared/ui/kit-platejs/__tests__/use-chat.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves list formatting while excluding temporary AI anchors and previews without mutating the document"
+      }
+    ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx": [],
     "src/features/project-chat/ui/ProjectConversation.tsx": [
       {
@@ -30,56 +42,469 @@
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-87b7613f8e": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-98e2f3d436": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-cf59481bd9": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.project-chat-panel.action": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.project-chat-panel.set-collapsed": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["idle", "success", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.select-34cebf65e8": [
       {
         "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "project": "component",
-        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
-        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        "caseId": "resizes from edges and corner, clamps dimensions and retains size when reopened"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps workspace content full width instead of creating a side-panel column"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens from a bottom dock, switches chats and restores focus when minimized"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates the first chat automatically after the query resolves, and allows retry after an error"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for the conversation query before creating a first chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the automatically created chat when it arrives in the conversation query"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "opens, selects a conversation and minimizes by keyboard while preserving the mounted chat"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a chat by keyboard, blocks duplicate submissions while pending and preserves control focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "reports create failures and permits a keyboard retry without losing the current conversation"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps chat creation disabled before its query completes and recovers from an unknown mutation failure"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "resizes the %s handle with keyboard, restores its dimensions and retains focus"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores unrelated pointers, handles lost capture and ends a drag after capture was released"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "safely cancels %s resizing when navigation removes the panel during event capture"
       }
     ],
     "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-messages": [

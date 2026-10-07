@@ -34,7 +34,7 @@ import { resolveStudioTheme } from './service';
 import { createClient } from '@/lib/supabase/server';
 import { assertStudioProposalSourceAudience, resolveProjectSources } from './ai-sources';
 import { stageElementSetForAiProposal } from './elements';
-import { canvasEnabled, studioEnabled, studioSql, studioTransaction, StudioError } from './db';
+import { studioSql, studioTransaction, StudioError } from './db';
 import { validateStudioAssetsInTransaction } from './assets';
 import { resolveStudioSource } from './source';
 
@@ -99,12 +99,10 @@ export interface Snapshot {
   audienceIsShared: boolean;
 }
 
-function aiAvailable(actor: string) {
+function aiAvailable(_actor: string) {
   return (
-    studioEnabled(actor) &&
-    canvasEnabled() &&
-    (process.env.STUDIO_AI_ENABLED === 'true' ||
-      (process.env.STUDIO_AI_ENABLED !== 'false' && process.env.NODE_ENV !== 'production'))
+    process.env.STUDIO_AI_ENABLED === 'true' ||
+    (process.env.STUDIO_AI_ENABLED !== 'false' && process.env.NODE_ENV !== 'production')
   );
 }
 

@@ -118,12 +118,7 @@ export default defineConfig({
     {
       command: appCommand,
       stdout: 'pipe',
-      env: {
-        STUDIO_ENABLED: 'true',
-        STUDIO_V3_ENABLED: 'true',
-        CANVAS_ENABLED: 'true',
-        STUDIO_PILOT_USER_IDS: '',
-      },
+      env: {},
       url: appBaseUrl,
       reuseExistingServer,
       timeout: 300 * 1000,

@@ -13,13 +13,11 @@ const io = vi.hoisted(() => ({
   sharing: vi.fn(),
   audience: vi.fn(),
   cleanup: vi.fn(),
-  enabled: true,
 }));
 vi.mock('../db', async original => ({
   ...(await original<typeof import('../db')>()),
   studioTransaction: io.transaction,
   assertStudioCollaborationAccess: io.access,
-  canvasEnabled: () => io.enabled,
 }));
 vi.mock('../ai-sources', () => ({
   assertProjectAiSourceSharing: io.sharing,
@@ -93,7 +91,6 @@ function ballot(values: Record<string, unknown> = {}) {
 }
 beforeEach(async () => {
   vi.resetAllMocks();
-  io.enabled = true;
   project = {
     id: projectId,
     owner_id: actor,
@@ -180,10 +177,7 @@ beforeEach(async () => {
 });
 
 describe('Canvas governance authority, ballots and operation receipts', () => {
-  it('rejects disabled canvas and invalid input before opening a transaction', async () => {
-    io.enabled = false;
-    await expect(canvasCommand(actor, command('session'))).rejects.toMatchObject({ status: 404 });
-    io.enabled = true;
+  it('rejects invalid input before opening a transaction', async () => {
     await expect(canvasCommand(actor, { projectId, action: 'unknown' })).rejects.toThrow();
     expect(io.transaction).not.toHaveBeenCalled();
   });
@@ -191,76 +185,21 @@ describe('Canvas governance authority, ballots and operation receipts', () => {
     if (row === 'project') project = null;
     if (row === 'control') control = null;
     if (row === 'canonical') canonical = null;
-    await expect(canvasCommand(actor, command('session'))).rejects.toThrow(
+    await expect(canvasCommand(actor, command('phase'))).rejects.toThrow(
       'Studio V5 project not found'
     );
   });
   it.each([false, true])('rejects inaccessible workspace with missing row %s', async missing => {
     if (missing) proposal = null;
     else proposal.can_read = false;
-    await expect(canvasCommand(actor, draft('loadDraft'))).rejects.toMatchObject({ status: 403 });
+    await expect(canvasCommand(actor, draft('saveDraft'))).rejects.toMatchObject({ status: 403 });
   });
   it('stops immediately after collaboration access is revoked', async () => {
     io.access.mockRejectedValueOnce(new Error('revoked'));
-    await expect(canvasCommand(actor, command('session'))).rejects.toThrow('revoked');
+    await expect(canvasCommand(actor, command('phase'))).rejects.toThrow('revoked');
     expect(io.sql).not.toHaveBeenCalled();
   });
-  it.each(['personal', 'group', 'group-reader', 'personal-collaborator'])(
-    'returns server-computed session capabilities for %s',
-    async kind => {
-      if (kind.startsWith('group')) project.group_id = groupId;
-      if (kind.endsWith('reader')) project.can_manage = false;
-      if (kind.endsWith('collaborator')) project.owner_id = other;
-      proposalList = [proposal];
-      const result = await canvasCommand(actor, command('session'));
-      expect(result.capabilities).toEqual({
-        read: true,
-        edit: true,
-        suggest: true,
-        comment: true,
-        vote: true,
-        manage: project.can_manage,
-      });
-      expect(result.proposals[0].votes).toEqual(votes);
-      expect(result.roles).toHaveLength(kind === 'group' ? 1 : 0);
-      expect(result.adoptionGroups).toHaveLength(kind === 'personal' ? 1 : 0);
-      expect(io.transaction).toHaveBeenCalledWith(expect.any(Function), { readOnly: true });
-      expect(calls('insert into canvas_receipt')).toHaveLength(0);
-    }
-  );
-  it.each([
-    ['edit-owner', 'edit', 'draft', true, actor, [], null, true],
-    ['suggest-shared', 'suggest_internal', 'draft', true, other, [actor], null, true],
-    ['vote-resolution', 'vote_internal', 'draft', true, actor, [], other, true],
-    ['vote-no-resolution', 'vote_internal', 'draft', true, actor, [], null, false],
-    ['view', 'view', 'draft', true, actor, [], null, false],
-    ['submitted', 'edit', 'submitted', true, actor, [], null, false],
-    ['no-capability', 'edit', 'draft', false, actor, [], null, false],
-    ['not-shared', 'edit', 'draft', true, other, [], null, false],
-  ])(
-    'loads draft editability for %s',
-    async (_name, phase, state, suggest, owner, shared, resolves, canEdit) => {
-      control.phase = phase;
-      rights.suggest = suggest;
-      Object.assign(proposal, {
-        state,
-        owner_id: owner,
-        shared_ids: shared,
-        resolves_id: resolves,
-      });
-      expect(await canvasCommand(actor, draft('loadDraft'))).toMatchObject({
-        document: proposal.document,
-        baseDocument: proposal.base_document,
-        canEdit,
-      });
-    }
-  );
-  it('requires a ready workspace for loading a draft and supports read-only library browsing', async () => {
-    await expect(canvasCommand(actor, command('loadDraft'))).rejects.toThrow('not permitted');
-    proposal.ai_status = 'generating';
-    await expect(canvasCommand(actor, draft('loadDraft'))).rejects.toThrow('not permitted');
-    expect(await canvasCommand(actor, command('libraries'))).toEqual([]);
-  });
+
   it('requires an operation ID and current generation for every write', async () => {
     await expect(
       canvasCommand(actor, command('comment', { operationId: undefined }))
@@ -797,7 +736,9 @@ describe('Canvas governance authority, ballots and operation receipts', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
       expect(await canvasCommand(actor, draft('withdraw'))).toEqual({ ok: true });
-      expect(log).toHaveBeenCalledWith('Cannot clean up rejected AI media', expect.any(Error));
+      expect(log).toHaveBeenCalledWith('studio.post_commit_failed', {
+        operationId: expect.any(String),
+      });
     } finally {
       log.mockRestore();
     }

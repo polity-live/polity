@@ -11,6 +11,7 @@ export function useStudioState(groupId: string | null, projectId?: string) {
     project,
     exports: exports ?? [],
     isLoading: listResult.type === 'unknown',
+    listError: listResult.type === 'error' ? listResult.error.message : '',
     exportResult,
   };
 }

@@ -82,6 +82,7 @@ function getServerSupabase(): SupabaseClient {
 export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user';
 
 export interface NotificationConfig {
+  id?: string;
   // Sender information
   senderId: string; // The user performing the action
 
@@ -1694,7 +1695,7 @@ async function notifyEventParticipantAudience(
  * On the server (no dispatch), inserts via Supabase service_role.
  */
 export async function createNotification(config: NotificationConfig): Promise<string> {
-  const notificationId = crypto.randomUUID();
+  const notificationId = config.id ?? crypto.randomUUID();
   const input = mapConfigToInput(config, notificationId);
 
   if (_clientDispatch) {

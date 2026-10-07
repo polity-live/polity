@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import type { CreateVisibility } from '@/features/create/logic/createVisibility';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -23,6 +23,7 @@ export function StudioVisibilityDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const studio = useStudioClient();
   const { t } = useTranslation();
   const [value, setValue] = useState<CreateVisibility>(visibility);
   const [busy, setBusy] = useState(false);
@@ -31,7 +32,7 @@ export function StudioVisibilityDialog({
     setBusy(true);
     setError('');
     try {
-      await studioRequest('visibility', { id: projectId, visibility: value });
+      await studio.setVisibility({ id: projectId, visibility: value });
       onOpenChange(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));

@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   reload: vi.fn(),
   replaceSelection: vi.fn(),
   setInput: vi.fn(),
+  setOption: vi.fn(),
   show: vi.fn(),
   stop: vi.fn(),
   submit: vi.fn(),
@@ -38,10 +39,12 @@ const mocks = vi.hoisted(() => ({
     messages: [] as unknown[],
     setInput: vi.fn(),
     status: 'ready',
+    plateChat: { messages: [], status: 'ready', sendMessage: vi.fn() },
   },
 }));
 
 const editor = {
+  setOption: mocks.setOption,
   api: {
     block: mocks.block,
     blocks: mocks.blocks,
@@ -91,6 +94,7 @@ vi.mock('@/features/shared/ui/kit-platejs/use-chat.ts', () => ({
 vi.mock('@platejs/ai/react', () => ({
   AIChatPlugin: { key: 'aiChat' },
   AIPlugin: { key: 'aiPlugin' },
+  insertBelowGenerate: (...args: unknown[]) => mocks.insertBelow(...args),
   useEditorChat: (config: Record<string, (...args: never[]) => void>) => {
     mocks.editorChatConfig = config;
   },
@@ -448,7 +452,8 @@ describe('AIMenu branch campaign A01', () => {
     expect(mocks.hide).toHaveBeenCalledTimes(1);
 
     fireEvent.keyDown(draftInput, { key: 'Enter' });
-    expect(mocks.submit).not.toHaveBeenCalled();
+    expect(mocks.submit).toHaveBeenCalledExactlyOnceWith('draft');
+    mocks.submit.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'clear command selection' }));
     fireEvent.keyDown(draftInput, { key: 'Enter', shiftKey: true });
     expect(mocks.submit).not.toHaveBeenCalled();
@@ -457,6 +462,66 @@ describe('AIMenu branch campaign A01', () => {
 
     fireEvent.change(draftInput, { target: { value: 'new prompt' } });
     expect(mocks.setInput).toHaveBeenCalledWith('new prompt');
+  });
+
+  it('registers the native chat with Plate without re-registering it on unrelated renders', () => {
+    const view = render(<AIMenu />);
+    expect(mocks.setOption).toHaveBeenCalledExactlyOnceWith(
+      { key: 'aiChat' },
+      'chat',
+      mocks.chat.plateChat
+    );
+    openFromBlockSelection();
+    view.rerender(<AIMenu />);
+    expect(mocks.setOption).toHaveBeenCalledTimes(1);
+    const previous = mocks.chat.plateChat;
+    mocks.chat.plateChat = { ...previous, status: 'streaming' };
+    view.rerender(<AIMenu />);
+    expect(mocks.setOption).toHaveBeenLastCalledWith(
+      { key: 'aiChat' },
+      'chat',
+      mocks.chat.plateChat
+    );
+    mocks.chat.plateChat = previous;
+  });
+
+  it.each(['', '   '])('does not submit a blank prompt %j', prompt => {
+    mocks.chat.input = prompt;
+    render(<AIMenu />);
+    openFromBlockSelection();
+    fireEvent.keyDown(screen.getByLabelText('AI prompt'), { key: 'Enter' });
+    expect(mocks.submit).not.toHaveBeenCalled();
+  });
+
+  it.each([{ shiftKey: true }, { isComposing: true }, { keyCode: 229 }])(
+    'blocks modified or composing Enter before it reaches the menu: %j',
+    options => {
+      const ancestor = vi.fn();
+      mocks.chat.input = 'draft';
+      render(
+        <div onKeyDown={ancestor}>
+          <AIMenu />
+        </div>
+      );
+      openFromBlockSelection();
+      fireEvent.keyDown(screen.getByLabelText('AI prompt'), { key: 'Enter', ...options });
+      expect(mocks.submit).not.toHaveBeenCalled();
+      expect(ancestor).not.toHaveBeenCalled();
+    }
+  );
+
+  it('submits a trimmed prompt once without forwarding Enter to the selected command', () => {
+    const ancestor = vi.fn();
+    mocks.chat.input = '  draft  ';
+    render(
+      <div onKeyDown={ancestor}>
+        <AIMenu />
+      </div>
+    );
+    openFromBlockSelection();
+    fireEvent.keyDown(screen.getByLabelText('AI prompt'), { key: 'Enter' });
+    expect(mocks.submit).toHaveBeenCalledExactlyOnceWith('draft');
+    expect(ancestor).not.toHaveBeenCalled();
   });
 });
 
@@ -533,6 +598,14 @@ describe('AIMenuItems branch campaign A01', () => {
     expect(mocks.submit).toHaveBeenCalledWith('', { prompt: 'plateJs.ai.menu.simplifyLanguage' });
   });
 
+  it('offers initial commands before the preview editor has been created', () => {
+    mocks.isSelecting = true;
+    mocks.optionAiEditor = null;
+    render(<AIMenuItems setValue={vi.fn()} />);
+    clickItem('improveWriting');
+    expect(mocks.submit).toHaveBeenCalledExactlyOnceWith('', { prompt: 'Improve the writing' });
+  });
+
   it('runs selection-suggestion replacement actions and returns no menu without an AI editor', () => {
     mocks.isSelecting = true;
     mocks.optionMessages = [{ id: 'assistant' }];
@@ -541,7 +614,7 @@ describe('AIMenuItems branch campaign A01', () => {
 
     for (const value of ['replace', 'insertBelow', 'discard', 'tryAgain']) clickItem(value);
     expect(mocks.replaceSelection).toHaveBeenCalledWith(mocks.optionAiEditor);
-    expect(mocks.insertBelow).toHaveBeenCalledWith(mocks.optionAiEditor);
+    expect(mocks.insertBelow).toHaveBeenCalledWith(editor, mocks.optionAiEditor);
 
     view.unmount();
     mocks.optionAiEditor = undefined;

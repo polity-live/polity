@@ -28,16 +28,3 @@ export const exportStudioSchema = z.object({
   pageIds: z.array(z.string().uuid()).max(300).default([]),
   revision: z.number().int().nonnegative(),
 });
-export const studioProjectSchema = z.object({
-  id: z.string().uuid(),
-  owner_id: z.string().uuid(),
-  group_id: z.string().uuid().nullable(),
-  title: z.string().max(200),
-  kind: studioDocumentV3Schema.shape.kind,
-  visibility: z.enum(['public', 'authenticated', 'private']),
-  is_template: z.boolean(),
-  version: z.number().int(),
-  document_schema_version: z.literal(5),
-  created_at: z.number(),
-  updated_at: z.number(),
-});

@@ -47,7 +47,6 @@ vi.mock('@/zero/communication-studio/useStudioState', () => ({
 vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: null }),
 }));
-vi.mock('@/server/studio/api', () => ({ handleStudio: io.studio }));
 vi.mock('@/server/studio/published-media', () => ({ publishedStudioMedia: io.media }));
 vi.mock('@/server/studio/private-media', () => ({ privateCanvasMedia: io.privateMedia }));
 import { Route as PersonalRoot } from '../_authed/studio';
@@ -57,7 +56,6 @@ import { Route as GroupRoot } from '../_authed/group/$id/studio';
 import { Route as Group } from '../_authed/group/$id/studio/index';
 import { Route as GroupProject } from '../_authed/group/$id/studio/$projectId';
 import { Route as CollaborationAPI } from '../api/collaboration';
-import { Route as StudioAPI } from '../api/studio';
 import { Route as MediaAPI } from '../api/studio/published-media/$id';
 import { Route as PrivateAssetAPI } from '../api/studio/media/$id';
 import { Route as PrivateExportAPI } from '../api/studio/exports/$id';
@@ -124,13 +122,11 @@ it('passes original requests to authorization handlers, including the published 
   });
   const denied = new Response('denied', { status: 403 });
   io.collaboration.mockResolvedValue(denied);
-  io.studio.mockResolvedValue(denied);
   io.media.mockResolvedValue(denied);
   io.privateMedia.mockResolvedValue(denied);
   expect((await (CollaborationAPI.options as any).server.handlers.POST({ request })).status).toBe(
     410
   );
-  expect(await (StudioAPI.options as any).server.handlers.POST({ request })).toBe(denied);
   expect(
     await (MediaAPI.options as any).server.handlers.GET({ request, params: { id: 'asset' } })
   ).toBe(denied);
@@ -147,7 +143,6 @@ it('passes original requests to authorization handlers, including the published 
     })
   ).toBe(denied);
 
-  expect(io.studio).toHaveBeenCalledWith(request);
   expect(io.media).toHaveBeenCalledWith(request, 'asset');
   expect(io.privateMedia).toHaveBeenCalledWith(request, 'private-asset');
   expect(io.privateMedia).toHaveBeenCalledWith(request, 'private-export', 'export');

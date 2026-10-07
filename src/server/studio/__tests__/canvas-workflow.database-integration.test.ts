@@ -1,20 +1,10 @@
-import { beforeAll, afterAll, it, expect, vi } from 'vitest';
+import { beforeAll, afterAll, it, expect } from 'vitest';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
-const broadcasts = vi.hoisted(() => [] as string[]);
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => ({
-    channel: (topic: string) => ({
-      httpSend: async () => {
-        broadcasts.push(topic);
-        return { success: true };
-      },
-    }),
-    removeChannel: async () => undefined,
-  }),
-}));
+
 import postgres from 'postgres';
-import { canvasCommand } from '../governance';
+import { studioCanvasCommand as canvasCommand } from '@/test/studio-zero-database.fixture';
+import { encodeAppError } from '@/features/shared/errors/app-error';
 import { studioSql } from '../db';
 import { applyStudioOperation } from '../operations';
 import { createDocument } from '@/features/communication-studio/logic/templates';
@@ -25,8 +15,20 @@ import {
   v3DocumentToLegacy,
 } from '@/features/communication-studio/logic/v3-adapter';
 import { assertCanvasWorkspace } from '../workspace-access';
-import { assetUrls } from '../service';
-import { canvasPresence } from '../presence';
+import { dbProvider } from '@/zero/db-provider';
+import { studioQueries } from '@/zero/communication-studio/queries';
+import { studioAssetUrls } from '@/zero/communication-studio/projections';
+const assetUrls = (actor: string, projectId: string, workspaceId?: string) =>
+  dbProvider.transaction(async tx =>
+    studioAssetUrls(
+      await tx.run(
+        studioQueries.assets.fn({
+          args: { projectId, workspaceId },
+          ctx: { userID: actor, email: '' },
+        })
+      )
+    )
+  );
 
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
@@ -72,22 +74,20 @@ it('creates signed upload tokens from the provisioned private Studio bucket', as
   expect(data?.token).toBeTruthy();
 });
 
-it('does not send new presence data to an already joined user after membership revocation', async () => {
-  const { id, doc } = await fixture();
-  const frame = doc.nodes.find(node => node.type === 'frame' && node.parentFrameId === null);
-  if (!frame) throw new Error('Missing root frame');
-  await canvasPresence(member, {
-    projectId: id,
-    cursor: { pageId: frame.id, x: 10, y: 20 },
-  });
-  await canvasPresence(owner, { projectId: id });
-  expect(broadcasts).toContain(`canvas-user:${id}:main:${member}`);
+it('protects private presence channels after membership revocation', async () => {
+  const { id } = await fixture();
+  const access = (actor: string) =>
+    sql.begin(async tx => {
+      await tx`select set_config('request.jwt.claim.sub',${actor},true)`;
+      return (
+        await tx`select studio_presence_channel_access(${'presence:studio:' + id + ':main'}) as allowed`
+      )[0].allowed;
+    });
+  expect(await access(member)).toBe(true);
   await sql`update group_membership set status='requested' where group_id=${group} and user_id=${member}`;
   try {
-    broadcasts.length = 0;
-    await canvasPresence(owner, { projectId: id });
-    expect(broadcasts).toEqual([`canvas-user:${id}:main:${owner}`]);
-    await expect(canvasPresence(member, { projectId: id })).rejects.toThrow();
+    expect(await access(member)).toBe(false);
+    expect(await access(owner)).toBe(true);
   } finally {
     await sql`update group_membership set status='active' where group_id=${group} and user_id=${member}`;
   }
@@ -119,7 +119,7 @@ it('isolates proposal media from the canonical library and promotes only media i
   const asset = crypto.randomUUID();
   await sql`insert into studio_asset(id,project_id,workspace_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset},${id},${workspaceId},'Private image','image/png',16,${`${id}/assets/${asset}`},true,0)`;
   expect(await assetUrls(owner, id)).toEqual([]);
-  await expect(assetUrls(owner, id, workspaceId)).rejects.toThrow();
+  expect(await assetUrls(owner, id, workspaceId)).toEqual([]);
   expect(await assetUrls(member, id, workspaceId)).toContainEqual(
     expect.objectContaining({ id: asset, url: `/api/studio/media/${asset}` })
   );
@@ -192,7 +192,7 @@ it('lets a private AI draft be reviewed and accepted only by the project owner',
       ${sql.json(JSON.parse(JSON.stringify(proposed)))},'ai','template','[]',0,0)`;
   await expect(
     command(member, 'acceptPrivate', { workspaceId: suggestionId, revision: 0 })
-  ).rejects.toThrow('not permitted');
+  ).rejects.toThrow(encodeAppError('permission_denied'));
   const accepted = await command(owner, 'acceptPrivate', {
     workspaceId: suggestionId,
     revision: 0,
@@ -222,7 +222,7 @@ it('runs personal suggestions and voting with a frozen accepted-collaborator ele
   expect(initial.members.map((m: { id: string }) => m.id).sort()).toEqual([owner, member].sort());
   await expect(
     command(member, 'phase', { revision: 0, phase: 'suggest_internal' })
-  ).rejects.toThrow('not permitted');
+  ).rejects.toThrow(encodeAppError('permission_denied'));
   await expect(canvasCommand(outsider, { action: 'session', projectId: id })).rejects.toThrow();
   await command(owner, 'phase', { revision: 0, phase: 'suggest_internal' });
   const suggestionSession = await canvasCommand(owner, { action: 'session', projectId: id });
@@ -241,16 +241,18 @@ it('runs personal suggestions and voting with a frozen accepted-collaborator ele
   await command(member, 'submit', { workspaceId, revision: 1 });
   await command(owner, 'phase', { revision: 0, phase: 'vote_internal' });
   await command(owner, 'startVote', { workspaceId });
-  await expect(command(member, 'startVote', { workspaceId })).rejects.toThrow('not permitted');
+  await expect(command(member, 'startVote', { workspaceId })).rejects.toThrow(
+    encodeAppError('permission_denied')
+  );
   const [ballot] = await sql`select state,electorate from canvas_proposal where id=${workspaceId}`;
   expect(ballot.state).toBe('voting');
   expect(ballot.electorate.sort()).toEqual([owner, member].sort());
   await sql`update studio_project_collaborator set status='active' where project_id=${id} and user_id=${outsider}`;
   await expect(command(outsider, 'vote', { workspaceId, choice: 'accept' })).rejects.toThrow(
-    'not permitted'
+    encodeAppError('permission_denied')
   );
   await expect(command(owner, 'phase', { revision: 0, phase: 'edit' })).rejects.toThrow(
-    'active ballots'
+    encodeAppError('project_revision_conflict')
   );
   await sql`delete from studio_project_collaborator where project_id=${id} and user_id=${member}`;
   await expect(command(member, 'vote', { workspaceId, choice: 'accept' })).rejects.toThrow();
@@ -283,13 +285,13 @@ it('requires personal AI suggestions to use the ballot procedure outside edit mo
   await command(owner, 'phase', { revision: 0, phase: 'suggest_internal' });
   for (const action of ['acceptPrivate', 'rejectPrivate'])
     await expect(command(owner, action, { workspaceId, revision: 1 })).rejects.toThrow(
-      'not permitted'
+      encodeAppError('permission_denied')
     );
   await command(owner, 'submit', { workspaceId, revision: 1 });
   await command(owner, 'phase', { revision: 0, phase: 'vote_internal' });
   for (const action of ['acceptPrivate', 'rejectPrivate'])
     await expect(command(owner, action, { workspaceId, revision: 1 })).rejects.toThrow(
-      'not permitted'
+      encodeAppError('permission_denied')
     );
   await command(owner, 'vote', { workspaceId, choice: 'accept' });
   const [state] = await sql`select document from studio_state where project_id=${id}`;
@@ -313,7 +315,7 @@ it('shares a personal project only through an explicit authorized adoption and i
     expect.objectContaining({ name: 'Personal library' })
   );
   await expect(command(owner, 'comment', { body: 'Obsolete generation' })).rejects.toThrow(
-    'generation'
+    encodeAppError('project_revision_conflict')
   );
   await expect(
     canvasCommand(outsider, { action: 'libraries', projectId: other })
@@ -360,7 +362,7 @@ it('blocks a corrupted submitted ballot instead of inventing a replacement votin
   await command(member, 'submit', { workspaceId, revision: 1 });
   await sql`update canvas_proposal set changes='[]' where id=${workspaceId}`;
   await expect(command(owner, 'phase', { phase: 'vote_internal', revision: 0 })).rejects.toThrow(
-    'integrity'
+    encodeAppError('project_revision_conflict')
   );
   expect(await sql`select * from canvas_vote where proposal_id=${workspaceId}`).toHaveLength(0);
   expect(
@@ -456,7 +458,7 @@ it.each([false, true])(
     expect(stored.document.title).toBe('Accepted A');
     expect(stored.content_revision).toBe(1);
     await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
-      'conflicts'
+      encodeAppError('project_revision_conflict')
     );
     const originalVotes =
       await sql`select user_id,choice from canvas_vote where proposal_id=${b} order by user_id`;
@@ -481,7 +483,7 @@ it.each([false, true])(
     };
     await resolve('Rejected resolution', 'reject');
     await expect(command(owner, 'phase', { phase: 'edit', revision: 1 })).rejects.toThrow(
-      'conflicts'
+      encodeAppError('project_revision_conflict')
     );
     const resolution = await resolve('Resolved by a new decision', 'accept');
     const resolved = await canvasCommand(owner, { action: 'session', projectId: id });
@@ -661,11 +663,14 @@ it('rechecks role capabilities for drafts, comments and votes while retaining ea
     await command(owner, 'setCapability', { roleId: role, capability: 'vote', allowed: false });
     await expect(command(member, 'vote', { workspaceId, choice: 'reject' })).rejects.toThrow();
     await command(owner, 'vote', { workspaceId, choice: 'accept' });
+    await command(owner, 'finalize', { workspaceId });
     const session = await canvasCommand(owner, { projectId: id, action: 'session' });
     expect(session.proposals[0]).toMatchObject({
       decision: 'accepted',
       application: 'applied',
-      votes: expect.arrayContaining([{ user_id: member, choice: 'accept' }]),
+      votes: expect.arrayContaining([
+        expect.objectContaining({ user_id: member, choice: 'accept' }),
+      ]),
     });
   } finally {
     await sql`delete from group_membership_role where role_id=${role}`;

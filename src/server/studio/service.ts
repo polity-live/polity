@@ -1,3 +1,5 @@
+import { copyStudioAsset, removeFailedStudioCopies } from './storage';
+import { studioId } from './context';
 import { rows, type SqlTransaction } from '@/server/transaction';
 import { assertCanvasWorkspace } from './workspace-access';
 import { createClient } from '@/lib/supabase/server';
@@ -21,11 +23,8 @@ import {
   studioTransaction,
   StudioError,
   assertStudioAccess,
-  assertStudioCollaborationAccess,
   assertStudioGroup,
-  canvasEnabled,
 } from './db';
-import { synchronizeProjectElementInstances } from './elements';
 export const bucket = 'studio';
 
 interface CreateProjectSelection {
@@ -73,10 +72,14 @@ export async function resolveStudioTheme(
   return createThemeSnapshot(definition, mode, row.revision_id);
 }
 
-export async function createProjectFromSelection(userId: string, input: CreateProjectSelection) {
+export async function createProjectFromSelection(
+  userId: string,
+  input: CreateProjectSelection,
+  id = studioId()
+) {
   if (input.groupId) await assertStudioGroup(userId, input.groupId, studioSql(), true);
   const theme = await resolveStudioTheme(userId, input.groupId, input.themeId, input.themeMode);
-  const projectId = crypto.randomUUID();
+  const projectId = id;
   let document: StudioDocumentV3;
   let templateAssets: Record<string, unknown>[] = [];
   let sourceReferences: unknown[] = [];
@@ -113,9 +116,9 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
   const storage = createClient().storage.from(bucket);
   try {
     for (const row of templateAssets) {
-      const id = crypto.randomUUID();
+      const id = studioId(`asset:${row.id}`);
       const path = `${projectId}/assets/${id}`;
-      const result = await storage.copy(String(row.storage_path), path);
+      const result = await copyStudioAsset(storage, String(row.storage_path), path);
       if (result.error) throw new StudioError('Cannot copy template media', 502);
       replacements.set(String(row.id), id);
       copied.push({
@@ -161,7 +164,11 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     });
     return { id: projectId };
   } catch (error) {
-    if (copied.length) await storage.remove(copied.map(asset => asset.path));
+    if (copied.length)
+      await removeFailedStudioCopies(
+        storage,
+        copied.map(asset => asset.path)
+      );
     throw error;
   }
 }
@@ -192,7 +199,7 @@ export async function createProject(
   document: StudioDocumentV3
 ) {
   if (groupId) await assertStudioGroup(userId, groupId, studioSql(), true);
-  const id = crypto.randomUUID();
+  const id = studioId();
   studioDocumentV3Schema.parse(document);
   await validateAssets(id, document);
   const now = Date.now();
@@ -203,38 +210,7 @@ export async function createProject(
   });
   return { id };
 }
-export async function loadProject(userId: string, id: string) {
-  await assertStudioAccess(userId, id, true);
-  const synchronized = await synchronizeProjectElementInstances(userId, id);
-  const sql = studioSql();
-  const [row] =
-    await sql`select s.document,s.content_revision,c.generation,(c.phase='edit' and studio_access(${userId}::uuid,${id}::uuid,true)) as can_edit from studio_state s join canvas_control c using(project_id) join studio_project p on p.id=s.project_id where s.project_id=${id} and p.document_schema_version=5`;
-  if (!row) throw new StudioError('Studio project not found', 404);
-  return {
-    id,
-    document: synchronized?.document ?? studioDocumentV3Schema.parse(row.document),
-    revision: synchronized?.revision ?? Number(row.content_revision),
-    canEdit: row.can_edit,
-    generation: row.generation,
-    canvasEnabled: canvasEnabled(),
-  };
-}
 
-export async function queueExport(
-  userId: string,
-  id: string,
-  format: string,
-  pageIds: string[],
-  revision: number
-) {
-  return (await import('@/server/studio/export')).queueCommittedExport(
-    userId,
-    id,
-    format,
-    pageIds,
-    revision
-  );
-}
 export function detectMime(bytes: Buffer) {
   if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
     return 'image/png';
@@ -250,10 +226,11 @@ export async function beginUpload(
   name: string,
   mime: string,
   size: number,
-  workspaceId?: string
+  workspaceId?: string,
+  assetId = studioId()
 ) {
   await assertCanvasWorkspace(userId, projectId, workspaceId, true, studioSql());
-  const id = crypto.randomUUID(),
+  const id = assetId,
     storagePath = `${projectId}/assets/${id}`,
     sql = studioSql();
   await studioTransaction(async tx => {
@@ -312,46 +289,13 @@ export async function finishUpload(userId: string, id: string, cancel = false) {
   });
   return { id, mime };
 }
-export async function assetUrls(userId: string, projectId: string, workspaceId?: string) {
-  await assertCanvasWorkspace(userId, projectId, workspaceId, false, studioSql());
-  const sql = studioSql();
-  const rows =
-    await sql`select id,name,mime_type,storage_path from studio_asset where project_id=${projectId} and ready=true and (workspace_id is null or workspace_id=${workspaceId ?? null})`;
-  return rows.map(r => ({
-    id: r.id,
-    name: r.name,
-    mime: r.mime_type,
-    url: `/api/studio/media/${r.id}`,
-  }));
-}
-export async function downloadExport(userId: string, id: string) {
-  const sql = studioSql();
-  const [job] = await sql`select * from studio_export where id=${id}`;
-  if (!job) throw new StudioError('Export not found', 404);
-  await assertStudioCollaborationAccess(userId, job.project_id);
-  if (job.status !== 'completed' || !job.storage_path) throw new StudioError('Export is not ready');
-  return { url: `/api/studio/exports/${id}`, name: job.file_name };
-}
-export async function exportStatus(userId: string, id: string) {
-  const sql = studioSql();
-  const [job] =
-    await sql`select project_id,format,status,progress,error,file_name from studio_export where id=${id}`;
-  if (!job) throw new StudioError('Export not found', 404);
-  await assertStudioCollaborationAccess(userId, job.project_id);
-  return {
-    id,
-    format: job.format,
-    status: job.status,
-    progress: Number(job.progress),
-    error: job.error,
-    fileName: job.file_name,
-  };
-}
+
 export async function duplicateProject(
   userId: string,
   id: string,
   destinationGroupId: string | null = null,
-  visibility: 'public' | 'authenticated' | 'private' = 'private'
+  visibility: 'public' | 'authenticated' | 'private' = 'private',
+  destinationId = studioId()
 ) {
   await assertStudioAccess(userId, id);
   if (destinationGroupId) await assertStudioGroup(userId, destinationGroupId, studioSql(), true);
@@ -371,7 +315,7 @@ export async function duplicateProject(
     await sql`select p.group_id,p.source_references,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
   if (!source) throw new StudioError('Studio project not found', 404);
   const value = studioDocumentV3Schema.parse(source.document);
-  const projectId = crypto.randomUUID();
+  const projectId = destinationId;
   value.title = value.title.slice(0, 190) + ' · Kopie';
   const rows =
     await sql`select * from studio_asset where project_id=${id} and workspace_id is null and ready=true`;
@@ -380,9 +324,9 @@ export async function duplicateProject(
   const storage = createClient().storage.from(bucket);
   try {
     for (const row of rows) {
-      const assetId = crypto.randomUUID(),
+      const assetId = studioId(`asset:${row.id}`),
         storagePath = `${projectId}/assets/${assetId}`;
-      const uploaded = await storage.copy(row.storage_path, storagePath);
+      const uploaded = await copyStudioAsset(storage, row.storage_path, storagePath);
       if (uploaded.error) throw new StudioError('Cannot copy media');
       copies.push({
         id: assetId,
@@ -427,7 +371,11 @@ export async function duplicateProject(
     });
     return { id: projectId };
   } catch (error) {
-    if (copies.length) await storage.remove(copies.map(a => a.path));
+    if (copies.length)
+      await removeFailedStudioCopies(
+        storage,
+        copies.map(a => a.path)
+      );
     throw error;
   }
 }

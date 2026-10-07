@@ -33,7 +33,6 @@ import { Route as AuthedTodosRouteImport } from './routes/_authed/todos'
 import { Route as ApiCollaborationRouteImport } from './routes/api/collaboration'
 import { Route as ApiMutateRouteImport } from './routes/api/mutate'
 import { Route as ApiQueryRouteImport } from './routes/api/query'
-import { Route as ApiStudioRouteImport } from './routes/api/studio'
 import { Route as ApiTutorialRouteImport } from './routes/api/tutorial'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -144,7 +143,6 @@ import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jo
 import { Route as ApiStudioExportsIdRouteImport } from './routes/api/studio/exports/$id'
 import { Route as ApiStudioMediaIdRouteImport } from './routes/api/studio/media/$id'
 import { Route as ApiStudioPublishedMediaIdRouteImport } from './routes/api/studio/published-media/$id'
-import { Route as ApiStudioReadIdRouteImport } from './routes/api/studio/read/$id'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
 import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
@@ -281,11 +279,6 @@ const ApiMutateRoute = ApiMutateRouteImport.update({
 const ApiQueryRoute = ApiQueryRouteImport.update({
   id: '/api/query',
   path: '/api/query',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStudioRoute = ApiStudioRouteImport.update({
-  id: '/api/studio',
-  path: '/api/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTutorialRoute = ApiTutorialRouteImport.update({
@@ -847,26 +840,21 @@ const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
   getParentRoute: () => ApiPushTestRoute,
 } as any)
 const ApiStudioExportsIdRoute = ApiStudioExportsIdRouteImport.update({
-  id: '/exports/$id',
-  path: '/exports/$id',
-  getParentRoute: () => ApiStudioRoute,
+  id: '/api/studio/exports/$id',
+  path: '/api/studio/exports/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStudioMediaIdRoute = ApiStudioMediaIdRouteImport.update({
-  id: '/media/$id',
-  path: '/media/$id',
-  getParentRoute: () => ApiStudioRoute,
+  id: '/api/studio/media/$id',
+  path: '/api/studio/media/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStudioPublishedMediaIdRoute =
   ApiStudioPublishedMediaIdRouteImport.update({
-    id: '/published-media/$id',
-    path: '/published-media/$id',
-    getParentRoute: () => ApiStudioRoute,
+    id: '/api/studio/published-media/$id',
+    path: '/api/studio/published-media/$id',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const ApiStudioReadIdRoute = ApiStudioReadIdRouteImport.update({
-  id: '/read/$id',
-  path: '/read/$id',
-  getParentRoute: () => ApiStudioRoute,
-} as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
     id: '/',
@@ -997,7 +985,6 @@ export interface FileRoutesByFullPath {
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
-  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1103,7 +1090,6 @@ export interface FileRoutesByFullPath {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
-  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1149,7 +1135,6 @@ export interface FileRoutesByTo {
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
-  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1246,7 +1231,6 @@ export interface FileRoutesByTo {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
-  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1295,7 +1279,6 @@ export interface FileRoutesById {
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
-  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1401,7 +1384,6 @@ export interface FileRoutesById {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
-  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1452,7 +1434,6 @@ export interface FileRouteTypes {
     | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
-    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1558,7 +1539,6 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
-    | '/api/studio/read/$id'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1604,7 +1584,6 @@ export interface FileRouteTypes {
     | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
-    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1701,7 +1680,6 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
-    | '/api/studio/read/$id'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1749,7 +1727,6 @@ export interface FileRouteTypes {
     | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
-    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1855,7 +1832,6 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
-    | '/api/studio/read/$id'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -1898,7 +1874,6 @@ export interface RootRouteChildren {
   ApiCollaborationRoute: typeof ApiCollaborationRoute
   ApiMutateRoute: typeof ApiMutateRoute
   ApiQueryRoute: typeof ApiQueryRoute
-  ApiStudioRoute: typeof ApiStudioRouteWithChildren
   ApiTutorialRoute: typeof ApiTutorialRouteWithChildren
   ApiAiCatalogRoute: typeof ApiAiCatalogRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
@@ -1929,6 +1904,9 @@ export interface RootRouteChildren {
   ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
   ApiDatasetsSnapshotIdProjectionRoute: typeof ApiDatasetsSnapshotIdProjectionRoute
   ApiDatasetsSnapshotIdValuesRoute: typeof ApiDatasetsSnapshotIdValuesRoute
+  ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
+  ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
+  ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2099,13 +2077,6 @@ declare module '@tanstack/react-router' {
       path: '/api/query'
       fullPath: '/api/query'
       preLoaderRoute: typeof ApiQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/studio': {
-      id: '/api/studio'
-      path: '/api/studio'
-      fullPath: '/api/studio'
-      preLoaderRoute: typeof ApiStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tutorial': {
@@ -2859,31 +2830,24 @@ declare module '@tanstack/react-router' {
     }
     '/api/studio/exports/$id': {
       id: '/api/studio/exports/$id'
-      path: '/exports/$id'
+      path: '/api/studio/exports/$id'
       fullPath: '/api/studio/exports/$id'
       preLoaderRoute: typeof ApiStudioExportsIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/studio/media/$id': {
       id: '/api/studio/media/$id'
-      path: '/media/$id'
+      path: '/api/studio/media/$id'
       fullPath: '/api/studio/media/$id'
       preLoaderRoute: typeof ApiStudioMediaIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/studio/published-media/$id': {
       id: '/api/studio/published-media/$id'
-      path: '/published-media/$id'
+      path: '/api/studio/published-media/$id'
       fullPath: '/api/studio/published-media/$id'
       preLoaderRoute: typeof ApiStudioPublishedMediaIdRouteImport
-      parentRoute: typeof ApiStudioRoute
-    }
-    '/api/studio/read/$id': {
-      id: '/api/studio/read/$id'
-      path: '/read/$id'
-      fullPath: '/api/studio/read/$id'
-      preLoaderRoute: typeof ApiStudioReadIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/event/$id/agenda/': {
       id: '/_authed/event/$id/agenda/'
@@ -3390,24 +3354,6 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
-interface ApiStudioRouteChildren {
-  ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
-  ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
-  ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
-  ApiStudioReadIdRoute: typeof ApiStudioReadIdRoute
-}
-
-const ApiStudioRouteChildren: ApiStudioRouteChildren = {
-  ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
-  ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
-  ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
-  ApiStudioReadIdRoute: ApiStudioReadIdRoute,
-}
-
-const ApiStudioRouteWithChildren = ApiStudioRoute._addFileChildren(
-  ApiStudioRouteChildren,
-)
-
 interface ApiTutorialRouteChildren {
   ApiTutorialCleanupRoute: typeof ApiTutorialCleanupRoute
 }
@@ -3449,7 +3395,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCollaborationRoute: ApiCollaborationRoute,
   ApiMutateRoute: ApiMutateRoute,
   ApiQueryRoute: ApiQueryRoute,
-  ApiStudioRoute: ApiStudioRouteWithChildren,
   ApiTutorialRoute: ApiTutorialRouteWithChildren,
   ApiAiCatalogRoute: ApiAiCatalogRoute,
   ApiAiChatRoute: ApiAiChatRoute,
@@ -3480,6 +3425,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,
   ApiDatasetsSnapshotIdProjectionRoute: ApiDatasetsSnapshotIdProjectionRoute,
   ApiDatasetsSnapshotIdValuesRoute: ApiDatasetsSnapshotIdValuesRoute,
+  ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
+  ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
+  ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

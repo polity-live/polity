@@ -14,7 +14,10 @@ vi.mock('@rocicorp/zero/react', () => ({
   useQuery: () => [io.groups],
 }));
 vi.mock('@/zero/queries', () => ({ queries: { studio: { manageGroups: () => ({}) } } }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: io.translate }),
   translate: io.translate,

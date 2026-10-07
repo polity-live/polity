@@ -34,6 +34,9 @@ async function loadMutatorContext(options: { includeRegistries?: boolean } = {})
     zql: queryHarness.zql,
     schema: {},
   }));
+  vi.doMock('../db-provider', () => ({
+    dbProvider: { transaction: vi.fn() },
+  }));
   vi.doMock('../rbac/can', () => ({
     can: (...args: unknown[]) => canMock(...args),
   }));
@@ -91,10 +94,10 @@ describe('Zero mutator contracts', () => {
     });
 
     expect(Object.keys(mutators)).toEqual(
-      expect.arrayContaining(['users', 'groups', 'events', 'amendments', 'network'])
+      expect.arrayContaining(['users', 'groups', 'events', 'amendments', 'network', 'studio'])
     );
     expect(Object.keys(serverMutators)).toEqual(
-      expect.arrayContaining(['groups', 'events', 'amendments', 'votes', 'network'])
+      expect.arrayContaining(['groups', 'events', 'amendments', 'votes', 'network', 'studio'])
     );
     expect(countMutators(mutators)).toBeGreaterThan(100);
     expect(countMutators(serverMutators)).toBeGreaterThan(100);

@@ -2555,26 +2555,6 @@
       ]
     },
     {
-      "file": "src/routes/api/studio.ts",
-      "routePath": "/api/studio",
-      "access": "public",
-      "actions": [
-        {
-          "id": "post-request",
-          "kind": "api-request",
-          "roles": ["anonymous", "authenticated"],
-          "states": ["success", "validation-error", "unauthorized", "service-error"],
-          "contractCoverage": [
-            {
-              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
-              "project": "unit",
-              "caseId": "accounts for every route source with a unique file and path"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "file": "src/routes/api/studio/exports/$id.ts",
       "routePath": "/api/studio/exports/$id",
       "access": "public",
@@ -2617,26 +2597,6 @@
     {
       "file": "src/routes/api/studio/published-media/$id.ts",
       "routePath": "/api/studio/published-media/$id",
-      "access": "public",
-      "actions": [
-        {
-          "id": "get-request",
-          "kind": "api-request",
-          "roles": ["anonymous", "authenticated"],
-          "states": ["success", "validation-error", "unauthorized", "service-error"],
-          "contractCoverage": [
-            {
-              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
-              "project": "unit",
-              "caseId": "accounts for every route source with a unique file and path"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "file": "src/routes/api/studio/read/$id.ts",
-      "routePath": "/api/studio/read/$id",
       "access": "public",
       "actions": [
         {

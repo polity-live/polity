@@ -71,12 +71,7 @@ describe('Studio Zero visibility projections', () => {
           ['where', 'readers', 'user_id', actor],
         ])
       );
-      expect(harness.lastQuery('canvas_proposal.project').calls).toContainEqual([
-        'where',
-        'group_id',
-        'IS NOT',
-        null,
-      ]);
+      expect(access('canvas_proposal.project')).toContainEqual(['cmp', 'group_id', 'IS', null]);
       expect(access('canvas_proposal.project')).toContainEqual([
         'where',
         'collaborators',
@@ -97,7 +92,7 @@ describe('Studio Zero visibility projections', () => {
     studioQueries.manageGroups.fn({ args: undefined, ctx: { userID: 'alice', email: '' } });
     expect(access('group')).toContainEqual([
       'where',
-      'memberships.membership_roles.role.group_action_rights',
+      'memberships.membership_roles.studio_project_rights',
       'action',
       'IN',
       ['manage'],
@@ -111,13 +106,13 @@ describe('Studio Zero visibility projections', () => {
     const rules = access('group');
     expect(rules).toContainEqual([
       'where',
-      'memberships.membership_roles.role.group_action_rights',
+      'memberships.membership_roles.studio_project_rights',
       'resource',
       'projects',
     ]);
     expect(rules).toContainEqual([
       'where',
-      'memberships.membership_roles.role.group_action_rights',
+      'memberships.membership_roles.studio_project_rights',
       'action',
       'IN',
       ['manage'],
@@ -142,13 +137,13 @@ describe('Studio Zero visibility projections', () => {
       expect(rules).toContainEqual(['where', 'collaborators', 'status', 'active']);
       expect(rules).toContainEqual([
         'where',
-        'memberships.membership_roles.role.group_action_rights',
+        'memberships.membership_roles.studio_project_rights',
         'resource',
         'projects',
       ]);
       expect(rules).toContainEqual([
         'where',
-        'memberships.membership_roles.role.group_action_rights',
+        'memberships.membership_roles.studio_project_rights',
         'action',
         'IN',
         ['view', 'manage'],
@@ -241,3 +236,67 @@ it('restricts operation receipts to their actor and current project access', () 
     'alice',
   ]);
 });
+
+it.each(['alice', 'anon'])(
+  'authorizes every durable Studio projection for %s without read side effects',
+  userID => {
+    for (const groupId of [null, 'group'])
+      for (const workspaceId of [undefined, 'workspace']) {
+        const args = {
+          id: 'project',
+          operationId: 'operation',
+          projectId: 'project',
+          workspaceId,
+          groupId,
+        };
+        for (const name of [
+          'commandReceipt',
+          'canvasReceipt',
+          'control',
+          'sessionProject',
+          'assets',
+          'collaborators',
+          'invitations',
+          'themes',
+          'elementSets',
+          'editorActions',
+          'comments',
+          'history',
+          'libraries',
+          'export',
+        ]) {
+          (studioQueries as any)[name].fn({
+            args: ['invitations'].includes(name) ? undefined : args,
+            ctx: { userID, email: '' },
+          });
+        }
+        for (const queryList of Object.values(harness.byTable))
+          for (const query of queryList)
+            for (const call of query.calls)
+              if (call[0] === 'where' && typeof call[1] === 'function') evaluatePredicate(call[1]);
+      }
+    const actor = userID === 'alice' ? userID : '00000000-0000-0000-0000-000000000000';
+    expect(harness.lastQuery('studio_command_receipt').calls).toContainEqual([
+      'where',
+      'actor_id',
+      actor,
+    ]);
+    expect(harness.lastQuery('studio_editor_action').calls).toContainEqual([
+      'where',
+      'actor_id',
+      actor,
+    ]);
+    expect(harness.lastQuery('studio_editor_action').calls).toContainEqual([
+      'where',
+      'pending',
+      true,
+    ]);
+    expect(harness.lastQuery('studio_project_collaborator').calls).toContainEqual([
+      'where',
+      'status',
+      'invited',
+    ]);
+    expect(JSON.stringify(access('canvas_history.project'))).not.toContain('public');
+    expect(JSON.stringify(access('studio_export.project'))).not.toContain('public');
+  }
+);

@@ -1,3 +1,4 @@
+import { cleanupStudioStorage } from '../../src/server/studio/cleanup';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -36,9 +37,7 @@ process.on('SIGINT', () => {
 });
 while (!stop) {
   if (Date.now() - lastCleanup > 10 * 60_000) {
-    const abandoned =
-      await sql`delete from studio_asset where ready=false and created_at<${Date.now() - 3 * 60 * 60_000} returning storage_path`;
-    if (abandoned.length) await storage.remove(abandoned.map(a => a.storage_path));
+    await cleanupStudioStorage();
     lastCleanup = Date.now();
   }
   // A worker that disappears leaves a lease; retry twice, then expose the failure.

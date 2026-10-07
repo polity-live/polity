@@ -1,3 +1,11 @@
+vi.mock('@rocicorp/zero/react', async () => {
+  const { studioSnapshotFixture } = await import('@/test/studio-snapshot.fixture');
+  return { useQuery: (q: any) => studioSnapshotFixture(q, io) };
+});
+vi.mock('@/zero/queries', async () => {
+  const { studioQueryFixture } = await import('@/test/studio-client.fixture');
+  return { queries: { studio: studioQueryFixture } };
+});
 // @vitest-environment jsdom
 import { forwardRef, useImperativeHandle } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -13,6 +21,7 @@ const io = vi.hoisted(() => ({
   toast: vi.fn(),
   props: {} as any,
   snapshot: {} as any,
+  queryStatus: undefined as any,
   t: (key: string) => key,
 }));
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: io.user }) }));
@@ -44,6 +53,7 @@ vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
 const props = { groupId: null, projectId: 'project', open: vi.fn() };
 beforeEach(() => {
   vi.clearAllMocks();
+  io.queryStatus = undefined;
   io.user = { id: 'reader' };
   io.focus.mockResolvedValue(undefined);
   io.getSession.mockResolvedValue({ data: { session: null } });
@@ -60,10 +70,8 @@ beforeEach(() => {
     document: legacyDocumentToV3(createDocument('carousel', 'Read project')),
     assets: [],
   };
-  io.fetch.mockImplementation(async (url: string) =>
-    url.startsWith('/api/studio/read/')
-      ? Response.json(io.snapshot)
-      : new Response(new Blob(['media'], { type: 'image/png' }))
+  io.fetch.mockImplementation(
+    async (_url: string) => new Response(new Blob(['media'], { type: 'image/png' }))
   );
   vi.stubGlobal('fetch', io.fetch);
   vi.stubGlobal(
@@ -80,50 +88,22 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 const loaded = () => screen.findByText('Read canvas');
-it.each(['http', 'group', 'json', 'network', 'session'])(
-  'reports a read snapshot %s failure without exposing a workspace',
-  async failure => {
-    if (failure === 'http') io.fetch.mockResolvedValue(new Response('', { status: 404 }));
-    if (failure === 'group') io.snapshot.project.groupId = 'wrong';
-    if (failure === 'json')
-      io.fetch.mockResolvedValue({
-        ok: true,
-        json: async () => {
-          throw new Error('Invalid snapshot');
-        },
-      });
-    if (failure === 'network') io.fetch.mockRejectedValue('Offline');
-    if (failure === 'session') io.getSession.mockRejectedValue(new Error('No session'));
-    render(<StudioProjectAccess {...props} />);
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain(
-      ['http', 'group'].includes(failure)
-        ? 'features.studio.projectUnavailable'
-        : failure === 'json'
-          ? 'Invalid snapshot'
-          : failure === 'network'
-            ? 'Offline'
-            : 'No session'
-    );
-    expect(screen.queryByTestId('workspace')).toBeNull();
-  }
-);
-it.each(['resolve', 'reject'])('ignores a late snapshot %s after unmounting', async outcome => {
-  let resolve!: (value: unknown) => void, reject!: (value: unknown) => void;
-  io.fetch.mockImplementation(
-    () =>
-      new Promise((done, fail) => {
-        resolve = done;
-        reject = fail;
-      })
-  );
+it.each(['denied', 'scope', 'query-error'])('handles Zero read failure %s', async kind => {
+  if (kind === 'denied') io.snapshot = null;
+  if (kind === 'scope') io.snapshot.project.groupId = 'wrong';
+  if (kind === 'query-error') io.queryStatus = { type: 'error', error: { message: 'Denied' } };
+  render(<StudioProjectAccess {...props} />);
+  expect(await screen.findByRole('alert')).toBeTruthy();
+  expect(screen.queryByTestId('workspace')).toBeNull();
+});
+it('shows pending Zero reads and updates after permission revocation', async () => {
+  io.snapshot = null;
+  io.queryStatus = { type: 'unknown' };
   const view = render(<StudioProjectAccess {...props} />);
-  await waitFor(() => expect(io.fetch).toHaveBeenCalled());
-  view.unmount();
-  await act(async () =>
-    outcome === 'resolve' ? resolve(Response.json(io.snapshot)) : reject(new Error('Late failure'))
-  );
-  expect(screen.queryByRole('alert')).toBeNull();
+  expect(screen.getByRole('status')).toBeTruthy();
+  io.queryStatus = { type: 'complete' };
+  view.rerender(<StudioProjectAccess {...props} />);
+  expect(await screen.findByRole('alert')).toBeTruthy();
 });
 it.each(['invalid', 'empty'])(
   'handles a read-only document with %s frame data without mounting an editable canvas',
@@ -196,12 +176,12 @@ it.each(['guest', 'authenticated'])(
     if (auth === 'guest') io.user = null;
     else io.getSession.mockResolvedValue({ data: { session: { access_token: 'reader-token' } } });
     io.snapshot.assets = [
-      { id: 'media', name: 'media', mime: 'image/png', url: '/api/media/image' },
+      { id: 'media', name: 'media', mime: 'image/png', url: '/api/studio/media/media' },
     ];
     const view = render(<StudioProjectAccess {...props} />);
     await loaded();
     await waitFor(() => expect(io.props.assets).toMatchObject([{ url: 'blob:reader-media' }]));
-    expect(io.fetch).toHaveBeenCalledWith('/api/media/image', {
+    expect(io.fetch).toHaveBeenCalledWith('/api/studio/media/media', {
       headers: auth === 'guest' ? {} : { Authorization: 'Bearer reader-token' },
     });
     view.unmount();
@@ -213,13 +193,9 @@ it.each(['guest', 'authenticated'])(
 it.each(['http', 'error-string'])(
   'reports a reader media %s failure without installing broken assets',
   async failure => {
-    io.snapshot.assets = [{ id: 'media', mime: 'image/png', url: '/api/media/image' }];
-    io.fetch.mockImplementation(async (url: string) =>
-      url.startsWith('/api/studio/read/')
-        ? Response.json(io.snapshot)
-        : failure === 'http'
-          ? new Response('', { status: 404 })
-          : Promise.reject('Media offline')
+    io.snapshot.assets = [{ id: 'media', mime: 'image/png', url: '/api/studio/media/media' }];
+    io.fetch.mockImplementation(async (_url: string) =>
+      failure === 'http' ? new Response('', { status: 404 }) : Promise.reject('Media offline')
     );
     render(<StudioProjectAccess {...props} />);
     expect((await screen.findByRole('alert')).textContent).toBe(
@@ -236,17 +212,15 @@ it.each(['blob', 'error'])(
       resolve = done;
       reject = fail;
     });
-    io.snapshot.assets = [{ id: 'media', mime: 'image/png', url: '/api/media/image' }];
-    io.fetch.mockImplementation(async (url: string) =>
-      url.startsWith('/api/studio/read/')
-        ? Response.json(io.snapshot)
-        : completion === 'blob'
-          ? { ok: true, blob: () => pending }
-          : pending
+    io.snapshot.assets = [{ id: 'media', mime: 'image/png', url: '/api/studio/media/media' }];
+    io.fetch.mockImplementation(async (_url: string) =>
+      completion === 'blob' ? { ok: true, blob: () => pending } : pending
     );
     const view = render(<StudioProjectAccess {...props} />);
     await loaded();
-    await waitFor(() => expect(io.fetch).toHaveBeenCalledWith('/api/media/image', { headers: {} }));
+    await waitFor(() =>
+      expect(io.fetch).toHaveBeenCalledWith('/api/studio/media/media', { headers: {} })
+    );
     view.unmount();
     await act(async () =>
       completion === 'blob' ? resolve(new Blob(['late'])) : reject(new Error('Late media failure'))

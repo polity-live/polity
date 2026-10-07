@@ -231,4 +231,23 @@ describe('AI editor command route', () => {
     ).toBe(true);
     errorSpy.mockRestore();
   });
+
+  it('passes document and selection context messages unchanged to the model', async () => {
+    const messages = [
+      {
+        role: 'system',
+        content:
+          '<Document>Full amendment text</Document>\n<Selection>Selected passage</Selection>\n<Block>Containing paragraph</Block>',
+      },
+      { role: 'user', content: 'Rewrite the selected passage' },
+    ];
+    const response = await command({ request: request({ messages }) });
+    expect(response.status).toBe(200);
+    expect(mocks.streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages,
+        allowSystemInMessages: true,
+      })
+    );
+  });
 });

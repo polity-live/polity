@@ -183,7 +183,7 @@ try {
       )
     );
     const channels = realtimeClients.map((client, i) =>
-      client.channel(`studio:${projectId}`, {
+      client.channel(`presence:studio:${projectId}:main`, {
         config: { private: true, presence: { key: `client-${i}` } },
       })
     );

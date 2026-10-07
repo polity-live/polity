@@ -2,8 +2,20 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createDocument } from '../../logic/templates';
-const io = vi.hoisted(() => ({ request: vi.fn() }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+const io = vi.hoisted(() => ({ request: vi.fn(), changed: undefined as undefined | (() => void) }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return {
+    useStudioClient: () =>
+      Object.assign(studioClientFixture(io), {
+        watchEditorActions: (_input: unknown, changed: () => void) => {
+          io.changed = changed;
+          queueMicrotask(changed);
+          return () => undefined;
+        },
+      }),
+  };
+});
 import { useStudioEditorTools } from '../useStudioEditorTools';
 import type { useStudioController } from '../useStudioController';
 
@@ -209,7 +221,8 @@ it('waits for connectivity and prevents overlapping polls and commands after unm
   expect(io.request).not.toHaveBeenCalled();
   online = true;
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(3000);
+    window.dispatchEvent(new Event('online'));
+    await Promise.resolve();
   });
   expect(io.request).toHaveBeenCalledTimes(1);
   hook.unmount();
@@ -229,7 +242,9 @@ it('marks an action interrupted when the document is unavailable and retries net
     useStudioEditorTools(unloaded as unknown as ReturnType<typeof useStudioController>)
   );
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('online'));
+    await Promise.resolve();
   });
   expect(JSON.parse(sessionStorage.getItem('studio-ui:unloaded')!).error).toContain(
     'Editor interrupted'
@@ -260,3 +275,35 @@ it('reports a missing paste destination and non-Error command failures', async (
     { status: 'failed', error: 'storage offline' },
   ]);
 });
+
+it.each([false, true])(
+  'coalesces repeated pending-action events and discards a queued claim after unmount=%s',
+  async unmount => {
+    const c = controller();
+    let resolve!: (actions: unknown[]) => void;
+    io.request
+      .mockImplementationOnce(
+        () =>
+          new Promise(done => {
+            resolve = done;
+          })
+      )
+      .mockResolvedValue([]);
+    const hook = renderHook(() =>
+      useStudioEditorTools(c as unknown as ReturnType<typeof useStudioController>)
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(io.request).toHaveBeenCalledTimes(1);
+    act(() => {
+      io.changed!();
+      io.changed!();
+    });
+    expect(io.request).toHaveBeenCalledTimes(1);
+    if (unmount) hook.unmount();
+    await act(async () => resolve([]));
+    expect(io.request).toHaveBeenCalledTimes(unmount ? 1 : 2);
+    if (!unmount) hook.unmount();
+  }
+);

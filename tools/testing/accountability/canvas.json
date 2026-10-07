@@ -15,13 +15,6 @@
         "caseId": "keeps drafts private and preserves immutable decisions and conflict resolutions (personal=%s)"
       }
     ],
-    "src/server/studio/presence.ts": [
-      {
-        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
-        "project": "database-integration",
-        "caseId": "does not send new presence data to an already joined user after membership revocation"
-      }
-    ],
     "src/server/studio/workspace-access.ts": [
       {
         "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",

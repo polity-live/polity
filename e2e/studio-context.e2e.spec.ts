@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createStudioProject } from './fixtures/studio';
 import { test, expect } from './fixtures/test';
 import { db } from './fixtures/db';
 import { waitForAppReady } from './fixtures/readiness';
@@ -15,36 +15,14 @@ test('shows Studio context and changes the subtitle through a reviewed suggestio
   e2eUser,
   e2eRun,
 }) => {
+  test.setTimeout(240_000);
   page.setDefaultTimeout(30000);
   if (!['localhost', '127.0.0.1'].includes(new URL(baseURL!).hostname))
     throw new Error('Local Studio context acceptance only');
   const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL!;
   if (!['localhost', '127.0.0.1'].includes(new URL(supabaseUrl).hostname))
     throw new Error('Local Supabase only');
-  const auth = createClient(
-    supabaseUrl,
-    process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
-  );
-  const { data, error } = await auth.auth.signInWithPassword({
-    email: e2eUser.email,
-    password: e2eUser.password,
-  });
-  if (error) throw error;
-  const response = await page.request.post('/api/studio', {
-    headers: { Authorization: `Bearer ${data.session!.access_token}` },
-    data: {
-      operation: 'create',
-      groupId: null,
-      title: `${e2eRun.prefix} Context`,
-      kind: 'single',
-      themeId: '00000000-0000-4000-8000-000000000001',
-      themeMode: 'light',
-      template: { kind: 'builtin', id: 'announcement' },
-    },
-  });
-  expect(response.ok()).toBe(true);
-  const { id: projectId } = await response.json();
+  const projectId = await createStudioProject(page, `${e2eRun.prefix} Context`);
   e2eRun.registerEntityId(projectId);
   const sql = db();
   const [initial] = await sql`select document from studio_state where project_id=${projectId}`;

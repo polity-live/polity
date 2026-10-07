@@ -3,7 +3,10 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const io = vi.hoisted(() => ({ request: vi.fn() }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   translate: (key: string) => key,

@@ -39,11 +39,7 @@ describe('Playwright run budgets', () => {
     expect(config.webServer).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          env: expect.objectContaining({
-            STUDIO_ENABLED: 'true',
-            STUDIO_V3_ENABLED: 'true',
-            CANVAS_ENABLED: 'true',
-          }),
+          env: expect.objectContaining({}),
         }),
       ])
     );

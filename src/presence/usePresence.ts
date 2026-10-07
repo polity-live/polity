@@ -9,6 +9,7 @@ export interface PeerData {
 }
 
 interface UsePresenceOptions {
+  private?: boolean;
   initialData?: Partial<PeerData>;
   enabled?: boolean;
 }
@@ -24,7 +25,7 @@ interface UsePresenceReturn {
 }
 
 export function usePresence(roomId: string, options: UsePresenceOptions = {}): UsePresenceReturn {
-  const { initialData, enabled = true } = options;
+  const { initialData, enabled = true, private: privateChannel = false } = options;
   const [peers, setPeers] = useState<PeerData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const currentDataRef = useRef<Partial<PeerData> | undefined>(initialData);
@@ -40,7 +41,7 @@ export function usePresence(roomId: string, options: UsePresenceOptions = {}): U
     if (!enabled || !roomId) return;
     roomIdRef.current = roomId;
 
-    const managed = channelManager.acquire(roomId, presenceKey);
+    const managed = channelManager.acquire(roomId, presenceKey, privateChannel);
 
     // Register for presence sync updates
     const unsubPresence = channelManager.onPresenceSync(roomId, newPeers => {
@@ -68,7 +69,7 @@ export function usePresence(roomId: string, options: UsePresenceOptions = {}): U
       unsubStatus();
       channelManager.release(roomId);
     };
-  }, [roomId, enabled, presenceKey]);
+  }, [roomId, enabled, presenceKey, privateChannel]);
 
   const publishPresence = useCallback((data: Partial<PeerData>) => {
     currentDataRef.current = { ...currentDataRef.current, ...data };

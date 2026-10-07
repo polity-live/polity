@@ -1,9 +1,18 @@
+vi.mock('@rocicorp/zero/react', async () => {
+  const { studioSnapshotFixture } = await import('@/test/studio-snapshot.fixture');
+  return { useQuery: (q: any) => studioSnapshotFixture(q, io) };
+});
+vi.mock('@/zero/queries', async () => {
+  const { studioQueryFixture } = await import('@/test/studio-client.fixture');
+  return { queries: { studio: studioQueryFixture } };
+});
 import { forwardRef, useImperativeHandle } from 'react';
 /* @vitest-environment jsdom */
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const io = vi.hoisted(() => ({
+  snapshot: {} as any,
   user: null as { id: string } | null,
   getSession: vi.fn(),
   fetch: vi.fn(),
@@ -41,21 +50,19 @@ const projectId = 'f9220000-0000-4000-a000-000000000001';
 beforeEach(() => {
   io.user = null;
   io.getSession.mockResolvedValue({ data: { session: null } });
-  io.fetch.mockResolvedValue(
-    Response.json({
-      project: {
-        id: projectId,
-        title: 'Open project',
-        groupId: null,
-        ownerId: 'owner',
-        visibility: 'public',
-        canEdit: false,
-        canManageVisibility: false,
-      },
-      document: {},
-      assets: [],
-    })
-  );
+  io.snapshot = {
+    project: {
+      id: projectId,
+      title: 'Open project',
+      groupId: null,
+      ownerId: 'owner',
+      visibility: 'public',
+      canEdit: false,
+      canManageVisibility: false,
+    },
+    document: {},
+    assets: [],
+  };
   vi.stubGlobal('fetch', io.fetch);
 });
 afterEach(() => {
@@ -69,7 +76,7 @@ it('shows a public project to guests as a read-only canvas without cloning', asy
   expect(await screen.findByText('Read-only canvas')).toBeTruthy();
   expect(screen.getByText('Open project')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'features.studio.cloneProject' })).toBeNull();
-  expect(io.fetch).toHaveBeenCalledWith(`/api/studio/read/${projectId}`, { headers: {} });
+  expect(io.fetch).not.toHaveBeenCalled();
 });
 
 it('offers cloning to signed-in readers without loading the editor', async () => {
@@ -79,9 +86,7 @@ it('offers cloning to signed-in readers without loading the editor', async () =>
   expect(await screen.findByText('Read-only canvas')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'features.studio.cloneProject' })).toBeTruthy();
   expect(screen.queryByText('Editable workspace')).toBeNull();
-  expect(io.fetch).toHaveBeenCalledWith(`/api/studio/read/${projectId}`, {
-    headers: { Authorization: 'Bearer token' },
-  });
+  expect(io.fetch).not.toHaveBeenCalled();
 });
 
 it('honors an element deep link in the read-only original and consumes it after focus', async () => {
@@ -115,4 +120,13 @@ it('rejects an inaccessible workspace instead of focusing a canonical element wi
   expect(await screen.findByRole('alert')).toBeTruthy();
   expect(io.focus).not.toHaveBeenCalled();
   await waitFor(() => expect(handled).toHaveBeenCalledWith(workspaceId));
+});
+
+it('keeps an editable snapshot read-only while the actor identity is temporarily absent', async () => {
+  io.user = { id: undefined } as never;
+  io.snapshot.project.canEdit = true;
+  io.snapshot.project.groupId = 'group';
+  render(<StudioProjectAccess groupId="group" projectId={projectId} open={vi.fn()} />);
+  expect(await screen.findByText('Read-only canvas')).toBeTruthy();
+  expect(screen.queryByText('Editable workspace')).toBeNull();
 });

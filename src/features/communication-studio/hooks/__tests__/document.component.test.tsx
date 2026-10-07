@@ -10,6 +10,9 @@ import { applyStudioCommandV3 } from '../../logic/commands-v3';
 import { element } from '../../logic/document';
 import { makePage } from '../../logic/templates';
 const io = vi.hoisted(() => ({
+  authority: undefined as any,
+  authorityError: undefined as any,
+  mediaChanged: undefined as any,
   remote: undefined as any,
   server: undefined as any,
   revision: 0,
@@ -39,7 +42,23 @@ vi.mock('@/zero/queries', () => ({
   queries: { studio: { document: (v: unknown) => v, workspace: (v: unknown) => v } },
 }));
 vi.mock('@/zero/mutators', () => ({ mutators: { studio: { apply: (v: unknown) => v } } }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return {
+    useStudioClient: () =>
+      Object.assign(studioClientFixture(io), {
+        watchSession: (_input: unknown, next: unknown, fail: unknown) => {
+          io.authority = next;
+          io.authorityError = fail;
+          return () => undefined;
+        },
+        watchAssets: (_input: unknown, next: unknown) => {
+          io.mediaChanged = next;
+          return () => undefined;
+        },
+      }),
+  };
+});
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: { getSession: io.getSession },
@@ -354,7 +373,7 @@ it('keeps a read-only document unchanged and rechecks server authority on confir
   expect(hook.result.current.value?.title).toBe('Initial');
   await act(() => hook.result.current.commit());
   expect(io.mutate).not.toHaveBeenCalled();
-  expect(io.request.mock.calls.filter(([op]) => op === 'load')).toHaveLength(2);
+  expect(io.request.mock.calls.filter(([op]) => op === 'load')).toHaveLength(3);
 });
 it.each([true, false])(
   'reports failed document loading with online state %s and ignores late results after unmount',
@@ -518,140 +537,7 @@ it('downloads and recovers an old-generation draft into a new proposal without o
   expect(localStorage.getItem(`${key}:archived:old`)).toContain('Recovered content');
   expect(io.mutate).not.toHaveBeenCalled();
 });
-it('publishes bounded canvas selection, receives peer broadcasts and tears down heartbeats', async () => {
-  vi.useFakeTimers();
-  const hook = renderHook(() => useStudioDocument(id, user));
-  await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(io.channels.at(-1)?.subscribe).toHaveBeenCalled();
-  const channel = io.channels.at(-1);
-  const subscribed = channel.subscribe.mock.calls[0][0];
-  await act(async () => {
-    subscribed('TIMED_OUT');
-    subscribed('SUBSCRIBED');
-    await vi.advanceTimersByTimeAsync(201);
-    hook.result.current.cursor(
-      'frame',
-      12,
-      34,
-      Array.from({ length: 110 }, (_, index) => `selection-${index}`)
-    );
-  });
-  expect(io.request).toHaveBeenCalledWith(
-    'canvasPresence',
-    expect.objectContaining({
-      cursor: { pageId: 'frame', x: 12, y: 34 },
-      selection: expect.any(Array),
-    })
-  );
-  expect(
-    io.request.mock.calls.filter(([op]) => op === 'canvasPresence').at(-1)![1].selection
-  ).toHaveLength(100);
-  const peers = [{ userId: 'other', user: { name: 'Other' } }];
-  act(() => channel.listeners.get('broadcast:peers')({ payload: { peers } }));
-  expect(hook.result.current.peers).toEqual(peers);
-  act(() => channel.listeners.get('broadcast:peers')({ payload: null }));
-  expect(hook.result.current.peers).toEqual(peers);
-  await act(() => vi.advanceTimersByTimeAsync(5000));
-  hook.unmount();
-  expect(io.removeChannel).toHaveBeenCalledWith(channel);
-  act(() => hook.result.current.cursor('closed', 0, 0));
-  const published = io.request.mock.calls.length;
-  await act(() => vi.advanceTimersByTimeAsync(10_000));
-  expect(io.request.mock.calls).toHaveLength(published);
-  act(() => channel.listeners.get('broadcast:peers')({ payload: { peers: [] } }));
-});
-it('keeps canvas presence quiet while offline, coalesces busy updates and clears failed peer reads', async () => {
-  vi.useFakeTimers();
-  const hook = renderHook(() => useStudioDocument(id, user));
-  await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(hook.result.current.canEdit).toBe(true);
-  const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
-  const originalCount = io.request.mock.calls.filter(([op]) => op === 'canvasPresence').length;
-  act(() => hook.result.current.cursor('frame', 1, 2));
-  await act(() => vi.advanceTimersByTimeAsync(5000));
-  expect(io.request.mock.calls.filter(([op]) => op === 'canvasPresence')).toHaveLength(
-    originalCount
-  );
-  online.mockReturnValue(true);
-  const request = io.request.getMockImplementation()!;
-  let reject!: (error: Error) => void;
-  io.request.mockImplementation((op, args) =>
-    op === 'canvasPresence'
-      ? new Promise((_resolve, rejection) => {
-          reject = rejection;
-        })
-      : request(op, args)
-  );
-  act(() => hook.result.current.cursor('frame', 3, 4));
-  await act(() => vi.advanceTimersByTimeAsync(5000));
-  expect(io.request.mock.calls.filter(([op]) => op === 'canvasPresence')).toHaveLength(
-    originalCount + 1
-  );
-  await act(async () => reject(new Error('Presence unavailable')));
-  expect(hook.result.current.peers).toEqual([]);
-});
-it('uses legacy presence only when the server disables native canvas presence', async () => {
-  const request = io.request.getMockImplementation()!;
-  io.request.mockImplementation(async (op, args) =>
-    op === 'load'
-      ? { document: io.server, revision: 0, canEdit: true, canvasEnabled: false }
-      : request(op, args)
-  );
-  const hook = renderHook(() => useStudioDocument(id, user));
-  await waitFor(() => expect(io.channels.at(-1)?.subscribe).toHaveBeenCalled());
-  const channel = io.channels.at(-1);
-  channel.presenceState.mockReturnValue({
-    owner: [{ userId: user.id }],
-    peer: [{ userId: 'other', cursor: null }],
-  });
-  act(() => channel.listeners.get('presence:sync')());
-  expect(hook.result.current.peers).toEqual([{ userId: 'other', cursor: null }]);
-  act(() =>
-    channel.listeners.get('broadcast:cursor')({
-      payload: { userId: 'other', cursor: { x: 8, y: 9 } },
-    })
-  );
-  expect(hook.result.current.peers[0]).toMatchObject({ cursor: { x: 8, y: 9 } });
-  act(() =>
-    channel.listeners.get('broadcast:cursor')({
-      payload: { userId: 'missing', cursor: { x: 90, y: 90 } },
-    })
-  );
-  expect(hook.result.current.peers[0]).toMatchObject({ cursor: { x: 8, y: 9 } });
-  act(() => channel.subscribe.mock.calls[0][0]('TIMED_OUT'));
-  expect(channel.track).not.toHaveBeenCalled();
-  act(() => channel.subscribe.mock.calls[0][0]('SUBSCRIBED'));
-  expect(channel.track).toHaveBeenCalledWith(expect.objectContaining({ userId: user.id }));
-  act(() => hook.result.current.cursor('frame', 4, 5));
-  expect(channel.send).toHaveBeenCalledWith({
-    type: 'broadcast',
-    event: 'cursor',
-    payload: { userId: user.id, cursor: { pageId: 'frame', x: 4, y: 5 } },
-  });
-  hook.unmount();
-  expect(channel.unsubscribe).toHaveBeenCalled();
-});
-it('does not subscribe without a session or after unmount during authentication', async () => {
-  io.session = null;
-  const anonymous = renderHook(() => useStudioDocument(id, user));
-  await waitFor(() => expect(anonymous.result.current.value).not.toBeNull());
-  expect(io.setAuth).not.toHaveBeenCalled();
-  expect(io.channels.at(-1).subscribe).not.toHaveBeenCalled();
-  anonymous.unmount();
-  let resolve!: (value: unknown) => void;
-  io.getSession.mockReturnValue(
-    new Promise(complete => {
-      resolve = complete;
-    })
-  );
-  const pending = renderHook(() => useStudioDocument(id, user));
-  await waitFor(() => expect(pending.result.current.value).not.toBeNull());
-  const channel = io.channels.at(-1);
-  pending.unmount();
-  await act(async () => resolve({ data: { session: { access_token: 'late' } } }));
-  expect(io.setAuth).not.toHaveBeenCalled();
-  expect(channel.subscribe).not.toHaveBeenCalled();
-});
+
 it('revokes replaced and removed private media URLs without downloading cached media twice', async () => {
   const asset = {
     id: crypto.randomUUID(),
@@ -769,7 +655,7 @@ it('exposes conflicts from Zero updates and rebases chosen local transforms onto
   io.remote = { document: structuredClone(io.server), content_revision: 2 };
   hook.rerender();
   expect(hook.result.current.status).toBe('conflict');
-  await act(() => vi.advanceTimersByTimeAsync(5000));
+  await act(async () => io.authority({ generation: undefined }));
   expect(hook.result.current.status).toBe('conflict');
   await act(async () => {
     await expect(hook.result.current.commit()).rejects.toThrow('Resolve Studio conflicts first');
@@ -958,7 +844,7 @@ it('automatically saves restored and newly edited drafts and reports failed time
   await act(async () => window.dispatchEvent(new Event('online')));
   expect(hook.result.current.error).toBe('Auto-save rejected');
 });
-it('refreshes media periodically and tolerates an unavailable asset list', async () => {
+it('refreshes media after a Zero asset change and tolerates an unavailable asset list', async () => {
   vi.useFakeTimers();
   const hook = renderHook(() => useStudioDocument(id, user));
   await act(() => vi.advanceTimersByTimeAsync(0));
@@ -967,7 +853,7 @@ it('refreshes media periodically and tolerates an unavailable asset list', async
   io.request.mockImplementation((op, args) =>
     op === 'assets' ? Promise.reject(new Error('Assets unavailable')) : request(op, args)
   );
-  await act(() => vi.advanceTimersByTimeAsync(240_000));
+  await act(async () => io.mediaChanged());
   expect(io.request.mock.calls.filter(([op]) => op === 'assets').length).toBeGreaterThan(1);
   expect(hook.result.current.value?.title).toBe('Initial');
 });
@@ -1086,7 +972,7 @@ it('retains pending edits when a later authority check makes the project read-on
     op === 'load' ? { document: io.server, revision: 0, canEdit: false } : request(op, args)
   );
   const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
-  await act(() => vi.advanceTimersByTimeAsync(5000));
+  await act(async () => io.authority({ generation: undefined }));
   expect(hook.result.current.canEdit).toBe(false);
   online.mockReturnValue(true);
   await act(async () => {
@@ -1171,32 +1057,7 @@ it('receives a complete Zero workspace document without revoking authorized draf
   hook.rerender();
   await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
 });
-it.each([true, false])(
-  'keeps legacy subscriptions inactive when authenticated=%s and authentication finishes after teardown',
-  async authenticated => {
-    const request = io.request.getMockImplementation()!;
-    io.workspaceStatus = 'loading';
-    io.request.mockImplementation(async (op, args) =>
-      op === 'load' || op === 'canvas'
-        ? { document: io.server, revision: 0, canEdit: true, canvasEnabled: false }
-        : request(op, args)
-    );
-    if (!authenticated) io.session = null;
-    let finishAuth!: () => void;
-    io.setAuth.mockImplementation(
-      () =>
-        new Promise<void>(resolve => {
-          finishAuth = resolve;
-        })
-    );
-    const hook = renderHook(() => useStudioDocument(id, user, 'workspace'));
-    await waitFor(() => expect(hook.result.current.value).not.toBeNull());
-    if (authenticated) await waitFor(() => expect(io.setAuth).toHaveBeenCalled());
-    hook.unmount();
-    if (authenticated) await act(async () => finishAuth());
-    expect(io.channels.every(channel => channel.subscribe.mock.calls.length === 0)).toBe(true);
-  }
-);
+
 it('rejects edits that conflict with a clean confirmation instead of overwriting remote changes', async () => {
   const hook = renderHook(() => useStudioDocument(id, user));
   await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
@@ -1340,42 +1201,7 @@ it.each(['workspace', 'user', 'reopen'] as const)(
     expect(io.mutate).toHaveBeenCalledOnce();
   }
 );
-it.each([true, false])(
-  'ignores native presence responses after unmount when successful=%s',
-  async success => {
-    const request = io.request.getMockImplementation()!;
-    let resolve!: (value: unknown) => void, reject!: (error: Error) => void;
-    io.request.mockImplementation((op, args) =>
-      op === 'canvasPresence'
-        ? new Promise((complete, failure) => {
-            resolve = complete;
-            reject = failure;
-          })
-        : request(op, args)
-    );
-    const hook = renderHook(() => useStudioDocument(id, user));
-    await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
-    hook.unmount();
-    await act(async () =>
-      success ? resolve({ peers: [{ userId: 'old' }] }) : reject(new Error('Old presence'))
-    );
-    expect(io.removeChannel).toHaveBeenCalledOnce();
-  }
-);
-it('does not subscribe a native channel if teardown happens while setting its authentication', async () => {
-  let resolve!: () => void;
-  io.setAuth.mockReturnValue(
-    new Promise<void>(complete => {
-      resolve = complete;
-    })
-  );
-  const hook = renderHook(() => useStudioDocument(id, user));
-  await waitFor(() => expect(io.setAuth).toHaveBeenCalled());
-  const channel = io.channels.at(-1);
-  hook.unmount();
-  await act(async () => resolve());
-  expect(channel.subscribe).not.toHaveBeenCalled();
-});
+
 it('retains a higher authority revision when an overlapping explicit refresh finishes first', async () => {
   const hook = renderHook(() => useStudioDocument(id, user));
   await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
@@ -1490,4 +1316,183 @@ it('fences navigation immediately after authority confirmation before the commit
   });
   expect(hook.result.current.status).toBe('saved');
   expect(hook.result.current.error).toBe('');
+});
+
+it('ignores authority events before loading and after leaving the project', async () => {
+  const request = io.request.getMockImplementation()!;
+  let resolve!: (value: unknown) => void;
+  io.request.mockImplementation((op, args) =>
+    op === 'load'
+      ? new Promise(done => {
+          resolve = done;
+        })
+      : request(op, args)
+  );
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await act(async () => io.authority({ generation: undefined }));
+  expect(hook.result.current.status).toBe('loading');
+  const next = io.authority;
+  const fail = io.authorityError;
+  hook.unmount();
+  await act(async () => {
+    next({ generation: 'different' });
+    fail(new Error('late failure'));
+    resolve({ document: io.server, revision: 0, canEdit: true });
+  });
+  expect(hook.result.current.canEdit).toBe(false);
+});
+it('blocks edits when the session subscription changes generation or loses access', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  await act(async () => io.authority({ generation: 'new-generation' }));
+  expect(hook.result.current.status).toBe('conflict');
+  expect(hook.result.current.canEdit).toBe(false);
+  await act(async () => io.authorityError(new Error('access revoked')));
+  expect(hook.result.current.status).toBe('unavailable');
+});
+it.each(['active-failure', 'late-failure', 'late-success'])(
+  'handles session authority completion %s without restoring stale access',
+  async outcome => {
+    const hook = renderHook(() => useStudioDocument(id, user));
+    await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+    let resolve!: (value: unknown) => void, reject!: (error: Error) => void;
+    io.request.mockImplementationOnce(
+      () =>
+        new Promise((done, fail) => {
+          resolve = done;
+          reject = fail;
+        })
+    );
+    await act(async () => io.authority({ generation: undefined }));
+    if (outcome !== 'active-failure') hook.unmount();
+    await act(async () =>
+      outcome === 'late-success' ? resolve({ canEdit: false }) : reject(new Error('access revoked'))
+    );
+    if (outcome === 'active-failure') {
+      expect(hook.result.current.status).toBe('unavailable');
+      expect(hook.result.current.canEdit).toBe(false);
+    } else expect(hook.result.current.canEdit).toBe(true);
+  }
+);
+it('rejects a recovery receipt without a workspace before sending draft content', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  const request = io.request.getMockImplementation()!;
+  io.request.mockImplementation(async (op, args) => (op === 'canvas' ? {} : request(op, args)));
+  await act(async () => {
+    await expect(hook.result.current.recoverAsProposal()).rejects.toThrow(
+      'Studio draft creation did not return a workspace'
+    );
+  });
+  expect(
+    io.request.mock.calls.filter(([op, args]) => op === 'canvas' && args.action === 'saveDraft')
+  ).toEqual([]);
+});
+it('saves a draft with a missing legacy generation using the empty generation sentinel', async () => {
+  const request = io.request.getMockImplementation()!;
+  io.workspaceStatus = 'loading';
+  io.request.mockImplementation(async (op, args) =>
+    op === 'canvas'
+      ? { document: io.server, revision: 0, canEdit: true, status: 'applied', conflicts: [] }
+      : request(op, args)
+  );
+  const hook = renderHook(() => useStudioDocument(id, user, 'workspace'));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  act(() => hook.result.current.meta('title', 'Legacy draft'));
+  await act(() => hook.result.current.commit());
+  expect(io.request).toHaveBeenCalledWith(
+    'canvas',
+    expect.objectContaining({ action: 'saveDraft', generation: '' })
+  );
+});
+
+it('keeps the initial document available when its media subscription cannot load', async () => {
+  const request = io.request.getMockImplementation()!;
+  io.request.mockImplementation(async (op, args) => {
+    if (op === 'assets') throw new Error('Initial assets unavailable');
+    return request(op, args);
+  });
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.error).toContain('Initial assets unavailable'));
+  expect(hook.result.current.value?.title).toBe('Initial');
+  expect(hook.result.current.canEdit).toBe(true);
+});
+it('retains a generation conflict raised while the restored document is still loading', async () => {
+  localStorage.setItem(
+    `studio:v4:${user.id}:${id}:canonical`,
+    JSON.stringify({
+      base: io.server,
+      value: io.server,
+      revision: 0,
+      generation: 'old',
+      canEdit: true,
+    })
+  );
+  let resolve!: (value: unknown) => void;
+  const request = io.request.getMockImplementation()!;
+  io.request.mockImplementation((op, args) =>
+    op === 'load'
+      ? new Promise(done => {
+          resolve = done;
+        })
+      : request(op, args)
+  );
+  const hook = renderHook(() => useStudioDocument(id, user));
+  act(() => io.authority({ generation: 'new' }));
+  expect(hook.result.current.status).toBe('conflict');
+  await act(async () =>
+    resolve({ document: io.server, revision: 0, generation: 'old', canEdit: true })
+  );
+  expect(hook.result.current.status).toBe('conflict');
+  hook.unmount();
+});
+it('confirms edits added while a clean server confirmation is pending before returning success', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  let resolve!: (value: unknown) => void;
+  io.request.mockImplementationOnce(
+    () =>
+      new Promise(done => {
+        resolve = done;
+      })
+  );
+  let confirmation!: Promise<number>;
+  act(() => {
+    confirmation = hook.result.current.commit();
+  });
+  act(() => hook.result.current.meta('title', 'Edited while confirming'));
+  await act(async () => {
+    resolve({ document: structuredClone(io.server), revision: 0, canEdit: true });
+    await confirmation;
+  });
+  expect(io.server.title).toBe('Edited while confirming');
+  expect(hook.result.current.status).toBe('saved');
+  expect(io.mutate).toHaveBeenCalledOnce();
+});
+
+it('rejects a navigation queued between the clean confirmation and its caller continuation', async () => {
+  const hook = renderHook(({ project }) => useStudioDocument(project, user), {
+    initialProps: { project: id },
+  });
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  let resolve!: (value: unknown) => void;
+  io.request.mockImplementationOnce(
+    () =>
+      new Promise(done => {
+        resolve = done;
+      })
+  );
+  let confirmation!: Promise<number>;
+  act(() => {
+    confirmation = hook.result.current.commit();
+  });
+  await act(async () => {
+    const result = expect(confirmation).rejects.toThrow('Studio changed while confirming');
+    resolve({ document: structuredClone(io.server), revision: 0, canEdit: true });
+    queueMicrotask(() =>
+      queueMicrotask(() => flushSync(() => hook.rerender({ project: crypto.randomUUID() })))
+    );
+    await result;
+  });
+  expect(io.mutate).not.toHaveBeenCalled();
 });

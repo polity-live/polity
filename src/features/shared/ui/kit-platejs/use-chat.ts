@@ -1,8 +1,15 @@
 import * as React from 'react';
 import { Chat, useChat as useBaseChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type ChatRequestOptions, type UIMessage } from 'ai';
+import { DefaultChatTransport, type ChatRequestOptions } from 'ai';
+import type { AIChatPluginConfig } from '@platejs/ai/react';
+import type { PlateEditor } from 'platejs/react';
 import { useAuth } from '@/providers/auth-provider';
 import { useAiEditorDocumentId } from './ai-editor-trace-context';
+import {
+  editorContextSystemMessage,
+  getEditorPromptContext,
+  resolveEditorPrompt,
+} from './ai-editor-context';
 
 export interface PlateEditorChatOptions {
   api?: string;
@@ -24,12 +31,12 @@ export interface EditorCommandMessage {
 export interface LegacyChatMessage {
   content?: string | { text?: string; type?: string }[];
   id?: string;
-  parts?: UIMessage['parts'];
+  parts?: EditorUIMessage['parts'];
   role: string;
 }
 
 type LegacyAppendOptions = ChatRequestOptions;
-type EditorUIMessage = UIMessage;
+type EditorUIMessage = AIChatPluginConfig['options']['chat']['messages'][number];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
@@ -100,9 +107,16 @@ export function toUiMessage(message: LegacyChatMessage, index: number): EditorUI
 
 export function buildEditorCommandBody(
   messages: readonly LegacyChatMessage[],
-  body?: unknown
+  body?: unknown,
+  editor?: PlateEditor
 ): { messages: EditorCommandMessage[] } {
-  const systemMessage = getSystemMessageFromBody(body);
+  const context = editor ? getEditorPromptContext(editor, body) : undefined;
+  const system = [
+    getSystemMessageFromBody(body)?.content,
+    context ? editorContextSystemMessage(context) : undefined,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   const editorMessages: EditorCommandMessage[] = messages.flatMap(message => {
     if (message.role !== 'assistant' && message.role !== 'system' && message.role !== 'user') {
       return [];
@@ -123,7 +137,7 @@ export function buildEditorCommandBody(
   });
 
   return {
-    messages: systemMessage ? [systemMessage, ...editorMessages] : editorMessages,
+    messages: system ? [{ role: 'system', content: system }, ...editorMessages] : editorMessages,
   };
 }
 
@@ -139,7 +153,7 @@ export function getAppendText(message?: LegacyChatMessage | { text?: string }): 
   return 'role' in message ? getMessageTextContent(message) : '';
 }
 
-export const useChat = () => {
+export const useChat = (editor?: PlateEditor) => {
   const options = DEFAULT_EDITOR_CHAT_OPTIONS;
   const { session } = useAuth();
   const documentId = useAiEditorDocumentId();
@@ -157,7 +171,7 @@ export const useChat = () => {
         },
         prepareSendMessagesRequest: ({ messages, body, headers, credentials, api }) => ({
           api,
-          body: buildEditorCommandBody(messages.map(toLegacyMessage), body),
+          body: buildEditorCommandBody(messages.map(toLegacyMessage), body, editor),
           credentials,
           headers,
         }),
@@ -169,6 +183,7 @@ export const useChat = () => {
       options.headers,
       session?.access_token,
       documentId,
+      editor,
     ]
   );
 
@@ -182,6 +197,44 @@ export const useChat = () => {
   );
 
   const chat = useBaseChat<EditorUIMessage>({ chat: chatInstance });
+  const sendMessage: typeof chat.sendMessage = React.useCallback(
+    (message, requestOptions) => {
+      // Store expanded presets in SDK history so later turns don't reinterpret old placeholders.
+      if (editor && message && 'text' in message && typeof message.text === 'string') {
+        return chat.sendMessage(
+          {
+            ...message,
+            text: resolveEditorPrompt(
+              message.text,
+              getEditorPromptContext(editor, requestOptions?.body)
+            ),
+          },
+          requestOptions
+        );
+      }
+      return chat.sendMessage(message, requestOptions);
+    },
+    [chat.sendMessage, editor]
+  );
+  // Plate consumes native SDK messages and methods, not the legacy adapter below.
+  const plateChat = React.useMemo(
+    () => ({ ...chat, sendMessage }),
+    [
+      chat.id,
+      chat.messages,
+      chat.status,
+      chat.error,
+      sendMessage,
+      chat.regenerate,
+      chat.stop,
+      chat.setMessages,
+      chat.resumeStream,
+      chat.addToolResult,
+      chat.addToolOutput,
+      chat.addToolApprovalResponse,
+      chat.clearError,
+    ]
+  );
 
   const [input, setInput] = React.useState('');
   const messages = React.useMemo(() => chat.messages.map(toLegacyMessage), [chat.messages]);
@@ -208,9 +261,9 @@ export const useChat = () => {
       const text = getAppendText(message);
       if (!text) return;
 
-      await chat.sendMessage({ text }, appendOptions);
+      await sendMessage({ text }, appendOptions);
     },
-    [chat]
+    [sendMessage]
   );
   const reload = React.useCallback(
     (reloadOptions?: LegacyAppendOptions) => chat.regenerate(reloadOptions),
@@ -219,6 +272,7 @@ export const useChat = () => {
 
   return {
     ...chat,
+    sendMessage,
     append,
     data: undefined,
     handleInputChange: (
@@ -234,6 +288,7 @@ export const useChat = () => {
     input,
     isLoading: chat.status === 'submitted' || chat.status === 'streaming',
     messages,
+    plateChat,
     reload,
     setInput,
     setMessages,

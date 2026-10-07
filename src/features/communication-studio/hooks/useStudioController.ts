@@ -1,3 +1,4 @@
+import type { StudioCommandInput } from '@/zero/communication-studio/commands';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useZero } from '@rocicorp/zero/react';
 import { mutators } from '@/zero/mutators';
@@ -5,7 +6,7 @@ import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';
-import { useStudioApi } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { useUserState } from '@/zero/users/useUserState';
 import { useStudioDocument } from './useStudioDocument';
 import {
@@ -94,8 +95,11 @@ export function useStudioController(
   const zero = useZero();
   const { user } = useAuth();
   const { currentUser } = useUserState();
-  const studioApi = useStudioApi();
-  const { projects, project, exports, isLoading } = useStudioState(groupId, id);
+  const studioApi = useStudioClient();
+  const { projects, project, exports, isLoading, exportResult, listError } = useStudioState(
+    groupId,
+    id
+  );
   const identity = useMemo(
     () => ({
       id: user?.id ?? '',
@@ -144,16 +148,10 @@ export function useStudioController(
     [photoEdit, setPhotoEdit] = useState<string | undefined>(),
     [exportPreparing, setExportPreparing] = useState(false),
     [exportFailure, setExportFailure] = useState(''),
-    [exportStatusError, setExportStatusError] = useState(false),
     [trackedExports, setTrackedExports] = useState<Record<string, StudioExportJob>>({});
-  const exportRequest = useRef(studioApi.request);
-  exportRequest.current = studioApi.request;
+  const exportStatusError = exportResult?.type === 'error';
   const autoDownloadIds = useRef(new Set<string>());
-  const activeExportIds = Object.values(trackedExports)
-    .filter(job => job.status === 'queued' || job.status === 'running')
-    .map(job => job.id)
-    .sort()
-    .join(',');
+
   const exportJobs = useMemo<StudioExportJob[]>(() => {
     const tracked = Object.values(trackedExports).reverse();
     return [
@@ -171,38 +169,30 @@ export function useStudioController(
     ];
   }, [exports, trackedExports]);
   useEffect(() => {
-    if (!activeExportIds) return;
-    const ids = activeExportIds.split(',');
-    let disposed = false;
-    let polling = false;
-    const poll = async () => {
-      if (polling) return;
-      polling = true;
-      try {
-        const results = await Promise.allSettled(
-          ids.map(id => exportRequest.current<StudioExportJob>('exportStatus', { id }))
-        );
-        if (disposed) return;
-        const updates = results.flatMap(result =>
-          result.status === 'fulfilled' ? [result.value] : []
-        );
-        if (updates.length)
-          setTrackedExports(current => ({
-            ...current,
-            ...Object.fromEntries(updates.map(job => [job.id, job])),
-          }));
-        setExportStatusError(results.some(result => result.status === 'rejected'));
-      } finally {
-        polling = false;
-      }
-    };
-    void poll();
-    const timer = window.setInterval(() => void poll(), 1500);
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-    };
-  }, [activeExportIds]);
+    setTrackedExports(current => {
+      const updated = { ...current };
+      let changed = false;
+      for (const job of exports)
+        if (
+          current[job.id] &&
+          (current[job.id].status !== job.status ||
+            current[job.id].progress !== job.progress ||
+            current[job.id].error !== job.error ||
+            current[job.id].fileName !== job.file_name)
+        ) {
+          changed = true;
+          updated[job.id] = {
+            id: job.id,
+            format: job.format,
+            status: job.status,
+            progress: job.progress,
+            error: job.error,
+            fileName: job.file_name,
+          };
+        }
+      return changed ? updated : current;
+    });
+  }, [exports]);
   useEffect(() => {
     for (const job of Object.values(trackedExports)) {
       if (job.status === 'completed' && autoDownloadIds.current.delete(job.id))
@@ -269,7 +259,7 @@ export function useStudioController(
   };
   useEffect(() => {
     void studioApi
-      .request<Record<string, unknown>[]>('themes', { groupId })
+      .themes({ groupId })
       .then(rows =>
         setThemes([
           ...BUILTIN_THEMES.map(theme => createThemeSnapshot(theme)),
@@ -281,7 +271,7 @@ export function useStudioController(
       });
   }, [groupId]);
   const refreshElementSets = async () => {
-    const rows = await studioApi.request<unknown[]>('elementSets', { groupId });
+    const rows = await studioApi.elementSets({ groupId });
     setElementSets(elementSetListItemSchema.array().parse(rows));
   };
   useEffect(() => {
@@ -304,7 +294,7 @@ export function useStudioController(
   }, [id]);
   const create = () =>
     run(async () => {
-      const result = await studioApi.request<{ id: string }>('create', {
+      const result = await studioApi.create({
         groupId,
         title: title || translateText('features.studio.newCampaign'),
         kind,
@@ -312,7 +302,13 @@ export function useStudioController(
         themeMode,
         template: template.startsWith('project:')
           ? { kind: 'project', id: template.slice('project:'.length) }
-          : { kind: 'builtin', id: template },
+          : {
+              kind: 'builtin',
+              id: template as Extract<
+                StudioCommandInput<'create'>['template'],
+                { kind: 'builtin' }
+              >['id'],
+            },
         campaign: { weeks, core, stories },
       });
       if (mode === 'ai') {
@@ -631,9 +627,9 @@ export function useStudioController(
         throw new Error(
           'Return to canonical content to export a committed project. Drafts can be downloaded from the canvas.'
         );
-      const result = await studioApi.request<{ id: string }>('export', {
+      const result = await studioApi.requestExport({
         projectId: id,
-        format,
+        format: format as StudioCommandInput<'requestExport'>['format'],
         pageIds: exportFrameIds,
         revision: await editor.commit(),
       });
@@ -677,7 +673,7 @@ export function useStudioController(
       if (!id || !selectedIds.length) throw new Error('Select elements first');
       if (workspaceId) throw new Error('Return to canonical content to save Elements');
       await editor.commit();
-      await studioApi.request('elementSetCreate', {
+      await studioApi.createElementSet({
         projectId: id,
         groupId,
         selectedIds,
@@ -691,12 +687,7 @@ export function useStudioController(
   ) =>
     run(async () => {
       if (!id) return;
-      const result = await studioApi.request<{
-        setId: string;
-        revisionId: string;
-        snapshot: unknown;
-        assetIds: Record<string, string>;
-      }>('elementSetInstantiate', { setId, projectId: id });
+      const result = await studioApi.instantiateElementSet({ setId, projectId: id });
       const document = editor.v3Value;
       if (!document) throw new Error('Studio not loaded');
       const targetFrameId =
@@ -733,7 +724,7 @@ export function useStudioController(
       );
       if (!instance) throw new Error('Select a linked Elements instance first');
       await editor.commit();
-      const result = await studioApi.request<{ revisionId: string }>('elementSetPublish', {
+      const result = await studioApi.publishElementSet({
         projectId: id,
         instanceId: instance.id,
       });
@@ -769,7 +760,7 @@ export function useStudioController(
     pageId,
     setPageId,
     busy,
-    failure,
+    failure: failure || listError || '',
     kind,
     setKind,
     title,
@@ -844,12 +835,12 @@ export function useStudioController(
     publishSelectedElementChanges,
     renameElementSet: (setId: string, name: string) =>
       run(async () => {
-        await studioApi.request('elementSetRename', { setId, name });
+        await studioApi.renameElementSet({ setId, name });
         await refreshElementSets();
       }),
     archiveElementSet: (setId: string) =>
       run(async () => {
-        await studioApi.request('elementSetArchive', { setId });
+        await studioApi.archiveElementSet({ setId });
         await refreshElementSets();
       }),
     deleteSelected: () => {

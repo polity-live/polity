@@ -1,3 +1,11 @@
+vi.mock('@rocicorp/zero/react', async () => {
+  const { studioSnapshotFixture } = await import('@/test/studio-snapshot.fixture');
+  return { useQuery: (q: any) => studioSnapshotFixture(q, io) };
+});
+vi.mock('@/zero/queries', async () => {
+  const { studioQueryFixture } = await import('@/test/studio-client.fixture');
+  return { queries: { studio: studioQueryFixture } };
+});
 import { forwardRef, useImperativeHandle } from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -21,13 +29,14 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: io.t,
   useTranslation: () => ({ t: io.t }),
 }));
-vi.mock('@rocicorp/zero/react', () => ({ useQuery: () => [[]] }));
 vi.mock('@tanstack/react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useNavigate: () => vi.fn(),
 }));
-vi.mock('@/zero/queries', () => ({ queries: { studio: { manageGroups: () => ({}) } } }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('../KonvaStudioCanvas', () => ({
   default: forwardRef((props: any, ref) => {
     useImperativeHandle(ref, () => ({ execute: async () => undefined }), []);
@@ -44,7 +53,7 @@ beforeEach(() => {
     document: legacyDocumentToV3(createDocument('carousel', 'Reader')),
     assets: [],
   };
-  io.fetch.mockImplementation(async () => Response.json(io.snapshot));
+  io.fetch.mockResolvedValue(new Response(new Blob(['media'])));
   vi.stubGlobal('fetch', io.fetch);
 });
 afterEach(() => {
