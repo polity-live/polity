@@ -123,6 +123,12 @@ import { formatStudioRichText } from '../logic/patch-studio-node';
 import { renameStudioNode } from '../logic/rename-studio-node';
 import { buildStudioPresence } from '../logic/studio-presence';
 import {
+  alignStudioSelection,
+  distributeStudioSelection,
+  toggleStudioSelectionLock,
+  cutStudioSelection,
+} from '../logic/studio-selection-commands';
+import {
   createStudioV3ClipboardPayload,
   getProjectStudioClipboard,
   parseStudioClipboard,
@@ -551,58 +557,25 @@ function StudioEditorReady({
     });
     if (action === 'delete') c.selectExact([]);
   };
-  const toggleSelectionLock = () => {
-    const locked = !selectionFullyLocked;
-    const nodeIds = selectedNodes.filter(node => node.locked !== locked).map(node => node.id);
-    if (!nodeIds.length) return;
-    c.transactV3(document =>
-      Object.assign(
-        document,
-        applyStudioCommandV3(document, {
-          type: 'setNodeState',
-          nodeIds,
-          locked,
-        })
-      )
-    );
-  };
-  const alignSelection = (direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
-    if (!selectedNodeIds.length || selectionLocked || !referenceAvailable) return;
-    c.transactV3(document =>
-      Object.assign(
-        document,
-        applyStudioCommandV3(document, {
-          type: 'alignNodes',
-          nodeIds: selectedNodeIds,
-          direction,
-          reference,
-          viewBounds: reference === 'view' ? (canvasState.viewBounds ?? undefined) : undefined,
-          groupDepth: selectionState.groupDepth,
-        })
-      )
-    );
-  };
-  const distributeSelection = (axis: 'horizontal' | 'vertical') => {
-    if (
-      arrangedUnits.length < (reference === 'selection' ? 3 : 2) ||
-      selectionLocked ||
-      !referenceAvailable
-    )
-      return;
-    c.transactV3(document =>
-      Object.assign(
-        document,
-        applyStudioCommandV3(document, {
-          type: 'distributeNodes',
-          nodeIds: selectedNodeIds,
-          axis,
-          reference,
-          viewBounds: reference === 'view' ? (canvasState.viewBounds ?? undefined) : undefined,
-          groupDepth: selectionState.groupDepth,
-        })
-      )
-    );
-  };
+  const toggleSelectionLock = () =>
+    toggleStudioSelectionLock({
+      selectedNodes,
+      fullyLocked: selectionFullyLocked,
+      transact: c.transactV3,
+    });
+  const alignmentSelection = () => ({
+    nodeIds: selectedNodeIds,
+    locked: selectionLocked,
+    referenceAvailable,
+    reference,
+    viewBounds: canvasState.viewBounds ?? undefined,
+    groupDepth: selectionState.groupDepth,
+    transact: c.transactV3,
+  });
+  const alignSelection = (direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') =>
+    alignStudioSelection({ ...alignmentSelection(), direction });
+  const distributeSelection = (axis: 'horizontal' | 'vertical') =>
+    distributeStudioSelection({ ...alignmentSelection(), axis, unitCount: arrangedUnits.length });
   const referenceOptions = () => (
     <>
       <DropdownMenuLabel>{tr('reference')}</DropdownMenuLabel>
@@ -705,18 +678,7 @@ function StudioEditorReady({
     });
     return selectedNodeIds;
   };
-  const cutV3Clipboard = (nodeIds: string[]) => {
-    if (!nodeIds.length) return;
-    c.transactV3(document =>
-      Object.assign(
-        document,
-        applyStudioCommandV3(document, {
-          type: 'deleteNodes',
-          nodeIds,
-        })
-      )
-    );
-  };
+  const cutV3Clipboard = (nodeIds: string[]) => cutStudioSelection(nodeIds, c.transactV3);
   const createCanvasNode = (
     tool: StudioTool,
     start: { x: number; y: number },

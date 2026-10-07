@@ -527,6 +527,10 @@ it('decodes and crops a native recorded video, redraws after seeking and release
     view.unmount();
     expect(video.getAttribute('src')).toBeNull();
     expect(video.paused).toBe(true);
+    expect(video.onloadeddata).toBeNull();
+    expect(video.onseeked).toBeNull();
+    video.dispatchEvent(new Event('loadeddata'));
+    video.dispatchEvent(new Event('seeked'));
   } finally {
     view.unmount();
     URL.revokeObjectURL(url);

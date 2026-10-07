@@ -13459,6 +13459,119 @@
         "project": "unit",
         "caseId": "keeps the current transaction document intact when the node is %s"
       }
+    ],
+    "src/features/communication-studio/logic/studio-selection-commands.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "locks and unlocks the selected nodes while keeping unselected nodes unchanged"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not transact for an empty lock or cut selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "changes only unlocked members of a mixed lock selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "leaves geometry unchanged when alignment is %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "aligns the actual selected shapes against the %s bounds"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not distribute with %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes actual shapes evenly against the %s bounds"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "cuts only the selected nodes and preserves the frame and remaining content"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-drag-preview.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves real SDK followers once and restores their geometry and draggable state on cancellation"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "initializes a missing preview and replaces a preview when the SDK driver changes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts an unselected driver independently and excludes locked or deleted selection IDs"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves already-disabled followers and supports partially mounted native layers"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores followers deleted after a drag began without changing the canonical document"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "restores a descendant driver without moving it twice when its SDK group is missing %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps stale SDK drivers and unavailable stages safe during teardown"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "projects follower movement into a rotated parent and handles root followers in the same selection"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-transforms.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "restores actual Konva groups with mirrored geometry %s and skips deleted nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "collects an actual mirrored %s resize in a rotated frame without changing the document"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "collects root node transforms, clamps collapsed dimensions, and ignores deleted SDK nodes"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-surfaces.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "tolerates surfaces that have not been mounted or have already been removed"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "configures actual browser canvases for %s interaction"
+      }
     ]
   },
   "actionReferences": {

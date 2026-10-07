@@ -41,11 +41,22 @@ import type {
 } from '../logic/document-v3';
 import { studioSceneChildren, studioScenePaintOrder } from '../logic/studio-scene';
 import { paintStudioRichText } from '../logic/rich-text-paint';
-import { isDescendantOf, worldBounds, worldMatrix, type Bounds } from '../logic/selection-geometry';
+import { isDescendantOf, worldBounds, type Bounds } from '../logic/selection-geometry';
 import { canvasMarqueeSelectionIds, canvasSelectionIds } from '../logic/studio-selection';
 import { drawStudioElement } from '../logic/draw-element';
 import { semanticElement } from '../logic/v3-adapter';
-import type { StudioMediaCrop } from '../logic/document';
+import { configureStudioCanvasSurfaces } from '../logic/canvas-surfaces';
+import {
+  createStudioDragPreview,
+  updateStudioDragPreview,
+  clearStudioDragPreview,
+  type CanvasDragPreview,
+} from '../logic/canvas-drag-preview';
+import {
+  collectStudioCanvasTransforms,
+  restoreStudioCanvasTransforms,
+} from '../logic/canvas-transforms';
+import type { StudioElement, StudioMediaCrop } from '../logic/document';
 import {
   initialMediaCrop,
   panMediaCrop,
@@ -242,19 +253,17 @@ function DirectMedia({
   const rendered = useRef<Konva.Image>(null);
   useEffect(() => {
     if (!url) return;
-    let cancelled = false;
     if (node.mediaType === 'video') {
       const video = document.createElement('video');
       video.crossOrigin = 'anonymous';
       video.src = url;
       video.muted = true;
       video.preload = 'auto';
-      video.onloadeddata = () => {
-        if (!cancelled) setImage(video);
-      };
+      video.onloadeddata = () => setImage(video);
       video.onseeked = () => rendered.current?.getLayer()?.batchDraw();
       return () => {
-        cancelled = true;
+        video.onloadeddata = null;
+        video.onseeked = null;
         video.pause();
         video.removeAttribute('src');
         video.load();
@@ -262,12 +271,9 @@ function DirectMedia({
     }
     const next = new window.Image();
     next.crossOrigin = 'anonymous';
-    next.onload = () => {
-      if (!cancelled) setImage(next);
-    };
+    next.onload = () => setImage(next);
     next.src = url;
     return () => {
-      cancelled = true;
       next.onload = null;
     };
   }, [url, node.mediaType]);
@@ -420,8 +426,8 @@ function NodeContent({
       />
     );
   if (node.type === 'table' || node.type === 'chart') {
-    const element = semanticElement(node);
-    return element ? (
+    const element = semanticElement(node) as StudioElement;
+    return (
       <Shape
         width={width}
         height={height}
@@ -438,7 +444,7 @@ function NodeContent({
           context.fillStrokeShape(item);
         }}
       />
-    ) : null;
+    );
   }
   return (
     <Rect
@@ -571,6 +577,58 @@ function EditorPortal({
   );
 }
 
+interface CanvasCropDraft {
+  nodeId: string;
+  state: MediaCropState;
+  zoom: number;
+}
+
+interface CanvasCropGesture {
+  nodeId: string;
+  kind: 'pan' | CropHandle;
+  start: { x: number; y: number };
+  inverse: Konva.Transform;
+  initial: MediaCropState;
+}
+
+interface CanvasToolGesture {
+  mode: 'pan' | 'tool';
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  points: [number, number][];
+}
+
+interface CanvasTextGesture {
+  pointerId: number;
+  nodeId: string | null;
+  start: { x: number; y: number };
+  clientX: number;
+  clientY: number;
+  shiftKey: boolean;
+  active: boolean;
+}
+
+interface CanvasMarquee {
+  pointerId: number;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  clientX: number;
+  clientY: number;
+  additive: boolean;
+  previous: string[];
+  active: boolean;
+}
+
+interface CanvasTouchGesture {
+  center: { x: number; y: number };
+  distance: number;
+}
+
+interface CanvasPanPointer {
+  x: number;
+  y: number;
+}
+
 const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
   function KonvaStudioCanvas(props, ref) {
     const t = useTranslation().t;
@@ -600,69 +658,25 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const inspectorPanel = useRef<HTMLElement>(null);
     const inspectorDrag = useRef<InspectorDrag | null>(null);
     const inspectorBodyId = useId();
-    const [cropDraft, setCropDraft] = useState<{
-      nodeId: string;
-      state: MediaCropState;
-      zoom: number;
-    } | null>(null);
+    const [cropDraft, setCropDraft] = useState<CanvasCropDraft | null>(null);
     const [cropLoading, setCropLoading] = useState(false);
     const [cropError, setCropError] = useState(false);
-    const cropGesture = useRef<{
-      nodeId: string;
-      kind: 'pan' | CropHandle;
-      start: { x: number; y: number };
-      inverse: Konva.Transform;
-      initial: MediaCropState;
-    } | null>(null);
+    const cropGesture = useRef<CanvasCropGesture | null>(null);
     const [portalTarget, setPortalTarget] = useState<HTMLDivElement | null>(null);
-    const [gesture, setGesture] = useState<{
-      mode: 'pan' | 'tool';
-      start: { x: number; y: number };
-      end: { x: number; y: number };
-      points: [number, number][];
-    } | null>(null);
-    const textGesture = useRef<{
-      pointerId: number;
-      nodeId: string | null;
-      start: { x: number; y: number };
-      clientX: number;
-      clientY: number;
-      shiftKey: boolean;
-      active: boolean;
-    } | null>(null);
+    const [gesture, setGesture] = useState<CanvasToolGesture | null>(null);
+    const textGesture = useRef<CanvasTextGesture | null>(null);
     const suppressTextClick = useRef(false);
-    const [marquee, setMarquee] = useState<{
-      pointerId: number;
-      start: { x: number; y: number };
-      end: { x: number; y: number };
-      clientX: number;
-      clientY: number;
-      additive: boolean;
-      previous: string[];
-      active: boolean;
-    } | null>(null);
+    const [marquee, setMarquee] = useState<CanvasMarquee | null>(null);
     const marqueeRef = useRef(marquee);
     marqueeRef.current = marquee;
-    const dragPreview = useRef<{
-      driverId: string;
-      selectedIds: string[];
-      roots: string[];
-      origins: Map<string, { x: number; y: number }>;
-      disabledFollowers: Map<string, boolean>;
-      startClientX: number;
-      startClientY: number;
-      initialDelta: { x: number; y: number };
-      delta: { x: number; y: number };
-    } | null>(null);
+    const dragPreview = useRef<CanvasDragPreview | null>(null);
     const ignoredFollowerDrags = useRef(new Set<string>());
     const [spacePressed, setSpacePressed] = useState(false);
     const spacePressedRef = useRef(false);
     const touchSuppressed = useRef(false);
-    const touchGesture = useRef<{ center: { x: number; y: number }; distance: number } | null>(
-      null
-    );
+    const touchGesture = useRef<CanvasTouchGesture | null>(null);
     const touchResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const panPointer = useRef<{ x: number; y: number } | null>(null);
+    const panPointer = useRef<CanvasPanPointer | null>(null);
     useEffect(() => {
       const cancel = () => {
         if (!textGesture.current) return;
@@ -1081,22 +1095,14 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       transformer.current?.getLayer()?.batchDraw();
     }, [props.selected, props.document, editing, cropDraft]);
     useEffect(() => {
-      const lowerCanvas = lower.current?.getCanvas()._canvas;
-      const upperCanvas = upper.current?.getCanvas()._canvas;
-      const controlsCanvas = controls.current?.getCanvas()._canvas;
-      for (const canvas of [lowerCanvas, upperCanvas, controlsCanvas]) {
-        if (canvas)
-          canvas.style.touchAction = props.editable && props.fit !== 'contain' ? 'none' : '';
-      }
-      if (lowerCanvas) lowerCanvas.style.zIndex = '0';
-      if (upperCanvas) {
-        upperCanvas.style.zIndex = '2';
-        upperCanvas.style.pointerEvents = editingNode ? 'none' : 'auto';
-      }
-      if (controlsCanvas) {
-        controlsCanvas.style.zIndex = '3';
-        controlsCanvas.style.pointerEvents = editingNode ? 'none' : 'auto';
-      }
+      configureStudioCanvasSurfaces({
+        lower: lower.current?.getCanvas()._canvas,
+        upper: upper.current?.getCanvas()._canvas,
+        controls: controls.current?.getCanvas()._canvas,
+        editable: props.editable,
+        contain: props.fit === 'contain',
+        editingText: Boolean(editingNode),
+      });
     }, [editingNode, paintOrder, props.editable, props.fit]);
 
     const scenePoint = useCallback(
@@ -1350,15 +1356,13 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             } else finishCrop(command.action);
             return;
           }
-          if (command.type === 'search') {
-            const found = paintOrder.find(
-              node =>
-                node.name.toLowerCase().includes(command.query.toLowerCase()) ||
-                (node.type === 'richText' &&
-                  flattenText(node).toLowerCase().includes(command.query.toLowerCase()))
-            );
-            if (found) props.selectExact?.([found.id]);
-          }
+          const found = paintOrder.find(
+            node =>
+              node.name.toLowerCase().includes(command.query.toLowerCase()) ||
+              (node.type === 'richText' &&
+                flattenText(node).toLowerCase().includes(command.query.toLowerCase()))
+          );
+          if (found) props.selectExact?.([found.id]);
         },
       }),
       [
@@ -1378,114 +1382,29 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       props.selectExact?.(canvasSelectionIds(props.document, props.selected, id, shift));
     };
 
+    const dragOptions = (driverId: string, clientX: number, clientY: number) => ({
+      document: props.document,
+      selected: props.selected,
+      stage: stage.current,
+      driverId,
+      clientX,
+      clientY,
+    });
     const beginDragPreview = (driverId: string, clientX: number, clientY: number) => {
-      const selectedIds = props.selected.includes(driverId) ? props.selected : [driverId];
-      const editableIds = selectedIds.filter(id => {
-        const node = props.document.nodes.find(candidate => candidate.id === id);
-        return node && !node.locked;
-      });
-      const roots = editableIds.filter(id => {
-        const node = props.document.nodes.find(candidate => candidate.id === id);
-        return (
-          node &&
-          !editableIds.some(parentId => {
-            const parent = props.document.nodes.find(candidate => candidate.id === parentId);
-            return parent?.type === 'frame' && isDescendantOf(props.document, node, parentId);
-          })
-        );
-      });
-      const origins = new Map(
-        [...new Set([...roots, driverId])].flatMap(id => {
-          const node = props.document.nodes.find(candidate => candidate.id === id);
-          return node
-            ? [
-                [
-                  id,
-                  {
-                    x: node.transform.x + node.transform.width / 2,
-                    y: node.transform.y + node.transform.height / 2,
-                  },
-                ] as const,
-              ]
-            : [];
-        })
-      );
-      const driver = props.document.nodes.find(candidate => candidate.id === driverId);
-      const rendered = stage.current?.findOne(`#${driverId}`);
-      const origin = origins.get(driverId);
-      const parent = driver?.parentFrameId
-        ? props.document.nodes.find(candidate => candidate.id === driver.parentFrameId)
-        : null;
-      const [a, b, c, d] = parent ? worldMatrix(props.document, parent) : [1, 0, 0, 1, 0, 0];
-      const localX = rendered && origin ? rendered.x() - origin.x : 0;
-      const localY = rendered && origin ? rendered.y() - origin.y : 0;
-      const disabledFollowers = new Map<string, boolean>();
-      for (const id of roots) {
-        if (id === driverId) continue;
-        const follower = stage.current?.findOne(`#${id}`);
-        if (!follower) continue;
-        disabledFollowers.set(id, follower.draggable());
-        follower.draggable(false);
-      }
-      dragPreview.current = {
-        driverId,
-        selectedIds,
-        roots,
-        origins,
-        disabledFollowers,
-        startClientX: clientX,
-        startClientY: clientY,
-        initialDelta: { x: a * localX + c * localY, y: b * localX + d * localY },
-        delta: { x: 0, y: 0 },
-      };
+      dragPreview.current = createStudioDragPreview(dragOptions(driverId, clientX, clientY));
     };
-
     const updateDragPreview = (driverId: string, clientX: number, clientY: number) => {
-      if (dragPreview.current?.driverId !== driverId) beginDragPreview(driverId, clientX, clientY);
-      const preview = dragPreview.current;
-      if (!preview) return;
-      const delta = {
-        x: preview.initialDelta.x + (clientX - preview.startClientX) / zoom,
-        y: preview.initialDelta.y + (clientY - preview.startClientY) / zoom,
-      };
-      preview.delta = delta;
-      for (const id of preview.roots) {
-        if (id === driverId) continue;
-        const node = props.document.nodes.find(candidate => candidate.id === id);
-        const rendered = stage.current?.findOne(`#${id}`);
-        const origin = preview.origins.get(id);
-        if (!node || !rendered || !origin) continue;
-        const parent = node.parentFrameId
-          ? props.document.nodes.find(candidate => candidate.id === node.parentFrameId)
-          : null;
-        const [a, b, c, d] = parent ? worldMatrix(props.document, parent) : [1, 0, 0, 1, 0, 0];
-        const determinant = a * d - b * c;
-        if (Math.abs(determinant) < 1e-8) continue;
-        rendered.position({
-          x: origin.x + (d * delta.x - c * delta.y) / determinant,
-          y: origin.y + (-b * delta.x + a * delta.y) / determinant,
-        });
-        rendered.getLayer()?.batchDraw();
-      }
-      if (!preview.roots.includes(driverId)) {
-        const driver = stage.current?.findOne(`#${driverId}`);
-        const origin = preview.origins.get(driverId);
-        if (driver && origin) driver.position(origin);
-      }
+      const preview = updateStudioDragPreview({
+        ...dragOptions(driverId, clientX, clientY),
+        preview: dragPreview.current,
+        zoom,
+      });
+      dragPreview.current = preview;
       refreshContextToolbarBounds();
+      return preview;
     };
-
     const clearDragPreview = () => {
-      const preview = dragPreview.current;
-      if (!preview) return;
-      for (const [id, draggable] of preview.disabledFollowers) {
-        stage.current?.findOne(`#${id}`)?.draggable(draggable);
-      }
-      for (const [id, origin] of preview.origins) {
-        const rendered = stage.current?.findOne(`#${id}`);
-        rendered?.position(origin);
-        rendered?.getLayer()?.draw();
-      }
+      clearStudioDragPreview(stage.current, dragPreview.current);
       dragPreview.current = null;
     };
 
@@ -1644,7 +1563,6 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       if (!masterFrame || frame.parentFrameId !== null || frame.id === masterFrame.id) return null;
       if (placement === 'background' && part === 'upper') return null;
       if (placement === 'foreground' && part === 'lower' && editingNode) return null;
-      if (placement === 'foreground' && part === 'upper' && !editingNode) return null;
       const children = studioSceneChildren(props.document, masterFrame.id).filter(
         node => (props.document.masterLayout.placements[node.id] ?? 'foreground') === placement
       );
@@ -1818,10 +1736,10 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 if (event.target !== event.currentTarget) return;
                 if (ignoredFollowerDrags.current.has(node.id)) return;
                 if (touchSuppressed.current) return;
-                updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
+                const preview = updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
                 props.onNodeDragMove?.(
                   node.id,
-                  dragPreview.current?.selectedIds ?? [node.id],
+                  preview.selectedIds,
                   event.evt.clientX,
                   event.evt.clientY
                 );
@@ -1836,13 +1754,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   event.target.getLayer()?.batchDraw();
                   return;
                 }
-                if (!dragPreview.current)
-                  beginDragPreview(node.id, event.evt.clientX, event.evt.clientY);
-                updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
-                const preview = dragPreview.current;
-                const chosen = preview?.selectedIds ?? [node.id];
-                const roots = preview?.roots ?? [node.id];
-                const delta = preview?.delta ?? { x: 0, y: 0 };
+                const preview = updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
+                const { selectedIds: chosen, roots, delta } = preview;
                 const handled = props.onNodeDragEnd?.(
                   node.id,
                   chosen,
@@ -2420,63 +2333,12 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 rotateEnabled
                 onTransform={refreshContextToolbarBounds}
                 onTransformEnd={() => {
+                  const items = transformer.current?.nodes() ?? [];
                   if (touchSuppressed.current) {
-                    transformer.current?.nodes().forEach(item => {
-                      const source = props.document.nodes.find(node => node.id === item.id());
-                      if (!source) return;
-                      item.position({
-                        x: source.transform.x + source.transform.width / 2,
-                        y: source.transform.y + source.transform.height / 2,
-                      });
-                      item.rotation(source.transform.rotation);
-                      item.scale({
-                        x: source.transform.flipX ? -1 : 1,
-                        y: source.transform.flipY ? -1 : 1,
-                      });
-                      item.getLayer()?.batchDraw();
-                    });
+                    restoreStudioCanvasTransforms(props.document, items);
                     return;
                   }
-                  const changes: StudioCanvasNodeChange[] = (
-                    transformer.current?.nodes() ?? []
-                  ).flatMap(item => {
-                    const source = props.document.nodes.find(node => node.id === item.id());
-                    if (!source) return [];
-                    const parent = props.document.nodes.find(
-                      node => node.id === source.parentFrameId
-                    );
-                    const [a, b, c, d] = parent
-                      ? worldMatrix(props.document, parent)
-                      : [1, 0, 0, 1, 0, 0];
-                    const width = Math.max(1, source.transform.width * Math.abs(item.scaleX()));
-                    const height = Math.max(1, source.transform.height * Math.abs(item.scaleY()));
-                    // The node's x/y store its top-left; Konva positions this
-                    // group by its center. Account for the new dimensions when
-                    // translating the center back into a canonical top-left.
-                    const localDx = item.x() - width / 2 - source.transform.x;
-                    const localDy = item.y() - height / 2 - source.transform.y;
-                    // Transformer can decompose mirrored geometry into a rotation
-                    // and different scale signs. Persist those signs with the new
-                    // rotation so resizing preserves the rendered orientation.
-                    const flipX = item.scaleX() < 0;
-                    const flipY = item.scaleY() < 0;
-                    item.scaleX(flipX ? -1 : 1);
-                    item.scaleY(flipY ? -1 : 1);
-                    return [
-                      {
-                        nodeId: source.id,
-                        transform: {
-                          dx: a * localDx + c * localDy,
-                          dy: b * localDx + d * localDy,
-                          width,
-                          height,
-                          rotation: item.rotation(),
-                          flipX,
-                          flipY,
-                        },
-                      },
-                    ];
-                  });
+                  const changes = collectStudioCanvasTransforms(props.document, items);
                   props.applyCanvasChanges?.(changes);
                 }}
               />
