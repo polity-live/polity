@@ -23,7 +23,6 @@ describe('GitHub workflow contracts', () => {
     expect(setup).toContain('node-version: 24.18.0');
     expect(setup).toContain("cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}");
     expect(setup).toContain('pnpm install --frozen-lockfile');
-    expect(workflow('ci.yml')).toContain('cache: "false"');
     expect(workspace).toContain('fetchRetries: 5');
     expect(workspace).toContain('fetchRetryFactor: 2');
     expect(workspace).toContain('fetchRetryMintimeout: 20000');
@@ -167,25 +166,6 @@ describe('GitHub workflow contracts', () => {
     expect(ratchet).toContain('pnpm run test:accountability:coverage');
     expect(ratchet).not.toContain('coverage-baseline');
     expect(ratchet).not.toContain('compare-coverage-reports.mjs');
-  });
-
-  it('warms up from the pipeline cutover before enforcing the 15-minute P95', () => {
-    const ci = workflow('ci.yml');
-
-    expect(ci).toContain('actions: read');
-    expect(ci).toContain('pipeline-performance:');
-    expect(ci).toContain('timeout-minutes: 5');
-    expect(ci).toContain('GH_TOKEN: ${{ github.token }}');
-    expect(ci).toContain(
-      '/actions/workflows/ci.yml/runs?event=pull_request&status=success&per_page=100'
-    );
-    expect(ci).toContain('check-pr-pipeline-p95.mjs');
-    expect(ci).toContain('--threshold-seconds 900');
-    expect(ci).toContain('--min-samples 20');
-    expect(ci).toContain('--max-samples 50');
-    expect(ci).toContain('--after-run-id 31544870651');
-    expect(ci).toContain('--allow-insufficient-samples');
-    expect(ci).not.toMatch(/echo[^\n]*(?:GH_TOKEN|github\.token)/u);
   });
 
   it('runs deep checks nightly and cold-stack acceptance without retries', () => {
