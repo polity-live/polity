@@ -50,7 +50,7 @@ describe('managed presence channel contract', () => {
     expect(second).toBe(first);
     expect(mocks.createClient).toHaveBeenCalledOnce();
     expect(mocks.client.channel).toHaveBeenCalledWith('presence:room', {
-      config: { presence: { key: 'user-1' } },
+      config: { presence: { key: 'user-1' }, private: false },
     });
     expect(getChannel('room')).toBe(mocks.channel);
 
@@ -104,5 +104,14 @@ describe('managed presence channel contract', () => {
     release('room');
     expect(mocks.client.removeChannel).toHaveBeenCalledWith(mocks.channel);
     expect(getChannel('room')).toBeNull();
+  });
+
+  it('opens Studio channels with private Realtime authorization', () => {
+    acquire('studio:project:main', 'user-1', true);
+    expect(mocks.client.channel).toHaveBeenLastCalledWith('presence:studio:project:main', {
+      config: { presence: { key: 'user-1' }, private: true },
+    });
+    release('studio:project:main');
+    expect(getChannel('studio:project:main')).toBeNull();
   });
 });
