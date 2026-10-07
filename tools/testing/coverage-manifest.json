@@ -23908,9 +23908,85 @@
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "updates native inspector labels after a language change while retaining keyboard focus and panel state"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects late focus after the canvas unmounts and still calculates finite scene coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps empty-document zoom, search, clipboard and crop commands safe without invoking missing callbacks"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "clears context bounds and avoids fitting a selected node that has been removed from the canonical document"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shows a safe crop error for an unresolved %s asset and leaves the document unchanged"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "refuses crop for a %s media selection before fetching metadata"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reports image and video metadata load failures through the actual browser media elements"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens real image crop controls with default labels and cancels and applies them through canvas keyboard capture"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores ordinary drag data when no element-set drop handler is installed"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps the viewport fixed on wheel input in %s mode"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "normalizes wheel scrolling in delta mode %s without changing zoom"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "does not scroll the canvas when wheel input targets an editable property field"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "closes the actual inline editor after its %s state changes"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "hands valid element-set drag data to the external drop boundary with finite scene coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "previews a real %s gesture and passes its sampled points to the creation boundary"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "abandons an active crop when %s access changes before applying"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -23921,8 +23997,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -23990,6 +24065,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24000,8 +24076,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24064,6 +24139,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24074,8 +24150,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24118,6 +24193,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24128,8 +24204,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24537,6 +24612,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24547,8 +24623,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24636,6 +24711,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24646,8 +24722,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24685,6 +24760,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24695,8 +24771,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24749,6 +24824,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24759,8 +24835,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -24888,6 +24963,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -24898,8 +24974,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25032,6 +25107,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25042,8 +25118,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25131,6 +25206,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25141,8 +25217,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25180,6 +25255,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25190,8 +25266,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25394,6 +25469,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25404,8 +25480,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25508,6 +25583,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25518,8 +25594,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25537,6 +25612,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25547,8 +25623,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25566,6 +25641,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25576,8 +25652,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25665,6 +25740,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25675,8 +25751,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -25749,6 +25824,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -25759,8 +25835,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -26033,6 +26108,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -26043,8 +26119,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -26082,6 +26157,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -26092,8 +26168,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -26371,6 +26446,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -26381,9 +26457,18 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -27055,6 +27140,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27065,8 +27151,7 @@
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
       ]
     },
     {
@@ -110553,6 +110638,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/ai-sources.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
@@ -111314,6 +111409,46 @@
           "file": "src/server/studio/__tests__/collaborators.unit.test.ts",
           "project": "unit",
           "caseId": "deduplicates, requires acceptance, supports reinvitation, and revokes access"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a private owner snapshot with only ready canonical asset links"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns the same private not-found response for invalid IDs, denied actors and missing canonical state"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lets an accepted personal collaborator edit without granting visibility management"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lists actual pending invitations and lets only the personal owner inspect collaborators"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks canonical project access when a proposal workspace is absent"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "resolves real canonical and proposal sources through the production SQL adapter"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks %s proposal editing for a %s actor with resolution %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows reading a published proposal while refusing edits after submission or suggest-capability revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -112298,6 +112433,46 @@
           "file": "src/server/studio/__tests__/read.unit.test.ts",
           "project": "unit",
           "caseId": "uses the authenticated identity to check a private document"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a private owner snapshot with only ready canonical asset links"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns the same private not-found response for invalid IDs, denied actors and missing canonical state"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lets an accepted personal collaborator edit without granting visibility management"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lists actual pending invitations and lets only the personal owner inspect collaborators"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks canonical project access when a proposal workspace is absent"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "resolves real canonical and proposal sources through the production SQL adapter"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks %s proposal editing for a %s actor with resolution %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows reading a published proposal while refusing edits after submission or suggest-capability revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -112551,6 +112726,46 @@
           "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a private owner snapshot with only ready canonical asset links"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns the same private not-found response for invalid IDs, denied actors and missing canonical state"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lets an accepted personal collaborator edit without granting visibility management"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lists actual pending invitations and lets only the personal owner inspect collaborators"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks canonical project access when a proposal workspace is absent"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "resolves real canonical and proposal sources through the production SQL adapter"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks %s proposal editing for a %s actor with resolution %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows reading a published proposal while refusing edits after submission or suggest-capability revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -112580,6 +112795,46 @@
           "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "isolates proposal media from the canonical library and promotes only media in an applied decision"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a private owner snapshot with only ready canonical asset links"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns the same private not-found response for invalid IDs, denied actors and missing canonical state"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lets an accepted personal collaborator edit without granting visibility management"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "lists actual pending invitations and lets only the personal owner inspect collaborators"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks canonical project access when a proposal workspace is absent"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "resolves real canonical and proposal sources through the production SQL adapter"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "checks %s proposal editing for a %s actor with resolution %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "allows reading a published proposal while refusing edits after submission or suggest-capability revocation"
         }
       ],
       "suggestedTestRefs": [
