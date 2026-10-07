@@ -9953,6 +9953,21 @@
         "file": "src/features/groups/ui/__tests__/GroupThemeSettings.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "creates and saves a personal preset with the native keyboard without attaching a group context"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.timers.component.test.tsx",
+        "project": "component",
+        "caseId": "expires the saved indicator after 1600 milliseconds"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.timers.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the indicator visible for a full interval after a second save"
+      },
+      {
+        "file": "src/features/groups/ui/__tests__/GroupThemeSettings.timers.component.test.tsx",
+        "project": "component",
+        "caseId": "cancels the pending saved timer when the editor unmounts"
       }
     ],
     "src/features/communication-studio/ui/KonvaStudioCanvas.tsx": [

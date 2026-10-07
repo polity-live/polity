@@ -119,51 +119,58 @@ it('keeps Shift-click selection and locked-text clicks without opening an editor
   expect(create).toHaveBeenCalledTimes(1);
 });
 
-it.each(['pointercancel', 'escape', 'tool change', 'blur', 'multitouch'] as const)(
-  'cancels overlapping text creation on %s and allows the next gesture',
-  async reason => {
-    const { pointer, ref, surface, client, create } = await harness();
-    pointer('down');
-    pointer('move', 40, 30);
-    if (reason === 'pointercancel') pointer('cancel', 40, 30);
-    if (reason === 'escape') fireEvent.keyDown(window, { key: 'Escape' });
-    if (reason === 'tool change')
-      await act(() => ref.current!.execute({ type: 'setTool', tool: 'selection' }));
-    if (reason === 'blur') fireEvent.blur(window);
-    if (reason === 'multitouch') {
-      const point = client();
-      const touches = [1, 2].map(
-        identifier => new Touch({ identifier, target: surface, ...point })
-      );
-      fireEvent(
-        surface,
-        new TouchEvent('touchstart', {
-          bubbles: true,
-          cancelable: true,
-          touches,
-          changedTouches: touches,
-        })
-      );
-      fireEvent(
-        surface,
-        new TouchEvent('touchend', {
-          bubbles: true,
-          cancelable: true,
-          touches: [],
-          changedTouches: touches,
-        })
-      );
-    }
-    pointer('up', 40, 30);
-    expect(create).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText('Text')).toBeNull();
-    await act(() => ref.current!.execute({ type: 'setTool', tool: 'text' }));
-    pointer('down');
-    pointer('move', 40, 30);
-    pointer('up', 40, 30);
-    expect(create).toHaveBeenCalledTimes(1);
+it.each([
+  'pointercancel',
+  'escape',
+  'focused escape',
+  'tool change',
+  'blur',
+  'multitouch',
+] as const)('cancels overlapping text creation on %s and allows the next gesture', async reason => {
+  const { pointer, ref, surface, client, create } = await harness();
+  pointer('down');
+  pointer('move', 40, 30);
+  if (reason === 'pointercancel') pointer('cancel', 40, 30);
+  if (reason === 'escape') fireEvent.keyDown(window, { key: 'Escape' });
+  if (reason === 'focused escape') {
+    const host = screen.getByTestId('studio-canvas');
+    host.focus();
+    fireEvent.keyDown(host, { key: 'Escape' });
   }
-);
+  if (reason === 'tool change')
+    await act(() => ref.current!.execute({ type: 'setTool', tool: 'selection' }));
+  if (reason === 'blur') fireEvent.blur(window);
+  if (reason === 'multitouch') {
+    const point = client();
+    const touches = [1, 2].map(identifier => new Touch({ identifier, target: surface, ...point }));
+    fireEvent(
+      surface,
+      new TouchEvent('touchstart', {
+        bubbles: true,
+        cancelable: true,
+        touches,
+        changedTouches: touches,
+      })
+    );
+    fireEvent(
+      surface,
+      new TouchEvent('touchend', {
+        bubbles: true,
+        cancelable: true,
+        touches: [],
+        changedTouches: touches,
+      })
+    );
+  }
+  pointer('up', 40, 30);
+  expect(create).not.toHaveBeenCalled();
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  await act(() => ref.current!.execute({ type: 'setTool', tool: 'text' }));
+  pointer('down');
+  pointer('move', 40, 30);
+  pointer('up', 40, 30);
+  expect(create).toHaveBeenCalledTimes(1);
+});
 
 it('ignores other pointers while dragging and creates once for the initiating pointer', async () => {
   const { pointer, create } = await harness();

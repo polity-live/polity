@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Copy, Palette, Plus, Send, Trash2 } from 'lucide-react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { queries } from '@/zero/queries';
@@ -287,6 +287,9 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
   const themes = (Array.isArray(rows) ? rows : []) as unknown as ThemeRow[];
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [saved, setSaved] = useState(false);
+  const savedTimeout = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(savedTimeout.current), []);
 
   const parsedTheme = useMemo(
     () =>
@@ -365,7 +368,8 @@ export function GroupThemeSettings({ groupId = null }: { groupId?: string | null
       })
     );
     setSaved(true);
-    window.setTimeout(() => setSaved(false), 1600);
+    window.clearTimeout(savedTimeout.current);
+    savedTimeout.current = window.setTimeout(() => setSaved(false), 1600);
     onServerError(mutation, message => console.error('Theme draft save failed:', message));
     return mutation;
   };
