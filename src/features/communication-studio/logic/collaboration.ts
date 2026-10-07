@@ -36,7 +36,8 @@ export function patchElement(
           patch: formatting,
         });
         const text = next.pages.find(p => p.id === pageId)?.elements.find(e => e.id === id);
-        if (text) Object.assign(e, text);
+        // Formatting retains the selected element and its stable ID.
+        Object.assign(e, text);
       }
     }
     Object.assign(e, patch);

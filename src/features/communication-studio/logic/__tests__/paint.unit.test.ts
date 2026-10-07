@@ -12,6 +12,7 @@ class MockImage {
   naturalHeight = 100;
   onload?: () => void;
   onerror?: () => void;
+  decode = vi.fn(async () => undefined);
   constructor() {
     media.push(this);
   }
@@ -111,6 +112,70 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('Studio canvas export drawing', () => {
+  it.each([
+    ['widescreen', 1920, 1080],
+    ['standard', 1440, 1080],
+  ])('exports %s at its documented canvas size', async (format, width, height) => {
+    await paintStudioPage(page([], { format }), {});
+    expect(canvas.width).toBe(width);
+    expect(canvas.height).toBe(height);
+    expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, width, height);
+  });
+  it('rejects live native elements when the isolated export renderer is unavailable but accepts deleted elements', async () => {
+    await expect(
+      paintStudioPage(page([], { canvas: { elements: [{ isDeleted: false }] } }), {})
+    ).rejects.toThrow('Excalidraw export renderer is unavailable');
+    expect(canvas.toDataURL).not.toHaveBeenCalled();
+    await paintStudioPage(page([], { canvas: { elements: [{ isDeleted: true }] } }), {});
+    expect(canvas.toDataURL).toHaveBeenCalledOnce();
+  });
+  it('decodes native SVG layers in renderer order, skips empty native layers and uses the serialized structured renderer', async () => {
+    const nativeElements = [{ id: 'native', isDeleted: false }];
+    const structured = element('rect');
+    const renderNative = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
+      svg: '<svg><text>Literal &amp; content</text></svg>',
+      x: 7,
+      y: 9,
+      width: 80,
+      height: 40,
+    });
+    const canvasLayers = vi.fn(() => [
+      { kind: 'native', elements: [] },
+      { kind: 'native', elements: nativeElements },
+      { kind: 'polity', element: structured },
+    ]);
+    const draw = vi.fn();
+    Object.assign(window, {
+      PolityCanvasRenderer: { canvasLayers, renderNative },
+      drawStudioElement: draw,
+    });
+    const p = page([structured], { canvas: { elements: nativeElements, appState: { zoom: 1 } } });
+    await paintStudioPage(p, {});
+    expect(canvasLayers).toHaveBeenCalledWith(p);
+    expect(renderNative).toHaveBeenLastCalledWith({
+      elements: nativeElements,
+      appState: { zoom: 1 },
+    });
+    expect(media).toHaveLength(1);
+    expect(media[0].decode).toHaveBeenCalledOnce();
+    expect(ctx.drawImage).toHaveBeenCalledWith(media[0], 7, 9, 80, 40);
+    expect(draw).toHaveBeenCalledWith(ctx, structured);
+    expect(ctx.drawImage.mock.invocationCallOrder[0]).toBeLessThan(
+      draw.mock.invocationCallOrder[0]
+    );
+  });
+  it('reflects media on both axes and skips media elements without an asset ID', async () => {
+    await paintStudioPage(
+      page([
+        element('image', { assetId: 'reflected', flipX: true, flipY: true }),
+        element('image', { assetId: null }),
+      ]),
+      { reflected: 'image.png' }
+    );
+    expect(ctx.translate).toHaveBeenCalledWith(100, 100);
+    expect(ctx.scale).toHaveBeenCalledWith(-1, -1);
+    expect(ctx.drawImage).toHaveBeenCalledOnce();
+  });
   it('creates correctly sized canvases and renders layers in stable order with shapes and scene fades', async () => {
     existing = false;
     const p = page(

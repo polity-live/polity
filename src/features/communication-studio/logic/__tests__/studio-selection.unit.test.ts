@@ -9,6 +9,39 @@ import {
   toggleSelection,
 } from '../studio-selection';
 
+it('ignores disappeared and hidden nodes, selects single objects and drills only actual groups', () => {
+  const document = createStudioDocumentV3('Selection guards');
+  const first = createFrameNode('custom');
+  const second = createFrameNode('custom');
+  const hidden = createFrameNode('custom', { visible: false });
+  document.nodes.push(first, second, hidden);
+  const missing = crypto.randomUUID();
+  expect(groupMembers(document, missing)).toEqual([]);
+  expect(groupMembers(document, hidden.id)).toEqual([]);
+  expect(groupMembers(document, first.id)).toEqual([first.id]);
+  expect(canvasSelectionIds(document, [first.id], missing, true)).toEqual([first.id]);
+  expect(canvasSelectionIds(document, [], first.id, false)).toEqual([first.id]);
+  const empty = emptyStudioSelection();
+  expect(drillIntoGroup(document, empty)).toBe(empty);
+  const selected = toggleSelection(document, empty, first.id, true);
+  expect(selected).toMatchObject({ nodeIds: [first.id], primaryId: first.id });
+  expect(drillIntoGroup(document, selected)).toBe(selected);
+  const added = toggleSelection(document, selected, second.id, true);
+  expect(added).toMatchObject({ nodeIds: [first.id, second.id], primaryId: first.id });
+  expect(toggleSelection(document, added, first.id, true)).toMatchObject({
+    nodeIds: [second.id],
+    primaryId: second.id,
+  });
+  expect(
+    canvasMarqueeSelectionIds(document, [first.id], {
+      left: -1,
+      top: -1,
+      right: 2000,
+      bottom: 2000,
+    })
+  ).toEqual([first.id]);
+});
+
 it('toggles outer groups, drills into nested groups, and skips locked nodes', () => {
   const document = createStudioDocumentV3('Selection');
   const outer = crypto.randomUUID(),

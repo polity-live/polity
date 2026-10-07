@@ -15,7 +15,7 @@ export function textValue(value: unknown): Descendant[] {
   if (typeof value === 'string') return [{ type: 'p', children: [{ text: value }] } as Descendant];
   if (value == null || (Array.isArray(value) && !value.length))
     return [{ type: 'p', children: [{ text: '' }] } as Descendant];
-  if (!Array.isArray(value) || !value.length) throw new Error('invalid_text');
+  if (!Array.isArray(value)) throw new Error('invalid_text');
   let count = 0;
   const visit = (node: unknown, depth: number): void => {
     if (++count > 100_000 || depth > 64 || !node || typeof node !== 'object' || Array.isArray(node))

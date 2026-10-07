@@ -12,6 +12,73 @@ const frame = { x: 20, y: 30, width: 100, height: 100, rotation: 0, flipX: false
 const focus = { x: 0.5, y: 0.5 };
 
 describe('Studio media crop', () => {
+  it('resizes each side of a doubly reflected crop at the original source scale and pans in its reflected direction', () => {
+    const state = initialMediaCrop(
+      { ...frame, flipX: true, flipY: true },
+      'cover',
+      focus,
+      {
+        x: 50,
+        y: 50,
+        width: 100,
+        height: 100,
+        naturalWidth: 200,
+        naturalHeight: 200,
+      },
+      200,
+      200
+    );
+    const panned = panMediaCrop(state, 10, 20);
+    expect(panned.crop).toMatchObject({ x: 60, y: 70 });
+    const topLeft = resizeMediaCrop(state, 'top-left', 10, 20);
+    expect(topLeft.crop).toMatchObject({ x: 50, y: 50, width: 90, height: 80 });
+    const bottomRight = resizeMediaCrop(state, 'bottom-right', 10, 20);
+    expect(bottomRight.crop).toMatchObject({ x: 40, y: 30, width: 110, height: 120 });
+    expect(state.crop).toMatchObject({ x: 50, y: 50, width: 100, height: 100 });
+    const entry = initialMediaCrop(
+      { ...frame, flipY: true },
+      'cover',
+      { x: 0.5, y: 0.25 },
+      null,
+      100,
+      200
+    );
+    expect(entry.crop).toMatchObject({ y: 75, height: 100 });
+    expect(studioMediaGeometry(entry, 100, 200)).toEqual(
+      mediaDrawGeometry(
+        {
+          width: 100,
+          height: 100,
+          fit: 'cover',
+          cropX: 0.5,
+          cropY: 0.25,
+          crop: null,
+          flipX: false,
+          flipY: true,
+        },
+        100,
+        200
+      )
+    );
+  });
+  it('keeps invalid source dimensions finite and clamps all edge handles at the smallest frame size', () => {
+    const state = initialMediaCrop(
+      { ...frame, width: 2, height: 2 },
+      'contain',
+      focus,
+      null,
+      0,
+      -1
+    );
+    expect(state.crop).toMatchObject({ naturalWidth: 1, naturalHeight: 1 });
+    for (const handle of ['left', 'right', 'top', 'bottom'] as const) {
+      const resized = resizeMediaCrop(state, handle, 1000, 1000);
+      expect(resized.frame.width).toBeGreaterThanOrEqual(2);
+      expect(resized.frame.height).toBeGreaterThanOrEqual(2);
+      expect(resized.crop.width).toBeGreaterThan(0);
+      expect(resized.crop.height).toBeGreaterThan(0);
+    }
+  });
   it('opens a cover crop without moving the existing pixels and clamps pan and zoom', () => {
     const state = initialMediaCrop(frame, 'cover', focus, null, 200, 100);
     expect(state.crop).toEqual({

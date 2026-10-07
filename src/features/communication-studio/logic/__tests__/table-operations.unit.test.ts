@@ -11,6 +11,7 @@ import {
   insertTableColumn,
   insertTableRow,
   normalizeTableSelection,
+  normalizeTableWidths,
   setTableBorders,
   type TableSelection,
 } from '../table-operations';
@@ -28,6 +29,45 @@ const select = (
 });
 
 describe('Studio table operations', () => {
+  it('toggles perimeter borders without neighbors and preserves other sides when toggling a single side', () => {
+    const table = createTableData({ rowCount: 1, colCount: 1 });
+    const empty = setTableBorders(table, select(0, 0), 'none');
+    expect(empty.rows[0].cells[0].borders).toEqual({
+      top: false,
+      right: false,
+      bottom: false,
+      left: false,
+    });
+    for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+      const visible = setTableBorders(empty, select(0, 0), side);
+      expect(visible.rows[0].cells[0].borders).toEqual({
+        top: false,
+        right: false,
+        bottom: false,
+        left: false,
+        [side]: true,
+      });
+      expect(setTableBorders(visible, select(0, 0), side).rows[0].cells[0].borders[side]).toBe(
+        false
+      );
+    }
+  });
+  it('normalizes zero and invalid column weights while respecting schema minimum widths', () => {
+    expect(normalizeTableWidths([0, NaN, -1, Infinity])).toEqual([0.25, 0.25, 0.25, 0.25]);
+    expect(normalizeTableWidths([1, 0, -1])).toEqual([0.98, 0.01, 0.01]);
+    expect(normalizeTableWidths([])).toEqual([]);
+  });
+  it('retains full tables when insertion would exceed the row or column limit', () => {
+    const table = createTableData({ rowCount: 50, colCount: 20 });
+    expect(insertTableRow(table, 0)).toBe(table);
+    expect(insertTableColumn(table, 20)).toBe(table);
+    for (const dimensions of [
+      { rowCount: 1.5, colCount: 1 },
+      { rowCount: 1, colCount: 1.5 },
+      { rowCount: 1, colCount: 0 },
+    ])
+      expect(() => createTableData(dimensions)).toThrow(RangeError);
+  });
   it('creates valid dimensions and stable distinct IDs while rejecting limits', () => {
     const table = createTableData({ rowCount: 3, colCount: 4 });
     expect(table.rows).toHaveLength(3);

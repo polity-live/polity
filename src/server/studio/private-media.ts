@@ -35,17 +35,14 @@ export async function privateCanvasMedia(
   const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
   if (!z.string().uuid().safeParse(id).success) return new Response(null, { status: 404, headers });
   let session = await getSession(request);
-  if (!session && request.headers.has('cookie')) {
+  const cookie = request.headers.get('cookie');
+  if (!session && cookie !== null) {
     const auth = createServerClient(
       getRequiredEnvVar(process.env.SUPABASE_URL, 'SUPABASE_URL'),
       getRequiredEnvVar(process.env.SUPABASE_ANON_KEY, 'SUPABASE_ANON_KEY'),
       {
         cookies: {
-          getAll: () =>
-            parseCookieHeader(request.headers.get('cookie') ?? '').map(c => ({
-              name: c.name,
-              value: c.value ?? '',
-            })),
+          getAll: () => parseCookieHeader(cookie),
           setAll: () => {
             /* Auth provider owns renewal. */
           },

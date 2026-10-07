@@ -48,7 +48,7 @@ function addText(
 ) {
   const node = richTextNodeSchema.parse({
     id: crypto.randomUUID(),
-    name: value.slice(0, 80) || 'Text',
+    name: value.slice(0, 80),
     textRole: zIndex === 0 ? 'eyebrow' : zIndex === 1 ? 'title' : 'subtitle',
     parentFrameId: frame.id,
     transform: { ...box, rotation: 0 },

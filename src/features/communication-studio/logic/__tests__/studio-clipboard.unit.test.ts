@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { applyStudioCommandV3 } from '../commands-v3';
-import { createFrameNode, createStudioDocumentV3, shapeNodeSchema } from '../document-v3';
+import { createStudioNodeFromElement } from '../create-studio-node';
+import { element } from '../document';
+import {
+  createFrameNode,
+  createStudioDocumentV3,
+  shapeNodeSchema,
+  deliverableSchema,
+} from '../document-v3';
 import {
   createStudioV3ClipboardPayload,
   getProjectStudioClipboard,
@@ -13,6 +20,275 @@ import {
 const projectId = crypto.randomUUID();
 
 describe('Studio project clipboard', () => {
+  it('rejects duplicate source node IDs in a parsed external clipboard without changing the document', () => {
+    const document = createStudioDocumentV3('Duplicate clipboard');
+    const frame = createFrameNode('square');
+    document.nodes.push(frame);
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [frame.id],
+    })!;
+    const parsed = parseStudioClipboard(
+      stringifyStudioClipboard({
+        ...payload,
+        nodes: [...payload.nodes, structuredClone(frame)],
+      })
+    )!;
+    expect(parsed.nodes).toHaveLength(2);
+    const original = structuredClone(document);
+    expect(() => pasteStudioV3Clipboard({ document, payload: parsed, projectId })).toThrow();
+    expect(document).toEqual(original);
+  });
+  it('restores multiple copied frames into a missing deliverable in its recorded frame order', () => {
+    const document = createStudioDocumentV3('Clipboard');
+    const first = createFrameNode('square'),
+      second = createFrameNode('square');
+    document.nodes.push(first, second);
+    document.deliverables.push(
+      deliverableSchema.parse({
+        id: crypto.randomUUID(),
+        code: '01',
+        title: 'Sequence',
+        kind: 'carousel',
+        frameIds: [first.id, second.id],
+        order: 0,
+        captions: { instagram: 'Caption', linkedin: '', facebook: '' },
+      })
+    );
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [first.id, second.id],
+    })!;
+    const empty = createStudioDocumentV3('After cutting');
+    const restored = pasteStudioV3Clipboard({ projectId, document: empty, payload });
+    expect(restored.document.deliverables[0]).toMatchObject({
+      title: 'Sequence',
+      frameIds: restored.selectedNodeIds,
+      captions: { instagram: 'Caption' },
+    });
+    const missing = crypto.randomUUID();
+    const stale = {
+      ...payload,
+      deliverables: payload.deliverables.map(membership => ({
+        ...membership,
+        framePositions: [{ frameId: missing, index: 0 }],
+      })),
+    };
+    expect(parseStudioClipboard(stringifyStudioClipboard(stale))).toEqual(stale);
+    expect(
+      pasteStudioV3Clipboard({ projectId, document: empty, payload: stale }).document.deliverables
+    ).toHaveLength(0);
+  });
+  it('returns no clipboard for empty or disappeared selection and ignores missing IDs in an otherwise valid selection', () => {
+    const document = createStudioDocumentV3('Clipboard');
+    expect(createStudioV3ClipboardPayload({ projectId, document, selectedNodeIds: [] })).toBeNull();
+    expect(
+      createStudioV3ClipboardPayload({
+        projectId,
+        document,
+        selectedNodeIds: [crypto.randomUUID()],
+      })
+    ).toBeNull();
+    const shape = shapeNodeSchema.parse({
+      ...createFrameNode('custom'),
+      type: 'shape',
+      shape: 'rectangle',
+    });
+    document.nodes.push(shape);
+    expect(
+      createStudioV3ClipboardPayload({
+        projectId,
+        document,
+        selectedNodeIds: [crypto.randomUUID(), shape.id],
+      })?.rootNodeIds
+    ).toEqual([shape.id]);
+  });
+  it('rejects a cyclic non-frame selection rather than producing a clipboard without root nodes', () => {
+    const document = createStudioDocumentV3('Invalid selection');
+    const first = shapeNodeSchema.parse({
+      ...createFrameNode('custom'),
+      type: 'shape',
+      shape: 'rectangle',
+    });
+    const second = createStudioNodeFromElement(element('rect'), first.id, 1);
+    first.parentFrameId = second.id;
+    document.nodes.push(first, second);
+    expect(
+      createStudioV3ClipboardPayload({
+        projectId,
+        document,
+        selectedNodeIds: [first.id, second.id],
+      })
+    ).toBeNull();
+  });
+  it.each(['text', 'table', 'chart', 'image'] as const)(
+    'copies %s data with fresh nested IDs while retaining media identity and never mutating the source',
+    kind => {
+      const document = createStudioDocumentV3('Clipboard');
+      const frame = createFrameNode('square');
+      document.nodes.push(frame);
+      const node = createStudioNodeFromElement(
+        element(kind, kind === 'image' ? { assetId: crypto.randomUUID() } : {}),
+        frame.id,
+        0
+      );
+      if (node.type === 'richText')
+        node.content[0].children[0] = {
+          id: crypto.randomUUID(),
+          text: 'Styled',
+          bold: true,
+          data: { flag: null, count: 7 },
+        };
+      node.locked = true;
+      document.nodes.push(node);
+      const original = structuredClone(document);
+      const payload = createStudioV3ClipboardPayload({
+        projectId,
+        document,
+        selectedNodeIds: [node.id],
+      })!;
+      const result = pasteStudioV3Clipboard({ projectId, document, payload });
+      const copy = result.document.nodes.find(
+        candidate => candidate.id === result.selectedNodeIds[0]
+      )!;
+      expect(copy.id).not.toBe(node.id);
+      expect(copy.locked).toBe(false);
+      expect(copy.transform).toMatchObject({ x: node.transform.x + 24, y: node.transform.y + 24 });
+      if (copy.type === 'richText' && node.type === 'richText') {
+        expect(copy.content[0].id).not.toBe(node.content[0].id);
+        expect(copy.content[0].children[0]).toMatchObject({
+          text: 'Styled',
+          bold: true,
+          data: { flag: null, count: 7 },
+        });
+      }
+      if (copy.type === 'table' && node.type === 'table') {
+        expect(copy.data.rows[0].id).not.toBe(node.data.rows[0].id);
+        expect(copy.data.rows[0].cells[0].id).not.toBe(node.data.rows[0].cells[0].id);
+      }
+      if (copy.type === 'chart' && node.type === 'chart') {
+        expect(copy.data.series[0].id).not.toBe(node.data.series[0].id);
+        expect(copy.data.series[0].values).toEqual(node.data.series[0].values);
+      }
+      if (copy.type === 'media' && node.type === 'media') expect(copy.assetId).toBe(node.assetId);
+      expect(document).toEqual(original);
+    }
+  );
+  it('remaps both arrow bindings to copied nodes and clears links to objects outside the clipboard', () => {
+    const document = createStudioDocumentV3('Clipboard');
+    const box = shapeNodeSchema.parse({
+      ...createFrameNode('custom'),
+      type: 'shape',
+      shape: 'rectangle',
+    });
+    const internal = shapeNodeSchema.parse({
+      ...box,
+      id: crypto.randomUUID(),
+      shape: 'arrow',
+      startBindingId: box.id,
+      endBindingId: box.id,
+    });
+    const external = shapeNodeSchema.parse({
+      ...box,
+      id: crypto.randomUUID(),
+      shape: 'arrow',
+      startBindingId: crypto.randomUUID(),
+      endBindingId: crypto.randomUUID(),
+    });
+    document.nodes.push(box, internal, external);
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [box.id, internal.id, external.id],
+    })!;
+    const result = pasteStudioV3Clipboard({ projectId, document, payload });
+    const copied = result.selectedNodeIds.map(id =>
+      result.document.nodes.find(node => node.id === id)
+    );
+    expect(copied[1]).toMatchObject({ startBindingId: copied[0]?.id, endBindingId: copied[0]?.id });
+    expect(copied[2]).toMatchObject({ startBindingId: null, endBindingId: null });
+  });
+  it('preserves mixed source parents instead of assigning the entire selection to a different target frame', () => {
+    const document = createStudioDocumentV3('Clipboard');
+    const first = createFrameNode('square'),
+      second = createFrameNode('square'),
+      target = createFrameNode('square');
+    const shape = createStudioNodeFromElement(element('rect'), first.id, 0);
+    const other = createStudioNodeFromElement(element('rect'), second.id, 0);
+    document.nodes.push(first, second, target, shape, other);
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [shape.id, other.id],
+    })!;
+    const result = pasteStudioV3Clipboard({
+      projectId,
+      document,
+      payload,
+      targetFrameId: target.id,
+    });
+    expect(
+      result.selectedNodeIds.map(
+        id => result.document.nodes.find(node => node.id === id)?.parentFrameId
+      )
+    ).toEqual([first.id, second.id]);
+  });
+  it('handles unknown payload root IDs and delivery frame IDs without creating dangling selected IDs', () => {
+    const document = createStudioDocumentV3('Clipboard');
+    const frame = createFrameNode('square');
+    document.nodes.push(frame);
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [frame.id],
+    })!;
+    const missing = crypto.randomUUID();
+    expect(() =>
+      pasteStudioV3Clipboard({
+        projectId,
+        document,
+        payload: { ...payload, rootNodeIds: [missing] },
+      })
+    ).toThrow('no root nodes');
+    const result = pasteStudioV3Clipboard({
+      projectId,
+      document,
+      payload: { ...payload, rootNodeIds: [frame.id, missing] },
+    });
+    expect(result.selectedNodeIds).toHaveLength(1);
+  });
+  it.each(['invalid-json', 'wrong-type', 'invalid-schema', 'null'])(
+    'rejects clipboard text %s without throwing',
+    kind => {
+      const value =
+        kind === 'invalid-json'
+          ? '{broken'
+          : kind === 'null'
+            ? 'null'
+            : JSON.stringify({
+                type: kind === 'wrong-type' ? 'other-app' : 'polity/studio-clipboard',
+                version: 2,
+              });
+      expect(parseStudioClipboard(value)).toBeNull();
+    }
+  );
+  it('keeps project clipboard reads isolated from caller mutations and returns null for another project', () => {
+    expect(getProjectStudioClipboard(crypto.randomUUID())).toBeNull();
+    const document = createStudioDocumentV3('Clipboard');
+    const frame = createFrameNode('square');
+    document.nodes.push(frame);
+    const payload = createStudioV3ClipboardPayload({
+      projectId,
+      document,
+      selectedNodeIds: [frame.id],
+    })!;
+    setProjectStudioClipboard(payload);
+    const read = getProjectStudioClipboard(projectId)!;
+    read.nodes[0].name = 'Changed copy';
+    expect(getProjectStudioClipboard(projectId)?.nodes[0].name).toBe(frame.name);
+  });
   it('copies a complete V3 frame hierarchy and inserts the new frame beside its source', () => {
     const document = createStudioDocumentV3('Clipboard hierarchy');
     const root = createFrameNode('square', {

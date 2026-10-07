@@ -78,7 +78,7 @@ export async function importChatMedia(
     [
       assetId,
       projectId,
-      path.split('/').at(-1)?.slice(0, 200) ?? 'Media',
+      path.substring(path.lastIndexOf('/') + 1).slice(0, 200),
       mime,
       size,
       destination,

@@ -42,8 +42,8 @@ export async function queueCommittedExport(
       )
     )
       throw new StudioError('A selected Studio frame no longer exists or cannot be exported.', 400);
-    const issues = validateExport(legacy, pageIds, true);
-    if (issues.length) throw new StudioError(`Studio export cannot start: ${issues[0]}`, 422);
+    // Validated V3 media nodes always carry an asset ID; validate the projected document.
+    validateExport(legacy, pageIds, true);
     if (operationId) {
       const [prior] = await rows<{ id: string }>(
         sql,

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createStudioDocumentV5 } from '@/features/communication-studio/logic/document-v3';
+import {
+  createStudioDocumentV5,
+  createFrameNode,
+} from '@/features/communication-studio/logic/document-v3';
 import {
   compileStudioAiPlan,
   studioAiPlanSchema,
@@ -33,6 +36,122 @@ function fixture() {
   return { document, title, subtitle, frame };
 }
 describe('Studio project target resolution', () => {
+  it.each([
+    ['Change the title to "subtitle"', 'title'],
+    ['Update CTA: now', 'cta'],
+    ['Ändere den Fließtext.', 'body'],
+    ['Replace arbitrary copy with „headline“', undefined],
+  ])(
+    'recognizes the resource role in %s without parsing quoted replacement copy',
+    (instruction, expected) => {
+      expect(requestedTextRole(instruction)).toBe(expected);
+    }
+  );
+  it('selects explicit nodes, frame contents and frame references from the current snapshot', () => {
+    const { document, title, subtitle, frame } = fixture();
+    const explicit = resolveStudioTargets(
+      document,
+      studioTargetSchema.parse({ nodeIds: [title.id] })
+    );
+    expect(explicit).toEqual({ nodeIds: [title.id], frameIds: [frame.id] });
+    const contents = document.nodes
+      .filter(node => node.parentFrameId === frame.id)
+      .map(node => node.id);
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({ frameIds: [frame.id] })).nodeIds
+    ).toEqual(contents);
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({}), {
+        surface: 'studio',
+        references: [{ id: frame.id, kind: 'frame', label: 'Main', origin: 'automatic' }],
+      }).nodeIds
+    ).toEqual(contents);
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({}), {
+        surface: 'studio',
+        elementIds: [subtitle.id],
+      })
+    ).toEqual({ nodeIds: [subtitle.id], frameIds: [frame.id] });
+  });
+  it('matches normalized names without a role or frame and ignores a mismatched frame', () => {
+    const { document, title, frame } = fixture();
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({ name: ' TITEL ' })).nodeIds
+    ).toEqual([title.id]);
+    const other = createFrameNode('square');
+    document.nodes.push(other);
+    expect(() =>
+      resolveStudioTargets(
+        document,
+        studioTargetSchema.parse({ name: 'Titel', frameIds: [other.id] })
+      )
+    ).toThrow('No text element');
+    expect(() =>
+      resolveStudioTargets(
+        document,
+        studioTargetSchema.parse({ role: 'cta', frameIds: [frame.id] })
+      )
+    ).toThrow('No text element');
+  });
+  it('rejects missing frame IDs, frame-as-element targets and stale editor selection', () => {
+    const { document, title, frame } = fixture();
+    expect(() =>
+      resolveStudioTargets(document, studioTargetSchema.parse({ frameIds: [crypto.randomUUID()] }))
+    ).toThrow('frame ID');
+    expect(() =>
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [frame.id] }))
+    ).toThrow('element ID');
+    for (const elementId of [crypto.randomUUID(), frame.id]) {
+      expect(() =>
+        resolveStudioTargets(document, studioTargetSchema.parse({}), {
+          surface: 'studio',
+          elementIds: [elementId],
+        })
+      ).toThrow('no longer exists');
+    }
+    title.locked = true;
+    expect(() =>
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [title.id] }))
+    ).toThrow('locked');
+    expect(() => resolveStudioTargets(document, studioTargetSchema.parse({}))).toThrow(
+      'Choose a frame'
+    );
+    expect(() =>
+      resolveStudioTargets(document, studioTargetSchema.parse({}), {
+        surface: 'studio',
+        references: [],
+      })
+    ).toThrow('Choose a frame');
+  });
+  it('resolves nested text through its frame ancestors and terminates stale or cyclic parent references', () => {
+    const { document, title, frame } = fixture();
+    const nested = createFrameNode('square', { parentFrameId: frame.id });
+    document.nodes.push(nested);
+    title.parentFrameId = nested.id;
+    expect(
+      resolveStudioTargets(
+        document,
+        studioTargetSchema.parse({ role: 'title', frameIds: [frame.id] })
+      ).nodeIds
+    ).toEqual([title.id]);
+    nested.locked = true;
+    expect(() =>
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [title.id] }))
+    ).toThrow('locked');
+    nested.locked = false;
+    frame.parentFrameId = nested.id;
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [title.id] })).nodeIds
+    ).toEqual([title.id]);
+    title.parentFrameId = crypto.randomUUID();
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [title.id] })).nodeIds
+    ).toEqual([title.id]);
+    title.parentFrameId = null;
+    expect(
+      resolveStudioTargets(document, studioTargetSchema.parse({ nodeIds: [title.id] }))
+    ).toEqual({ nodeIds: [title.id], frameIds: [] });
+  });
   it('resolves the requested subtitle ahead of a selected title', () => {
     const { document, title, subtitle, frame } = fixture();
     const role = requestedTextRole('Ändere den subtitle des frames in "test"');

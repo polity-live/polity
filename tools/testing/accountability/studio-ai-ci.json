@@ -987,6 +987,26 @@
         "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "project": "unit",
         "caseId": "fails failed decoding and bounded media or video waits instead of exporting blank successful frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports %s at its documented canvas size"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects live native elements when the isolated export renderer is unavailable but accepts deleted elements"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "decodes native SVG layers in renderer order, skips empty native layers and uses the serialized structured renderer"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "reflects media on both axes and skips media elements without an asset ID"
       }
     ],
     "src/features/communication-studio/logic/panel-events.ts": [
@@ -1029,6 +1049,21 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/panel-events.unit.test.ts",
+        "project": "unit",
+        "caseId": "accepts legacy panel keys and typed secondary navigation requests"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/panel-events.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects malformed panel navigation detail %j"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/panel-events.unit.test.ts",
+        "project": "unit",
+        "caseId": "dispatches typed and legacy requests to subscribed browser listeners"
       }
     ],
     "src/features/communication-studio/logic/patch-schema.ts": [
@@ -1185,6 +1220,56 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "positions text at the %s of its bounds and clips its drawing"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses paragraph %s alignment before the document alignment"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses document alignment on every wrapped line and keeps overflowing vertical text at the top"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "wraps long unbroken text by character while preserving letter spacing and empty paragraphs"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "numbers list paragraphs by document position and paints bullet prefixes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "inherits links through nested inline elements while allowing explicit link overrides"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses leaf font overrides and marks while computing line height from the tallest run"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the default text color for an unfilled node and restores it after marked backgrounds"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "paints underline and strikethrough at their font-relative positions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
+        "project": "unit",
+        "caseId": "justifies only wrapped lines containing whitespace and leaves the final line unstretched"
       }
     ],
     "src/features/communication-studio/logic/selection-geometry.ts": [
@@ -1264,6 +1349,56 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "project": "unit",
         "caseId": "restores multiple cut frames at their original deliverable positions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "restores multiple copied frames into a missing deliverable in its recorded frame order"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns no clipboard for empty or disappeared selection and ignores missing IDs in an otherwise valid selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a cyclic non-frame selection rather than producing a clipboard without root nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies %s data with fresh nested IDs while retaining media identity and never mutating the source"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "remaps both arrow bindings to copied nodes and clears links to objects outside the clipboard"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves mixed source parents instead of assigning the entire selection to a different target frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "handles unknown payload root IDs and delivery frame IDs without creating dangling selected IDs"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects clipboard text %s without throwing"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps project clipboard reads isolated from caller mutations and returns null for another project"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate source node IDs in a parsed external clipboard without changing the document"
       }
     ],
     "src/features/communication-studio/logic/studio-scene.ts": [
@@ -1303,6 +1438,11 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
         "project": "unit",
         "caseId": "selects and shift-toggles complete canvas groups while retaining locked members"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores disappeared and hidden nodes, selects single objects and drills only actual groups"
       }
     ],
     "src/features/communication-studio/logic/table-operations.ts": [
@@ -1325,6 +1465,21 @@
         "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
         "project": "unit",
         "caseId": "loads legacy cells without borders, round-trips V3, and merges independent cell edits"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "toggles perimeter borders without neighbors and preserves other sides when toggling a single side"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes zero and invalid column weights while respecting schema minimum widths"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains full tables when insertion would exceed the row or column limit"
       }
     ],
     "src/features/communication-studio/logic/templates-v5.ts": [
@@ -1342,6 +1497,41 @@
         "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "project": "unit",
         "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates %s as %i persistent %s frames with a %s deliverable"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a usable %s design while retaining frame metadata"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates positioned logo assets in a %s template without duplicating asset IDs"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "cycles campaign formats, schedules core posts and stories and wraps the workspace frame grid"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "clamps campaign weeks %i while retaining one persistent frame per core post"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "caps crowded campaign day offsets at the last day of the week"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/templates-v5.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an empty title before creating persistent starter content"
       }
     ],
     "src/features/communication-studio/logic/theme.ts": [
@@ -1683,6 +1873,11 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "creates and focuses one overlapping text field when dragging ends %s the existing field"
+      },
+      {
+        "file": "src/features/communication-studio/state/__tests__/studio-viewport-store.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates tools, selection, frame, panel, viewport and each canvas option"
       }
     ],
     "src/features/communication-studio/ui/StudioCanonicalProperties.tsx": [
@@ -4350,6 +4545,31 @@
         "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "blocks legacy direct Studio AI writes"
+      },
+      {
+        "file": "src/features/shared/utils/__tests__/document-value.unit.test.ts",
+        "project": "unit",
+        "caseId": "canonicalizes nested objects by key while retaining array order and omitting undefined object properties"
+      },
+      {
+        "file": "src/features/shared/utils/__tests__/document-value.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates an empty paragraph for absent document value %j"
+      },
+      {
+        "file": "src/features/shared/utils/__tests__/document-value.unit.test.ts",
+        "project": "unit",
+        "caseId": "accepts plain text and validated nested editor nodes without changing durable properties"
+      },
+      {
+        "file": "src/features/shared/utils/__tests__/document-value.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects malformed editor value %j"
+      },
+      {
+        "file": "src/features/shared/utils/__tests__/document-value.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects excessive nesting and node counts before they enter durable editor state"
       }
     ],
     "src/features/users/ui/ChatGptConnectionCard.tsx": [
@@ -5520,6 +5740,41 @@
         "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
         "project": "unit",
         "caseId": "reuses a completed media import and rejects a mismatched file signature"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires a current run and explicitly shared document attachment %j"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects non-upload paths and missing access results before reading storage objects"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing and foreign storage objects %j"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unsupported media metadata %j before signing or copying"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "enforces the project quota %j while holding its database lock"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects signing and download failures without creating a ready asset record"
+      },
+      {
+        "file": "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses a successfully copied storage object after a retry only when its size matches"
       }
     ],
     "src/server/studio/collaborators.ts": [
@@ -5686,6 +5941,31 @@
         "file": "src/server/studio/__tests__/export.unit.test.ts",
         "project": "unit",
         "caseId": "queues a ZIP when its video is too long for MP4 but its frames are valid"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable or revoked export access %j before locking the project"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing or stale committed revisions %j"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses an existing operation only for this actor and project and writes new operations with their requested stable ID"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "enforces the per-user running export limit before creating a revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/export.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects master and nested frames while preserving valid committed media in the export revision"
       }
     ],
     "src/server/studio/project-targets.ts": [
@@ -5708,6 +5988,31 @@
         "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
         "project": "unit",
         "caseId": "asks about ambiguous roles and rejects wrong kinds, missing and locked targets"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "recognizes the resource role in %s without parsing quoted replacement copy"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "selects explicit nodes, frame contents and frame references from the current snapshot"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "matches normalized names without a role or frame and ignores a mismatched frame"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing frame IDs, frame-as-element targets and stale editor selection"
+      },
+      {
+        "file": "src/server/studio/__tests__/project-targets.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves nested text through its frame ancestors and terminates stale or cyclic parent references"
       }
     ],
     "src/server/studio/published-media.ts": [
@@ -8425,6 +8730,176 @@
         "file": "src/server/studio/__tests__/service.unit.test.ts",
         "project": "unit",
         "caseId": "copies private assets before exposing a new project and remaps media references"
+      }
+    ],
+    "src/server/studio/private-media.ts": [
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "checks the current workspace before serving uncached bytes without exposing a storage URL"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "serves canonical public media to guests and rechecks access for every request"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rechecks export downloads and sends an attachment without exposing a reusable storage link"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps export downloads internal even when a project is public"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "serves %s with a downloadable filename and its actual MIME type"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects malformed identifiers and missing database rows without signing storage URLs"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires authentication for proposal media even when its project is public"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses decoded SSR cookies for a verified authenticated user %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "supports empty cookie headers and avoids cookie authentication when the request already has a session"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an invalid asset byte range %s before storage signing"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "forwards a valid asset range and request signal while preserving upstream partial-response headers"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a gateway error for %s without exposing a signed URL"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "sanitizes the fallback or Unicode export filename %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates an export byte range %s without consulting an asset byte size"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-crop.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "resizes each side of a doubly reflected crop at the original source scale and pans in its reflected direction"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps invalid source dimensions finite and clamps all edge handles at the smallest frame size"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a contain image unchanged on entry and preserves an existing native crop"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains pixels on a flipped entry and moves a rotated edge along the local axis"
+      }
+    ],
+    "src/server/studio/db.ts": [
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates collaboration identifiers and checks current workspace access in the requested transaction"
+      },
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses a shared transaction authority lock for read-only work and explicit write access for groups"
+      },
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects canvas preview flags and the V3 development default and explicit disablement"
+      }
+    ],
+    "src/server/studio/presence.ts": [
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires preview enablement, valid input and current workspace and collaboration rights"
+      },
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "publishes private per-user peers with cursor and selection while excluding each recipient"
+      },
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "expires inactive peers and empty rooms while isolating projects and workspaces"
+      },
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses safe user fallbacks for missing profile details %j"
+      },
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes revoked peers before broadcasting their presence"
+      },
+      {
+        "file": "src/server/studio/__tests__/presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes broadcast channels after failed delivery and thrown transport errors"
+      }
+    ],
+    "src/features/communication-studio/logic/collaboration.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "clones new pages and elements and ignores stale page references"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves locked elements during edits and deletion while allowing explicit unlocking"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies text formatting through real commands, resets marks on plain replacement and retains explicit rich content"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges partial captions independently and accepts non-caption post patches"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "remaps brand colors and fonts while retaining independently styled pages and elements"
       }
     ]
   },

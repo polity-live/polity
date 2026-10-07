@@ -110,26 +110,33 @@ export function pasteStudioV3Clipboard(input: {
     return node ? [node] : [];
   });
   if (!roots.length) throw new Error('Studio clipboard has no root nodes');
-  const nodeIds = new Map(input.payload.nodes.map(node => [node.id, crypto.randomUUID()]));
+  const nodeIds = new Map<string, string>();
+  const copies = input.payload.nodes.map(source => {
+    const id = nodeIds.get(source.id) ?? crypto.randomUUID();
+    nodeIds.set(source.id, id);
+    return { source, id };
+  });
   const groupIds = new Map<string, string>();
-  for (const node of input.payload.nodes)
-    for (const groupId of node.groupIds)
-      if (!groupIds.has(groupId)) groupIds.set(groupId, crypto.randomUUID());
 
   const targetFrame = input.targetFrameId
     ? document.nodes.find(node => node.id === input.targetFrameId && node.type === 'frame')
     : undefined;
   const sharedSourceParent = new Set(roots.map(node => node.parentFrameId)).size === 1;
   const rootIds = new Set(input.payload.rootNodeIds);
-  const clones = input.payload.nodes.map(source => {
+  const clones = copies.map(({ source, id }) => {
     const copy = jsonClone(source) as StudioNode;
-    const copyId = nodeIds.get(source.id);
-    if (!copyId) throw new Error('Clipboard node id mapping is incomplete.');
-    copy.id = copyId;
+    copy.id = id;
     copy.parentFrameId = source.parentFrameId
       ? (nodeIds.get(source.parentFrameId) ?? source.parentFrameId)
       : null;
-    copy.groupIds = source.groupIds.map(id => groupIds.get(id) ?? id);
+    copy.groupIds = source.groupIds.map(groupId => {
+      let mapped = groupIds.get(groupId);
+      if (!mapped) {
+        mapped = crypto.randomUUID();
+        groupIds.set(groupId, mapped);
+      }
+      return mapped;
+    });
     copy.locked = false;
     if (rootIds.has(source.id)) {
       const rootFrame = source.type === 'frame' && source.parentFrameId === null;
@@ -167,7 +174,7 @@ export function pasteStudioV3Clipboard(input: {
   for (const membership of input.payload.deliverables) {
     const copiedFrames = membership.framePositions.flatMap(position => {
       const frameId = nodeIds.get(position.frameId);
-      return frameId ? [{ ...position, frameId }] : [];
+      return frameId ? [{ ...position, frameId, sourceFrameId: position.frameId }] : [];
     });
     if (!copiedFrames.length) continue;
     const existing = document.deliverables.find(
@@ -175,10 +182,7 @@ export function pasteStudioV3Clipboard(input: {
     );
     if (existing) {
       for (const copied of copiedFrames.sort((a, b) => a.index - b.index)) {
-        const originalFrameId = membership.framePositions.find(
-          position => position.index === copied.index
-        )?.frameId;
-        const originalIndex = originalFrameId ? existing.frameIds.indexOf(originalFrameId) : -1;
+        const originalIndex = existing.frameIds.indexOf(copied.sourceFrameId);
         const index =
           originalIndex >= 0 ? originalIndex + 1 : Math.min(existing.frameIds.length, copied.index);
         existing.frameIds.splice(index, 0, copied.frameId);
