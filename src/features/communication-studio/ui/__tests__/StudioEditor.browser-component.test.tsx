@@ -9,9 +9,20 @@ import {
 } from './StudioWorkspace.fixture';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { element } from '../../logic/document';
 import { openStudioPanel } from '../../logic/panel-events';
+import { applyStudioCommandV3 } from '../../logic/commands-v3';
+import { createStudioV3ClipboardPayload } from '../../logic/studio-clipboard';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router';
+import { StudioWorkspace } from '../StudioWorkspace';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
@@ -62,6 +73,46 @@ async function menu(name: string) {
   const trigger = triggers[0];
   await activate(trigger);
   return { trigger, menu: within(await screen.findByRole('menu')) };
+}
+
+async function editorRouter(
+  groupId: string | null = 'group',
+  loader: () => Promise<void> = async () => undefined,
+  initial = '/editor'
+) {
+  io.realLinks = true;
+  useCanonicalDocument();
+  const root = createRootRoute({ component: Outlet });
+  const editor = createRoute({
+    getParentRoute: () => root,
+    path: '/editor',
+    component: () => <StudioWorkspace projectId="project" groupId={groupId} open={vi.fn()} />,
+  });
+  const destinations = [
+    '/studio',
+    '/group/$id/studio',
+    '/group/$id/settings',
+    '/studio/$projectId',
+  ].map(path =>
+    createRoute({
+      getParentRoute: () => root,
+      path,
+      loader,
+      pendingMs: 0,
+      pendingMinMs: 0,
+      pendingComponent: () => <p role="status">Loading destination</p>,
+      errorComponent: () => <p role="alert">Destination access failed</p>,
+      component: () => <p>Studio destination opened</p>,
+    })
+  );
+  const router = createRouter({
+    routeTree: root.addChildren([editor, ...destinations]),
+    history: createMemoryHistory({ initialEntries: [initial] }),
+  });
+  await router.load();
+  render(<RouterProvider router={router} />);
+  if (initial === '/editor') await screen.findByTestId('canvas', {}, { timeout: 10000 });
+  return router;
 }
 
 it('edits selected text through native inspector keyboard controls', async () => {
@@ -717,4 +768,701 @@ it('selects themes and both appearance modes with native focus then applies a te
   expect(styleButton.disabled).toBe(true);
   await userEvent.keyboard(' ');
   expect(io.editor.v3Value).toEqual(before);
+});
+
+async function emptyFixture() {
+  useCanonicalDocument();
+  const projectId = `empty-${crypto.randomUUID()}`;
+  const original = structuredClone(io.editor.v3Value);
+  const frame = original.nodes.find((node: any) => node.type === 'frame');
+  const payload = createStudioV3ClipboardPayload({
+    projectId,
+    selectedNodeIds: [frame.id],
+    document: original,
+  });
+  if (!payload) throw new Error('Missing frame clipboard fixture');
+  io.editor.transactV3((document: typeof original) =>
+    Object.assign(
+      document,
+      applyStudioCommandV3(document, { type: 'deleteNodes', nodeIds: [frame.id] })
+    )
+  );
+  io.editor.canUndo = true;
+  await show({ projectId, groupId: null, open: vi.fn() });
+  expect(screen.getByRole('status').textContent).toBe('The canvas is empty.');
+  return { projectId, payload };
+}
+
+it.each(['actor', 'procedure'] as const)(
+  'disables empty-canvas history and clipboard actions when %s editing rights are absent',
+  async reason => {
+    if (reason === 'actor') io.editor.canEdit = false;
+    else io.procedureEditingAllowed = false;
+    await emptyFixture();
+    expect((screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Paste' }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    const before = structuredClone(io.editor.v3Value);
+    await userEvent.keyboard('{Control>}z{/Control}{Control>}v{/Control}');
+    expect(io.editor.undo).not.toHaveBeenCalled();
+    expect(io.editor.v3Value).toEqual(before);
+  }
+);
+
+it('activates empty-canvas undo through native focus and disables it when no history remains', async () => {
+  await emptyFixture();
+  const undo = screen.getByRole('button', { name: 'Undo' }) as HTMLButtonElement;
+  expect(undo.getAttribute('data-action-id')).toBe(
+    'communication-studio.empty-canvas.history.undo'
+  );
+  expect(undo.disabled).toBe(false);
+  await activate(undo);
+  expect(io.editor.undo).toHaveBeenCalledOnce();
+  expect(document.activeElement).toBe(undo);
+  await act(async () => {
+    io.editor.canUndo = false;
+    notifyAll();
+  });
+  expect(undo.disabled).toBe(true);
+});
+
+it('pastes an actual frame and deliverable once from a pending browser clipboard read while retaining keyboard focus', async () => {
+  const { payload } = await emptyFixture();
+  let resolve: (value: string) => void = () => {
+    throw new Error('Missing clipboard read');
+  };
+  const read = vi.spyOn(navigator.clipboard, 'readText').mockReturnValueOnce(
+    new Promise<string>(done => {
+      resolve = done;
+    })
+  );
+  const paste = screen.getByRole('button', { name: 'Paste' });
+  expect(paste.getAttribute('data-action-id')).toBe(
+    'communication-studio.empty-canvas.clipboard.paste'
+  );
+  await activate(paste);
+  expect(paste.getAttribute('aria-busy')).toBe('true');
+  expect(paste.getAttribute('aria-disabled')).toBe('true');
+  expect(document.activeElement).toBe(paste);
+  await userEvent.keyboard('{Enter}{Control>}v{/Control}');
+  expect(read).toHaveBeenCalledOnce();
+  await act(async () => resolve(JSON.stringify(payload)));
+  await screen.findByTestId('canvas', {}, { timeout: 10000 });
+  const restored = io.editor.v3Value;
+  expect(restored.nodes).toHaveLength(payload.nodes.length);
+  const frame = restored.nodes.find((node: any) => node.type === 'frame');
+  expect(frame.id).not.toBe(payload.rootNodeIds[0]);
+  expect(restored.deliverables[0]).toMatchObject({
+    ...payload.deliverables[0].deliverable,
+    frameIds: [frame.id],
+  });
+  expect(io.canvasProps.selected).toContain(frame.id);
+});
+
+it('keeps empty-canvas paste available after denied clipboard access and a foreign project then accepts a native keyboard retry', async () => {
+  const { payload } = await emptyFixture();
+  const read = vi
+    .spyOn(navigator.clipboard, 'readText')
+    .mockRejectedValueOnce(new Error('Clipboard permission denied'))
+    .mockResolvedValueOnce(JSON.stringify({ ...payload, projectId: 'another-project' }))
+    .mockResolvedValueOnce(JSON.stringify(payload));
+  const paste = screen.getByRole('button', { name: 'Paste' }) as HTMLButtonElement;
+  await activate(paste);
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toBe('The Studio clipboard is empty.')
+  );
+  expect(paste.disabled).toBe(false);
+  expect(document.activeElement).toBe(paste);
+  await userEvent.keyboard('{Enter}');
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Elements can only be pasted within the same Studio project.'
+    )
+  );
+  expect(io.editor.v3Value.nodes).toHaveLength(0);
+  expect(paste.getAttribute('aria-busy')).toBe('false');
+  await userEvent.keyboard('{Enter}');
+  await screen.findByTestId('canvas', {}, { timeout: 10000 });
+  expect(read).toHaveBeenCalledTimes(3);
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(io.editor.v3Value.nodes).toHaveLength(payload.nodes.length);
+});
+
+function librarySet(name: string) {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    scope: 'group',
+    revisionId: crypto.randomUUID(),
+    version: 2,
+    width: 120,
+    height: 80,
+    updatedAt: Date.now(),
+  };
+}
+
+async function elementsPanel() {
+  render(
+    <nav
+      data-navigation-type="secondary"
+      style={{ position: 'fixed', right: 0, top: 50, width: 48, height: 500 }}
+    >
+      <button
+        data-navigation-item-id="studio-elements"
+        onClick={() =>
+          openStudioPanel({
+            panelKey: 'elements',
+            origin: 'secondary-navigation',
+            navigationItemId: 'studio-elements',
+          })
+        }
+      >
+        Open elements panel
+      </button>
+    </nav>
+  );
+  await activate(screen.getByRole('button', { name: 'Open elements panel' }));
+  return within(await screen.findByRole('dialog', { name: 'elements' }));
+}
+
+it('filters real Elements rows case-insensitively with native search keyboard focus and shows empty results', async () => {
+  const set = librarySet('Native element');
+  io.request.mockImplementation(async (op: string) => (op === 'elementSets' ? [set] : []));
+  await mount();
+  const panel = await elementsPanel();
+  const search = panel.getByRole('searchbox', { name: 'searchElements' });
+  expect(search.getAttribute('data-action-id')).toBe(
+    'communication-studio.elements.library.search'
+  );
+  expect(panel.getByText(set.name)).toBeTruthy();
+  await userEvent.fill(search, ' missing ');
+  await waitFor(() => expect(panel.queryByText(set.name)).toBeNull());
+  expect(panel.getByText('noElementsFound')).toBeTruthy();
+  expect(document.activeElement).toBe(search);
+  await userEvent.fill(search, ' NATIVE ');
+  await waitFor(() => expect(panel.getByText(set.name)).toBeTruthy());
+  expect(document.activeElement).toBe(search);
+  await userEvent.keyboard('{Control>}a{/Control}{Backspace}');
+  await waitFor(() => expect((search as HTMLInputElement).value).toBe(''));
+  expect(panel.getByText(set.name)).toBeTruthy();
+});
+
+it('saves selected canonical elements through the native library button and disables missing selection and revoked rights', async () => {
+  const commit = vi.spyOn(io.editor, 'commit');
+  let complete: () => void = () => {
+    throw new Error('Missing save request');
+  };
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'elementSetCreate')
+      await new Promise<void>(resolve => {
+        complete = resolve;
+      });
+    return [];
+  });
+  await mount();
+  const emptyPanel = await elementsPanel();
+  expect(
+    (emptyPanel.getByRole('button', { name: 'saveSelectionToElements' }) as HTMLButtonElement)
+      .disabled
+  ).toBe(true);
+  await userEvent.keyboard('{Escape}');
+  const id = await selectText();
+  await activate(screen.getByRole('button', { name: 'Open elements panel' }));
+  const panel = within(await screen.findByRole('dialog', { name: 'elements' }));
+  const save = panel.getByRole('button', { name: 'saveSelectionToElements' }) as HTMLButtonElement;
+  expect(save.getAttribute('data-action-id')).toBe('communication-studio.elements.selection.save');
+  expect(save.disabled).toBe(false);
+  await activate(save);
+  await waitFor(() =>
+    expect(io.request).toHaveBeenCalledWith('elementSetCreate', {
+      projectId: 'project',
+      groupId: 'group',
+      selectedIds: [id],
+    })
+  );
+  expect(commit).toHaveBeenCalledOnce();
+  expect(save.disabled).toBe(true);
+  await userEvent.keyboard('{Enter}');
+  expect(io.request.mock.calls.filter(([op]) => op === 'elementSetCreate')).toHaveLength(1);
+  await act(async () => complete());
+  await waitFor(() => expect(save.disabled).toBe(false));
+  await userEvent.click(screen.getByRole('button', { name: 'Select all' }));
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(save.disabled).toBe(true);
+  const calls = io.request.mock.calls.filter(([op]) => op === 'elementSetCreate').length;
+  await userEvent.keyboard(' ');
+  expect(io.request.mock.calls.filter(([op]) => op === 'elementSetCreate')).toHaveLength(calls);
+});
+
+it('renames a library set from its natively focused action while rejecting cancelled and whitespace prompts and disabling revoked rights', async () => {
+  const set = librarySet('Original element');
+  io.request.mockImplementation(async (op: string, payload: any) => {
+    if (op === 'elementSetRename') set.name = payload.name;
+    return op === 'elementSets' ? [set] : [];
+  });
+  const prompt = vi
+    .spyOn(window, 'prompt')
+    .mockReturnValueOnce(null)
+    .mockReturnValueOnce('   ')
+    .mockReturnValueOnce('Renamed native element');
+  await mount();
+  const panel = await elementsPanel();
+  const rename = panel.getByRole('button', { name: `rename: ${set.name}` }) as HTMLButtonElement;
+  expect(rename.getAttribute('data-action-id')).toBe('communication-studio.elements.set.rename');
+  await activate(rename);
+  expect(document.activeElement).toBe(rename);
+  await userEvent.keyboard(' ');
+  expect(prompt).toHaveBeenCalledTimes(2);
+  expect(io.request.mock.calls.some(([op]) => op === 'elementSetRename')).toBe(false);
+  await userEvent.keyboard('{Enter}');
+  await waitFor(() => expect(panel.getByText('Renamed native element')).toBeTruthy());
+  expect(io.request).toHaveBeenCalledWith('elementSetRename', {
+    setId: set.id,
+    name: 'Renamed native element',
+  });
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(rename.disabled).toBe(true);
+});
+
+it('archives a set through native keyboard activation and keeps its row available for retry after an API failure', async () => {
+  const set = librarySet('Archived element');
+  let archived = false;
+  let attempts = 0;
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'elementSetArchive') {
+      attempts += 1;
+      if (attempts === 1) throw new Error('Archive temporarily unavailable');
+      archived = true;
+    }
+    return op === 'elementSets' && !archived ? [set] : [];
+  });
+  await mount();
+  const panel = await elementsPanel();
+  const archive = panel.getByRole('button', { name: `delete: ${set.name}` }) as HTMLButtonElement;
+  expect(archive.getAttribute('data-action-id')).toBe('communication-studio.elements.set.archive');
+  await activate(archive);
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toContain('Archive temporarily unavailable')
+  );
+  expect(panel.getByText(set.name)).toBeTruthy();
+  expect(archive.disabled).toBe(false);
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(archive.disabled).toBe(true);
+  await act(async () => {
+    io.editor.canEdit = true;
+    notifyAll();
+  });
+  await activate(archive);
+  await waitFor(() => expect(panel.queryByText(set.name)).toBeNull());
+  expect(panel.getByText('noElements')).toBeTruthy();
+  expect(attempts).toBe(2);
+  expect(io.request).toHaveBeenCalledWith('elementSetArchive', { setId: set.id });
+});
+
+it('publishes the selected linked instance from its native library action and clears local edits only after successful retry', async () => {
+  const commit = vi.spyOn(io.editor, 'commit');
+  await mount();
+  const id = await selectText();
+  const sourceId = crypto.randomUUID();
+  const instance = {
+    id: crypto.randomUUID(),
+    setId: crypto.randomUUID(),
+    revisionId: crypto.randomUUID(),
+    sourceToInstance: { [sourceId]: id },
+    localOverrides: { [id]: ['transform.x'] },
+    localDeletions: [crypto.randomUUID()],
+    detachedNodes: [],
+  };
+  await act(async () =>
+    io.editor.transactV3((document: any) => document.componentInstances.push(instance))
+  );
+  const revisionId = crypto.randomUUID();
+  let attempts = 0;
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'elementSetPublish') {
+      if (++attempts === 1) throw new Error('Publish temporarily unavailable');
+      return { revisionId };
+    }
+    return [];
+  });
+  const panel = await elementsPanel();
+  const publish = panel.getByRole('button', { name: 'publishElementChanges' }) as HTMLButtonElement;
+  expect(publish.getAttribute('data-action-id')).toBe(
+    'communication-studio.elements.instance.publish'
+  );
+  await activate(publish);
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toContain('Publish temporarily unavailable')
+  );
+  expect(io.editor.v3Value.componentInstances[0]).toEqual(instance);
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(publish.disabled).toBe(true);
+  await act(async () => {
+    io.editor.canEdit = true;
+    notifyAll();
+  });
+  await activate(publish);
+  await waitFor(() => expect(io.editor.v3Value.componentInstances[0].revisionId).toBe(revisionId));
+  expect(io.editor.v3Value.componentInstances[0].localOverrides).toEqual({});
+  expect(io.editor.v3Value.componentInstances[0].localDeletions).toEqual([]);
+  expect(commit).toHaveBeenCalledTimes(2);
+  expect(io.request).toHaveBeenCalledWith('elementSetPublish', {
+    projectId: 'project',
+    instanceId: instance.id,
+  });
+});
+
+it('saves the project template through its native menu and keeps retry and read-only states visible', async () => {
+  const commit = vi.spyOn(io.editor, 'commit');
+  let attempts = 0;
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'template' && ++attempts === 1) throw new Error('Template temporarily unavailable');
+    return [];
+  });
+  await mount();
+  let opened = await menu('project');
+  const save = opened.menu.getByRole('menuitem', { name: 'saveTemplate' });
+  expect(save.getAttribute('data-action-id')).toBe('communication-studio.project.template.save');
+  await activate(save);
+  await waitFor(() =>
+    expect(screen.getByRole('alert').textContent).toContain('Template temporarily unavailable')
+  );
+  await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  opened = await menu('project');
+  await activate(opened.menu.getByRole('menuitem', { name: 'saveTemplate' }));
+  await waitFor(() => expect(attempts).toBe(2));
+  expect(io.request).toHaveBeenCalledWith('template', { id: 'project', value: true });
+  expect(commit).toHaveBeenCalledTimes(2);
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  opened = await menu('project');
+  expect(
+    opened.menu.getByRole('menuitem', { name: 'saveTemplate' }).hasAttribute('data-disabled')
+  ).toBe(true);
+  await userEvent.keyboard('{Escape}');
+  expect(document.activeElement).toBe(opened.trigger);
+});
+
+it('opens the actual clone dialog from the native project menu and submits the confirmed revision before navigating', async () => {
+  io.realClone = true;
+  const commit = vi.spyOn(io.editor, 'commit');
+  io.request.mockImplementation(async (op: string) =>
+    op === 'duplicate' ? { id: 'cloned-project' } : []
+  );
+  const router = await editorRouter();
+  const opened = await menu('project');
+  const item = opened.menu.getByRole('menuitem', { name: 'duplicateProject' });
+  expect(item.getAttribute('data-action-id')).toBe('communication-studio.project.clone.open');
+  await activate(item);
+  const dialog = await screen.findByRole('dialog', { name: 'cloneProject' });
+  await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+  await activate(within(dialog).getByRole('button', { name: 'cloneProject' }));
+  await screen.findByText('Studio destination opened');
+  expect(router.state.location.pathname).toBe('/studio/cloned-project');
+  expect(commit).toHaveBeenCalledOnce();
+  expect(io.request).toHaveBeenCalledWith('duplicate', {
+    id: 'project',
+    groupId: null,
+    visibility: 'private',
+  });
+  expect(screen.queryByRole('dialog', { name: 'cloneProject' })).toBeNull();
+});
+
+it('opens the actual visibility dialog through the native project menu and retains its failed update for keyboard retry', async () => {
+  let attempts = 0;
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'visibility' && ++attempts === 1)
+      throw new Error('Visibility temporarily unavailable');
+    return [];
+  });
+  await mount();
+  const opened = await menu('project');
+  const item = opened.menu.getByRole('menuitem', { name: 'pages.create.common.visibility' });
+  expect(item.getAttribute('data-action-id')).toBe('communication-studio.project.visibility.open');
+  await activate(item);
+  const dialog = await screen.findByRole('dialog', { name: 'pages.create.common.visibility' });
+  await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+  const submit = within(dialog).getByRole('button', { name: 'common.actions.save' });
+  await activate(submit);
+  await waitFor(() =>
+    expect(within(dialog).getByRole('alert').textContent).toBe('Visibility temporarily unavailable')
+  );
+  await activate(submit);
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: 'pages.create.common.visibility' })).toBeNull()
+  );
+  expect(io.request).toHaveBeenCalledWith('visibility', { id: 'project', visibility: 'private' });
+  expect(attempts).toBe(2);
+});
+
+it('opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden', async () => {
+  io.realPreview = true;
+  await mount();
+  const preview = screen.getByRole('button', { name: 'preview' }) as HTMLButtonElement;
+  expect(preview.getAttribute('data-action-id')).toBe('communication-studio.preview.open');
+  await activate(preview);
+  const dialog = await screen.findByRole('dialog', { name: 'previewTitle' });
+  await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+  await userEvent.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull());
+  expect(document.activeElement).toBe(preview);
+  await act(async () =>
+    io.editor.transactV3((document: any) =>
+      document.nodes.forEach((node: any) => {
+        if (node.type === 'frame') node.visible = false;
+      })
+    )
+  );
+  expect(
+    (
+      document.querySelector(
+        '[data-action-id="communication-studio.preview.open"]'
+      ) as HTMLButtonElement
+    ).disabled
+  ).toBe(true);
+  expect(
+    screen.getByRole('button', { name: 'noVisibleFrames' }).getAttribute('aria-disabled')
+  ).toBe('true');
+});
+
+it('opens shared collaboration tools from native comments activation and restores the comments button after Escape', async () => {
+  await mount();
+  const comments = screen.getByRole('button', { name: 'comments' });
+  expect(comments.getAttribute('data-action-id')).toBe(
+    'communication-studio.collaboration.comments.open'
+  );
+  await activate(comments);
+  const dialog = await screen.findByRole('dialog', { name: 'collaboration' });
+  expect(within(dialog).getByRole('region', { name: 'Shared procedure tools' })).toBeTruthy();
+  await userEvent.keyboard('{Escape}');
+  await waitFor(() => expect(document.activeElement).toBe(comments));
+  expect(screen.queryByRole('dialog', { name: 'collaboration' })).toBeNull();
+});
+
+it('opens sharing through the native header button with the correct group link and restores focus after dismissal', async () => {
+  await mount();
+  const share = screen.getByRole('button', { name: 'Share' });
+  expect(share.getAttribute('data-action-id')).toBe('editor.shell.share.open');
+  await activate(share);
+  const menu = await screen.findByRole('menu');
+  expect((within(menu).getByRole('textbox') as HTMLInputElement).value).toBe(
+    window.location.origin + '/group/group/studio/project'
+  );
+  expect(within(menu).getAllByRole('menuitem')).toHaveLength(8);
+  await userEvent.keyboard('{Escape}');
+  await waitFor(() => expect(document.activeElement).toBe(share));
+  expect(screen.queryByRole('menu')).toBeNull();
+});
+
+it('opens the native upload chooser once from the toolbar and uploads a real file while disabling busy and revoked rights', async () => {
+  await mount();
+  const upload = screen.getByRole('button', { name: 'upload' }) as HTMLButtonElement;
+  const input = document.querySelector<HTMLInputElement>(
+    'input[type="file"][aria-label="upload"]'
+  )!;
+  const chooser = vi.spyOn(input, 'click');
+  expect(upload.getAttribute('data-action-id')).toBe('communication-studio.assets.upload.open');
+  await activate(upload);
+  expect(chooser).toHaveBeenCalledOnce();
+  expect(document.activeElement).toBe(upload);
+  const file = new File(['native-image'], 'native.png', { type: 'image/png' });
+  const assetId = crypto.randomUUID();
+  let complete: (asset: { id: string; mime: string }) => void = () => {
+    throw new Error('Missing upload');
+  };
+  io.upload.mockReturnValueOnce(
+    new Promise(resolve => {
+      complete = resolve;
+    })
+  );
+  await page.elementLocator(input).upload(file);
+  await waitFor(() => expect(io.upload).toHaveBeenCalledOnce());
+  expect(io.upload.mock.calls[0][0]).toBe('project');
+  expect(io.upload.mock.calls[0][1].name).toBe('native.png');
+  await waitFor(() =>
+    expect(
+      (
+        document.querySelector(
+          '[data-action-id="communication-studio.assets.upload.open"]'
+        ) as HTMLButtonElement
+      ).disabled
+    ).toBe(true)
+  );
+  expect(input.value).toBe('');
+  await act(async () => complete({ id: assetId, mime: 'image/png' }));
+  await waitFor(() =>
+    expect(
+      (
+        document.querySelector(
+          '[data-action-id="communication-studio.assets.upload.open"]'
+        ) as HTMLButtonElement
+      ).disabled
+    ).toBe(false)
+  );
+  expect(
+    io.editor.v3Value.nodes.some((node: any) => node.type === 'media' && node.assetId === assetId)
+  ).toBe(true);
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(
+    (
+      document.querySelector(
+        '[data-action-id="communication-studio.assets.upload.open"]'
+      ) as HTMLButtonElement
+    ).disabled
+  ).toBe(true);
+  expect(input.disabled).toBe(true);
+});
+
+it('toggles actual text marks from the native canvas context actions and exposes image availability through its disabled action', async () => {
+  io.renderContextToolbar = true;
+  const assetId = crypto.randomUUID();
+  const image = element('image', { assetId });
+  ydoc.pages[0].elements.push(image);
+  await mount();
+  const id = await selectText();
+  let context = within(screen.getByRole('region', { name: 'elementActions' }));
+  for (const mark of ['bold', 'italic', 'underline'] as const) {
+    const original = current(id)[mark];
+    const control = context.getByRole('button', { name: mark });
+    expect(control.getAttribute('data-action-id')).toBe(
+      'communication-studio.context.action.activate'
+    );
+    expect(control.getAttribute('data-context-action')).toBe(mark);
+    await activate(control);
+    expect(current(id)[mark]).toBe(!original);
+    expect(control.getAttribute('aria-pressed')).toBe(String(!original));
+    expect(document.activeElement).toBe(control);
+    await userEvent.keyboard(' ');
+    expect(current(id)[mark]).toBe(original);
+  }
+  await userEvent.click(screen.getByRole('button', { name: `Select image ${image.id}` }));
+  context = within(screen.getByRole('region', { name: 'elementActions' }));
+  expect((context.getByRole('button', { name: 'editImage' }) as HTMLButtonElement).disabled).toBe(
+    true
+  );
+  await activate(context.getByRole('button', { name: 'resizeImage' }));
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'crop', action: 'start' });
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(screen.queryByRole('region', { name: 'elementActions' })).toBeNull();
+});
+
+it.each([null, 'group'])(
+  'navigates to the %s project list through a focused native link while exposing the destination loading state',
+  async groupId => {
+    let finish: () => void = () => {
+      throw new Error('Missing destination loader');
+    };
+    const loader = vi.fn(
+      () =>
+        new Promise<void>(resolve => {
+          finish = resolve;
+        })
+    );
+    const router = await editorRouter(groupId, loader);
+    const link = screen.getByRole('link', { name: 'projects' });
+    const path = groupId ? '/group/group/studio' : '/studio';
+    expect(link.getAttribute('data-action-id')).toBe('communication-studio.project.list.navigate');
+    expect(link.getAttribute('href')).toBe(path);
+    await activate(link);
+    await screen.findByRole('status', { name: '' });
+    expect(screen.getByRole('status').textContent).toBe('Loading destination');
+    expect(loader).toHaveBeenCalledOnce();
+    await act(async () => finish());
+    await screen.findByText('Studio destination opened');
+    expect(router.state.location.pathname).toBe(path);
+  }
+);
+
+it.each([null, 'group'])(
+  'shows a destination access failure after native %s project-list navigation',
+  async groupId => {
+    const router = await editorRouter(groupId, async () => {
+      throw new Error('Access denied');
+    });
+    await activate(screen.getByRole('link', { name: 'projects' }));
+    await screen.findByRole('alert');
+    expect(screen.getByRole('alert').textContent).toBe('Destination access failed');
+    expect(router.state.location.pathname).toBe(groupId ? '/group/group/studio' : '/studio');
+  }
+);
+
+it.each(['/studio', '/group/group/studio', '/group/group/settings?tab=themes'])(
+  'resolves the direct Studio destination deep link %s through the actual router',
+  async initial => {
+    const router = await editorRouter('group', async () => undefined, initial);
+    expect(screen.getByText('Studio destination opened')).toBeTruthy();
+    expect(router.state.location.pathname + router.state.location.searchStr).toBe(initial);
+  }
+);
+
+it('opens group theme settings from its focused native link with the correct query while exposing destination loading and access errors', async () => {
+  let finish: () => void = () => {
+    throw new Error('Missing settings loader');
+  };
+  let reject = false;
+  const router = await editorRouter('group', async () => {
+    if (reject) throw new Error('Theme management denied');
+    await new Promise<void>(resolve => {
+      finish = resolve;
+    });
+  });
+  render(
+    <nav
+      data-navigation-type="secondary"
+      style={{ position: 'fixed', right: 0, top: 50, width: 48, height: 500 }}
+    >
+      <button
+        data-navigation-item-id="theme"
+        onClick={() =>
+          openStudioPanel({
+            panelKey: 'theme',
+            origin: 'secondary-navigation',
+            navigationItemId: 'theme',
+          })
+        }
+      >
+        Open theme settings panel
+      </button>
+    </nav>
+  );
+  await activate(screen.getByRole('button', { name: 'Open theme settings panel' }));
+  const link = screen.getByRole('link', { name: 'editThemes' });
+  expect(link.getAttribute('data-action-id')).toBe('communication-studio.theme.settings.navigate');
+  expect(link.getAttribute('href')).toBe('/group/group/settings?tab=themes');
+  await activate(link);
+  await screen.findByText('Loading destination');
+  await act(async () => finish());
+  await screen.findByText('Studio destination opened');
+  expect(router.state.location.pathname).toBe('/group/group/settings');
+  expect(router.state.location.search).toEqual({ tab: 'themes' });
+  reject = true;
+  await act(async () => {
+    await router.navigate({ to: '/editor' as never });
+  });
+  await screen.findByTestId('canvas', {}, { timeout: 10000 });
+  await activate(screen.getByRole('button', { name: 'Open theme settings panel' }));
+  await activate(screen.getByRole('link', { name: 'editThemes' }));
+  await screen.findByRole('alert');
+  expect(screen.getByRole('alert').textContent).toBe('Destination access failed');
 });

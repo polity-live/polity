@@ -115,11 +115,17 @@ it('moves the inspector with native arrow keys and clamps movement to the viewpo
   await userEvent.keyboard('{Enter} {Escape}');
   expect(document.activeElement).toBe(handle);
   expect(select).not.toHaveBeenCalled();
-  await userEvent.keyboard('{Shift>}{ArrowDown>50/}{ArrowRight>40/}{/Shift}');
+  const verticalSteps = Math.ceil(stage().height() / 20) + 1;
+  const horizontalSteps = Math.ceil((stage().width() - panel.offsetWidth) / 20) + 1;
+  await userEvent.keyboard(
+    `{Shift>}{ArrowDown>${verticalSteps}/}{ArrowRight>${horizontalSteps}/}{/Shift}`
+  );
   expect(panel.getAttribute('data-expand-direction')).toBe('up');
   expect(parseFloat(panel.style.top)).toBe(stage().height() - 44);
   expect(parseFloat(panel.style.left)).toBe(700 - panel.offsetWidth);
-  await userEvent.keyboard('{Shift>}{ArrowUp>50/}{ArrowLeft>40/}{/Shift}');
+  await userEvent.keyboard(
+    `{Shift>}{ArrowUp>${verticalSteps}/}{ArrowLeft>${horizontalSteps}/}{/Shift}`
+  );
   expect(panel.style.top).toBe('0px');
   expect(panel.style.left).toBe('0px');
   expect(panel.getAttribute('data-expand-direction')).toBe('down');
@@ -912,6 +918,12 @@ it('keeps foreground master content above the live inline text editor', async ()
     await ref.current!.execute({ type: 'setTool', tool: 'text' });
   });
   const point = canvasPoint(stage().findOne(`#${text.id}`)!, { x: 80, y: 30 });
+  await waitFor(() => {
+    const hit = stage().getIntersection(
+      stage().findOne(`#${text.id}`)!.getAbsoluteTransform().point({ x: 80, y: 30 })
+    );
+    expect(hit?.id() === text.id || Boolean(hit?.findAncestor(`#${text.id}`))).toBe(true);
+  });
   await userEvent.click(point.surface, { position: { x: point.x, y: point.y } } as never);
   const editor = await screen.findByLabelText('Text');
   expect(document.activeElement).toBe(editor);

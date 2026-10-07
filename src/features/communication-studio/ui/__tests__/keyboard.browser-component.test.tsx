@@ -4,7 +4,9 @@ import { Toolbar } from '@/features/shared/ui/layout';
 import { StudioDataProperties } from '../StudioDataProperties';
 import { StudioTextEditor, type StudioTextSelectionEditor } from '../StudioTextEditor';
 import { StudioMenuItem, StudioToolbarMenu } from '../StudioToolbarMenu';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render as renderView, screen, waitFor } from '@testing-library/react';
+import { TestRouter } from '@/test/router-wrapper';
+import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { createDocument } from '../../logic/templates';
@@ -59,6 +61,9 @@ vi.mock('../KonvaStudioCanvas', () => ({
 }));
 import { StudioWorkspace } from '../StudioWorkspace';
 afterEach(cleanup);
+function render(ui: ReactNode) {
+  return renderView(ui, { wrapper: TestRouter });
+}
 function model(kind: 'campaign' | 'single' = 'campaign') {
   const value = createDocument(kind, 'Keyboard campaign', undefined, 1);
   return new Proxy(

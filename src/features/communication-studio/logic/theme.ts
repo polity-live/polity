@@ -193,6 +193,13 @@ export function applyThemeSnapshot(document: StudioDocumentV3, next: StudioTheme
       }
     }
     if (node.type !== 'richText') continue;
+    const styleId = node.typography.textStyleId;
+    const oldStyle = styleId ? oldStyles.get(styleId) : undefined;
+    const nextStyle = styleId ? newStyles.get(styleId) : undefined;
+    const typographyOverridden = node.overrides.some(key => key.startsWith('typography.'));
+    // Compare the existing runs before replacing their bound style with the new revision.
+    const updateTypography =
+      nextStyle && !typographyOverridden && (!oldStyle || styleMatches(node, oldStyle));
     node.content = node.content.map(block => ({
       ...block,
       children: block.children.map(child => {
@@ -211,11 +218,7 @@ export function applyThemeSnapshot(document: StudioDocumentV3, next: StudioTheme
         };
       }),
     }));
-    const styleId = node.typography.textStyleId;
-    const oldStyle = styleId ? oldStyles.get(styleId) : undefined;
-    const nextStyle = styleId ? newStyles.get(styleId) : undefined;
-    const typographyOverridden = node.overrides.some(key => key.startsWith('typography.'));
-    if (nextStyle && !typographyOverridden && (!oldStyle || styleMatches(node, oldStyle))) {
+    if (updateTypography) {
       applyTextStyleToNode(node, nextStyle, newPalette);
       node.style.fillBinding = nextStyle.color;
       node.style.fill = paletteColor(newPalette, nextStyle.color);

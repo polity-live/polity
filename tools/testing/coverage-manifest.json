@@ -20456,6 +20456,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/theme-v4.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -22212,6 +22222,71 @@
           "file": "src/features/communication-studio/logic/__tests__/theme-v4.unit.test.ts",
           "project": "unit",
           "caseId": "applies a combined text style and its semantic color token"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "resolves both persisted and CSS font families for %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "resolves every chart palette token and falls back to foreground when a palette lacks its chart color"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses snapshot defaults and preserves the selected dark palette, revision and legacy font identities"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies default palette typography and marks without rewriting nested inline nodes or unrelated overrides"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "infers case-insensitive semantic and chart color bindings while preserving null and custom colors"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains explicit color bindings without applying the new palette over overridden colors"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "updates unmodified bound typography when the new text style also changes its inline marks"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains customised node typography when the previous style no longer matches %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps explicit typography overrides and preserves unknown or unbound inline styles"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "adopts a newly available node style when no previous definition exists"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves unbound node typography and content references when its definition has been removed"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports API theme defaults for the %s ownership scope"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/theme-v4-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports explicit API metadata and dark revision while rejecting a missing required name"
         }
       ],
       "suggestedTestRefs": [
@@ -22947,6 +23022,111 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "selects themes and both appearance modes with native focus then applies a text style and disables all theme editing after permission revocation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables empty-canvas history and clipboard actions when %s editing rights are absent"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "activates empty-canvas undo through native focus and disables it when no history remains"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "pastes an actual frame and deliverable once from a pending browser clipboard read while retaining keyboard focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps empty-canvas paste available after denied clipboard access and a foreign project then accepts a native keyboard retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "filters real Elements rows case-insensitively with native search keyboard focus and shows empty results"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "saves selected canonical elements through the native library button and disables missing selection and revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renames a library set from its natively focused action while rejecting cancelled and whitespace prompts and disabling revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "archives a set through native keyboard activation and keeps its row available for retry after an API failure"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "publishes the selected linked instance from its native library action and clears local edits only after successful retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "saves the project template through its native menu and keeps retry and read-only states visible"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual clone dialog from the native project menu and submits the confirmed revision before navigating"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual visibility dialog through the native project menu and retains its failed update for keyboard retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens shared collaboration tools from native comments activation and restores the comments button after Escape"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens sharing through the native header button with the correct group link and restores focus after dismissal"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the native upload chooser once from the toolbar and uploads a real file while disabling busy and revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "toggles actual text marks from the native canvas context actions and exposes image availability through its disabled action"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "navigates to the %s project list through a focused native link while exposing the destination loading state"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shows a destination access failure after native %s project-list navigation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resolves the direct Studio destination deep link %s through the actual router"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens group theme settings from its focused native link with the correct query while exposing destination loading and access errors"
         }
       ],
       "suggestedTestRefs": [
@@ -24188,6 +24368,111 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "selects themes and both appearance modes with native focus then applies a text style and disables all theme editing after permission revocation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "disables empty-canvas history and clipboard actions when %s editing rights are absent"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "activates empty-canvas undo through native focus and disables it when no history remains"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "pastes an actual frame and deliverable once from a pending browser clipboard read while retaining keyboard focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps empty-canvas paste available after denied clipboard access and a foreign project then accepts a native keyboard retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "filters real Elements rows case-insensitively with native search keyboard focus and shows empty results"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "saves selected canonical elements through the native library button and disables missing selection and revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "renames a library set from its natively focused action while rejecting cancelled and whitespace prompts and disabling revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "archives a set through native keyboard activation and keeps its row available for retry after an API failure"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "publishes the selected linked instance from its native library action and clears local edits only after successful retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "saves the project template through its native menu and keeps retry and read-only states visible"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual clone dialog from the native project menu and submits the confirmed revision before navigating"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual visibility dialog through the native project menu and retains its failed update for keyboard retry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens shared collaboration tools from native comments activation and restores the comments button after Escape"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens sharing through the native header button with the correct group link and restores focus after dismissal"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens the native upload chooser once from the toolbar and uploads a real file while disabling busy and revoked rights"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "toggles actual text marks from the native canvas context actions and exposes image availability through its disabled action"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "navigates to the %s project list through a focused native link while exposing the destination loading state"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "shows a destination access failure after native %s project-list navigation"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resolves the direct Studio destination deep link %s through the actual router"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens group theme settings from its focused native link with the correct query while exposing destination loading and access errors"
         }
       ],
       "suggestedTestRefs": [
@@ -107329,6 +107614,16 @@
     },
     {
       "path": "src/test/render-component-flow.tsx",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/test/router-wrapper.tsx",
       "domain": "src:test",
       "owner": "polity/src:test",
       "kind": "test-infrastructure",

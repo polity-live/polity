@@ -8,6 +8,7 @@ import { v3DocumentToLegacy } from '../../logic/v3-adapter';
 import type { StudioDocumentV3 } from '../../logic/document-v3';
 import { useStudioViewportStore } from '../../state/studio-viewport-store';
 import { StudioEditor } from '../StudioEditor';
+import { TestRouter } from '@/test/router-wrapper';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
@@ -107,7 +108,7 @@ async function textEntryHarness() {
     );
   }
 
-  render(<Harness />);
+  render(<Harness />, { wrapper: TestRouter });
   const host = await screen.findByTestId('studio-canvas', {}, { timeout: 15000 });
   await waitFor(() =>
     expect(host.querySelectorAll('.konvajs-content canvas').length).toBeGreaterThan(0)

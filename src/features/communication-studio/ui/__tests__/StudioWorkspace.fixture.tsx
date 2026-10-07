@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useReducer } from 'react';
+import { useEffect, useImperativeHandle, useReducer } from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import type { StudioDocument } from '../../logic/document';
@@ -20,6 +20,10 @@ const io = vi.hoisted(() => ({
   projectChat: vi.fn(),
   procedureReason: undefined as string | null | undefined,
   procedureEditingAllowed: true,
+  realClone: false,
+  realPreview: false,
+  realLinks: false,
+  renderContextToolbar: false,
 }));
 export { io };
 vi.mock('@rocicorp/zero/react', () => ({
@@ -58,7 +62,7 @@ vi.mock('@/zero/communication-studio/useStudioState', () => ({
 }));
 vi.mock('@/zero/communication-studio/useStudioApi', () => ({
   useStudioApi: () => io,
-  studioRequest: io.request,
+  studioRequest: (...args: unknown[]) => io.request(...args),
 }));
 vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
   CollaborationStatus: () => <span>Shared connection status</span>,
@@ -86,59 +90,96 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     },
   }),
 }));
-vi.mock('../KonvaStudioCanvas', () => ({
-  default: forwardRef((p: any, ref) => {
-    io.canvasProps = p;
-    const canvasPage = p.document
-      ? v3DocumentToLegacy(p.document).pages.find(page => page.id === p.activeFrameId)!
-      : ydoc.pages.find(page => page.id === p.activeFrameId)!;
-    useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));
-    useEffect(
-      () => p.onGeometry?.({ left: 100, top: 150, right: 350, bottom: 450, interacting: false }),
-      []
-    );
-    useEffect(() => {
-      p.onCanvasStateChange?.({
-        activeTool: 'selection',
-        toolLocked: false,
-        zoom: 1,
-        viewBounds: { left: 100, top: 200, right: 900, bottom: 1000 },
-      });
-    }, []);
-    return (
-      <div data-testid="canvas" data-canvas-engine="konva" data-page-id={p.activeFrameId}>
-        {p.inspector && (
-          <section aria-label="properties" className="polity-inspector-extension">
-            {p.inspector}
-          </section>
-        )}
-        <button onClick={() => p.cursor(12, 24)}>Move cursor</button>
-        <button onClick={() => p.selectExact(canvasPage.elements.map((e: any) => e.id))}>
-          Select all
-        </button>
-        {canvasPage.elements.map((e: any) => (
-          <button
-            key={e.id}
-            onClick={() => p.selectExact([e.id])}
-          >{`Select ${e.type} ${e.id}`}</button>
-        ))}
-      </div>
-    );
-  }),
-}));
-vi.mock('../StudioPreviewDialog', () => ({
-  StudioPreviewDialog: (props: any) =>
-    props.open ? (
-      <div role="dialog" aria-label="previewTitle">
-        <button onClick={() => props.onOpenChange(false)}>closePreview</button>
-      </div>
-    ) : null,
-}));
-vi.mock('../StudioCloneDialog', () => ({
-  StudioCloneDialog: ({ beforeClone }: { beforeClone: () => Promise<unknown> }) => (
-    <button onClick={() => void beforeClone()}>confirmClone</button>
-  ),
-}));
+vi.mock('../KonvaStudioCanvas', async () => {
+  const { forwardRef: canvasRef } = await import('react');
+  return {
+    default: canvasRef((p: any, ref) => {
+      io.canvasProps = p;
+      const canvasPage = p.document
+        ? v3DocumentToLegacy(p.document).pages.find(page => page.id === p.activeFrameId)!
+        : ydoc.pages.find(page => page.id === p.activeFrameId)!;
+      useImperativeHandle(ref, () => ({ execute: io.canvasExecute }));
+      useEffect(
+        () => p.onGeometry?.({ left: 100, top: 150, right: 350, bottom: 450, interacting: false }),
+        []
+      );
+      useEffect(() => {
+        p.onCanvasStateChange?.({
+          activeTool: 'selection',
+          toolLocked: false,
+          zoom: 1,
+          viewBounds: { left: 100, top: 200, right: 900, bottom: 1000 },
+        });
+      }, []);
+      if (!p.editable && p.fit === 'contain')
+        return <div data-testid="preview-canvas" data-page-id={p.activeFrameId} />;
+      return (
+        <div data-testid="canvas" data-canvas-engine="konva" data-page-id={p.activeFrameId}>
+          {p.inspector && (
+            <section aria-label="properties" className="polity-inspector-extension">
+              {p.inspector}
+            </section>
+          )}
+          {io.renderContextToolbar && p.contextToolbar && (
+            <section aria-label={p.contextToolbarLabel}>{p.contextToolbar}</section>
+          )}
+          <button onClick={() => p.cursor(12, 24)}>Move cursor</button>
+          <button onClick={() => p.selectExact(canvasPage.elements.map((e: any) => e.id))}>
+            Select all
+          </button>
+          {canvasPage.elements.map((e: any) => (
+            <button
+              key={e.id}
+              onClick={() => p.selectExact([e.id])}
+            >{`Select ${e.type} ${e.id}`}</button>
+          ))}
+        </div>
+      );
+    }),
+  };
+});
+vi.mock('../StudioPreviewDialog', async () => {
+  const { lazy, Suspense } = await import('react');
+  const ActualPreview = lazy(() =>
+    vi
+      .importActual<typeof import('../StudioPreviewDialog')>(
+        '@/features/communication-studio/ui/StudioPreviewDialog.tsx'
+      )
+      .then(module => ({ default: module.StudioPreviewDialog }))
+  );
+  return {
+    StudioPreviewDialog: (props: any) =>
+      io.realPreview ? (
+        <Suspense fallback={<p role="status">Opening preview</p>}>
+          <ActualPreview {...props} />
+        </Suspense>
+      ) : props.open ? (
+        <div role="dialog" aria-label="previewTitle">
+          <button onClick={() => props.onOpenChange(false)}>closePreview</button>
+        </div>
+      ) : null,
+  };
+});
+vi.mock('../StudioCloneDialog', async () => {
+  const { lazy, Suspense } = await import('react');
+  const ActualClone = lazy(() =>
+    vi
+      .importActual<typeof import('../StudioCloneDialog')>(
+        '@/features/communication-studio/ui/StudioCloneDialog.tsx'
+      )
+      .then(module => ({ default: module.StudioCloneDialog }))
+  );
+  return {
+    StudioCloneDialog: (props: any) =>
+      io.realClone ? (
+        <Suspense fallback={<p role="status">Opening clone dialog</p>}>
+          <ActualClone {...props} />
+        </Suspense>
+      ) : (
+        <button onClick={() => void props.beforeClone()}>confirmClone</button>
+      ),
+  };
+});
 vi.mock('../useStudioProcedure', () => ({
   useStudioProcedure: () => ({
     readOnlyReason: io.procedureReason,
@@ -167,14 +208,24 @@ vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
   useFixedToolbarController: () => ({ className: 'fixed' }),
 }));
-vi.mock('@/features/shared/ui/navigation/SmartLink', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/shared/ui/navigation/SmartLink')>()),
-  SmartLink: ({ href, children, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock('@/features/shared/ui/navigation/SmartLink', async importOriginal => {
+  const { forwardRef: linkRef } = await import('react');
+  const actual = await importOriginal<typeof import('@/features/shared/ui/navigation/SmartLink')>();
+  return {
+    ...actual,
+    SmartLink: linkRef<HTMLAnchorElement, any>(({ href, children, ...props }, ref) =>
+      io.realLinks ? (
+        <actual.SmartLink href={href} ref={ref} {...props}>
+          {children}
+        </actual.SmartLink>
+      ) : (
+        <a href={href} ref={ref} {...props}>
+          {children}
+        </a>
+      )
+    ),
+  };
+});
 import { StudioWorkspace } from '../StudioWorkspace';
 export let ydoc: StudioDocument;
 export function setDocument(document: StudioDocument) {
@@ -290,6 +341,10 @@ export function setup(kind: Parameters<typeof createDocument>[0] = 'single') {
 beforeEach(() => {
   io.procedureReason = undefined;
   io.procedureEditingAllowed = true;
+  io.realClone = false;
+  io.realPreview = false;
+  io.realLinks = false;
+  io.renderContextToolbar = false;
   vi.clearAllMocks();
   sessionStorage.clear();
   io.projects = [];

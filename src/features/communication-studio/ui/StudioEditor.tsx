@@ -79,6 +79,7 @@ import { GroupThemeSettings } from '@/features/groups/ui/GroupThemeSettings';
 import { StudioPanel } from './StudioPanel';
 import { StudioInviteDialog } from './StudioInviteDialog';
 import { StudioCloneDialog } from './StudioCloneDialog';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { StudioVisibilityDialog } from './StudioVisibilityDialog';
 import { openStudioPanel } from '../logic/panel-events';
 import { StudioLayersPanel } from './StudioLayersPanel';
@@ -258,9 +259,15 @@ export function StudioEditor({
     tr = (k: string) => t('features.studio.' + k);
   const { page, active, value } = c;
   const [emptyClipboardError, setEmptyClipboardError] = useState('');
+  const [emptyPastePending, setEmptyPastePending] = useState(false);
+  const emptyPasteBusy = useRef(false);
+  const emptyEditingDisabled =
+    !c.canEdit || c.busy || editingAllowed === false || Boolean(previewDocument);
   const pasteIntoEmptyDocument = async () => {
+    if (emptyEditingDisabled || emptyPasteBusy.current) return;
+    emptyPasteBusy.current = true;
+    setEmptyPastePending(true);
     try {
-      if (!c.canEdit || c.busy) return;
       let payload = getProjectStudioClipboard(projectId);
       if (!payload) {
         try {
@@ -286,6 +293,9 @@ export function StudioEditor({
       setEmptyClipboardError('');
     } catch (error) {
       setEmptyClipboardError(error instanceof Error ? error.message : String(error));
+    } finally {
+      emptyPasteBusy.current = false;
+      setEmptyPastePending(false);
     }
   };
   useEffect(() => {
@@ -301,21 +311,21 @@ export function StudioEditor({
         return;
       const mod = event.ctrlKey || event.metaKey;
       if (mod && event.key.toLowerCase() === 'z') {
-        if (!c.canEdit || c.busy) return;
+        if (emptyEditingDisabled || emptyPasteBusy.current) return;
         event.preventDefault();
         if (event.shiftKey) c.redo();
         else c.undo();
         return;
       }
       if (!mod || event.key.toLowerCase() !== 'v') return;
-      if (!c.canEdit || c.busy) return;
+      if (emptyEditingDisabled || emptyPasteBusy.current) return;
       event.preventDefault();
       event.stopPropagation();
       void pasteIntoEmptyDocument();
     };
     window.addEventListener('keydown', paste, true);
     return () => window.removeEventListener('keydown', paste, true);
-  }, [page, value, projectId, c]);
+  }, [page, value, projectId, c, emptyEditingDisabled]);
   if (!value) return null;
   if (!page)
     return (
@@ -324,10 +334,23 @@ export function StudioEditor({
           <p role="status">The canvas is empty.</p>
           {emptyClipboardError && <p role="alert">{emptyClipboardError}</p>}
           <div className="flex justify-center gap-2">
-            <Button type="button" disabled={!c.canUndo || c.busy} onClick={() => c.undo()}>
+            <Button
+              data-action-id="communication-studio.empty-canvas.history.undo"
+              data-action-kind="interaction"
+              type="button"
+              disabled={!c.canUndo || emptyEditingDisabled || emptyPastePending}
+              onClick={() => c.undo()}
+            >
               Undo
             </Button>
-            <Button type="button" disabled={!c.canEdit || c.busy} onClick={pasteIntoEmptyDocument}>
+            <Button
+              data-action-id="communication-studio.empty-canvas.clipboard.paste"
+              type="button"
+              disabled={emptyEditingDisabled}
+              aria-disabled={emptyEditingDisabled || emptyPastePending}
+              aria-busy={emptyPastePending}
+              onClick={pasteIntoEmptyDocument}
+            >
               Paste
             </Button>
           </div>
@@ -452,6 +475,7 @@ function StudioEditorReady({
     [setTool]
   );
   const [selectionState, setSelectionState] = useState<StudioSelectionState>(emptyStudioSelection);
+  const selectionProjectId = useRef(projectId);
   const [masterMode] = useState(false);
   const [tableInsertCount, setTableInsertCount] = useState(0);
   const masterPage = useMemo(() => {
@@ -561,6 +585,8 @@ function StudioEditorReady({
     );
   }, [c.selected]);
   useEffect(() => {
+    if (selectionProjectId.current === projectId) return;
+    selectionProjectId.current = projectId;
     setSelectionState(emptyStudioSelection());
     c.selectExact([]);
   }, [projectId]);
@@ -1405,7 +1431,8 @@ function StudioEditorReady({
     <button
       key={key}
       type="button"
-      data-action-id={`communication-studio.context.${key}`}
+      data-action-id="communication-studio.context.action.activate"
+      data-context-action={key}
       aria-label={tr(key)}
       aria-pressed={options.pressed}
       disabled={options.disabled}
@@ -1505,14 +1532,23 @@ function StudioEditorReady({
         aria-label={tr('tools')}
       >
         <ToolbarGroup>
-          <ToolbarButton asChild tooltip={tr('projects')}>
-            <a href={groupId ? `/group/${groupId}/studio` : '/studio'}>
+          <ToolbarButton
+            asChild
+            tooltip={tr('projects')}
+            data-action-id="communication-studio.project.list.navigate"
+            data-action-kind="navigation"
+          >
+            <SmartLink
+              data-action-id="communication-studio.project.list.navigate"
+              href={groupId ? `/group/${groupId}/studio` : '/studio'}
+            >
               <ArrowLeft />
-            </a>
+            </SmartLink>
           </ToolbarButton>
           <StudioToolbarMenu panelKey="project" label={tr('project')} icon={<FolderOpen />}>
             {(groupId || c.project?.owner_id === c.identity.id) && (
               <StudioMenuItem
+                data-action-id="communication-studio.project.template.save"
                 data-action-kind="interaction"
                 label={tr('saveTemplate')}
                 icon={<Library />}
@@ -1526,6 +1562,7 @@ function StudioEditorReady({
               />
             )}
             <StudioMenuItem
+              data-action-id="communication-studio.project.clone.open"
               data-action-kind="interaction"
               label={tr('duplicateProject')}
               icon={<Copy />}
@@ -1533,6 +1570,7 @@ function StudioEditorReady({
             />
             {(groupId || c.project?.owner_id === c.identity.id) && (
               <StudioMenuItem
+                data-action-id="communication-studio.project.visibility.open"
                 data-action-kind="interaction"
                 label={t('pages.create.common.visibility')}
                 icon={<FolderOpen />}
@@ -1751,6 +1789,7 @@ function StudioEditorReady({
             <ToolbarButton
               data-action-kind="interaction"
               tooltip={tr('comments')}
+              data-action-id="communication-studio.collaboration.comments.open"
               onClick={() =>
                 window.dispatchEvent(
                   new CustomEvent('studio-open-panel', { detail: 'collaboration' })
@@ -1810,6 +1849,7 @@ function StudioEditorReady({
           <ToolbarButton
             data-action-kind="interaction"
             tooltip={tr('upload')}
+            data-action-id="communication-studio.assets.upload.open"
             disabled={disabled}
             onClick={() => uploadInput.current?.click()}
           >
@@ -2314,9 +2354,13 @@ function StudioEditorReady({
               </section>
             )}
             {groupId && (
-              <a className="block text-sm underline" href={`/group/${groupId}/settings?tab=themes`}>
+              <SmartLink
+                data-action-id="communication-studio.theme.settings.navigate"
+                className="block text-sm underline"
+                href={`/group/${groupId}/settings?tab=themes`}
+              >
                 {tr('editThemes')}
-              </a>
+              </SmartLink>
             )}
             <details className="border-t pt-3">
               <summary className="cursor-pointer text-sm font-semibold">
@@ -2336,6 +2380,8 @@ function StudioEditorReady({
         >
           <section data-studio-elements-drop-zone className="space-y-2 p-1">
             <input
+              data-action-id="communication-studio.elements.library.search"
+              data-action-kind="interaction"
               className="bg-background h-8 w-full rounded-md border px-2 text-sm"
               type="search"
               aria-label={tr('searchElements')}
@@ -2344,6 +2390,7 @@ function StudioEditorReady({
               onChange={event => setElementQuery(event.currentTarget.value)}
             />
             <button
+              data-action-id="communication-studio.elements.selection.save"
               type="button"
               className="hover:bg-muted w-full rounded-sm border px-2 py-1.5 text-left text-sm disabled:opacity-40"
               disabled={!canSaveElements(c.selected)}
@@ -2366,6 +2413,7 @@ function StudioEditorReady({
                   <span className="min-w-0 flex-1 truncate">{set.name}</span>
                   <span className="text-muted-foreground text-xs">v{set.version}</span>
                   <button
+                    data-action-id="communication-studio.elements.set.rename"
                     type="button"
                     className="hover:bg-muted focus-visible:ring-ring inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
                     aria-label={`${tr('rename')}: ${set.name}`}
@@ -2378,6 +2426,7 @@ function StudioEditorReady({
                     <Pencil className="size-4" />
                   </button>
                   <button
+                    data-action-id="communication-studio.elements.set.archive"
                     type="button"
                     className="hover:bg-muted focus-visible:ring-ring inline-flex size-7 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
                     aria-label={`${tr('delete')}: ${set.name}`}
@@ -2401,6 +2450,7 @@ function StudioEditorReady({
             </div>
             {linkedSelection && (
               <button
+                data-action-id="communication-studio.elements.instance.publish"
                 type="button"
                 className="hover:bg-muted w-full rounded-sm border px-2 py-1.5 text-left text-sm disabled:opacity-40"
                 disabled={disabled || !!c.workspaceId}
