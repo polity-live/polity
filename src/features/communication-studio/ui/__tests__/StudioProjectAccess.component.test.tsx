@@ -121,3 +121,12 @@ it('rejects an inaccessible workspace instead of focusing a canonical element wi
   expect(io.focus).not.toHaveBeenCalled();
   await waitFor(() => expect(handled).toHaveBeenCalledWith(workspaceId));
 });
+
+it('keeps an editable snapshot read-only while the actor identity is temporarily absent', async () => {
+  io.user = { id: undefined } as never;
+  io.snapshot.project.canEdit = true;
+  io.snapshot.project.groupId = 'group';
+  render(<StudioProjectAccess groupId="group" projectId={projectId} open={vi.fn()} />);
+  expect(await screen.findByText('Read-only canvas')).toBeTruthy();
+  expect(screen.queryByText('Editable workspace')).toBeNull();
+});

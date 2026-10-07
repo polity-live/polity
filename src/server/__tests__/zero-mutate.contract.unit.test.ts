@@ -14,6 +14,7 @@ import {
   executeZeroTransaction,
   runZeroMutator,
   sanitizeZeroMutationResult,
+  withZeroTransaction,
 } from '../zero-mutate';
 
 const tx = { id: 'tx' };
@@ -24,6 +25,19 @@ beforeEach(() => {
 });
 
 describe('Zero transaction helpers', () => {
+  it('reuses the active writer transaction for nested reads and restores its parent scope', async () => {
+    const nested = { id: 'nested' };
+    await withZeroTransaction(tx as never, async () => {
+      expect(await executeZeroRead(async value => value)).toBe(tx);
+      await withZeroTransaction(nested as never, async () => {
+        expect(await executeZeroRead(async value => value)).toBe(nested);
+      });
+      expect(await executeZeroRead(async value => value)).toBe(tx);
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+    expect(await executeZeroRead(async value => value)).toBe(tx);
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+  });
   it('creates default and explicit contexts and executes read and contextual transactions', async () => {
     expect(createZeroContext('user-1')).toEqual({ userID: 'user-1', email: '' });
     expect(createZeroContext('user-1', 'user@example.test')).toEqual({

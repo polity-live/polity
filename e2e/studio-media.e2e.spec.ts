@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures/test';
 import { db } from './fixtures/db';
-import { createStudioProject } from './fixtures/studio';
+import { createStudioProject, startStudioExportWorker } from './fixtures/studio';
 import { waitForAppReady } from './fixtures/readiness';
 import { createClient } from '@supabase/supabase-js';
 
@@ -14,6 +14,7 @@ test('uploads, maintains an element library, clones media, exports and hands off
   const sql = db();
   const projects: string[] = [];
   const obsoleteRequests: string[] = [];
+  const worker = await startStudioExportWorker();
   page.on('request', request => {
     const path = new URL(request.url()).pathname;
     if (path === '/api/studio' || path.startsWith('/api/studio/read/')) obsoleteRequests.push(path);
@@ -133,6 +134,7 @@ test('uploads, maintains an element library, clones media, exports and hands off
         async () => {
           const [row] =
             await sql`select status from studio_export where project_id=${cloneId} order by created_at desc limit 1`;
+          worker.assertRunning();
           return row?.status;
         },
         { timeout: 90_000 }
@@ -166,6 +168,7 @@ test('uploads, maintains an element library, clones media, exports and hands off
     expect(handoff.imageUrl).toMatch(/^\/api\/studio\/published-media\//);
     expect(obsoleteRequests).toEqual([]);
   } finally {
+    await worker.stop();
     const created =
       await sql`select id from studio_project where owner_id=${e2eRun.actorId} and title=${`${e2eRun.prefix} Media`}`;
     for (const row of created) if (!projects.includes(row.id)) projects.push(row.id);

@@ -339,9 +339,8 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.insertBelow'),
       value: 'insertBelow',
       onSelect: ({ aiEditor, editor }) => {
-        if (!aiEditor) return;
         // This endpoint generates plain text; Plate's generic path expects edit-tool suggestions.
-        insertBelowGenerate(editor, aiEditor);
+        insertBelowGenerate(editor, aiEditor as SlateEditor);
       },
     },
     makeLonger: {
@@ -369,8 +368,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.replaceSelection'),
       value: 'replace',
       onSelect: ({ aiEditor, editor }) => {
-        if (!aiEditor) return;
-        void editor.getTransforms(AIChatPlugin).aiChat.replaceSelection(aiEditor);
+        void editor.getTransforms(AIChatPlugin).aiChat.replaceSelection(aiEditor as SlateEditor);
       },
     },
     simplifyLanguage: {

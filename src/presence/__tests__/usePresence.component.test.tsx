@@ -61,7 +61,7 @@ describe('presence hook lifecycle', () => {
       ({ data }) => usePresence('room-1', { initialData: data }),
       { initialProps: { data: initialData } }
     );
-    expect(manager.acquire).toHaveBeenCalledWith('room-1', 'ada');
+    expect(manager.acquire).toHaveBeenCalledWith('room-1', 'ada', false);
 
     act(() => manager.statusCallback?.(true));
     expect(result.current.isConnected).toBe(true);
@@ -122,5 +122,21 @@ describe('presence hook lifecycle', () => {
     act(() => manager.statusCallback?.(false));
     expect(result.current.isConnected).toBe(false);
     expect(manager.channel.track).not.toHaveBeenCalled();
+  });
+
+  it('releases the old channel when switching Studio workspaces or privacy', () => {
+    const { rerender, unmount } = renderHook(
+      ({ roomId, privateChannel }) => usePresence(roomId, { private: privateChannel }),
+      { initialProps: { roomId: 'studio:project:main', privateChannel: true } }
+    );
+    expect(manager.acquire).toHaveBeenLastCalledWith('studio:project:main', 'anon', true);
+    rerender({ roomId: 'studio:project:workspace', privateChannel: true });
+    expect(manager.release).toHaveBeenLastCalledWith('studio:project:main');
+    expect(manager.acquire).toHaveBeenLastCalledWith('studio:project:workspace', 'anon', true);
+    rerender({ roomId: 'studio:project:workspace', privateChannel: false });
+    expect(manager.release).toHaveBeenLastCalledWith('studio:project:workspace');
+    expect(manager.acquire).toHaveBeenLastCalledWith('studio:project:workspace', 'anon', false);
+    unmount();
+    expect(manager.release).toHaveBeenCalledTimes(3);
   });
 });

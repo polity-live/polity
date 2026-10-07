@@ -158,3 +158,10 @@ it.each([true, false])(
     expect(screen.queryByRole('region')).toBeNull();
   }
 );
+
+it('renders an invitation safely while its related project is absent from the subscription', async () => {
+  io.request.mockResolvedValue([{ id: 'detached', project_id: 'one', project: null }]);
+  render(<StudioInvitations />);
+  expect(await screen.findByRole('button', { name: 'acceptInvitation' })).toBeTruthy();
+  expect(screen.getByText('invitedBy')).toBeTruthy();
+});

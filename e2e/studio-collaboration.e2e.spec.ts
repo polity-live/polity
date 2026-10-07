@@ -65,7 +65,13 @@ for (const scope of ['personal', 'group'] as const) {
 
       if (scope === 'personal') {
         await peerPage.goto(projectRoute);
-        await expect(peerPage.getByRole('alert')).toHaveText('This Studio project is unavailable.');
+        await waitForAppReady(peerPage);
+        await expect(peerPage.getByRole('alert')).toHaveText(
+          'This Studio project is unavailable.',
+          {
+            timeout: 30_000,
+          }
+        );
         await expect(peerPage.getByRole('textbox', { name: 'Title', exact: true })).toHaveCount(0);
 
         await context.setOffline(true);

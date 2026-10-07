@@ -686,3 +686,32 @@ it('retains text styles when the document contains no selectable nodes', async (
   expect(canonical.nodes).toEqual([]);
   expect(hook.result.current.failure).toBe('');
 });
+
+it('updates a subscribed export when only progress, error or filename changes and ignores identical rows', async () => {
+  io.request.mockImplementation(async op => (op === 'export' ? { id: 'export' } : []));
+  const hook = mount();
+  await flush();
+  await act(() => hook.result.current.exportMedia());
+  io.exports = [
+    {
+      id: 'export',
+      status: 'queued',
+      progress: 0,
+      format: 'png',
+      error: null,
+      file_name: undefined,
+    },
+  ];
+  hook.rerender();
+  await flush();
+  for (const patch of [{ progress: 20 }, { error: 'Retrying' }, { file_name: 'preview.png' }, {}]) {
+    io.exports = [{ ...io.exports[0], ...patch }];
+    hook.rerender();
+    await flush();
+    expect(hook.result.current.exports[0]).toMatchObject({
+      progress: io.exports[0].progress,
+      error: io.exports[0].error,
+      fileName: io.exports[0].file_name,
+    });
+  }
+});

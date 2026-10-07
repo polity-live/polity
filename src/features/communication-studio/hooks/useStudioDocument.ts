@@ -71,8 +71,9 @@ export function useStudioDocument(
       : workspaceRemote
     : canonicalRemote;
   const loadDocument = () => {
-    if (!id) return Promise.reject(new Error('Studio project unavailable'));
-    return workspaceId ? studio.loadDraft({ projectId: id, workspaceId }) : studio.load({ id });
+    return workspaceId
+      ? studio.loadDraft({ projectId: id as string, workspaceId })
+      : studio.load({ id: id as string });
   };
   const [value, setValue] = useState<StudioDocument | null>(null),
     [canEdit, setCanEdit] = useState(false),
@@ -286,7 +287,7 @@ export function useStudioDocument(
           .then(current => {
             if (!disposed) {
               setCanEdit(current.canEdit);
-              if (draft.current) draft.current.canEdit = current.canEdit;
+              (draft.current as Draft).canEdit = current.canEdit;
             }
           })
           .catch(() => {

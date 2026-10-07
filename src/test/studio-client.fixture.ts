@@ -7,7 +7,7 @@ export const studioQueryFixture = new Proxy(
   { get: (_target, name) => (args: unknown) => ({ name, args }) }
 );
 export function useStudioQueryFixture(query: any, io: { request: (...args: any[]) => any }) {
-  const [result, setResult] = useState<any>([[], { type: 'unknown' }]);
+  const [result, setResult] = useState<any>([query ? [] : undefined, { type: 'unknown' }]);
   const key = JSON.stringify(query);
   useEffect(() => {
     let live = true;
@@ -22,7 +22,11 @@ export function useStudioQueryFixture(query: any, io: { request: (...args: any[]
           : [];
         const rows = raw.map((r: any) =>
           query?.name === 'invitations'
-            ? { ...r, project: { title: r.title, owner_id: r.owner_id, owner: r } }
+            ? {
+                ...r,
+                project:
+                  'project' in r ? r.project : { title: r.title, owner_id: r.owner_id, owner: r },
+              }
             : { ...r, user: r }
         );
         if (live) setResult([rows, { type: 'complete' }]);
