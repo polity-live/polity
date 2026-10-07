@@ -1,12 +1,5 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-  type PointerEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import type { ReactNode, PointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { MessageSquare, MessageSquarePlus, Minus } from 'lucide-react';
 import { queries } from '@/zero/queries';

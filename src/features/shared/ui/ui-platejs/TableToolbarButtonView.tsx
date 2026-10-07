@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { TablePlugin } from '@platejs/table/react';
 import { useEditorPlugin } from 'platejs/react';
 import {

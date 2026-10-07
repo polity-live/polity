@@ -65,7 +65,7 @@ export function StudioTextEditor({
   onChange: (patch: Partial<StudioElement>) => void;
   register: (editor: StudioTextSelectionEditor | null) => void;
 }) {
-  const { t } = useTranslation();
+  const t = useTranslation().t;
   const editor = usePlateEditor(
     {
       plugins: [ParagraphPlugin.withComponent(StudioParagraph), ...BasicMarksKit, ...FontKit],

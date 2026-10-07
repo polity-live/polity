@@ -83,6 +83,14 @@ export interface StudioCanvasState {
 
 export type StudioCanvasChangeRequestMarker = StudioChangeRequestAnnotation;
 
+interface InspectorDrag {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
+  x: number;
+  y: number;
+}
+
 export type StudioCanvasCommand =
   | { type: 'setTool'; tool: StudioTool; locked?: boolean; rounded?: boolean }
   | { type: 'focus'; nodeId: string }
@@ -565,7 +573,7 @@ function EditorPortal({
 
 const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
   function KonvaStudioCanvas(props, ref) {
-    const { t } = useTranslation();
+    const t = useTranslation().t;
     const host = useRef<HTMLDivElement>(null);
     const stage = useRef<Konva.Stage>(null);
     const lower = useRef<Konva.Layer>(null);
@@ -590,13 +598,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
     const [inspectorPosition, setInspectorPosition] = useState({ x: 16, y: 16 });
     const inspectorPanel = useRef<HTMLElement>(null);
-    const inspectorDrag = useRef<{
-      pointerId: number;
-      clientX: number;
-      clientY: number;
-      x: number;
-      y: number;
-    } | null>(null);
+    const inspectorDrag = useRef<InspectorDrag | null>(null);
     const inspectorBodyId = useId();
     const [cropDraft, setCropDraft] = useState<{
       nodeId: string;

@@ -101,7 +101,7 @@ export function CityDesignChangeRequestCanvasList({
   selectedChangeRequestId,
   onChangeRequestSelect,
 }: CityDesignChangeRequestCanvasListProps) {
-  const { t } = useTranslation();
+  const t = useTranslation().t;
 
   return (
     <CanvasChangeRequestList

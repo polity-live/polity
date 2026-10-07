@@ -468,10 +468,125 @@ it('opens real image crop controls with default labels and cancels and applies t
   await userEvent.keyboard('{Escape}');
   expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
   await act(() => ref.current!.execute({ type: 'crop', action: 'start' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+  await act(() => ref.current!.execute({ type: 'crop', action: 'start' }));
   host.focus();
   await userEvent.keyboard('{Enter}');
   expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
 });
+
+it.each(['left', 'right', 'top', 'bottom', 'outside'] as const)(
+  'handles a native crop drag beginning just beyond the %s frame edge',
+  async edge => {
+    const document = createStudioTemplateDocumentV5('single', 'Crop edges', defaultBrand);
+    const source = document.nodes.find(node => node.type === 'shape')!;
+    const media = mediaNodeSchema.parse({
+      ...source,
+      type: 'media',
+      mediaType: 'image',
+      assetId: crypto.randomUUID(),
+      transform: { ...source.transform, x: 80, y: 80, width: 300, height: 240 },
+    });
+    document.nodes = document.nodes.filter(node => node.type === 'frame');
+    document.nodes.push(media);
+    const commit = vi.fn();
+    const { host, ref } = await mount({
+      document,
+      selected: [media.id],
+      canvasProps: { onCropCommit: commit },
+      assets: [
+        {
+          id: media.assetId,
+          url:
+            'data:image/svg+xml,' +
+            encodeURIComponent(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="red"/></svg>'
+            ),
+          mime: 'image/png',
+          name: 'Crop image',
+        },
+      ],
+    });
+    await act(() => ref.current!.execute({ type: 'crop', action: 'start' }));
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${media.id}`)!;
+    const local =
+      edge === 'left'
+        ? { x: -4, y: 80 }
+        : edge === 'right'
+          ? { x: 301, y: 80 }
+          : edge === 'top'
+            ? { x: 120, y: -4 }
+            : edge === 'bottom'
+              ? { x: 120, y: 244 }
+              : { x: 360, y: 80 };
+    const point = group.getAbsoluteTransform().point(local);
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    const x = (point.x * bounds.width) / stage.width(),
+      y = (point.y * bounds.height) / stage.height();
+    expect(globalThis.document.elementFromPoint(bounds.left + x, bounds.top + y)).toBeInstanceOf(
+      HTMLCanvasElement
+    );
+    await userEvent.dragAndDrop(surface, surface, {
+      sourcePosition: { x, y },
+      targetPosition: {
+        x: x + (edge === 'right' ? -20 : 20),
+        y: y + (edge === 'bottom' ? -20 : 20),
+      },
+    } as never);
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(commit).toHaveBeenCalledOnce();
+    const state = commit.mock.calls[0][1];
+    expect(commit.mock.calls[0][0]).toBe(media.id);
+    if (edge === 'outside') expect(state.frame).toEqual(media.transform);
+    else if (edge === 'left' || edge === 'right')
+      expect(state.frame.width).not.toBe(media.transform.width);
+    else expect(state.frame.height).not.toBe(240);
+    expect(document.nodes.find(node => node.id === media.id)?.transform).toEqual(media.transform);
+  }
+);
+
+it.each(['lost button', 'retained button'] as const)(
+  'ends a middle-button pan after a native %s transition',
+  async mode => {
+    const { host, state, changes, select } = await mount();
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    const pointer = (type: string, buttons: number, x: number, button = 1) =>
+      fireEvent(
+        surface,
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerType: 'mouse',
+          pointerId: 63,
+          button,
+          buttons,
+          clientX: bounds.left + x,
+          clientY: bounds.top + 30,
+        })
+      );
+    pointer('pointerdown', 4, 30);
+    const before = state.current!.viewBounds;
+    if (mode === 'retained button') {
+      pointer('pointerup', 4, 30, 0);
+      pointer('pointermove', 4, 60);
+      await waitFor(() => expect(state.current!.viewBounds).not.toEqual(before));
+      pointer('pointerup', 0, 60);
+    } else pointer('pointermove', 0, 60);
+    const stopped = state.current!.viewBounds;
+    pointer('pointermove', 4, 90);
+    expect(state.current!.viewBounds).toEqual(stopped);
+    expect(changes).not.toHaveBeenCalled();
+    expect(select).not.toHaveBeenCalled();
+    const content = host.querySelector('.konvajs-content')!;
+    expect(
+      fireEvent(content, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }))
+    ).toBe(false);
+  }
+);
 
 it('ignores ordinary drag data when no element-set drop handler is installed', async () => {
   const { host } = await mount();
@@ -480,6 +595,39 @@ it('ignores ordinary drag data when no element-set drop handler is installed', a
   expect(fireEvent.dragOver(host, { dataTransfer: data })).toBe(true);
   expect(fireEvent.drop(host, { dataTransfer: data, clientX: 120, clientY: 180 })).toBe(true);
 });
+
+it.each(['readonly', 'locked', 'pan'] as const)(
+  'keeps native double activation from editing text in %s mode',
+  async mode => {
+    const document = createStudioTemplateDocumentV5('single', 'Read-only activation', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    text.locked = mode === 'locked';
+    document.nodes = document.nodes.filter(node => node.type === 'frame' || node.id === text.id);
+    const { host, changes } = await mount({
+      document,
+      selected: [text.id],
+      editable: mode !== 'readonly',
+    });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${text.id}`)!;
+    const point = group.getAbsoluteTransform().point({ x: 30, y: 30 });
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    if (mode === 'pan') {
+      host.focus();
+      await userEvent.keyboard('[Space>]');
+    }
+    await userEvent.dblClick(surface, {
+      position: {
+        x: (point.x * bounds.width) / stage.width(),
+        y: (point.y * bounds.height) / stage.height(),
+      },
+    } as never);
+    expect(screen.queryByTestId('studio-inline-text-layer')).toBeNull();
+    expect(changes).not.toHaveBeenCalled();
+    if (mode === 'pan') await userEvent.keyboard('[/Space]');
+  }
+);
 
 it.each(['readonly', 'contain'] as const)(
   'keeps the viewport fixed on wheel input in %s mode',

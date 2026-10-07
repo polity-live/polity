@@ -10235,6 +10235,21 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "drags a real selected shape with a %s without changing unrendered siblings"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "handles a native crop drag beginning just beyond the %s frame edge"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ends a middle-button pan after a native %s transition"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps native double activation from editing text in %s mode"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [

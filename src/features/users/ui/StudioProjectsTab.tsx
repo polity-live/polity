@@ -4,7 +4,7 @@ import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function StudioProjectsTab({ userId }: { userId: string }) {
-  const { t } = useTranslation();
+  const t = useTranslation().t;
   const [projects, result] = useQuery(queries.studio.byOwner({ ownerId: userId }));
   if (result.type === 'unknown') return <p role="status">{t('features.studio.loading')}</p>;
   if (result.type === 'error')
