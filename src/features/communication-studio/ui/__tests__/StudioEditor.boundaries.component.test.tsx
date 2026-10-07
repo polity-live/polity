@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { useStudioController } from '../../hooks/useStudioController';
 import { StudioEditor } from '../StudioEditor';
 import { openStudioPanel } from '../../logic/panel-events';
+import type { ReactNode } from 'react';
 
 vi.setConfig({ testTimeout: 15000 });
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -13,10 +14,49 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 afterEach(() => vi.unstubAllGlobals());
 
-function Harness({ projectId = 'project' }: { projectId?: string }) {
+function Harness({
+  projectId = 'project',
+  modeButton,
+}: {
+  projectId?: string;
+  modeButton?: ReactNode;
+}) {
   const controller = useStudioController('group', 'project', vi.fn());
-  return <StudioEditor c={controller} projectId={projectId} groupId="group" open={vi.fn()} />;
+  return (
+    <StudioEditor
+      c={controller}
+      projectId={projectId}
+      groupId="group"
+      open={vi.fn()}
+      modeButton={modeButton}
+    />
+  );
 }
+
+it('renders and activates the procedure mode button inside the actual editor toolbar', async () => {
+  useCanonicalDocument();
+  const switchMode = vi.fn();
+  render(<Harness modeButton={<button onClick={switchMode}>Switch procedure mode</button>} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Switch procedure mode' }));
+  expect(switchMode).toHaveBeenCalledOnce();
+});
+
+it('keeps a queued export visible and reports a rejected status request', async () => {
+  useCanonicalDocument();
+  io.request.mockImplementation(async (op: string) => {
+    if (op === 'export') return { id: 'unavailable-status' };
+    if (op === 'exportStatus') throw new Error('Status endpoint unavailable');
+    return [];
+  });
+  await show();
+  act(() => openStudioPanel('exports'));
+  fireEvent.click(await screen.findByRole('button', { name: /^export$/i }));
+  await waitFor(() =>
+    expect(io.request).toHaveBeenCalledWith('exportStatus', { id: 'unavailable-status' })
+  );
+  expect(await screen.findByText('exportStatusUnavailable')).toBeTruthy();
+  expect(screen.getByText(/PNG · queued · 0%/)).toBeTruthy();
+});
 
 it('reports an empty project clipboard when the browser exposes no clipboard API', async () => {
   useCanonicalDocument();

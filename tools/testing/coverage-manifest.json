@@ -20601,6 +20601,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/rich-text-paint.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20642,6 +20652,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -22830,6 +22850,45 @@
       ]
     },
     {
+      "path": "src/features/communication-studio/logic/rename-studio-node.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+          "project": "unit",
+          "caseId": "trims the name and preserves every unrelated node and property"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not start a transaction for a %s rename"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps the current transaction document intact when the node is %s"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/communication-studio/logic/rich-text-paint.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -23188,6 +23247,45 @@
           "file": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
           "project": "unit",
           "caseId": "retains pixels on a flipped entry and moves a rotated edge along the local axis"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/studio-presence.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps the roster empty before an identity or peers are available"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+          "project": "unit",
+          "caseId": "deduplicates peers, omits the local user and anonymous entries, and retains the newest peer"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+          "project": "unit",
+          "caseId": "shows known remote peers while the local identity is still loading"
         }
       ],
       "suggestedTestRefs": [
@@ -24182,11 +24280,6 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "handles a native crop drag beginning just beyond the %s frame edge"
-        },
-        {
-          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
-          "project": "browser-component",
           "caseId": "ends a middle-button pan after a native %s transition"
         },
         {
@@ -24263,6 +24356,11 @@
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "renders unclipped nested frames and master contents with inherited text fonts"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "handles a native crop drag beginning near the %s frame boundary"
         }
       ],
       "suggestedTestRefs": [
@@ -24964,6 +25062,21 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "activates another canonical frame through the canvas without modifying its document"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "publishes native canvas cursor movement through the document presence transport"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "renders and activates the procedure mode button inside the actual editor toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a queued export visible and reports a rejected status request"
         }
       ],
       "suggestedTestRefs": [
@@ -26992,6 +27105,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -80830,9 +80953,9 @@
         "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
-        "src/features/editor/hooks/__tests__/editor-realtime-version.branch-a03.component.test.tsx"
+        "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx"
       ]
     },
     {
@@ -98261,12 +98384,12 @@
         "e2e/studio-personal-invitation.e2e.spec.ts",
         "e2e/studio-project-chat.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -100107,12 +100230,12 @@
         "e2e/studio-personal-invitation.e2e.spec.ts",
         "e2e/studio-project-chat.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -113285,6 +113408,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
         "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
         "src/presence/__tests__/presence-server.unit.test.ts",
@@ -113295,8 +113419,7 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
-        "src/server/studio/__tests__/collaborators.unit.test.ts",
-        "src/server/studio/__tests__/db.unit.test.ts"
+        "src/server/studio/__tests__/collaborators.unit.test.ts"
       ]
     },
     {

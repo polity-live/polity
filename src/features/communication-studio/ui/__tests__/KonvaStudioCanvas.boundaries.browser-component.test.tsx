@@ -347,6 +347,7 @@ it('ends a space-pan gesture on key release and preserves its resulting view', a
   const { host, ref, changes, select } = await mount();
   host.focus();
   await userEvent.keyboard('[Space>]');
+  fireEvent.keyDown(host, { key: ' ', code: 'Space', repeat: true });
   const surface = [...host.querySelectorAll('canvas')].at(-1)!;
   const bounds = surface.getBoundingClientRect();
   const pointer = (type: string, x: number) =>
@@ -593,8 +594,8 @@ it('opens real image crop controls with default labels and cancels and applies t
   expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
 });
 
-it.each(['left', 'right', 'top', 'bottom', 'outside'] as const)(
-  'handles a native crop drag beginning just beyond the %s frame edge',
+it.each(['left', 'right', 'top', 'bottom', 'corner', 'outside'] as const)(
+  'handles a native crop drag beginning near the %s frame boundary',
   async edge => {
     const document = createStudioTemplateDocumentV5('single', 'Crop edges', defaultBrand);
     const source = document.nodes.find(node => node.type === 'shape')!;
@@ -637,7 +638,9 @@ it.each(['left', 'right', 'top', 'bottom', 'outside'] as const)(
             ? { x: 120, y: -4 }
             : edge === 'bottom'
               ? { x: 120, y: 244 }
-              : { x: 360, y: 80 };
+              : edge === 'corner'
+                ? { x: 10 / group.getAbsoluteScale().x, y: 10 / group.getAbsoluteScale().y }
+                : { x: 360, y: 80 };
     const point = group.getAbsoluteTransform().point(local);
     const surface = [...host.querySelectorAll('canvas')].at(-1)!;
     const bounds = surface.getBoundingClientRect();
@@ -658,7 +661,10 @@ it.each(['left', 'right', 'top', 'bottom', 'outside'] as const)(
     const state = commit.mock.calls[0][1];
     expect(commit.mock.calls[0][0]).toBe(media.id);
     if (edge === 'outside') expect(state.frame).toEqual(media.transform);
-    else if (edge === 'left' || edge === 'right')
+    else if (edge === 'corner') {
+      expect(state.frame.width).not.toBe(media.transform.width);
+      expect(state.frame.height).not.toBe(media.transform.height);
+    } else if (edge === 'left' || edge === 'right')
       expect(state.frame.width).not.toBe(media.transform.width);
     else expect(state.frame.height).not.toBe(240);
     expect(document.nodes.find(node => node.id === media.id)?.transform).toEqual(media.transform);

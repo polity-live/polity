@@ -9643,6 +9643,21 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "activates another canonical frame through the canvas without modifying its document"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "publishes native canvas cursor movement through the document presence transport"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "renders and activates the procedure mode button inside the actual editor toolbar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a queued export visible and reports a rejected status request"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -10254,11 +10269,6 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "handles a native crop drag beginning just beyond the %s frame edge"
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
-        "project": "browser-component",
         "caseId": "ends a middle-button pan after a native %s transition"
       },
       {
@@ -10335,6 +10345,11 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "renders unclipped nested frames and master contents with inherited text fonts"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "handles a native crop drag beginning near the %s frame boundary"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [
@@ -13409,6 +13424,40 @@
         "file": "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "changes document editing mode without replacing content or advancing its revision"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-presence.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the roster empty before an identity or peers are available"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "deduplicates peers, omits the local user and anonymous entries, and retains the newest peer"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-presence.unit.test.ts",
+        "project": "unit",
+        "caseId": "shows known remote peers while the local identity is still loading"
+      }
+    ],
+    "src/features/communication-studio/logic/rename-studio-node.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "trims the name and preserves every unrelated node and property"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not start a transaction for a %s rename"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the current transaction document intact when the node is %s"
       }
     ]
   },

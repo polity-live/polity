@@ -10,6 +10,15 @@ import type { ProjectScope, EditorContext } from '../logic/contracts';
 import { scopeKey } from '../hooks/editor-bridge';
 import { ProjectConversation } from './ProjectConversation';
 
+interface PanelDrag {
+  pointerId: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  direction: 'width' | 'height' | 'both';
+}
+
 export function ProjectChatPanel({
   scope,
   context,
@@ -33,14 +42,7 @@ export function ProjectChatPanel({
     [creating, setCreating] = useState(false);
   const panelId = useId();
   const [size, setSize] = useState<{ width: number; height: number }>();
-  const drag = useRef<{
-    pointerId: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    direction: 'width' | 'height' | 'both';
-  } | null>(null);
+  const drag = useRef<PanelDrag | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const restoreTriggerFocus = useRef(false);
   const autoCreateAttempt = useRef('');

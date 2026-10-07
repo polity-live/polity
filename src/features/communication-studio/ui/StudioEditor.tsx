@@ -63,8 +63,6 @@ import {
   UnlockKeyhole,
   Users,
 } from 'lucide-react';
-import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
-import type { EditorCollaborator, EditorPresencePeer } from '@/features/editor/types';
 import { EditorSaveStatus } from '@/features/editor/ui/EditorSaveStatus';
 import { OnlineCollaboratorAvatars } from '@/features/editor/ui/OnlineCollaboratorAvatars';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -122,6 +120,8 @@ import {
 import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
 import { paletteColor, themeFontFamily } from '../logic/theme';
 import { formatStudioRichText } from '../logic/patch-studio-node';
+import { renameStudioNode } from '../logic/rename-studio-node';
+import { buildStudioPresence } from '../logic/studio-presence';
 import {
   createStudioV3ClipboardPayload,
   getProjectStudioClipboard,
@@ -143,86 +143,6 @@ const KonvaStudioCanvas = lazy(() => import('./KonvaStudioCanvas'));
 const input = 'w-full rounded-md border bg-background px-2 py-1.5 text-sm';
 const button = 'rounded-md border px-3 py-2 text-sm hover:bg-muted disabled:opacity-40';
 
-interface StudioPresencePeer {
-  userId?: string;
-  user?: {
-    id?: string;
-    name?: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    avatar?: string | null;
-    color?: string;
-  };
-  cursor?: { pageId?: string };
-}
-
-function buildStudioPresence(
-  identity: {
-    id: string;
-    name: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    avatarUrl?: string;
-  },
-  peers: Record<string, unknown>[]
-) {
-  const normalizedPeers = peers as StudioPresencePeer[];
-  const peerByUserId = new Map<string, StudioPresencePeer>();
-
-  for (const peer of normalizedPeers) {
-    const userId = peer.userId ?? peer.user?.id;
-    if (userId && userId !== identity.id) peerByUserId.set(userId, peer);
-  }
-
-  const userIds = [identity.id, ...peerByUserId.keys()].filter(Boolean);
-  const presenceColorByUserId = generateDistinctUserColorMap(userIds);
-  const collaborators: EditorCollaborator[] = [];
-
-  if (identity.id) {
-    collaborators.push({
-      id: `studio-presence-${identity.id}`,
-      user: {
-        id: identity.id,
-        name: identity.name,
-        firstName: identity.firstName,
-        lastName: identity.lastName,
-        avatarUrl: identity.avatarUrl,
-      },
-      canEdit: true,
-      status: 'collaborator',
-    });
-  }
-
-  const onlinePeerMap = new Map<string, EditorPresencePeer>();
-  const activeCursorUserIds = new Set<string>();
-
-  for (const [userId, peer] of peerByUserId) {
-    const name = peer.user?.name || 'Polity';
-    const color = presenceColorByUserId.get(userId) ?? peer.user?.color ?? '#B88A3B';
-    collaborators.push({
-      id: `studio-presence-${userId}`,
-      user: {
-        id: userId,
-        name,
-        firstName: peer.user?.firstName,
-        lastName: peer.user?.lastName,
-        avatarUrl: peer.user?.avatar ?? undefined,
-      },
-      canEdit: true,
-      status: 'collaborator',
-    });
-    onlinePeerMap.set(userId, {
-      peerId: userId,
-      userId,
-      name,
-      avatar: peer.user?.avatar ?? undefined,
-      color,
-    });
-    if (peer.cursor) activeCursorUserIds.add(userId);
-  }
-
-  return { collaborators, onlinePeerMap, activeCursorUserIds, presenceColorByUserId };
-}
 export function StudioEditor({
   c,
   projectId,
@@ -1845,23 +1765,14 @@ function StudioEditorReady({
                 selectedNodeIds={selectedNodeIds}
                 disabled={disabled}
                 tr={tr}
-                onRename={(nodeId, name) => {
-                  if (disabled) return;
-                  const normalizedName = name.trim();
-                  if (!normalizedName || normalizedName.length > 200) return;
-                  c.transactV3(document => {
-                    const node = document.nodes.find(candidate => candidate.id === nodeId);
-                    if (!node || node.locked || node.name === normalizedName) return;
-                    Object.assign(
-                      document,
-                      applyStudioCommandV3(document, {
-                        type: 'updateNode',
-                        nodeId,
-                        patch: { name: normalizedName },
-                      })
-                    );
-                  });
-                }}
+                onRename={(nodeId, name) =>
+                  renameStudioNode({
+                    nodeId,
+                    name,
+                    editable: !disabled,
+                    transact: c.transactV3,
+                  })
+                }
                 onSelect={(node, rootFrameId) => {
                   if (rootFrameId) c.setPageId(rootFrameId);
                   c.selectExact([node.id]);
