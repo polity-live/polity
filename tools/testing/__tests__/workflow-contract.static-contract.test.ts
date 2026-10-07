@@ -13,6 +13,19 @@ function repositoryFile(...segments: string[]) {
 }
 
 describe('GitHub workflow contracts', () => {
+  it('installs browser dependencies from the official HTTPS mirror with bounded network waits', () => {
+    const ci = workflow('ci.yml');
+    for (const job of ['browser-component-tests', 'e2e-tests']) {
+      const start = ci.indexOf(`  ${job}:`);
+      const section = ci.slice(start).split(/\r?\n {2}\S/)[0];
+      expect(section).toContain('https://archive.ubuntu.com/ubuntu');
+      expect(section).toContain('/etc/apt/apt-mirrors.txt');
+      expect(section).toContain('Acquire::http::Timeout "30";');
+      expect(section).toContain('Acquire::https::Timeout "30";');
+      expect(section).toContain('Acquire::Retries "2";');
+      expect(section).toContain('pnpm exec playwright install --with-deps chromium');
+    }
+  });
   it('requires complete per-file coverage for new Studio Zero code in CI', () => {
     const ci = workflow('ci.yml');
     const unit = ci.slice(ci.indexOf('  unit-tests:'), ci.indexOf('  component-tests:'));
