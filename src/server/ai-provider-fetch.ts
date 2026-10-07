@@ -21,7 +21,8 @@ export const aiProviderFetch: typeof fetch = async (input, init) => {
   }
   const started = Date.now();
   const maximum = root.retryProvider ? 3 : 1;
-  for (let attempt = 1; attempt <= maximum; attempt++) {
+  // The final attempt returns its HTTP response, including a final 429.
+  for (let attempt = 1; ; attempt++) {
     const operation = await startAiOperation('provider', 'request', body, { attempt }, context);
     try {
       const response = await fetch(input, init);
@@ -70,5 +71,4 @@ export const aiProviderFetch: typeof fetch = async (input, init) => {
       throw error;
     }
   }
-  throw new Error('Unreachable provider retry state');
 };

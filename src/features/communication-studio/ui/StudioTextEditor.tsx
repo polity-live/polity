@@ -35,6 +35,27 @@ export interface StudioTextSelectionEditor {
   setMark: (key: string, value: unknown) => void;
   paragraph: (key: string, value: unknown) => void;
 }
+/** Slate paste and split operations can introduce missing or duplicate paragraph identities. */
+export function normalizeStudioLegacyParagraphs(
+  value: readonly { id?: unknown; children: unknown[]; [key: string]: unknown }[],
+  repairIdentity: (id: string, index: number) => void
+) {
+  const seen = new Set<string>();
+  return value.map((node, index) => {
+    let id = typeof node.id === 'string' ? node.id : '';
+    if (!id || seen.has(id)) {
+      id = crypto.randomUUID();
+      repairIdentity(id, index);
+    }
+    seen.add(id);
+    return {
+      ...node,
+      id,
+      type: 'p' as const,
+      children: node.children as StudioElement['richText'][number]['children'],
+    };
+  });
+}
 export function StudioTextEditor({
   element,
   onChange,
@@ -104,20 +125,8 @@ export function StudioTextEditor({
     <Plate
       editor={editor}
       onValueChange={({ value }) => {
-        const seen = new Set<string>();
-        const richText = value.map((n, index) => {
-          let id = typeof n.id === 'string' ? n.id : '';
-          if (!id || seen.has(id)) {
-            id = crypto.randomUUID();
-            queueMicrotask(() => editor.tf.setNodes({ id }, { at: [index] }));
-          }
-          seen.add(id);
-          return {
-            ...n,
-            id,
-            type: 'p' as const,
-            children: n.children as StudioElement['richText'][number]['children'],
-          };
+        const richText = normalizeStudioLegacyParagraphs(value, (id, index) => {
+          queueMicrotask(() => editor.tf.setNodes({ id }, { at: [index] }));
         });
         const patch = {
           richText,

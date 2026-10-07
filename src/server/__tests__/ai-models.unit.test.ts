@@ -4,6 +4,7 @@ vi.mock('@/server/ai-trace-store', () => ({
   finishAiOperation: vi.fn(),
 }));
 import { aiProviderFetch } from '../ai-provider-fetch';
+import { withAiTrace, type AiTraceContext } from '../ai-trace';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -41,6 +42,79 @@ import {
 const originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY;
 const originalViteAppUrl = process.env.VITE_APP_URL;
 const originalFetch = globalThis.fetch;
+
+describe('model catalog and Studio fallback boundaries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listAiCredentialSummaries.mockResolvedValue([]);
+    mocks.getDecryptedAiCredential.mockResolvedValue(null);
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    globalThis.fetch = originalFetch;
+  });
+
+  it('deduplicates repeated provider model identities while preserving distinct descriptors', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'duplicate-catalog-fixture');
+    const entry = { id: 'duplicate:free', name: 'Repeated', pricing: { prompt: 0, completion: 0 } };
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(openRouterResponse([entry, entry, { ...entry, id: 'distinct:free' }]));
+    const catalog = await getAiCatalog('actor');
+    expect(catalog.models.map(model => model.id).sort()).toEqual([
+      'distinct:free',
+      'duplicate:free',
+    ]);
+  });
+
+  it('rejects implicit Studio inference without configured application access', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', '');
+    await expect(resolveStudioFreeModel()).rejects.toThrow('Free Studio AI is not configured');
+    await expect(resolveStudioGenerationModelForUser('actor')).rejects.toThrow(
+      'Free Studio AI is not configured'
+    );
+  });
+
+  it('resolves an omitted Studio descriptor using the verified free application catalog', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'implicit-studio-fixture');
+    vi.stubEnv('STUDIO_AI_MODEL_ID', 'implicit:free');
+    const { provider, chatModel } = createOpenAiProviderMock();
+    mocks.createOpenAI.mockReturnValue(provider);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      openRouterResponse([
+        {
+          id: 'implicit:free',
+          pricing: { prompt: 0, completion: 0 },
+          supported_parameters: ['response_format'],
+        },
+      ])
+    );
+    expect(await resolveStudioGenerationModelForUser('actor')).toMatchObject({
+      model: chatModel,
+      supportsStructuredOutput: true,
+    });
+    expect(provider.chat).toHaveBeenCalledWith('implicit:free');
+    expect(mocks.getDecryptedAiCredential).not.toHaveBeenCalled();
+  });
+
+  it('binds the selected credential descriptor to the current diagnostic trace', async () => {
+    const descriptor = { provider: 'openai', id: 'gpt-4.1', source: 'byok' } as const;
+    mocks.getDecryptedAiCredential.mockResolvedValue('personal-credential-fixture');
+    const { provider, responseModel } = createOpenAiProviderMock();
+    mocks.createOpenAI.mockReturnValue(provider);
+    const context: AiTraceContext = {
+      traceId: crypto.randomUUID(),
+      actorId: 'actor',
+      surface: 'studio',
+      invocation: 'test',
+    };
+    const resolved = await withAiTrace(context, () =>
+      resolveLanguageModelForUser('actor', descriptor, 'medium')
+    );
+    expect(context.model).toEqual(descriptor);
+    expect(resolved.model).toBe(responseModel);
+  });
+});
 
 function createOpenAiProviderMock() {
   const responseModel = { transport: 'responses' };

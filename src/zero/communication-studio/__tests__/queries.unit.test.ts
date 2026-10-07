@@ -16,6 +16,83 @@ function access(table: string) {
   return evaluatePredicate(call?.[1]);
 }
 describe('Studio Zero visibility projections', () => {
+  it.each(['alice', undefined, null, 'anon', ''])(
+    'filters owner and document projections by current identity %s',
+    userID => {
+      const ctx = { userID, email: '' } as any;
+      studioQueries.byOwner.fn({ args: { ownerId: 'owner' }, ctx });
+      expect(harness.lastQuery('studio_project').calls).toEqual(
+        expect.arrayContaining([
+          ['where', 'owner_id', 'owner'],
+          ['orderBy', 'updated_at', 'desc'],
+          ['limit', 100],
+        ])
+      );
+      expect(access('studio_project')).toContainEqual(['cmp', 'visibility', 'public']);
+      expect(JSON.stringify(access('studio_project')).includes('authenticated')).toBe(
+        userID === 'alice'
+      );
+      studioQueries.document.fn({ args: { id: 'project' }, ctx });
+      expect(harness.lastQuery('studio_state').calls).toContainEqual([
+        'where',
+        'project_id',
+        'project',
+      ]);
+      expect(access('studio_state.project')).toContainEqual(['cmp', 'visibility', 'public']);
+      studioQueries.list.fn({ args: { groupId: null }, ctx });
+      expect(JSON.stringify(access('studio_project')).includes('authenticated')).toBe(
+        userID === 'alice'
+      );
+      studioQueries.project.fn({ args: { id: 'project' }, ctx });
+      expect(harness.lastQuery('studio_project').calls).toContainEqual(['where', 'id', 'project']);
+      expect(JSON.stringify(access('studio_project')).includes('authenticated')).toBe(
+        userID === 'alice'
+      );
+    }
+  );
+
+  it.each(['alice', undefined, null, 'anon', ''])(
+    'protects shared workspaces and proposals for identity %s using collaborative project and reader rights',
+    userID => {
+      const actor = userID === 'alice' ? userID : '00000000-0000-0000-0000-000000000000';
+      const ctx = { userID, email: '' } as any;
+      studioQueries.workspace.fn({ args: { projectId: 'project', workspaceId: 'workspace' }, ctx });
+      expect(harness.lastQuery('canvas_proposal').calls).toEqual(
+        expect.arrayContaining([
+          ['where', 'project_id', 'project'],
+          ['where', 'id', 'workspace'],
+          ['one'],
+        ])
+      );
+      expect(access('canvas_proposal')).toEqual(
+        expect.arrayContaining([
+          ['cmp', 'checksum', 'IS NOT', null],
+          ['cmp', 'owner_id', actor],
+          ['where', 'readers', 'user_id', actor],
+        ])
+      );
+      expect(harness.lastQuery('canvas_proposal.project').calls).toContainEqual([
+        'where',
+        'group_id',
+        'IS NOT',
+        null,
+      ]);
+      expect(access('canvas_proposal.project')).toContainEqual([
+        'where',
+        'collaborators',
+        'user_id',
+        actor,
+      ]);
+      expect(JSON.stringify(access('canvas_proposal.project'))).not.toContain('visibility');
+      studioQueries.proposals.fn({ args: { projectId: 'project' }, ctx });
+      expect(harness.lastQuery('canvas_proposal').calls).toContainEqual([
+        'orderBy',
+        'updated_at',
+        'desc',
+      ]);
+      expect(access('canvas_proposal')).toContainEqual(['where', 'readers', 'user_id', actor]);
+    }
+  );
   it('offers only manageable groups as clone and create targets', () => {
     studioQueries.manageGroups.fn({ args: undefined, ctx: { userID: 'alice', email: '' } });
     expect(access('group')).toContainEqual([

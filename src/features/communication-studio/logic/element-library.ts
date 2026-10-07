@@ -14,12 +14,17 @@ export const elementLibraryAssetSchema = z.object({
   mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'video/mp4']),
 });
 
-export const elementSetSnapshotSchema = z.object({
-  nodes: z.array(studioNodeSchema).min(1).max(5_000),
-  width: z.number().finite().positive().max(100_000),
-  height: z.number().finite().positive().max(100_000),
-  assets: z.array(elementLibraryAssetSchema).max(100),
-});
+export const elementSetSnapshotSchema = z
+  .object({
+    nodes: z.array(studioNodeSchema).min(1).max(5_000),
+    width: z.number().finite().positive().max(100_000),
+    height: z.number().finite().positive().max(100_000),
+    assets: z.array(elementLibraryAssetSchema).max(100),
+  })
+  .refine(
+    snapshot => new Set(snapshot.nodes.map(node => node.id)).size === snapshot.nodes.length,
+    'Element set node identities must be unique'
+  );
 export type ElementSetSnapshot = z.infer<typeof elementSetSnapshotSchema>;
 
 export const elementSetListItemSchema = z.object({
@@ -69,10 +74,12 @@ export function createElementSetSnapshot(
   const ids = descendants(document, roots);
   const chosen = document.nodes.filter(node => ids.has(node.id));
   if (!chosen.length) throw new Error('Select one or more elements, not a root frame');
-  const minX = Math.min(...chosen.map(node => node.transform.x));
-  const minY = Math.min(...chosen.map(node => node.transform.y));
-  const maxX = Math.max(...chosen.map(node => node.transform.x + node.transform.width));
-  const maxY = Math.max(...chosen.map(node => node.transform.y + node.transform.height));
+  // Descendant transforms remain relative to their copied parent frame.
+  const topLevel = chosen.filter(node => !node.parentFrameId || !ids.has(node.parentFrameId));
+  const minX = Math.min(...topLevel.map(node => node.transform.x));
+  const minY = Math.min(...topLevel.map(node => node.transform.y));
+  const maxX = Math.max(...topLevel.map(node => node.transform.x + node.transform.width));
+  const maxY = Math.max(...topLevel.map(node => node.transform.y + node.transform.height));
   const usedAssets = new Set(
     chosen.flatMap(node =>
       node.type === 'media'
@@ -88,8 +95,14 @@ export function createElementSetSnapshot(
       parentFrameId: node.parentFrameId && ids.has(node.parentFrameId) ? node.parentFrameId : null,
       transform: {
         ...node.transform,
-        x: node.transform.x - minX,
-        y: node.transform.y - minY,
+        x:
+          node.parentFrameId && ids.has(node.parentFrameId)
+            ? node.transform.x
+            : node.transform.x - minX,
+        y:
+          node.parentFrameId && ids.has(node.parentFrameId)
+            ? node.transform.y
+            : node.transform.y - minY,
       },
     })),
     width: Math.max(1, maxX - minX),
@@ -102,6 +115,7 @@ export function createElementSetSnapshot(
 
 function remapNode(
   source: StudioNode,
+  nodeId: string,
   nodeIds: Map<string, string>,
   groupIds: Map<string, string>,
   assetIds: Map<string, string>,
@@ -111,14 +125,14 @@ function remapNode(
   zIndex: number
 ): StudioNode {
   const next = structuredClone(source);
-  const nodeId = nodeIds.get(source.id);
-  if (!nodeId) throw new Error(`Missing node mapping for ${source.id}`);
   next.id = nodeId;
   next.parentFrameId = source.parentFrameId
     ? (nodeIds.get(source.parentFrameId) ?? targetFrameId)
     : targetFrameId;
-  next.transform.x += x;
-  next.transform.y += y;
+  if (!source.parentFrameId || !nodeIds.has(source.parentFrameId)) {
+    next.transform.x += x;
+    next.transform.y += y;
+  }
   next.zIndex += zIndex;
   next.groupIds = source.groupIds.map(id => {
     const mapped = groupIds.get(id) ?? crypto.randomUUID();
@@ -149,12 +163,14 @@ export function instantiateElementSet(
   }
 ) {
   const parsed = elementSetSnapshotSchema.parse(snapshot);
-  const nodeIds = new Map(parsed.nodes.map(node => [node.id, crypto.randomUUID()]));
+  const entries = parsed.nodes.map(node => ({ node, id: crypto.randomUUID() }));
+  const nodeIds = new Map(entries.map(({ node, id }) => [node.id, id]));
   const groupIds = new Map<string, string>();
   const assetIds = new Map(Object.entries(values.assetIds ?? {}));
-  const nodes = parsed.nodes.map(node =>
+  const nodes = entries.map(({ node, id }) =>
     remapNode(
       node,
+      id,
       nodeIds,
       groupIds,
       assetIds,
@@ -188,47 +204,13 @@ export function mergeElementSetRevision(
   if (!instance) return;
   const oldById = new Map(previous.nodes.map(node => [node.id, node]));
   const newById = new Map(next.nodes.map(node => [node.id, node]));
-  for (const [sourceId, instanceNodeId] of Object.entries(instance.sourceToInstance)) {
-    const local = document.nodes.find(node => node.id === instanceNodeId);
-    const upstream = newById.get(sourceId);
-    if (!local) {
-      if (!instance.localDeletions.includes(sourceId)) instance.localDeletions.push(sourceId);
-      continue;
-    }
-    if (!upstream) {
-      const changed = (instance.localOverrides[sourceId] ?? []).length > 0;
-      if (changed) {
-        instance.detachedNodes.push(local.id);
-        Reflect.deleteProperty(instance.sourceToInstance, sourceId);
-        local.componentRef = null;
-      } else document.nodes = document.nodes.filter(node => node.id !== local.id);
-      continue;
-    }
-    const overrides = new Set(instance.localOverrides[sourceId] ?? []);
-    const old = oldById.get(sourceId);
-    const updated = structuredClone(upstream) as Record<string, unknown>;
-    const current = local as unknown as Record<string, unknown>;
-    for (const field of [
-      'name',
-      'transform',
-      'style',
-      'visible',
-      'locked',
-      'constraints',
-      'animation',
-    ])
-      if (
-        overrides.has(field) ||
-        (old &&
-          JSON.stringify(current[field]) !==
-            JSON.stringify((old as unknown as Record<string, unknown>)[field]))
-      )
-        updated[field] = current[field];
-    Object.assign(local, updated, { id: local.id, componentRef: sourceId });
-  }
-  const anchorEntry = Object.entries(instance.sourceToInstance).find(([, nodeId]) =>
-    document.nodes.some(node => node.id === nodeId)
-  );
+  const anchorEntry = Object.entries(instance.sourceToInstance).find(([sourceId, nodeId]) => {
+    const source = oldById.get(sourceId);
+    return (
+      document.nodes.some(node => node.id === nodeId) &&
+      (!source?.parentFrameId || !instance.sourceToInstance[source.parentFrameId])
+    );
+  });
   const anchorNode = anchorEntry
     ? document.nodes.find(node => node.id === anchorEntry[1])
     : undefined;
@@ -243,43 +225,64 @@ export function mergeElementSetRevision(
   const additions = next.nodes.filter(
     node => !instance.sourceToInstance[node.id] && !instance.localDeletions.includes(node.id)
   );
-  if (additions.length) {
-    const created = instantiateElementSet(
-      { ...next, nodes: additions },
-      {
-        setId: instance.setId,
-        revisionId,
-        targetFrameId: offset.parentFrameId,
-        x: offset.x,
-        y: offset.y,
-      }
-    ).nodes;
-    const createdBySource = new Map(
-      created.flatMap(node => (node.componentRef ? ([[node.componentRef, node]] as const) : []))
-    );
-    for (const source of additions) {
-      const node = createdBySource.get(source.id);
-      if (!node) continue;
-      if (source.parentFrameId)
-        node.parentFrameId =
-          createdBySource.get(source.parentFrameId)?.id ??
-          instance.sourceToInstance[source.parentFrameId] ??
-          offset.parentFrameId;
-      if (node.type === 'shape' && source.type === 'shape') {
-        node.startBindingId = source.startBindingId
-          ? (createdBySource.get(source.startBindingId)?.id ??
-            instance.sourceToInstance[source.startBindingId] ??
-            null)
-          : null;
-        node.endBindingId = source.endBindingId
-          ? (createdBySource.get(source.endBindingId)?.id ??
-            instance.sourceToInstance[source.endBindingId] ??
-            null)
-          : null;
-      }
-      instance.sourceToInstance[source.id] = node.id;
-      document.nodes.push(node);
+  const createdIds = additions.map(source => ({ source, id: crypto.randomUUID() }));
+  const nodeIds = new Map([
+    ...Object.entries(instance.sourceToInstance),
+    ...createdIds.map(({ source, id }) => [source.id, id] as const),
+  ]);
+  const groupIds = new Map<string, string>();
+  const assetIds = new Map<string, string>();
+  for (const [sourceId, instanceNodeId] of Object.entries(instance.sourceToInstance)) {
+    const old = oldById.get(sourceId);
+    const local = document.nodes.find(node => node.id === instanceNodeId);
+    if (!old || !local) continue;
+    old.groupIds.forEach((group, index) => {
+      const mapped = local.groupIds[index];
+      if (mapped) groupIds.set(group, mapped);
+    });
+    if (old.type === 'media' && local.type === 'media') assetIds.set(old.assetId, local.assetId);
+    if (old.type === 'chart' && local.type === 'chart' && old.sourceAssetId && local.sourceAssetId)
+      assetIds.set(old.sourceAssetId, local.sourceAssetId);
+  }
+  const remap = (source: StudioNode, id: string) =>
+    remapNode(source, id, nodeIds, groupIds, assetIds, offset.parentFrameId, offset.x, offset.y, 0);
+  for (const [sourceId, instanceNodeId] of Object.entries(instance.sourceToInstance)) {
+    const local = document.nodes.find(node => node.id === instanceNodeId);
+    const upstream = newById.get(sourceId);
+    if (!local) {
+      if (!instance.localDeletions.includes(sourceId)) instance.localDeletions.push(sourceId);
+      continue;
     }
+    if (!upstream) {
+      const changed = (instance.localOverrides[sourceId] ?? []).length > 0;
+      if (changed) {
+        instance.detachedNodes.push(local.id);
+        local.componentRef = null;
+      } else document.nodes = document.nodes.filter(node => node.id !== local.id);
+      Reflect.deleteProperty(instance.sourceToInstance, sourceId);
+      continue;
+    }
+    const overrides = new Set(instance.localOverrides[sourceId] ?? []);
+    const old = oldById.get(sourceId);
+    const baseline = old
+      ? (remap(old, instanceNodeId) as unknown as Record<string, unknown>)
+      : undefined;
+    const updated = remap(upstream, instanceNodeId) as unknown as Record<string, unknown>;
+    const current = local as unknown as Record<string, unknown>;
+    for (const field of Object.keys(updated)) {
+      if (field === 'id' || field === 'componentRef') continue;
+      if (
+        overrides.has(field) ||
+        (baseline && JSON.stringify(current[field]) !== JSON.stringify(baseline[field]))
+      )
+        updated[field] = current[field];
+    }
+    Object.assign(local, updated, { id: local.id, componentRef: sourceId });
+  }
+  for (const { source, id } of createdIds) {
+    const node = remap(source, id);
+    instance.sourceToInstance[source.id] = id;
+    document.nodes.push(node);
   }
   instance.revisionId = revisionId;
 }

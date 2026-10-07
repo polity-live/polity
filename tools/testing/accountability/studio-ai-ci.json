@@ -913,6 +913,71 @@
       {
         "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "project": "unit",
+        "caseId": "retains child local coordinates when saving and inserting a nested frame selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps instance frame, group and binding references when the linked source revision changes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects empty, missing, root, master and deliverable frame selections"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "includes only referenced media and chart assets, leaving unrelated assets and inputs untouched"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "remaps internal bindings and discards dangling bindings on insertion"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores missing instances and inserts upstream additions when every old instance node is gone"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "detaches locally overridden upstream deletions and removes unchanged upstream deletions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves implicit and recorded local overrides while applying untouched upstream fields"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "remaps new children and arrows against both existing and newly added instance nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "reconciles a source absent from the older snapshot without inventing a prior override"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate source identities before creating an ambiguous linked instance"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains a copied %s asset identity across linked revisions"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
+        "caseId": "tracks unchanged, new, missing and deleted instance nodes without repeating tombstones"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "project": "unit",
         "caseId": "normalizes a selection and instantiates it with fresh node and group ids"
       },
       {
@@ -2029,6 +2094,41 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "drops a canvas node into the open Elements menu and moves normally elsewhere"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies and removes toolbar marks to the actual selected %s editor text"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "publishes native typing with stable node identities, links, highlight and external content updates"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders legacy %s alignment and preserves explicit false marks across remote and typed changes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps %s toolbar actions usable after DOM selection moves outside or to another editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "normalizes incomplete pasted native blocks and leaves while retaining supported content fields"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects malformed native content and retains nested supported paragraph and leaf metadata"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "repairs only missing, empty and duplicate legacy paragraph identities without mutating the input"
       }
     ],
     "src/features/communication-studio/ui/StudioInvitations.tsx": [
@@ -2756,6 +2856,41 @@
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "keeps a partial editor selection when a text-menu action takes focus"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "applies and removes toolbar marks to the actual selected %s editor text"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "publishes native typing with stable node identities, links, highlight and external content updates"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders legacy %s alignment and preserves explicit false marks across remote and typed changes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextFormatting.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps %s toolbar actions usable after DOM selection moves outside or to another editor"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "normalizes incomplete pasted native blocks and leaves while retaining supported content fields"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects malformed native content and retains nested supported paragraph and leaf metadata"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "repairs only missing, empty and duplicate legacy paragraph identities without mutating the input"
       }
     ],
     "src/features/communication-studio/ui/StudioToolbarMenu.tsx": [
@@ -4786,6 +4921,61 @@
         "file": "src/server/__tests__/ai-generation.unit.test.ts",
         "project": "unit",
         "caseId": "records accepted-stream errors without leaking the raw exception to console"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores invalid Retry-After value %s"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "accepts zero, seconds and future dates while rejecting elapsed dates"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "passes requests through unchanged when there is no active diagnostic trace"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "records %s requests in the current model operation and returns accepted responses without consuming them"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "records rejected non-retryable responses with their actual body and headers"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "retries only rate-limited responses and forwards the %s abort signal"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "caps retries at three requests and applies exponential delay only to rejected HTTP responses"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "honors the total retry budget without waiting or replaying an oversized Retry-After"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a rate-limit response immediately when retrying is disabled"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains thrown fetch failures without replaying an accepted request (%s)"
+      },
+      {
+        "file": "src/server/__tests__/ai-provider-fetch.unit.test.ts",
+        "project": "unit",
+        "caseId": "stops retrying when the delay is cancelled and retains the cancellation diagnostic"
       }
     ],
     "src/server/ai-trace-store.ts": [
@@ -6819,6 +7009,21 @@
         "file": "src/zero/__tests__/registry-smoke.unit.test.ts",
         "project": "unit",
         "caseId": "loads the composed schema, query registry, and mutator registries without a database"
+      },
+      {
+        "file": "src/zero/project-chat/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "lists only the requested %s project conversations under current access"
+      },
+      {
+        "file": "src/zero/project-chat/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects %s through the conversation relation and applies its bounded history limit"
+      },
+      {
+        "file": "src/zero/project-chat/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies project conversation replication for identity %s"
       }
     ],
     "src/zero/project-chat/server-mutators.ts": [
@@ -9135,6 +9340,180 @@
         "file": "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
         "project": "unit",
         "caseId": "remaps brand colors and fonts while retaining independently styled pages and elements"
+      }
+    ],
+    "src/zero/communication-studio/queries.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "filters owner and document projections by current identity %s"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects shared workspaces and proposals for identity %s using collaborative project and reader rights"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "offers only manageable groups as clone and create targets"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "shows group creation only to the owner or a role with projects:manage"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "scopes lists to the requested workspace (%s) and requires project rights for group members"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "limits unauthenticated identity %s to public projects"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects each export through its parent project and caps the recent job list"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "never exposes a legacy document through a direct project lookup"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "restricts operation receipts to their actor and current project access"
+      }
+    ],
+    "src/server/ai-models.ts": [
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "deduplicates repeated provider model identities while preserving distinct descriptors"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects implicit Studio inference without configured application access"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves an omitted Studio descriptor using the verified free application catalog"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "binds the selected credential descriptor to the current diagnostic trace"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the app key and confirms both prices instead of trusting a free suffix or paid preference"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails closed when the catalog has no model with confirmed zero prices"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses only the requesting actor’s selected OpenAI access for Studio generation"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not silently replace an unavailable personal Studio model with a free model"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an app Studio model whose zero prices cannot be verified"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses OpenAI-compatible chat completions for app-level OpenRouter free models"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses OpenAI-compatible chat completions for BYOK OpenRouter models"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps native OpenAI model resolution on the OpenAI provider"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps Anthropic model resolution and reasoning provider options"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "parses, filters, deduplicates and orders app and BYOK model catalogs"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the first app-free model when the exact router is absent and leaves an index-zero default"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns credentials without models when no providers are configured"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses a valid cache entry and refreshes it after expiry"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "coalesces an in-flight app catalog request"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a newer in-flight key while an older request finishes"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "never uses a saved personal key when the caller explicitly selects app access"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not fall back to the app key if an explicitly selected personal key is missing"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects ChatGPT inference and invalid app sources even with personal credentials present"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires an app OpenRouter key and restricts app models to the free catalog"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "detects an app key removed while its free catalog is loading"
+      },
+      {
+        "file": "src/server/__tests__/ai-models.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires personal OpenAI and Anthropic credentials"
       }
     ]
   },

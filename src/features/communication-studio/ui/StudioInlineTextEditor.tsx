@@ -38,7 +38,7 @@ function Paragraph(props: PlateElementProps) {
   );
 }
 
-function normalizeContent(value: unknown[]): StudioPlateElement[] {
+export function normalizeStudioTextContent(value: unknown[]): StudioPlateElement[] {
   const normalize = (raw: unknown): unknown => {
     const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const id = typeof item.id === 'string' ? item.id : crypto.randomUUID();
@@ -109,8 +109,19 @@ export function StudioInlineTextEditor({
     }
   }, [editor, node.content]);
   useEffect(() => {
+    const syncSelection = () => {
+      const selection = window.getSelection();
+      if (selection?.anchorNode?.parentElement?.closest('[data-slate-editor="true"]')) {
+        const range = editor.api.toSlateRange(selection, {
+          exactMatch: false,
+          suppressThrow: true,
+        });
+        if (range) editor.tf.select(range);
+      }
+    };
     register({
       mark: (key, value) => {
+        syncSelection();
         if (key === 'url') {
           editor.tf.setNodes({ url: value });
           return;
@@ -120,10 +131,14 @@ export function StudioInlineTextEditor({
         else editor.tf.addMark(key, value);
       },
       setMark: (key, value) => {
+        syncSelection();
         if (value === null) editor.tf.removeMark(key);
         else editor.tf.addMark(key, value);
       },
-      paragraph: (key, value) => editor.tf.setNodes({ [key]: value }),
+      paragraph: (key, value) => {
+        syncSelection();
+        editor.tf.setNodes({ [key]: value });
+      },
     });
     return () => register(null);
   }, [editor, register]);
@@ -131,7 +146,7 @@ export function StudioInlineTextEditor({
     <Plate
       editor={editor}
       onValueChange={({ value }) => {
-        const content = normalizeContent(value);
+        const content = normalizeStudioTextContent(value);
         published.current = stableJson(content);
         onChange(content);
       }}
