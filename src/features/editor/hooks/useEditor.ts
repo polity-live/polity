@@ -606,7 +606,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
       if (pendingContentSave.current) await pendingContentSave.current;
       if (hasUnsavedChanges) await saveContent(latestEditorContent.current, true);
-      if (saveStatus === 'error') throw new Error('Save the document before starting the AI.');
+      // Both awaited save paths propagate server rejection. The rendered saveStatus can
+      // still describe a previous failure after this retry has already been accepted.
       return {
         surface: 'amendment_text',
         selection: projectTextSelection(contentEntityId),

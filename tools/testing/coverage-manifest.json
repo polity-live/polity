@@ -34585,6 +34585,76 @@
             "coveredStatements": 200,
             "totalStatements": 378
           }
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "publishes the persisted revision and the latest text selection before an amendment AI request"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "serializes overlapping confirmed saves and advances the revision only after each acceptance"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "flushes a throttled trailing edit immediately and cancels its delayed duplicate save"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "waits for an in-flight server confirmation before releasing the editor context"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the new document revision when an older document save completes after a context switch"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "propagates rejected dirty flushes and allows a later confirmed retry to start the AI"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "enables orphaned change-request reconciliation for normal collaborative amendment saves"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes the localized tutorial amendment text immediately: %s"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "does not enable orphan reconciliation when restoring a version in collaborative mode"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "persists amendment mode changes to the document when no process branch exists"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "adopts canonical remote content in internal voting even with an older timestamp"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "does not publish a local save echo back through the controlled content value"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the controlled content value stable when only CR metadata changes"
+        },
+        {
+          "file": "src/features/editor/hooks/__tests__/useEditor.component.test.tsx",
+          "project": "component",
+          "caseId": "adopts genuinely different remote content outside voting modes"
         }
       ],
       "suggestedTestRefs": [

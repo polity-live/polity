@@ -1,6 +1,10 @@
 /* @vitest-environment jsdom */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import {
+  flushProjectEditor,
+  useProjectTextSelection,
+} from '@/features/project-chat/hooks/editor-bridge';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hookMocks = vi.hoisted(() => ({
@@ -123,6 +127,7 @@ vi.mock('@/features/app-tutorial/events', () => ({
 import { useEditor } from '../useEditor';
 
 beforeEach(() => {
+  hookMocks.waitForClientApply.mockReset().mockResolvedValue(undefined);
   hookMocks.amendmentDocsCollabs = {
     ...hookMocks.amendmentDocsCollabs,
     change_requests: [],
@@ -139,12 +144,160 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   Object.values(hookMocks).forEach(value => {
     if (vi.isMockFunction(value)) value.mockClear();
   });
 });
 
 describe('useEditor', () => {
+  const bridgeScope = { kind: 'amendment' as const, amendmentId: 'amendment-1' };
+  const edited = (text: string) => [{ type: 'p', children: [{ text }] }];
+  function renderEditableAmendment() {
+    hookMocks.amendmentDocsCollabs.document.editing_mode = 'edit';
+    return renderHook(() =>
+      useEditor({ entityType: 'amendment', entityId: 'amendment-1', userId: 'user-1' })
+    );
+  }
+
+  it('publishes the persisted revision and the latest text selection before an amendment AI request', async () => {
+    hookMocks.amendmentDocsCollabs.document.content_revision = 7;
+    const selection = { anchor: { path: [0, 0], offset: 1 }, focus: { path: [0, 0], offset: 3 } };
+    renderHook(() => useProjectTextSelection('document-1', () => selection));
+    const hook = renderEditableAmendment();
+    await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+    await expect(
+      flushProjectEditor(bridgeScope, { surface: 'amendment_text' })
+    ).resolves.toMatchObject({ documentId: 'document-1', contentRevision: 7, selection });
+    expect(hookMocks.updateDocumentContent).not.toHaveBeenCalled();
+  });
+
+  it('serializes overlapping confirmed saves and advances the revision only after each acceptance', async () => {
+    let completeFirst!: () => void;
+    const first = new Promise<void>(resolve => {
+      completeFirst = resolve;
+    });
+    hookMocks.waitForClientApply.mockImplementationOnce(() => first);
+    const hook = renderEditableAmendment();
+    await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+    act(() => hook.result.current.setContent(edited('First edit')));
+    act(() => hook.result.current.setContent(edited('Second edit')));
+    expect(hookMocks.updateDocumentContent).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      completeFirst();
+      await first;
+    });
+    await waitFor(() => expect(hook.result.current.saveStatus).toBe('saved'));
+    expect(
+      hookMocks.updateDocumentContent.mock.calls.map(
+        ([args]) => (args as { expected_content_revision: number }).expected_content_revision
+      )
+    ).toEqual([0, 1]);
+    await expect(
+      flushProjectEditor(bridgeScope, { surface: 'amendment_text' })
+    ).resolves.toMatchObject({ contentRevision: 2 });
+    expect(hook.result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it('flushes a throttled trailing edit immediately and cancels its delayed duplicate save', async () => {
+    const hook = renderEditableAmendment();
+    await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+    act(() => hook.result.current.setContent(edited('First edit')));
+    await waitFor(() => expect(hook.result.current.saveStatus).toBe('saved'));
+    act(() => hook.result.current.setContent(edited('Second edit')));
+    expect(hook.result.current.hasUnsavedChanges).toBe(true);
+    let context;
+    await act(async () => {
+      context = await flushProjectEditor(bridgeScope, { surface: 'amendment_text' });
+    });
+    expect(context).toMatchObject({ contentRevision: 2 });
+    expect(hookMocks.updateDocumentContent).toHaveBeenCalledTimes(2);
+    expect(hook.result.current.hasUnsavedChanges).toBe(false);
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 1100));
+    });
+    expect(hookMocks.updateDocumentContent).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits for an in-flight server confirmation before releasing the editor context', async () => {
+    let complete!: () => void;
+    const accepted = new Promise<void>(resolve => {
+      complete = resolve;
+    });
+    hookMocks.waitForClientApply.mockImplementationOnce(() => accepted);
+    const hook = renderEditableAmendment();
+    await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+    act(() => hook.result.current.setContent(edited('Confirmed edit')));
+    let released = false;
+    let flush!: Promise<unknown>;
+    act(() => {
+      flush = flushProjectEditor(bridgeScope, { surface: 'amendment_text' }).then(value => {
+        released = true;
+        return value;
+      });
+    });
+    expect(released).toBe(false);
+    await act(async () => {
+      complete();
+      expect(await flush).toMatchObject({ contentRevision: 1 });
+    });
+    expect(released).toBe(true);
+  });
+
+  it('keeps the new document revision when an older document save completes after a context switch', async () => {
+    let complete!: () => void;
+    const accepted = new Promise<void>(resolve => {
+      complete = resolve;
+    });
+    hookMocks.waitForClientApply.mockImplementationOnce(() => accepted);
+    const hook = renderEditableAmendment();
+    await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+    act(() => hook.result.current.setContent(edited('Old document edit')));
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        id: 'new-document',
+        content_revision: 12,
+        content: edited('New document'),
+      },
+    };
+    hook.rerender();
+    await act(async () => {
+      complete();
+      await accepted;
+    });
+    await expect(
+      flushProjectEditor(bridgeScope, { surface: 'amendment_text' })
+    ).resolves.toMatchObject({ documentId: 'new-document', contentRevision: 12 });
+  });
+
+  it('propagates rejected dirty flushes and allows a later confirmed retry to start the AI', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      hookMocks.waitForClientApply.mockRejectedValueOnce(new Error('First rejection'));
+      const hook = renderEditableAmendment();
+      await waitFor(() => expect(hook.result.current.mode).toBe('edit'));
+      act(() => hook.result.current.setContent(edited('Retry this edit')));
+      await waitFor(() => expect(hook.result.current.saveStatus).toBe('error'));
+      hookMocks.waitForClientApply.mockRejectedValueOnce(new Error('Retry rejection'));
+      await act(async () => {
+        await expect(
+          flushProjectEditor(bridgeScope, { surface: 'amendment_text' })
+        ).rejects.toThrow('Retry rejection');
+      });
+      expect(hook.result.current.hasUnsavedChanges).toBe(true);
+      await act(async () => {
+        await expect(
+          flushProjectEditor(bridgeScope, { surface: 'amendment_text' })
+        ).resolves.toMatchObject({ contentRevision: 1 });
+      });
+      expect(hook.result.current.saveStatus).toBe('saved');
+      expect(hook.result.current.hasUnsavedChanges).toBe(false);
+    } finally {
+      errors.mockRestore();
+    }
+  });
   it('keeps a valid amendment editor loading while its Zero document is hydrating', () => {
     const hydratedAmendment = hookMocks.amendmentDocsCollabs;
     hookMocks.amendmentDocsCollabs = null;
