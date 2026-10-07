@@ -1103,6 +1103,46 @@
         "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "project": "unit",
         "caseId": "keeps Plate marks and shape geometry when panel properties change"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies explicit geometry, ordering, visibility, locks and style without conflating false or zero with missing values"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "patches text content, typography and marks through nested links while retaining unrelated leaf formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains provided paragraph IDs and optional alignment and list data when importing legacy rich text"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "patches media, tables and charts through their specific data fields"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats every nested leaf for %s and clears a superseded text style binding"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "sets or removes paragraph list formatting %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains only HTTP links for %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "project": "unit",
+        "caseId": "sets font, size and paragraph alignment independently of inline marks"
       }
     ],
     "src/features/communication-studio/logic/rich-text-paint.ts": [
@@ -5191,6 +5231,256 @@
         "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies generation when %s is disabled"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows development defaults but requires explicit production enablement"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "replays completed %s requests without another model call"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a duplicate request that is still generating"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates an empty snapshot for a new project and rejects editing without a project"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "loads a %s source workspace with the proper update authority"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an unavailable phase, a manual explicit target and another owner’s explicit AI draft"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves the latest editable draft with strict source %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses no latest draft when none exists or the user explicitly selected nodes or frames"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "generates correctly formatted %s plans and stores a reviewable proposal"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an incompatible explicit %s format before model generation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "generates a new personal project atomically and links its diagnostic trace"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates group proposal links and supports plain JSON providers with code-fenced responses"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "propagates a provider authentication failure without selecting a fallback model"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "retries malformed JSON once and rejects repeated invalid plans without creating records"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a plan violating %s after one corrective retry"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "propagates ordinary generation failures without retrying"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "retries structured-output validation errors once and rejects a second one"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects stale or missing edit selection %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "edits the actual selected %s without automatic canonical application"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rechecks expected context both before and inside the locked transaction"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a concurrent %s change before saving"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans proposal assets only for completed AI lifecycle %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "treats empty cleanup as a no-op and retains rows if storage deletion fails"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies an explicitly requested theme by %s without generating text for theme-only changes"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a requested theme for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows an unchanged theme for generation and honors an explicit dark theme mode"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "deduplicates approved source references and rejects more than ten combined sources"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "includes verified source context and missing event facts in the prompt and visible design placeholders"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "excludes personal element sets from an audience-shared project"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses explicit text edits as the candidate without invoking the model"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unchanged candidate content without claiming a completed suggestion"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rebases a proposal against a concurrent %s canonical change"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an expected revision that changes inside the transaction after generation"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rechecks authority when inserting a new draft for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "replaces text safely with %s without looping or losing style"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "prunes unused staged files while preserving media and chart sources referenced by the proposal"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "logs an asset-pruning failure after storing a successful proposal"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "stages a permitted reusable library element in a %s and checks media availability"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a model-selected library that is outside the permitted set list"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans staged library media after a failure in %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "forks source-workspace media into a new AI proposal for %s"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not adopt source group access for an unchanged theme-mode request"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "describes text with nested inline elements without flattening nontext objects into fabricated content"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "treats missing storage rows as already cleaned and keeps the request receipt independent"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "continues a new request key while checking ready-state retries separately"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses top-level frame targets when a theme-only follow-up has no selected nodes"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves existing mode when no theme mode is given for a nonchanging mode request"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves first paragraph style and IDs during a multiline replacement"
+      },
+      {
+        "file": "src/server/studio/__tests__/ai-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects text replacement for %s"
       }
     ],
     "src/server/studio/assets.ts": [

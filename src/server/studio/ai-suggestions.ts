@@ -92,6 +92,7 @@ export interface Snapshot {
   generation: string | null;
   proposalId: string | null;
   proposalRevision: number | null;
+  editableProposal: { id: string; revision: number } | null;
   proposalMode: StudioAiMode | null;
   sourceWorkspaceId?: string;
   sourceRefs: z.infer<typeof sourceRefSchema>[];
@@ -138,14 +139,10 @@ async function applyRequestedTheme(
       themeId = matches[0].id;
     }
   }
+  const mode = input.themeMode ?? snapshot.working.theme.mode;
   const next = themeId
-    ? await resolveStudioTheme(
-        actor,
-        snapshot.groupId,
-        themeId,
-        input.themeMode ?? snapshot.working.theme.mode
-      )
-    : { ...snapshot.working.theme, mode: input.themeMode ?? snapshot.working.theme.mode };
+    ? await resolveStudioTheme(actor, snapshot.groupId, themeId, mode)
+    : { ...snapshot.working.theme, mode };
   if (snapshot.audienceIsShared && next.scope === 'personal' && themeId)
     throw new StudioError('This theme is not available to the project audience', 403);
   if (JSON.stringify(next) === JSON.stringify(snapshot.working.theme)) return false;
@@ -176,6 +173,7 @@ export async function loadSnapshot(
       generation: null,
       proposalId: null,
       proposalRevision: null,
+      editableProposal: null,
       proposalMode: null,
       sourceRefs: [],
       audienceIsShared: false,
@@ -205,13 +203,16 @@ export async function loadSnapshot(
     throw new StudioError('Only the AI draft owner may prompt changes', 403);
   const canonical = source.canonical;
   const working = source.document;
-  const proposalRevision =
+  // Keep the target and its revision together: an editable draft always has an ID.
+  const editableProposal =
+    proposalId &&
     proposal?.origin === 'ai' &&
     proposal.owner_id === actor &&
     proposal.state === 'draft' &&
     proposal.ai_status === 'ready'
-      ? Number(proposal.revision)
+      ? { id: proposalId, revision: Number(proposal.revision) }
       : null;
+  const proposalRevision = editableProposal?.revision ?? null;
   const base =
     proposalRevision !== null ? studioDocumentV5Schema.parse(proposal?.base_document) : canonical;
   const proposalMode = proposal
@@ -230,6 +231,7 @@ export async function loadSnapshot(
     generation: source.generation,
     proposalId,
     proposalRevision,
+    editableProposal,
     proposalMode,
     sourceWorkspaceId: proposalId ?? undefined,
     sourceRefs,
@@ -310,11 +312,15 @@ function targetNodeIds(
   for (const frameId of input.frameIds) {
     const frame = document.nodes.find(item => item.id === frameId);
     if (frame?.type !== 'frame') throw new StudioError('Selected frame no longer exists', 409);
-    for (const node of document.nodes) if (node.parentFrameId === frameId) ids.add(node.id);
+    for (const node of document.nodes) {
+      if (node.parentFrameId === frameId) ids.add(node.id);
+    }
   }
-  if (!ids.size && input.proposalId)
-    for (const node of document.nodes)
+  if (!ids.size && input.proposalId) {
+    for (const node of document.nodes) {
       if (node.parentFrameId && node.type === 'richText') ids.add(node.id);
+    }
+  }
   if (!ids.size && !input.frameIds.length)
     throw new StudioError('Select a frame or element to edit', 400);
   return ids;
@@ -645,9 +651,8 @@ async function generateStudioSuggestionImpl(
           sets: assets.sets.map(row => ({ id: row.id, name: row.name })),
         });
   const projectId = snapshot.projectId ?? crypto.randomUUID();
-  const isNewProposal = snapshot.proposalRevision === null;
-  const proposalId = isNewProposal ? crypto.randomUUID() : snapshot.proposalId;
-  if (!proposalId) throw new StudioError('AI draft has no proposal ID', 409);
+  const isNewProposal = snapshot.editableProposal === null;
+  const proposalId = snapshot.editableProposal?.id ?? crypto.randomUUID();
   const sourceMetadata = refs.map(ref => ({ ...ref, fetchedAt: Date.now() }));
   const stagedAssets: Awaited<ReturnType<typeof stageElementSetForAiProposal>>['assets'] = [];
   const selectedSetIds = [
@@ -725,10 +730,11 @@ async function generateStudioSuggestionImpl(
         for (const element of frame.elements)
           if (element.kind === 'media')
             element.assetId = replacements.get(element.assetId) ?? element.assetId;
-      for (const addition of plan.additions)
-        if (addition.element.kind === 'media')
-          addition.element.assetId =
-            replacements.get(addition.element.assetId) ?? addition.element.assetId;
+      for (const addition of plan.additions) {
+        if (addition.element.kind !== 'media') continue;
+        addition.element.assetId =
+          replacements.get(addition.element.assetId) ?? addition.element.assetId;
+      }
       for (const media of assets.media) media.id = replacements.get(media.id) ?? media.id;
     }
     const libraries: StudioAiLibrary = new Map();

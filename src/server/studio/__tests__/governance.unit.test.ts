@@ -838,7 +838,7 @@ describe('Canvas governance authority, ballots and operation receipts', () => {
     const published = calls('update studio_asset set workspace_id=null')[0][2] as {
       values: string[];
     };
-    expect(published.values.toSorted()).toEqual([image, image, chartFile].toSorted());
+    expect([...published.values].sort()).toEqual([image, image, chartFile].sort());
   });
   it('shares a manual draft without requesting AI-source audience checks', async () => {
     await canvasCommand(actor, draft('share', { userIds: [other] }));
