@@ -1,4 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AiAccessError } from '@/lib/ai/errors';
+vi.mock('@/server/ai-trace-store', () => ({
+  insertAiTrace: vi.fn(),
+  insertAiOperation: vi.fn(),
+  finishAiOperation: vi.fn(),
+}));
 
 const mocks = vi.hoisted(() => ({
   credentialDeleteParse: vi.fn(),
@@ -111,6 +117,43 @@ describe('AI catalogue and credential routes', () => {
 });
 
 describe('AI editor command route', () => {
+  it.each(['permission', 'provider'] as const)(
+    'returns a safe %s failure and retains the trace identity after model resolution fails',
+    async kind => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        mocks.resolveModel.mockRejectedValueOnce(
+          kind === 'permission'
+            ? new AiAccessError('permission_denied', 'Private access detail')
+            : new Error('Private provider detail')
+        );
+        const response = await command({ request: request(validCommand) });
+        expect(response.status).toBe(kind === 'permission' ? 403 : 500);
+        expect(response.headers.get('X-AI-Trace-Id')).toMatch(/^[0-9a-f-]{36}$/);
+        expect(await response.json()).toMatchObject({
+          error: { code: kind === 'permission' ? 'permission_denied' : 'ai_operation_failed' },
+        });
+        expect(mocks.streamText).not.toHaveBeenCalled();
+      } finally {
+        errorSpy.mockRestore();
+      }
+    }
+  );
+
+  it('rejects a malformed editor document identifier without creating a diagnostic trace', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const input = request(validCommand);
+      input.headers.set('X-AI-Document-Id', 'invalid');
+      const response = await command({ request: input });
+      expect(response.status).toBe(500);
+      expect(response.headers.has('X-AI-Trace-Id')).toBe(false);
+      expect(await response.json()).toMatchObject({ error: { code: 'ai_invalid_identifier' } });
+      expect(mocks.resolveModel).not.toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
   it('rejects anonymous and malformed requests', async () => {
     mocks.getSession.mockResolvedValueOnce(null);
     let response = await command({ request: request(validCommand) });

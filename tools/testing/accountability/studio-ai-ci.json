@@ -5170,6 +5170,26 @@
         "file": "src/lib/ai/__tests__/errors.unit.test.ts",
         "project": "unit",
         "caseId": "does not turn a project tool permission failure into an invalid API key"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "maps unstructured error %s to a safe generic code"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "recognizes serialized application errors through nested causes"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves unwrapped tool error %s without exposing its message"
+      },
+      {
+        "file": "src/lib/ai/__tests__/errors.unit.test.ts",
+        "project": "unit",
+        "caseId": "maps PostgreSQL invalid identifiers through nested driver errors"
       }
     ],
     "src/lib/zero-api-url.ts": [
@@ -6059,6 +6079,16 @@
         "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "refuses a legacy project conversation whose project reference has been cleared"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "routes a durable project %s through the registered HTTP endpoint and real project permissions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a durable resume for a personal assistant conversation through the public chat endpoint"
       }
     ],
     "src/server/project-chat/starter-tools.ts": [
@@ -11282,6 +11312,350 @@
         "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "project": "component",
         "caseId": "executes skill form field callbacks and both slug-placeholder branches"
+      }
+    ],
+    "src/routes/api/ai/chat.ts": [
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a structured 401 response"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "passes the explicit personal source and authenticated actor to nested Studio tools"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "logs the persisted originating message once, rather than the constructed model prompt"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not substitute the app source for the same unavailable personal model"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "stops after a provider limit without retries or persisting an incomplete answer"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a structured 400 response for invalid input"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a structured 403 response for another conversation"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a structured model-unavailable response"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "hides unexpected setup details behind a stable 500 response"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "streams successful text as NDJSON"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "enables the internal title tool on the first user message and hides it from the stream"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "recognizes the first turn when the current user message is already persisted"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not enable the title tool for $label"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps title update failures from interrupting the assistant response"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists combined entity attachments and findings in the V1 context"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "streams compression, public tool events, errors and ignored stream parts"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "persists attachment-only output, touches credentials and isolates finish hooks"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an explicit origin message that is %s instead of attributing another prompt"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "aborts provider generation when the HTTP consumer cancels its response stream"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "continues after an ordinary failed tool and never streams its private error payload"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "aborts a known tool access failure and emits only its safe code"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/chat.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the original diagnostic trace identity when model setup fails after the trace has started"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "routes a durable project %s through the registered HTTP endpoint and real project permissions"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a durable resume for a personal assistant conversation through the public chat endpoint"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "restores a legacy saved request from its user message when the run has no configuration or editor hints"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "refuses oversized historical context before creating a new run"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "preserves empty historical messages and uses the default model context window when its size is unknown"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "records an interrupted previous tool as a durable clarification result without repeating its side effects"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "stores a safe error for a valid personal tool absent from the saved run selection"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "skips retired personal tool definitions and stores a useful unavailable receipt when resuming an older configuration"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "enforces the repair budget from durable previous failures (%s)"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "converts invalid project tool arguments into an atomic safe receipt and continues the response"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "uses a readable completion fallback when the resumed model returns no text or further calls"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "treats an SDK error finish reason as interrupted and does not publish an assistant reply"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "stops a request that was already aborted before the model stream was established"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "restores a legacy saved editor context against the current amendment document"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "handles native heartbeat transactions without overlapping renewal or overwriting a newer owner (%s)"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "streams successive text deltas, skips reasoning parts and publishes only the accumulated assistant text"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "supports a legacy model descriptor without a credential source while retaining the actor boundary"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "resumes a durable Studio suggestion receipt with model source %s and filters legacy attachment references"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "links a persisted project tool to the preceding native model operation"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "interrupts the run instead of recording a recoverable tool result when the personal tool data boundary loses access"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "stops streaming when the durable lease becomes %s"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "returns the original stream error even when the database cannot persist its interruption status"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "interrupts an active native request as soon as its client aborts"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a legacy run with no saved user message or editor context before invoking its model"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "leaves personal conversations to the personal chat handler"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "omits inaccessible personal uploads instead of trusting their client-supplied context in the shared chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "refuses a legacy project conversation whose project reference has been cleared"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects a malformed request identity before writing any run or user message"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "denies an actor who has no current rights to the private project"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects resumption when no saved run exists for the requested actor and identity"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "requires a currently available model before creating a run"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "requires tool support for a Studio project without changing the durable chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "returns a safe actionable model-access error (%s)"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rejects changed content under a saved request identity instead of replaying it"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "refuses a second request while another run has a current lease"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "interrupts an expired previous run and accepts a fresh request"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "replays a terminal %s run without invoking the model again or duplicating messages"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "enforces the saved step limit when resuming a run"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "persists enabled custom and built-in skills and prunes disabled, unknown and unavailable tools"
+      }
+    ],
+    "src/routes/api/ai/command.ts": [
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "guards and loads the catalogue"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "guards credential %s"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves and deletes credentials before returning the refreshed catalogue"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a safe %s failure and retains the trace identity after model resolution fails"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a malformed editor document identifier without creating a diagnostic trace"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects anonymous and malformed requests"
+      },
+      {
+        "file": "src/routes/api/ai/__tests__/auxiliaryRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns a stable response when no model is available"
       }
     ]
   },

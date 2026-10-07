@@ -19,6 +19,7 @@ import * as transactions from '@/server/transaction';
 import * as zeroRuntime from '@/server/zero-mutate';
 
 const provider = vi.hoisted(() => ({
+  actor: '',
   stream: vi.fn(),
   resolve: vi.fn(),
   models: [
@@ -31,6 +32,10 @@ const provider = vi.hoisted(() => ({
     },
   ],
 }));
+vi.mock('@/lib/supabase/server', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/supabase/server')>()),
+  getSession: async () => (provider.actor ? { user: { id: provider.actor } } : null),
+}));
 vi.mock('ai', async original => ({
   ...(await original<typeof import('ai')>()),
   streamText: provider.stream,
@@ -39,6 +44,7 @@ vi.mock('@/server/ai-models', () => ({
   getAiCatalog: async () => ({ models: provider.models }),
   resolveLanguageModelForUser: provider.resolve,
 }));
+import { handleAiChatRequest, Route as ChatRoute } from '@/routes/api/ai/chat';
 
 const database = new URL(
   process.env.ZERO_UPSTREAM_DB ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
@@ -47,6 +53,7 @@ if (!['localhost', '127.0.0.1', '[::1]'].includes(database.hostname))
   throw new Error('Run boundary tests require isolated local PostgreSQL');
 const assistantId = 'a12a0000-0000-4000-a000-000000000001';
 beforeEach(() => {
+  provider.actor = '';
   vi.clearAllMocks();
   provider.models = [
     {
@@ -198,6 +205,55 @@ async function savedRun(
     );
   return id;
 }
+
+it.each(['new request', 'resumed request'] as const)(
+  'routes a durable project %s through the registered HTTP endpoint and real project permissions',
+  mode =>
+    withFixture(async f => {
+      provider.actor = f.actor;
+      if (mode === 'resumed request') await savedRun(f, { status: 'interrupted' });
+      const body = mode === 'resumed request' ? resume(f) : f.body;
+      const handler = (
+        ChatRoute.options as unknown as {
+          server: { handlers: { POST: (input: { request: Request }) => Promise<Response> } };
+        }
+      ).server.handlers.POST;
+      const response = await handler({
+        request: new Request('http://localhost/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('Completed reply');
+      expect(
+        await f.query('select status from ai_run where conversation_id=$1', [f.conversationId])
+      ).toMatchObject([{ status: 'completed' }]);
+    })
+);
+
+it('rejects a durable resume for a personal assistant conversation through the public chat endpoint', () =>
+  withFixture(async f => {
+    provider.actor = f.actor;
+    await f.query(
+      "update conversation set type='assistant',amendment_id=null,assistant_for_user_id=$2 where id=$1",
+      [f.conversationId, f.actor]
+    );
+    const response = await handleAiChatRequest(
+      new Request('http://localhost/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resume(f)),
+      })
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: { code: 'permission_denied' } });
+    expect(
+      await f.query('select id from ai_run where conversation_id=$1', [f.conversationId])
+    ).toEqual([]);
+    expect(provider.stream).not.toHaveBeenCalled();
+  }));
 
 async function savedCall(
   fixture: Fixture,
