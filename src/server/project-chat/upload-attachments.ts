@@ -22,11 +22,11 @@ function metadataNumber(metadata: Record<string, unknown> | null, key: string) {
 }
 
 function displayName(path: string) {
-  const encodedName = path.split('/').at(-1) ?? 'Datei';
+  const encodedName = path.substring(path.lastIndexOf('/') + 1);
   try {
     return decodeURIComponent(encodedName).replace(/^\d+-/, '') || 'Datei';
   } catch {
-    return encodedName.replace(/^\d+-/, '') || 'Datei';
+    return encodedName.replace(/^\d+-/, '');
   }
 }
 

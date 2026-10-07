@@ -62,6 +62,53 @@ async function amendment(tx: Tx, actor: string, mode = 'edit') {
   return { id, doc, chat, runId: await run(tx, actor, chat) };
 }
 describe('shared project chat authority and atomic writes', () => {
+  it('reapplies an undone text change only while its saved before-value still matches', () =>
+    fixture(async (tx, actor) => {
+      const project = await amendment(tx, actor);
+      const snapshot = await readContext(
+        tx,
+        actor,
+        project.runId,
+        project.chat,
+        'amendment_text',
+        undefined
+      );
+      const result = (await executeProjectTool(
+        tx,
+        actor,
+        project.runId,
+        project.chat,
+        'redo-regression',
+        'amendment_apply_actions',
+        {
+          snapshotId: snapshot.snapshotId,
+          summary: 'Redo regression',
+          actions: [{ type: 'text.replace', anchorRef: 'text_0_0', text: 'Changed' }],
+        }
+      )) as { changeSetId: string };
+      await undoProjectChange(tx, actor, result.changeSetId);
+      expect((await tx.run(zql.document.where('id', project.doc).one()))?.content).toEqual([
+        { type: 'p', children: [{ text: 'Original' }] },
+      ]);
+      await undoProjectChange(tx, actor, result.changeSetId, true);
+      expect((await tx.run(zql.document.where('id', project.doc).one()))?.content).toEqual([
+        { type: 'p', children: [{ text: 'Changed' }] },
+      ]);
+      await undoProjectChange(tx, actor, result.changeSetId);
+      await tx.dbTransaction.query('update document set content=$2::jsonb where id=$1', [
+        project.doc,
+        [{ type: 'p', children: [{ text: 'Later manual edit' }] }],
+      ]);
+      await expect(undoProjectChange(tx, actor, result.changeSetId, true)).rejects.toThrow(
+        'resource has changed'
+      );
+      const [change] = await rows(
+        tx.dbTransaction,
+        'select status from ai_change_set where id=$1',
+        [result.changeSetId]
+      );
+      expect(change.status).toBe('undone');
+    }));
   it('does not equate public amendment visibility or former chat participation with membership', () =>
     fixture(async (tx, actor, outsider) => {
       const project = await amendment(tx, actor);

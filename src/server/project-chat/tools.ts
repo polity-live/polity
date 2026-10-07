@@ -1,12 +1,3 @@
-import { createHash } from 'node:crypto';
-import { studioEditorCommandSchemas } from '@/features/communication-studio/logic/editor-commands';
-import {
-  studioCommandSchemas,
-  applyStudioCommand,
-  type StudioCommandName,
-} from '@/features/communication-studio/logic/commands';
-import { studioActionSchema } from '@/features/project-chat/logic/contracts';
-import { zql } from '@/zero/schema';
 import { syncEntityHashtagsForUpdate } from '@/zero/common/server-hashtags';
 import { z } from 'zod';
 import { tool, type ToolSet } from 'ai';
@@ -14,7 +5,6 @@ import type { ZeroTransaction } from '@/server/zero-mutate';
 import type { ZeroContext } from '@/zero/context';
 import { rows, sqlTransaction, lockAuthority } from '@/server/transaction';
 import { checksum } from '@/server/checksum';
-import { applyStudioOperation } from '@/server/studio/operations';
 import {
   studioProjectGenerationSchema,
   studioEditSuggestionSchema,
@@ -23,30 +13,11 @@ import {
 } from '@/server/studio/project-targets';
 import { resolveStudioSource } from '@/server/studio/source';
 import {
-  diffStudio,
-  mergeStudio,
-  inverseChanges,
-  type StudioConflict,
-} from '@/features/communication-studio/logic/operations';
-import { documentSchema } from '@/features/communication-studio/logic/document';
-import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
-import {
-  applyThemeSnapshot,
-  type StudioThemeSnapshot,
-} from '@/features/communication-studio/logic/theme';
-import { resolveStudioTheme } from '@/server/studio/service';
-import {
-  legacyDocumentToV3,
-  v3DocumentToLegacy,
-} from '@/features/communication-studio/logic/v3-adapter';
-import {
-  applyStudioSchema,
   applyAmendmentSchema,
   applyCitySchema,
   ProjectToolError,
   type EditorContext,
 } from '@/features/project-chat/logic/contracts';
-import { applyStudioActions } from '@/features/project-chat/logic/studio-actions';
 import { applyCityActions, cityCatalog } from '@/features/project-chat/logic/city-actions';
 import {
   applyTextActions,
@@ -80,37 +51,10 @@ import {
   type ContextSnapshot,
 } from './context';
 
-const operationUUID = (s: string) => {
-  const h = createHash('sha256').update(s).digest('hex');
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
-};
 const readSchema = z.strictObject({
   offset: z.number().int().nonnegative().default(0),
   limit: z.number().int().min(1).max(50).default(20),
 });
-const namedActions = new Map(
-  studioActionSchema.options.map(option => [
-    `studio_${String(option.shape.type.value).replaceAll('.', '_')}`,
-    option,
-  ])
-);
-const writeContext = { snapshotId: z.string().uuid(), summary: z.string().min(1).max(500) };
-const shapeInsertSchema = z.object({
-  snapshotId: z.string().uuid(),
-  summary: z.string().min(1).max(500),
-  pageId: z.string().uuid(),
-  ref: z.string().min(1).max(100),
-  shape: z.enum(['rect', 'ellipse', 'line', 'arrow']),
-  x: z.number().default(0),
-  y: z.number().default(0),
-  width: z.number().min(4).max(5000),
-  height: z.number().min(4).max(5000),
-  fill: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .default('#B88A3B'),
-});
-const editorNames = new Set(Object.keys(studioEditorCommandSchemas));
 export const studioToolGroup = (name: string) =>
   /export/.test(name)
     ? 'export'
@@ -147,145 +91,28 @@ const catalogSchema = z.object({
 });
 export function studioToolNamesForGroups(groups: string[]) {
   void groups;
-  return Object.keys(toolsForScope(true)).filter(name =>
-    [
-      'studio_catalog',
-      'studio_read',
-      'studio_media',
-      'studio_editor_status',
-      'studio_export_status',
-      'studio_generate_suggestion',
-      'studio_edit_suggestion',
-      'studio_resolve_target',
-    ].includes(name)
-  );
+  return Object.keys(toolsForScope(true));
 }
-const namedStudioTools: ToolSet = Object.fromEntries([
-  ...Object.entries(studioEditorCommandSchemas).map(([name, inputSchema]) => [
-    name,
-    tool({
-      description: `${name.replaceAll('_', ' ')} in the open Studio editor. Returns queued, not completed. Poll studio_editor_status until the editor acknowledges execution.`,
-      inputSchema: inputSchema as z.ZodObject<z.ZodRawShape>,
-    }),
-  ]),
-  [
-    'studio_editor_status',
-    tool({
-      description:
-        'Read the actual acknowledgement from the open editor. A queued action has not completed yet.',
-      inputSchema: z.object({ operationId: z.string().uuid() }),
-    }),
-  ],
-  [
-    'studio_upload_media',
-    tool({
-      description:
-        'Request a local image or video upload. Requires the user to choose a file with the editor’s Upload media button; cannot complete without that step.',
-      inputSchema: z.object({}),
-    }),
-  ],
-  [
-    'studio_import_chat_media',
-    tool({
-      description:
-        'Copy a server-approved chat upload into this project. Use an editor-uploads path returned with the current run attachments. Returns a project assetId for studio_element_add.',
-      inputSchema: z.object({ path: z.string().min(1).max(1000) }),
-    }),
-  ],
-  [
-    'studio_media',
-    tool({
-      description:
-        'List ready project media IDs usable with studio_element_add. Local uploads require the user to use the editor’s Upload media button.',
-      inputSchema: z.object({}),
-    }),
-  ],
-  [
-    'studio_format_text_range',
-    tool({
-      description:
-        'Format a range in an existing rich-text paragraph. Offsets are characters; read the paragraph ID first.',
-      inputSchema: studioCommandSchemas.studio_format_text.extend(writeContext),
-    }),
-  ],
-  [
-    'studio_insert_shape',
-    tool({
-      description:
-        'Insert a rectangle, ellipse, line or arrow on a loaded page. Returns createdRefs for alignment.',
-      inputSchema: shapeInsertSchema,
-    }),
-  ],
-  ...[...namedActions].map(([name, option]) => [
-    name,
-    tool({
-      description: `Studio: ${String(option.shape.type.value)}. Read studio_read first; use its snapshotId and exact resource IDs.`,
-      inputSchema: (option as z.ZodObject<z.ZodRawShape>).omit({ type: true }).extend(writeContext),
-    }),
-  ]),
-  ...Object.entries(studioCommandSchemas).map(([name, schema]) => [
-    name,
-    tool({
-      description: `${name.replaceAll('_', ' ')}. Read studio_read first. Coordinates are page pixels; locked elements are protected.`,
-      inputSchema: (name === 'studio_format_text'
-        ? studioCommandSchemas.studio_format_text
-            .omit({ range: true, list: true, url: true })
-            .extend({
-              patch: studioCommandSchemas.studio_format_text.shape.patch.omit({ richText: true }),
-            })
-        : (schema as z.ZodObject<z.ZodRawShape>)
-      ).extend(writeContext),
-    }),
-  ]),
-  [
-    'studio_catalog',
-    tool({
-      description:
-        'Discover and activate Studio tools by group: project, text, objects, pages, data, campaign, media, view, export, or all.',
-      inputSchema: catalogSchema,
-    }),
-  ],
-  [
-    'studio_export',
-    tool({
-      description:
-        'Export a committed Studio revision. Returns an export job; read its status before claiming completion.',
-      inputSchema: z.object({
-        revision: z.number().int().nonnegative(),
-        format: z.enum(['png', 'pdf', 'pptx', 'canva', 'mp4', 'xlsx', 'zip']),
-        pageIds: z.array(z.string().uuid()).default([]),
-      }),
-    }),
-  ],
-  [
-    'studio_export_status',
-    tool({
-      description: 'Read an export job status and download link when completed.',
-      inputSchema: z.object({ jobId: z.string().uuid() }),
-    }),
-  ],
-  [
-    'studio_redo',
-    tool({
-      description: 'Reapply an undone AI change without overwriting later edits.',
-      inputSchema: z.object({ changeSetId: z.string().uuid() }),
-    }),
-  ],
-  [
-    'studio_cancel_export',
-    tool({
-      description: 'Cancel a queued or running export.',
-      inputSchema: z.object({ jobId: z.string().uuid() }),
-    }),
-  ],
-  [
-    'studio_undo',
-    tool({
-      description: 'Undo a previous AI change using its changeSetId. Later edits are protected.',
-      inputSchema: z.object({ changeSetId: z.string().uuid() }),
-    }),
-  ],
-]);
+const namedStudioTools: ToolSet = {
+  studio_editor_status: tool({
+    description:
+      'Read the actual acknowledgement from the open editor. A queued action has not completed yet.',
+    inputSchema: z.object({ operationId: z.string().uuid() }),
+  }),
+  studio_media: tool({
+    description: 'List ready media IDs available in the current Studio workspace.',
+    inputSchema: z.object({}),
+  }),
+  studio_catalog: tool({
+    description:
+      'Discover available Studio context, media, status and reviewable suggestion tools.',
+    inputSchema: catalogSchema,
+  }),
+  studio_export_status: tool({
+    description: 'Read an export job status and download link when completed.',
+    inputSchema: z.object({ jobId: z.string().uuid() }),
+  }),
+};
 export const projectToolDefinitions = {
   studio_edit_suggestion: tool({
     description:
@@ -311,11 +138,6 @@ export const projectToolDefinitions = {
     description:
       'Read committed Studio pages, elements, theme and posts. Returns snapshotId and IDs. Page using offset/limit. Read before writing.',
     inputSchema: readSchema,
-  }),
-  studio_apply_actions: tool({
-    description:
-      'Atomically apply 1–50 Studio actions to a loaded snapshot. Local references refer to entities created earlier in this batch. Locked elements cannot be modified. Does not export or publish.',
-    inputSchema: applyStudioSchema,
   }),
   amendment_read: tool({
     description:
@@ -350,7 +172,6 @@ export function toolsForScope(studio: boolean): ToolSet {
         studio_resolve_target: projectToolDefinitions.studio_resolve_target,
         studio_edit_suggestion: projectToolDefinitions.studio_edit_suggestion,
         studio_generate_suggestion: projectToolDefinitions.studio_generate_suggestion,
-        studio_apply_actions: projectToolDefinitions.studio_apply_actions,
       }
     : {
         city_design_read_features: projectToolDefinitions.city_design_read_features,
@@ -372,43 +193,12 @@ async function saveResource(
   actor: string,
   resource: Resource,
   value: unknown,
-  operationId: string,
   summary: string
 ): Promise<{
   value: unknown;
   proposalIds: string[];
-  operationId?: string;
-  revision?: number;
-  conflicts?: StudioConflict[];
 }> {
   const ctx: ZeroContext = { userID: actor, email: '' };
-  if (resource.kind === 'studio') {
-    const after = documentSchema.parse(value);
-    const before = studioDocumentV3Schema.parse(resource.stored);
-    const persisted = legacyDocumentToV3(after, before);
-    const receipt = await applyStudioOperation(tx, actor, {
-      projectId: resource.id,
-      operationId: operationUUID(operationId),
-      generation: resource.generation,
-      expectedRevision: resource.contentRevision,
-      changes: diffStudio(before, persisted),
-    });
-    if (receipt.status === 'conflict')
-      return {
-        value: v3DocumentToLegacy(receipt.document),
-        proposalIds: [],
-        operationId: receipt.operationId,
-        revision: receipt.revision,
-        conflicts: receipt.conflicts,
-      };
-    return {
-      value: v3DocumentToLegacy(receipt.document),
-      proposalIds: [],
-      operationId: receipt.operationId,
-      revision: receipt.revision,
-    };
-  }
-
   const amendment = resource.amendment;
   if (!amendment) throw new ProjectToolError('scope_mismatch');
   const direct = resource.mode === 'edit';
@@ -557,232 +347,125 @@ export async function executeProjectTool(
   if (JSON.stringify(input).length > 300_000) throw new ProjectToolError('actions_too_large');
   await lockAuthority(sqlTransaction(tx));
   const conversation = await requireProjectConversation(tx, actor, conversationId);
-  if (!Object.hasOwn(toolsForScope(!!conversation.studio_project_id), name))
-    throw new ProjectToolError('tool_not_available');
-  if (
-    conversation.studio_project_id &&
-    ![
-      'studio_read',
-      'studio_media',
-      'studio_catalog',
-      'studio_editor_status',
-      'studio_export_status',
-      'studio_generate_suggestion',
-      'studio_edit_suggestion',
-      'studio_resolve_target',
-    ].includes(name)
-  )
+  const projectId = conversation.studio_project_id;
+  if (!Object.hasOwn(toolsForScope(!!projectId), name))
     throw new ProjectToolError(
       'tool_not_available',
-      'Studio AI edits must create a reviewable suggestion.'
+      projectId ? 'Studio AI edits must create a reviewable suggestion.' : undefined
     );
   if (name === 'studio_generate_suggestion' || name === 'studio_edit_suggestion')
     throw new ProjectToolError('tool_not_available', 'Use the Studio AI suggestion runner.');
-  if (editorNames.has(name)) {
-    const args =
-        studioEditorCommandSchemas[name as keyof typeof studioEditorCommandSchemas].parse(input),
-      requestId = `${runId}:${name}:${checksum(input)}`,
-      sql = sqlTransaction(tx);
-    const [old] = await rows<{ id: string; result: unknown }>(
-      sql,
-      'select id,result from studio_editor_action where request_id=$1',
-      [requestId]
-    );
-    if (old)
+  if (projectId) {
+    if (name === 'studio_editor_status') {
+      const { operationId } = z.object({ operationId: z.string().uuid() }).parse(input);
+      const [row] = await rows<{ result: unknown; created_at: number }>(
+        sqlTransaction(tx),
+        'select result,created_at from studio_editor_action where id=$1 and actor_id=$2 and project_id=$3',
+        [operationId, actor, conversation.studio_project_id]
+      );
+      if (!row) throw new ProjectToolError('not_found');
       return {
-        operationId: old.id,
-        status: old.result ? 'completed' : 'queued',
-        result: old.result,
+        operationId,
+        status: row.result
+          ? 'acknowledged'
+          : Date.now() - row.created_at > 120000
+            ? 'editor_unavailable'
+            : 'queued',
+        result: row.result,
       };
-    const id = crypto.randomUUID();
-    await sql.query(
-      'insert into studio_editor_action(id,project_id,actor_id,request_id,name,input,created_at) values($1,$2,$3,$4,$5,$6::jsonb,$7)',
-      [id, conversation.studio_project_id, actor, requestId, name, args, Date.now()]
-    );
-    return {
-      operationId: id,
-      status: 'queued',
-      next: 'Poll studio_editor_status. Do not claim success until acknowledged.',
-    };
-  }
-  if (name === 'studio_editor_status') {
-    const { operationId } = z.object({ operationId: z.string().uuid() }).parse(input);
-    const [row] = await rows<{ result: unknown; created_at: number }>(
-      sqlTransaction(tx),
-      'select result,created_at from studio_editor_action where id=$1 and actor_id=$2 and project_id=$3',
-      [operationId, actor, conversation.studio_project_id]
-    );
-    if (!row) throw new ProjectToolError('not_found');
-    return {
-      operationId,
-      status: row.result
-        ? 'acknowledged'
-        : Date.now() - row.created_at > 120000
-          ? 'editor_unavailable'
-          : 'queued',
-      result: row.result,
-    };
-  }
-  if (name === 'studio_upload_media')
-    return {
-      status: 'needs_user_action',
-      step: 'Click Upload media in the editor toolbar and choose an image or video. Then use studio_media to read the uploaded asset ID.',
-    };
-  if (name === 'studio_import_chat_media') {
-    const { path } = z.object({ path: z.string().min(1).max(1000) }).parse(input);
-    return (await import('@/server/studio/chat-media')).importChatMedia(
+    }
+    if (name === 'studio_resolve_target') {
+      const source = await resolveStudioSource(
+        actor,
+        projectId,
+        hints?.proposalId ?? null,
+        sqlTransaction(tx)
+      );
+      const targets = resolveStudioTargets(source.document, studioTargetSchema.parse(input), hints);
+      return {
+        ...(await readContext(
+          tx,
+          actor,
+          runId,
+          conversationId,
+          'studio',
+          hints,
+          0,
+          20,
+          false,
+          maxContextCharacters
+        )),
+        targets,
+      };
+    }
+    if (name === 'studio_media') {
+      const source = await resolveStudioSource(
+        actor,
+        projectId,
+        hints?.proposalId ?? null,
+        sqlTransaction(tx)
+      );
+      return rows(
+        sqlTransaction(tx),
+        'select id,name,mime_type from studio_asset where project_id=$1 and (workspace_id is null or workspace_id=$2) and ready=true',
+        [source.projectId, source.workspaceId]
+      );
+    }
+    if (name === 'studio_catalog') {
+      const { group } = catalogSchema.parse(input);
+      return {
+        groups: [
+          'project',
+          'text',
+          'objects',
+          'pages',
+          'data',
+          'campaign',
+          'media',
+          'view',
+          'export',
+        ],
+        tools: studioToolNamesForGroups([group ?? 'all']).map(name => ({
+          name,
+          group: studioToolGroup(name),
+          description: toolsForScope(true)[name].description,
+        })),
+        activatedGroup: group ?? null,
+      };
+    }
+    if (name === 'studio_export_status') {
+      const { jobId } = z.object({ jobId: z.string().uuid() }).parse(input);
+      const [job] = await rows<{ status: string; progress: number; error: string | null }>(
+        sqlTransaction(tx),
+        'select status,progress,error from studio_export where id=$1 and project_id=$2',
+        [jobId, conversation.studio_project_id]
+      );
+      if (!job) throw new ProjectToolError('not_found');
+      return {
+        ...job,
+        jobId,
+        next:
+          job.status === 'completed'
+            ? 'Use the export download control in Studio.'
+            : 'Poll this job again.',
+      };
+    }
+    const args = readSchema.parse(input);
+    return readContext(
       tx,
       actor,
       runId,
-      conversation.studio_project_id ?? '',
-      path,
-      operationUUID(`${runId}:import-media:${path}`)
+      conversationId,
+      'studio',
+      hints,
+      args.offset,
+      args.limit,
+      false,
+      maxContextCharacters
     );
-  }
-  if (name === 'studio_resolve_target') {
-    const source = await resolveStudioSource(
-      actor,
-      conversation.studio_project_id ?? '',
-      hints?.proposalId ?? null,
-      sqlTransaction(tx)
-    );
-    const targets = resolveStudioTargets(source.document, studioTargetSchema.parse(input), hints);
-    return {
-      ...(await readContext(
-        tx,
-        actor,
-        runId,
-        conversationId,
-        'studio',
-        hints,
-        0,
-        20,
-        false,
-        maxContextCharacters
-      )),
-      targets,
-    };
-  }
-  if (name === 'studio_media') {
-    const source = await resolveStudioSource(
-      actor,
-      conversation.studio_project_id ?? '',
-      hints?.proposalId ?? null,
-      sqlTransaction(tx)
-    );
-    return rows(
-      sqlTransaction(tx),
-      'select id,name,mime_type from studio_asset where project_id=$1 and (workspace_id is null or workspace_id=$2) and ready=true',
-      [source.projectId, source.workspaceId]
-    );
-  }
-  if (name === 'studio_format_text_range') name = 'studio_format_text';
-  if (name === 'studio_catalog') {
-    const { group } = catalogSchema.parse(input);
-    return {
-      groups: [
-        'project',
-        'text',
-        'objects',
-        'pages',
-        'data',
-        'campaign',
-        'media',
-        'view',
-        'export',
-      ],
-      tools: studioToolNamesForGroups([group ?? 'all']).map(name => ({
-        name,
-        group: studioToolGroup(name),
-        description: toolsForScope(true)[name].description,
-      })),
-      activatedGroup: group ?? null,
-    };
-  }
-  if (name === 'studio_cancel_export') {
-    const { jobId } = z.object({ jobId: z.string().uuid() }).parse(input);
-    const resource = await loadResource(tx, actor, conversationId, 'studio', hints);
-    if (resource.mode !== 'edit') throw new ProjectToolError('permission_denied');
-    const [job] = await rows<{ status: string }>(
-      sqlTransaction(tx),
-      'select status from studio_export where id=$1 and project_id=$2 for update',
-      [jobId, resource.id]
-    );
-    if (!job) throw new ProjectToolError('not_found');
-    if (!['queued', 'running'].includes(job.status)) return { jobId, status: job.status };
-    await sqlTransaction(tx).query(
-      "update studio_export set status='cancelled',updated_at=$3 where id=$1 and project_id=$2",
-      [jobId, resource.id, Date.now()]
-    );
-    return { jobId, status: 'cancelled' };
-  }
-
-  if (name === 'studio_undo' || name === 'studio_redo') {
-    const { changeSetId } = z.object({ changeSetId: z.string().uuid() }).parse(input);
-    await undoProjectChange(tx, actor, changeSetId, name === 'studio_redo');
-    return { status: name === 'studio_redo' ? 'applied' : 'undone', changeSetId };
-  }
-  if (name === 'studio_export') {
-    const args = z
-      .object({
-        revision: z.number().int().nonnegative(),
-        format: z.enum(['png', 'pdf', 'pptx', 'canva', 'mp4', 'xlsx', 'zip']),
-        pageIds: z.array(z.string().uuid()).default([]),
-      })
-      .parse(input);
-    return (await import('@/server/studio/export')).queueCommittedExport(
-      actor,
-      conversation.studio_project_id ?? '',
-      args.format,
-      args.pageIds,
-      args.revision,
-      operationUUID(`${runId}:export:${checksum(input)}`)
-    );
-  }
-  if (name === 'studio_export_status') {
-    const { jobId } = z.object({ jobId: z.string().uuid() }).parse(input);
-    const [job] = await rows<{ status: string; progress: number; error: string | null }>(
-      sqlTransaction(tx),
-      'select status,progress,error from studio_export where id=$1 and project_id=$2',
-      [jobId, conversation.studio_project_id]
-    );
-    if (!job) throw new ProjectToolError('not_found');
-    return {
-      ...job,
-      jobId,
-      next:
-        job.status === 'completed'
-          ? 'Use the export download control in Studio.'
-          : 'Poll this job again.',
-    };
-  }
-  if (name === 'studio_insert_shape') {
-    const { snapshotId, summary, pageId, ref, shape, ...properties } =
-      shapeInsertSchema.parse(input);
-    input = {
-      snapshotId,
-      summary,
-      actions: [{ type: 'element.add', page: { id: pageId }, ref, elementType: shape, properties }],
-    };
-    name = 'studio_apply_actions';
-  }
-  const convenience = Object.hasOwn(studioCommandSchemas, name);
-  if (namedActions.has(name)) {
-    const option = namedActions.get(name);
-    if (!option) throw new ProjectToolError('tool_not_available');
-    const { snapshotId, summary, ...args } = (option as z.ZodObject<z.ZodRawShape>)
-      .omit({ type: true })
-      .extend(writeContext)
-      .parse(input);
-    input = { snapshotId, summary, actions: [{ ...args, type: option.shape.type.value }] };
-    name = 'studio_apply_actions';
   }
   if (name === 'city_design_catalog') return cityCatalog();
-  const kind: ResourceKind = name.startsWith('studio_')
-    ? 'studio'
-    : name.startsWith('amendment_')
-      ? 'amendment_text'
-      : 'city_design';
+  const kind: ResourceKind = name.startsWith('amendment_') ? 'amendment_text' : 'city_design';
   if (name.endsWith('_read') || name === 'city_design_read_features') {
     const args = readSchema.parse(input);
     return readContext(
@@ -799,13 +482,7 @@ export async function executeProjectTool(
     );
   }
   const args =
-    kind === 'studio'
-      ? convenience
-        ? z.object(writeContext).passthrough().parse(input)
-        : applyStudioSchema.parse(input)
-      : kind === 'amendment_text'
-        ? applyAmendmentSchema.parse(input)
-        : applyCitySchema.parse(input);
+    kind === 'amendment_text' ? applyAmendmentSchema.parse(input) : applyCitySchema.parse(input);
   const sql = sqlTransaction(tx);
   const [snapshot] = await rows<ContextSnapshot>(
     sql,
@@ -818,51 +495,16 @@ export async function executeProjectTool(
   if (
     resource.id !== snapshot.resource_id ||
     resource.branchId !== snapshot.branch_id ||
-    (kind !== 'studio' && resource.revision !== snapshot.revision)
+    resource.revision !== snapshot.revision
   )
     throw new ProjectToolError(
       'revision_conflict',
       'The resource changed. Read it again.',
       'read_again'
     );
-  const operationKey = `${runId}:${args.snapshotId}:${name}:${checksum(input)}`;
-  let createdIndex = 0;
-  const createId = () => operationUUID(`${operationKey}:${createdIndex++}`);
   let next: unknown,
-    createdRefs: Record<string, string> = {},
-    studioStoredOverride: unknown;
-  if (kind === 'studio') {
-    const actions = convenience ? [] : applyStudioSchema.parse(args).actions;
-    const themes: Record<string, StudioThemeSnapshot> = {};
-    const project = await tx.run(zql.studio_project.where('id', resource.id).one());
-    const themedStored = studioDocumentV3Schema.parse(structuredClone(resource.stored));
-    for (const action of actions) {
-      if (action.type === 'theme.apply') {
-        const theme = await resolveStudioTheme(
-          actor,
-          project?.group_id ?? null,
-          action.themeId,
-          action.mode
-        );
-        themes[`${action.themeId}:${action.mode}`] = theme;
-        applyThemeSnapshot(themedStored, theme);
-      }
-    }
-    studioStoredOverride = themedStored;
-    const result = convenience
-      ? {
-          value: applyStudioCommand(
-            documentSchema.parse(snapshot.value),
-            name as StudioCommandName,
-            input,
-            createId
-          ),
-          createdRefs: {},
-        }
-      : applyStudioActions(documentSchema.parse(snapshot.value), actions, { themes, createId });
-    next = result.value;
-    createdRefs = result.createdRefs;
-  } else if (kind === 'city_design') {
+    createdRefs: Record<string, string> = {};
+  if (kind === 'city_design') {
     const result = applyCityActions(
       resource.value as CityDesignStateV1,
       applyCitySchema.parse(args).actions
@@ -883,37 +525,9 @@ export async function executeProjectTool(
     };
   }
   if (checksum(next) === checksum(resource.value)) {
-    if (kind === 'studio')
-      return {
-        status: 'already_applied',
-        operationId: operationUUID(operationKey),
-        createdRefs,
-        revision: resource.revision,
-      };
     throw new ProjectToolError('no_changes');
   }
-  const saved = await saveResource(
-    tx,
-    actor,
-    resource.kind === 'studio'
-      ? {
-          ...resource,
-          value: documentSchema.parse(snapshot.value),
-          stored: studioDocumentV3Schema.parse(studioStoredOverride ?? resource.stored),
-        }
-      : resource,
-    next,
-    operationKey,
-    args.summary
-  );
-  if (saved.conflicts?.length)
-    return {
-      status: 'conflict',
-      operationId: saved.operationId,
-      revision: saved.revision,
-      conflicts: saved.conflicts,
-      next: 'Read again and ask which value to keep.',
-    };
+  const saved = await saveResource(tx, actor, resource, next, args.summary);
   const persistedValue = saved.proposalIds.length
     ? saved.value
     : (await loadResource(tx, actor, conversationId, kind, hints)).value;
@@ -940,8 +554,6 @@ export async function executeProjectTool(
   );
   return {
     changeSetId: id,
-    operationId: saved.operationId,
-    revision: saved.revision,
     status,
     summary: args.summary,
     createdRefs,
@@ -989,26 +601,12 @@ export async function undoProjectChange(
   });
   if (resource.id !== change.resource_id || resource.mode !== 'edit')
     throw new ProjectToolError('undo_conflict');
-  const merged =
-    resource.kind === 'studio'
-      ? mergeStudio(
-          resource.value,
-          redo
-            ? diffStudio(change.before_value, change.after_value)
-            : inverseChanges(diffStudio(change.before_value, change.after_value))
-        )
-      : null;
-  if (merged?.conflicts.length) throw new ProjectToolError('undo_conflict');
-  const inverse =
-    merged?.value ?? conditionalUndo(resource.value, change.before_value, change.after_value);
-  await saveResource(
-    tx,
-    actor,
-    resource,
-    inverse,
-    `${redo ? 'redo' : 'undo'}:${change.id}:${change.undone_at ?? 0}`,
-    redo ? 'Redo AI change' : 'Undo AI change'
+  const inverse = conditionalUndo(
+    resource.value,
+    redo ? change.after_value : change.before_value,
+    redo ? change.before_value : change.after_value
   );
+  await saveResource(tx, actor, resource, inverse, redo ? 'Redo AI change' : 'Undo AI change');
   await sql.query('update ai_change_set set status=$3,undone_at=$2 where id=$1', [
     change.id,
     Date.now(),

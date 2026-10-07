@@ -5141,6 +5141,51 @@
         "file": "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts",
         "project": "unit",
         "caseId": "takes the actor and model source from trusted chat context, not tool arguments"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies only the current instruction and server-filtered attachments into an existing project chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "opens a briefing without inventing a message when the current instruction is blank"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates native project state and a shared briefing for scope %s"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates customized and default campaign schedules from validated native templates"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "truncates new-project handoff messages at the durable message limit"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires Studio enablement, group write rights and a visible newly inserted project before creating its chat"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "propagates chat mutation failures without inserting a handoff message"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "passes the trusted model, current instruction and canonical attachment references to suggestion generation"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/starter-tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the model tool instruction only when there is no current user instruction"
       }
     ],
     "src/server/project-chat/studio-suggestions.ts": [
@@ -5198,6 +5243,51 @@
         "file": "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "edits the real subtitle through a source-bound snapshot, preserves styling, replays safely and accepts the proposal"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "replays a completed request in the correct project scope %s without invoking generation"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses empty warnings on legacy receipts and resolves the explicitly selected workspace before replay"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "generates from authoritative main content and retains trusted model options"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "forks a selected workspace rather than editing an ineligible AI draft %j"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates only the actor-owned ready AI draft while preserving its workspace identity"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves explicit and instruction-based generation edit targets while theme-only edits require no text selection"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects %s snapshot provenance before making a precise text edit"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "resolves all precise edits against the real document and records their authoritative revision"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/studio-suggestions.unit.test.ts",
+        "project": "unit",
+        "caseId": "gives the instruction role precedence over model names and preserves literal replacement text"
       }
     ],
     "src/server/project-chat/tools.ts": [
@@ -5225,6 +5315,131 @@
         "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "blocks legacy direct Studio AI writes"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "advertises only the eight available Studio tools and the six amendment tools"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "classifies %s as %s in the tool catalog"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "blocks unavailable direct Studio tool %s before any writes"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects oversized actions, cross-scope tools and revoked conversation rights"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "routes %s exclusively to the reviewable suggestion runner"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads %s with paging, editor context and a bounded context budget"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads Studio with default pagination and obtains the real City Design catalog"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "returns the available tool catalog for request %j"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports the actual %s editor action state"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports the actual %s export job state within the project"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads workspace-scoped media and resolves named targets in the real native Studio document"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a duplicate-ID scene edit when it cannot produce a meaningful per-object proposal"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a %s snapshot without writing"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves text against its content revision and records the reloaded value and original before-value"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates amendment metadata and optional hashtags %s without rewriting unchanged text"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates real annotated text change requests in %s mode without changing canonical text"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects voting-phase writes, suggestion metadata edits, no-op edits and a lost amendment scope"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "saves City Design changes through the native persistence snapshot and returns local created references"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates per-object City Design proposals in suggestion mode and keeps the canonical scene unchanged"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "undoes and redoes text changes only while their saved after and before states match respectively"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses completed undo or redo %s without another write"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing, foreign, Studio and proposed changes through their required authority workflows"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects changed resources, phases and later manual edits without updating the change status"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/tools.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a redo after later edits and preserves the undone status"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "reapplies an undone text change only while its saved before-value still matches"
       }
     ],
     "src/server/project-chat/upload-attachments.ts": [
@@ -5237,6 +5452,26 @@
         "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
         "project": "unit",
         "caseId": "rejects another user’s object and malformed upload paths"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "rebuilds filename and preview from server metadata for %s"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "falls back safely for malformed optional storage metadata %j"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "extracts bounded text for %s and omits empty downloads"
+      },
+      {
+        "file": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects traversal inside the upload prefix and missing storage objects"
       }
     ],
     "src/server/studio/ai-sources.ts": [
