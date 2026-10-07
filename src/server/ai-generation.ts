@@ -27,14 +27,15 @@ function generationOptions(options: Options, root: AiTraceContext) {
             ...(execute
               ? {
                   execute: (input: unknown, execution: any) => {
-                    if (execution?.toolCallId) executedTools.add(execution.toolCallId);
-                    return withAiTrace(step ?? context, () =>
+                    // The SDK calls onStepStart before execute and supplies a toolCallId.
+                    executedTools.add(execution.toolCallId);
+                    return withAiTrace(step as AiTraceContext, () =>
                       traceAiOperation(
                         'tool',
                         name,
                         input,
                         async () => execute(input as never, execution),
-                        { toolCallId: execution?.toolCallId }
+                        { toolCallId: execution.toolCallId }
                       )
                     );
                   },
@@ -53,10 +54,10 @@ function generationOptions(options: Options, root: AiTraceContext) {
       onStepStart: async (event: any) => {
         step = await startAiOperation(
           'model',
-          String(event.modelId ?? event.model?.modelId ?? 'generation'),
+          event.modelId,
           {
             system: event.system ?? options.system,
-            messages: event.messages ?? options.messages,
+            messages: event.messages,
             prompt: options.prompt,
             activeTools: event.activeTools ?? options.activeTools,
             providerOptions: event.providerOptions ?? options.providerOptions,
@@ -75,7 +76,7 @@ function generationOptions(options: Options, root: AiTraceContext) {
       },
       onStepEnd: async (event: any) => {
         // Invalid tool arguments never reach execute(), but are still failed calls.
-        for (const part of event.content ?? []) {
+        for (const part of event.content) {
           if (part.type !== 'tool-error' || executedTools.has(part.toolCallId)) continue;
           const call = event.toolCalls?.find(
             (call: { toolCallId: string }) => call.toolCallId === part.toolCallId

@@ -15,6 +15,7 @@ import {
   endAiOperation,
   startAiTrace,
   logAiEvent,
+  traceAiRequest,
 } from '../ai-trace';
 import { aiProviderFetch, retryAfterMs } from '../ai-provider-fetch';
 
@@ -25,6 +26,142 @@ const root = (id: string) => ({
   surface: 'city_design',
   invocation: 'project_chat',
   retryProvider: true,
+});
+
+it('redacts function values and circular diagnostic structures without discarding unrelated content', () => {
+  const circular: { text: string; self?: unknown } = { text: 'Retained' };
+  circular.self = circular;
+  expect(redactAiValue({ run: () => undefined, circular })).toEqual({
+    run: undefined,
+    circular: { text: 'Retained', self: '[circular]' },
+  });
+});
+
+it('normalizes validation paths and debug stack frames while omitting embedded credentials and exception text', () => {
+  vi.stubEnv('AI_LOG_LEVEL', 'debug');
+  const error = {
+    name: 'ZodError',
+    issues: [{ path: ['assetId'] }, {}],
+    stack:
+      'Secret prompt\n    at handler (server.ts:1)\n    at sk-abcdefghijklmnop (provider.ts:2)\nUntrusted details',
+  };
+  const result = normalizeAiError(error);
+  expect(result).toMatchObject({ code: 'validation_failed', fields: [['assetId'], undefined] });
+  expect(result.stack).toBe('    at handler (server.ts:1)\n    at [redacted] (provider.ts:2)');
+  expect(JSON.stringify(result)).not.toContain('Secret prompt');
+  expect(normalizeAiError({ stack: 7 })).not.toHaveProperty('stack');
+  expect(normalizeAiError({ stack: 'No frames' }).stack).toBe('');
+});
+
+it('classifies tool-reported errors and cancellation without replacing the returned or thrown value', async () => {
+  const reported = { error: { code: 'permission_denied' } };
+  expect(
+    await withAiTrace(root('reported'), () =>
+      traceAiOperation('tool', 'write', {}, async () => reported)
+    )
+  ).toBe(reported);
+  expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+    expect.any(String),
+    'failed',
+    reported,
+    expect.objectContaining({ code: 'permission_denied' }),
+    expect.anything()
+  );
+  const cancelled = new DOMException('Stopped', 'AbortError');
+  await expect(
+    withAiTrace(root('cancelled'), () =>
+      traceAiOperation('tool', 'write', {}, async () => {
+        throw cancelled;
+      })
+    )
+  ).rejects.toBe(cancelled);
+  expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+    expect.any(String),
+    'cancelled',
+    undefined,
+    expect.anything(),
+    expect.anything()
+  );
+});
+
+it.each(['json', 'invalid-json', 'text', 'error-json', 'error-text'] as const)(
+  'preserves %s HTTP response bodies while storing diagnostics and adding trace lineage',
+  async kind => {
+    const response =
+      kind === 'json'
+        ? Response.json({ saved: true })
+        : kind === 'invalid-json'
+          ? new Response('broken', { headers: { 'Content-Type': 'application/json' } })
+          : kind === 'error-json'
+            ? Response.json({ error: { code: 'permission_denied' } }, { status: 403 })
+            : kind === 'error-text'
+              ? new Response('Denied', { status: 403 })
+              : new Response('Text response');
+    const expectedText = await response.clone().text();
+    const result = await traceAiRequest(root('http'), async () => response);
+    expect(result).toBe(response);
+    expect(response.headers.get('X-AI-Trace-Id')).toBe('http');
+    expect(response.bodyUsed).toBe(false);
+    expect(await response.text()).toBe(expectedText);
+    expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+      expect.any(String),
+      response.ok ? 'completed' : 'failed',
+      kind === 'json' ? { saved: true } : undefined,
+      kind === 'error-json' ? expect.objectContaining({ code: 'permission_denied' }) : undefined,
+      expect.objectContaining({ httpStatus: response.status })
+    );
+  }
+);
+
+it('records an early request failure and rethrows the same exception', async () => {
+  const error = new Error('Request setup failed');
+  await expect(
+    traceAiRequest(root('setup'), async () => {
+      throw error;
+    })
+  ).rejects.toBe(error);
+  expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+    expect.any(String),
+    'failed',
+    undefined,
+    expect.anything(),
+    expect.anything()
+  );
+});
+
+it('executes work without a trace and classifies queued results and ordinary thrown failures', async () => {
+  expect(normalizeAiError(null)).toMatchObject({ version: 1 });
+  const plain = { saved: true };
+  expect(await traceAiOperation('tool', 'write', {}, async () => plain)).toBe(plain);
+  expect(store.insertAiOperation).not.toHaveBeenCalled();
+  const queued = { status: 'queued', operationId: 'pending' };
+  expect(
+    await withAiTrace(root('queued'), () =>
+      traceAiOperation('tool', 'write', {}, async () => queued)
+    )
+  ).toBe(queued);
+  expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+    expect.any(String),
+    'queued',
+    queued,
+    undefined,
+    expect.anything()
+  );
+  const error = new Error('Write failed');
+  await expect(
+    withAiTrace(root('thrown'), () =>
+      traceAiOperation('tool', 'write', {}, async () => {
+        throw error;
+      })
+    )
+  ).rejects.toBe(error);
+  expect(store.finishAiOperation).toHaveBeenLastCalledWith(
+    expect.any(String),
+    'failed',
+    undefined,
+    expect.anything(),
+    expect.anything()
+  );
 });
 beforeEach(() => {
   vi.clearAllMocks();

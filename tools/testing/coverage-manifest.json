@@ -104944,6 +104944,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/__tests__/transaction.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/__tests__/zero-auth.unit.test.ts",
       "domain": "server:__tests__",
       "owner": "polity/server:__tests__",
@@ -105067,6 +105077,21 @@
           "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
           "project": "unit",
           "caseId": "does not substitute a system message when there is no user input"
+        },
+        {
+          "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects malformed document identities before reading storage or creating a trace"
+        },
+        {
+          "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing or inaccessible documents without persisting diagnostic context"
+        },
+        {
+          "file": "src/server/__tests__/ai-editor-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds the accessible document and %s amendment to editor diagnostics under actual query access"
         }
       ],
       "suggestedTestRefs": ["src/server/__tests__/ai-editor-trace.unit.test.ts"]
@@ -105098,6 +105123,36 @@
           "file": "src/server/__tests__/ai-generation.unit.test.ts",
           "project": "unit",
           "caseId": "records accepted-stream errors without leaking the raw exception to console"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains generation behavior without tracing or diagnostic storage"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "executes caller completion callbacks in a persistence operation after actual SDK generation"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "supports SDK callback aliases while recording the actual current step context"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "records thrown provider failures and forwards the caller error callback without exposing raw console errors"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "records an aborted actual SDK stream and forwards cancellation without claiming completion"
+        },
+        {
+          "file": "src/server/__tests__/ai-generation.unit.test.ts",
+          "project": "unit",
+          "caseId": "advertises a caller-executed tool without inventing an executed tool operation"
         }
       ],
       "suggestedTestRefs": ["src/server/__tests__/ai-generation.unit.test.ts"]
@@ -105426,6 +105481,106 @@
           "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "redacts function values and circular diagnostic structures without discarding unrelated content"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "normalizes validation paths and debug stack frames while omitting embedded credentials and exception text"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "classifies tool-reported errors and cancellation without replacing the returned or thrown value"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves %s HTTP response bodies while storing diagnostics and adding trace lineage"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "records an early request failure and rethrows the same exception"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "executes work without a trace and classifies queued results and ordinary thrown failures"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats $environment logs with format=$format and prompts=$prompts"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "logs only original input and retains the stored diagnostic payload unchanged"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "redacts credentials before either presentation format and never repeats original text in followup events"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps concurrent original prompts scoped to their own traces"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "emits one new start event for an explicit resume with the same lineage"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "logs a start without guessing a prompt from system/history payloads"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "isolates simultaneous prompts and parents nested tool/model calls"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "records embedded tool errors and does not emit prompt contents to logs"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "finishes once and allows children of completed model operations"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "extracts provider cause, identifier failures and redacts credentials"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports storage failure without changing a successful tool result"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "retries twice with the same body and preserves the trace"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not retry accepted streams, billing failures or excessive Retry-After"
+        },
+        {
+          "file": "src/server/__tests__/ai-trace.unit.test.ts",
+          "project": "unit",
+          "caseId": "honors cancellation during backoff"
         }
       ],
       "suggestedTestRefs": [
@@ -108368,6 +108523,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/studio/__tests__/operations.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
@@ -109823,6 +109988,51 @@
           "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "commits independent edits from ten distinct simultaneous editors and refuses stale generations"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies the actual native three-way merge and persists a revision and actor-bound receipt after authority locking"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "fails closed for %s before any document or receipt write"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns the durable receipt under current collaborative access even after edit permission is removed"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects operation identity reuse for %s"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an %s operation affecting a locked node"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows an explicit unlock and changes outside the locked node without unlocking unrelated nodes"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "stores a conflict receipt without increasing the revision or persisting a partial canonical merge"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates all newly referenced assets before committing (ready=%s)"
+        },
+        {
+          "file": "src/server/studio/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects malformed operation schemas before reading or locking any database state"
         }
       ],
       "suggestedTestRefs": [
@@ -110502,9 +110712,39 @@
           "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "blocks legacy direct Studio AI writes"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects client SQL access and passes untraced server transactions through unchanged"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns all iterable rows and locks authority using the canonical advisory-lock key"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "bypasses recursive trace-table instrumentation while retaining the underlying database result"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "instruments real SQL execution with parameter types rather than values or credentials"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses a safe diagnostic name for statements without a table relation"
+        },
+        {
+          "file": "src/server/__tests__/transaction.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects empty UUID-cast parameters before executing SQL and records the identifier failure"
         }
       ],
-      "suggestedTestRefs": []
+      "suggestedTestRefs": ["src/server/__tests__/transaction.unit.test.ts"]
     },
     {
       "path": "src/server/zero-auth.ts",
@@ -115056,6 +115296,31 @@
           "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
           "project": "unit",
           "caseId": "rejects unavailable group appearance themes before updating preferences"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unauthenticated %s Studio operations on both client and server boundaries"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps shared drafts optimistic and delegates canonical edits only to the server operation service"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "delegates undo using the authoritative transaction, current actor and selected change identity"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps an undo conflict to the stable application error code"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains other undo failures without rewriting their identity (%s)"
         }
       ],
       "suggestedTestRefs": [
@@ -115155,6 +115420,31 @@
           "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
           "project": "unit",
           "caseId": "rejects unavailable group appearance themes before updating preferences"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unauthenticated %s Studio operations on both client and server boundaries"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps shared drafts optimistic and delegates canonical edits only to the server operation service"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "delegates undo using the authoritative transaction, current actor and selected change identity"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps an undo conflict to the stable application error code"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains other undo failures without rewriting their identity (%s)"
         }
       ],
       "suggestedTestRefs": [
@@ -120832,6 +121122,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/project-chat/access.ts",
       "domain": "zero:project-chat",
       "owner": "polity/zero:project-chat",
@@ -120996,6 +121306,31 @@
           "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
           "project": "unit",
           "caseId": "rejects unavailable group appearance themes before updating preferences"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unauthenticated %s Studio operations on both client and server boundaries"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps shared drafts optimistic and delegates canonical edits only to the server operation service"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "delegates undo using the authoritative transaction, current actor and selected change identity"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps an undo conflict to the stable application error code"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/server-boundaries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains other undo failures without rewriting their identity (%s)"
         }
       ],
       "suggestedTestRefs": [
@@ -121045,6 +121380,56 @@
           "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "blocks legacy direct Studio AI writes"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates a %s conversation and initial participant only after current project access"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "supports optimistic %s creation without asserting canonical server project access"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects denied %s creation without inserting speculative participants on the server"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires authenticated identity before server %s queries"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "joins from %s only once and records the current actor as participant"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "denies %s after conversation access is revoked, before looking up participant state"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "changes only the current %s participant surface and requires an existing participant"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not speculate a run cancellation or inverse document mutation on the client"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects cancellation of a %s run without updating it"
+        },
+        {
+          "file": "src/zero/project-chat/__tests__/shared-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "cancels only a current actor’s active or interrupted run (status=%s)"
         }
       ],
       "suggestedTestRefs": [

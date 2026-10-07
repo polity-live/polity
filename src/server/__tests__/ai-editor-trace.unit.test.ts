@@ -39,3 +39,57 @@ it('does not substitute a system message when there is no user input', async () 
   await startEditorAiTrace(new Request('http://localhost'), 'actor', 'editor_command', body);
   expect(mocks.startAiTrace).toHaveBeenCalledWith(expect.anything(), body, undefined);
 });
+
+it('rejects malformed document identities before reading storage or creating a trace', async () => {
+  await expect(
+    startEditorAiTrace(
+      new Request('http://localhost', { headers: { 'X-AI-Document-Id': 'invalid' } }),
+      'actor',
+      'copilot',
+      { prompt: 'Complete' }
+    )
+  ).rejects.toMatchObject({ code: 'ai_invalid_identifier' });
+  expect(mocks.executeZeroRead).not.toHaveBeenCalled();
+  expect(mocks.startAiTrace).not.toHaveBeenCalled();
+});
+
+it('rejects missing or inaccessible documents without persisting diagnostic context', async () => {
+  mocks.executeZeroRead.mockResolvedValueOnce(null);
+  await expect(
+    startEditorAiTrace(
+      new Request('http://localhost', { headers: { 'X-AI-Document-Id': crypto.randomUUID() } }),
+      'actor',
+      'editor_command',
+      { prompt: 'Change' }
+    )
+  ).rejects.toMatchObject({ code: 'permission_denied' });
+  expect(mocks.startAiTrace).not.toHaveBeenCalled();
+});
+
+it.each([null, 'amendment'])(
+  'binds the accessible document and %s amendment to editor diagnostics under actual query access',
+  async amendment => {
+    // Keep the real schema query and access predicate; only the database read is substituted.
+    const documentId = crypto.randomUUID();
+    const amendmentId = amendment ? crypto.randomUUID() : null;
+    const run = vi.fn().mockResolvedValue({ id: documentId, amendment_id: amendmentId });
+    mocks.executeZeroRead.mockImplementationOnce(work => work({ run }));
+    await startEditorAiTrace(
+      new Request('http://localhost', { headers: { 'X-AI-Document-Id': documentId } }),
+      'actor',
+      'copilot',
+      { prompt: 'Complete' }
+    );
+    expect(run).toHaveBeenCalledOnce();
+    expect(mocks.startAiTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documentId,
+        amendmentId: amendmentId ?? undefined,
+        surface: amendmentId ? 'amendment_text' : 'editor',
+        retryProvider: false,
+      }),
+      { prompt: 'Complete' },
+      'Complete'
+    );
+  }
+);

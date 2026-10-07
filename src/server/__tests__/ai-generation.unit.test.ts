@@ -174,3 +174,142 @@ it('records accepted-stream errors without leaking the raw exception to console'
   );
   expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain('private prompt');
 });
+
+it('retains generation behavior without tracing or diagnostic storage', async () => {
+  const model = new MockLanguageModelV4({
+    doGenerate: generated('Plain'),
+    doStream: {
+      stream: convertArrayToReadableStream([
+        { type: 'stream-start', warnings: [] },
+        { type: 'text-start', id: 'plain' },
+        { type: 'text-delta', id: 'plain', delta: 'Plain' },
+        { type: 'text-end', id: 'plain' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage },
+      ]),
+    },
+  });
+  expect((await generateText({ model, prompt: 'Read', maxRetries: 0 })).text).toBe('Plain');
+  expect(await streamText({ model, prompt: 'Read', maxRetries: 0 }).text).toBe('Plain');
+  expect(store.insertAiOperation).not.toHaveBeenCalled();
+});
+
+it('executes caller completion callbacks in a persistence operation after actual SDK generation', async () => {
+  const model = new MockLanguageModelV4({ doGenerate: generated('Done') });
+  const onStepStart = vi.fn(),
+    onStepEnd = vi.fn(),
+    onEnd = vi.fn();
+  expect(
+    (
+      await withAiTrace(root, () =>
+        generateText({ model, prompt: 'Read', maxRetries: 0, onStepStart, onStepEnd, onEnd })
+      )
+    ).text
+  ).toBe('Done');
+  expect(onStepStart).toHaveBeenCalledOnce();
+  expect(onStepEnd).toHaveBeenCalledOnce();
+  expect(onEnd).toHaveBeenCalledOnce();
+  expect(store.insertAiOperation.mock.calls.map(([op]) => op.name)).toContain('finish_response');
+});
+
+it('supports SDK callback aliases while recording the actual current step context', async () => {
+  const model = new MockLanguageModelV4({ doGenerate: generated('Done') });
+  const onStepStart = vi.fn(),
+    onStepFinish = vi.fn(),
+    onFinish = vi.fn();
+  const result = await withAiTrace(root, () =>
+    generateText({
+      model,
+      prompt: 'Read',
+      maxRetries: 0,
+      experimental_onStepStart: onStepStart,
+      onStepFinish,
+      onFinish,
+    })
+  );
+  expect(result.text).toBe('Done');
+  expect(onStepStart).toHaveBeenCalledOnce();
+  expect(onStepFinish).toHaveBeenCalledOnce();
+  expect(onFinish).toHaveBeenCalledOnce();
+});
+
+it('records thrown provider failures and forwards the caller error callback without exposing raw console errors', async () => {
+  const error = new Error('Provider unavailable');
+  const onError = vi.fn();
+  const model = new MockLanguageModelV4({
+    doGenerate: async () => {
+      throw error;
+    },
+  });
+  await expect(
+    withAiTrace(root, () =>
+      generateText({ model, prompt: 'Read', maxRetries: 0, onError } as never)
+    )
+  ).rejects.toBe(error);
+  expect(onError).toHaveBeenCalledWith({ error });
+  expect(store.finishAiOperation).toHaveBeenCalledWith(
+    expect.any(String),
+    'failed',
+    undefined,
+    expect.anything(),
+    expect.anything()
+  );
+});
+
+it('records an aborted actual SDK stream and forwards cancellation without claiming completion', async () => {
+  const abort = new AbortController();
+  const onAbort = vi.fn();
+  const model = new MockLanguageModelV4({
+    doStream: async options => ({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: 'stream-start', warnings: [] });
+          controller.enqueue({ type: 'text-start', id: 'stop' });
+          controller.enqueue({ type: 'text-delta', id: 'stop', delta: 'Partial' });
+          options.abortSignal!.addEventListener(
+            'abort',
+            () => controller.error(new DOMException('Stopped', 'AbortError')),
+            { once: true }
+          );
+        },
+      }),
+    }),
+  });
+  const result = withAiTrace(root, () =>
+    streamText({ model, prompt: 'Read', maxRetries: 0, abortSignal: abort.signal, onAbort })
+  );
+  for await (const part of result.fullStream) {
+    if (part.type === 'text-delta') abort.abort();
+  }
+  expect(onAbort).toHaveBeenCalledOnce();
+  expect(store.finishAiOperation).toHaveBeenCalledWith(
+    expect.any(String),
+    'cancelled',
+    undefined,
+    undefined,
+    expect.anything()
+  );
+});
+
+it('advertises a caller-executed tool without inventing an executed tool operation', async () => {
+  const model = new MockLanguageModelV4({
+    doGenerate: {
+      ...generated(''),
+      content: [
+        { type: 'tool-call', toolCallId: 'external', toolName: 'read', input: '{"id":"project"}' },
+      ],
+      finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
+    },
+  });
+  const result = await withAiTrace(root, () =>
+    generateText({
+      model,
+      prompt: 'Read',
+      maxRetries: 0,
+      tools: { read: tool({ inputSchema: z.object({ id: z.string() }) }) },
+    })
+  );
+  expect(result.toolCalls).toEqual([
+    expect.objectContaining({ toolCallId: 'external', toolName: 'read', input: { id: 'project' } }),
+  ]);
+  expect(store.insertAiOperation.mock.calls.map(([op]) => op.kind)).toEqual(['model']);
+});
