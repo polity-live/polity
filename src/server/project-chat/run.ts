@@ -151,8 +151,6 @@ function safeError(error: unknown) {
             : 'choose_model',
     };
   }
-  if (error instanceof ProjectToolError)
-    return { code: error.code, message: error.message, recovery: error.recovery };
   if (error instanceof z.ZodError)
     return {
       code: 'invalid_actions',
@@ -257,7 +255,9 @@ export async function handleProjectAiChat(
             source: savedRun.model.source,
           },
           reasoningEffort: savedRun.model.reasoningEffort ?? 'medium',
-          editorContext: savedRun.editor_context ?? undefined,
+          editorContext: Object.keys(savedRun.editor_context ?? {}).length
+            ? savedRun.editor_context
+            : undefined,
           skillSlugs: [],
           toolNames: [],
           attachments: [],
@@ -487,7 +487,8 @@ export async function handleProjectAiChat(
           emit({ type: 'run-status', runId: run.id, status: 'running' });
           const abort = new AbortController();
           const stop = () => abort.abort();
-          request.signal.addEventListener('abort', stop);
+          if (request.signal.aborted) stop();
+          else request.signal.addEventListener('abort', stop);
           let renewing = false;
           const heartbeat = setInterval(() => {
             if (renewing) return;
@@ -628,9 +629,10 @@ export async function handleProjectAiChat(
                           )[call.tool_name] as
                             | { execute?: (input: unknown, options: unknown) => Promise<unknown> }
                             | undefined;
+                          const execute = personalTool?.execute;
                           if (
                             !configuration.personalToolNames.includes(call.tool_name) ||
-                            !personalTool?.execute
+                            !execute
                           ) {
                             throw new ProjectToolError('tool_not_available');
                           }
@@ -639,7 +641,7 @@ export async function handleProjectAiChat(
                             // executeZeroTransaction/executeZeroRead reuse this ambient transaction.
                             // Personal mutations, their tool receipt and result therefore commit or
                             // roll back together, so Resume can safely execute a still-pending call.
-                            const output = await personalTool.execute?.(call.input, {
+                            const output = await execute(call.input, {
                               toolCallId: call.tool_call_id,
                               operationId: `${run.id}:${call.tool_call_id}`,
                               messages: state.messages,

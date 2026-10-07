@@ -263,7 +263,9 @@ it('keeps the contextual toolbar above the selected node while the canvas pans',
     </div>
   );
   const toolbar = await screen.findByRole('toolbar', { name: 'Element actions' });
-  await waitFor(() => expect(Number.parseFloat(toolbar.style.left)).toBeGreaterThan(0));
+  // The initial zero-sized viewport clamps the toolbar to 8px. Wait until
+  // ResizeObserver has fitted the selected node before measuring the pan.
+  await waitFor(() => expect(Number.parseFloat(toolbar.style.left)).toBeGreaterThan(8));
   const initialLeft = Number.parseFloat(toolbar.style.left);
   const host = screen.getByTestId('studio-canvas');
   const surface = host.querySelector<HTMLCanvasElement>('.konvajs-content canvas')!;
