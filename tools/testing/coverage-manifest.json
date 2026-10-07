@@ -131838,6 +131838,16 @@
       ]
     },
     {
+      "path": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/accountability-scope.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -132454,7 +132464,43 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires an instrumented report for explicitly referenced production code"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects production code that the full suite never executes"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts real execution hits after normalizing source paths"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the declared self-test verification for test infrastructure"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "continues to require coverage for instrumented test infrastructure"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "never accepts production code as self-tested infrastructure"
+        },
+        {
+          "file": "tools/testing/__tests__/accountability-coverage-evidence.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not demand execution evidence for unreferenced files"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
