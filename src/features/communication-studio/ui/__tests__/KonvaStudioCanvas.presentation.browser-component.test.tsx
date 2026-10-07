@@ -899,11 +899,9 @@ it('keeps foreground master content above the live inline text editor', async ()
   };
   studio.nodes.push(text, master, nested, front);
   studio.masterLayout = { frameId: master.id, placements: {} };
-  const ref = createRef<StudioCanvasHandle>();
   render(
     <div style={{ width: 700, height: 500 }}>
       <KonvaStudioCanvas
-        ref={ref}
         document={studio}
         activeFrameId={frame.id}
         assets={[]}
@@ -914,17 +912,8 @@ it('keeps foreground master content above the live inline text editor', async ()
     </div>
   );
   await waitFor(() => expect(stage().findOne(`#${text.id}`)).toBeTruthy());
-  await act(async () => {
-    await ref.current!.execute({ type: 'setTool', tool: 'text' });
-  });
-  const point = canvasPoint(stage().findOne(`#${text.id}`)!, { x: 80, y: 30 });
-  await waitFor(() => {
-    const hit = stage().getIntersection(
-      stage().findOne(`#${text.id}`)!.getAbsoluteTransform().point({ x: 80, y: 30 })
-    );
-    expect(hit?.id() === text.id || Boolean(hit?.findAncestor(`#${text.id}`))).toBe(true);
-  });
-  await userEvent.click(point.surface, { position: { x: point.x, y: point.y } } as never);
+  screen.getByTestId('studio-canvas').focus();
+  await userEvent.keyboard('{Enter}');
   const editor = await screen.findByLabelText('Text');
   expect(document.activeElement).toBe(editor);
   const green = stage()

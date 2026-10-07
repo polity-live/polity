@@ -23,7 +23,7 @@ describe('app tutorial cleanup order', () => {
 
   it.each([
     '../../../../supabase/schemas/33_app_tutorial.sql',
-    '../../../../supabase/migrations/20260727215100_initial_schema.sql',
+    '../../../../supabase/migrations/20260922043912_initial_reset.sql',
   ])('uses the safe order in %s', path => {
     expectRuntimeCleanupBeforeTutorialRun(readFileSync(new URL(path, import.meta.url), 'utf8'));
   });

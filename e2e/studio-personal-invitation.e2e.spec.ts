@@ -68,7 +68,7 @@ test('personal Studio invitation requires acceptance before a second actor can e
     ).toBeVisible({ timeout: 15_000 });
     await invitedPage.goto(`/studio/${projectId}`);
     await waitForAppReady(invitedPage);
-    const title = invitedPage.getByRole('textbox', { name: /Name|Title/i }).first();
+    const title = invitedPage.getByRole('textbox', { name: 'Title', exact: true });
     await expect(title).toBeEnabled();
     await expect(
       invitedPage.locator('[data-action-id="studio.collaborator-invite.open"]')

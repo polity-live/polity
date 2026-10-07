@@ -444,7 +444,6 @@ export function compileStudioAiPlan(input: {
   if (plan.frames.length) {
     if (input.kind === 'single' && plan.frames.length !== 1)
       throw new Error('Single post requires one frame');
-    if (plan.frames.length > 10) throw new Error('Too many frames');
     if (!document.deliverables.length && !document.nodes.length) {
       document.title = plan.title;
       document.kind = input.kind;

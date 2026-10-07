@@ -18,8 +18,8 @@ for (const personal of [false, true]) {
     const reviewer = e2eRun.actor('studio-reviewer');
     const projectId = crypto.randomUUID();
     const origin = new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000');
-    if (origin.origin !== 'http://localhost:3000')
-      throw new Error('Studio acceptance requires localhost:3000');
+    if (origin.protocol !== 'http:' || !['localhost', '127.0.0.1'].includes(origin.hostname))
+      throw new Error('Studio acceptance requires a local HTTP server');
     const route = personal ? `/studio/${projectId}` : `/group/${seed.groupId}/studio/${projectId}`;
     const document = legacyDocumentToV3(createDocument('single', `${e2eRun.prefix} Studio`));
     const removalTarget = document.nodes.find(node => node.type === 'shape')!;
@@ -112,9 +112,9 @@ for (const personal of [false, true]) {
       await expect(reviewerPage.getByRole('tree')).toBeHidden();
       await reviewerPage.keyboard.press('Delete');
       await expect(
-        reviewerPage
-          .locator('div[data-change-request-tone="remove"][data-change-request-ghost="true"]')
-          .first()
+        reviewerPage.locator(
+          `[data-change-request-tone="remove"][data-change-request-ghost="true"][data-testid$=":${removalTarget.id}"]`
+        )
       ).toBeVisible();
       await expect(page.locator('[data-change-request-tone="remove"]')).toHaveCount(0);
       await expect
@@ -132,9 +132,7 @@ for (const personal of [false, true]) {
       const squareFrame = reviewerPage.getByRole('menuitem', { name: /square/i });
       await expect(squareFrame).toBeEnabled({ timeout: 10_000 });
       await squareFrame.dispatchEvent('click');
-      await expect(
-        reviewerPage.locator('div[data-change-request-tone="add"]').first()
-      ).toBeVisible();
+      await expect(reviewerPage.locator('div[data-change-request-tone="add"]')).toBeVisible();
       await reviewerPage.getByRole('button', { name: /Submit|Einreichen/i }).click();
       await expect
         .poll(async () => {
@@ -144,12 +142,16 @@ for (const personal of [false, true]) {
         })
         .toBeGreaterThan(1);
       await expect(
-        page.getByRole('button', { name: /Clearer Studio title/i }).first()
+        page
+          .locator('[data-action-id="studio.proposal.select"]')
+          .filter({ hasText: 'Clearer Studio title' })
       ).toBeVisible();
-      await expect(page.locator('div[data-change-request-tone="remove"]').first()).toBeVisible();
+      await expect(
+        page.locator(`[data-change-request-tone="remove"][data-testid$=":${removalTarget.id}"]`)
+      ).toBeVisible();
       await page
-        .getByRole('button', { name: /Clearer Studio title/i })
-        .first()
+        .locator('[data-action-id="studio.proposal.select"]')
+        .filter({ hasText: 'Clearer Studio title' })
         .click();
       const view = page.getByRole('group', { name: 'View' });
       await expect(view.getByRole('button', { name: 'Difference' })).toHaveAttribute(
@@ -161,7 +163,9 @@ for (const personal of [false, true]) {
       await view.getByRole('button', { name: 'Proposal' }).click();
       await expect(page.locator('[data-change-request-tone]')).toHaveCount(0);
       await view.getByRole('button', { name: 'Difference' }).click();
-      await expect(page.locator('div[data-change-request-tone="remove"]').first()).toBeVisible();
+      await expect(
+        page.locator(`[data-change-request-tone="remove"][data-testid$=":${removalTarget.id}"]`)
+      ).toBeVisible();
       await page.getByRole('textbox', { name: /Comment|Kommentar/i }).fill('Looks ready');
       await page.getByRole('button', { name: /^(Comment|Kommentieren)$/i }).click();
       await expect(page.getByText('Looks ready')).toBeVisible();
@@ -170,8 +174,8 @@ for (const personal of [false, true]) {
       await page.getByRole('menuitemradio', { name: /Internal Voting|Intern.*Abstimm/i }).click();
       await page.locator('[data-action-id="communication-studio.procedure.vote.accept"]').click();
       await reviewerPage
-        .getByRole('button', { name: /Clearer Studio title/i })
-        .first()
+        .locator('[data-action-id="studio.proposal.select"]')
+        .filter({ hasText: 'Clearer Studio title' })
         .click();
       await reviewerPage
         .locator('[data-action-id="communication-studio.procedure.vote.accept"]')

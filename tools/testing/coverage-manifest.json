@@ -20226,6 +20226,16 @@
       ]
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20317,6 +20327,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20476,6 +20496,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/ai-design.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20502,9 +20532,130 @@
           "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
           "project": "unit",
           "caseId": "limits follow-up additions, recoloring and removal to the selected frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts a patch with only %s and rejects an empty patch"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an empty design, mixed creation and edits, and creation during a selected edit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates free text with the %s palette binding and matching color"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates filled and outlined %s shapes without painting line interiors"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects elements outside the safe area %j"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires explicit free elements, authorized media and a known library revision"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "reserves missing facts on the first free frame and rejects overlap with that area"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "adds template placeholders once and keeps an existing project title and kind"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "fits text using theme typography, nested marks and line-breaking rules"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates template text without matching theme styles and rejects impossible text fit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects patching without a selected frame, an unknown node, an unselected node or a missing parent frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects edits and deletions when the %s is locked"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "moves and resizes selected elements in safe-area coordinates and preserves their rotation"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "recolors %s text and shape strokes with palette bindings"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "recolors filled rectangles and lines and rejects recoloring media"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "changes selected text and explicit inline sizes while retaining old marks"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "fits a font-size-only patch and updates explicitly sized leaves without changing link children"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects font and text patches on shapes and deletes only selected non-frame nodes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "authorizes additions through a selected child and rejects unavailable, unselected or locked target frames"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "inserts an addition in an empty selected frame at the first layer"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "scales library text, inline font sizes and strokes into the target box"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unsupported library node kinds and library geometry outside its declared bounds"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "fits oversized theme text while preserving an existing size override %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps text that fits and rejects text that cannot fit at the minimum font size"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20515,8 +20666,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20534,6 +20684,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20544,8 +20695,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20573,6 +20723,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20583,8 +20734,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20602,6 +20752,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20612,8 +20763,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20641,6 +20791,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20651,8 +20802,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20675,6 +20825,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20685,8 +20836,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20713,14 +20863,14 @@
         "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/amendments/__tests__/amendment-collaboration.component-flow.test.tsx",
         "src/features/amendments/hooks/__tests__/useAmendmentCollaboration.a04.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts"
       ]
     },
     {
@@ -20803,6 +20953,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20813,8 +20964,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20927,6 +21077,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20937,8 +21088,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -20981,6 +21131,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -20991,8 +21142,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21025,6 +21175,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21035,8 +21186,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21070,12 +21220,12 @@
         "src/features/app-tutorial/__tests__/city-design-fixture-document.unit.test.ts",
         "src/features/change-requests/logic/__tests__/filterDocumentToSingleSuggestion.unit.test.ts",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts"
       ]
     },
     {
@@ -21128,6 +21278,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21138,8 +21289,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21177,6 +21327,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21187,8 +21338,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21211,6 +21361,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21221,8 +21372,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21245,6 +21395,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21255,8 +21406,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21275,6 +21425,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/fixtures/domains/governance.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21284,8 +21435,7 @@
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21303,6 +21453,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21313,8 +21464,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21337,6 +21487,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21347,8 +21498,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21371,6 +21521,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21381,8 +21532,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21462,10 +21612,96 @@
           "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
           "project": "unit",
           "caseId": "validates nested canvas style, roundness and group updates at the common boundary"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "recognizes serialized %s validation errors"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "recognizes Zod errors and rejects unrelated failures"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "serializes null and absent values and sorts object keys deterministically"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects non-JSON object %s instead of persisting it as an empty object"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts null-prototype JSON objects and repeated values without confusing them with cycles"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a circular current value at the merge boundary"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "records structural order independently from paragraph content"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies and undoes table row order while retaining cell contents"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges geometry atomically and restores all geometry fields on undo"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges canonical transforms atomically and retains independent theme edits"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "adds, replaces, removes and repeats deletion of an identified element without duplicates"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "removes an optional property and treats a repeated removal as idempotent"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "initializes a legacy scene for the first drawing without changing another page"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "sorts legacy pages and elements by order with stable identifier tie breaks"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "sorts canonical nodes and deliverables using identifier tie breaks"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "sorts canonical deliverables by their explicit campaign order before their identifiers"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects scalar properties inside an array instead of producing non-JSON array metadata"
         }
       ],
       "suggestedTestRefs": [
         "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21475,8 +21711,7 @@
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -21539,6 +21774,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21549,8 +21785,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21593,6 +21828,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21603,8 +21839,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21657,6 +21892,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21667,8 +21903,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21746,6 +21981,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21756,8 +21992,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21775,6 +22010,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21785,8 +22021,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21839,6 +22074,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21849,8 +22085,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21923,6 +22158,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21933,8 +22169,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21962,6 +22197,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -21972,8 +22208,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -21996,6 +22231,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22006,8 +22242,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22035,6 +22270,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22045,8 +22281,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22079,6 +22314,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22089,8 +22325,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22123,6 +22358,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22133,8 +22369,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22162,6 +22397,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22172,8 +22408,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22191,6 +22426,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22201,8 +22437,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -22291,6 +22526,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/appearance-theme.e2e.spec.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22300,8 +22536,7 @@
         "src/features/communication-studio/logic/__tests__/draw-element.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts"
       ]
     },
     {
@@ -22381,9 +22616,185 @@
           "file": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
           "project": "unit",
           "caseId": "round-trips existing Studio content through the V3 node model"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates public canonical document boundaries and rejects incomplete records"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns the legacy format dimensions for %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "resolves preset dimensions independently of transforms and uses actual dimensions for custom frames"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "derives deterministic native canvas IDs scoped to their containing frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports the native %s canvas record into its canonical node kind"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports native geometry, reflected axes, color, opacity, grouping and stroke metadata"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses safe defaults for unsupported native appearance values and filters malformed freehand points"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports native text alignment %s and multiline content with durable paragraph IDs"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "falls back to plain native text defaults for missing or malformed optional fields"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "handles native root metadata %j without accepting an invalid persistent node identity"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains a valid persistent native root ID and ignores nonnumeric root layer metadata"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves constraints and palette bindings on a persistent native root across scene updates"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "parents native records to imported nested frames and keeps attached files in the canonical document"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves native frame configuration and text-style identity across an imported scene update"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "removes deleted native root records when persistent metadata is %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "avoids duplicating a native record that is already represented by a semantic legacy element"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a semantic %s element whose referenced media asset is missing"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a legacy %s element whose required typed data is absent"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "flattens nested text links and retains explicit links without losing visible text or marks"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves nested group identities and marks manually changed semantic colors as overrides"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains the canonical %s shape when its legacy projection is edited"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "leaves canonical %s media outside the supported legacy element projection"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects long canonical videos only when explicitly permitted and preserves the video deliverable kind"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not restore a root frame that was deleted from the legacy document without a master layout"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "round-trips supported semantic %s content and metadata"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves existing run IDs when rich text changes and retains paragraph alignment and lists"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "rebuilds rich text when its legacy element replaces a different canonical node kind"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "inherits nested links and uses legacy fallback colors for canonical null fills and strokes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects nested frames, null strokes and stable root ordering without changing the canonical document"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the custom legacy format fallback when preset %s no longer matches"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "scales explicit master text run sizes and frame groups while excluding hidden master content"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains unprojected descendants inside the canonical master across a legacy transaction"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains imported nested scene nodes without duplicating their preserved canonical descendants"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps short videos and nonvideo deliverables unchanged when long-video compatibility is enabled"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/v3-adapter.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a legacy video projection that references a nested frame outside the exported page list"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
@@ -22394,8 +22805,7 @@
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint-v5.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts"
       ]
     },
     {
@@ -99695,7 +100105,11 @@
         {
           "file": "src/routes/__tests__/studio-routes.component.test.tsx",
           "project": "component",
-          "caseId": "validates group identifiers and renders personal or group creation with the selected context"
+          "caseId": "validates group identifiers and renders personal or group creation with the selected context",
+          "evidence": {
+            "relation": "direct",
+            "description": "Renders the actual creation route and verifies its personal and validated group context."
+          }
         },
         {
           "file": "src/routes/__tests__/studio-routes.component.test.tsx",
@@ -101602,7 +102016,11 @@
         {
           "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
           "project": "database-integration",
-          "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors"
+          "caseId": "rechecks current amendment access and rejects anonymous/invalid selectors",
+          "evidence": {
+            "relation": "direct",
+            "description": "Invokes the actual diagnostics request handler against persisted traces and verifies current resource access, anonymous rejection, and selector validation."
+          }
         },
         {
           "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
@@ -102360,7 +102778,11 @@
         {
           "file": "src/routes/__tests__/studio-routes.component.test.tsx",
           "project": "component",
-          "caseId": "passes the request and project identifier to the authorized Studio reader"
+          "caseId": "passes the request and project identifier to the authorized Studio reader",
+          "evidence": {
+            "relation": "direct",
+            "description": "Invokes the actual GET handler and verifies the original request, project identity, and authorized response."
+          }
         }
       ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
@@ -107006,6 +107428,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/operations-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
         "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
@@ -107015,8 +107438,7 @@
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/collaborators.unit.test.ts",
-        "src/server/studio/__tests__/db.unit.test.ts",
-        "src/server/studio/__tests__/elements.unit.test.ts"
+        "src/server/studio/__tests__/db.unit.test.ts"
       ]
     },
     {

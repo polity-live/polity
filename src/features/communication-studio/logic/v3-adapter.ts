@@ -43,6 +43,18 @@ export function nativeCanvasNodeId(frameId: string, sceneId: string): string {
   return stableUuid(frameId, `native:${sceneId}`);
 }
 
+function nativePersistentId(element: CanvasScene['elements'][number], pageId: string): string {
+  const data = element.customData;
+  return typeof data === 'object' &&
+    data !== null &&
+    !Array.isArray(data) &&
+    data.polityRoot === true &&
+    typeof data.polityNode === 'string' &&
+    uuidPattern.test(data.polityNode)
+    ? data.polityNode
+    : nativeCanvasNodeId(pageId, element.id);
+}
+
 const formatToPreset: Record<StudioPage['format'], FramePresetId> = {
   feed: 'portrait',
   square: 'square',
@@ -198,47 +210,13 @@ function semanticNode(
     return {
       ...common,
       type: 'table',
-      data: tableDataSchema.parse(
-        element.table ?? {
-          widths: [1],
-          border: '#888888',
-          rows: [
-            {
-              id: stableUuid(element.id, 'table-row'),
-              cells: [
-                {
-                  id: stableUuid(element.id, 'table-cell'),
-                  text: '',
-                  fill: '#FFFFFF',
-                  color: '#12362D',
-                  align: 'left',
-                  bold: false,
-                },
-              ],
-            },
-          ],
-        }
-      ),
+      data: tableDataSchema.parse(element.table),
     };
   if (element.type === 'chart')
     return {
       ...common,
       type: 'chart',
-      data: chartDataSchema.parse(
-        element.chart ?? {
-          kind: 'bar',
-          labels: ['A'],
-          legend: true,
-          series: [
-            {
-              id: stableUuid(element.id, 'chart-series'),
-              name: 'Series',
-              color: '#B88A3B',
-              values: [0],
-            },
-          ],
-        }
-      ),
+      data: chartDataSchema.parse(element.chart),
       sourceAssetId: null,
     };
   return {
@@ -263,6 +241,7 @@ function nativeNode(
   element: CanvasScene['elements'][number],
   pageId: string,
   idMap: Map<string, string>,
+  id: string,
   base?: StudioNode
 ): StudioNode {
   const root =
@@ -270,16 +249,6 @@ function nativeNode(
     element.customData !== null &&
     !Array.isArray(element.customData) &&
     element.customData.polityRoot === true;
-  const durableNodeId =
-    root &&
-    typeof element.customData === 'object' &&
-    element.customData !== null &&
-    !Array.isArray(element.customData) &&
-    typeof element.customData.polityNode === 'string' &&
-    uuidPattern.test(element.customData.polityNode)
-      ? element.customData.polityNode
-      : undefined;
-  const id = durableNodeId ?? idMap.get(element.id) ?? stableUuid(pageId, `native:${element.id}`);
   const frameId = typeof element.frameId === 'string' ? idMap.get(element.frameId) : undefined;
   const parentFrameId = root ? null : (frameId ?? pageId);
   const strokeStyle: 'solid' | 'dashed' | 'dotted' =
@@ -485,15 +454,14 @@ export function legacyDocumentToV3(
     nodes.push(
       ...page.elements.map(element => semanticNode(element, page.id, previousNodes.get(element.id)))
     );
-    const durable = page.canvas?.elements.filter(element => !element.isDeleted) ?? [];
-    const idMap = new Map(
-      durable.map(element => [element.id, stableUuid(page.id, `native:${element.id}`)])
+    const durable = (page.canvas?.elements.filter(element => !element.isDeleted) ?? []).map(
+      element => ({ element, id: nativePersistentId(element, page.id) })
     );
-    for (const element of durable) {
-      const id = idMap.get(element.id) ?? stableUuid(page.id, `native:${element.id}`);
+    const idMap = new Map(durable.map(({ element, id }) => [element.id, id]));
+    for (const { element, id } of durable) {
       if (!previousNodes.has(id) && page.elements.some(source => source.id === element.id))
         continue;
-      nodes.push(nativeNode(element, page.id, idMap, previousNodes.get(id)));
+      nodes.push(nativeNode(element, page.id, idMap, id, previousNodes.get(id)));
     }
     Object.assign(files, page.canvas?.files ?? {});
   });
@@ -506,22 +474,17 @@ export function legacyDocumentToV3(
       legacy.pages.flatMap(page =>
         (page.canvas?.elements ?? [])
           .filter(element => element.isDeleted)
-          .map(element => {
-            const customData = element.customData;
-            return typeof customData === 'object' &&
-              customData !== null &&
-              !Array.isArray(customData) &&
-              typeof customData.polityNode === 'string' &&
-              uuidPattern.test(customData.polityNode)
-              ? customData.polityNode
-              : stableUuid(page.id, `native:${element.id}`);
-          })
+          .map(element => nativePersistentId(element, page.id))
       )
     );
     const preserved = previous.nodes.filter(node => {
       if (deletedNativeIds.has(node.id)) return false;
-      if (node.id === previous.masterLayout.frameId) return true;
-      if (node.parentFrameId === previous.masterLayout.frameId) return true;
+      if (
+        previous.masterLayout.frameId &&
+        (node.id === previous.masterLayout.frameId ||
+          node.parentFrameId === previous.masterLayout.frameId)
+      )
+        return true;
       if (node.parentFrameId === null && node.type !== 'frame') return true;
       return (
         node.parentFrameId !== null &&
@@ -674,11 +637,11 @@ export function semanticElement(node: Exclude<StudioNode, FrameNode>): StudioEle
   return null;
 }
 
-function nativeElement(node: StudioNode, _nodeById: Map<string, StudioNode>) {
+function nativeElement(node: StudioNode) {
   if (node.type !== 'frame') return null;
   return {
     id: node.id,
-    type: 'frame',
+    type: 'frame' as const,
     x: node.transform.x,
     y: node.transform.y,
     width: node.transform.width,
@@ -745,7 +708,7 @@ export function v3DocumentToLegacy(
       .map(semanticElement)
       .filter((element): element is StudioElement => !!element);
     const native = descendants
-      .map(node => nativeElement(node, nodeById))
+      .map(node => nativeElement(node))
       .filter(Boolean) as CanvasScene['elements'];
     if (masterFrame?.type === 'frame' && masterNodes.length) {
       const scaleX = frame.transform.width / masterFrame.transform.width;
@@ -780,9 +743,9 @@ export function v3DocumentToLegacy(
             })
           );
         }
-        const original = nativeElement(node, nodeById);
+        const original = nativeElement(node);
         if (!original) continue;
-        const element = original as CanvasScene['elements'][number];
+        const element = original;
         native.push({
           ...element,
           id: masterId(element.id),
@@ -790,30 +753,11 @@ export function v3DocumentToLegacy(
           y: element.y * scaleY,
           width: element.width * scaleX,
           height: element.height * scaleY,
-          frameId: typeof element.frameId === 'string' ? masterId(element.frameId) : null,
-          groupIds: Array.isArray(element.groupIds)
-            ? element.groupIds.map(id => masterId(String(id)))
-            : [],
-          ...(Array.isArray(element.points)
-            ? {
-                points: element.points.map(point =>
-                  Array.isArray(point)
-                    ? [Number(point[0]) * scaleX, Number(point[1]) * scaleY]
-                    : point
-                ),
-              }
-            : {}),
-          ...(typeof element.fontSize === 'number' ? { fontSize: element.fontSize * scale } : {}),
-          ...(typeof element.strokeWidth === 'number'
-            ? { strokeWidth: element.strokeWidth * scale }
-            : {}),
+          frameId: null,
+          groupIds: element.groupIds.map(id => masterId(id)),
+          strokeWidth: element.strokeWidth * scale,
           locked: true,
           customData: {
-            ...(element.customData &&
-            typeof element.customData === 'object' &&
-            !Array.isArray(element.customData)
-              ? element.customData
-              : {}),
             polityOrder: order,
           },
         });
