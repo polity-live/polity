@@ -133,6 +133,44 @@ const trace = {
     },
   ],
 };
+
+it('shows unfinished retried operations without exposing an absent origin link', async () => {
+  const pending = {
+    ...trace,
+    origin_message_id: null,
+    prompt: null,
+    operations: [{ ...trace.operations[0], status: 'running', finished_at: null, attempt: 2 }],
+  };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ traces: [pending] })));
+  const view = render(<AiTraceDetails traceId="pending-trace" />);
+  const details = view.container.querySelector('details')!;
+  details.open = true;
+  fireEvent(details, new Event('toggle'));
+  expect(
+    await screen.findByText('model · common.aiTrace.status.running · common.aiTrace.attempt 2')
+  ).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'common.aiTrace.origin' })).toBeNull();
+  expect(screen.queryByText(/ms$/)).toBeNull();
+});
+
+it('ignores a rejected diagnostic request after its panel has unmounted', async () => {
+  let reject!: (error: Error) => void;
+  const fetch = vi.fn(
+    () =>
+      new Promise<Response>((_resolve, fail) => {
+        reject = fail;
+      })
+  );
+  vi.stubGlobal('fetch', fetch);
+  const view = render(<AiTraceDetails traceId="cancelled-trace" />);
+  const details = view.container.querySelector('details')!;
+  details.open = true;
+  fireEvent(details, new Event('toggle'));
+  await screen.findByRole('status');
+  view.unmount();
+  await act(async () => reject(new DOMException('Request aborted', 'AbortError')));
+  expect(screen.queryByRole('alert')).toBeNull();
+});
 it('loads on demand and presents prompt, nested tool failures and origin link after reload', async () => {
   const fetch = vi.fn().mockResolvedValue(Response.json({ traces: [trace] }));
   vi.stubGlobal('fetch', fetch);

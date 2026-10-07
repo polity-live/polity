@@ -866,6 +866,21 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "focuses and activates crop controls with the keyboard"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "refuses inserting %s media until its asset has been selected"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "paints the complete validated scene without a root filter and omits absent or hidden root frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates actual editor command inputs before canvas selection or preview changes"
       }
     ],
     "src/features/communication-studio/logic/document-v3.ts": [
@@ -1027,6 +1042,21 @@
         "file": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "blocks legacy direct Studio AI writes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "refuses inserting %s media until its asset has been selected"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "paints the complete validated scene without a root filter and omits absent or hidden root frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates actual editor command inputs before canvas selection or preview changes"
       }
     ],
     "src/features/communication-studio/logic/element-library.ts": [
@@ -1165,6 +1195,21 @@
         "file": "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "project": "unit",
         "caseId": "keeps non-media projections stable"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "refuses inserting %s media until its asset has been selected"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "paints the complete validated scene without a root filter and omits absent or hidden root frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates actual editor command inputs before canvas selection or preview changes"
       }
     ],
     "src/features/communication-studio/logic/paint.ts": [
@@ -1661,6 +1706,21 @@
         "file": "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
         "project": "unit",
         "caseId": "duplicates rich text with independent Plate IDs and formatting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "refuses inserting %s media until its asset has been selected"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "paints the complete validated scene without a root filter and omits absent or hidden root frames"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/node-boundaries.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates actual editor command inputs before canvas selection or preview changes"
       }
     ],
     "src/features/communication-studio/logic/studio-selection.ts": [
@@ -2694,6 +2754,26 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
         "project": "component",
         "caseId": "keeps all visible proposal markers while switching the selected canvas preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPlateDiff.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps unchanged text readable without inserting suggestion marks"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPlateDiff.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "renders a valid empty Plate value when both versions are empty"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPlateDiff.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "retains common prefixes and suffixes around changed wording"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioPlateDiff.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reads text recursively from valid linked Plate content and keeps paragraph boundaries"
       }
     ],
     "src/features/communication-studio/ui/StudioPreviewDialog.tsx": [
@@ -3012,6 +3092,11 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "moves focus and selection through Studio ownership tabs with the keyboard"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps template and shared-project metadata when switching actual collection preferences to compact rows"
       }
     ],
     "src/features/communication-studio/ui/StudioTableEditor.tsx": [
@@ -3848,6 +3933,16 @@
         "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "project": "component",
         "caseId": "aborts pending requests on unmount and tolerates responses without trace data"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "shows unfinished retried operations without exposing an absent origin link"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores a rejected diagnostic request after its panel has unmounted"
       }
     ],
     "src/features/project-chat/hooks/editor-bridge.ts": [
@@ -9403,6 +9498,61 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "routes native canvas keyboard duplicate, history, formatting, movement and deletion commands while guarding unrelated editing controls"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "hands a completed image export to the statement composer for group %s"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "cancels a %s export through the actual controller"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "leaves the public editor empty when the document hook has no cached value"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "handles empty-canvas undo and redo while respecting editable inputs and revoked editing access"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "responds to preview lifecycle events emitted outside the editor toolbar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "clears selection and its context state when an existing editor receives a new project identity"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the %s document status while keeping the cached canvas available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "includes remote cursor presence and fallback peer identities without selecting them as canvas nodes"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "aligns and distributes selected canonical nodes against the current viewport"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits a canonical embed through its dedicated properties without creating a legacy shape"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates custom colors, borders and media fitting through real canonical inspector controls"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -12196,6 +12346,77 @@
         "file": "src/server/studio/__tests__/workspace-read-boundaries.database-integration.test.ts",
         "project": "database-integration",
         "caseId": "allows reading a published proposal while refusing edits after submission or suggest-capability revocation"
+      }
+    ],
+    "src/features/messages/ui/MessageListView.tsx": [
+      {
+        "file": "src/features/messages/ui/__tests__/MessageListView.branch-a05.component.test.tsx",
+        "project": "component",
+        "caseId": "renders chronological annotations on both sides of a virtual message row"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/MessageListView.branch-a05.component.test.tsx",
+        "project": "component",
+        "caseId": "covers absent user and every streaming activity/error presentation"
+      },
+      {
+        "file": "src/features/messages/ui/__tests__/MessageListView.branch-a05.component.test.tsx",
+        "project": "component",
+        "caseId": "renders new-message, empty, loaded, pending, streaming and recipient request rows"
+      }
+    ],
+    "src/routes/_authed/studio/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "links group projects to their group Studio route"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves project scope when opening another project or completing canvas focus"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders nested Studio routes through an outlet"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity"
+      }
+    ],
+    "src/routes/_authed/group/$id/studio/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "links group projects to their group Studio route"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves project scope when opening another project or completing canvas focus"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders nested Studio routes through an outlet"
+      },
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity"
       }
     ]
   },

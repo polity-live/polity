@@ -26,10 +26,14 @@ vi.mock('@/features/communication-studio/ui/StudioWorkspace', () => ({
   ),
 }));
 vi.mock('@/features/communication-studio/ui/StudioProjectAccess', () => ({
-  StudioProjectAccess: ({ groupId, projectId }: any) => (
-    <button>
-      {groupId ?? 'personal'}:{projectId}
-    </button>
+  StudioProjectAccess: ({ groupId, projectId, open, onFocusHandled }: any) => (
+    <>
+      <button>
+        {groupId ?? 'personal'}:{projectId}
+      </button>
+      <button onClick={() => open('next')}>Open another project</button>
+      <button onClick={() => onFocusHandled('next-workspace')}>Complete canvas focus</button>
+    </>
   ),
 }));
 vi.mock('@/features/communication-studio/ui/StudioProjectOverview', () => ({
@@ -86,6 +90,27 @@ it.each([
   render(<Page />);
   expect(screen.getByRole('button', { name: `${scope}:project` })).toBeTruthy();
 });
+
+it.each([
+  [PersonalProject, null],
+  [GroupProject, 'group'],
+] as const)(
+  'preserves project scope when opening another project or completing canvas focus',
+  (route, groupId) => {
+    const Page = route.options.component as any;
+    render(<Page />);
+    fireEvent.click(screen.getByRole('button', { name: 'Complete canvas focus' }));
+    expect(io.navigate).toHaveBeenCalledWith({
+      search: { conversationId: undefined, workspaceId: 'next-workspace' },
+      replace: true,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open another project' }));
+    expect(io.navigate).toHaveBeenCalledWith({
+      to: groupId ? '/group/$id/studio/$projectId' : '/studio/$projectId',
+      params: groupId ? { id: groupId, projectId: 'next' } : { projectId: 'next' },
+    });
+  }
+);
 
 it.each([PersonalRoot, GroupRoot])('renders nested Studio routes through an outlet', route => {
   const Page = route.options.component as any;

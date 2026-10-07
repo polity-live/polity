@@ -13,7 +13,10 @@ import { readStudioProject } from '../read';
 import { listStudioCollaborators, listMyStudioInvitations } from '../collaborators';
 import { resolveStudioSource } from '../source';
 
-const database = process.env.STUDIO_TEST_DATABASE_URL ?? process.env.STUDIO_DATABASE_URL;
+const database =
+  process.env.STUDIO_TEST_DATABASE_URL ??
+  process.env.STUDIO_DATABASE_URL ??
+  process.env.ZERO_UPSTREAM_DB;
 if (!database || !['localhost', '127.0.0.1'].includes(new URL(database).hostname))
   throw new Error('Workspace boundary tests require an explicit local test database');
 process.env.STUDIO_DATABASE_URL = database;

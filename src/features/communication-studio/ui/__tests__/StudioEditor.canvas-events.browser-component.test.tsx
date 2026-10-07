@@ -7,7 +7,13 @@ import {
   createStudioV3ClipboardPayload,
   stringifyStudioClipboard,
 } from '../../logic/studio-clipboard';
-import type { StudioDocumentV3, StudioNode, StudioPlateElement } from '../../logic/document-v3';
+import {
+  embedNodeSchema,
+  mediaNodeSchema,
+  type StudioDocumentV3,
+  type StudioNode,
+  type StudioPlateElement,
+} from '../../logic/document-v3';
 import { applyStudioCommandV3 } from '../../logic/commands-v3';
 import { StudioInlineTextEditor } from '../StudioInlineTextEditor';
 import { StudioWorkspace } from '../StudioWorkspace';
@@ -55,6 +61,75 @@ async function menu(label: string) {
   await activate(trigger);
   return within(await screen.findByRole('menu'));
 }
+
+it('aligns and distributes selected canonical nodes against the current viewport', async () => {
+  await mount();
+  const nodes = canonical()
+    .nodes.filter(candidate => candidate.type !== 'frame')
+    .slice(0, 2);
+  await act(() => io.canvasProps.selectExact(nodes.map(item => item.id)));
+  let popup = await menu('elementAlignment');
+  await activate(popup.getByRole('menuitemradio', { name: 'view' }));
+  popup = await menu('elementAlignment');
+  await activate(popup.getByRole('menuitem', { name: 'left' }));
+  const parent = frame();
+  await waitFor(() => expect(node(nodes[0].id).transform.x + parent.transform.x).toBeCloseTo(100));
+  popup = await menu('distribute');
+  await activate(popup.getByRole('menuitem', { name: 'distribute horizontal' }));
+  expect(canonical().nodes).toHaveLength(io.canvasProps.document.nodes.length);
+});
+
+it('edits a canonical embed through its dedicated properties without creating a legacy shape', async () => {
+  await mount();
+  const source = canonical().nodes.find(candidate => candidate.type === 'shape')!;
+  const embed = embedNodeSchema.parse({
+    ...source,
+    type: 'embed',
+    provider: 'code',
+    value: 'const x = 1;',
+  });
+  await act(() =>
+    io.editor.transactV3((document: StudioDocumentV3) =>
+      document.nodes.push(embedNodeSchema.parse({ ...embed, id: crypto.randomUUID() }))
+    )
+  );
+  const target = canonical().nodes.find(candidate => candidate.type === 'embed')!;
+  await select(target.id);
+  const name = within(screen.getByRole('region', { name: 'properties' })).getByRole('textbox', {
+    name: 'name',
+  });
+  await userEvent.fill(name, 'Native canonical code');
+  await waitFor(() => expect(node(target.id).name).toBe('Native canonical code'));
+  expect(node(target.id)).toMatchObject({ type: 'embed', value: 'const x = 1;' });
+});
+
+it('updates custom colors, borders and media fitting through real canonical inspector controls', async () => {
+  await mount();
+  const source = canonical().nodes.find(candidate => candidate.type === 'shape')!;
+  await select(source.id);
+  fireEvent.change(screen.getByLabelText('customColor', { exact: true }), {
+    target: { value: '#234567' },
+  });
+  fireEvent.change(screen.getByLabelText('border', { exact: true }), {
+    target: { value: '#765432' },
+  });
+  expect(node(source.id).style).toMatchObject({ fill: '#234567', stroke: '#765432' });
+  const media = mediaNodeSchema.parse({
+    ...source,
+    type: 'media',
+    mediaType: 'image',
+    assetId: crypto.randomUUID(),
+  });
+  await act(() =>
+    io.editor.transactV3((document: StudioDocumentV3) =>
+      document.nodes.push(mediaNodeSchema.parse({ ...media, id: crypto.randomUUID() }))
+    )
+  );
+  const target = canonical().nodes.find(candidate => candidate.type === 'media')!;
+  await select(target.id);
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'fit' }), 'contain');
+  expect(node(target.id)).toMatchObject({ type: 'media', fit: 'contain' });
+});
 
 it.each(['frame', 'text', 'draw', 'laser', 'rectangle', 'arrow', 'ellipse'] as const)(
   'persists the real canvas %s creation event as a validated canonical node with local geometry',
@@ -480,6 +555,18 @@ it('formats the actual selected Plate editor text through Studio marks, alignmen
     expect(node(text.id)).toMatchObject({
       content: [{ children: [{ text: 'Alpha', bold: true }] }],
     })
+  );
+  const fonts = await menu('font');
+  await activate(fonts.getByRole('menuitemradio', { name: 'Inter' }));
+  await waitFor(() =>
+    expect(node(text.id)).toMatchObject({ content: [{ children: [{ fontFamily: 'Inter' }] }] })
+  );
+  const color = document.querySelector<HTMLInputElement>(
+    '[data-action-id="communication-studio.studio-editor.activate.input-6b4651ec8d"]'
+  )!;
+  fireEvent.change(color, { target: { value: '#13579b' } });
+  await waitFor(() =>
+    expect(node(text.id)).toMatchObject({ content: [{ children: [{ color: '#13579b' }] }] })
   );
   const alignment = await menu('alignment');
   await activate(alignment.getByRole('menuitemradio', { name: 'center' }));
