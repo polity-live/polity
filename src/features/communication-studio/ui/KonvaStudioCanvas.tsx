@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import './studio-fonts.css';
 import './studio-canvas.css';
 import { canvasFocusTarget, canvasFocusView, freeCanvasRectangle } from '../logic/canvas-focus';
@@ -564,6 +565,7 @@ function EditorPortal({
 
 const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
   function KonvaStudioCanvas(props, ref) {
+    const { t } = useTranslation();
     const host = useRef<HTMLDivElement>(null);
     const stage = useRef<Konva.Stage>(null);
     const lower = useRef<Konva.Layer>(null);
@@ -2543,7 +2545,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           <div
             ref={contextToolbarRef}
             role="toolbar"
-            aria-label={props.contextToolbarLabel ?? 'Element actions'}
+            aria-label={props.contextToolbarLabel ?? t('features.studio.elementActions')}
             data-testid="studio-context-toolbar"
             className="polity-canvas-context-toolbar"
             style={{
@@ -2619,7 +2621,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         {cropDraft && (
           <div
             role="toolbar"
-            aria-label={props.cropLabels?.crop ?? 'Crop'}
+            aria-label={props.cropLabels?.crop ?? t('features.studio.cropMedia')}
             data-crop-x={cropDraft.state.crop.x}
             data-crop-width={cropDraft.state.crop.width}
             data-frame-width={cropDraft.state.frame.width}
@@ -2679,7 +2681,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             className="polity-canvas-properties"
             data-collapsed={inspectorCollapsed}
             data-expand-direction={inspectorOpensUp ? 'up' : 'down'}
-            aria-label={props.inspectorLabels?.title ?? 'Elementeigenschaften'}
+            aria-label={props.inspectorLabels?.title ?? t('features.studio.elementProperties')}
             style={{
               left: inspectorAnchor.x,
               top: inspectorAnchor.y,
@@ -2692,7 +2694,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 data-action-kind="interaction"
                 type="button"
                 className="polity-canvas-properties-drag-handle"
-                aria-label={props.inspectorLabels?.move ?? 'Eigenschaften verschieben'}
+                aria-label={props.inspectorLabels?.move ?? t('features.studio.moveProperties')}
                 onPointerDown={event => {
                   if (event.button !== 0) return;
                   inspectorDrag.current = {
@@ -2728,7 +2730,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 }}
               >
                 <span aria-hidden="true">⠿</span>
-                <span>{props.inspectorLabels?.title ?? 'Elementeigenschaften'}</span>
+                <span>
+                  {props.inspectorLabels?.title ?? t('features.studio.elementProperties')}
+                </span>
               </button>
               <button
                 data-action-id="communication-studio.inspector.visibility.toggle"
@@ -2739,8 +2743,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 aria-expanded={!inspectorCollapsed}
                 aria-label={
                   inspectorCollapsed
-                    ? (props.inspectorLabels?.expand ?? 'Eigenschaften aufklappen')
-                    : (props.inspectorLabels?.collapse ?? 'Eigenschaften einklappen')
+                    ? (props.inspectorLabels?.expand ?? t('features.studio.expandProperties'))
+                    : (props.inspectorLabels?.collapse ?? t('features.studio.collapseProperties'))
                 }
                 onClick={() => setInspectorCollapsed(value => !value)}
               >

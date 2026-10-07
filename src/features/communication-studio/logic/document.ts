@@ -234,9 +234,15 @@ export const documentSchema = z
         e.chart?.series.map(s => s.id) ?? [],
       ];
       if (sets.some(ids => new Set(ids).size !== ids.length))
-        ctx.addIssue({ code: 'custom', message: 'Duplicate nested Studio IDs' });
+        ctx.addIssue({
+          code: 'custom',
+          message: translateText('features.studio.duplicateNestedIds'),
+        });
       if ((e.type === 'table' && !e.table) || (e.type === 'chart' && !e.chart))
-        ctx.addIssue({ code: 'custom', message: 'Element data missing' });
+        ctx.addIssue({
+          code: 'custom',
+          message: translateText('features.studio.elementDataMissing'),
+        });
     }
     for (const post of d.posts) {
       if (post.pageIds.some(id => !ids.has(id)))

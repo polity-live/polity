@@ -331,7 +331,7 @@ export function StudioEditor({
     return (
       <main className="grid min-h-64 place-items-center p-6" data-testid="studio-editor">
         <div className="space-y-3 text-center">
-          <p role="status">The canvas is empty.</p>
+          <p role="status">{tr('canvasEmpty')}</p>
           {emptyClipboardError && <p role="alert">{emptyClipboardError}</p>}
           <div className="flex justify-center gap-2">
             <Button
@@ -341,7 +341,7 @@ export function StudioEditor({
               disabled={!c.canUndo || emptyEditingDisabled || emptyPastePending}
               onClick={() => c.undo()}
             >
-              Undo
+              {tr('undo')}
             </Button>
             <Button
               data-action-id="communication-studio.empty-canvas.clipboard.paste"
@@ -351,7 +351,7 @@ export function StudioEditor({
               aria-busy={emptyPastePending}
               onClick={pasteIntoEmptyDocument}
             >
-              Paste
+              {tr('paste')}
             </Button>
           </div>
         </div>
@@ -1159,7 +1159,13 @@ function StudioEditorReady({
                     aria-pressed={active[style]}
                     onClick={() => formatText(style, !active[style])}
                   >
-                    {style === 'bold' ? <b>B</b> : style === 'italic' ? <i>I</i> : <u>U</u>}
+                    {style === 'bold' ? (
+                      <b>{tr('boldSymbol')}</b>
+                    ) : style === 'italic' ? (
+                      <i>{tr('italicSymbol')}</i>
+                    ) : (
+                      <u>{tr('underlineSymbol')}</u>
+                    )}
                   </button>
                 ))}
               </div>
@@ -1632,13 +1638,7 @@ function StudioEditorReady({
               <StudioMenuItem
                 data-action-kind="interaction"
                 key={kind}
-                label={
-                  kind === 'presentation'
-                    ? typeof document !== 'undefined' && document.documentElement.lang === 'en'
-                      ? 'Presentation'
-                      : 'Präsentation'
-                    : tr(kind)
-                }
+                label={tr(kind)}
                 icon={<Layers3 />}
                 disabled={disabled}
                 onSelect={() => c.insertFrameSet(kind)}
@@ -2334,9 +2334,15 @@ function StudioEditorReady({
             {c.theme && (
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold">{tr('fonts')}</h3>
-                <p className="text-xs">Display: {c.theme.fonts.display}</p>
-                <p className="text-xs">Sans: {c.theme.fonts.sans}</p>
-                <p className="text-xs">Mono: {c.theme.fonts.mono}</p>
+                <p className="text-xs">
+                  {tr('displayFontLabel')} {c.theme.fonts.display}
+                </p>
+                <p className="text-xs">
+                  {tr('sansFontLabel')} {c.theme.fonts.sans}
+                </p>
+                <p className="text-xs">
+                  {tr('monoFontLabel')} {c.theme.fonts.mono}
+                </p>
                 <h3 className="pt-2 text-sm font-semibold">{tr('textStyles')}</h3>
                 {c.theme.textStyles.map(style => (
                   <button
@@ -2348,7 +2354,10 @@ function StudioEditorReady({
                     onClick={() => applyTextStyle(style.id)}
                   >
                     <span>{style.name}</span>
-                    <span className="text-muted-foreground text-xs">{style.size}px</span>
+                    <span className="text-muted-foreground text-xs">
+                      {style.size}
+                      {tr('pixelUnit')}
+                    </span>
                   </button>
                 ))}
               </section>

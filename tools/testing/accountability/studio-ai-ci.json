@@ -555,6 +555,26 @@
         "file": "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "project": "unit",
         "caseId": "retains zoom for small elements and reduces it to fit large elements with padding"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads every frame preset label in the current %s language without changing geometry"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes canonical document validation in %s while retaining resource identities"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes duplicate scene and nested document errors in %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the selected language when a validator and registry were imported before the language changed"
       }
     ],
     "src/features/communication-studio/logic/change-request-annotations.ts": [
@@ -693,6 +713,26 @@
         "file": "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "project": "unit",
         "caseId": "limits follow-up additions, recoloring and removal to the selected frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads every frame preset label in the current %s language without changing geometry"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes canonical document validation in %s while retaining resource identities"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes duplicate scene and nested document errors in %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the selected language when a validator and registry were imported before the language changed"
       }
     ],
     "src/features/communication-studio/logic/draw-element.ts": [
@@ -3409,6 +3449,91 @@
         "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
         "project": "unit",
         "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "indexes nested inline leaves and empty blocks without mutating the document"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes a reversed=%s selection across nested leaves and blocks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains a collapsed insertion anchor, compares parent paths and omits boundary-only selections"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a selected leaf range %i..%i outside its text"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "encodes every rich block, inline marks and safe links with fresh identities"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "inserts %s a snapshot block while retaining later references"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies %s to contiguous snapshot blocks after earlier insertion"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects duplicate, separated or reversed block ranges %s"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "recreates an empty paragraph after removing the whole document and generates a default UUID"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "splits a selected link leaf for %s while preserving outside marks"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats a whole leaf without adding empty outside fragments"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "protects nested %s annotations and reports recovery"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects %s without changing the input snapshot"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects stale or invalid anchor data %j"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects an anchor pointing at a nontext node"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates resolvable suggestions for %s while retaining unchanged block identity"
+      },
+      {
+        "file": "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "project": "unit",
+        "caseId": "builds a native insertion suggestion for an initially empty document"
       }
     ],
     "src/features/project-chat/ui/ProjectChatPanel.tsx": [
@@ -7010,6 +7135,11 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "erases a node with native pointer activation and tolerates a missing delete delegate"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates native inspector labels after a language change while retaining keyboard focus and panel state"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [
@@ -7092,6 +7222,28 @@
         "file": "src/features/amendments/__tests__/AmendmentTargetGroup.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "shows a failed target group route after native pointer navigation without rendering a successful group page"
+      }
+    ],
+    "src/features/communication-studio/logic/document.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads every frame preset label in the current %s language without changing geometry"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes canonical document validation in %s while retaining resource identities"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "localizes duplicate scene and nested document errors in %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the selected language when a validator and registry were imported before the language changed"
       }
     ]
   },

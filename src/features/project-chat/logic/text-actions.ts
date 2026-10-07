@@ -68,7 +68,9 @@ export function textReferences(content: TextNode[], selection?: EditorContext['s
       compare(selection.anchor, selection.focus) <= 0
         ? [selection.anchor, selection.focus]
         : [selection.focus, selection.anchor];
-    for (const [ref, anchor] of Object.entries(references.anchors)) {
+    // Each selectable anchor comes from the leaf indexed in this snapshot.
+    for (const { ref, text } of blocks.flatMap(block => block.anchors)) {
+      const anchor = references.anchors[ref];
       if (
         compare({ path: anchor.path, offset: anchor.end }, start) <= 0 ||
         compare({ path: anchor.path, offset: 0 }, end) >= 0
@@ -81,8 +83,6 @@ export function textReferences(content: TextNode[], selection?: EditorContext['s
       if (from < 0 || to > anchor.end || from > to) throw new ProjectToolError('invalid_selection');
       const selectedRef = `selection_${selectionAnchors.length}`;
       references.anchors[selectedRef] = { ...anchor, start: from, end: to };
-      const text = blocks.flatMap(b => b.anchors).find(a => a.ref === ref)?.text;
-      if (text === undefined) throw new ProjectToolError('invalid_selection');
       selectionAnchors.push({ ref: selectedRef, text: text.slice(from, to) });
     }
   }
@@ -142,19 +142,20 @@ export function applyTextActions(
   input: TextNode[],
   actions: AmendmentAction[],
   references: TextReferences,
-  createId = () => crypto.randomUUID()
+  createId: () => string = () => crypto.randomUUID()
 ) {
   const value = structuredClone(input);
   const original = [...value];
   const metadata: Record<string, unknown> = {};
   const touchedAnchors = new Set<TextNode>();
-  const anchorNodes = new Map<string, { root: TextNode; parent: TextNode; leaf: TextNode }>();
+  const anchorNodes = new Map<string, { root: TextNode; children: TextNode[]; leaf: TextNode }>();
   for (const [ref, anchor] of Object.entries(references.anchors)) {
     const root = original[anchor.path[0]];
     let parent = root;
     for (const index of anchor.path.slice(1, -1)) parent = parent?.children?.[index] as TextNode;
-    const leaf = parent?.children?.[anchor.path[anchor.path.length - 1]];
-    if (root && parent && leaf) anchorNodes.set(ref, { root, parent, leaf });
+    const children = parent?.children;
+    const leaf = children?.[anchor.path[anchor.path.length - 1]];
+    if (root && children && leaf) anchorNodes.set(ref, { root, children, leaf });
   }
   const blockFor = (ref: string) => {
     const index = references.blocks[ref];
@@ -200,12 +201,13 @@ export function applyTextActions(
       nodes = anchorNodes.get(action.anchorRef);
     if (!anchor || !nodes || touchedAnchors.has(nodes.leaf))
       throw new ProjectToolError('invalid_reference');
-    const { root, parent, leaf } = nodes;
+    const { root, children, leaf } = nodes;
     if (!value.includes(root)) throw new ProjectToolError('invalid_reference');
     writable(root);
-    const index = parent.children?.indexOf(leaf) ?? -1;
+    // The anchor was resolved from this cloned child array. Earlier operations
+    // either retain its leaf or reject it as removed/already touched above.
+    const index = children.indexOf(leaf);
     if (
-      index < 0 ||
       typeof leaf.text !== 'string' ||
       anchor.start < 0 ||
       anchor.start > anchor.end ||
@@ -219,8 +221,7 @@ export function applyTextActions(
         ? { ...leaf, text: action.text }
         : { ...leaf, text: leaf.text.slice(anchor.start, anchor.end), ...action.marks };
     touchedAnchors.add(leaf);
-    if (!parent.children) throw new ProjectToolError('invalid_reference');
-    parent.children.splice(
+    children.splice(
       index,
       1,
       ...(before ? [{ ...leaf, text: before }] : []),

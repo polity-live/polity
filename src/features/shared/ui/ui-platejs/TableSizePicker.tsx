@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useState } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -11,13 +12,15 @@ export function TableSizePicker({
   onSelect,
   rows = 8,
   columns = 8,
-  label = 'Table size',
+  label,
 }: {
   onSelect: (size: TableSize) => void;
   rows?: number;
   columns?: number;
   label?: string;
 }) {
+  const { t } = useTranslation();
+  const accessibleLabel = label ?? t('features.studio.tableSize');
   const [size, setSize] = useState<TableSize>({ rowCount: 0, colCount: 0 });
   const select = () => {
     if (size.rowCount > 0 && size.colCount > 0) onSelect(size);
@@ -28,7 +31,11 @@ export function TableSizePicker({
       className="m-0 flex flex-col p-1"
       role="button"
       tabIndex={0}
-      aria-label={`${label}: ${size.rowCount} x ${size.colCount}`}
+      aria-label={t('features.studio.tableSizeDescription', {
+        label: accessibleLabel,
+        rows: size.rowCount,
+        columns: size.colCount,
+      })}
       onClick={event => {
         const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-table-size-row]');
         if (cell && event.currentTarget.contains(cell)) {

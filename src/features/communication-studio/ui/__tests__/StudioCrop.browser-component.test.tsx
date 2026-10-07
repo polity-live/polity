@@ -147,11 +147,11 @@ it('applies a crop once and discards an abandoned crop', async () => {
     await ref.current!.execute({ type: 'crop', action: 'start' });
   });
   await screen.findByRole('toolbar', { name: 'Crop' });
-  expect(screen.queryByRole('complementary', { name: 'Elementeigenschaften' })).toBeNull();
+  expect(screen.queryByRole('complementary', { name: 'Element properties' })).toBeNull();
   fireEvent.change(screen.getByRole('slider'), { target: { value: '2' } });
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(commit).not.toHaveBeenCalled();
-  expect(screen.getByRole('complementary', { name: 'Elementeigenschaften' })).toBeTruthy();
+  expect(screen.getByRole('complementary', { name: 'Element properties' })).toBeTruthy();
   await act(async () => {
     await ref.current!.execute({ type: 'crop', action: 'start' });
   });

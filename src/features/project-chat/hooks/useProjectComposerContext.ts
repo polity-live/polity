@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMemo, useState } from 'react';
 import type { EditorContext, ProjectScope } from '../logic/contracts';
 import {
@@ -30,6 +31,7 @@ export function useProjectComposerContext(
   fallback: EditorContext,
   title: string
 ) {
+  const { t } = useTranslation();
   const publication = useProjectEditorSnapshot(scope, fallback.surface);
   const live = publication?.context ?? fallback;
   const automatic = useMemo<ProjectContextReference[]>(() => {
@@ -48,7 +50,7 @@ export function useProjectComposerContext(
         kind: 'workspace',
         id: live.proposalId ?? 'canonical',
         workspaceId: live.proposalId ?? null,
-        label: live.proposalId ?? 'canonical',
+        label: live.proposalId ?? t('features.projectChat.context.canonical'),
         origin: 'automatic',
       });
       if (live.pageId)
@@ -80,7 +82,7 @@ export function useProjectComposerContext(
         add({
           kind: 'city_design',
           id: live.cityDesignId,
-          label: 'City Design',
+          label: t('features.projectChat.context.city_design'),
           origin: 'automatic',
         });
       for (const id of live.objectIds ?? [])
@@ -94,12 +96,12 @@ export function useProjectComposerContext(
         add({
           kind: 'text_selection',
           id: live.documentId ?? scope.amendmentId,
-          label: 'selection',
+          label: t('features.projectChat.context.selection'),
           origin: 'automatic',
         });
     }
     return refs;
-  }, [live, scope.kind, title]);
+  }, [live, scope.kind, title, t]);
   const fingerprint = JSON.stringify([
     fallback.surface,
     live.proposalId ?? null,

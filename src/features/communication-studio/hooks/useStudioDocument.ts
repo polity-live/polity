@@ -709,8 +709,8 @@ export function useStudioDocument(
         operationId: crypto.randomUUID(),
         generation: currentDocument.generation,
         revision: currentDocument.revision,
-        title: 'Recovered draft',
-        reason: 'Recovered local changes for a new review.',
+        title: translateText('features.studio.recoveredDraft'),
+        reason: translateText('features.studio.recoveredDraftReason'),
       });
       await studioRequest('canvas', {
         action: 'saveDraft',

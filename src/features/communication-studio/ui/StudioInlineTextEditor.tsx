@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Plate,
@@ -88,6 +89,7 @@ export function StudioInlineTextEditor({
   onChange: (content: StudioPlateElement[]) => void;
   register: (editor: StudioTextSelectionEditor | null) => void;
 }) {
+  const { t } = useTranslation();
   const editor = usePlateEditor(
     {
       plugins: [ParagraphPlugin.withComponent(Paragraph), ...BasicMarksKit, ...FontKit],
@@ -135,7 +137,7 @@ export function StudioInlineTextEditor({
       }}
     >
       <PlateContent
-        aria-label="Text"
+        aria-label={t('features.studio.editText')}
         style={{
           width: '100%',
           minHeight: node.transform.height,

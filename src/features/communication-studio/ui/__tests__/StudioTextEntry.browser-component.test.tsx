@@ -12,7 +12,18 @@ import { TestRouter } from '@/test/router-wrapper';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
-  useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),
+  useTranslation: () => ({
+    t: (key: string) => {
+      const localizedTestCopy: Record<string, string> = {
+        canvasEmpty: 'The canvas is empty.',
+        undo: 'Undo',
+        paste: 'Paste',
+        editText: 'Text',
+      };
+      const name = key.replace('features.studio.', '');
+      return localizedTestCopy[name] ?? name;
+    },
+  }),
 }));
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
   useFixedToolbarController: () => ({ className: 'fixed' }),

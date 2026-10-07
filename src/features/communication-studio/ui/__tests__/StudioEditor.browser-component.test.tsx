@@ -26,7 +26,21 @@ import { StudioWorkspace } from '../StudioWorkspace';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
-  useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, unknown>) => {
+      if (key === 'features.studio.tableSizeDescription')
+        return `${params?.label}: ${params?.rows} x ${params?.columns}`;
+      const localizedTestCopy: Record<string, string> = {
+        canvasEmpty: 'The canvas is empty.',
+        undo: 'Undo',
+        paste: 'Paste',
+        editText: 'Text',
+        pixelUnit: 'px',
+      };
+      const name = key.replace('features.studio.', '');
+      return localizedTestCopy[name] ?? name;
+    },
+  }),
 }));
 
 async function mount() {

@@ -46,9 +46,9 @@ export interface DefaultAiToolDefinition {
 export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
   {
     name: 'studio_generate_suggestion',
-    label: 'Studio-Entwurf erstellen',
+    label: translateText('features.studio.generateSuggestion'),
     kind: 'create',
-    description: 'Erstellt einen editierbaren KI-Vorschlag für Polity Studio.',
+    description: translateText('features.studio.generateSuggestionDescription'),
   },
   {
     name: 'create_studio_project',

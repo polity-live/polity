@@ -131,6 +131,7 @@ function WorkspaceContent({
   finishFocus: (requestId: number, error?: unknown) => void;
 }) {
   const c = useStudioController(groupId, projectId, open, workspaceId);
+  const { t } = useTranslation();
   const canvasHandle = useRef<StudioCanvasHandle | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
   const setCanvasHandle = useRef((handle: StudioCanvasHandle | null) => {
@@ -191,7 +192,9 @@ function WorkspaceContent({
                 kind: 'workspace',
                 id: workspaceId ?? 'canonical',
                 workspaceId: workspaceId ?? null,
-                label: workspaceId ? c.v3Value.title || workspaceId : 'canonical',
+                label: workspaceId
+                  ? c.v3Value.title || workspaceId
+                  : t('features.projectChat.context.canonical'),
                 origin: 'automatic',
               },
               ...c.v3Value.nodes
@@ -229,7 +232,6 @@ function WorkspaceContent({
       await requestFocus(target);
     }
   );
-  const { t } = useTranslation();
   const tr = (key: string) => t('features.studio.' + key);
   useStudioEditorTools(c);
   const failure = c.failure || c.error;

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useEffect, useRef } from 'react';
 import {
   Plate,
@@ -43,6 +44,7 @@ export function StudioTextEditor({
   onChange: (patch: Partial<StudioElement>) => void;
   register: (editor: StudioTextSelectionEditor | null) => void;
 }) {
+  const { t } = useTranslation();
   const editor = usePlateEditor(
     {
       plugins: [ParagraphPlugin.withComponent(StudioParagraph), ...BasicMarksKit, ...FontKit],
@@ -127,7 +129,7 @@ export function StudioTextEditor({
     >
       <PlateContent
         autoFocus
-        aria-label="Text"
+        aria-label={t('features.studio.editText')}
         style={{
           fontFamily: element.font,
           fontSize: element.fontSize,

@@ -332,7 +332,7 @@ describe('Studio toolbar workflows', () => {
       'chart',
       'table',
       'upload',
-      'undo',
+      'Undo',
       'redo',
       'guides',
     ]) {
@@ -1207,7 +1207,7 @@ describe('Studio toolbar workflows', () => {
   it('dispatches history, inserts a chart and toggles guides from the main toolbar', async () => {
     await show();
     const nodes = value().pages[0].elements;
-    click('undo');
+    click('Undo');
     click('redo');
     expect(io.editor.undo).toHaveBeenCalledOnce();
     expect(io.editor.redo).toHaveBeenCalledOnce();
@@ -1229,7 +1229,7 @@ describe('Studio toolbar workflows', () => {
     await show();
     expect(screen.getByText('readOnly')).toBeTruthy();
     selectText();
-    for (const name of ['chart', 'table', 'upload', 'undo', 'redo']) {
+    for (const name of ['chart', 'table', 'upload', 'Undo', 'redo']) {
       expect(screen.getByRole('button', { name }).getAttribute('aria-disabled')).toBe('true');
     }
     for (const id of ['input-f9d64640a1', 'input-6b4651ec8d']) {
@@ -1274,7 +1274,7 @@ describe('Studio toolbar workflows', () => {
     fireEvent.keyDown(input, { key: 'c', ctrlKey: true });
     expect(io.canvasExecute).toHaveBeenCalledTimes(3);
     input.remove();
-    click('undo');
+    click('Undo');
     expect(io.editor.undo).toHaveBeenCalled();
     click('preview');
     expect(screen.getByRole('dialog', { name: 'previewTitle' })).toBeTruthy();

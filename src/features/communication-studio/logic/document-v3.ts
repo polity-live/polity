@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { z } from 'zod';
 import { chartDataSchema, fontFamilies, mediaCropSchema, tableDataSchema } from './document';
 import { themePaletteRoleSchema } from '@/features/shared/appearance-theme/contract';
@@ -10,11 +11,51 @@ const uuid = z.string().uuid();
 export const STUDIO_DOCUMENT_SCHEMA_VERSION = 5 as const;
 
 export const framePresetRegistry = {
-  square: { id: 'square', label: 'Square post', width: 1080, height: 1080, safeArea: 54 },
-  portrait: { id: 'portrait', label: 'Portrait post', width: 1080, height: 1350, safeArea: 54 },
-  story: { id: 'story', label: 'Story / Reel', width: 1080, height: 1920, safeArea: 96 },
-  widescreen: { id: 'widescreen', label: 'Widescreen', width: 1920, height: 1080, safeArea: 54 },
-  standard: { id: 'standard', label: 'Presentation', width: 1440, height: 1080, safeArea: 54 },
+  square: {
+    id: 'square',
+    get label() {
+      return translateText('features.studio.squarePost');
+    },
+    width: 1080,
+    height: 1080,
+    safeArea: 54,
+  },
+  portrait: {
+    id: 'portrait',
+    get label() {
+      return translateText('features.studio.portraitPost');
+    },
+    width: 1080,
+    height: 1350,
+    safeArea: 54,
+  },
+  story: {
+    id: 'story',
+    get label() {
+      return translateText('features.studio.storyReel');
+    },
+    width: 1080,
+    height: 1920,
+    safeArea: 96,
+  },
+  widescreen: {
+    id: 'widescreen',
+    get label() {
+      return translateText('features.studio.widescreen');
+    },
+    width: 1920,
+    height: 1080,
+    safeArea: 54,
+  },
+  standard: {
+    id: 'standard',
+    get label() {
+      return translateText('features.studio.presentation');
+    },
+    width: 1440,
+    height: 1080,
+    safeArea: 54,
+  },
 } as const;
 
 export type FramePresetId = keyof typeof framePresetRegistry;
@@ -279,7 +320,11 @@ export const studioDocumentV3Schema = z
   .superRefine((document, context) => {
     const nodeById = new Map(document.nodes.map(node => [node.id, node]));
     if (nodeById.size !== document.nodes.length)
-      context.addIssue({ code: 'custom', path: ['nodes'], message: 'Duplicate Studio node IDs' });
+      context.addIssue({
+        code: 'custom',
+        path: ['nodes'],
+        message: translateText('features.studio.duplicateStudioNodes'),
+      });
 
     for (const node of document.nodes) {
       if (node.parentFrameId) {
@@ -288,7 +333,7 @@ export const studioDocumentV3Schema = z
           context.addIssue({
             code: 'custom',
             path: ['nodes'],
-            message: `Unknown parent frame for ${node.id}`,
+            message: translateText('features.studio.unknownParentFrame', { id: node.id }),
           });
       }
       const visited = new Set([node.id]);
@@ -298,7 +343,7 @@ export const studioDocumentV3Schema = z
           context.addIssue({
             code: 'custom',
             path: ['nodes'],
-            message: `Circular frame hierarchy at ${node.id}`,
+            message: translateText('features.studio.circularFrameHierarchy', { id: node.id }),
           });
           break;
         }
@@ -313,14 +358,14 @@ export const studioDocumentV3Schema = z
         context.addIssue({
           code: 'custom',
           path: ['deliverables'],
-          message: 'Duplicate deliverable IDs',
+          message: translateText('features.studio.duplicateDeliverables'),
         });
       deliverableIds.add(deliverable.id);
       if (deliverable.frameIds.some(id => nodeById.get(id)?.type !== 'frame'))
         context.addIssue({
           code: 'custom',
           path: ['deliverables'],
-          message: `Unknown deliverable frame in ${deliverable.id}`,
+          message: translateText('features.studio.unknownDeliverableFrame', { id: deliverable.id }),
         });
     }
 
@@ -331,7 +376,7 @@ export const studioDocumentV3Schema = z
         context.addIssue({
           code: 'custom',
           path: ['masterLayout', 'frameId'],
-          message: 'Master layout must reference a root frame',
+          message: translateText('features.studio.masterRootRequired'),
         });
       for (const nodeId of Object.keys(document.masterLayout.placements)) {
         const node = nodeById.get(nodeId);
@@ -339,14 +384,14 @@ export const studioDocumentV3Schema = z
           context.addIssue({
             code: 'custom',
             path: ['masterLayout', 'placements', nodeId],
-            message: 'Master placement must reference a direct master child',
+            message: translateText('features.studio.masterChildRequired'),
           });
       }
       if (document.deliverables.some(deliverable => deliverable.frameIds.includes(masterFrameId)))
         context.addIssue({
           code: 'custom',
           path: ['deliverables'],
-          message: 'Master layout cannot be exported as a deliverable frame',
+          message: translateText('features.studio.masterCannotExport'),
         });
     }
   });

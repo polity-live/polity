@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { z } from 'zod';
 
 // Only document records cross the persistence boundary. AppState contains local
@@ -55,9 +56,15 @@ export const canvasSceneSchema = z
   })
   .superRefine((scene, ctx) => {
     if (new Set(scene.elements.map(e => e.id)).size !== scene.elements.length)
-      ctx.addIssue({ code: 'custom', message: 'Duplicate canvas element IDs' });
+      ctx.addIssue({
+        code: 'custom',
+        message: translateText('features.studio.duplicateCanvasElements'),
+      });
     if (JSON.stringify(scene.files).length > 24_000_000)
-      ctx.addIssue({ code: 'custom', message: 'Canvas media exceeds 24 MB' });
+      ctx.addIssue({
+        code: 'custom',
+        message: translateText('features.studio.canvasMediaTooLarge'),
+      });
   });
 export type CanvasScene = z.infer<typeof canvasSceneSchema>;
 export const emptyCanvasScene = (): CanvasScene => ({ version: 1, elements: [], files: {} });

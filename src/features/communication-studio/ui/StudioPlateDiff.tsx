@@ -1,3 +1,4 @@
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMemo } from 'react';
 import { Plate, PlateContent, ParagraphPlugin, usePlateEditor } from 'platejs/react';
 import { suggestionPreviewClassName } from '@/features/shared/ui/ui-platejs/suggestion-mark-style';
@@ -10,6 +11,7 @@ export function studioText(node: RichTextNode): string {
 }
 
 export function StudioPlateDiff({ before, after }: { before: string; after: string }) {
+  const { t } = useTranslation();
   const value = useMemo(() => {
     let prefix = 0;
     while (prefix < before.length && prefix < after.length && before[prefix] === after[prefix])
@@ -37,7 +39,7 @@ export function StudioPlateDiff({ before, after }: { before: string; after: stri
     <Plate editor={editor}>
       <PlateContent
         readOnly
-        aria-label="Text changes"
+        aria-label={t('features.studio.textChanges')}
         className="rounded border p-2 text-sm whitespace-pre-wrap"
         renderLeaf={({ attributes, children, leaf }) => (
           <span

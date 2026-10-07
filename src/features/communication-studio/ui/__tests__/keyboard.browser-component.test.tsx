@@ -50,7 +50,18 @@ vi.mock('../StudioCanvas', () => ({
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
-  useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),
+  useTranslation: () => ({
+    t: (key: string) => {
+      const localizedTestCopy: Record<string, string> = {
+        canvasEmpty: 'The canvas is empty.',
+        undo: 'Undo',
+        paste: 'Paste',
+        editText: 'Text',
+      };
+      const name = key.replace('features.studio.', '');
+      return localizedTestCopy[name] ?? name;
+    },
+  }),
 }));
 vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({ ImageEditorDialog: () => null }));
 vi.mock('../KonvaStudioCanvas', () => ({
@@ -231,7 +242,7 @@ it('activates history, chart insertion and guides through native keyboard focus'
   controller.selected = [...controller.selected];
   ui.rerender(<StudioWorkspace groupId="group" projectId="project" open={vi.fn()} />);
   for (const [name, callback, args] of [
-    ['undo', 'undo', []],
+    ['Undo', 'undo', []],
     ['redo', 'redo', []],
     ['chart', 'add', ['chart']],
     ['guides', 'setGuides', [false]],
@@ -384,7 +395,7 @@ it.each([
   ['carousel', 'carousel'],
   ['story', 'story'],
   ['video', 'video'],
-  [document.documentElement.lang === 'en' ? 'Presentation' : 'Präsentation', 'presentation'],
+  ['presentation', 'presentation'],
 ] as const)(
   'inserts frame choice %s by keyboard exactly once and restores focus',
   async (itemName, kind) => {

@@ -623,7 +623,12 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         branchId: effectiveProcessBranchId,
         contentRevision: baseRevision.current.revision,
         references: [
-          { kind: 'amendment', id: entityId, label: title || 'Amendment', origin: 'automatic' },
+          {
+            kind: 'amendment',
+            id: entityId,
+            label: title || translateText('features.projectChat.context.amendment'),
+            origin: 'automatic',
+          },
           ...(effectiveProcessBranchId
             ? [
                 {

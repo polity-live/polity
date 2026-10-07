@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useZero } from '@rocicorp/zero/react';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
@@ -305,7 +306,7 @@ export function useStudioController(
     run(async () => {
       const result = await studioApi.request<{ id: string }>('create', {
         groupId,
-        title: title || 'Neue Kampagne',
+        title: title || translateText('features.studio.newCampaign'),
         kind,
         themeId,
         themeMode,

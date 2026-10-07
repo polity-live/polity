@@ -632,7 +632,7 @@ export function useCityDesignPageController(amendmentId: string, requestedBranch
           {
             kind: 'amendment',
             id: amendmentId,
-            label: amendment?.title || 'Amendment',
+            label: amendment?.title || translateText('features.projectChat.context.amendment'),
             origin: 'automatic',
           },
           ...(selectedProcessBranch?.id
@@ -650,7 +650,7 @@ export function useCityDesignPageController(amendmentId: string, requestedBranch
                 {
                   kind: 'city_design' as const,
                   id: primaryCityDesign.id,
-                  label: 'City Design',
+                  label: translateText('features.projectChat.context.city_design'),
                   origin: 'automatic' as const,
                 },
               ]

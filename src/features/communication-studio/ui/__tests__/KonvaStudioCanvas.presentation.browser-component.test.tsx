@@ -3,6 +3,7 @@ import Konva from 'konva';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { cdp, userEvent } from 'vitest/browser';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { defaultBrand, element } from '../../logic/document';
 import { createStudioNodeFromElement } from '../../logic/create-studio-node';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
@@ -11,7 +12,10 @@ import type { StudioNode } from '../../logic/document-v3';
 import type { StudioChangeRequestAnnotation } from '../../logic/change-request-annotations';
 import KonvaStudioCanvas, { type StudioCanvasHandle } from '../KonvaStudioCanvas';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  useLanguageStore.setState({ language: 'en' });
+});
 
 function fixture() {
   const studio = createStudioTemplateDocumentV5(
@@ -100,8 +104,8 @@ it('collapses and restores the native inspector with keyboard activation and ret
 
 it('moves the inspector with native arrow keys and clamps movement to the viewport', async () => {
   const { select } = mountInspector();
-  const panel = screen.getByRole('complementary', { name: 'Elementeigenschaften' });
-  const handle = screen.getByRole('button', { name: 'Eigenschaften verschieben' });
+  const panel = screen.getByRole('complementary', { name: 'Element properties' });
+  const handle = screen.getByRole('button', { name: 'Move properties' });
   await waitFor(() => expect(stage().width()).toBe(700));
   const initialX = parseFloat(panel.style.left);
   const initialY = parseFloat(panel.style.top);
@@ -131,10 +135,34 @@ it('moves the inspector with native arrow keys and clamps movement to the viewpo
   expect(panel.getAttribute('data-expand-direction')).toBe('down');
 });
 
+it('updates native inspector labels after a language change while retaining keyboard focus and panel state', async () => {
+  mountInspector();
+  const panel = screen.getByRole('complementary', { name: 'Element properties' });
+  const toggle = screen.getByRole('button', { name: 'Collapse properties' });
+  toggle.focus();
+  await userEvent.keyboard('{Enter}');
+  expect(panel.getAttribute('data-collapsed')).toBe('true');
+  await act(async () => {
+    useLanguageStore.setState({ language: 'de' });
+  });
+  expect(screen.getByRole('complementary', { name: 'Elementeigenschaften' })).toBe(panel);
+  expect(screen.getByRole('button', { name: 'Eigenschaften aufklappen' })).toBe(toggle);
+  expect(screen.getByRole('button', { name: 'Eigenschaften verschieben' })).toBeTruthy();
+  expect(document.activeElement).toBe(toggle);
+  await userEvent.keyboard(' ');
+  expect(panel.getAttribute('data-collapsed')).toBe('false');
+  expect(screen.getByRole('button', { name: 'Eigenschaften einklappen' })).toBe(toggle);
+  expect(document.activeElement).toBe(toggle);
+  await act(async () => {
+    useLanguageStore.setState({ language: 'en' });
+  });
+  expect(screen.getByRole('button', { name: 'Collapse properties' })).toBe(toggle);
+});
+
 it('drags the inspector using a real pointer and retains its selection', async () => {
   const { select } = mountInspector();
-  const panel = screen.getByRole('complementary', { name: 'Elementeigenschaften' });
-  const handle = screen.getByRole('button', { name: 'Eigenschaften verschieben' });
+  const panel = screen.getByRole('complementary', { name: 'Element properties' });
+  const handle = screen.getByRole('button', { name: 'Move properties' });
   const initialX = parseFloat(panel.style.left);
   const initialY = parseFloat(panel.style.top);
   await userEvent.dragAndDrop(handle, screen.getByTestId('studio-canvas'), {
@@ -152,8 +180,8 @@ it('drags the inspector using a real pointer and retains its selection', async (
 
 it('ignores secondary inspector drags and cancels interrupted pointer movement', async () => {
   mountInspector();
-  const panel = screen.getByRole('complementary', { name: 'Elementeigenschaften' });
-  const handle = screen.getByRole('button', { name: 'Eigenschaften verschieben' });
+  const panel = screen.getByRole('complementary', { name: 'Element properties' });
+  const handle = screen.getByRole('button', { name: 'Move properties' });
   await waitFor(() => expect(stage().width()).toBe(700));
   const initial = { left: panel.style.left, top: panel.style.top };
   fireEvent.pointerDown(handle, { button: 2, pointerId: 9, clientX: 10, clientY: 10 });
