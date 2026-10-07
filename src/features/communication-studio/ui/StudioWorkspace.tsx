@@ -146,7 +146,7 @@ function WorkspaceContent({
       focusRequest.workspaceId !== (workspaceId ?? null)
     )
       return;
-    if (c.failure || (!c.value && c.error) || c.canvasEnabled === false) {
+    if (c.failure || (!c.value && c.error)) {
       attempted.current = focusRequest.requestId;
       finishFocus(focusRequest.requestId, new Error('Canvas unavailable'));
       return;
@@ -162,17 +162,7 @@ function WorkspaceContent({
       .execute({ type: 'focus', nodeId: focusRequest.nodeId })
       .then(() => finishFocus(focusRequest.requestId))
       .catch(error => finishFocus(focusRequest.requestId, error));
-  }, [
-    focusRequest,
-    canvasReady,
-    c.v3Value,
-    c.failure,
-    c.error,
-    c.value,
-    c.canvasEnabled,
-    workspaceId,
-    finishFocus,
-  ]);
+  }, [focusRequest, canvasReady, c.v3Value, c.failure, c.error, c.value, workspaceId, finishFocus]);
   const publication: EditorPublication = {
     context: {
       surface: 'studio',
@@ -233,12 +223,6 @@ function WorkspaceContent({
   const tr = (key: string) => t('features.studio.' + key);
   useStudioEditorTools(c);
   const failure = c.failure || c.error;
-  if (projectId && c.canvasEnabled === false)
-    return (
-      <p role="alert" className="p-6">
-        {tr('canvasPreviewRequired')}
-      </p>
-    );
   const projectHref = (id: string) =>
     `${groupId ? `/group/${encodeURIComponent(groupId)}` : ''}/studio/${encodeURIComponent(id)}`;
   if (!projectId)

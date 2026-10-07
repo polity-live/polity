@@ -8,7 +8,6 @@ const io = vi.hoisted(() => ({
   createChat: vi.fn(),
   insert: vi.fn(),
   run: vi.fn(),
-  enabled: vi.fn(),
   theme: vi.fn(),
   generate: vi.fn(),
 }));
@@ -32,7 +31,6 @@ vi.mock('@/server/zero-mutate', () => ({
 vi.mock('@/zero/project-chat/shared-mutators', () => ({
   projectChatSharedMutators: { create: { fn: io.createChat } },
 }));
-vi.mock('@/server/studio/db', () => ({ studioEnabled: io.enabled }));
 vi.mock('@/server/studio/service', () => ({ resolveStudioTheme: io.theme }));
 vi.mock('@/server/studio/ai-suggestions', async original => ({
   ...(await original<typeof import('@/server/studio/ai-suggestions')>()),
@@ -58,7 +56,6 @@ beforeEach(() => {
   io.run.mockResolvedValue({ id: projectId });
   io.createChat.mockResolvedValue(undefined);
   io.insert.mockResolvedValue(undefined);
-  io.enabled.mockReturnValue(true);
   io.theme.mockResolvedValue(DEFAULT_STUDIO_THEME);
   io.generate.mockResolvedValue({ proposalId: 'proposal' });
 });
@@ -184,10 +181,7 @@ describe('Project starter handoffs and native Studio creation', () => {
     await create(instruction);
     expect(io.insert.mock.lastCall![0].content).toBe('X'.repeat(20_000));
   });
-  it('requires Studio enablement, group write rights and a visible newly inserted project before creating its chat', async () => {
-    io.enabled.mockReturnValueOnce(false);
-    await expect(create()).rejects.toMatchObject({ code: 'studio_unavailable' });
-    expect(io.theme).not.toHaveBeenCalled();
+  it('requires group write rights and a visible newly inserted project before creating its chat', async () => {
     for (const rights of [[], [{ allowed: false }]]) {
       io.query.mockImplementation(async (sql: string) =>
         sql.includes('studio_group_access') ? rights : []

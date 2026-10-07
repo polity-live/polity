@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '@/zero/queries';
+import { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
@@ -14,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { useUserState } from '@/zero/users/useUserState';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 
 interface Collaborator {
   id: string;
@@ -32,37 +34,28 @@ export function StudioInviteDialog({
   projectId: string;
   currentUserId: string;
 }) {
+  const studio = useStudioClient();
   const { t } = useTranslation();
   const tr = (key: string) => t(`features.studio.${key}`);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [rows, collaboratorStatus] = useQuery(
+    open ? queries.studio.collaborators({ projectId }) : undefined
+  );
+  const collaborators: Collaborator[] = (rows ?? []).map(row => ({
+    id: row.id,
+    user_id: row.user_id,
+    status: row.status as Collaborator['status'],
+    first_name: row.user?.first_name ?? null,
+    last_name: row.user?.last_name ?? null,
+    handle: row.user?.handle ?? null,
+  }));
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const loading = open && collaboratorStatus.type === 'unknown';
   const [error, setError] = useState('');
+  const failure =
+    error || (collaboratorStatus.type === 'error' ? collaboratorStatus.error.message : '');
   const { allUsers, isLoading } = useUserState({ includeAllUsers: true });
-  const refresh = async () => {
-    setCollaborators(await studioRequest<Collaborator[]>('collaborators', { projectId }));
-  };
-  useEffect(() => {
-    if (!open) return;
-    let active = true;
-    setLoading(true);
-    setError('');
-    studioRequest<Collaborator[]>('collaborators', { projectId })
-      .then(rows => {
-        if (active) setCollaborators(rows);
-      })
-      .catch(err => {
-        if (active) setError(String(err));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [open, projectId]);
   const excluded = new Set(collaborators.filter(c => c.status !== 'declined').map(c => c.user_id));
   const items = useMemo(() => {
     const availableUsers = (allUsers ?? []).filter(
@@ -88,7 +81,6 @@ export function StudioInviteDialog({
     setError('');
     try {
       await work();
-      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -97,16 +89,16 @@ export function StudioInviteDialog({
   };
   const invite = () =>
     void run(async () => {
-      await studioRequest('inviteCollaborators', { projectId, userIds: selected });
+      await studio.inviteCollaborators({ projectId, userIds: selected });
       setSelected([]);
     });
   const remove = (userId: string) =>
     void run(async () => {
-      await studioRequest('removeCollaborator', { projectId, userId });
+      await studio.removeCollaborator({ projectId, userId });
     });
   const resend = (userId: string) =>
     void run(async () => {
-      await studioRequest('inviteCollaborators', { projectId, userIds: [userId] });
+      await studio.inviteCollaborators({ projectId, userIds: [userId] });
     });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -177,9 +169,9 @@ export function StudioInviteDialog({
                 ))}
             </section>
           )}
-          {error && (
+          {failure && (
             <p role="alert" className="text-destructive text-sm">
-              {error}
+              {failure}
             </p>
           )}
         </div>

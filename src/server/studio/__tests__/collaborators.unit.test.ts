@@ -65,7 +65,6 @@ vi.mock('../db', async original => {
 });
 import {
   inviteStudioCollaborators,
-  listMyStudioInvitations,
   removeStudioCollaborator,
   respondStudioInvitation,
 } from '../collaborators';
@@ -98,7 +97,6 @@ describe('personal Studio invitations', () => {
     expect(io.rows).toHaveLength(1);
     expect(io.rows[0].status).toBe('invited');
     expect(io.notify).toHaveBeenCalledTimes(1);
-    expect(await listMyStudioInvitations('guest')).toHaveLength(1);
     await expect(respondStudioInvitation('other', io.rows[0].id, true)).rejects.toMatchObject({
       status: 403,
     });
@@ -111,7 +109,6 @@ describe('personal Studio invitations', () => {
     expect(await respondStudioInvitation('guest', io.rows[0].id, true)).toEqual({
       status: 'active',
     });
-    expect(await listMyStudioInvitations('guest')).toHaveLength(0);
     expect(await inviteStudioCollaborators('owner', 'project', ['guest'])).toEqual({ invited: 0 });
     await removeStudioCollaborator('owner', 'project', 'guest');
     expect(io.rows).toHaveLength(0);

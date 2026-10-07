@@ -71,6 +71,16 @@ jobs:
       - uses: ./.github/actions/setup-project
       - name: Run unit tests
         run: pnpm run test:unit
+      - name: Enforce 100 percent coverage for Studio Zero commands
+        run: pnpm run studio:test:coverage
+      - name: Upload Studio coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-studio-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: coverage-studio/
 
   component-tests:
     name: Component Integration Tests

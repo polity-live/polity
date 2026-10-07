@@ -10,7 +10,6 @@ import {
 import { createStudioTemplateDocumentV5 } from '@/features/communication-studio/logic/templates-v5';
 import { createZeroContext, executeZeroTransaction } from '@/server/zero-mutate';
 import { rows, sqlTransaction, lockAuthority } from '@/server/transaction';
-import { studioEnabled } from '@/server/studio/db';
 import { projectChatSharedMutators } from '@/zero/project-chat/shared-mutators';
 import { zql } from '@/zero/schema';
 import {
@@ -95,7 +94,6 @@ export function buildProjectStarterTools(
         'Create a Studio project and shared briefing chat. Choose a format, template, theme and color mode. Copies only the current instruction. Does not export or publish. Continue editing with tools in the returned project chat.',
       inputSchema: studioCreateSchema,
       execute: async args => {
-        if (!studioEnabled(actor)) throw new ProjectToolError('studio_unavailable');
         const selectedTheme = await resolveStudioTheme(
           actor,
           args.groupId,

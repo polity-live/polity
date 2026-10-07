@@ -9,8 +9,10 @@ vi.mock('@/lib/supabase/server', async original => ({
   getSession: async () => (session.actor ? { user: { id: session.actor } } : null),
 }));
 import { assertCanvasWorkspace } from '../workspace-access';
-import { readStudioProject } from '../read';
-import { listStudioCollaborators, listMyStudioInvitations } from '../collaborators';
+import { dbProvider } from '@/zero/db-provider';
+import { studioQueries } from '@/zero/communication-studio/queries';
+import { studioAssetUrls, studioCapabilities } from '@/zero/communication-studio/projections';
+
 import { resolveStudioSource } from '../source';
 
 const database =
@@ -26,7 +28,27 @@ const [owner, guest, other, group, personal, grouped, missingState, proposal, re
 const document = createStudioTemplateDocumentV5('single', 'Workspace boundaries', defaultBrand);
 const encodedDocument = JSON.parse(JSON.stringify(document));
 const readRole = crypto.randomUUID();
-const request = () => new Request('http://localhost/api/studio/project');
+const query = (name: keyof typeof studioQueries, args: unknown, actor = session.actor) =>
+  dbProvider.transaction(tx =>
+    tx.run((studioQueries[name] as any).fn({ args, ctx: { userID: actor ?? 'anon', email: '' } }))
+  );
+const snapshot = async (id: string) => {
+  const [project, state, assets, internal] = (await Promise.all([
+    query('project', { id }),
+    query('document', { id }),
+    query('assets', { projectId: id }),
+    query('sessionProject', { projectId: id }),
+  ])) as any[];
+  if (!project || !state) return null;
+  const caps = internal
+    ? studioCapabilities(internal, session.actor ?? '', 'edit')
+    : { edit: false, manage: false };
+  return {
+    project: { ...project, canEdit: caps.edit, canManageVisibility: caps.manage },
+    document: state.document,
+    assets: studioAssetUrls(assets),
+  };
+};
 
 beforeAll(async () => {
   for (const actor of [owner, guest, other]) await sql`insert into "user" (id) values (${actor})`;
@@ -66,60 +88,75 @@ afterAll(async () => {
   await sql.end();
 });
 
-it('returns a private owner snapshot with only ready canonical asset links', async () => {
-  const response = await readStudioProject(request(), personal);
-  expect(response.status).toBe(200);
-  expect(await response.json()).toMatchObject({
+it('reads owner, public and collaborator snapshots through Zero and reflects rights revocation', async () => {
+  expect(await snapshot(personal)).toMatchObject({
     project: { id: personal, canEdit: true, canManageVisibility: true },
     document,
-    assets: [
-      { id: asset, name: 'Private image', mime: 'image/png', url: `/api/studio/media/${asset}` },
-    ],
+    assets: [{ id: asset, url: '/api/studio/media/' + asset }],
   });
-  expect(response.headers.get('Cache-Control')).toBe('private, no-store');
-  expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
-});
-
-it('returns the same private not-found response for invalid IDs, denied actors and missing canonical state', async () => {
-  expect((await readStudioProject(request(), 'invalid')).status).toBe(404);
-  expect((await readStudioProject(request(), missingState)).status).toBe(404);
+  expect(await snapshot(missingState)).toBeNull();
   session.actor = other;
-  expect((await readStudioProject(request(), personal)).status).toBe(404);
+  expect(await snapshot(personal)).toBeNull();
   session.actor = null;
-  expect((await readStudioProject(request(), personal)).status).toBe(404);
-  const publicResponse = await readStudioProject(request(), grouped);
-  expect(publicResponse.status).toBe(200);
-  expect((await publicResponse.json()).project).toMatchObject({
-    canEdit: false,
-    canManageVisibility: false,
+  expect(await snapshot(personal)).toBeNull();
+  expect(await snapshot(grouped)).toMatchObject({
+    project: { canEdit: false, canManageVisibility: false },
   });
-});
-
-it('lets an accepted personal collaborator edit without granting visibility management', async () => {
   await sql`update studio_project_collaborator set status='active' where project_id=${personal} and user_id=${guest}`;
   try {
     session.actor = guest;
-    expect((await (await readStudioProject(request(), personal)).json()).project).toMatchObject({
-      canEdit: true,
-      canManageVisibility: false,
+    expect(await snapshot(personal)).toMatchObject({
+      project: { canEdit: true, canManageVisibility: false },
     });
   } finally {
     await sql`update studio_project_collaborator set status='invited' where project_id=${personal} and user_id=${guest}`;
   }
+  expect(await snapshot(personal)).toBeNull();
 });
-
-it('lists actual pending invitations and lets only the personal owner inspect collaborators', async () => {
-  expect(await listStudioCollaborators(owner, personal)).toMatchObject([
+it('protects invitation and collaborator queries with owner and actor predicates', async () => {
+  expect(await query('collaborators', { projectId: personal }, owner)).toMatchObject([
     { user_id: guest, status: 'invited' },
   ]);
-  expect(await listMyStudioInvitations(guest)).toMatchObject([
-    { project_id: personal, owner_id: owner },
+  expect(await query('invitations', undefined, guest)).toMatchObject([
+    { project_id: personal, project: { owner_id: owner } },
   ]);
-  await expect(listStudioCollaborators(other, personal)).rejects.toMatchObject({ status: 403 });
-  await expect(listStudioCollaborators(owner, grouped)).rejects.toMatchObject({ status: 403 });
-  await expect(listStudioCollaborators(owner, crypto.randomUUID())).rejects.toMatchObject({
-    status: 403,
-  });
+  for (const actor of [other, null])
+    expect(await query('collaborators', { projectId: personal }, actor)).toEqual([]);
+  expect(await query('collaborators', { projectId: grouped }, owner)).toEqual([]);
+});
+
+it('matches SQL group access when an assigned role and its rights belong to another group', async () => {
+  const foreignGroup = crypto.randomUUID();
+  const foreignRole = crypto.randomUUID();
+  const membership = crypto.randomUUID();
+  await sql`insert into "group" (id,name,owner_id) values (${foreignGroup},'Foreign role boundary',${owner})`;
+  try {
+    await sql`insert into role (id,name,scope,group_id) values (${foreignRole},'Foreign manager','group',${foreignGroup})`;
+    await sql`insert into action_right (resource,action,role_id,group_id) values ('projects','manage',${foreignRole},${foreignGroup})`;
+    await sql`insert into group_membership (id,group_id,user_id,status) values (${membership},${group},${guest},'active')`;
+    await sql`insert into group_membership_role (group_membership_id,role_id) values (${membership},${foreignRole})`;
+    expect(
+      (await sql`select studio_group_access(${guest},${group},false) as allowed`)[0].allowed
+    ).toBe(false);
+    expect(await query('sessionProject', { projectId: grouped }, guest)).toBeUndefined();
+    await sql`insert into action_right (resource,action,role_id,group_id) values ('projects','manage',${foreignRole},${group})`;
+    await sql`insert into canvas_role_capability (role_id,capability,allowed) values (${foreignRole},'vote',false)`;
+    expect(
+      (await sql`select studio_group_access(${guest},${group},true) as allowed`)[0].allowed
+    ).toBe(true);
+    const project = await query('sessionProject', { projectId: grouped }, guest);
+    expect(project).toMatchObject({ id: grouped });
+    expect(studioCapabilities(project as any, guest, 'edit').manage).toBe(true);
+    expect(
+      (await sql`select canvas_capability(${guest},${grouped},'vote') as allowed`)[0].allowed
+    ).toBe(true);
+    expect(studioCapabilities(project as any, guest, 'edit').vote).toBe(true);
+    await sql`delete from action_right where role_id=${foreignRole} and group_id=${group}`;
+    expect(await query('sessionProject', { projectId: grouped }, guest)).toBeUndefined();
+  } finally {
+    await sql`delete from group_membership where id=${membership}`;
+    await sql`delete from "group" where id=${foreignGroup}`;
+  }
 });
 
 it('checks canonical project access when a proposal workspace is absent', async () => {

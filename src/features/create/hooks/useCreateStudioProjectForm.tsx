@@ -1,8 +1,9 @@
+import type { StudioCommandInput } from '@/zero/communication-studio/commands';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useStudioApi } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';
 import { mutators } from '@/zero/mutators';
 import { queries } from '@/zero/queries';
@@ -37,7 +38,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
   const tr = (key: string) => t(`features.studio.${key}`);
   const navigate = useNavigate();
   const zero = useZero();
-  const { request } = useStudioApi();
+  const studio = useStudioClient();
   const [manageableGroups] = useQuery(queries.studio.manageGroups());
   const [groupId, setGroupId] = useState<string | null>(initialGroupId);
   const [visibility, setVisibility] = useState<CreateVisibility>('private');
@@ -60,7 +61,8 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
 
   useEffect(() => {
     let active = true;
-    void request<Record<string, unknown>[]>('themes', { groupId })
+    void studio
+      .themes({ groupId })
       .then(rows => {
         if (active)
           setThemes([
@@ -74,7 +76,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
     return () => {
       active = false;
     };
-  }, [groupId, request]);
+  }, [groupId, studio]);
 
   useEffect(() => {
     try {
@@ -105,7 +107,7 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
     setIsSubmitting(true);
     try {
       if (!createdId.current) {
-        const result = await request<{ id: string }>('create', {
+        const result = await studio.create({
           groupId,
           visibility,
           title: title.trim(),
@@ -114,7 +116,13 @@ export function useCreateStudioProjectForm(initialGroupId: string | null): Creat
           themeMode,
           template: template.startsWith('project:')
             ? { kind: 'project', id: template.slice('project:'.length) }
-            : { kind: 'builtin', id: template },
+            : {
+                kind: 'builtin',
+                id: template as Extract<
+                  StudioCommandInput<'create'>['template'],
+                  { kind: 'builtin' }
+                >['id'],
+              },
           campaign: { weeks, core, stories },
         });
         createdId.current = result.id;

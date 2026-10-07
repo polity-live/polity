@@ -1268,7 +1268,7 @@ function StudioEditorReady({
                 onSelect={() =>
                   c.run(async () => {
                     await c.commit();
-                    await c.actions.request('template', { id: projectId, value: true });
+                    await c.actions.setTemplate({ id: projectId, value: true });
                   })
                 }
               />
@@ -2324,7 +2324,7 @@ function StudioEditorReady({
                             disabled={disabled}
                             onClick={() =>
                               c.run(async () => {
-                                const result = await c.actions.request<any>('handoff', {
+                                const result = await c.actions.handoff({
                                   id: job.id,
                                 });
                                 sessionStorage.setItem(
@@ -2352,7 +2352,7 @@ function StudioEditorReady({
                           data-action-id="communication-studio.studioworkspace.activate.button-f159baea82"
                           className={button}
                           disabled={disabled}
-                          onClick={() => c.run(() => c.actions.request('cancel', { id: job.id }))}
+                          onClick={() => c.run(() => c.actions.cancelExport({ id: job.id }))}
                         >
                           {tr('cancel')}
                         </button>

@@ -1,6 +1,6 @@
 # Kommunikationsstudio
 
-Der aktuelle Implementierungs- und Prüfstand steht in [CANVAS-IMPLEMENTATION.md](CANVAS-IMPLEMENTATION.md). Die Aktivierung der neuen Studio-Engine bleibt eine separate Produktionsfreigabe.
+Der aktuelle Implementierungs- und Prüfstand steht in [CANVAS-IMPLEMENTATION.md](CANVAS-IMPLEMENTATION.md). Studio und Canvas sind in allen Umgebungen aktiv.
 
 ## Lokal starten
 
@@ -13,11 +13,11 @@ Es wird kein Yjs-/Hocuspocus-Dienst benötigt. Die Text-, Blog- und Streetdesign
 
 ## Aktivierung und Daten
 
-`canvasEnabled()` aktiviert die Canvas-Engine im Entwicklungsmodus, sofern `CANVAS_ENABLED` nicht `false` ist. Produktion benötigt ausdrücklich `CANVAS_ENABLED=true`, `STUDIO_V3_ENABLED=true` und `VITE_STUDIO_V3_ENABLED=true` sowie die bestehenden Studio-Freigaben. Die Navigation ist keine Zugriffskontrolle.
+Studio und Canvas benötigen keine Rolloutflags oder Pilotfreigabe. Zero Queries lesen dauerhafte Daten; typisierte Zero-Mutatoren bestätigen Schreibvorgänge. Private Supabase-Realtime-Kanäle übertragen Presence und Cursor. Die Anmeldung und Projekt- sowie Gruppenrechte werden bei jeder Mutation geprüft. Eigenständige AI-Freigaben bleiben erhalten.
 
 Konva zeichnet die semantischen Studio-Knoten. Rich Text bleibt als Plate-Inhalt gespeichert und wird bei direkter Bearbeitung als HTML-Editor an derselben Canvas-Position eingeblendet. Die Ebenenreihenfolge aus dem Layers-Panel gilt auch während der Bearbeitung.
 
-PostgreSQL speichert bestätigte Inhalte, bedingte Elementoperationen, Generationen und Revisionen. Zero synchronisiert Hauptdokumente und autorisierte Vorschlagsräume. Supabase Realtime überträgt serverseitig autorisierte Anwesenheit über empfängerbezogene private Kanäle. Cursor und Auswahl sind vorübergehend und werden nicht als Dokumentinhalt gespeichert.
+PostgreSQL speichert bestätigte Inhalte, bedingte Elementoperationen, Generationen und Revisionen. Zero synchronisiert Hauptdokumente und autorisierte Vorschlagsräume. Supabase Realtime überträgt Anwesenheit über private Studio- und Workspace-Kanäle mit Collaboration-Zugriff. Cursor und Auswahl sind vorübergehend und werden nicht als Dokumentinhalt gespeichert.
 
 Hauptinhalt, private Vorschlagsentwürfe, eingereichte Fassungen und Abstimmungen sind getrennt. Ein angenommener Beschluss kann einen sichtbaren Anwendungskonflikt haben. Die unveränderte Änderung kann erneut geprüft werden; eine inhaltliche Klärung benötigt einen neuen Vorschlag und eine neue Abstimmung. Der alte Beschluss und seine Stimmen bleiben erhalten.
 
@@ -25,7 +25,7 @@ Persönliche Projekte sind dem Besitzer und Personen mit angenommener Einladung 
 
 Für die Produktionsumstellung zuerst `20260923060000_group_studio_project_rights.sql` und den Medien-Endpunkt mit Archiv-Fallback bereitstellen. Erst danach `20260923061000_retire_whiteboards.sql` anwenden. Die zweite Migration übernimmt von Beiträgen verwendete Exporte ins unabhängige Archiv, löscht die Whiteboard-Daten und erfasst die übrigen Storage-Dateien. Anschließend löscht `pnpm studio:cleanup-whiteboards` die erfassten Dateien. Der Lauf ist wiederholbar und nimmt archivierte Medien aus. Dafür werden `STUDIO_DATABASE_URL`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` benötigt.
 
-Das neue Studio speichert semantische Dokumente der Schemaversion 5. Bestehende Dokumente werden vor Aktivierung durch den geplanten Datenbank-Reset entfernt; eine Migration alter Canvas-Daten ist nicht vorgesehen.
+Das Studio speichert semantische Dokumente der Schemaversion 5. Der Zero-Umbau erhält bestehende Projekte, Dokumentversionen und Berechtigungen. Er benötigt keinen Datenbank-Reset und migriert oder löscht keine bestehenden Dokumente.
 
 ## Medien und Exporte
 

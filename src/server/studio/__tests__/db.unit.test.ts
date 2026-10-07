@@ -54,25 +54,7 @@ describe('Studio database authority boundary', () => {
     await db.assertStudioGroup('actor', 'group', io.sql as never, true);
     expect(io.sql.mock.lastCall?.slice(1)).toEqual(['actor', 'group', true]);
   });
-  it('respects canvas preview flags and the V3 development default and explicit disablement', async () => {
-    const { canvasEnabled, studioV3Enabled } = await import('../db');
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('STUDIO_ENABLED', 'true');
-    vi.stubEnv('STUDIO_PILOT_USER_IDS', '');
-    vi.stubEnv('STUDIO_V3_ENABLED', '');
-    expect(studioV3Enabled('actor')).toBe(true);
-    vi.stubEnv('STUDIO_V3_ENABLED', 'false');
-    expect(studioV3Enabled('actor')).toBe(false);
-    vi.stubEnv('CANVAS_ENABLED', '');
-    expect(canvasEnabled()).toBe(true);
-    vi.stubEnv('CANVAS_ENABLED', 'false');
-    expect(canvasEnabled()).toBe(false);
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('CANVAS_ENABLED', '');
-    expect(canvasEnabled()).toBe(false);
-    vi.stubEnv('CANVAS_ENABLED', 'true');
-    expect(canvasEnabled()).toBe(true);
-  });
+
   it('uses an explicit studio connection or upstream fallback and reuses its limited pool', async () => {
     vi.stubEnv('STUDIO_DATABASE_URL', 'postgres://studio');
     vi.stubEnv('ZERO_UPSTREAM_DB', 'postgres://upstream');
@@ -119,27 +101,5 @@ describe('Studio database authority boundary', () => {
     expect(io.sql.mock.calls[0][0].join('')).toContain('pg_advisory_xact_lock');
     body.mockRejectedValueOnce(new Error('write_failed'));
     await expect(db.studioTransaction(body)).rejects.toThrow('write_failed');
-  });
-  it('respects explicit enablement, production defaults and pilot restrictions', async () => {
-    const { studioEnabled, studioV3Enabled } = await import('../db');
-    vi.stubEnv('STUDIO_ENABLED', '');
-    vi.stubEnv('STUDIO_PILOT_USER_IDS', '');
-    vi.stubEnv('NODE_ENV', 'development');
-    expect(studioEnabled('actor')).toBe(true);
-    vi.stubEnv('NODE_ENV', 'production');
-    expect(studioEnabled('actor')).toBe(false);
-    expect(studioV3Enabled('actor')).toBe(false);
-    vi.stubEnv('STUDIO_ENABLED', 'true');
-    expect(studioEnabled('actor')).toBe(true);
-    expect(studioV3Enabled('actor')).toBe(false);
-    vi.stubEnv('STUDIO_V3_ENABLED', 'true');
-    expect(studioV3Enabled('actor')).toBe(true);
-    vi.stubEnv('STUDIO_PILOT_USER_IDS', 'pilot,,other');
-    expect(studioEnabled('actor')).toBe(false);
-    expect(studioEnabled('pilot')).toBe(true);
-    vi.stubEnv('STUDIO_ENABLED', 'false');
-    vi.stubEnv('NODE_ENV', 'development');
-    expect(studioEnabled('pilot')).toBe(false);
-    expect(studioV3Enabled('pilot')).toBe(false);
   });
 });

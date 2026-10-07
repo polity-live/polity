@@ -6,6 +6,12 @@ import { GROUP_CONFLICT_ERROR_PREFIX } from '@/features/groups/logic/groupConfli
 
 export type ZeroTransaction = Parameters<Parameters<typeof dbProvider.transaction>[0]>[0];
 const activeZeroTransaction = new AsyncLocalStorage<ZeroTransaction>();
+export function withZeroTransaction<T>(
+  tx: ZeroTransaction,
+  callback: () => Promise<T>
+): Promise<T> {
+  return activeZeroTransaction.run(tx, callback);
+}
 
 interface ZeroMutatorRequest<TArgs> {
   readonly mutator: {

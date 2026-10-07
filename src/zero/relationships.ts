@@ -12,8 +12,72 @@ import {
   studioOperation,
   canvasProposal,
   canvasWorkspaceReader,
+  studioCommandReceipt,
+  studioAsset,
+  studioRevision,
+  canvasControl,
+  canvasVote,
+  canvasComment,
+  canvasHistory,
+  canvasLibrary,
+  canvasRoleCapability,
+  canvasReceipt,
+  studioEditorAction,
+  studioElementSet,
+  studioElementSetRevision,
 } from './communication-studio/table';
+export const studioCommandReceiptRelationships = relationships(studioCommandReceipt, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const studioAssetRelationships = relationships(studioAsset, ({ one }) => ({
+  workspace: one({ sourceField: ['workspace_id'], destField: ['id'], destSchema: canvasProposal }),
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const studioRevisionRelationships = relationships(studioRevision, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const canvasControlRelationships = relationships(canvasControl, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const canvasVoteRelationships = relationships(canvasVote, ({ one }) => ({
+  proposal: one({ sourceField: ['proposal_id'], destField: ['id'], destSchema: canvasProposal }),
+}));
+export const canvasCommentRelationships = relationships(canvasComment, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+  proposal: one({ sourceField: ['proposal_id'], destField: ['id'], destSchema: canvasProposal }),
+}));
+export const canvasHistoryRelationships = relationships(canvasHistory, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const canvasLibraryRelationships = relationships(canvasLibrary, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const canvasRoleCapabilityRelationships = relationships(canvasRoleCapability, ({ one }) => ({
+  role: one({ sourceField: ['role_id'], destField: ['id'], destSchema: role }),
+}));
+export const canvasReceiptRelationships = relationships(canvasReceipt, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const studioEditorActionRelationships = relationships(studioEditorAction, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const studioElementSetRelationships = relationships(studioElementSet, ({ one }) => ({
+  group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
+  current_revision: one({
+    sourceField: ['current_revision_id'],
+    destField: ['id'],
+    destSchema: studioElementSetRevision,
+  }),
+}));
+export const studioElementSetRevisionRelationships = relationships(
+  studioElementSetRevision,
+  ({ one }) => ({
+    set: one({ sourceField: ['set_id'], destField: ['id'], destSchema: studioElementSet }),
+  })
+);
+
 export const canvasProposalRelationships = relationships(canvasProposal, ({ one, many }) => ({
+  votes: many({ sourceField: ['id'], destField: ['proposal_id'], destSchema: canvasVote }),
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
   readers: many({
     sourceField: ['id'],
@@ -29,6 +93,8 @@ export const studioStateRelationships = relationships(studioState, ({ one }) => 
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
 }));
 export const studioProjectRelationships = relationships(studioProject, ({ one, many }) => ({
+  owner: one({ sourceField: ['owner_id'], destField: ['id'], destSchema: user }),
+  control: one({ sourceField: ['id'], destField: ['project_id'], destSchema: canvasControl }),
   group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
   collaborators: many({
     sourceField: ['id'],
@@ -39,10 +105,12 @@ export const studioProjectRelationships = relationships(studioProject, ({ one, m
 export const studioProjectCollaboratorRelationships = relationships(
   studioProjectCollaborator,
   ({ one }) => ({
+    user: one({ sourceField: ['user_id'], destField: ['id'], destSchema: user }),
     project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
   })
 );
 export const studioExportRelationships = relationships(studioExport, ({ one }) => ({
+  revision: one({ sourceField: ['revision_id'], destField: ['id'], destSchema: studioRevision }),
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
 }));
 // Groups
@@ -724,15 +792,23 @@ export const groupOfflineMemberRelationships = relationships(
   })
 );
 
-export const groupMembershipRoleRelationships = relationships(groupMembershipRole, ({ one }) => ({
-  group_membership: one({
-    sourceField: ['group_membership_id'],
-    destSchema: groupMembership,
-    destField: ['id'],
-  }),
-  role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
-  assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
-}));
+export const groupMembershipRoleRelationships = relationships(
+  groupMembershipRole,
+  ({ one, many }) => ({
+    group_membership: one({
+      sourceField: ['group_membership_id'],
+      destSchema: groupMembership,
+      destField: ['id'],
+    }),
+    role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+    studio_project_rights: many({
+      sourceField: ['role_id', 'group_id'],
+      destSchema: actionRight,
+      destField: ['role_id', 'group_id'],
+    }),
+    assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
+  })
+);
 
 export const groupOfflineMembershipRelationships = relationships(
   groupOfflineMembership,
@@ -1036,6 +1112,11 @@ export const groupMembershipRuleRequestOriginRelationships = relationships(
 );
 
 export const roleRelationships = relationships(role, helpers => ({
+  canvas_capabilities: helpers.many({
+    sourceField: ['id'],
+    destField: ['role_id'],
+    destSchema: canvasRoleCapability,
+  }),
   group: helpers.one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: helpers.one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   amendment: helpers.one({
@@ -2692,6 +2773,19 @@ export const allRelationships = [
   userPreferenceRelationships,
   appearanceThemeRelationships,
   studioStateRelationships,
+  studioCommandReceiptRelationships,
+  studioAssetRelationships,
+  studioRevisionRelationships,
+  canvasControlRelationships,
+  canvasVoteRelationships,
+  canvasCommentRelationships,
+  canvasHistoryRelationships,
+  canvasLibraryRelationships,
+  canvasRoleCapabilityRelationships,
+  canvasReceiptRelationships,
+  studioEditorActionRelationships,
+  studioElementSetRelationships,
+  studioElementSetRevisionRelationships,
   studioOperationRelationships,
   canvasProposalRelationships,
   studioProjectRelationships,

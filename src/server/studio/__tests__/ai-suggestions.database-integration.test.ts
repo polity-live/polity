@@ -1,3 +1,4 @@
+import { encodeAppError } from '@/features/shared/errors/app-error';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import postgres from 'postgres';
 import { createStudioDocumentV5 } from '@/features/communication-studio/logic/document-v3';
@@ -88,7 +89,7 @@ import {
   studioAiPlanSchema,
 } from '@/features/communication-studio/logic/ai-design';
 import { generateStudioSuggestion } from '../ai-suggestions';
-import { canvasCommand } from '../governance';
+import { studioCanvasCommand as canvasCommand } from '@/test/studio-zero-database.fixture';
 import { studioSql } from '../db';
 import { inviteStudioCollaborators } from '../collaborators';
 
@@ -256,7 +257,7 @@ it('prepares a group AI draft in edit phase but waits for the suggestion phase t
       generation: session.generation,
       operationId: crypto.randomUUID(),
     })
-  ).rejects.toThrow('not permitted');
+  ).rejects.toThrow(encodeAppError('permission_denied'));
   await canvasCommand(actor, {
     action: 'phase',
     projectId,
@@ -355,7 +356,7 @@ it('blocks sharing and acceptance when a private source is not readable by the p
       generation: session.generation,
       operationId: crypto.randomUUID(),
     })
-  ).rejects.toThrow('project audience');
+  ).rejects.toThrow(encodeAppError('permission_denied'));
   const [canonical] =
     await sql`select content_revision from studio_state where project_id=${suggestion.projectId}`;
   expect(canonical.content_revision).toBe(0);

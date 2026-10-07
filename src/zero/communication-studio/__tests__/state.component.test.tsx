@@ -41,4 +41,13 @@ it('does not request private exports before selecting a project, then tracks its
     isLoading: false,
     exportResult: { type: 'complete' },
   });
+  io.query.mockReturnValue([
+    [],
+    { type: 'error', error: { message: 'Access service unavailable' } },
+  ]);
+  hook.rerender({ id: undefined });
+  expect(hook.result.current).toMatchObject({
+    isLoading: false,
+    listError: 'Access service unavailable',
+  });
 });

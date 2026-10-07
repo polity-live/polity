@@ -1,3 +1,4 @@
+import { studioClientFixture } from '@/test/studio-client.fixture';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -9,7 +10,7 @@ import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import { Toolbar } from '@/features/shared/ui/layout';
 
 const io = vi.hoisted(() => ({
-  user: { id: 'actor' } as { id: string } | null,
+  user: { id: '00000000-0000-4000-a000-000000000008' } as { id: string } | null,
   session: null as any,
   request: vi.fn(),
   commit: vi.fn(),
@@ -23,17 +24,20 @@ const io = vi.hoisted(() => ({
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: io.user }) }));
 vi.mock('@rocicorp/zero/react', () => ({ useZero: () => ({ mutate: vi.fn() }) }));
 vi.mock('@/zero/users/useUserState', () => ({
-  useUserState: () => ({ currentUser: { id: 'actor' } }),
+  useUserState: () => ({ currentUser: { id: '00000000-0000-4000-a000-000000000008' } }),
 }));
 vi.mock('@/zero/communication-studio/useStudioState', () => ({
   useStudioState: () => ({ projects: [], exports: [], isLoading: false }),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ useStudioApi: () => io }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('../../hooks/useStudioDocument', () => ({ useStudioDocument: () => io.editor }));
 let finish: (result: unknown) => void;
 let reject: (error: Error) => void;
 const controller = () => ({
-  actions: { request: io.request },
+  actions: studioClientFixture(io),
   commit: io.commit,
   selected: ['node'],
   canEdit: true,
@@ -46,7 +50,7 @@ const controller = () => ({
 });
 function Harness({ workspaceId }: { workspaceId?: string }) {
   const procedure = useStudioProcedure({
-    projectId: 'project',
+    projectId: '00000000-0000-4000-a000-000000000002',
     workspaceId,
     chooseWorkspace: io.choose,
     c: controller() as never,
@@ -60,8 +64,16 @@ function Harness({ workspaceId }: { workspaceId?: string }) {
   );
 }
 function ControllerHarness() {
-  const c = useStudioController('group', 'project', io.choose);
-  const procedure = useStudioProcedure({ projectId: 'project', chooseWorkspace: io.choose, c });
+  const c = useStudioController(
+    '00000000-0000-4000-a000-000000000004',
+    '00000000-0000-4000-a000-000000000002',
+    io.choose
+  );
+  const procedure = useStudioProcedure({
+    projectId: '00000000-0000-4000-a000-000000000002',
+    chooseWorkspace: io.choose,
+    c,
+  });
   return (
     <>
       {procedure.tools}
@@ -74,12 +86,12 @@ beforeEach(async () => {
   vi.clearAllMocks();
   await page.viewport(1280, 800);
   document.documentElement.lang = 'en';
-  io.user = { id: 'actor' };
+  io.user = { id: '00000000-0000-4000-a000-000000000008' };
   io.session = {
     canEditProject: true,
-    groupId: 'group',
+    groupId: '00000000-0000-4000-a000-000000000004',
     phase: 'edit',
-    generation: 'generation',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: true,
@@ -91,20 +103,24 @@ beforeEach(async () => {
     proposals: [],
     comments: [
       {
-        id: 'comment',
-        author_id: 'actor',
+        id: '00000000-0000-4000-a000-000000000006',
+        author_id: '00000000-0000-4000-a000-000000000008',
         proposal_id: null,
         element_id: null,
         body: 'Existing discussion',
         resolved: false,
       },
     ],
-    revisions: [{ id: 'revision', revision: 2, created_at: 0 }],
+    revisions: [{ id: '00000000-0000-4000-a000-000000000009', revision: 2, created_at: 0 }],
     members: [],
     roles: [
-      { id: 'role', name: 'Editors', capabilities: { suggest: true, comment: true, vote: true } },
+      {
+        id: '00000000-0000-4000-a000-000000000007',
+        name: 'Editors',
+        capabilities: { suggest: true, comment: true, vote: true },
+      },
     ],
-    adoptionGroups: [{ id: 'group', name: 'Destination' }],
+    adoptionGroups: [{ id: '00000000-0000-4000-a000-000000000004', name: 'Destination' }],
   };
   const pending = new Promise((resolve, fail) => {
     finish = resolve;
@@ -148,7 +164,10 @@ beforeEach(async () => {
         ...io.session,
         proposals: io.session.proposals.map((item: any) =>
           item.id === input.workspaceId
-            ? { ...item, votes: [{ user_id: 'actor', choice: input.choice }] }
+            ? {
+                ...item,
+                votes: [{ user_id: '00000000-0000-4000-a000-000000000008', choice: input.choice }],
+              }
             : item
         ),
       };
@@ -179,24 +198,40 @@ const operations = [
   {
     action: 'editComment',
     label: 'Save',
-    input: { body: 'Revised discussion', commentId: 'comment' },
+    input: { body: 'Revised discussion', commentId: '00000000-0000-4000-a000-000000000006' },
   },
-  { action: 'resolveComment', label: 'Resolve', input: { commentId: 'comment' } },
-  { action: 'restore', label: 'Restore as new revision', input: { historyId: 'revision' } },
+  {
+    action: 'resolveComment',
+    label: 'Resolve',
+    input: { commentId: '00000000-0000-4000-a000-000000000006' },
+  },
+  {
+    action: 'restore',
+    label: 'Restore as new revision',
+    input: { historyId: '00000000-0000-4000-a000-000000000009' },
+  },
   {
     action: 'setCapability',
     label: 'Suggest',
-    input: { roleId: 'role', capability: 'suggest', allowed: false },
+    input: {
+      roleId: '00000000-0000-4000-a000-000000000007',
+      capability: 'suggest',
+      allowed: false,
+    },
   },
   {
     action: 'setCapability',
     label: 'Comment',
-    input: { roleId: 'role', capability: 'comment', allowed: false },
+    input: {
+      roleId: '00000000-0000-4000-a000-000000000007',
+      capability: 'comment',
+      allowed: false,
+    },
   },
   {
     action: 'setCapability',
     label: 'Vote',
-    input: { roleId: 'role', capability: 'vote', allowed: false },
+    input: { roleId: '00000000-0000-4000-a000-000000000007', capability: 'vote', allowed: false },
   },
 ];
 it.each(
@@ -243,8 +278,8 @@ it.each(
     expect(io.request).toHaveBeenCalledWith(
       'canvas',
       expect.objectContaining({
-        projectId: 'project',
-        generation: 'generation',
+        projectId: '00000000-0000-4000-a000-000000000002',
+        generation: '00000000-0000-4000-a000-000000000001',
         operationId: expect.any(String),
         ...operation.input,
       })
@@ -362,14 +397,18 @@ it.each(['error', 'unauthorized'])(
     await waitFor(() =>
       expect(io.request).toHaveBeenCalledWith(
         'canvas',
-        expect.objectContaining({ action: 'adopt', groupId: 'group', revision: 7 })
+        expect.objectContaining({
+          action: 'adopt',
+          groupId: '00000000-0000-4000-a000-000000000004',
+          revision: 7,
+        })
       )
     );
     reject(new Error(outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable'));
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(outcome === 'unauthorized' ? 'Permission denied' : 'Service unavailable');
-    await expect.element(select).toHaveValue('group');
+    await expect.element(select).toHaveValue('00000000-0000-4000-a000-000000000004');
     await expect.element(adopt).not.toBeDisabled();
   }
 );
@@ -391,7 +430,7 @@ it('chooses and clears a destination with native arrow keys and preserves select
   await expect.element(adopt).toBeDisabled();
   select.element().focus();
   await userEvent.keyboard('{ArrowDown}{Enter}');
-  await expect.element(select).toHaveValue('group');
+  await expect.element(select).toHaveValue('00000000-0000-4000-a000-000000000004');
   await expect.element(select).toHaveFocus();
   await expect.element(adopt).not.toBeDisabled();
   await userEvent.keyboard('{ArrowUp}{Enter}');
@@ -442,10 +481,10 @@ it('hides protected controls and keeps comment submission disabled without proje
 });
 
 const proposal = (overrides: Record<string, unknown> = {}) => ({
-  id: 'proposal',
+  id: '00000000-0000-4000-a000-000000000003',
   title: 'Proposed introduction',
   reason: 'Clearer wording',
-  owner_id: 'actor',
+  owner_id: '00000000-0000-4000-a000-000000000008',
   shared_ids: [],
   revision: 4,
   base_revision: 1,
@@ -466,7 +505,12 @@ const workflow = [
     phase: 'suggest_internal',
     workspaceId: undefined,
   },
-  { action: 'submit', label: 'Submit', phase: 'suggest_internal', workspaceId: 'proposal' },
+  {
+    action: 'submit',
+    label: 'Submit',
+    phase: 'suggest_internal',
+    workspaceId: '00000000-0000-4000-a000-000000000003',
+  },
   { action: 'withdraw', label: 'Withdraw', phase: 'edit', workspaceId: undefined },
   { action: 'acceptPrivate', label: 'Accept', phase: 'edit', workspaceId: undefined },
   { action: 'rejectPrivate', label: 'Reject', phase: 'edit', workspaceId: undefined },
@@ -482,7 +526,7 @@ const workflow = [
     action: 'return',
     label: 'Back to project',
     phase: 'suggest_internal',
-    workspaceId: 'proposal',
+    workspaceId: '00000000-0000-4000-a000-000000000003',
   },
 ];
 it.each(
@@ -506,7 +550,10 @@ it.each(
               application: ['reapply', 'resolveDraft'].includes(operation.action)
                 ? 'conflict'
                 : 'pending',
-              electorate: operation.phase === 'vote_internal' ? ['actor'] : null,
+              electorate:
+                operation.phase === 'vote_internal'
+                  ? ['00000000-0000-4000-a000-000000000008']
+                  : null,
             }),
           ];
     if (['acceptPrivate', 'rejectPrivate'].includes(operation.action)) io.session.groupId = null;
@@ -553,12 +600,12 @@ it.each(
         'canvas',
         expect.objectContaining({
           action: operation.action,
-          projectId: 'project',
-          generation: 'generation',
+          projectId: '00000000-0000-4000-a000-000000000002',
+          generation: '00000000-0000-4000-a000-000000000001',
           operationId: expect.any(String),
           ...(operation.action === 'createDraft'
             ? { title: 'New proposal', reason: 'Specific explanation', revision: 7 }
-            : { workspaceId: 'proposal' }),
+            : { workspaceId: '00000000-0000-4000-a000-000000000003' }),
         })
       );
     }
@@ -619,7 +666,7 @@ it('selects proposal rows, switches every comparison view and closes details wit
   edit.element().focus();
   await expect.element(edit).toHaveFocus();
   await userEvent.keyboard('{Enter}');
-  expect(io.choose).toHaveBeenCalledWith('proposal');
+  expect(io.choose).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000003');
   const close = region.getByRole('button', { name: 'Close', exact: true });
   close.element().focus();
   await expect.element(close).toHaveFocus();
@@ -633,8 +680,8 @@ it.each(['success', 'error', 'unauthorized'])(
   async outcome => {
     io.session.phase = 'suggest_internal';
     io.session.proposals = [proposal()];
-    io.session.members = [{ id: 'reader', first_name: 'Reader' }];
-    render(<Harness workspaceId="proposal" />);
+    io.session.members = [{ id: '00000000-0000-4000-a000-000000000020', first_name: 'Reader' }];
+    render(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
     const checkbox = page.getByRole('checkbox', { name: 'Reader' });
     await expect.element(checkbox).not.toBeChecked();
     checkbox.element().focus();
@@ -649,9 +696,9 @@ it.each(['success', 'error', 'unauthorized'])(
       'canvas',
       expect.objectContaining({
         action: 'share',
-        workspaceId: 'proposal',
-        userIds: ['reader'],
-        generation: 'generation',
+        workspaceId: '00000000-0000-4000-a000-000000000003',
+        userIds: ['00000000-0000-4000-a000-000000000020'],
+        generation: '00000000-0000-4000-a000-000000000001',
         operationId: expect.any(String),
       })
     );
@@ -693,8 +740,8 @@ it.each(
     io.session.proposals = [
       proposal({
         state: 'voting',
-        electorate: ['actor'],
-        votes: [{ user_id: 'actor', choice: previous }],
+        electorate: ['00000000-0000-4000-a000-000000000008'],
+        votes: [{ user_id: '00000000-0000-4000-a000-000000000008', choice: previous }],
       }),
     ];
     render(<Harness />);
@@ -720,10 +767,10 @@ it.each(
       'canvas',
       expect.objectContaining({
         action: 'vote',
-        workspaceId: 'proposal',
+        workspaceId: '00000000-0000-4000-a000-000000000003',
         choice,
-        projectId: 'project',
-        generation: 'generation',
+        projectId: '00000000-0000-4000-a000-000000000002',
+        generation: '00000000-0000-4000-a000-000000000001',
         operationId: expect.any(String),
       })
     );

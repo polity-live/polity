@@ -31,8 +31,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND relation.relkind = 'r'
   ),
-  172,
-  'the application owns 172 public tables'
+  173,
+  'the application owns 173 public tables'
 );
 
 SELECT is(
@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1814,
-  'all 1814 application columns are installed'
+  1824,
+  'all 1824 application columns are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  419,
-  'all 419 foreign keys are installed'
+  420,
+  'all 420 foreign keys are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  710,
-  'all 710 application indexes are installed'
+  715,
+  'all 715 application indexes are installed'
 );
 
 SELECT is(
@@ -160,8 +160,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  89,
-  'all 89 application functions are installed'
+  91,
+  'all 91 application functions are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  81,
-  'all 81 privileged functions are SECURITY DEFINER'
+  83,
+  'all 83 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  83,
-  'all 83 application triggers are installed'
+  86,
+  'all 86 application triggers are installed'
 );
 
 SELECT is(

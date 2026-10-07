@@ -1,10 +1,7 @@
+import { afterCommit } from '../after-commit';
+
 import { z } from 'zod';
-import {
-  studioTransaction,
-  StudioError,
-  assertStudioCollaborationAccess,
-  canvasEnabled,
-} from './db';
+import { studioTransaction, StudioError, assertStudioCollaborationAccess } from './db';
 import { aiAttachmentEntitySchema } from '@/lib/ai/schemas';
 import { assertProjectAiSourceSharing, assertStudioProposalSourceAudience } from './ai-sources';
 import { checksum } from '@/server/checksum';
@@ -22,8 +19,6 @@ import type postgres from 'postgres';
 const inputSchema = z.object({
   projectId: z.string().uuid(),
   action: z.enum([
-    'session',
-    'loadDraft',
     'createDraft',
     'resolveDraft',
     'saveDraft',
@@ -40,7 +35,6 @@ const inputSchema = z.object({
     'editComment',
     'restore',
     'saveLibrary',
-    'libraries',
     'setCapability',
     'adopt',
     'acceptPrivate',
@@ -196,416 +190,363 @@ async function eligibleVoters(sql: Sql, project: postgres.Row) {
 }
 
 export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
-  if (!canvasEnabled()) throw new StudioError('Canvas preview is not enabled', 404);
   const input = inputSchema.parse(raw);
-  const readOnly = ['session', 'loadDraft', 'libraries'].includes(input.action);
-  const response = await studioTransaction(
-    async sql => {
-      const { projectId, action, workspaceId } = input;
-      await assertStudioCollaborationAccess(actor, projectId, sql);
-      const [project] =
-        await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=5 ${readOnly ? sql`` : sql`for update`}`;
-      const [control] =
-        await sql`select * from canvas_control where project_id=${projectId} ${readOnly ? sql`` : sql`for update`}`;
-      const [canonical] =
-        await sql`select * from studio_state where project_id=${projectId} ${readOnly ? sql`` : sql`for update`}`;
-      if (!project || !control || !canonical)
-        throw new StudioError('Studio V5 project not found', 404);
-      let proposal: postgres.Row | undefined;
-      if (workspaceId) {
-        [proposal] =
-          await sql`select *,canvas_proposal_access(${actor}::uuid,id) as can_read from canvas_proposal where id=${workspaceId} and project_id=${projectId} ${readOnly ? sql`` : sql`for update`}`;
-        if (!proposal?.can_read) denied();
-      }
-      const [rights] =
-        await sql`select canvas_capability(${actor}::uuid,${projectId}::uuid,'suggest') as suggest,canvas_capability(${actor}::uuid,${projectId}::uuid,'comment') as comment,canvas_capability(${actor}::uuid,${projectId}::uuid,'vote') as vote`;
-      const capabilities = {
-        read: true,
-        edit: !!project.can_edit && control.phase === 'edit',
-        suggest: !!rights.suggest,
-        comment: !!rights.comment,
-        vote: !!rights.vote,
-        manage: !!project.can_manage,
-      };
-      if (action === 'session') {
-        const proposals =
-          await sql`select id,title,reason,owner_id,shared_ids,revision,base_revision,state,changes,decision,application,conflicts,electorate,deadline,resolves_id,origin,ai_mode,ai_status,ai_sources,ai_warnings from canvas_proposal where project_id=${projectId} and ai_status='ready' and canvas_proposal_access(${actor}::uuid,id) order by created_at`;
-        for (const p of proposals)
-          p.votes = await sql`select user_id,choice from canvas_vote where proposal_id=${p.id}`;
-        const comments =
-          await sql`select * from canvas_comment where project_id=${projectId} and (proposal_id is null or canvas_proposal_access(${actor}::uuid,proposal_id)) order by created_at`;
-        const revisions =
-          await sql`select id,revision,created_at from canvas_history where project_id=${projectId} order by revision desc limit 100`;
-        const members = await procedureMembers(sql, project);
-        const roles =
-          capabilities.manage && project.group_id
-            ? await sql`select r.id,r.name,coalesce(jsonb_object_agg(c.capability,c.allowed) filter(where c.capability is not null),'{}') as capabilities from role r left join canvas_role_capability c on c.role_id=r.id where r.group_id=${project.group_id} group by r.id,r.name`
-            : [];
-        return {
-          phase: control.phase,
-          groupId: project.group_id,
-          generation: control.generation,
-          capabilities,
-          canEditProject: !!project.can_edit,
-          proposals,
-          comments,
-          revisions,
-          members,
-          roles,
-          adoptionGroups:
-            !project.group_id && project.owner_id === actor
-              ? await sql`select id,name from "group" where studio_group_access(${actor}::uuid,id,true) order by name`
-              : [],
-        };
-      }
-      if (action === 'loadDraft') {
-        if (!proposal || proposal.ai_status !== 'ready') denied();
-        return {
-          canvasEnabled: true,
-          document: studioDocumentV3Schema.parse(proposal.document),
-          baseDocument: studioDocumentV3Schema.parse(proposal.base_document),
-          revision: proposal.revision,
-          generation: control.generation,
-          canEdit:
-            capabilities.suggest &&
-            proposal.state === 'draft' &&
-            (['edit', 'suggest_internal'].includes(control.phase) ||
-              (control.phase === 'vote_internal' && !!proposal.resolves_id)) &&
-            (proposal.owner_id === actor || proposal.shared_ids.includes(actor)),
-        };
-      }
-      if (action === 'libraries')
-        return sql`select l.id,l.name,l.content from canvas_library l join studio_project p on p.id=l.project_id where studio_collaboration_access(${actor}::uuid,p.id) and ((p.group_id is null and ${project.group_id}::uuid is null and p.owner_id=${actor}) or (p.group_id=${project.group_id}::uuid)) order by l.created_at`;
-      const operationId = requireValue(input.operationId);
-      const hash = checksum(input);
-      const [prior] = await sql`select * from canvas_receipt where id=${operationId}`;
-      if (prior) {
-        if (prior.actor_id !== actor || prior.input_hash !== hash)
-          throw new StudioError('Operation ID reused', 409);
-        return prior.result;
-      }
-      if (input.generation !== control.generation)
-        throw new StudioError('Canvas generation changed; recover the local draft first', 409);
-      let result: unknown = { ok: true };
-      const ownDraft = (exact = true) => {
+  const response = await studioTransaction(async sql => {
+    const { projectId, action, workspaceId } = input;
+    await assertStudioCollaborationAccess(actor, projectId, sql);
+    const [project] =
+      await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=5 for update`;
+    const [control] =
+      await sql`select * from canvas_control where project_id=${projectId} for update`;
+    const [canonical] =
+      await sql`select * from studio_state where project_id=${projectId} for update`;
+    if (!project || !control || !canonical)
+      throw new StudioError('Studio V5 project not found', 404);
+    let proposal: postgres.Row | undefined;
+    if (workspaceId) {
+      [proposal] =
+        await sql`select *,canvas_proposal_access(${actor}::uuid,id) as can_read from canvas_proposal where id=${workspaceId} and project_id=${projectId} for update`;
+      if (!proposal?.can_read) denied();
+    }
+    const [rights] =
+      await sql`select canvas_capability(${actor}::uuid,${projectId}::uuid,'suggest') as suggest,canvas_capability(${actor}::uuid,${projectId}::uuid,'comment') as comment,canvas_capability(${actor}::uuid,${projectId}::uuid,'vote') as vote`;
+    const capabilities = {
+      read: true,
+      edit: !!project.can_edit && control.phase === 'edit',
+      suggest: !!rights.suggest,
+      comment: !!rights.comment,
+      vote: !!rights.vote,
+      manage: !!project.can_manage,
+    };
+    const operationId = requireValue(input.operationId);
+    const hash = checksum(input);
+    const [prior] = await sql`select * from canvas_receipt where id=${operationId}`;
+    if (prior) {
+      if (prior.actor_id !== actor || prior.input_hash !== hash)
+        throw new StudioError('Operation ID reused', 409);
+      return prior.result;
+    }
+    if (input.generation !== control.generation)
+      throw new StudioError('Canvas generation changed; recover the local draft first', 409);
+    let result: unknown = { ok: true };
+    const ownDraft = (exact = true) => {
+      if (
+        !proposal ||
+        !capabilities.suggest ||
+        proposal.state !== 'draft' ||
+        (proposal.owner_id !== actor && !proposal.shared_ids.includes(actor)) ||
+        !(
+          ['edit', 'suggest_internal'].includes(control.phase) ||
+          (control.phase === 'vote_internal' && !!proposal.resolves_id)
+        )
+      )
+        denied();
+      if (
+        input.revision === undefined ||
+        input.revision > proposal.revision ||
+        (exact && input.revision !== proposal.revision)
+      )
+        throw new StudioError('Proposal revision changed', 409);
+      return proposal;
+    };
+    switch (action) {
+      case 'acceptPrivate':
+      case 'rejectPrivate': {
         if (
+          project.group_id ||
+          control.phase !== 'edit' ||
+          !capabilities.manage ||
           !proposal ||
-          !capabilities.suggest ||
+          proposal.origin !== 'ai' ||
+          proposal.ai_status !== 'ready' ||
           proposal.state !== 'draft' ||
-          (proposal.owner_id !== actor && !proposal.shared_ids.includes(actor)) ||
-          !(
-            ['edit', 'suggest_internal'].includes(control.phase) ||
-            (control.phase === 'vote_internal' && !!proposal.resolves_id)
-          )
+          input.revision !== proposal.revision
         )
           denied();
-        if (
-          input.revision === undefined ||
-          input.revision > proposal.revision ||
-          (exact && input.revision !== proposal.revision)
-        )
-          throw new StudioError('Proposal revision changed', 409);
-        return proposal;
-      };
-      switch (action) {
-        case 'acceptPrivate':
-        case 'rejectPrivate': {
-          if (
-            project.group_id ||
-            control.phase !== 'edit' ||
-            !capabilities.manage ||
-            !proposal ||
-            proposal.origin !== 'ai' ||
-            proposal.ai_status !== 'ready' ||
-            proposal.state !== 'draft' ||
-            input.revision !== proposal.revision
-          )
-            denied();
-          const decision = action === 'acceptPrivate' ? 'accepted' : 'rejected';
-          const changes =
-            decision === 'accepted' ? diffStudio(proposal.base_document, proposal.document) : [];
-          if (decision === 'accepted' && !changes.length)
-            throw new StudioError('AI suggestion has no changes');
-          if (decision === 'accepted')
-            await validateAssets(sql, projectId, proposal.document, proposal.id);
-          const digest =
-            decision === 'accepted'
-              ? checksum({
-                  base: proposal.base_revision,
-                  generation: proposal.base_generation,
-                  changes,
-                })
-              : null;
-          await sql`update canvas_proposal set state='closed',decision=${decision},
+        const decision = action === 'acceptPrivate' ? 'accepted' : 'rejected';
+        const changes =
+          decision === 'accepted' ? diffStudio(proposal.base_document, proposal.document) : [];
+        if (decision === 'accepted' && !changes.length)
+          throw new StudioError('AI suggestion has no changes');
+        if (decision === 'accepted')
+          await validateAssets(sql, projectId, proposal.document, proposal.id);
+        const digest =
+          decision === 'accepted'
+            ? checksum({
+                base: proposal.base_revision,
+                generation: proposal.base_generation,
+                changes,
+              })
+            : null;
+        await sql`update canvas_proposal set state='closed',decision=${decision},
             changes=${sql.json(changes)},checksum=${digest},
             application=${decision === 'accepted' ? 'pending' : 'not_applicable'},
             updated_at=${Date.now()} where id=${proposal.id}`;
-          if (decision === 'accepted')
-            await applyDecision(sql, { ...proposal, changes, checksum: digest, decision }, control);
-          result = { decision };
-          break;
-        }
-        case 'adopt': {
-          if (
-            project.group_id ||
-            project.owner_id !== actor ||
-            control.phase !== 'edit' ||
-            input.revision !== canonical.content_revision
-          )
-            denied();
-          const target = requireValue(input.groupId);
-          const [allowed] =
-            await sql`select studio_group_access(${actor}::uuid,${target}::uuid,true) as value`;
-          if (!allowed.value) denied();
-          const audience = await sql`select owner_id as id from "group" where id=${target}
+        if (decision === 'accepted')
+          await applyDecision(sql, { ...proposal, changes, checksum: digest, decision }, control);
+        result = { decision };
+        break;
+      }
+      case 'adopt': {
+        if (
+          project.group_id ||
+          project.owner_id !== actor ||
+          control.phase !== 'edit' ||
+          input.revision !== canonical.content_revision
+        )
+          denied();
+        const target = requireValue(input.groupId);
+        const [allowed] =
+          await sql`select studio_group_access(${actor}::uuid,${target}::uuid,true) as value`;
+        if (!allowed.value) denied();
+        const audience = await sql`select owner_id as id from "group" where id=${target}
             union select user_id as id from group_membership
             where group_id=${target} and status in ('active','member','admin')`;
-          await assertProjectAiSourceSharing(
+        await assertProjectAiSourceSharing(
+          projectId,
+          audience.map(person => person.id),
+          'private',
+          sql
+        );
+        await sql`update studio_project set group_id=${target},updated_at=${Date.now()} where id=${projectId}`;
+        await sql`update canvas_control set generation=gen_random_uuid() where project_id=${projectId}`;
+        await sql`update studio_state set content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${projectId}`;
+        result = { groupId: target };
+        break;
+      }
+      case 'phase': {
+        if (!capabilities.manage) denied();
+        if (input.phase === 'view') denied();
+        if (input.revision !== canonical.content_revision)
+          throw new StudioError('Canvas revision changed', 409);
+        const [pending] =
+          await sql`select id from canvas_proposal where project_id=${projectId} and (state='voting' or application='conflict') limit 1`;
+        if (pending)
+          throw new StudioError('Resolve active ballots and application conflicts first', 409);
+        if (input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
+          const submitted =
+            await sql`select * from canvas_proposal where project_id=${projectId} and state='submitted' for update`;
+          const electorate = await eligibleVoters(sql, project);
+          if (submitted.length && !electorate.length) throw new StudioError('No eligible voters');
+          for (const submittedProposal of submitted) {
+            assertBallotIntegrity(submittedProposal);
+            await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=null,updated_at=${Date.now()} where id=${submittedProposal.id}`;
+          }
+        }
+        await sql`update canvas_control set phase=${requireValue(input.phase)} where project_id=${projectId}`;
+        break;
+      }
+      case 'resolveDraft':
+      case 'createDraft': {
+        const resolving =
+          action === 'resolveDraft' &&
+          proposal?.decision === 'accepted' &&
+          proposal.application === 'conflict';
+        if (action === 'createDraft' && project.group_id && control.phase !== 'suggest_internal')
+          denied();
+        if (
+          !capabilities.suggest ||
+          !(
+            (resolving && control.phase === 'vote_internal') ||
+            ['edit', 'suggest_internal'].includes(control.phase)
+          )
+        )
+          denied();
+        if (action === 'resolveDraft' && !resolving) denied();
+        if (input.revision !== canonical.content_revision)
+          throw new StudioError('Canvas revision changed', 409);
+        await sql`insert into canvas_proposal(id,project_id,owner_id,title,reason,base_document,base_revision,base_generation,document,resolves_id,created_at,updated_at) values(${operationId},${projectId},${actor},${requireValue(input.title)},${input.reason ?? ''},${sql.json(canonical.document)},${canonical.content_revision},${control.generation},${sql.json(canonical.document)},${resolving ? proposal?.id : null},${Date.now()},${Date.now()})`;
+        result = { workspaceId: operationId };
+        break;
+      }
+      case 'saveDraft': {
+        const p = ownDraft(false);
+        const merged = mergeStudioV3(
+          studioDocumentV3Schema.parse(p.document),
+          requireValue(input.changes)
+        );
+        if (!merged.conflicts.length) {
+          await validateAssets(sql, projectId, merged.value, p.id);
+          await sql`update canvas_proposal set document=${sql.json(JSON.parse(JSON.stringify(merged.value)) as postgres.JSONValue)},revision=revision+1,updated_at=${Date.now()} where id=${p.id}`;
+        }
+        result = {
+          operationId,
+          document: merged.conflicts.length ? p.document : merged.value,
+          revision: p.revision + (merged.conflicts.length ? 0 : 1),
+          status: merged.conflicts.length ? 'conflict' : 'applied',
+          conflicts: merged.conflicts,
+        };
+        break;
+      }
+      case 'share': {
+        const p = ownDraft();
+        if (p.owner_id !== actor) denied();
+        for (const id of input.userIds ?? [])
+          await assertStudioCollaborationAccess(id, projectId, sql);
+        if (p.origin === 'ai')
+          await assertStudioProposalSourceAudience(
+            actor,
             projectId,
-            audience.map(person => person.id),
-            'private',
+            z
+              .array(z.object({ type: aiAttachmentEntitySchema, id: z.string().uuid() }))
+              .parse(p.ai_sources),
             sql
           );
-          await sql`update studio_project set group_id=${target},updated_at=${Date.now()} where id=${projectId}`;
-          await sql`update canvas_control set generation=gen_random_uuid() where project_id=${projectId}`;
-          await sql`update studio_state set content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${projectId}`;
-          result = { groupId: target };
-          break;
-        }
-        case 'phase': {
-          if (!capabilities.manage) denied();
-          if (input.phase === 'view') denied();
-          if (input.revision !== canonical.content_revision)
-            throw new StudioError('Canvas revision changed', 409);
-          const [pending] =
-            await sql`select id from canvas_proposal where project_id=${projectId} and (state='voting' or application='conflict') limit 1`;
-          if (pending)
-            throw new StudioError('Resolve active ballots and application conflicts first', 409);
-          if (input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
-            const submitted =
-              await sql`select * from canvas_proposal where project_id=${projectId} and state='submitted' for update`;
-            const electorate = await eligibleVoters(sql, project);
-            if (submitted.length && !electorate.length) throw new StudioError('No eligible voters');
-            for (const submittedProposal of submitted) {
-              assertBallotIntegrity(submittedProposal);
-              await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=null,updated_at=${Date.now()} where id=${submittedProposal.id}`;
-            }
-          }
-          await sql`update canvas_control set phase=${requireValue(input.phase)} where project_id=${projectId}`;
-          break;
-        }
-        case 'resolveDraft':
-        case 'createDraft': {
-          const resolving =
-            action === 'resolveDraft' &&
-            proposal?.decision === 'accepted' &&
-            proposal.application === 'conflict';
-          if (action === 'createDraft' && project.group_id && control.phase !== 'suggest_internal')
-            denied();
-          if (
-            !capabilities.suggest ||
-            !(
-              (resolving && control.phase === 'vote_internal') ||
-              ['edit', 'suggest_internal'].includes(control.phase)
-            )
-          )
-            denied();
-          if (action === 'resolveDraft' && !resolving) denied();
-          if (input.revision !== canonical.content_revision)
-            throw new StudioError('Canvas revision changed', 409);
-          await sql`insert into canvas_proposal(id,project_id,owner_id,title,reason,base_document,base_revision,base_generation,document,resolves_id,created_at,updated_at) values(${operationId},${projectId},${actor},${requireValue(input.title)},${input.reason ?? ''},${sql.json(canonical.document)},${canonical.content_revision},${control.generation},${sql.json(canonical.document)},${resolving ? proposal?.id : null},${Date.now()},${Date.now()})`;
-          result = { workspaceId: operationId };
-          break;
-        }
-        case 'saveDraft': {
-          const p = ownDraft(false);
-          const merged = mergeStudioV3(
-            studioDocumentV3Schema.parse(p.document),
-            requireValue(input.changes)
-          );
-          if (!merged.conflicts.length) {
-            await validateAssets(sql, projectId, merged.value, p.id);
-            await sql`update canvas_proposal set document=${sql.json(JSON.parse(JSON.stringify(merged.value)) as postgres.JSONValue)},revision=revision+1,updated_at=${Date.now()} where id=${p.id}`;
-          }
-          result = {
-            operationId,
-            document: merged.conflicts.length ? p.document : merged.value,
-            revision: p.revision + (merged.conflicts.length ? 0 : 1),
-            status: merged.conflicts.length ? 'conflict' : 'applied',
-            conflicts: merged.conflicts,
-          };
-          break;
-        }
-        case 'share': {
-          const p = ownDraft();
-          if (p.owner_id !== actor) denied();
-          for (const id of input.userIds ?? [])
-            await assertStudioCollaborationAccess(id, projectId, sql);
-          if (p.origin === 'ai')
-            await assertStudioProposalSourceAudience(
-              actor,
-              projectId,
-              z
-                .array(z.object({ type: aiAttachmentEntitySchema, id: z.string().uuid() }))
-                .parse(p.ai_sources),
-              sql
-            );
-          await sql`update canvas_proposal set shared_ids=${input.userIds ?? []},updated_at=${Date.now()} where id=${p.id}`;
-          break;
-        }
-        case 'submit': {
-          const p = ownDraft();
-          if (p.owner_id !== actor) denied();
-          if (p.origin === 'ai' && project.group_id && control.phase !== 'suggest_internal')
-            denied();
-          const changes = diffStudio(p.base_document, p.document);
-          if (!changes.length) throw new StudioError('Proposal has no changes');
-          await validateAssets(sql, projectId, p.document, p.id);
-          const openResolutionBallot = control.phase === 'vote_internal' && !!p.resolves_id;
-          const electorate = openResolutionBallot ? await eligibleVoters(sql, project) : [];
-          if (openResolutionBallot && !electorate.length)
-            throw new StudioError('No eligible voters');
-          await sql`update canvas_proposal set state=${openResolutionBallot ? 'voting' : 'submitted'},changes=${sql.json(changes)},checksum=${checksum({ base: p.base_revision, generation: p.base_generation, changes })},electorate=${openResolutionBallot ? electorate.map(v => v.id) : null},deadline=null,updated_at=${Date.now()} where id=${p.id}`;
-          break;
-        }
-        case 'withdraw': {
-          if (
-            !proposal ||
-            proposal.owner_id !== actor ||
-            !['draft', 'submitted'].includes(proposal.state)
-          )
-            denied();
-          await sql`update canvas_proposal set state='withdrawn',application='not_applicable',updated_at=${Date.now()} where id=${requireValue(workspaceId)}`;
-          break;
-        }
-        case 'startVote': {
-          if (!capabilities.manage) denied();
-          // Older Studio clients may repeat the action after the phase has opened its ballots.
-          if (proposal?.state === 'voting') break;
-          if (
-            !capabilities.manage ||
-            control.phase !== 'vote_internal' ||
-            proposal?.state !== 'submitted'
-          )
-            denied();
-          assertBallotIntegrity(proposal);
-          const electorate = await eligibleVoters(sql, project);
-          if (!electorate.length) throw new StudioError('No eligible voters');
-          await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=${Date.now() + (input.minutes ?? 5) * 60000},updated_at=${Date.now()} where id=${requireValue(workspaceId)}`;
-          break;
-        }
-        case 'vote': {
-          if (
-            !capabilities.vote ||
-            control.phase !== 'vote_internal' ||
-            proposal?.state !== 'voting' ||
-            !proposal.electorate.includes(actor)
-          )
-            denied();
-          if (proposal.deadline != null && Date.now() >= Number(proposal.deadline)) {
-            await finalize(sql, proposal, control);
-            result = { closed: true };
-            break;
-          }
-          await sql`insert into canvas_vote(proposal_id,user_id,choice,created_at) values(${requireValue(workspaceId)},${actor},${requireValue(input.choice)},${Date.now()}) on conflict(proposal_id,user_id) do update set choice=excluded.choice,created_at=excluded.created_at`;
-          const [count] =
-            await sql`select count(*)::int as n from canvas_vote where proposal_id=${requireValue(workspaceId)}`;
-          if (count.n === proposal.electorate.length) await finalize(sql, proposal, control);
-          break;
-        }
-        case 'finalize': {
-          if (
-            !proposal ||
-            control.phase !== 'vote_internal' ||
-            (!capabilities.manage &&
-              (proposal.deadline == null || Date.now() < Number(proposal.deadline)))
-          )
-            denied();
-          await finalize(sql, proposal, control);
-          break;
-        }
-        case 'reapply': {
-          if (
-            !capabilities.manage ||
-            proposal?.decision !== 'accepted' ||
-            proposal.application !== 'conflict'
-          )
-            denied();
-          await applyDecision(sql, proposal, control);
-          break;
-        }
-        case 'comment': {
-          if (!capabilities.comment) denied();
-          await sql`insert into canvas_comment(id,project_id,proposal_id,author_id,element_id,body,created_at,updated_at) values(${operationId},${projectId},${workspaceId ?? null},${actor},${input.elementId ?? null},${requireValue(input.body)},${Date.now()},${Date.now()})`;
-          break;
-        }
-        case 'editComment':
-        case 'resolveComment': {
-          if (!capabilities.comment) denied();
-          const [comment] =
-            await sql`select * from canvas_comment where id=${requireValue(input.commentId)} and project_id=${projectId}`;
-          if (!comment || (comment.author_id !== actor && !capabilities.manage)) denied();
-          if (action === 'editComment' && comment.author_id !== actor) denied();
-          if (comment.proposal_id) {
-            const [access] =
-              await sql`select canvas_proposal_access(${actor}::uuid,${comment.proposal_id}::uuid) as allowed`;
-            if (!access.allowed) denied();
-          }
-          if (action === 'editComment')
-            await sql`update canvas_comment set body=${requireValue(input.body)},updated_at=${Date.now()} where id=${comment.id}`;
-          else
-            await sql`update canvas_comment set resolved=true,updated_at=${Date.now()} where id=${comment.id}`;
-          break;
-        }
-        case 'restore': {
-          if (
-            !capabilities.manage ||
-            control.phase !== 'edit' ||
-            input.revision !== canonical.content_revision
-          )
-            denied();
-          const [active] =
-            await sql`select id from canvas_proposal where project_id=${projectId} and state='voting' limit 1`;
-          if (active) denied();
-          const [history] =
-            await sql`select * from canvas_history where id=${requireValue(input.historyId)} and project_id=${projectId}`;
-          if (!history) throw new StudioError('Revision not found', 404);
-          await validateAssets(sql, projectId, history.document);
-          await sql`update canvas_control set generation=gen_random_uuid() where project_id=${projectId}`;
-          await sql`update studio_state set document=${sql.json(history.document)},content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${projectId}`;
-          await sql`update studio_project set title=${history.document.title},updated_at=${Date.now()} where id=${projectId}`;
-          break;
-        }
-        case 'saveLibrary': {
-          if (!project.can_edit) denied();
-          await sql`delete from canvas_library where project_id=${projectId} and name=${requireValue(input.title)} and created_by=${actor}`;
-          await sql`insert into canvas_library(project_id,name,content,created_by,created_at) values(${projectId},${requireValue(input.title)},${sql.json(requireValue(input.library))},${actor},${Date.now()})`;
-          break;
-        }
-        case 'setCapability': {
-          if (!capabilities.manage || !project.group_id) denied();
-          const [role] =
-            await sql`select id from role where id=${requireValue(input.roleId)} and group_id=${project.group_id}`;
-          if (!role) denied();
-          await sql`insert into canvas_role_capability(role_id,capability,allowed) values(${role.id},${requireValue(input.capability)},${requireValue(input.allowed)}) on conflict(role_id,capability) do update set allowed=excluded.allowed`;
-          break;
-        }
+        await sql`update canvas_proposal set shared_ids=${input.userIds ?? []},updated_at=${Date.now()} where id=${p.id}`;
+        break;
       }
-      await sql`insert into canvas_receipt(id,project_id,actor_id,input_hash,result,created_at) values(${operationId},${projectId},${actor},${hash},${sql.json(result as postgres.JSONValue)},${Date.now()})`;
-      return result;
-    },
-    { readOnly }
-  );
+      case 'submit': {
+        const p = ownDraft();
+        if (p.owner_id !== actor) denied();
+        if (p.origin === 'ai' && project.group_id && control.phase !== 'suggest_internal') denied();
+        const changes = diffStudio(p.base_document, p.document);
+        if (!changes.length) throw new StudioError('Proposal has no changes');
+        await validateAssets(sql, projectId, p.document, p.id);
+        const openResolutionBallot = control.phase === 'vote_internal' && !!p.resolves_id;
+        const electorate = openResolutionBallot ? await eligibleVoters(sql, project) : [];
+        if (openResolutionBallot && !electorate.length) throw new StudioError('No eligible voters');
+        await sql`update canvas_proposal set state=${openResolutionBallot ? 'voting' : 'submitted'},changes=${sql.json(changes)},checksum=${checksum({ base: p.base_revision, generation: p.base_generation, changes })},electorate=${openResolutionBallot ? electorate.map(v => v.id) : null},deadline=null,updated_at=${Date.now()} where id=${p.id}`;
+        break;
+      }
+      case 'withdraw': {
+        if (
+          !proposal ||
+          proposal.owner_id !== actor ||
+          !['draft', 'submitted'].includes(proposal.state)
+        )
+          denied();
+        await sql`update canvas_proposal set state='withdrawn',application='not_applicable',updated_at=${Date.now()} where id=${requireValue(workspaceId)}`;
+        break;
+      }
+      case 'startVote': {
+        if (!capabilities.manage) denied();
+        // Older Studio clients may repeat the action after the phase has opened its ballots.
+        if (proposal?.state === 'voting') break;
+        if (
+          !capabilities.manage ||
+          control.phase !== 'vote_internal' ||
+          proposal?.state !== 'submitted'
+        )
+          denied();
+        assertBallotIntegrity(proposal);
+        const electorate = await eligibleVoters(sql, project);
+        if (!electorate.length) throw new StudioError('No eligible voters');
+        await sql`update canvas_proposal set state='voting',electorate=${electorate.map(v => v.id)},deadline=${Date.now() + (input.minutes ?? 5) * 60000},updated_at=${Date.now()} where id=${requireValue(workspaceId)}`;
+        break;
+      }
+      case 'vote': {
+        if (
+          !capabilities.vote ||
+          control.phase !== 'vote_internal' ||
+          proposal?.state !== 'voting' ||
+          !proposal.electorate.includes(actor)
+        )
+          denied();
+        if (proposal.deadline != null && Date.now() >= Number(proposal.deadline)) {
+          await finalize(sql, proposal, control);
+          result = { closed: true };
+          break;
+        }
+        await sql`insert into canvas_vote(proposal_id,user_id,choice,created_at) values(${requireValue(workspaceId)},${actor},${requireValue(input.choice)},${Date.now()}) on conflict(proposal_id,user_id) do update set choice=excluded.choice,created_at=excluded.created_at`;
+        const [count] =
+          await sql`select count(*)::int as n from canvas_vote where proposal_id=${requireValue(workspaceId)}`;
+        if (count.n === proposal.electorate.length) await finalize(sql, proposal, control);
+        break;
+      }
+      case 'finalize': {
+        if (
+          !proposal ||
+          control.phase !== 'vote_internal' ||
+          (!capabilities.manage &&
+            (proposal.deadline == null || Date.now() < Number(proposal.deadline)))
+        )
+          denied();
+        await finalize(sql, proposal, control);
+        break;
+      }
+      case 'reapply': {
+        if (
+          !capabilities.manage ||
+          proposal?.decision !== 'accepted' ||
+          proposal.application !== 'conflict'
+        )
+          denied();
+        await applyDecision(sql, proposal, control);
+        break;
+      }
+      case 'comment': {
+        if (!capabilities.comment) denied();
+        await sql`insert into canvas_comment(id,project_id,proposal_id,author_id,element_id,body,created_at,updated_at) values(${operationId},${projectId},${workspaceId ?? null},${actor},${input.elementId ?? null},${requireValue(input.body)},${Date.now()},${Date.now()})`;
+        break;
+      }
+      case 'editComment':
+      case 'resolveComment': {
+        if (!capabilities.comment) denied();
+        const [comment] =
+          await sql`select * from canvas_comment where id=${requireValue(input.commentId)} and project_id=${projectId}`;
+        if (!comment || (comment.author_id !== actor && !capabilities.manage)) denied();
+        if (action === 'editComment' && comment.author_id !== actor) denied();
+        if (comment.proposal_id) {
+          const [access] =
+            await sql`select canvas_proposal_access(${actor}::uuid,${comment.proposal_id}::uuid) as allowed`;
+          if (!access.allowed) denied();
+        }
+        if (action === 'editComment')
+          await sql`update canvas_comment set body=${requireValue(input.body)},updated_at=${Date.now()} where id=${comment.id}`;
+        else
+          await sql`update canvas_comment set resolved=true,updated_at=${Date.now()} where id=${comment.id}`;
+        break;
+      }
+      case 'restore': {
+        if (
+          !capabilities.manage ||
+          control.phase !== 'edit' ||
+          input.revision !== canonical.content_revision
+        )
+          denied();
+        const [active] =
+          await sql`select id from canvas_proposal where project_id=${projectId} and state='voting' limit 1`;
+        if (active) denied();
+        const [history] =
+          await sql`select * from canvas_history where id=${requireValue(input.historyId)} and project_id=${projectId}`;
+        if (!history) throw new StudioError('Revision not found', 404);
+        await validateAssets(sql, projectId, history.document);
+        await sql`update canvas_control set generation=gen_random_uuid() where project_id=${projectId}`;
+        await sql`update studio_state set document=${sql.json(history.document)},content_revision=content_revision+1,updated_at=${Date.now()} where project_id=${projectId}`;
+        await sql`update studio_project set title=${history.document.title},updated_at=${Date.now()} where id=${projectId}`;
+        break;
+      }
+      case 'saveLibrary': {
+        if (!project.can_edit) denied();
+        await sql`delete from canvas_library where project_id=${projectId} and name=${requireValue(input.title)} and created_by=${actor}`;
+        await sql`insert into canvas_library(project_id,name,content,created_by,created_at) values(${projectId},${requireValue(input.title)},${sql.json(requireValue(input.library))},${actor},${Date.now()})`;
+        break;
+      }
+      case 'setCapability': {
+        if (!capabilities.manage || !project.group_id) denied();
+        const [role] =
+          await sql`select id from role where id=${requireValue(input.roleId)} and group_id=${project.group_id}`;
+        if (!role) denied();
+        await sql`insert into canvas_role_capability(role_id,capability,allowed) values(${role.id},${requireValue(input.capability)},${requireValue(input.allowed)}) on conflict(role_id,capability) do update set allowed=excluded.allowed`;
+        break;
+      }
+    }
+    await sql`insert into canvas_receipt(id,project_id,actor_id,input_hash,result,created_at) values(${operationId},${projectId},${actor},${hash},${sql.json(result as postgres.JSONValue)},${Date.now()})`;
+    return result;
+  });
   if (
     input.workspaceId &&
     ['withdraw', 'rejectPrivate', 'acceptPrivate', 'vote', 'finalize', 'reapply'].includes(
       input.action
     )
   ) {
-    const { cleanupStudioProposalAssets } = await import('./ai-suggestions');
-    await cleanupStudioProposalAssets(input.workspaceId).catch(error =>
-      console.error('Cannot clean up rejected AI media', error)
-    );
+    const workspaceId = input.workspaceId;
+    await afterCommit(requireValue(input.operationId), async () => {
+      const { cleanupStudioProposalAssets } = await import('./ai-suggestions');
+      await cleanupStudioProposalAssets(workspaceId).catch(() =>
+        console.error('studio.post_commit_failed', { operationId: input.operationId })
+      );
+    });
   }
   return response;
 }

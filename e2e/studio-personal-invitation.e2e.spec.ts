@@ -1,3 +1,5 @@
+import { dbProvider } from '@/zero/db-provider';
+import { studioQueries } from '@/zero/communication-studio/queries';
 import { expect, test } from './fixtures/test';
 import { authenticateActor, removeActorAuthState } from './fixtures/auth';
 import { db } from './fixtures/db';
@@ -61,6 +63,13 @@ test('personal Studio invitation requires acceptance before a second actor can e
         return row?.status;
       })
       .toBe('active');
+    expect(
+      await dbProvider.transaction(tx =>
+        tx.run(
+          studioQueries.list.fn({ args: { groupId: null }, ctx: { userID: invited.id, email: '' } })
+        )
+      )
+    ).toContainEqual(expect.objectContaining({ id: projectId }));
     await expect(
       invitedPage.getByRole('link', {
         name: new RegExp(document.title + '.*(Shared with me|Mit mir geteilt)', 'i'),
@@ -81,17 +90,35 @@ test('personal Studio invitation requires acceptance before a second actor can e
         return row?.title;
       })
       .toBe(`${e2eRun.prefix} Shared Studio edit`);
+    await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(
+      `${e2eRun.prefix} Shared Studio edit`
+    );
     await page.locator('[data-action-id="studio.collaborator-invite.open"]').click();
     const ownerDialog = page.getByRole('dialog');
     await expect(ownerDialog.getByText(/Active|Aktiv/i)).toBeVisible();
-    await ownerDialog.getByRole('button', { name: /Remove|Entfernen/i }).click();
+    await ownerDialog.getByRole('button', { name: /Remove|Entfernen/i }).press('Enter');
     await expect
-      .poll(async () => {
-        const [row] =
-          await sql`select studio_access(${invited.id}::uuid,${projectId}::uuid,true) as allowed`;
-        return row?.allowed;
-      })
+      .poll(
+        async () => {
+          const rows =
+            await sql`select id from studio_project_collaborator where project_id=${projectId} and user_id=${invited.id}`;
+          return rows.length;
+        },
+        { timeout: 30_000 }
+      )
+      .toBe(0);
+    await expect
+      .poll(
+        async () => {
+          const [row] =
+            await sql`select studio_access(${invited.id}::uuid,${projectId}::uuid,true) as allowed`;
+          return row?.allowed;
+        },
+        { timeout: 30_000 }
+      )
       .toBe(false);
+    await expect(invitedPage.getByRole('textbox', { name: 'Title', exact: true })).toHaveCount(0);
+    await expect(invitedPage.getByRole('alert')).toBeVisible();
   } finally {
     await invitedContext.close();
     await sql`delete from studio_project where id=${projectId}`;

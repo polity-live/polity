@@ -87,6 +87,8 @@ const SKIPPED_FILE_PATTERNS = [
 const NON_UI_COPY_PROPERTY_FILES = [/routes\/api\/ai\//, /server\//, /zero\/.*\/schema\.ts$/];
 const NON_UI_HELPER_RETURN_FILES = [
   /features\/shared\/ui\/kit-platejs\/copilot-kit\.tsx$/,
+  // This helper returns model instructions and document context, never product copy.
+  /features\/shared\/ui\/kit-platejs\/ai-editor-context\.ts$/,
   /lib\/ai\//,
   /server\//,
 ];

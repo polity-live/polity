@@ -35,7 +35,6 @@ import {
   archiveElementSet,
   createElementSet,
   instantiateElementSetForProject,
-  listElementSets,
   publishElementSetRevision,
   renameElementSet,
   stageElementSetForAiProposal,
@@ -607,38 +606,6 @@ describe('Studio Elements server synchronization', () => {
           )
         ).toBe(true);
       } else expect(io.remove).not.toHaveBeenCalled();
-    }
-  );
-  it.each([null, 'group'])(
-    'lists the accessible %s library with normalized numeric metadata',
-    async groupId => {
-      io.sql.mockResolvedValue([
-        {
-          id: setId,
-          name: 'Library',
-          scope: groupId ? 'group' : 'personal',
-          revision_id: oldRevisionId,
-          version: '2',
-          width: '640',
-          height: '480',
-          updated_at: '1200',
-        },
-      ]);
-      expect(await listElementSets('reader', groupId)).toEqual([
-        {
-          id: setId,
-          name: 'Library',
-          scope: groupId ? 'group' : 'personal',
-          revisionId: oldRevisionId,
-          version: 2,
-          width: 640,
-          height: 480,
-          updatedAt: 1200,
-        },
-      ]);
-      const query = io.sql.mock.calls[0][0].join('?');
-      expect(query).toContain(groupId ? 'studio_group_access' : 's.owner_id=');
-      expect(query).toContain('s.archived_at is null');
     }
   );
   it.each(['rename', 'archive'] as const)(

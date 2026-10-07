@@ -25,9 +25,10 @@ vi.mock('@/zero/mutators', () => ({
 vi.mock('@/zero/mutate-with-server-check', () => ({
   serverConfirmed: (input: unknown) => io.confirm(input),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({
-  useStudioApi: () => ({ request: io.request }),
-}));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('@/zero/communication-studio/useStudioState', () => ({
   useStudioState: () => ({
     projects: [

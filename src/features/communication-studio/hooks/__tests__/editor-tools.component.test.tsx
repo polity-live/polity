@@ -3,7 +3,10 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createDocument } from '../../logic/templates';
 const io = vi.hoisted(() => ({ request: vi.fn() }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 import { useStudioEditorTools } from '../useStudioEditorTools';
 import type { useStudioController } from '../useStudioController';
 
@@ -209,7 +212,8 @@ it('waits for connectivity and prevents overlapping polls and commands after unm
   expect(io.request).not.toHaveBeenCalled();
   online = true;
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(3000);
+    window.dispatchEvent(new Event('online'));
+    await Promise.resolve();
   });
   expect(io.request).toHaveBeenCalledTimes(1);
   hook.unmount();
@@ -229,7 +233,9 @@ it('marks an action interrupted when the document is unavailable and retries net
     useStudioEditorTools(unloaded as unknown as ReturnType<typeof useStudioController>)
   );
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('online'));
+    await Promise.resolve();
   });
   expect(JSON.parse(sessionStorage.getItem('studio-ui:unloaded')!).error).toContain(
     'Editor interrupted'

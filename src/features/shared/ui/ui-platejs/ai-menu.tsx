@@ -1,6 +1,12 @@
 import * as React from 'react';
 
-import { AIChatPlugin, AIPlugin, useEditorChat, useLastAssistantMessage } from '@platejs/ai/react';
+import {
+  AIChatPlugin,
+  AIPlugin,
+  insertBelowGenerate,
+  useEditorChat,
+  useLastAssistantMessage,
+} from '@platejs/ai/react';
 import { BlockSelectionPlugin, useIsSelecting } from '@platejs/selection/react';
 import { Command as CommandPrimitive } from 'cmdk';
 import {
@@ -49,10 +55,14 @@ export function AIMenu() {
 
   const [value, setValue] = React.useState('');
 
-  const chat = useChat();
+  const chat = useChat(editor);
 
-  const { input, messages, setInput, status } = chat;
+  const { input, messages, plateChat, setInput, status } = chat;
   const [anchorElement, setAnchorElement] = React.useState<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    editor.setOption(AIChatPlugin, 'chat', plateChat);
+  }, [editor, plateChat]);
 
   const content = useLastAssistantMessage()
     ?.parts.filter(part => part.type === 'text')
@@ -85,7 +95,6 @@ export function AIMenu() {
   };
 
   useEditorChat({
-    chat,
     onOpenBlockSelection: (blocks: NodeEntry[]) => {
       const lastBlock = blocks.at(-1)?.[0];
       if (lastBlock) {
@@ -126,6 +135,10 @@ export function AIMenu() {
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  React.useEffect(() => {
+    if (isLoading) setInput('');
+  }, [isLoading, setInput]);
 
   if (isLoading && mode === 'insert') {
     return null;
@@ -175,9 +188,17 @@ export function AIMenu() {
                   e.preventDefault();
                   api.aiChat.hide();
                 }
-                if (isHotkey('enter')(e) && !e.shiftKey && !value) {
+                if (e.key === 'Enter') {
+                  if (e.shiftKey || e.nativeEvent.isComposing || e.keyCode === 229) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                  }
+                  if (input.length === 0) return;
                   e.preventDefault();
-                  void api.aiChat.submit(input);
+                  e.stopPropagation();
+                  const prompt = input.trim();
+                  if (prompt) api.aiChat.submit(prompt);
                 }
               }}
               onValueChange={setInput}
@@ -318,7 +339,9 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.insertBelow'),
       value: 'insertBelow',
       onSelect: ({ aiEditor, editor }) => {
-        void editor.getTransforms(AIChatPlugin).aiChat.insertBelow(aiEditor);
+        if (!aiEditor) return;
+        // This endpoint generates plain text; Plate's generic path expects edit-tool suggestions.
+        insertBelowGenerate(editor, aiEditor);
       },
     },
     makeLonger: {
@@ -346,6 +369,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.replaceSelection'),
       value: 'replace',
       onSelect: ({ aiEditor, editor }) => {
+        if (!aiEditor) return;
         void editor.getTransforms(AIChatPlugin).aiChat.replaceSelection(aiEditor);
       },
     },
@@ -391,7 +415,13 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       filterItems?: boolean;
       items?: { label: string; value: string }[];
       shortcut?: string;
-      onSelect: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => void;
+      onSelect: ({
+        aiEditor,
+        editor,
+      }: {
+        aiEditor: SlateEditor | null;
+        editor: PlateEditor;
+      }) => void;
     }
   >;
 
@@ -460,7 +490,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
     setValue(menuGroups[0].items[0].value);
   }, [menuGroups, setValue]);
 
-  if (!aiEditor) return null;
+  if (!aiEditor && messages && messages.length > 0) return null;
 
   return (
     <>

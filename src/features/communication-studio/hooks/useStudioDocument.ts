@@ -1,10 +1,11 @@
+import { studioPresence } from '@/features/communication-studio/logic/studio-realtime-presence';
 import { z } from 'zod';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { createClient } from '@/lib/supabase/client';
 import * as edit from '../logic/collaboration';
 import {
@@ -52,6 +53,7 @@ export function useStudioDocument(
   user: { id: string; name: string },
   workspaceId?: string
 ) {
+  const studio = useStudioClient();
   const zero = useZero();
   const [canonicalRemote, remoteStatus] = useQuery(
     id ? queries.studio.document({ id }) : undefined
@@ -68,19 +70,11 @@ export function useStudioDocument(
       ? { document: remoteWorkspace.document, content_revision: remoteWorkspace.revision }
       : workspaceRemote
     : canonicalRemote;
-  const loadDocument = () =>
-    studioRequest<{
-      document: StudioDocumentV3;
-      revision: number;
-      generation: string;
-      canEdit: boolean;
-      canvasEnabled?: boolean;
-    }>(
-      workspaceId ? 'canvas' : 'load',
-      workspaceId ? { action: 'loadDraft', projectId: id, workspaceId } : { id }
-    );
+  const loadDocument = () => {
+    if (!id) return Promise.reject(new Error('Studio project unavailable'));
+    return workspaceId ? studio.loadDraft({ projectId: id, workspaceId }) : studio.load({ id });
+  };
   const [value, setValue] = useState<StudioDocument | null>(null),
-    [canvasEnabled, setCanvasEnabled] = useState(true),
     [canEdit, setCanEdit] = useState(false),
     [status, setStatus] = useState('loading'),
     [error, setError] = useState(''),
@@ -92,7 +86,6 @@ export function useStudioDocument(
     history = useRef<StudioChange[][]>([]),
     future = useRef<StudioChange[][]>([]),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const channel = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
   const assetObjectUrls = useRef(new Map<string, { source: string; url: string }>());
   const presenceCursor = useRef<{ pageId: string; x: number; y: number } | undefined>(undefined);
   const presenceSelection = useRef<string[]>([]);
@@ -113,7 +106,7 @@ export function useStudioDocument(
   const refreshAssets = useCallback(async () => {
     if (!id) return;
     const scope = `${id}:${workspaceId ?? 'canonical'}`;
-    const result = await studioRequest<StudioAsset[]>('assets', { id, workspaceId });
+    const result = await studio.assets({ id, workspaceId });
     if (currentAssetScope.current !== scope) return;
     const pending: string[] = [];
     try {
@@ -221,10 +214,15 @@ export function useStudioDocument(
       setStatus(navigator.onLine ? 'loading' : 'offline');
     }
     const load = () =>
-      loadDocument()
+      (async () => {
+        if (!workspaceId && !restored) {
+          const current = await studio.load({ id });
+          if (current.canEdit) await studio.synchronizeElements({ projectId: id });
+        }
+        return loadDocument();
+      })()
         .then(result => {
           if (disposed) return;
-          setCanvasEnabled(result.canvasEnabled !== false);
           if (draft.current?.generation && draft.current.generation !== result.generation) {
             blocked.current = true;
             setCanEdit(false);
@@ -274,21 +272,48 @@ export function useStudioDocument(
         });
     void load();
     const reconnect = () => void load();
-    const authorityCheck = setInterval(() => void load(), 5000);
+    const stopAuthority = studio.watchSession(
+      { projectId: id },
+      next => {
+        if (disposed || !draft.current) return;
+        if (draft.current.generation !== next.generation) {
+          blocked.current = true;
+          setCanEdit(false);
+          setStatus('conflict');
+          return;
+        }
+        void loadDocument()
+          .then(current => {
+            if (!disposed) {
+              setCanEdit(current.canEdit);
+              if (draft.current) draft.current.canEdit = current.canEdit;
+            }
+          })
+          .catch(() => {
+            if (!disposed) {
+              setCanEdit(false);
+              setStatus('unavailable');
+            }
+          });
+      },
+      () => {
+        if (!disposed) {
+          setCanEdit(false);
+          setStatus('unavailable');
+        }
+      }
+    );
     window.addEventListener('online', reconnect);
-    const interval = setInterval(
-      () =>
-        void refreshAssets().catch(() => {
-          /* Error is shown in the save status. */
-        }),
-      240000
+    const stopAssets = studio.watchAssets(
+      { id, workspaceId },
+      () => void refreshAssets().catch(e => setError(String(e)))
     );
     return () => {
       session.current++;
       disposed = true;
-      clearInterval(authorityCheck);
+      stopAuthority();
       window.removeEventListener('online', reconnect);
-      clearInterval(interval);
+      stopAssets();
       if (timer.current) clearTimeout(timer.current);
       clearAssetObjectUrls();
     };
@@ -322,95 +347,16 @@ export function useStudioDocument(
   }, [remote, remoteStatus]);
   useEffect(() => {
     if (!id || !value || !user.id || status === 'unavailable') return;
-    let disposed = false;
-    const supabase = createClient();
-    if (canvasEnabled) {
-      const c = supabase.channel(`canvas-user:${id}:${workspaceId ?? 'main'}:${user.id}`, {
-        config: { private: true },
-      });
-      channel.current = c;
-      let busy = false,
-        last = 0;
-      const publish = () => {
-        if (disposed || busy || !navigator.onLine || Date.now() - last < 200) return;
-        last = Date.now();
-        busy = true;
-        void studioRequest<{ peers: Record<string, unknown>[] }>('canvasPresence', {
-          projectId: id,
-          workspaceId,
-          cursor: presenceCursor.current,
-          selection: presenceSelection.current,
-        })
-          .then(result => {
-            if (!disposed) setPeers(result.peers);
-          })
-          .catch(() => {
-            if (!disposed) setPeers([]);
-          })
-          .finally(() => {
-            busy = false;
-          });
-      };
-      publishPresence.current = publish;
-      c.on('broadcast', { event: 'peers' }, ({ payload }) => {
-        if (!disposed && Array.isArray(payload?.peers)) setPeers(payload.peers);
-      });
-      void supabase.auth.getSession().then(async ({ data }) => {
-        if (!data.session || disposed) return;
-        await supabase.realtime.setAuth(data.session.access_token);
-        if (!disposed)
-          c.subscribe(s => {
-            if (s === 'SUBSCRIBED') publish();
-          });
-      });
-      const heartbeat = setInterval(publish, 5000);
-      publish();
-      return () => {
-        disposed = true;
-        clearInterval(heartbeat);
-        publishPresence.current = () => {
-          /* Session closed. */
-        };
-        channel.current = null;
-        void supabase.removeChannel(c);
-        setPeers([]);
-      };
-    }
-    const c = supabase.channel(workspaceId ? `canvas-proposal:${workspaceId}` : `studio:${id}`, {
-      config: { private: true, presence: { key: user.id } },
+    return studioPresence({
+      projectId: id,
+      workspaceId,
+      user,
+      setPeers,
+      cursor: presenceCursor,
+      selection: presenceSelection,
+      publish: publishPresence,
     });
-    channel.current = c;
-    c.on('presence', { event: 'sync' }, () =>
-      setPeers(
-        Object.values(c.presenceState())
-          .flat()
-          .filter(p => (p as { userId?: string }).userId !== user.id) as Record<string, unknown>[]
-      )
-    );
-    c.on('broadcast', { event: 'cursor' }, ({ payload }) =>
-      setPeers(old =>
-        old.map(p => (p.userId === payload.userId ? { ...p, cursor: payload.cursor } : p))
-      )
-    );
-    void supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session || disposed) return;
-      await supabase.realtime.setAuth(data.session.access_token);
-      if (disposed) return;
-      c.subscribe(s => {
-        if (s === 'SUBSCRIBED')
-          void c.track({
-            userId: user.id,
-            user: { id: user.id, name: user.name, color: '#B88A3B' },
-          });
-      });
-    });
-    return () => {
-      disposed = true;
-      channel.current = null;
-      void c.unsubscribe();
-      setPeers([]);
-    };
-  }, [id, !!value, user.id, user.name, status === 'unavailable', canvasEnabled, workspaceId]);
+  }, [id, !!value, user.id, user.name, status === 'unavailable', workspaceId]);
   const commit = async (): Promise<number> => {
     if (flight.current) {
       await flight.current;
@@ -486,12 +432,12 @@ export function useStudioDocument(
     const operation = (async () => {
       let receipt: StudioReceipt;
       if (workspaceId)
-        receipt = await studioRequest<StudioReceipt>('canvas', {
+        receipt = await studio.canvas({
           action: 'saveDraft',
           projectId: id,
           workspaceId,
           revision: d.revision,
-          generation: d.generation,
+          generation: d.generation ?? '',
           ...pending,
         });
       else {
@@ -505,7 +451,7 @@ export function useStudioDocument(
             })
           )
         );
-        receipt = await studioRequest<StudioReceipt>('receipt', {
+        receipt = await studio.operation({
           projectId: id,
           id: pending.operationId,
         });
@@ -681,7 +627,6 @@ export function useStudioDocument(
     await commitRef.current();
   };
   return {
-    canvasEnabled,
     recovery: draft.current
       ? { base: draft.current.base, local: draft.current.value, server: remote?.document ?? null }
       : null,
@@ -698,12 +643,8 @@ export function useStudioDocument(
     },
     recoverAsProposal: async () => {
       if (!draft.current || !id) throw new Error('No draft');
-      const currentDocument = await studioRequest<{
-        document: StudioDocumentV3;
-        revision: number;
-        generation: string;
-      }>('load', { id });
-      const { workspaceId: recoveredId } = await studioRequest<{ workspaceId: string }>('canvas', {
+      const currentDocument = await studio.load({ id });
+      const { workspaceId: recoveredId } = await studio.canvas({
         action: 'createDraft',
         projectId: id,
         operationId: crypto.randomUUID(),
@@ -712,7 +653,8 @@ export function useStudioDocument(
         title: translateText('features.studio.recoveredDraft'),
         reason: translateText('features.studio.recoveredDraftReason'),
       });
-      await studioRequest('canvas', {
+      if (!recoveredId) throw new Error('Studio draft creation did not return a workspace');
+      await studio.canvas({
         action: 'saveDraft',
         projectId: id,
         workspaceId: recoveredId,
@@ -757,17 +699,9 @@ export function useStudioDocument(
     undo: () => undoRedo(true),
     redo: () => undoRedo(false),
     cursor: (pageId: string, x: number, y: number, selection: string[] = []) => {
-      if (canvasEnabled) {
-        presenceCursor.current = { pageId, x, y };
-        presenceSelection.current = selection.slice(0, 100);
-        publishPresence.current();
-        return;
-      }
-      void channel.current?.send({
-        type: 'broadcast',
-        event: 'cursor',
-        payload: { userId: user.id, cursor: { pageId, x, y } },
-      });
+      presenceCursor.current = { pageId, x, y };
+      presenceSelection.current = selection.slice(0, 100);
+      publishPresence.current();
     },
   };
 }

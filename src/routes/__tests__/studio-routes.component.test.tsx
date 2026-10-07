@@ -18,9 +18,7 @@ vi.mock('@/features/create/hooks/useCreateStudioProjectForm', () => ({
 vi.mock('@/features/create/ui/CreateFormShell', () => ({
   CreateFormShell: ({ config }: any) => <p>{config.title}</p>,
 }));
-vi.mock('@/server/studio/read', () => ({ readStudioProject: io.read }));
 import { Route as createRoute } from '../_authed/create/studio-project';
-import { Route as readRoute } from '../api/studio/read/$id';
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -39,13 +37,4 @@ it('validates group identifiers and renders personal or group creation with the 
   io.groupId = groupId;
   rerender(<Page />);
   expect(io.form).toHaveBeenLastCalledWith(groupId);
-});
-it('passes the request and project identifier to the authorized Studio reader', async () => {
-  const request = new Request('https://example.test/api/studio/read/project');
-  const response = Response.json({ project: { id: 'project' } });
-  io.read.mockResolvedValue(response);
-  expect(await (readRoute as any).server.handlers.GET({ request, params: { id: 'project' } })).toBe(
-    response
-  );
-  expect(io.read).toHaveBeenCalledWith(request, 'project');
 });

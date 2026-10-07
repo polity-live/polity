@@ -13,6 +13,16 @@ function repositoryFile(...segments: string[]) {
 }
 
 describe('GitHub workflow contracts', () => {
+  it('requires complete per-file coverage for new Studio Zero code in CI', () => {
+    const ci = workflow('ci.yml');
+    const unit = ci.slice(ci.indexOf('  unit-tests:'), ci.indexOf('  component-tests:'));
+    const coverage = repositoryFile('vitest.studio-coverage.config.ts');
+    expect(unit).toContain('run: pnpm run studio:test:coverage');
+    expect(unit).toContain('path: coverage-studio/');
+    expect(coverage).toContain(
+      'perFile: true, statements: 100, branches: 100, functions: 100, lines: 100'
+    );
+  });
   it('uses one pinned pnpm setup and bounded registry retries', () => {
     const setup = repositoryFile('.github', 'actions', 'setup-project', 'action.yml');
     const workspace = repositoryFile('pnpm-workspace.yaml');

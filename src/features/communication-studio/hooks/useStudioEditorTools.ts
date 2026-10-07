@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import type { useStudioController } from './useStudioController';
-import type { StudioEditorRequest } from '../logic/editor-commands';
+
 import type { StudioElement } from '../logic/document';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) {
+  const studio = useStudioClient();
   const latest = useRef(c);
   latest.current = c;
   const clipboard = useRef<StudioElement[]>([]);
@@ -13,12 +14,18 @@ export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) 
     const clientId = sessionStorage.getItem('studio-editor-client') ?? crypto.randomUUID();
     sessionStorage.setItem('studio-editor-client', clientId);
     let disposed = false,
-      running = false;
+      running = false,
+      changed = false;
     const poll = async () => {
-      if (running || disposed || !navigator.onLine) return;
+      if (running) {
+        changed = true;
+        return;
+      }
+      if (disposed || !navigator.onLine) return;
+      changed = false;
       running = true;
       try {
-        const actions = await studioRequest<StudioEditorRequest[]>('editorActions', {
+        const actions = await studio.claimEditorActions({
           projectId,
           clientId,
         });
@@ -105,7 +112,7 @@ export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) 
                 case 'studio_copy_project':
                   await c.commit();
                   {
-                    const copy = await studioRequest<{ id: string }>('duplicate', {
+                    const copy = await studio.duplicate({
                       id: projectId,
                     });
                     result = { status: 'completed', projectId: copy.id };
@@ -113,7 +120,7 @@ export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) 
                   break;
                 case 'studio_save_template':
                   await c.commit();
-                  await studioRequest('template', { id: projectId, value: true });
+                  await studio.setTemplate({ id: projectId, value: true });
                   break;
                 case 'studio_open_panel':
                   window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: a.panel }));
@@ -128,19 +135,22 @@ export function useStudioEditorTools(c: ReturnType<typeof useStudioController>) 
             }
             sessionStorage.setItem(key, JSON.stringify(result));
           }
-          await studioRequest('editorResult', { projectId, clientId, id: action.id, result });
+          await studio.completeEditorAction({ projectId, clientId, id: action.id, result });
         }
       } catch {
         /* Poll again after reconnection. */
       } finally {
         running = false;
+        if (changed && !disposed) void poll();
       }
     };
-    const timer = setInterval(() => void poll(), 1000);
-    void poll();
+    const unsubscribe = studio.watchEditorActions({ projectId }, () => void poll());
+    const reconnect = () => void poll();
+    window.addEventListener('online', reconnect);
     return () => {
       disposed = true;
-      clearInterval(timer);
+      unsubscribe();
+      window.removeEventListener('online', reconnect);
     };
   }, [c.id, c.workspaceId]);
 }

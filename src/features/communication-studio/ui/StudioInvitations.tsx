@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '@/zero/queries';
+import { useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 
 interface StudioInvitation {
   id: string;
@@ -14,37 +16,34 @@ interface StudioInvitation {
 }
 
 export function StudioInvitations() {
+  const studio = useStudioClient();
   const { t } = useTranslation();
   const tr = (key: string) => t(`features.studio.${key}`);
-  const [invitations, setInvitations] = useState<StudioInvitation[]>([]);
+  const [rows, queryStatus] = useQuery(queries.studio.invitations());
+  const invitations: StudioInvitation[] = rows.map(row => ({
+    id: row.id,
+    project_id: row.project_id,
+    title: row.project?.title ?? '',
+    owner_id: row.project?.owner_id ?? '',
+    first_name: row.project?.owner?.first_name ?? null,
+    last_name: row.project?.owner?.last_name ?? null,
+    handle: row.project?.owner?.handle ?? null,
+  }));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    studioRequest<StudioInvitation[]>('myInvitations')
-      .then(rows => {
-        if (active) setInvitations(rows);
-      })
-      .catch(err => {
-        if (active) setError(err instanceof Error ? err.message : String(err));
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
   const respond = async (id: string, accept: boolean) => {
     setBusyId(id);
     setError('');
     try {
-      await studioRequest('respondInvitation', { invitationId: id, accept });
-      setInvitations(current => current.filter(invitation => invitation.id !== id));
+      await studio.respondInvitation({ invitationId: id, accept });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusyId(null);
     }
   };
-  if (!invitations.length && !error) return null;
+  const failure = error || (queryStatus.type === 'error' ? queryStatus.error.message : '');
+  if (!invitations.length && !failure) return null;
   return (
     <section className="space-y-3" aria-label={tr('pendingInvitations')}>
       <h2 className="text-xl font-semibold">{tr('pendingInvitations')}</h2>
@@ -80,9 +79,9 @@ export function StudioInvitations() {
           </div>
         </div>
       ))}
-      {error && (
+      {failure && (
         <p role="alert" className="text-destructive text-sm">
-          {error}
+          {failure}
         </p>
       )}
     </section>

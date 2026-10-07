@@ -1,3 +1,4 @@
+import { studioClientFixture } from '@/test/studio-client.fixture';
 /* @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -10,7 +11,9 @@ import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
 import { diffStudio } from '../../logic/operations';
 import type { StudioDocumentV3 } from '../../logic/document-v3';
 
-vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: { id: 'voter' } }) }));
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: { id: '00000000-0000-4000-a000-000000000009' } }),
+}));
 afterEach(cleanup);
 
 function procedureSession(overrides: Partial<CanvasSession> = {}): CanvasSession {
@@ -18,7 +21,7 @@ function procedureSession(overrides: Partial<CanvasSession> = {}): CanvasSession
     canEditProject: true,
     groupId: null,
     phase: 'edit',
-    generation: 'generation',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: true,
@@ -37,7 +40,7 @@ function procedureSession(overrides: Partial<CanvasSession> = {}): CanvasSession
   };
 }
 
-it.each(['group', null])(
+it.each(['00000000-0000-4000-a000-000000000004', null])(
   'uses the same mode and change-request controls for project group %s',
   async groupId => {
     const session = procedureSession({ groupId });
@@ -63,7 +66,7 @@ it.each([
   ['vote_internal', 'votingPhaseReadOnly'],
   ['edit', ''],
 ] as const)('explains the %s phase independently of admin rights', async (phase, reason) => {
-  const session = procedureSession({ groupId: 'group', phase });
+  const session = procedureSession({ groupId: '00000000-0000-4000-a000-000000000004', phase });
   const request = vi.fn(async () => session);
   render(<Harness request={request} canEdit={phase === 'edit'} />);
   await waitFor(() => expect(screen.getByTestId('read-only-reason').textContent).toBe(reason));
@@ -86,7 +89,15 @@ it('distinguishes missing project rights and locked proposal drafts from phase l
 it('keeps an authorized proposal draft editable during the suggestion phase', async () => {
   const session = procedureSession({
     phase: 'suggest_internal',
-    proposals: [{ ...proposal, id: 'draft', owner_id: 'voter', state: 'draft', electorate: null }],
+    proposals: [
+      {
+        ...proposal,
+        id: 'draft',
+        owner_id: '00000000-0000-4000-a000-000000000009',
+        state: 'draft',
+        electorate: null,
+      },
+    ],
   });
   const request = vi.fn(async (_type, input) =>
     input.action === 'session' ? session : { baseDocument: { nodes: [] } }
@@ -100,7 +111,15 @@ it('keeps an authorized proposal draft editable during the suggestion phase', as
 it('locks an ordinary draft immediately when the procedure enters voting', async () => {
   const session = procedureSession({
     phase: 'vote_internal',
-    proposals: [{ ...proposal, id: 'draft', owner_id: 'voter', state: 'draft', electorate: null }],
+    proposals: [
+      {
+        ...proposal,
+        id: 'draft',
+        owner_id: '00000000-0000-4000-a000-000000000009',
+        state: 'draft',
+        electorate: null,
+      },
+    ],
   });
   const request = vi.fn(async (_type, input) =>
     input.action === 'session' ? session : { baseDocument: { nodes: [] } }
@@ -117,7 +136,7 @@ it.each(['edit', 'suggest_internal', 'vote_internal'] as const)(
     const ai = {
       ...proposal,
       origin: 'ai' as const,
-      owner_id: 'voter',
+      owner_id: '00000000-0000-4000-a000-000000000009',
       state: 'draft' as const,
       electorate: null,
     };
@@ -142,16 +161,16 @@ it('preserves canonical comments, revision history and group adoption in the sha
   const session = procedureSession({
     comments: [
       {
-        id: 'comment',
-        author_id: 'voter',
+        id: '00000000-0000-4000-a000-000000000006',
+        author_id: '00000000-0000-4000-a000-000000000009',
         proposal_id: null,
         element_id: null,
         body: 'Canonical discussion',
         resolved: false,
       },
     ],
-    revisions: [{ id: 'history', revision: 0, created_at: 0 }],
-    adoptionGroups: [{ id: 'group', name: 'Destination' }],
+    revisions: [{ id: '00000000-0000-4000-a000-000000000005', revision: 0, created_at: 0 }],
+    adoptionGroups: [{ id: '00000000-0000-4000-a000-000000000004', name: 'Destination' }],
   });
   const request = vi.fn(async (type, input) =>
     type === 'load' ? { revision: 0 } : input.action === 'session' ? session : { ok: true }
@@ -168,7 +187,7 @@ it('preserves canonical comments, revision history and group adoption in the sha
       'canvas',
       expect.objectContaining({
         action: 'editComment',
-        commentId: 'comment',
+        commentId: '00000000-0000-4000-a000-000000000006',
         body: 'Revised discussion',
       })
     )
@@ -178,7 +197,11 @@ it('preserves canonical comments, revision history and group adoption in the sha
   await waitFor(() =>
     expect(request).toHaveBeenCalledWith(
       'canvas',
-      expect.objectContaining({ action: 'restore', historyId: 'history', revision: 0 })
+      expect.objectContaining({
+        action: 'restore',
+        historyId: '00000000-0000-4000-a000-000000000005',
+        revision: 0,
+      })
     )
   );
   expect(screen.getByText('In einen Gruppenbereich übernehmen')).toBeTruthy();
@@ -187,8 +210,17 @@ it('preserves canonical comments, revision history and group adoption in the sha
 it('shares a private draft with personal project participants through the shared proposal card', async () => {
   const session = procedureSession({
     phase: 'suggest_internal',
-    proposals: [{ ...proposal, owner_id: 'voter', state: 'draft', electorate: null }],
-    members: [{ id: 'reader', first_name: 'Invited', last_name: 'Reader' }],
+    proposals: [
+      {
+        ...proposal,
+        owner_id: '00000000-0000-4000-a000-000000000009',
+        state: 'draft',
+        electorate: null,
+      },
+    ],
+    members: [
+      { id: '00000000-0000-4000-a000-000000000020', first_name: 'Invited', last_name: 'Reader' },
+    ],
   });
   const request = vi.fn(async (_type, input) =>
     input.action === 'session'
@@ -197,18 +229,22 @@ it('shares a private draft with personal project participants through the shared
         ? { baseDocument: { nodes: [] } }
         : { ok: true }
   );
-  render(<Harness request={request} workspaceId="proposal" />);
+  render(<Harness request={request} workspaceId="00000000-0000-4000-a000-000000000003" />);
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Invited Reader' }));
   await waitFor(() =>
     expect(request).toHaveBeenCalledWith(
       'canvas',
-      expect.objectContaining({ action: 'share', workspaceId: 'proposal', userIds: ['reader'] })
+      expect.objectContaining({
+        action: 'share',
+        workspaceId: '00000000-0000-4000-a000-000000000003',
+        userIds: ['00000000-0000-4000-a000-000000000020'],
+      })
     )
   );
 });
 
 const proposal = {
-  id: 'proposal',
+  id: '00000000-0000-4000-a000-000000000003',
   title: 'New introduction',
   reason: 'Clearer language',
   owner_id: 'author',
@@ -220,7 +256,7 @@ const proposal = {
   application: 'pending' as const,
   resolves_id: null,
   deadline: null,
-  electorate: ['voter'],
+  electorate: ['00000000-0000-4000-a000-000000000009'],
   votes: [],
   changes: [
     { path: ['nodes', '#node-1', 'content'], before: { value: 'Old' }, after: { value: 'New' } },
@@ -243,11 +279,11 @@ function Harness({
   showTools?: boolean;
 }) {
   const procedure = useStudioProcedure({
-    projectId: 'project',
+    projectId: '00000000-0000-4000-a000-000000000002',
     workspaceId,
     chooseWorkspace,
     c: {
-      actions: { request },
+      actions: studioClientFixture(Object.assign(request, { request }) as never),
       commit: vi.fn().mockResolvedValue(0),
       selected: [],
       canEdit,
@@ -261,7 +297,9 @@ function Harness({
       <div>{procedure.canvasOverlay}</div>
       {showTools && <div>{procedure.tools}</div>}
       <span data-testid="read-only-reason">{procedure.readOnlyReason}</span>
-      <button onClick={() => procedure.selectProposal('proposal')}>Open marker</button>
+      <button onClick={() => procedure.selectProposal('00000000-0000-4000-a000-000000000003')}>
+        Open marker
+      </button>
       <span data-testid="marker-count">{procedure.markers.length}</span>
       <span data-testid="marker-tones">
         {procedure.markers.map(marker => `${marker.proposalId}:${marker.tone}`).join(',')}
@@ -289,8 +327,8 @@ it('puts the labeled mode button in the toolbar with only the three Studio modes
   const session = {
     canEditProject: true,
     phase: 'edit',
-    groupId: 'group',
-    generation: 'generation',
+    groupId: '00000000-0000-4000-a000-000000000004',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: true,
@@ -322,8 +360,8 @@ it('opens a canvas request, records a comment and casts a vote using the shared 
   const session = {
     canEditProject: true,
     phase: 'vote_internal',
-    groupId: 'group',
-    generation: 'generation',
+    groupId: '00000000-0000-4000-a000-000000000004',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: false,
@@ -365,7 +403,11 @@ it('opens a canvas request, records a comment and casts a vote using the shared 
   await waitFor(() =>
     expect(request).toHaveBeenCalledWith(
       'canvas',
-      expect.objectContaining({ action: 'vote', choice: 'accept', workspaceId: 'proposal' })
+      expect.objectContaining({
+        action: 'vote',
+        choice: 'accept',
+        workspaceId: '00000000-0000-4000-a000-000000000003',
+      })
     )
   );
 });
@@ -374,8 +416,8 @@ it('keeps a new suggestion private until its canvas draft is explicitly submitte
   const session = {
     canEditProject: true,
     phase: 'suggest_internal',
-    groupId: 'group',
-    generation: 'generation',
+    groupId: '00000000-0000-4000-a000-000000000004',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: false,
@@ -427,8 +469,8 @@ it('marks private draft additions immediately against its protected base documen
   const session = {
     canEditProject: true,
     phase: 'suggest_internal',
-    groupId: 'group',
-    generation: 'generation',
+    groupId: '00000000-0000-4000-a000-000000000004',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: false,
@@ -437,7 +479,15 @@ it('marks private draft additions immediately against its protected base documen
       vote: true,
       manage: false,
     },
-    proposals: [{ ...proposal, id: 'draft', owner_id: 'voter', state: 'draft', changes: null }],
+    proposals: [
+      {
+        ...proposal,
+        id: 'draft',
+        owner_id: '00000000-0000-4000-a000-000000000009',
+        state: 'draft',
+        changes: null,
+      },
+    ],
     comments: [],
     revisions: [],
     members: [],
@@ -481,8 +531,8 @@ it('keeps all visible proposal markers while switching the selected canvas previ
   const session = {
     canEditProject: true,
     phase: 'vote_internal',
-    groupId: 'group',
-    generation: 'generation',
+    groupId: '00000000-0000-4000-a000-000000000004',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: false,
@@ -492,7 +542,7 @@ it('keeps all visible proposal markers while switching the selected canvas previ
       manage: false,
     },
     proposals: [
-      { ...proposal, id: 'proposal', state: 'submitted', changes },
+      { ...proposal, id: '00000000-0000-4000-a000-000000000003', state: 'submitted', changes },
       { ...proposal, id: 'second', state: 'submitted', changes },
     ],
     comments: [],
@@ -510,7 +560,9 @@ it('keeps all visible proposal markers while switching the selected canvas previ
   );
   render(<Harness request={request} value={base} />);
   await waitFor(() =>
-    expect(screen.getByTestId('marker-tones').textContent).toBe('proposal:remove,second:remove')
+    expect(screen.getByTestId('marker-tones').textContent).toBe(
+      '00000000-0000-4000-a000-000000000003:remove,second:remove'
+    )
   );
   fireEvent.click(screen.getByRole('button', { name: 'Open marker' }));
   const difference = await screen.findByRole('button', { name: 'Differenz' });

@@ -2,7 +2,7 @@ import { useState, type RefObject } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useNavigate } from '@tanstack/react-router';
 import { queries } from '@/zero/queries';
-import { studioRequest } from '@/zero/communication-studio/useStudioApi';
+import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import type { CreateVisibility } from '@/features/create/logic/createVisibility';
@@ -28,6 +28,7 @@ export function StudioCloneDialog({
   beforeClone?: () => Promise<unknown>;
   restoreFocusRef?: RefObject<HTMLElement | null>;
 }) {
+  const studio = useStudioClient();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [groups] = useQuery(queries.studio.manageGroups());
@@ -40,7 +41,7 @@ export function StudioCloneDialog({
     setError('');
     try {
       await beforeClone?.();
-      const result = await studioRequest<{ id: string }>('duplicate', {
+      const result = await studio.duplicate({
         id: sourceId,
         groupId,
         visibility,

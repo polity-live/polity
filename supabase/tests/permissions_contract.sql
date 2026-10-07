@@ -64,7 +64,7 @@ SELECT set_eq(
     WHERE has_function_privilege('authenticated', oid, 'EXECUTE')
   $sql$,
   $sql$
-    VALUES ('current_user_has_password()'::TEXT), ('studio_realtime_access(text)'::TEXT), ('canvas_presence_access(text)'::TEXT)
+    VALUES ('current_user_has_password()'::TEXT), ('studio_presence_channel_access(text)'::TEXT)
   $sql$,
   'authenticated clients can execute only password inspection and authorized Studio Presence'
 );
@@ -89,11 +89,14 @@ SELECT set_eq(
       ('studio_group_access(uuid,uuid,boolean)'::TEXT),
       ('studio_collaboration_access(uuid,uuid)'::TEXT),
       ('project_content_revision()'::TEXT),
+      ('studio_editor_action_pending()'::TEXT),
+      ('studio_membership_role_group()'::TEXT),
+      ('studio_membership_group_changed()'::TEXT),
       ('canvas_record_revision()'::TEXT),
       ('canvas_manage(uuid,uuid)'::TEXT),
       ('canvas_proposal_access(uuid,uuid)'::TEXT),
       ('canvas_capability(uuid,uuid,text)'::TEXT),
-      ('studio_realtime_access(text)'::TEXT)
+      ('studio_presence_channel_access(text)'::TEXT)
   $sql$,
   'the service role can execute exactly the server RPC allowlist'
 );
@@ -125,8 +128,8 @@ SELECT is(
         'TRIGGER'
       )
   ),
-  1204,
-  'the service role has all seven privileges on all 172 tables'
+  1211,
+  'the service role has all seven privileges on all 173 tables'
 );
 
 SELECT is(

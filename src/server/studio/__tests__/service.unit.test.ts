@@ -51,17 +51,12 @@ vi.mock('../ai-sources', () => ({
 }));
 vi.mock('../elements', () => ({ synchronizeProjectElementInstances: io.synchronize }));
 import {
-  assetUrls,
   beginUpload,
   createProject,
   createProjectFromSelection,
   resolveStudioTheme,
-  loadProject,
-  downloadExport,
-  exportStatus,
   duplicateProject,
   finishUpload,
-  queueExport,
   validateAssets,
   validateStudioStatementRefs,
 } from '../service';
@@ -363,34 +358,7 @@ describe('Studio template selection and authoritative project loading', () => {
     expect(writes('insert into studio_project')).toHaveLength(0);
     expect(io.remove).toHaveBeenCalledTimes(1);
   });
-  it('loads canonical document revision and current server editing capabilities', async () => {
-    expect(await loadProject('reader', 'project')).toMatchObject({
-      id: 'project',
-      document: source.document,
-      revision: 7,
-      canEdit: true,
-      generation: 'live',
-    });
-    expect(io.access).toHaveBeenCalledWith('reader', 'project', true);
-    expect(io.synchronize).toHaveBeenCalledWith('reader', 'project');
-    io.synchronize.mockResolvedValueOnce({
-      document: { ...source.document, title: 'Synchronized' },
-      revision: 8,
-    });
-    expect(await loadProject('reader', 'project')).toMatchObject({
-      document: { title: 'Synchronized' },
-      revision: 8,
-    });
-    loaded = null;
-    await expect(loadProject('reader', 'gone')).rejects.toThrow('Studio project not found');
-  });
-  it('loads no document after permission revocation and rejects malformed canonical state', async () => {
-    io.access.mockRejectedValueOnce(new Error('revoked'));
-    await expect(loadProject('reader', 'project')).rejects.toThrow('revoked');
-    expect(io.synchronize).not.toHaveBeenCalled();
-    loaded.document = { ...loaded.document, schemaVersion: 1 };
-    await expect(loadProject('reader', 'project')).rejects.toThrow();
-  });
+
   it('validates chart source assets and ignores charts without a source file', async () => {
     const { document, id, missing } = withMediaAndCharts();
     await expect(validateAssets('project', document)).rejects.toThrow('A media file is missing');
@@ -464,13 +432,7 @@ describe('Studio shared persistence and media authority', () => {
     await validateAssets('project', value);
     expect(writes('select id from studio_asset').at(-1)![1]).toBe('project');
   });
-  it('queues exports using a confirmed content revision', async () => {
-    expect(await queueExport('owner', 'project', 'pptx', ['page'], 3)).toEqual({
-      id: 'export',
-      revision: 3,
-    });
-    expect(io.export).toHaveBeenCalledWith('owner', 'project', 'pptx', ['page'], 3);
-  });
+
   it('reserves uploads under current rights and quotas before issuing a signed upload token', async () => {
     const result = await beginUpload('editor', 'project', 'Photo.png', 'image/png', 16);
     expect(result).toMatchObject({ path: `project/assets/${result.id}`, token: 'upload-token' });
@@ -564,41 +526,7 @@ describe('Studio shared persistence and media authority', () => {
     asset = null;
     await expect(finishUpload('editor', 'missing')).rejects.toThrow('Upload not found');
   });
-  it('serves authorized media and export proxy URLs only after access checks', async () => {
-    available = [asset];
-    expect(await assetUrls('reader', 'project')).toEqual([
-      { id: 'asset', name: 'Photo', mime: 'image/png', url: '/api/studio/media/asset' },
-    ]);
-    expect(io.sign).not.toHaveBeenCalled();
-    expect(await downloadExport('reader', 'export')).toEqual({
-      url: '/api/studio/exports/export',
-      name: 'Result.png',
-    });
-    expect(io.sign).not.toHaveBeenCalled();
-    job.status = 'running';
-    await expect(downloadExport('reader', 'export')).rejects.toThrow('Export is not ready');
-    job.status = 'completed';
-    job.storage_path = null;
-    await expect(downloadExport('reader', 'export')).rejects.toThrow('Export is not ready');
-    job = null;
-    await expect(downloadExport('reader', 'missing')).rejects.toThrow('Export not found');
-  });
-  it('reports export progress only to a user with current project access', async () => {
-    Object.assign(job, { format: 'png', status: 'running', progress: 45, error: null });
-    expect(await exportStatus('reader', 'export')).toEqual({
-      id: 'export',
-      format: 'png',
-      status: 'running',
-      progress: 45,
-      error: null,
-      fileName: 'Result.png',
-    });
-    expect(io.access).toHaveBeenCalledWith('reader', 'project');
-    io.access.mockRejectedValueOnce(new Error('No access'));
-    await expect(exportStatus('reader', 'export')).rejects.toThrow('No access');
-    job = null;
-    await expect(exportStatus('reader', 'missing')).rejects.toThrow('Export not found');
-  });
+
   it('copies private assets before exposing a new project and remaps media references', async () => {
     const image = crypto.randomUUID();
     available = [{ ...asset, id: image }];

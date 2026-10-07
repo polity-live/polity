@@ -1,10 +1,21 @@
+vi.mock('@rocicorp/zero/react', async () => {
+  const { useStudioQueryFixture } = await import('@/test/studio-client.fixture');
+  return { useQuery: (q: any) => useStudioQueryFixture(q, io) };
+});
+vi.mock('@/zero/queries', async () => {
+  const { studioQueryFixture } = await import('@/test/studio-client.fixture');
+  return { queries: { studio: studioQueryFixture } };
+});
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const io = vi.hoisted(() => ({ request: vi.fn(), users: [] as any[] | undefined, loading: false }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('@/zero/users/useUserState', () => ({
   useUserState: () => ({ allUsers: io.users, isLoading: io.loading }),
 }));
@@ -300,7 +311,7 @@ describe('Studio collaborator dialog', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'invite' }));
     expect(await screen.findByRole('alert')).toHaveProperty(
       'textContent',
-      'Error: Authentication required'
+      'Authentication required'
     );
     expect(screen.getByRole('button', { name: 'invite (0)' })).toHaveProperty('disabled', true);
   });

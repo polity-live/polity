@@ -136,19 +136,18 @@ it('renders and activates the procedure mode button inside the actual editor too
   expect(switchMode).toHaveBeenCalledOnce();
 });
 
-it('keeps a queued export visible and reports a rejected status request', async () => {
+it('keeps a queued export visible and reports a failed Zero subscription', async () => {
   useCanonicalDocument();
   io.request.mockImplementation(async (op: string) => {
     if (op === 'export') return { id: 'unavailable-status' };
-    if (op === 'exportStatus') throw new Error('Status endpoint unavailable');
     return [];
   });
   await show();
   act(() => openStudioPanel('exports'));
   fireEvent.click(await screen.findByRole('button', { name: /^export$/i }));
-  await waitFor(() =>
-    expect(io.request).toHaveBeenCalledWith('exportStatus', { id: 'unavailable-status' })
-  );
+  await waitFor(() => expect(screen.getByText(/PNG · queued · 0%/)).toBeTruthy());
+  io.exportResult = { type: 'error', error: { message: 'Subscription unavailable' } };
+  await act(async () => notifyAll());
   expect(await screen.findByText('exportStatusUnavailable')).toBeTruthy();
   expect(screen.getByText(/PNG · queued · 0%/)).toBeTruthy();
 });

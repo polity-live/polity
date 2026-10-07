@@ -16,7 +16,7 @@ vi.mock('platejs/react', () => ({
     <Comp {...props}>{children}</Comp>
   ),
   PlateLeaf: ({ children, as: Comp = 'span', ...props }: any) => <Comp {...props}>{children}</Comp>,
-  usePlateEditor: () => ({ id: 'ai-editor' }),
+  usePlateViewEditor: () => ({ id: 'ai-editor' }),
   useEditorRef: () => ({ id: 'editor' }),
   useEditorReadOnly: () => false,
   useEditorPlugin: () => ({ setOption: mocks.setOption }),

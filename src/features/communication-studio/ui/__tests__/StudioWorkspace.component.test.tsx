@@ -1098,17 +1098,7 @@ describe('Studio toolbar workflows', () => {
           confirm = resolve;
         })
     );
-    let statusCalls = 0;
-    io.request.mockImplementation(async (op: string) => {
-      if (op === 'export') return { id: 'new-job' };
-      if (op === 'exportStatus') {
-        statusCalls++;
-        return statusCalls === 1
-          ? { id: 'new-job', format: 'png', status: 'queued', progress: 0, error: null }
-          : { id: 'new-job', format: 'png', status: 'running', progress: 45, error: null };
-      }
-      return [];
-    });
+    io.request.mockImplementation(async (op: string) => (op === 'export' ? { id: 'new-job' } : []));
     await show();
     panel('exports');
     click('export');
@@ -1117,9 +1107,10 @@ describe('Studio toolbar workflows', () => {
     ).toBe(true);
     await act(async () => confirm(7));
     await waitFor(() => expect(screen.getByRole('progressbar')).toBeTruthy());
-    await waitFor(
-      () => expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('45'),
-      { timeout: 4000 }
+    io.exports = [{ id: 'new-job', format: 'png', status: 'running', progress: 45, error: null }];
+    await act(async () => io.editor.transact(() => undefined));
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('45')
     );
     expect(screen.getByText(/PNG · running · 45%/)).toBeTruthy();
   });
@@ -1127,22 +1118,21 @@ describe('Studio toolbar workflows', () => {
     const clicked = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(() => undefined);
-    io.request.mockImplementation(async (op: string) => {
-      if (op === 'export') return { id: 'new-job' };
-      if (op === 'exportStatus')
-        return {
-          id: 'new-job',
-          format: 'png',
-          status: 'completed',
-          progress: 100,
-          error: null,
-          fileName: 'Selected-frames.zip',
-        };
-      return [];
-    });
+    io.request.mockImplementation(async (op: string) => (op === 'export' ? { id: 'new-job' } : []));
     await show();
     panel('exports');
     click('export');
+    await waitFor(() => expect(io.request).toHaveBeenCalledWith('export', expect.anything()));
+    io.exports = [
+      {
+        id: 'new-job',
+        format: 'png',
+        status: 'completed',
+        progress: 100,
+        file_name: 'Selected-frames.zip',
+      },
+    ];
+    await act(async () => io.editor.transact(() => undefined));
     await waitFor(() => expect(clicked).toHaveBeenCalledTimes(1));
     expect((clicked.mock.instances[0] as HTMLAnchorElement).getAttribute('href')).toBe(
       '/api/studio/exports/new-job'
@@ -1547,11 +1537,10 @@ it('consumes a successful route focus without requiring a pending bridge request
   await waitFor(() => expect(handled).toHaveBeenCalledOnce());
   expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'focus', nodeId: 'available' });
 });
-it.each(['disabled', 'failed', 'empty', 'legacy'] as const)(
+it.each(['failed', 'empty', 'legacy'] as const)(
   'consumes route focus safely when the canvas is %s',
   async state => {
     const handled = vi.fn();
-    if (state === 'disabled') io.editor.canvasEnabled = false;
     if (state === 'failed') {
       Object.defineProperty(io.editor, 'value', { get: () => null });
       io.editor.error = 'Project load failed';
@@ -1567,8 +1556,6 @@ it.each(['disabled', 'failed', 'empty', 'legacy'] as const)(
     });
     await waitFor(() => expect(handled).toHaveBeenCalledOnce());
     expect(io.canvasExecute).not.toHaveBeenCalledWith({ type: 'focus', nodeId: 'missing' });
-    if (state === 'disabled')
-      expect(screen.getByRole('alert').textContent).toBe('canvasPreviewRequired');
     if (state === 'failed')
       expect(screen.getByRole('alert').textContent).toBe('Project load failed');
   }

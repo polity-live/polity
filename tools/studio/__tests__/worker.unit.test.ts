@@ -83,7 +83,9 @@ beforeEach(() => {
   io.remove.mockResolvedValue({ error: null });
   io.sql.mockImplementation(async (parts: TemplateStringsArray) => {
     const sql = parts.join('?');
-    if (sql.startsWith('delete from studio_asset')) return abandoned;
+    if (sql.startsWith('delete from studio_asset')) return [];
+    if (sql.includes('select name from storage.objects'))
+      return abandoned.map(row => ({ name: row.storage_path }));
     if (sql.startsWith('select * from studio_export')) return nextCount++ === 0 && job ? [job] : [];
     if (sql.startsWith('select document'))
       return [{ document: legacyDocumentToV3(createDocument('single', 'Snapshot')) }];

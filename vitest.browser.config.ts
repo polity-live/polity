@@ -4,7 +4,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   optimizeDeps: {
+    entries: ['./src/**/*.browser-component.test.tsx'],
     include: [
+      '@platejs/ai/react',
+      '@platejs/selection/react',
       '@radix-ui/react-toggle-group',
       '@radix-ui/react-toggle',
       '@xyflow/react',

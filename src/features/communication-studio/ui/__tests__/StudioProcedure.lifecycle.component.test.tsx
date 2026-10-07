@@ -1,3 +1,4 @@
+import { studioClientFixture } from '@/test/studio-client.fixture';
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -9,7 +10,7 @@ import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
 import { diffStudio } from '../../logic/operations';
 
 const io = vi.hoisted(() => ({
-  user: { id: 'actor' } as { id: string } | null,
+  user: { id: '00000000-0000-4000-a000-000000000008' } as { id: string } | null,
   session: null as any,
   controller: null as any,
   procedure: null as any,
@@ -29,10 +30,10 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 function proposal(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'proposal',
+    id: '00000000-0000-4000-a000-000000000003',
     title: 'Proposed introduction',
     reason: 'Clearer wording',
-    owner_id: 'actor',
+    owner_id: '00000000-0000-4000-a000-000000000008',
     shared_ids: [],
     revision: 4,
     base_revision: 1,
@@ -51,14 +52,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   document.documentElement.lang = 'en';
   window.history.replaceState(null, '', '/');
-  io.user = { id: 'actor' };
+  io.user = { id: '00000000-0000-4000-a000-000000000008' };
   io.base = createStudioTemplateDocumentV5('single', 'Base', defaultBrand);
   io.proposed = structuredClone(io.base);
   io.session = {
     canEditProject: true,
-    groupId: 'group',
+    groupId: '00000000-0000-4000-a000-000000000004',
     phase: 'edit',
-    generation: 'generation',
+    generation: '00000000-0000-4000-a000-000000000001',
     capabilities: {
       read: true,
       edit: true,
@@ -90,7 +91,7 @@ beforeEach(() => {
     return io.response;
   });
   io.controller = {
-    actions: { request: io.request },
+    actions: studioClientFixture(io),
     commit: io.commit,
     selected: [],
     canEdit: true,
@@ -109,7 +110,7 @@ afterEach(() => {
 });
 function Harness({ workspaceId }: { workspaceId?: string }) {
   const p = useStudioProcedure({
-    projectId: 'project',
+    projectId: '00000000-0000-4000-a000-000000000002',
     workspaceId,
     chooseWorkspace: io.choose,
     c: io.controller,
@@ -120,7 +121,9 @@ function Harness({ workspaceId }: { workspaceId?: string }) {
       <Toolbar>{p.modeButton}</Toolbar>
       {p.tools}
       {p.canvasOverlay}
-      <button onClick={() => p.selectProposal('proposal')}>Open proposal</button>
+      <button onClick={() => p.selectProposal('00000000-0000-4000-a000-000000000003')}>
+        Open proposal
+      </button>
       <output data-testid="preview">{p.previewDocument?.title ?? 'canonical'}</output>
     </>
   );
@@ -129,8 +132,8 @@ const command = (action: string, input: Record<string, unknown>) =>
   expect(io.request).toHaveBeenCalledWith(
     'canvas',
     expect.objectContaining({
-      projectId: 'project',
-      generation: 'generation',
+      projectId: '00000000-0000-4000-a000-000000000002',
+      generation: '00000000-0000-4000-a000-000000000001',
       operationId: expect.any(String),
       action,
       ...input,
@@ -167,7 +170,9 @@ it.each(['acceptPrivate', 'rejectPrivate'])(
     fireEvent.click(
       await screen.findByRole('button', { name: action === 'acceptPrivate' ? 'Accept' : 'Reject' })
     );
-    await waitFor(() => command(action, { workspaceId: 'proposal', revision: 4 }));
+    await waitFor(() =>
+      command(action, { workspaceId: '00000000-0000-4000-a000-000000000003', revision: 4 })
+    );
     expect(io.commit).not.toHaveBeenCalled();
     expect(screen.getByText(/Free design/)).toBeTruthy();
     expect(screen.getByText(/Warning/)).toBeTruthy();
@@ -179,11 +184,11 @@ it.each(['submit', 'withdraw'])(
   async action => {
     io.session.phase = 'suggest_internal';
     io.session.proposals = [proposal()];
-    render(<Harness workspaceId="proposal" />);
+    render(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
     fireEvent.click(
       await screen.findByRole('button', { name: action === 'submit' ? 'Submit' : 'Withdraw' })
     );
-    await waitFor(() => command(action, { workspaceId: 'proposal' }));
+    await waitFor(() => command(action, { workspaceId: '00000000-0000-4000-a000-000000000003' }));
     if (action === 'submit') await waitFor(() => expect(io.choose).toHaveBeenCalledWith());
     else
       await waitFor(() =>
@@ -193,12 +198,17 @@ it.each(['submit', 'withdraw'])(
 );
 
 it('opens an editable shared draft and returns to the canonical workspace only after committing', async () => {
-  io.session.proposals = [proposal({ owner_id: 'other', shared_ids: ['actor'] })];
+  io.session.proposals = [
+    proposal({
+      owner_id: '00000000-0000-4000-a000-000000000012',
+      shared_ids: ['00000000-0000-4000-a000-000000000008'],
+    }),
+  ];
   const view = render(<Harness />);
   fireEvent.click(screen.getByRole('button', { name: 'Open proposal' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Edit draft' }));
-  expect(io.choose).toHaveBeenCalledWith('proposal');
-  view.rerender(<Harness workspaceId="proposal" />);
+  expect(io.choose).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000003');
+  view.rerender(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
   fireEvent.click(await screen.findByRole('button', { name: 'Back to project' }));
   await waitFor(() => expect(io.commit).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(io.choose).toHaveBeenCalledWith());
@@ -212,10 +222,10 @@ it.each(['finalize', 'reapply', 'resolveDraft'])(
       proposal({
         state: 'voting',
         application: 'conflict',
-        electorate: ['actor'],
+        electorate: ['00000000-0000-4000-a000-000000000008'],
         votes: [
-          { user_id: 'actor', choice: 'accept' },
-          { user_id: 'other', choice: 'reject' },
+          { user_id: '00000000-0000-4000-a000-000000000008', choice: 'accept' },
+          { user_id: '00000000-0000-4000-a000-000000000012', choice: 'reject' },
           { user_id: 'third', choice: 'abstain' },
         ],
       }),
@@ -232,7 +242,7 @@ it.each(['finalize', 'reapply', 'resolveDraft'])(
     fireEvent.click(await screen.findByRole('button', { name: label }));
     await waitFor(() =>
       command(action, {
-        workspaceId: 'proposal',
+        workspaceId: '00000000-0000-4000-a000-000000000003',
         ...(action === 'resolveDraft'
           ? { revision: 11, title: 'Resolution: Proposed introduction' }
           : {}),
@@ -248,12 +258,20 @@ it.each(['accept', 'reject', 'abstain'])(
   'records the eligible voter choice %s and preserves the visible voting state',
   async choice => {
     io.session.phase = 'vote_internal';
-    io.session.proposals = [proposal({ state: 'voting', electorate: ['actor'], votes: [] })];
+    io.session.proposals = [
+      proposal({
+        state: 'voting',
+        electorate: ['00000000-0000-4000-a000-000000000008'],
+        votes: [],
+      }),
+    ];
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Open proposal' }));
     const label = choice === 'accept' ? 'Yes' : choice === 'reject' ? 'No' : 'Abstain';
     fireEvent.click(await screen.findByRole('button', { name: label }));
-    await waitFor(() => command('vote', { workspaceId: 'proposal', choice }));
+    await waitFor(() =>
+      command('vote', { workspaceId: '00000000-0000-4000-a000-000000000003', choice })
+    );
   }
 );
 
@@ -261,19 +279,32 @@ it.each([true, false])(
   'shares and unshares the private draft with an explicit user identity (initially shared=%s)',
   async shared => {
     io.session.phase = 'suggest_internal';
-    io.session.proposals = [proposal({ shared_ids: shared ? ['reader'] : [] })];
-    io.session.members = [{ id: 'actor' }, { id: 'reader' }];
-    render(<Harness workspaceId="proposal" />);
-    fireEvent.click(await screen.findByRole('checkbox', { name: 'reader' }));
-    await waitFor(() =>
-      command('share', { workspaceId: 'proposal', userIds: shared ? [] : ['reader'], revision: 7 })
+    io.session.proposals = [
+      proposal({ shared_ids: shared ? ['00000000-0000-4000-a000-000000000020'] : [] }),
+    ];
+    io.session.members = [
+      { id: '00000000-0000-4000-a000-000000000008' },
+      { id: '00000000-0000-4000-a000-000000000020' },
+    ];
+    render(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
+    fireEvent.click(
+      await screen.findByRole('checkbox', { name: '00000000-0000-4000-a000-000000000020' })
     );
-    expect(screen.queryByRole('checkbox', { name: 'actor' })).toBeNull();
+    await waitFor(() =>
+      command('share', {
+        workspaceId: '00000000-0000-4000-a000-000000000003',
+        userIds: shared ? [] : ['00000000-0000-4000-a000-000000000020'],
+        revision: 7,
+      })
+    );
+    expect(
+      screen.queryByRole('checkbox', { name: '00000000-0000-4000-a000-000000000008' })
+    ).toBeNull();
   }
 );
 
 it('selects a linked proposal from the URL, compares changed rich text and closes its details', async () => {
-  window.history.replaceState(null, '', '/?proposalId=proposal');
+  window.history.replaceState(null, '', '/?proposalId=00000000-0000-4000-a000-000000000003');
   const text = io.proposed.nodes.find((node: any) => node.type === 'richText');
   text.content = [{ type: 'p', children: [{ text: 'New introduction' }] }];
   io.session.proposals = [
@@ -361,8 +392,8 @@ it.each(['success', 'canonical', 'missing-session', 'download-error'])(
     } else if (mode === 'canonical') {
       await waitFor(() =>
         expect(io.request).toHaveBeenCalledWith('assets', {
-          id: 'project',
-          workspaceId: 'proposal',
+          id: '00000000-0000-4000-a000-000000000002',
+          workspaceId: '00000000-0000-4000-a000-000000000003',
         })
       );
       expect(io.fetch).not.toHaveBeenCalled();
@@ -429,7 +460,7 @@ it.each(['resolve', 'reject'])(
   }
 );
 
-it('reports an initial session failure and refreshes the recovered project on the next poll', async () => {
+it('reports an initial session failure and refreshes the recovered project on reconnect', async () => {
   vi.useFakeTimers();
   io.request.mockRejectedValueOnce(new Error('Session unavailable'));
   render(<Harness />);
@@ -438,7 +469,8 @@ it('reports an initial session failure and refreshes the recovered project on th
   });
   expect(screen.getByRole('alert').textContent).toContain('Session unavailable');
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(4000);
+    fireEvent(window, new Event('online'));
+    await Promise.resolve();
   });
   expect(screen.getByRole('button', { name: 'Collaborative Editing' })).toBeTruthy();
   cleanup();
@@ -460,7 +492,9 @@ it.each([null, [], {}])(
       input.action === 'session' ? Promise.resolve(invalid) : request(operation, input)
     );
     fireEvent.click(accept);
-    await waitFor(() => command('acceptPrivate', { workspaceId: 'proposal' }));
+    await waitFor(() =>
+      command('acceptPrivate', { workspaceId: '00000000-0000-4000-a000-000000000003' })
+    );
     await waitFor(() => expect((accept as HTMLButtonElement).disabled).toBe(false));
     expect(screen.getByRole('region', { name: 'Change request' })).toBeTruthy();
   }
@@ -481,7 +515,7 @@ it.each(['live-error', 'late-error', 'no-base'])(
             })
         : request(operation, input)
     );
-    const view = render(<Harness workspaceId="proposal" />);
+    const view = render(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
     await screen.findByRole('button', { name: 'Back to project' });
     if (mode === 'no-base') expect(screen.queryByRole('button', { name: 'Original' })).toBeNull();
     else {
@@ -575,7 +609,9 @@ it('renders the initial procedure without document globals on the server', () =>
 it('denies anonymous voting and editing, falls back from view mode, and respects the controller busy state', async () => {
   io.user = null;
   io.session.phase = 'vote_internal';
-  io.session.proposals = [proposal({ owner_id: 'other', state: 'voting', electorate: [] })];
+  io.session.proposals = [
+    proposal({ owner_id: '00000000-0000-4000-a000-000000000012', state: 'voting', electorate: [] }),
+  ];
   render(<Harness />);
   fireEvent.click(screen.getByRole('button', { name: 'Open proposal' }));
   await screen.findByRole('region', { name: 'Change request' });
@@ -609,16 +645,20 @@ it('reports a rejected decision while preserving the selected proposal for retry
 it('navigates to the adopted group only after the server acknowledges the committed revision', async () => {
   const assign = vi.fn();
   vi.stubGlobal('location', { assign });
-  io.session.adoptionGroups = [{ id: 'destination', name: 'Destination' }];
+  io.session.adoptionGroups = [{ id: '00000000-0000-4000-a000-000000000021', name: 'Destination' }];
   render(<Harness />);
   fireEvent.click(await screen.findByText('Move to a group workspace'));
   fireEvent.change(screen.getByRole('combobox', { name: 'Destination group' }), {
-    target: { value: 'destination' },
+    target: { value: '00000000-0000-4000-a000-000000000021' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Share project with this group' }));
-  await waitFor(() => command('adopt', { groupId: 'destination', revision: 7 }));
   await waitFor(() =>
-    expect(assign).toHaveBeenCalledExactlyOnceWith('/group/destination/studio/project')
+    command('adopt', { groupId: '00000000-0000-4000-a000-000000000021', revision: 7 })
+  );
+  await waitFor(() =>
+    expect(assign).toHaveBeenCalledExactlyOnceWith(
+      '/group/00000000-0000-4000-a000-000000000021/studio/00000000-0000-4000-a000-000000000002'
+    )
   );
 });
 
@@ -698,7 +738,7 @@ it.each(['success', 'error', 'unauthorized'])(
           reject = fail;
         })
     );
-    render(<Harness workspaceId="proposal" />);
+    render(<Harness workspaceId="00000000-0000-4000-a000-000000000003" />);
     const back = await screen.findByRole('button', { name: 'Back to project' });
     fireEvent.click(back);
     expect((back as HTMLButtonElement).disabled).toBe(true);

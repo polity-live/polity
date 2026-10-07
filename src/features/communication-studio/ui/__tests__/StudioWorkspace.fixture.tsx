@@ -17,6 +17,7 @@ const io = vi.hoisted(() => ({
   project: null as any,
   exports: [] as any[],
   loading: false,
+  exportResult: { type: 'complete' } as any,
   projectChat: vi.fn(),
   procedureReason: undefined as string | null | undefined,
   procedureEditingAllowed: true,
@@ -58,12 +59,13 @@ vi.mock('@/zero/communication-studio/useStudioState', () => ({
     project: io.project,
     exports: io.exports,
     isLoading: io.loading,
+    exportResult: io.exportResult,
   }),
 }));
-vi.mock('@/zero/communication-studio/useStudioApi', () => ({
-  useStudioApi: () => io,
-  studioRequest: (...args: unknown[]) => io.request(...args),
-}));
+vi.mock('@/zero/communication-studio/useStudioClient', async () => {
+  const { studioClientFixture } = await import('@/test/studio-client.fixture');
+  return { useStudioClient: () => studioClientFixture(io) };
+});
 vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
   CollaborationStatus: () => <span>Shared connection status</span>,
 }));
@@ -360,6 +362,7 @@ beforeEach(() => {
   io.projects = [];
   io.project = null;
   io.exports = [];
+  io.exportResult = { type: 'complete' };
   io.loading = false;
   io.canvasProps = null;
   io.request.mockImplementation(async (op: string) => {

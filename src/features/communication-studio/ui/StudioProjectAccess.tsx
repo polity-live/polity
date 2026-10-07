@@ -1,3 +1,6 @@
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '@/zero/queries';
+import { studioAssetUrls, studioCapabilities } from '@/zero/communication-studio/projections';
 import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react';
 import type { StudioCanvasHandle } from './KonvaStudioCanvas';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -47,7 +50,28 @@ export function StudioProjectAccess({
 }) {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [project, projectStatus] = useQuery(queries.studio.project({ id: projectId }));
+  const [canonical, documentStatus] = useQuery(queries.studio.document({ id: projectId }));
+  const [assetRows, assetStatus] = useQuery(queries.studio.assets({ projectId }));
+  const [internal] = useQuery(user ? queries.studio.sessionProject({ projectId }) : undefined);
+  const snapshot = useMemo<Snapshot | null>(() => {
+    if (!project || !canonical || project.group_id !== groupId) return null;
+    const canEdit = Boolean(internal && studioCapabilities(internal, user?.id ?? '', 'edit').edit);
+    return {
+      project: {
+        id: project.id,
+        title: project.title,
+        groupId: project.group_id,
+        ownerId: project.owner_id,
+        visibility: project.visibility as CreateVisibility,
+        canEdit,
+        canManageVisibility:
+          canEdit && (project.group_id !== null || project.owner_id === user?.id),
+      },
+      document: canonical.document,
+      assets: studioAssetUrls(assetRows),
+    };
+  }, [project, canonical, internal, assetRows, groupId, user?.id]);
   const [error, setError] = useState('');
   const [assets, setAssets] = useState<StudioAsset[]>([]);
   const [activeFrameId, setActiveFrameId] = useState('');
@@ -57,28 +81,19 @@ export function StudioProjectAccess({
   const [readerSelection, setReaderSelection] = useState<string[]>([]);
   const [readerFocused, setReaderFocused] = useState(false);
   const readerAttempt = useRef<string | undefined>(undefined);
+  const queryFailure = [projectStatus, documentStatus, assetStatus].find(
+    state => state.type === 'error'
+  );
+  const queryError = queryFailure?.type === 'error' ? queryFailure.error.message : '';
 
   useEffect(() => {
-    let cancelled = false;
-    setSnapshot(null);
-    setError('');
-    void (async () => {
-      const { data } = await createClient().auth.getSession();
-      const response = await fetch(`/api/studio/read/${encodeURIComponent(projectId)}`, {
-        headers: data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {},
-      });
-      if (!response.ok) throw new Error(t('features.studio.projectUnavailable'));
-      const next = (await response.json()) as Snapshot;
-      if (next.project.groupId !== groupId)
-        throw new Error(t('features.studio.projectUnavailable'));
-      if (!cancelled) setSnapshot(next);
-    })().catch(cause => {
-      if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, groupId, user?.id, t]);
+    setError(
+      queryError ||
+        (projectStatus.type === 'complete' && documentStatus.type === 'complete' && !snapshot
+          ? t('features.studio.projectUnavailable')
+          : '')
+    );
+  }, [projectStatus.type, documentStatus.type, queryError, snapshot, t]);
 
   const document = useMemo<StudioDocumentV3 | null>(() => {
     if (!snapshot || snapshot.project.canEdit) return null;

@@ -19,7 +19,6 @@ vi.mock('../../hooks/useStudioController', () => ({
     isLoading: io.isLoading,
     failure: io.failure,
     error: '',
-    canvasEnabled: true,
     identity: { id: 'author' },
   }),
 }));

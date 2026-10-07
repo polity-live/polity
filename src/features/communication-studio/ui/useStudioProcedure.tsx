@@ -1,3 +1,4 @@
+import { canvasCommandSchema } from '@/zero/communication-studio/commands';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { createClient } from '@/lib/supabase/client';
@@ -58,44 +59,27 @@ export function useStudioProcedure({
   const [error, setError] = useState('');
   const de = typeof document === 'undefined' || document.documentElement.lang !== 'en';
   const tr = (german: string, english: string) => (de ? german : english);
-  const request = c.actions.request;
+  const studio = c.actions;
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('proposalId');
     if (id) setSelectedId(id);
   }, [projectId]);
   const refresh = async () => {
-    const next = await request<CanvasSession>('canvas', { projectId, action: 'session' });
+    const next = await studio.session({ projectId });
     if (next && !Array.isArray(next) && Array.isArray(next.proposals)) setSession(next);
   };
 
-  useEffect(() => {
-    let live = true;
-    const load = () =>
-      request<CanvasSession>('canvas', { projectId, action: 'session' })
-        .then(next => {
-          if (live && next && !Array.isArray(next) && Array.isArray(next.proposals))
-            setSession(next);
-        })
-        .catch(cause => {
-          if (live) setError(String(cause));
-        });
-    void load();
-    const timer = setInterval(() => void load(), 4000);
-    return () => {
-      live = false;
-      clearInterval(timer);
-    };
-  }, [projectId]);
+  useEffect(
+    () => studio.watchSession({ projectId }, setSession, cause => setError(String(cause))),
+    [projectId, studio]
+  );
 
   useEffect(() => {
     setDraftBase(null);
     if (!workspaceId) return;
     let live = true;
-    void request<{ baseDocument?: StudioDocumentV3 }>('canvas', {
-      projectId,
-      action: 'loadDraft',
-      workspaceId,
-    })
+    void studio
+      .loadDraft({ projectId, workspaceId })
       .then(result => {
         if (live && result.baseDocument) setDraftBase(result.baseDocument);
       })
@@ -119,12 +103,8 @@ export function useStudioProcedure({
     let live = true;
     const objectUrls: string[] = [];
     void Promise.all([
-      request<{ document: StudioDocumentV3; baseDocument?: StudioDocumentV3 }>('canvas', {
-        projectId,
-        action: 'loadDraft',
-        workspaceId: selectedId,
-      }),
-      request<StudioAsset[]>('assets', { id: projectId, workspaceId: selectedId }),
+      studio.loadDraft({ projectId, workspaceId: selectedId }),
+      studio.assets({ id: projectId, workspaceId: selectedId }),
     ])
       .then(async ([result, assets]) => {
         const missing = assets.filter(asset => !c.assets.some(current => current.id === asset.id));
@@ -171,17 +151,19 @@ export function useStudioProcedure({
       if (['acceptPrivate', 'rejectPrivate'].includes(action))
         revision = session.proposals.find(item => item.id === extra.workspaceId)?.revision;
       if (['phase', 'resolveDraft', 'restore'].includes(action))
-        revision = (await request<{ revision: number }>('load', { id: projectId })).revision;
-      const result = await request<{ workspaceId?: string }>('canvas', {
-        projectId,
-        action,
-        generation: session.generation,
-        operationId: crypto.randomUUID(),
-        revision,
-        ...extra,
-      });
+        revision = (await studio.load({ id: projectId })).revision;
+      const result = await studio.canvas(
+        canvasCommandSchema.parse({
+          projectId,
+          action,
+          generation: session.generation,
+          operationId: crypto.randomUUID(),
+          revision,
+          ...extra,
+        })
+      );
       await refresh();
-      if ((action === 'createDraft' || action === 'resolveDraft') && result.workspaceId)
+      if ((action === 'createDraft' || action === 'resolveDraft') && 'workspaceId' in result)
         chooseWorkspace(result.workspaceId);
       if (action === 'submit') {
         chooseWorkspace();
@@ -221,9 +203,7 @@ export function useStudioProcedure({
     if (!ids.length) return;
     let live = true;
     const objectUrls: string[] = [];
-    void Promise.all(
-      ids.map(id => request<StudioAsset[]>('assets', { id: projectId, workspaceId: id }))
-    )
+    void Promise.all(ids.map(id => studio.assets({ id: projectId, workspaceId: id })))
       .then(async groups => {
         const canonicalIds = new Set(c.assets.map(asset => asset.id));
         const missing = [...new Map(groups.flat().map(asset => [asset.id, asset])).values()].filter(
