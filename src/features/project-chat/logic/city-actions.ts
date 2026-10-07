@@ -86,7 +86,9 @@ function createObject(
         overrides,
       });
     case 'polygon': {
-      if (definition.geometryKind !== 'polygon')
+      // Area geometry is supported by the same nonpoint catalog entries that
+      // the OSM converter can materialize as editable polygons.
+      if (definition.geometryKind !== 'corridor')
         throw new ProjectToolError('unsupported_operation');
       const result = createPolygonGeometry(geometry.points);
       if (result.area <= 0) throw new ProjectToolError('invalid_action', 'Degenerate polygon');

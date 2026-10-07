@@ -56951,6 +56951,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
       "domain": "features:project-chat",
       "owner": "polity/features:project-chat",
@@ -57012,10 +57022,91 @@
           "file": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
           "project": "unit",
           "caseId": "undo tolerates JSONB key ordering, but refuses concurrent content changes"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates a %s with %s geometry, local references and recalculated costs"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "translates a %s geometry %j without changing its area or input"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "patches registered properties and changes geometry and rotation in one atomic batch"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "resizes only corridor widths and recalculates quantities for %j"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects width changes on point and polygon objects"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "sets and removes a custom unit cost, then removes the object through its local reference"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing objects, missing local references and duplicate creation references atomically"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unsupported or degenerate polygon creation without leaking a created object"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "translates an imported editable polygon using its persisted geometry"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects malformed tree property %s=%s"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates numeric minimum boundaries, booleans, select options and unrestricted text"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "honors an optional numeric upper bound and fails closed for a select without options"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "returns the complete catalog or an exact type subset without mutating the registry"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "imports a real mapped OpenStreetMap feature with provenance and rejects repeat imports"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects absent and unconvertible OpenStreetMap features without changing the design"
+        },
+        {
+          "file": "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates the entire resulting projection and rejects invalid persisted input"
         }
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -57066,6 +57157,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -57116,6 +57208,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -57166,6 +57259,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
         "supabase/tests/permissions_contract.sql",
@@ -57281,6 +57375,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -57416,6 +57511,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "src/features/project-chat/logic/__tests__/city-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts"
       ]
@@ -106058,6 +106154,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/project-chat/__tests__/history.unit.test.ts",
       "domain": "server:project-chat",
       "owner": "polity/server:project-chat",
@@ -106145,6 +106251,7 @@
         "src/features/messages/__tests__/contextAttachments.unit.test.ts",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106219,10 +106326,106 @@
           "file": "src/server/project-chat/__tests__/run.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "resumes after a committed write without duplicating messages or actions and never loads personal history"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "revalidates conversation access before consulting project resources"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a %s surface on a Studio conversation"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a Studio surface on an amendment conversation"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "resolves the canonical or selected workspace %s using trusted actor and conversation scope"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses explicit manual node references and discards forged project and workspace labels"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains explicitly empty selections instead of trusting stale legacy node IDs"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts an absent selection and fills fallback labels from trusted node types"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a reference from stale workspace %s with explicit read-again recovery"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects an invalid Studio target: %s"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "propagates workspace authorization errors without exposing client-supplied context"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates amendment text on branch=%s and replaces client labels"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses safe fallbacks when amendment and branch records have no labels"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "publishes an amendment selection only for the current revision"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects selected text with stale revision %s"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows stale revision hints when no text is selected"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates City Design selections with explicit names=%s and restores trusted labels"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates an empty City Design selection without inventing objects or map features"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a missing City Design %s with read-again recovery"
+        },
+        {
+          "file": "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+          "project": "unit",
+          "caseId": "propagates amendment resource authorization errors"
         }
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106260,6 +106463,7 @@
         "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
         "src/lib/ai/__tests__/historyCompression.unit.test.ts",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106290,6 +106494,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106319,6 +106524,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106343,6 +106549,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106417,6 +106624,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
@@ -106470,8 +106678,8 @@
         "src/server/__tests__/ai-tools.contract.unit.test.ts",
         "src/server/__tests__/ai-update-tools.contract.unit.test.ts",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
-        "src/server/project-chat/__tests__/history.unit.test.ts",
-        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts"
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts"
       ]
     },
     {
@@ -106495,6 +106703,7 @@
       ],
       "suggestedTestRefs": [
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/editor-context.unit.test.ts",
         "src/server/project-chat/__tests__/history.unit.test.ts",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
