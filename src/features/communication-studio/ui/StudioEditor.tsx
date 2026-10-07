@@ -96,15 +96,7 @@ import { StudioCanonicalProperties } from './StudioCanonicalProperties';
 import type { StudioTextSelectionEditor } from './StudioTextEditor';
 import type { useStudioController } from '../hooks/useStudioController';
 import { fontFamilies, formats } from '../logic/document';
-import {
-  createFrameNode,
-  drawingNodeSchema,
-  richTextNodeSchema,
-  shapeNodeSchema,
-  type FrameNode,
-  type StudioPlateElement,
-  type StudioNode,
-} from '../logic/document-v3';
+import type { FrameNode, StudioPlateElement } from '../logic/document-v3';
 import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import { applyStudioCommandV3 } from '../logic/commands-v3';
 import {
@@ -113,15 +105,22 @@ import {
   isDescendantOf,
   moveByWorldDelta,
   selectionUnits,
-  worldBounds,
-  worldToLocalPoint,
   type ArrangementReference,
 } from '../logic/selection-geometry';
 import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
 import { paletteColor, themeFontFamily } from '../logic/theme';
-import { formatStudioRichText } from '../logic/patch-studio-node';
 import { renameStudioNode } from '../logic/rename-studio-node';
 import { buildStudioPresence } from '../logic/studio-presence';
+import {
+  updateStudioNode,
+  updateStudioNodeConstraint,
+  updateStudioShapeArrowhead,
+} from '../logic/studio-node-updates';
+import {
+  createStudioCanvasNode,
+  changeStudioCanvasText,
+  formatStudioCanvasText,
+} from '../logic/studio-canvas-commands';
 import {
   alignStudioSelection,
   distributeStudioSelection,
@@ -685,118 +684,20 @@ function StudioEditorReady({
     end: { x: number; y: number },
     rounded: boolean,
     points: [number, number][] = []
-  ): string | null => {
-    const currentDocument = c.v3Value;
-    if (!currentDocument || !c.canEdit) return null;
-    const frame = [...rootFrames].reverse().find(candidate => {
-      const bounds = worldBounds(currentDocument, candidate);
-      return (
-        start.x >= bounds.left &&
-        start.x <= bounds.right &&
-        start.y >= bounds.top &&
-        start.y <= bounds.bottom
-      );
+  ) =>
+    createStudioCanvasNode({
+      document: c.v3Value,
+      canEdit: c.canEdit,
+      brandForeground: c.value?.brand.foreground,
+      tool,
+      start,
+      end,
+      rounded,
+      points,
+      transact: c.transactV3,
     });
-    const parentFrameId = tool === 'frame' ? null : (frame?.id ?? null);
-    const localStart = worldToLocalPoint(currentDocument, parentFrameId, start);
-    const localEnd = worldToLocalPoint(currentDocument, parentFrameId, end);
-    const x = Math.min(localStart.x, localEnd.x);
-    const y = Math.min(localStart.y, localEnd.y);
-    const width = Math.max(tool === 'text' ? 700 : 4, Math.abs(localEnd.x - localStart.x));
-    const height = Math.max(tool === 'text' ? 180 : 4, Math.abs(localEnd.y - localStart.y));
-    const id = crypto.randomUUID();
-    const zIndex =
-      Math.max(
-        -1,
-        ...currentDocument.nodes
-          .filter(node => node.parentFrameId === parentFrameId)
-          .map(node => node.zIndex)
-      ) + 1;
-    const foreground = c.value?.brand.foreground ?? '#12362D';
-    const common = {
-      id,
-      name: tool === 'text' ? 'Text' : tool,
-      parentFrameId,
-      transform: { x, y, width, height, rotation: 0 },
-      zIndex,
-      style: {
-        fill:
-          tool === 'text'
-            ? foreground
-            : ['line', 'arrow', 'draw', 'laser'].includes(tool)
-              ? null
-              : '#B88A3B',
-        stroke: foreground,
-        strokeWidth: ['line', 'arrow', 'draw', 'laser'].includes(tool) ? 3 : 1,
-        cornerRadius: rounded ? 24 : 0,
-        opacity: 1,
-      },
-    };
-    let node: StudioNode;
-    if (tool === 'frame') {
-      node = createFrameNode('custom', {
-        id,
-        name: 'Frame',
-        zIndex,
-        transform: {
-          x,
-          y,
-          width: Math.max(200, width),
-          height: Math.max(200, height),
-          rotation: 0,
-        },
-      });
-    } else if (tool === 'text') {
-      node = richTextNodeSchema.parse({
-        ...common,
-        content: [
-          { id: crypto.randomUUID(), type: 'p', children: [{ id: crypto.randomUUID(), text: '' }] },
-        ],
-        typography: {
-          fontFamily: 'Manrope',
-          fontSize: 42,
-          lineHeight: 1.2,
-          letterSpacing: 0,
-          horizontalAlign: 'left',
-          verticalAlign: 'top',
-        },
-        type: 'richText',
-      });
-    } else if (tool === 'draw' || tool === 'laser') {
-      const localPoints = points.map(([px, py]) =>
-        worldToLocalPoint(currentDocument, parentFrameId, { x: px, y: py })
-      );
-      node = drawingNodeSchema.parse({
-        ...common,
-        type: 'drawing',
-        tool: tool === 'laser' ? 'laser' : 'pen',
-        points: localPoints.map(point => [point.x - x, point.y - y]),
-      });
-    } else {
-      node = shapeNodeSchema.parse({
-        ...common,
-        type: 'shape',
-        shape: tool === 'rectangle' ? (rounded ? 'rounded-rectangle' : 'rectangle') : tool,
-        endArrowhead: tool === 'arrow' ? 'arrow' : 'none',
-      });
-    }
-    c.transactV3(document => {
-      document.nodes.push(node);
-    });
-    return id;
-  };
-  const changeCanvasText = (id: string, content: StudioPlateElement[]) => {
-    c.transactV3(document => {
-      const node = document.nodes.find(candidate => candidate.id === id);
-      if (node?.type !== 'richText') return;
-      node.content = content;
-      node.name =
-        content
-          .map(block => block.children.map(child => ('text' in child ? child.text : '')).join(''))
-          .join(' ')
-          .slice(0, 80) || 'Text';
-    });
-  };
+  const changeCanvasText = (id: string, content: StudioPlateElement[]) =>
+    changeStudioCanvasText({ id, content, transact: c.transactV3 });
   const canvasClipboard = async (action: 'copy' | 'cut' | 'paste') => {
     if (!c.v3Value) return;
     if (action === 'copy' || action === 'cut') {
@@ -836,12 +737,7 @@ function StudioEditorReady({
         textEditor.current.mark('textStyleId', null);
         textEditor.current.mark(key === 'fill' ? 'color' : key === 'font' ? 'fontFamily' : key, v);
       }
-    } else if (active?.type === 'text')
-      c.transactV3(document => {
-        const node = document.nodes.find(candidate => candidate.id === active.id);
-        if (node?.type === 'richText')
-          formatStudioRichText(node, key as Parameters<typeof formatStudioRichText>[1], v);
-      });
+    } else formatStudioCanvasText({ active, property: key, value: v, transact: c.transactV3 });
   };
   const applyTextStyle = (styleId: string) => {
     const style = c.theme?.textStyles.find(item => item.id === styleId);
@@ -1159,13 +1055,14 @@ function StudioEditorReady({
                       className={input}
                       value={activeNode[key]}
                       onChange={event =>
-                        c.transactV3(document => {
-                          const node = document.nodes.find(
-                            candidate => candidate.id === activeNode.id
-                          );
-                          if (node?.type === 'shape')
-                            node[key] = event.target.value as (typeof node)[typeof key];
-                        })
+                        c.transactV3(document =>
+                          updateStudioShapeArrowhead(
+                            document,
+                            activeNode.id,
+                            key,
+                            event.target.value as Parameters<typeof updateStudioShapeArrowhead>[3]
+                          )
+                        )
                       }
                     >
                       {(['none', 'arrow', 'bar', 'dot', 'triangle'] as const).map(value => (
@@ -1187,12 +1084,14 @@ function StudioEditorReady({
                   className={input}
                   value={activeNode.constraints.horizontal}
                   onChange={event =>
-                    c.transactV3(document => {
-                      const node = document.nodes.find(candidate => candidate.id === activeNode.id);
-                      if (node)
-                        node.constraints.horizontal = event.target.value as
-                          'left' | 'right' | 'left-right' | 'center' | 'scale';
-                    })
+                    c.transactV3(document =>
+                      updateStudioNodeConstraint(
+                        document,
+                        activeNode.id,
+                        'horizontal',
+                        event.target.value as 'left' | 'right' | 'left-right' | 'center' | 'scale'
+                      )
+                    )
                   }
                 >
                   {['left', 'right', 'left-right', 'center', 'scale'].map(value => (
@@ -1209,12 +1108,14 @@ function StudioEditorReady({
                   className={input}
                   value={activeNode.constraints.vertical}
                   onChange={event =>
-                    c.transactV3(document => {
-                      const node = document.nodes.find(candidate => candidate.id === activeNode.id);
-                      if (node)
-                        node.constraints.vertical = event.target.value as
-                          'top' | 'bottom' | 'top-bottom' | 'center' | 'scale';
-                    })
+                    c.transactV3(document =>
+                      updateStudioNodeConstraint(
+                        document,
+                        activeNode.id,
+                        'vertical',
+                        event.target.value as 'top' | 'bottom' | 'top-bottom' | 'center' | 'scale'
+                      )
+                    )
                   }
                 >
                   {['top', 'bottom', 'top-bottom', 'center', 'scale'].map(value => (
@@ -1262,10 +1163,7 @@ function StudioEditorReady({
           node={activeNode}
           tr={tr}
           update={change =>
-            c.transactV3(document => {
-              const node = document.nodes.find(candidate => candidate.id === activeNode.id);
-              if (node) change(node);
-            })
+            c.transactV3(document => updateStudioNode(document, activeNode.id, change))
           }
         />
       )}

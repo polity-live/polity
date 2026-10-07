@@ -66,6 +66,73 @@ async function mount(
   return { document, frame, ref, select, changes, state, view, host, rerender };
 }
 
+it.each(['different frame', 'unframed'] as const)(
+  'selects a native shape in a %s location and activates its owning frame when available',
+  async location => {
+    const document = createStudioTemplateDocumentV5('single', 'Frame activation', defaultBrand);
+    const frame = document.nodes.find(node => node.type === 'frame')!;
+    frame.transform = { ...frame.transform, width: 300, height: 240 };
+    const other = structuredClone(frame);
+    other.id = crypto.randomUUID();
+    other.zIndex++;
+    other.transform.x = 340;
+    const shape = document.nodes.find(node => node.type === 'shape')!;
+    shape.parentFrameId = location === 'different frame' ? other.id : null;
+    shape.transform = {
+      ...shape.transform,
+      x: 40,
+      y: location === 'unframed' ? 300 : 40,
+      width: 100,
+      height: 80,
+    };
+    document.nodes = [frame, other, shape];
+    document.deliverables[0].frameIds.push(other.id);
+    const activateFrame = vi.fn();
+    const { host, select } = await mount({ document, canvasProps: { activateFrame } });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${shape.id}`)!;
+    const point = group.getAbsoluteTransform().point({ x: 50, y: 40 });
+    await waitFor(() => expect(stage.getIntersection(point)?.getParent()?.id()).toBe(shape.id));
+    const surface = [...host.querySelectorAll('canvas')].at(-1)!;
+    const bounds = surface.getBoundingClientRect();
+    await userEvent.click(surface, {
+      position: {
+        x: (point.x * bounds.width) / stage.width(),
+        y: (point.y * bounds.height) / stage.height(),
+      },
+    });
+    expect(select).toHaveBeenCalledWith([shape.id]);
+    if (location === 'different frame')
+      expect(activateFrame).toHaveBeenCalledExactlyOnceWith(other.id);
+    else expect(activateFrame).not.toHaveBeenCalled();
+  }
+);
+
+it('places a tall context toolbar below the native selection and uses its custom accessible label', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'Context placement', defaultBrand);
+  const shape = document.nodes.find(node => node.type === 'shape')!;
+  shape.transform.y = 0;
+  const { host } = await mount({
+    document,
+    selected: [shape.id],
+    canvasProps: {
+      contextToolbar: (
+        <div style={{ height: 200 }}>
+          <button>Native context action</button>
+        </div>
+      ),
+      contextToolbarLabel: 'Selection tools',
+    },
+  });
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  const group = stage.findOne<Konva.Group>(`#${shape.id}`)!;
+  const bottom = group.getClientRect().y + group.getClientRect().height;
+  const toolbar = await screen.findByRole('toolbar', { name: 'Selection tools' });
+  await waitFor(() => expect(parseFloat(toolbar.style.top)).toBeGreaterThan(bottom));
+  await userEvent.click(screen.getByRole('button', { name: 'Native context action' }));
+  expect(screen.getByRole('button', { name: 'Native context action' })).toHaveFocus();
+});
+
 it.each(['add', 'remove', 'update'] as const)(
   'renders and selects a selected %s proposal for a mirrored nested ghost',
   async tone => {

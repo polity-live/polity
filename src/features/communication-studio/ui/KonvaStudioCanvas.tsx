@@ -658,7 +658,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const inspectorPanel = useRef<HTMLElement>(null);
     const inspectorDrag = useRef<InspectorDrag | null>(null);
     const inspectorBodyId = useId();
-    const [cropDraft, setCropDraft] = useState<CanvasCropDraft | null>(null);
+    const cropState = useState<CanvasCropDraft | null>(null);
+    const cropDraft = cropState[0];
+    const setCropDraft = cropState[1];
     const [cropLoading, setCropLoading] = useState(false);
     const [cropError, setCropError] = useState(false);
     const cropGesture = useRef<CanvasCropGesture | null>(null);
@@ -1958,8 +1960,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             const dx = event.evt.deltaX * factor;
             const dy = event.evt.deltaY * factor;
             if (event.evt.ctrlKey) {
-              const bounds = stage.current?.container().getBoundingClientRect();
-              if (!bounds) return;
+              const bounds = (event.currentTarget as Konva.Stage)
+                .container()
+                .getBoundingClientRect();
               const anchor = {
                 x: event.evt.clientX - bounds.left,
                 y: event.evt.clientY - bounds.top,

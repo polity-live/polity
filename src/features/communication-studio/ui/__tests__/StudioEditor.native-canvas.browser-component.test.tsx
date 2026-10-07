@@ -7,6 +7,7 @@ import Konva from 'konva';
 vi.doMock('../KonvaStudioCanvas', async () => vi.importActual('../KonvaStudioCanvas'));
 
 it('publishes native canvas cursor movement through the document presence transport', async () => {
+  await vi.importActual('../KonvaStudioCanvas');
   useCanonicalDocument();
   await show();
   const host = await screen.findByTestId('studio-canvas');

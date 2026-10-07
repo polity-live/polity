@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import React from 'react';
 import type { ReactNode, PointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { MessageSquare, MessageSquarePlus, Minus } from 'lucide-react';
@@ -10,6 +10,8 @@ import type { ProjectScope, EditorContext } from '../logic/contracts';
 import { scopeKey } from '../hooks/editor-bridge';
 import { ProjectConversation } from './ProjectConversation';
 
+const { useEffect, useId, useRef, useState } = React;
+
 interface PanelDrag {
   pointerId: number;
   x: number;
@@ -17,6 +19,11 @@ interface PanelDrag {
   width: number;
   height: number;
   direction: 'width' | 'height' | 'both';
+}
+
+interface PanelSize {
+  width: number;
+  height: number;
 }
 
 export function ProjectChatPanel({
@@ -32,16 +39,16 @@ export function ProjectChatPanel({
   initialInstruction?: string;
   initiallyOpen?: boolean;
 }) {
-  const zero = useZero(),
-    { t } = useTranslation(),
-    tr = (key: string) => t(`features.projectChat.${key}`);
+  const zero = useZero();
+  const t = useTranslation().t;
+  const tr = (key: string) => t(`features.projectChat.${key}`);
   const [conversations, conversationsResult] = useQuery(queries.projectChat.conversations(scope));
   const [selected, setSelected] = useState(conversationId ?? ''),
     [open, setOpen] = useState(initiallyOpen),
     [error, setError] = useState(''),
     [creating, setCreating] = useState(false);
   const panelId = useId();
-  const [size, setSize] = useState<{ width: number; height: number }>();
+  const [size, setSize] = useState<PanelSize | undefined>(undefined);
   const drag = useRef<PanelDrag | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const restoreTriggerFocus = useRef(false);

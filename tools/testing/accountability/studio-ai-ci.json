@@ -10350,6 +10350,16 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "handles a native crop drag beginning near the %s frame boundary"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects a native shape in a %s location and activates its owning frame when available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "places a tall context toolbar below the native selection and uses its custom accessible label"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [
@@ -13571,6 +13581,75 @@
         "file": "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "configures actual browser canvases for %s interaction"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-node-updates.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates the current canonical node and leaves every other node unchanged"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not call a pending property change after its canonical target has been deleted"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "changes only the %s on the current arrow shape"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores an old arrowhead event when its target has been %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates the %s constraint while preserving the other axis and geometry"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores a constraint event after a node deletion"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-canvas-commands.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not create or transact with a %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a canonical %s node through one transaction and preserves existing content"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates a rounded root shape outside all frames using the default foreground"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores a text change targeting a %s node"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates the real rich text content and its label with %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not format a %s as rich text"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats only a current %s canonical target"
       }
     ]
   },
