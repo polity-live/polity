@@ -524,6 +524,21 @@ it('decodes and crops a native recorded video, redraws after seeking and release
         crop: expect.objectContaining({ naturalWidth: 160, naturalHeight: 90 }),
       })
     );
+    const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
+    const point = canvasPoint(group, { x: 80, y: 45 });
+    await waitFor(() =>
+      expect(
+        stage()
+          .getIntersection(group.getAbsoluteTransform().point({ x: 80, y: 45 }))
+          ?.findAncestor(`#${media.id}`)
+      ).toBe(group)
+    );
+    await userEvent.dblClick(point.surface, { position: { x: point.x, y: point.y } } as never);
+    await screen.findByRole('toolbar', { name: 'Crop' });
+    screen.getByRole('button', { name: 'Cancel' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.queryByRole('toolbar', { name: 'Crop' })).toBeNull();
+    expect(commit).toHaveBeenCalledTimes(1);
     view.unmount();
     expect(video.getAttribute('src')).toBeNull();
     expect(video.paused).toBe(true);

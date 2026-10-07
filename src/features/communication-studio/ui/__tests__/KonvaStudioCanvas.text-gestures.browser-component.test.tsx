@@ -25,11 +25,12 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
   );
   function Harness() {
     const [selected, selectExact] = useState<string[]>([]);
+    const [value, setValue] = useState(document);
     return (
       <div style={{ width: 1000, height: 700 }}>
         <KonvaStudioCanvas
           ref={ref}
-          document={document}
+          document={value}
           activeFrameId={frame.id}
           assets={[]}
           selected={selected}
@@ -41,6 +42,16 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
           }}
         />
         <output data-testid="selected-text">{selected.join(',')}</output>
+        <button
+          onClick={() =>
+            setValue(current => ({
+              ...current,
+              nodes: current.nodes.filter(node => node.id !== text.id),
+            }))
+          }
+        >
+          Remove remote text
+        </button>
       </div>
     );
   }
@@ -81,6 +92,26 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
   };
   return { ref, state, surface, create, pointer, client, text, frame, document, host };
 }
+
+it('accepts a touch pointer without a mouse button and edits the actual text node', async () => {
+  const { surface, client, text, create } = await harness();
+  const event = { ...client(), pointerId: 38, pointerType: 'touch', button: -1 };
+  fireEvent.pointerDown(surface, event);
+  fireEvent.pointerUp(surface, event);
+  await screen.findByLabelText('Text');
+  expect(screen.getByTestId('selected-text')).toHaveTextContent(text.id);
+  expect(create).not.toHaveBeenCalled();
+});
+
+it('does not select or recreate a text node removed by a remote update before pointer release', async () => {
+  const { pointer, create } = await harness();
+  pointer('down');
+  fireEvent.click(screen.getByRole('button', { name: 'Remove remote text' }));
+  pointer('up');
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  expect(screen.getByTestId('selected-text')).toBeEmptyDOMElement();
+  expect(create).not.toHaveBeenCalled();
+});
 
 it.each(['click', 'drag', 'cancel'] as const)(
   'handles text creation on blank frame space with a %s gesture',

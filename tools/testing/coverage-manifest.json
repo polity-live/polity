@@ -20401,6 +20401,36 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20422,6 +20452,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20661,6 +20701,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20682,6 +20732,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20721,6 +20781,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20742,6 +20812,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20972,16 +21052,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21001,16 +21081,138 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-ancestry.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+          "project": "unit",
+          "caseId": "orders actual nested frame ancestors from the outer frame to the inner frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains the available ancestors when consuming a partial node snapshot"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-content.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "waits for SDK content before subscribing and removes the native subscription on cleanup"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-crop-gesture.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "does not begin a crop gesture with %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resolves a native crop pointer to the %s handle"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "retains an explicit resize handle and maps the real mirrored rotated group into local coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "limits a stage crop activation at the %s edge to the padded frame"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "does not apply a pending crop gesture to a %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "pans the real image crop in native local coordinates while keeping its frame and metadata intact"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "resizes the native crop frame while preserving the source image dimensions"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21065,16 +21267,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21114,16 +21316,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21143,16 +21345,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21252,16 +21454,55 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-selection-bounds.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "maps the native selection union through viewport zoom and pan without including unselected nodes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "returns no bounds for %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores native transform overflow on the %s axis while retaining finite selection geometry"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21286,16 +21527,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21325,16 +21566,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21369,16 +21610,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21432,12 +21673,12 @@
         "src/features/amendments/hooks/__tests__/useAmendmentCollaboration.a04.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts"
       ]
     },
     {
@@ -21627,16 +21868,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21751,16 +21992,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21820,16 +22061,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -21934,16 +22175,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22049,10 +22290,10 @@
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx"
       ]
     },
     {
@@ -22107,16 +22348,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22171,16 +22412,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22270,16 +22511,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22329,16 +22570,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22359,15 +22600,15 @@
         "e2e/fixtures/domains/governance.ts",
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx"
       ]
     },
     {
@@ -22387,16 +22628,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22421,16 +22662,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22470,16 +22711,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22650,15 +22891,15 @@
         "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx"
       ]
     },
     {
@@ -22723,16 +22964,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22797,16 +23038,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22876,16 +23117,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -22965,16 +23206,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23034,16 +23275,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23073,16 +23314,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23187,16 +23428,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23306,16 +23547,70 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/studio-canvas-clipboard.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not access clipboard or mutate before the canonical document is loaded"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "ignores an empty copy selection"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "copies the real canonical payload into both browser and project clipboards without changing the document"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "cuts the selection even when browser permission is denied and pastes from the retained project buffer"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "pastes a browser payload into the target frame and selects the actual newly inserted nodes"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "ignores clipboard text that is neither a valid payload nor a saved project selection"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23365,16 +23660,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23454,16 +23749,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23508,16 +23803,50 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/studio-editor-commands.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "chooses a theme with %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
+          "project": "unit",
+          "caseId": "acknowledges table insertion only for a %s"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23562,16 +23891,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23601,16 +23930,65 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/studio-project-clipboard.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "pastes the real canonical frame from the %s and activates its new identity"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "leaves the page unchanged when the SDK declines to execute the transaction after access is revoked"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports an empty selection for %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects a valid clipboard belonging to another project before transacting"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats an SDK rejection without losing its message: %s"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23655,16 +24033,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23719,16 +24097,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23768,16 +24146,55 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/studio-text-style.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+          "project": "unit",
+          "caseId": "leaves the actual editor and selection unchanged for %s"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies all theme marks and alignment to the actual Slate selection without mutating the canonical node"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies to the canonical selection when there is %s"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23827,16 +24244,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23901,16 +24318,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -23930,16 +24347,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -24030,15 +24447,15 @@
         "e2e/appearance-theme.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx"
       ]
     },
     {
@@ -24298,16 +24715,16 @@
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-layers.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-surfaces.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-transforms.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/collaboration.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/document-boundaries.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts"
       ]
     },
     {
@@ -24745,6 +25162,56 @@
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "places a tall context toolbar below the native selection and uses its custom accessible label"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "accepts a touch pointer without a mouse button and edits the actual text node"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "does not select or recreate a text node removed by a remote update before pointer release"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "ignores other pointers during a marquee and preserves the existing selection on an additive blank click"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "uses the translated context-toolbar label when no explicit label is provided"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens rich text through the actual Konva double-tap event contract"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "rejects a canvas double tap while %s owns the native gesture"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "handles the native SDK click contract for %s without a preceding pointer drag"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "pans the actual crop through the touch-pointer SDK channel and commits the shifted image region"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "clears existing toolbar geometry when a selected SDK group is removed before the next projection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps user zoom and pan when the mounted free-canvas viewport is resized"
         }
       ],
       "suggestedTestRefs": [
@@ -25461,9 +25928,30 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
           "project": "component",
           "caseId": "keeps a queued export visible and reports a rejected status request"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "aligns a selected pair before viewport bounds arrive and shares the frame reference with contextual distribution"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "persists a height-only frame resize through the canonical canvas transaction"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "selects a root-level shape from the layer tree without replacing the active root frame"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores an empty file selection after the upload chooser is cancelled"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25474,8 +25962,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ]
     },
     {
@@ -81334,12 +81821,12 @@
         "src/features/change-requests/ui/__tests__/EditorViewModeToggleView.contract.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/editor-tools.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx"
       ]
     },
     {
@@ -84998,6 +85485,7 @@
         "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
@@ -85005,8 +85493,7 @@
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx"
       ]
     },
     {
@@ -86314,7 +86801,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ]
     },
     {
@@ -98769,11 +99256,11 @@
         "e2e/studio-project-chat.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts"
       ]
     },
     {
@@ -100615,11 +101102,11 @@
         "e2e/studio-project-chat.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-localization.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-node-updates.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts"
       ]
     },
     {
@@ -126719,14 +127206,14 @@
         "src/features/amendments/ui/__tests__/AmendmentEditContentView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/useAmendmentEditContentController.component.test.tsx",
         "src/features/change-requests/logic/__tests__/applySuggestionToContent.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioTextContent.browser-component.test.tsx",
         "src/features/events/__tests__/EventWikiContentView.component.test.tsx",
         "src/features/groups/__tests__/GroupWikiContentView.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupMembershipsContentContainer.coverage.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupMembershipsContentContainer.unit.test.ts",
         "src/features/groups/ui/__tests__/GroupMembershipsContentView.accountability.unit.test.ts",
-        "src/features/groups/ui/__tests__/GroupMembershipsContentView.coverage.component.test.tsx",
-        "src/features/messages/ui/__tests__/MessageContent.branch-a05.component.test.tsx"
+        "src/features/groups/ui/__tests__/GroupMembershipsContentView.coverage.component.test.tsx"
       ]
     },
     {

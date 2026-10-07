@@ -58,6 +58,45 @@ function middlePointer(clientX: number, clientY: number) {
   return { pointerId: 19, pointerType: 'mouse', button: 1, buttons: 4, clientX, clientY };
 }
 
+it.each(['release', 'cancel'] as const)(
+  'ends a native Space pan on %s while a final move is queued',
+  async reason => {
+    const create = vi.fn(() => null);
+    const { surface, bounds, point } = await canvasHarness(create);
+    const pointer = {
+      pointerId: 44,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: bounds.left + 10,
+      clientY: bounds.top + 10,
+    };
+    fireEvent.keyDown(window, { key: ' ', code: 'Space' });
+    fireEvent.pointerDown(surface, pointer);
+    fireEvent.pointerMove(surface, { ...pointer, clientX: pointer.clientX + 20 });
+    const before = point(10, 10);
+    if (reason === 'release') {
+      await act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent('keyup', { key: ' ', code: 'Space', bubbles: true })
+        );
+        surface.dispatchEvent(
+          new PointerEvent('pointermove', {
+            ...pointer,
+            clientX: pointer.clientX + 40,
+            bubbles: true,
+          })
+        );
+      });
+      expect(point(10, 10)).toEqual(before);
+    } else {
+      fireEvent.pointerUp(surface, pointer);
+      fireEvent.pointerCancel(surface, pointer);
+      fireEvent.keyUp(window, { key: ' ', code: 'Space' });
+    }
+    expect(create).not.toHaveBeenCalled();
+  }
+);
+
 it.each(['initial', 'reset'] as const)(
   'pans with middle-button dragging over an element at %s zoom without editing or switching tools',
   async mode => {
@@ -281,6 +320,8 @@ it('pans with two touches and zooms around their midpoint when they spread', asy
   const zoom = state.current!.zoom;
   const before = point(250, 200);
   send('touchstart', [finger(1, 200, 200), finger(2, 300, 200)]);
+  // A delayed single-contact start must not clear the already active pinch gesture.
+  send('touchstart', [finger(1, 200, 200)]);
   send('touchmove', [finger(1, 220, 220), finger(2, 320, 220)]);
   await waitFor(() => {
     expect(point(250, 200).x - before.x).toBeCloseTo(-20 / zoom, 2);

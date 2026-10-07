@@ -21198,12 +21198,12 @@
     },
     {
       "key": "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.canvas.node.select",
-      "debtKey": "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#Group-79ff81be16",
+      "debtKey": "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#Group-21e237e02b",
       "file": "src/features/communication-studio/ui/KonvaStudioCanvas.tsx",
       "actionId": "communication-studio.canvas.node.select",
       "identifierSource": "data-action-id",
       "tag": "Group",
-      "line": 1603,
+      "line": 1561,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -21247,7 +21247,7 @@
       "actionId": "communication-studio.inspector.position.move",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2554,
+      "line": 2473,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21291,7 +21291,7 @@
       "actionId": "communication-studio.inspector.visibility.toggle",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2599,
+      "line": 2518,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -21330,7 +21330,7 @@
       "actionId": "communication-studio.media.crop.apply",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2530,
+      "line": 2449,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21375,7 +21375,7 @@
       "actionId": "communication-studio.media.crop.cancel",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2522,
+      "line": 2441,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21420,7 +21420,7 @@
       "actionId": "communication-studio.media.crop.reset",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2514,
+      "line": 2433,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21465,7 +21465,7 @@
       "actionId": "communication-studio.media.crop.zoom",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2494,
+      "line": 2413,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -23115,7 +23115,7 @@
       "actionId": "communication-studio.arrangement.reference.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 586,
+      "line": 571,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -23131,6 +23131,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23141,8 +23142,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23153,7 +23153,7 @@
       "actionId": "communication-studio.assets.upload.open",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1598,
+      "line": 1556,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23170,6 +23170,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23180,8 +23181,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23193,7 +23193,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-10ee17ceb1",
       "tag": "StudioMenuItem",
-      "line": 1525,
+      "line": 1482,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23210,6 +23210,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23220,8 +23221,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23233,7 +23233,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-28ad060596",
       "tag": "StudioMenuItem",
-      "line": 1479,
+      "line": 1436,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23250,6 +23250,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23260,8 +23261,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23273,7 +23273,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-2b460b552e",
       "tag": "StudioMenuItem",
-      "line": 1397,
+      "line": 1354,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23290,6 +23290,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23300,8 +23301,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23313,7 +23313,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-54d83a3825",
       "tag": "StudioMenuItem",
-      "line": 1417,
+      "line": 1374,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23330,6 +23330,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23340,8 +23341,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23353,7 +23353,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-66c9f87b00",
       "tag": "StudioMenuItem",
-      "line": 1500,
+      "line": 1457,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23370,6 +23370,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23380,8 +23381,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23393,7 +23393,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-80ae783095",
       "tag": "StudioMenuItem",
-      "line": 1519,
+      "line": 1476,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23410,6 +23410,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23420,8 +23421,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23433,7 +23433,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-8990b1b229",
       "tag": "StudioMenuItem",
-      "line": 1512,
+      "line": 1469,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23450,6 +23450,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23460,8 +23461,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23473,7 +23473,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ac6599da75",
       "tag": "StudioMenuItem",
-      "line": 1448,
+      "line": 1405,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23490,6 +23490,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23500,8 +23501,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23513,7 +23513,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c2ff45f97e",
       "tag": "StudioMenuItem",
-      "line": 1467,
+      "line": 1424,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23530,6 +23530,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23540,8 +23541,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23553,7 +23553,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c5319378ab",
       "tag": "StudioMenuItem",
-      "line": 1454,
+      "line": 1411,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23570,6 +23570,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23580,8 +23581,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23593,7 +23593,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-d1e85167c3",
       "tag": "StudioMenuItem",
-      "line": 1506,
+      "line": 1463,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23610,6 +23610,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23620,8 +23621,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23633,7 +23633,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ded0999a54",
       "tag": "StudioMenuItem",
-      "line": 1473,
+      "line": 1430,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23650,6 +23650,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23660,8 +23661,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23673,7 +23673,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-008fcc9c86",
       "tag": "ToolbarButton",
-      "line": 1486,
+      "line": 1443,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23696,6 +23696,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23706,8 +23707,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23719,7 +23719,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-1675c4b11a",
       "tag": "ToolbarButton",
-      "line": 1350,
+      "line": 1307,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23736,6 +23736,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23746,8 +23747,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23758,7 +23758,7 @@
       "actionId": "communication-studio.collaboration.comments.open",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1538,
+      "line": 1495,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23775,6 +23775,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23785,8 +23786,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23797,7 +23797,7 @@
       "actionId": "communication-studio.context.action.activate",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 1186,
+      "line": 1143,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23814,6 +23814,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23824,8 +23825,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23836,7 +23836,7 @@
       "actionId": "communication-studio.elements.instance.publish",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2201,
+      "line": 2163,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23852,6 +23852,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23862,8 +23863,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23874,7 +23874,7 @@
       "actionId": "communication-studio.elements.library.search",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2131,
+      "line": 2093,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23890,6 +23890,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23900,8 +23901,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23912,7 +23912,7 @@
       "actionId": "communication-studio.elements.selection.save",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2141,
+      "line": 2103,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23928,6 +23928,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23938,8 +23939,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23950,7 +23950,7 @@
       "actionId": "communication-studio.elements.set.archive",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2177,
+      "line": 2139,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23966,6 +23966,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -23976,8 +23977,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23988,7 +23988,7 @@
       "actionId": "communication-studio.elements.set.rename",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2164,
+      "line": 2126,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24004,6 +24004,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24014,8 +24015,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24026,7 +24026,7 @@
       "actionId": "communication-studio.empty-canvas.clipboard.paste",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 268,
+      "line": 253,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -24055,6 +24055,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24065,8 +24066,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24077,7 +24077,7 @@
       "actionId": "communication-studio.empty-canvas.history.undo",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 259,
+      "line": 244,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24094,6 +24094,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24104,8 +24105,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24116,7 +24116,7 @@
       "actionId": "communication-studio.export.frame.toggle",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2306,
+      "line": 2268,
       "column": 22,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24132,6 +24132,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24142,8 +24143,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24154,7 +24154,7 @@
       "actionId": "communication-studio.export.frames.search",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2264,
+      "line": 2226,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24170,6 +24170,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24180,8 +24181,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24192,7 +24192,7 @@
       "actionId": "communication-studio.export.frames.select-all",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2274,
+      "line": 2236,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24209,6 +24209,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24219,8 +24220,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24231,7 +24231,7 @@
       "actionId": "communication-studio.export.frames.select-current",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2282,
+      "line": 2244,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24248,6 +24248,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24258,8 +24259,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24270,7 +24270,7 @@
       "actionId": "communication-studio.media.crop.open",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 990,
+      "line": 947,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24292,6 +24292,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24302,8 +24303,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24314,7 +24314,7 @@
       "actionId": "communication-studio.node.constraint.horizontal",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1082,
+      "line": 1039,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24330,6 +24330,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24340,8 +24341,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24352,7 +24352,7 @@
       "actionId": "communication-studio.node.constraint.vertical",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1106,
+      "line": 1063,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24368,6 +24368,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24378,8 +24379,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24390,7 +24390,7 @@
       "actionId": "communication-studio.preview.open",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 2214,
+      "line": 2176,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24406,6 +24406,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24416,8 +24417,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24428,7 +24428,7 @@
       "actionId": "communication-studio.project.clone.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1319,
+      "line": 1276,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24445,6 +24445,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24455,8 +24456,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24467,7 +24467,7 @@
       "actionId": "communication-studio.project.list.navigate",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1290,
+      "line": 1247,
       "column": 10,
       "kind": "navigation",
       "classification": "transparent-wrapper",
@@ -24496,6 +24496,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24506,8 +24507,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -24518,7 +24518,7 @@
       "actionId": "communication-studio.project.list.navigate",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 1296,
+      "line": 1253,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -24546,6 +24546,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24556,8 +24557,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24568,7 +24568,7 @@
       "actionId": "communication-studio.project.template.save",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1305,
+      "line": 1262,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24585,6 +24585,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24595,8 +24596,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24607,7 +24607,7 @@
       "actionId": "communication-studio.project.title.edit",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2419,
+      "line": 2381,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24623,6 +24623,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24633,8 +24634,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24645,7 +24645,7 @@
       "actionId": "communication-studio.project.visibility.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1327,
+      "line": 1284,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24662,6 +24662,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24672,8 +24673,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24684,7 +24684,7 @@
       "actionId": "communication-studio.selection.align.apply",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1724,
+      "line": 1682,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24701,6 +24701,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24711,8 +24712,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24723,7 +24723,7 @@
       "actionId": "communication-studio.selection.copy.duplicate",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1688,
+      "line": 1646,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24746,6 +24746,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24756,8 +24757,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24768,7 +24768,7 @@
       "actionId": "communication-studio.selection.distribute.horizontal",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1742,
+      "line": 1700,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24785,6 +24785,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24795,8 +24796,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24807,7 +24807,7 @@
       "actionId": "communication-studio.selection.distribute.vertical",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1755,
+      "line": 1713,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24824,6 +24824,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24834,8 +24835,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24846,7 +24846,7 @@
       "actionId": "communication-studio.selection.group.toggle",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1798,
+      "line": 1756,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24863,6 +24863,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24873,8 +24874,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24885,7 +24885,7 @@
       "actionId": "communication-studio.selection.lock.toggle",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1339,
+      "line": 1296,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24908,6 +24908,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24918,8 +24919,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24930,7 +24930,7 @@
       "actionId": "communication-studio.selection.order.apply",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1779,
+      "line": 1737,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24947,6 +24947,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -24957,8 +24958,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24969,7 +24969,7 @@
       "actionId": "communication-studio.selection.remove.delete",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1697,
+      "line": 1655,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -24992,6 +24992,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25002,8 +25003,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25014,7 +25014,7 @@
       "actionId": "communication-studio.shape.arrowhead.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1053,
+      "line": 1010,
       "column": 20,
       "kind": "selection",
       "classification": "canonical-action",
@@ -25030,6 +25030,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25040,8 +25041,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25053,7 +25053,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-1488e0d1c3",
       "tag": "button",
-      "line": 2495,
+      "line": 2457,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25075,6 +25075,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25085,8 +25086,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25098,7 +25098,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-9fe2f0396c",
       "tag": "button",
-      "line": 2486,
+      "line": 2448,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25120,6 +25120,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25130,8 +25131,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25143,7 +25143,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-aa0b083391",
       "tag": "button",
-      "line": 2452,
+      "line": 2414,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25165,6 +25165,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25175,8 +25176,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25187,7 +25187,7 @@
       "actionId": "communication-studio.studio-editor.activate.input-6b4651ec8d",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 1889,
+      "line": 1847,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25215,6 +25215,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25225,8 +25226,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25238,7 +25238,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#input-922d2dbcbc",
       "tag": "input",
-      "line": 1133,
+      "line": 1090,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -25260,6 +25260,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25270,8 +25271,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25283,7 +25283,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#input-e7c5465a6d",
       "tag": "input",
-      "line": 835,
+      "line": 792,
       "column": 6,
       "kind": "selection",
       "classification": "canonical-action",
@@ -25305,6 +25305,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25315,8 +25316,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25327,7 +25327,7 @@
       "actionId": "communication-studio.studio-editor.activate.input-f9d64640a1",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 1833,
+      "line": 1791,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25355,6 +25355,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25365,8 +25366,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25378,7 +25378,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-13558298cb",
       "tag": "ToolbarButton",
-      "line": 1553,
+      "line": 1510,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25407,6 +25407,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25417,8 +25418,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25430,7 +25430,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-30e1803505",
       "tag": "ToolbarButton",
-      "line": 1561,
+      "line": 1518,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25459,6 +25459,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25469,8 +25470,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25481,7 +25481,7 @@
       "actionId": "communication-studio.studio-editor.add",
       "identifierSource": "handler",
       "tag": "ToolbarButton",
-      "line": 1571,
+      "line": 1528,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25510,6 +25510,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25520,8 +25521,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25532,7 +25532,7 @@
       "actionId": "communication-studio.studio-editor.insert-frame",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1376,
+      "line": 1333,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25555,6 +25555,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25565,8 +25566,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25577,7 +25577,7 @@
       "actionId": "communication-studio.studio-editor.insert-frame-set",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1387,
+      "line": 1344,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25600,6 +25600,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25610,8 +25611,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25622,7 +25622,7 @@
       "actionId": "communication-studio.studio-editor.set-guides",
       "identifierSource": "handler",
       "tag": "ToolbarButton",
-      "line": 2226,
+      "line": 2188,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25645,6 +25645,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25655,8 +25656,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25667,7 +25667,7 @@
       "actionId": "communication-studio.studio-editor.set-tool",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1426,
+      "line": 1383,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25684,6 +25684,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25694,8 +25695,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25706,7 +25706,7 @@
       "actionId": "communication-studio.studio-workspace.export-media",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2250,
+      "line": 2212,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25735,6 +25735,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25745,8 +25746,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25757,7 +25757,7 @@
       "actionId": "communication-studio.studio-workspace.set-photo-edit",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 1033,
+      "line": 990,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25780,6 +25780,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25790,8 +25791,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25802,7 +25802,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-07f95dca6d",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2359,
+      "line": 2321,
       "column": 26,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25831,6 +25831,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25841,8 +25842,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25853,7 +25853,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-f159baea82",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2389,
+      "line": 2351,
       "column": 24,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25882,6 +25882,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25892,8 +25893,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25904,7 +25904,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-fdbeb1cd6b",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2351,
+      "line": 2313,
       "column": 24,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -25927,6 +25927,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25937,8 +25938,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25949,7 +25949,7 @@
       "actionId": "communication-studio.studioworkspace.activate.format-2",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 2237,
+      "line": 2199,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -25971,6 +25971,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -25981,8 +25982,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -25993,7 +25993,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-70799f297e",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 966,
+      "line": 923,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26016,6 +26016,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26026,8 +26027,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26038,7 +26038,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-f891eec816",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 954,
+      "line": 911,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26060,6 +26060,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26070,8 +26071,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26082,7 +26082,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-f95d891276",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 1022,
+      "line": 979,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26105,6 +26105,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26115,8 +26116,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26127,7 +26127,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-1408e711cc",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1004,
+      "line": 961,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26149,6 +26149,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26159,8 +26160,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26171,7 +26171,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-4d0cd79d46",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 870,
+      "line": 827,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26193,6 +26193,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26203,8 +26204,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26215,7 +26215,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-515683ba65",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 883,
+      "line": 840,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26237,6 +26237,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26247,8 +26248,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26259,7 +26259,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-74119eaeb9",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 975,
+      "line": 932,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26281,6 +26281,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26291,8 +26292,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26303,7 +26303,7 @@
       "actionId": "communication-studio.studioworkspace.activate.textarea-dcebf42594",
       "identifierSource": "data-action-id",
       "tag": "textarea",
-      "line": 859,
+      "line": 816,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26325,6 +26325,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26335,24 +26336,24 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.table.dimensions.insert",
-      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-cb0524a2fd",
+      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-0c08f9ff3b",
       "file": "src/features/communication-studio/ui/StudioEditor.tsx",
       "actionId": "communication-studio.table.dimensions.insert",
       "identifierSource": "manifest-declaration",
-      "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-cb0524a2fd",
+      "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-0c08f9ff3b",
       "tag": "TableSizePicker",
-      "line": 1587,
+      "line": 1544,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
+      "handler": "insertStudioEditorTable",
       "scenarios": ["selected", "unselected", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
       "testRefs": [
@@ -26364,6 +26365,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26374,8 +26376,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26386,7 +26387,7 @@
       "actionId": "communication-studio.text.alignment.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 1927,
+      "line": 1885,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26402,6 +26403,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26412,8 +26414,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26424,7 +26425,7 @@
       "actionId": "communication-studio.text.color.select-role",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 943,
+      "line": 900,
       "column": 22,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26441,6 +26442,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26451,8 +26453,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26463,7 +26464,7 @@
       "actionId": "communication-studio.text.font.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 1823,
+      "line": 1781,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26479,6 +26480,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26489,8 +26491,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26501,7 +26502,7 @@
       "actionId": "communication-studio.text.inspector.toggle-mark",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 900,
+      "line": 857,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26518,6 +26519,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26528,8 +26530,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26540,7 +26541,7 @@
       "actionId": "communication-studio.text.link.edit",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 1989,
+      "line": 1947,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26556,6 +26557,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26566,8 +26568,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26578,7 +26579,7 @@
       "actionId": "communication-studio.text.link.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1973,
+      "line": 1931,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26595,6 +26596,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26605,8 +26607,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26617,7 +26618,7 @@
       "actionId": "communication-studio.text.list.bullet",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1952,
+      "line": 1910,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26633,6 +26634,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26643,8 +26645,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26655,7 +26656,7 @@
       "actionId": "communication-studio.text.list.numbered",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1962,
+      "line": 1920,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26671,6 +26672,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26681,8 +26683,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26693,7 +26694,7 @@
       "actionId": "communication-studio.text.mark-code.apply",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1869,
+      "line": 1827,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26716,6 +26717,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26726,8 +26728,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26738,7 +26739,7 @@
       "actionId": "communication-studio.text.mark-highlight.apply",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1879,
+      "line": 1837,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26761,6 +26762,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26771,8 +26773,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26783,7 +26784,7 @@
       "actionId": "communication-studio.text.toolbar.toggle-mark",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1856,
+      "line": 1814,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26806,6 +26807,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26816,8 +26818,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26828,7 +26829,7 @@
       "actionId": "communication-studio.text.vertical-align.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1144,
+      "line": 1101,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26844,6 +26845,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26854,8 +26856,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26866,7 +26867,7 @@
       "actionId": "communication-studio.theme.appearance-mode.select",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2037,
+      "line": 1999,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -26883,6 +26884,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26893,19 +26895,18 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.theme.definition.select",
-      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#select-75740a39b9",
+      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#select-33cab41f70",
       "file": "src/features/communication-studio/ui/StudioEditor.tsx",
       "actionId": "communication-studio.theme.definition.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 2015,
+      "line": 1973,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -26921,6 +26922,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26931,8 +26933,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26943,7 +26944,7 @@
       "actionId": "communication-studio.theme.settings.navigate",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 2106,
+      "line": 2068,
       "column": 14,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -26965,6 +26966,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -26975,8 +26977,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -26987,7 +26988,7 @@
       "actionId": "communication-studio.theme.text-style.apply",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2088,
+      "line": 2050,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27004,6 +27005,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27014,8 +27016,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -27026,7 +27027,7 @@
       "actionId": "editor.shell.share.open",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 2429,
+      "line": 2391,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27042,6 +27043,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
@@ -27052,8 +27054,7 @@
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -84134,6 +84135,7 @@
         "src/features/communication-studio/logic/__tests__/commands-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
@@ -84141,8 +84143,7 @@
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85195,7 +85196,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85234,7 +85235,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85273,7 +85274,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85312,7 +85313,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85351,7 +85352,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -85390,7 +85391,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

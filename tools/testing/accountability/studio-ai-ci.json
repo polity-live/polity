@@ -9658,6 +9658,26 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
         "project": "component",
         "caseId": "keeps a queued export visible and reports a rejected status request"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns a selected pair before viewport bounds arrive and shares the frame reference with contextual distribution"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "persists a height-only frame resize through the canonical canvas transaction"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "selects a root-level shape from the layer tree without replacing the active root frame"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores an empty file selection after the upload chooser is cancelled"
       }
     ],
     "src/features/communication-studio/ui/StudioDataProperties.tsx": [
@@ -10360,6 +10380,56 @@
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "project": "browser-component",
         "caseId": "places a tall context toolbar below the native selection and uses its custom accessible label"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "accepts a touch pointer without a mouse button and edits the actual text node"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "does not select or recreate a text node removed by a remote update before pointer release"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores other pointers during a marquee and preserves the existing selection on an additive blank click"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "uses the translated context-toolbar label when no explicit label is provided"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens rich text through the actual Konva double-tap event contract"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "rejects a canvas double tap while %s owns the native gesture"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "handles the native SDK click contract for %s without a preceding pointer drag"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "pans the actual crop through the touch-pointer SDK channel and commits the shifted image region"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "clears existing toolbar geometry when a selected SDK group is removed before the next projection"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps user zoom and pan when the mounted free-canvas viewport is resized"
       }
     ],
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx": [
@@ -13651,6 +13721,167 @@
         "project": "unit",
         "caseId": "formats only a current %s canonical target"
       }
+    ],
+    "src/features/communication-studio/logic/canvas-crop-gesture.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "does not begin a crop gesture with %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resolves a native crop pointer to the %s handle"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "retains an explicit resize handle and maps the real mirrored rotated group into local coordinates"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "limits a stage crop activation at the %s edge to the padded frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "does not apply a pending crop gesture to a %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "pans the real image crop in native local coordinates while keeping its frame and metadata intact"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resizes the native crop frame while preserving the source image dimensions"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-selection-bounds.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "maps the native selection union through viewport zoom and pan without including unselected nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "returns no bounds for %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "ignores native transform overflow on the %s axis while retaining finite selection geometry"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-canvas-clipboard.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not access clipboard or mutate before the canonical document is loaded"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores an empty copy selection"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies the real canonical payload into both browser and project clipboards without changing the document"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "cuts the selection even when browser permission is denied and pastes from the retained project buffer"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "pastes a browser payload into the target frame and selects the actual newly inserted nodes"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "ignores clipboard text that is neither a valid payload nor a saved project selection"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-text-style.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+        "project": "unit",
+        "caseId": "leaves the actual editor and selection unchanged for %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies all theme marks and alignment to the actual Slate selection without mutating the canonical node"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-text-style.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies to the canonical selection when there is %s"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-ancestry.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "project": "unit",
+        "caseId": "orders actual nested frame ancestors from the outer frame to the inner frame"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains the available ancestors when consuming a partial node snapshot"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-content.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "waits for SDK content before subscribing and removes the native subscription on cleanup"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-project-clipboard.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "pastes the real canonical frame from the %s and activates its new identity"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "leaves the page unchanged when the SDK declines to execute the transaction after access is revoked"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports an empty selection for %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a valid clipboard belonging to another project before transacting"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-project-clipboard.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats an SDK rejection without losing its message: %s"
+      }
+    ],
+    "src/features/communication-studio/logic/studio-editor-commands.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "chooses a theme with %s"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
+        "project": "unit",
+        "caseId": "acknowledges table insertion only for a %s"
+      }
     ]
   },
   "actionReferences": {
@@ -15999,9 +16230,6 @@
     "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx#button-294759a95e": {
       "actionId": "shared.canvas-change-request.marker.select"
     },
-    "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-cb0524a2fd": {
-      "actionId": "communication-studio.table.dimensions.insert"
-    },
     "src/features/shared/ui/ui-platejs/TableToolbarButtonView.tsx#PlateTablePicker-c84d5e64ea": {
       "actionId": "editor.table-picker.menu.select-size"
     },
@@ -16016,6 +16244,9 @@
     },
     "src/features/amendments/city-design/ui/CityDesignChangeRequestPanel.tsx#CanvasChangeRequestCloseButton-d292d491aa": {
       "actionId": "amendments.city-request.details.close"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-0c08f9ff3b": {
+      "actionId": "communication-studio.table.dimensions.insert"
     }
   }
 }

@@ -6,6 +6,8 @@ import { useStudioController } from '../../hooks/useStudioController';
 import { StudioEditor } from '../StudioEditor';
 import { openStudioPanel } from '../../logic/panel-events';
 import type { ReactNode } from 'react';
+import { within } from '@testing-library/react';
+import { studioDocumentV3Schema } from '../../logic/document-v3';
 
 vi.setConfig({ testTimeout: 15000 });
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -13,6 +15,99 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),
 }));
 afterEach(() => vi.unstubAllGlobals());
+
+it('ignores an empty file selection after the upload chooser is cancelled', async () => {
+  useCanonicalDocument();
+  await show();
+  const input = screen.getByLabelText('upload', { selector: 'input' }) as HTMLInputElement;
+  fireEvent.change(input, { target: { files: [] } });
+  expect(io.upload).not.toHaveBeenCalled();
+  expect(input.value).toBe('');
+});
+
+it('aligns a selected pair before viewport bounds arrive and shares the frame reference with contextual distribution', async () => {
+  useCanonicalDocument();
+  io.renderContextToolbar = true;
+  await show();
+  const ids = io.editor.v3Value.nodes
+    .filter((node: { type: string }) => node.type !== 'frame')
+    .slice(0, 2)
+    .map((node: { id: string }) => node.id);
+  const groupId = crypto.randomUUID();
+  act(() =>
+    io.editor.transactV3((document: { nodes: { id: string; groupIds: string[] }[] }) => {
+      for (const node of document.nodes) if (ids.includes(node.id)) node.groupIds = [groupId];
+    })
+  );
+  act(() => {
+    io.canvasProps.selectExact(ids);
+    io.canvasProps.onCanvasStateChange({
+      activeTool: 'selection',
+      toolLocked: false,
+      zoom: 1,
+      viewBounds: null,
+    });
+  });
+  const toolbar = await screen.findByLabelText('elementActions');
+  fireEvent.click(within(toolbar).getByRole('button', { name: 'left' }));
+  const trigger = screen
+    .getAllByRole('button', { name: 'elementAlignment' })
+    .find(button => button.getAttribute('aria-haspopup') === 'menu')!;
+  fireEvent.pointerDown(trigger);
+  fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitemradio', { name: 'frame' }));
+  const distribute = within(screen.getByLabelText('elementActions')).getByRole('button', {
+    name: 'distributeHorizontal',
+  });
+  expect((distribute as HTMLButtonElement).disabled).toBe(false);
+  fireEvent.click(distribute);
+  expect(io.canvasProps.selected).toEqual(ids);
+  expect(studioDocumentV3Schema.safeParse(io.editor.v3Value).success).toBe(true);
+});
+
+it('persists a height-only frame resize through the canonical canvas transaction', async () => {
+  useCanonicalDocument();
+  await show();
+  const frame = structuredClone(
+    io.editor.v3Value.nodes.find((node: { type: string }) => node.type === 'frame')
+  );
+  act(() =>
+    io.canvasProps.applyCanvasChanges([
+      {
+        nodeId: frame.id,
+        transform: {
+          dx: 0,
+          dy: 0,
+          width: frame.transform.width,
+          height: frame.transform.height + 50,
+          rotation: frame.transform.rotation,
+          flipX: frame.transform.flipX,
+          flipY: frame.transform.flipY,
+        },
+      },
+    ])
+  );
+  expect(
+    io.editor.v3Value.nodes.find((node: { id: string }) => node.id === frame.id).transform
+  ).toEqual({ ...frame.transform, height: frame.transform.height + 50 });
+});
+
+it('selects a root-level shape from the layer tree without replacing the active root frame', async () => {
+  useCanonicalDocument();
+  const shape = io.editor.v3Value.nodes.find((node: { type: string }) => node.type === 'shape');
+  io.editor.transactV3((document: { nodes: { id: string; parentFrameId: string | null }[] }) => {
+    document.nodes.find(node => node.id === shape.id)!.parentFrameId = null;
+  });
+  await show();
+  const frameId = io.canvasProps.activeFrameId;
+  fireEvent.click(screen.getByRole('button', { name: 'layers' }));
+  const dialog = await screen.findByRole('dialog');
+  const row = within(dialog)
+    .getAllByRole('treeitem')
+    .find(row => row.getAttribute('data-studio-layer-id') === shape.id)!;
+  fireEvent.click(within(row).getByRole('button', { name: shape.name }));
+  await waitFor(() => expect(io.canvasProps.selected).toEqual([shape.id]));
+  expect(io.canvasProps.activeFrameId).toBe(frameId);
+});
 
 function Harness({
   projectId = 'project',

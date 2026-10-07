@@ -142,6 +142,31 @@ async function harness() {
   };
 }
 
+it('ignores other pointers during a marquee and preserves the existing selection on an additive blank click', async () => {
+  const { shapes, surface, worldToClient, drag, selectedIds } = await harness();
+  drag([50, 50], [250, 250]);
+  expect(selectedIds()).toEqual([shapes[0].id]);
+  drag([50, 50], [50, 50], true, false);
+  const other = {
+    ...worldToClient(900, 500),
+    pointerId: 99,
+    pointerType: 'mouse',
+    button: 0,
+    shiftKey: true,
+  };
+  fireEvent.pointerMove(surface, other);
+  fireEvent.pointerUp(surface, other);
+  expect(selectedIds()).toEqual([shapes[0].id]);
+  fireEvent.pointerUp(surface, {
+    ...worldToClient(50, 50),
+    pointerId: 10,
+    pointerType: 'mouse',
+    button: 0,
+    shiftKey: true,
+  });
+  expect(selectedIds()).toEqual([shapes[0].id]);
+});
+
 it('shows a marquee inside a frame, selects contained shapes, extends with Shift, and preserves frame-border selection', async () => {
   const { frame, shapes, host, surface, worldToClient, drag, selectedIds } = await harness();
   drag([50, 50], [550, 300], false, false);

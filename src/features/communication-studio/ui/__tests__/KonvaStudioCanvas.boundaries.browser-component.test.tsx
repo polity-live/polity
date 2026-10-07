@@ -5,6 +5,7 @@ import { expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { defaultBrand } from '../../logic/document';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
+import { createStudioCanvasNode } from '../../logic/studio-canvas-commands';
 import {
   mediaNodeSchema,
   studioDocumentV3Schema,
@@ -131,6 +132,194 @@ it('places a tall context toolbar below the native selection and uses its custom
   await waitFor(() => expect(parseFloat(toolbar.style.top)).toBeGreaterThan(bottom));
   await userEvent.click(screen.getByRole('button', { name: 'Native context action' }));
   expect(screen.getByRole('button', { name: 'Native context action' })).toHaveFocus();
+});
+
+it('uses the translated context-toolbar label when no explicit label is provided', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'Context label', defaultBrand);
+  const shape = document.nodes.find(node => node.type === 'shape')!;
+  await mount({ document, selected: [shape.id], context: true });
+  const toolbar = await screen.findByTestId('studio-context-toolbar');
+  expect(toolbar.getAttribute('aria-label')).toBeTruthy();
+  expect(toolbar).toHaveTextContent('Context action');
+});
+
+it('keeps user zoom and pan when the mounted free-canvas viewport is resized', async () => {
+  const { host, ref, state } = await mount();
+  await act(() => ref.current!.execute({ type: 'zoom', mode: 'in' }));
+  const before = structuredClone(state.current)!;
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  host.parentElement!.style.width = '1000px';
+  await waitFor(() => expect(stage.width()).toBe(1000));
+  expect(state.current?.zoom).toBe(before.zoom);
+  expect(state.current?.viewBounds?.left).toBe(before.viewBounds?.left);
+  expect(state.current?.viewBounds?.top).toBe(before.viewBounds?.top);
+  expect(state.current?.viewBounds?.right).toBeGreaterThan(before.viewBounds!.right);
+});
+
+it('clears existing toolbar geometry when a selected SDK group is removed before the next projection', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'Projection readiness', defaultBrand);
+  const shape = document.nodes.find(node => node.type === 'shape')!;
+  const { host } = await mount({ document, selected: [shape.id], context: true });
+  await screen.findByTestId('studio-context-toolbar');
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  const group = stage.findOne<Konva.Group>(`#${shape.id}`)!;
+  const transformer = stage.findOne<Konva.Transformer>('Transformer')!;
+  await act(() => {
+    group.destroy();
+    transformer.fire('transform');
+  });
+  expect(screen.queryByTestId('studio-context-toolbar')).toBeNull();
+  expect(document.nodes).toContain(shape);
+});
+
+it('opens rich text through the actual Konva double-tap event contract', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'SDK double tap', defaultBrand);
+  const text = document.nodes.find(node => node.type === 'richText')!;
+  const { host, select } = await mount({ document, selected: [text.id], fit: 'contain' });
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  const group = stage.findOne<Konva.Group>(`#${text.id}`)!;
+  const surface = host.querySelector('canvas')!;
+  const point = group.getAbsoluteTransform().point({ x: 10, y: 10 });
+  const bounds = surface.getBoundingClientRect();
+  const touch = new Touch({
+    identifier: 1,
+    target: surface,
+    clientX: bounds.left + point.x,
+    clientY: bounds.top + point.y,
+  });
+  const event = new TouchEvent('touchend', {
+    changedTouches: [touch],
+    bubbles: true,
+    cancelable: true,
+  });
+  surface.dispatchEvent(event);
+  await act(() => group.fire('dbltap', { evt: event }, true));
+  expect(await screen.findByLabelText('Text')).toBeTruthy();
+  expect(select).toHaveBeenCalledWith([text.id]);
+});
+
+it.each(['foreign input', 'pinch active'] as const)(
+  'rejects a canvas double tap while %s owns the native gesture',
+  async kind => {
+    const document = createStudioTemplateDocumentV5('single', 'Suppressed tap', defaultBrand);
+    const text = document.nodes.find(node => node.type === 'richText')!;
+    const { host, select } = await mount({
+      document,
+      selected: [text.id],
+      canvasProps: { inspector: <input aria-label="Native inspector input" /> },
+    });
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${text.id}`)!;
+    const surface = host.querySelector('canvas')!;
+    const input = screen.getByRole('textbox', { name: 'Native inspector input' });
+    const touch = new Touch({ identifier: 1, target: surface, clientX: 100, clientY: 100 });
+    if (kind === 'pinch active') {
+      const second = new Touch({ identifier: 2, target: surface, clientX: 200, clientY: 100 });
+      await act(() =>
+        surface.dispatchEvent(
+          new TouchEvent('touchstart', {
+            touches: [touch, second],
+            changedTouches: [touch, second],
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      );
+    }
+    const event = new TouchEvent('touchend', {
+      changedTouches: [touch],
+      bubbles: true,
+      cancelable: true,
+    });
+    (kind === 'foreign input' ? input : surface).dispatchEvent(event);
+    await act(() => group.fire('dbltap', { evt: event }, true));
+    expect(screen.queryByLabelText('Text')).toBeNull();
+    expect(select).not.toHaveBeenCalled();
+  }
+);
+
+it.each(['hand shape', 'text shape', 'text rich text'] as const)(
+  'handles the native SDK click contract for %s without a preceding pointer drag',
+  async kind => {
+    const document = createStudioTemplateDocumentV5('single', 'SDK activation', defaultBrand);
+    const node = document.nodes.find(
+      node => node.type === (kind === 'text rich text' ? 'richText' : 'shape')
+    )!;
+    const { host, ref, select } = await mount({ document, selected: [node.id] });
+    await act(() =>
+      ref.current!.execute({ type: 'setTool', tool: kind === 'hand shape' ? 'hand' : 'text' })
+    );
+    const stage = Konva.stages.find(item => host.contains(item.container()))!;
+    const group = stage.findOne<Konva.Group>(`#${node.id}`)!;
+    const surface = host.querySelector('canvas')!;
+    const event = new MouseEvent('click', { bubbles: true });
+    surface.dispatchEvent(event);
+    await act(() => group.fire('click', { evt: event }, true));
+    if (kind === 'text rich text') {
+      await screen.findByLabelText('Text');
+      expect(select).toHaveBeenCalledWith([node.id]);
+    } else {
+      expect(select).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText('Text')).toBeNull();
+    }
+  }
+);
+
+it('pans the actual crop through the touch-pointer SDK channel and commits the shifted image region', async () => {
+  const document = createStudioTemplateDocumentV5('single', 'SDK crop pan', defaultBrand);
+  const source = document.nodes.find(node => node.type === 'shape')!;
+  const media = mediaNodeSchema.parse({
+    ...source,
+    type: 'media',
+    mediaType: 'image',
+    assetId: crypto.randomUUID(),
+    transform: { ...source.transform, x: 80, y: 80, width: 300, height: 240 },
+  });
+  document.nodes = document.nodes.filter(node => node.type === 'frame');
+  document.nodes.push(media);
+  const commit = vi.fn();
+  const { host, ref } = await mount({
+    document,
+    selected: [media.id],
+    canvasProps: { onCropCommit: commit },
+    assets: [
+      {
+        id: media.assetId,
+        name: 'Wide image',
+        mime: 'image/svg+xml',
+        url:
+          'data:image/svg+xml,' +
+          encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="red"/></svg>'
+          ),
+      },
+    ],
+  });
+  await act(() => ref.current!.execute({ type: 'crop', action: 'start' }));
+  const stage = Konva.stages.find(item => host.contains(item.container()))!;
+  const group = stage.findOne<Konva.Group>(`#${media.id}`)!;
+  const surface = host.querySelector('canvas')!;
+  const point = group.getAbsoluteTransform().point({ x: 150, y: 120 });
+  const bounds = surface.getBoundingClientRect();
+  const pointer = {
+    pointerId: 51,
+    pointerType: 'touch',
+    button: -1,
+    clientX: bounds.left + point.x,
+    clientY: bounds.top + point.y,
+    bubbles: true,
+  };
+  const event = new PointerEvent('pointerdown', pointer);
+  surface.dispatchEvent(event);
+  await act(() => group.fire('pointerdown', { evt: event }, true));
+  fireEvent.pointerMove(surface, { ...pointer, clientX: pointer.clientX + 20 });
+  fireEvent.pointerUp(surface, pointer);
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(commit).toHaveBeenCalledOnce();
+  const draft = commit.mock.calls[0][1];
+  expect(draft.frame).toEqual(media.transform);
+  expect(draft.crop.x).toBeLessThan(50);
+  expect(draft.crop.naturalWidth).toBe(200);
 });
 
 it.each(['add', 'remove', 'update'] as const)(
@@ -919,8 +1108,29 @@ it('hands valid element-set drag data to the external drop boundary with finite 
 it.each(['draw', 'laser'] as const)(
   'previews a real %s gesture and passes its sampled points to the creation boundary',
   async tool => {
-    const create = vi.fn(() => null);
-    const { host, ref } = await mount({ canvasProps: { onCreateNode: create, guides: true } });
+    const document = studioDocumentV3Schema.parse(
+      createStudioTemplateDocumentV5('single', 'Native drawing', defaultBrand)
+    );
+    const create = vi.fn<NonNullable<ComponentProps<typeof KonvaStudioCanvas>['onCreateNode']>>(
+      (tool, start, end, rounded, points) =>
+        createStudioCanvasNode({
+          document,
+          canEdit: true,
+          tool,
+          start,
+          end,
+          rounded,
+          points,
+          transact: change => {
+            change(document);
+            studioDocumentV3Schema.parse(document);
+          },
+        })
+    );
+    const { host, ref, select, state } = await mount({
+      document,
+      canvasProps: { onCreateNode: create, guides: true },
+    });
     const stage = Konva.stages.find(item => host.contains(item.container()))!;
     const surface = host.querySelector('canvas')!;
     await act(() => ref.current!.execute({ type: 'setTool', tool }));
@@ -953,6 +1163,11 @@ it.each(['draw', 'laser'] as const)(
       false,
       expect.any(Array)
     );
+    const id = create.mock.results[0].value;
+    expect(id).toBeTruthy();
+    expect(document.nodes.find(node => node.id === id)?.type).toBe('drawing');
+    expect(select).toHaveBeenCalledWith([id]);
+    expect(state.current?.activeTool).toBe('selection');
   }
 );
 

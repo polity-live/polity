@@ -3,7 +3,9 @@ import './studio-fonts.css';
 import './studio-canvas.css';
 import { canvasFocusTarget, canvasFocusView, freeCanvasRectangle } from '../logic/canvas-focus';
 import { createPortal } from 'react-dom';
-import {
+import React from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+const {
   forwardRef,
   useCallback,
   useEffect,
@@ -13,9 +15,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react';
+} = React;
 import {
   Stage,
   Layer,
@@ -42,10 +42,19 @@ import type {
 import { studioSceneChildren, studioScenePaintOrder } from '../logic/studio-scene';
 import { paintStudioRichText } from '../logic/rich-text-paint';
 import { isDescendantOf, worldBounds, type Bounds } from '../logic/selection-geometry';
+import { studioCanvasSelectionBounds } from '../logic/canvas-selection-bounds';
+import { studioCanvasAncestors } from '../logic/canvas-ancestry';
+import { observeStudioCanvasContent } from '../logic/canvas-content';
 import { canvasMarqueeSelectionIds, canvasSelectionIds } from '../logic/studio-selection';
 import { drawStudioElement } from '../logic/draw-element';
 import { semanticElement } from '../logic/v3-adapter';
 import { configureStudioCanvasSurfaces } from '../logic/canvas-surfaces';
+import {
+  createStudioCropGesture,
+  updateStudioCropGesture,
+  type CanvasCropDraft,
+  type CanvasCropGesture,
+} from '../logic/canvas-crop-gesture';
 import {
   createStudioDragPreview,
   updateStudioDragPreview,
@@ -59,8 +68,6 @@ import {
 import type { StudioElement, StudioMediaCrop } from '../logic/document';
 import {
   initialMediaCrop,
-  panMediaCrop,
-  resizeMediaCrop,
   studioMediaGeometry,
   zoomMediaCrop,
   type CropHandle,
@@ -531,14 +538,7 @@ function EditorPortal({
   pan: { x: number; y: number };
   children: ReactNode;
 }) {
-  const ancestors: StudioNode[] = [];
-  let parentId = node.parentFrameId;
-  while (parentId) {
-    const parent = document.nodes.find(candidate => candidate.id === parentId);
-    if (!parent) break;
-    ancestors.unshift(parent);
-    parentId = parent.parentFrameId;
-  }
+  const ancestors = studioCanvasAncestors(document.nodes, node.parentFrameId);
   const wrap = (item: StudioNode, content: ReactNode) => {
     const t = item.transform;
     const style: CSSProperties = {
@@ -575,20 +575,6 @@ function EditorPortal({
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>{content}</div>
     </div>
   );
-}
-
-interface CanvasCropDraft {
-  nodeId: string;
-  state: MediaCropState;
-  zoom: number;
-}
-
-interface CanvasCropGesture {
-  nodeId: string;
-  kind: 'pan' | CropHandle;
-  start: { x: number; y: number };
-  inverse: Konva.Transform;
-  initial: MediaCropState;
 }
 
 interface CanvasToolGesture {
@@ -824,24 +810,10 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         setContextToolbarBounds(null);
         return;
       }
-      const rectangles = props.selected.flatMap(id => {
-        const rendered = stageNode.findOne(`#${id}`);
-        if (!rendered) return [];
-        const rect = rendered.getClientRect({ relativeTo: stageNode, skipStroke: true });
-        return Number.isFinite(rect.x) && Number.isFinite(rect.y) ? [rect] : [];
-      });
-      if (!rectangles.length) {
-        setContextToolbarBounds(null);
-        return;
-      }
-      const next = {
-        left: Math.min(...rectangles.map(rect => rect.x)) * zoom + pan.x,
-        top: Math.min(...rectangles.map(rect => rect.y)) * zoom + pan.y,
-        right: Math.max(...rectangles.map(rect => rect.x + rect.width)) * zoom + pan.x,
-        bottom: Math.max(...rectangles.map(rect => rect.y + rect.height)) * zoom + pan.y,
-      };
+      const next = studioCanvasSelectionBounds(stageNode, props.selected, zoom, pan);
       setContextToolbarBounds(current =>
         current &&
+        next &&
         Object.keys(next).every(key => current[key as keyof Bounds] === next[key as keyof Bounds])
           ? current
           : next
@@ -953,86 +925,87 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     }, [props.editable, props.fit]);
     useEffect(() => {
       if (!props.editable || props.fit === 'contain') return;
-      const content = stage.current?.content;
-      if (!content) return;
-      const geometry = (touches: TouchList) => {
-        const bounds = content.getBoundingClientRect();
-        const first = touches[0];
-        const second = touches[1];
-        return {
-          center: {
-            x: (first.clientX + second.clientX) / 2 - bounds.left,
-            y: (first.clientY + second.clientY) / 2 - bounds.top,
-          },
-          distance: Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY),
+      return observeStudioCanvasContent(stage.current, content => {
+        const geometry = (touches: TouchList) => {
+          const bounds = content.getBoundingClientRect();
+          const first = touches[0];
+          const second = touches[1];
+          return {
+            center: {
+              x: (first.clientX + second.clientX) / 2 - bounds.left,
+              y: (first.clientY + second.clientY) / 2 - bounds.top,
+            },
+            distance: Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY),
+          };
         };
-      };
-      const onTouchStart = (event: TouchEvent) => {
-        if (
-          event.target instanceof Element &&
-          event.target.closest('[contenteditable="true"],input,textarea,select')
-        )
-          return;
-        if (touchResetTimer.current) clearTimeout(touchResetTimer.current);
-        if (event.touches.length < 2) {
-          if (event.touches.length === 1 && !touchGesture.current) touchSuppressed.current = false;
-          return;
-        }
-        event.preventDefault();
-        touchSuppressed.current = true;
-        textGesture.current = null;
-        suppressTextClick.current = true;
-        setGesture(null);
-        marqueeRef.current = null;
-        setMarquee(null);
-        panPointer.current = null;
-        cropGesture.current = null;
-        if (transformer.current?.isTransforming()) transformer.current.stopTransform();
-        stage.current
-          ?.find((node: Konva.Node) => node.isDragging())
-          .forEach(node => node.stopDrag());
-        touchGesture.current = geometry(event.touches);
-      };
-      const onTouchMove = (event: TouchEvent) => {
-        if (event.touches.length < 2 || !touchGesture.current) return;
-        event.preventDefault();
-        const next = geometry(event.touches);
-        const previous = touchGesture.current;
-        const currentZoom = zoomRef.current;
-        const nextZoom = Math.max(
-          0.05,
-          Math.min(4, currentZoom * (next.distance / Math.max(1, previous.distance)))
-        );
-        const nextPan = {
-          x: next.center.x - ((previous.center.x - panRef.current.x) * nextZoom) / currentZoom,
-          y: next.center.y - ((previous.center.y - panRef.current.y) * nextZoom) / currentZoom,
+        const onTouchStart = (event: TouchEvent) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest('[contenteditable="true"],input,textarea,select')
+          )
+            return;
+          if (touchResetTimer.current) clearTimeout(touchResetTimer.current);
+          if (event.touches.length < 2) {
+            if (event.touches.length === 1 && !touchGesture.current)
+              touchSuppressed.current = false;
+            return;
+          }
+          event.preventDefault();
+          touchSuppressed.current = true;
+          textGesture.current = null;
+          suppressTextClick.current = true;
+          setGesture(null);
+          marqueeRef.current = null;
+          setMarquee(null);
+          panPointer.current = null;
+          cropGesture.current = null;
+          if (transformer.current?.isTransforming()) transformer.current.stopTransform();
+          stage.current
+            ?.find((node: Konva.Node) => node.isDragging())
+            .forEach(node => node.stopDrag());
+          touchGesture.current = geometry(event.touches);
         };
-        zoomRef.current = nextZoom;
-        panRef.current = nextPan;
-        setZoom(nextZoom);
-        setPan(nextPan);
-        touchGesture.current = next;
-      };
-      const onTouchEnd = (event: TouchEvent) => {
-        if (touchGesture.current || touchSuppressed.current) event.preventDefault();
-        if (event.touches.length < 2) touchGesture.current = null;
-        if (event.touches.length === 0 && touchSuppressed.current) {
-          touchResetTimer.current = setTimeout(() => {
-            touchSuppressed.current = false;
-          }, 350);
-        }
-      };
-      content.addEventListener('touchstart', onTouchStart, { capture: true, passive: false });
-      content.addEventListener('touchmove', onTouchMove, { capture: true, passive: false });
-      content.addEventListener('touchend', onTouchEnd, { capture: true, passive: false });
-      content.addEventListener('touchcancel', onTouchEnd, { capture: true, passive: false });
-      return () => {
-        if (touchResetTimer.current) clearTimeout(touchResetTimer.current);
-        content.removeEventListener('touchstart', onTouchStart, true);
-        content.removeEventListener('touchmove', onTouchMove, true);
-        content.removeEventListener('touchend', onTouchEnd, true);
-        content.removeEventListener('touchcancel', onTouchEnd, true);
-      };
+        const onTouchMove = (event: TouchEvent) => {
+          if (event.touches.length < 2 || !touchGesture.current) return;
+          event.preventDefault();
+          const next = geometry(event.touches);
+          const previous = touchGesture.current;
+          const currentZoom = zoomRef.current;
+          const nextZoom = Math.max(
+            0.05,
+            Math.min(4, currentZoom * (next.distance / Math.max(1, previous.distance)))
+          );
+          const nextPan = {
+            x: next.center.x - ((previous.center.x - panRef.current.x) * nextZoom) / currentZoom,
+            y: next.center.y - ((previous.center.y - panRef.current.y) * nextZoom) / currentZoom,
+          };
+          zoomRef.current = nextZoom;
+          panRef.current = nextPan;
+          setZoom(nextZoom);
+          setPan(nextPan);
+          touchGesture.current = next;
+        };
+        const onTouchEnd = (event: TouchEvent) => {
+          if (touchGesture.current || touchSuppressed.current) event.preventDefault();
+          if (event.touches.length < 2) touchGesture.current = null;
+          if (event.touches.length === 0 && touchSuppressed.current) {
+            touchResetTimer.current = setTimeout(() => {
+              touchSuppressed.current = false;
+            }, 350);
+          }
+        };
+        content.addEventListener('touchstart', onTouchStart, { capture: true, passive: false });
+        content.addEventListener('touchmove', onTouchMove, { capture: true, passive: false });
+        content.addEventListener('touchend', onTouchEnd, { capture: true, passive: false });
+        content.addEventListener('touchcancel', onTouchEnd, { capture: true, passive: false });
+        return () => {
+          if (touchResetTimer.current) clearTimeout(touchResetTimer.current);
+          content.removeEventListener('touchstart', onTouchStart, true);
+          content.removeEventListener('touchmove', onTouchMove, true);
+          content.removeEventListener('touchend', onTouchEnd, true);
+          content.removeEventListener('touchcancel', onTouchEnd, true);
+        };
+      });
     }, [props.editable, props.fit, viewport.width, viewport.height]);
     useEffect(() => {
       props.onCanvasStateChange?.({
@@ -1380,6 +1353,20 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       ]
     );
 
+    const openNode = (node: StudioNode) => {
+      if (node.type === 'richText' && props.editable && !node.locked) {
+        props.selectExact?.([node.id]);
+        setPendingTextEdit(node.id);
+      }
+      if (
+        !cropDraft &&
+        node.type === 'media' &&
+        props.editable &&
+        !node.locked &&
+        (node.mediaType === 'image' || node.mediaType === 'video')
+      )
+        void startCrop(node.id);
+    };
     const selectNode = (id: string, shift: boolean) => {
       props.selectExact?.(canvasSelectionIds(props.document, props.selected, id, shift));
     };
@@ -1416,44 +1403,15 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       clientX: number,
       clientY: number
     ) => {
-      if (!cropDraft || cropDraft.nodeId !== nodeId) return;
-      const stageNode = stage.current;
-      const group = stageNode?.findOne(`#${nodeId}`);
-      if (!stageNode || !group) return;
-      const bounds = stageNode.container().getBoundingClientRect();
-      const point = {
-        x: ((clientX - bounds.left) * stageNode.width()) / bounds.width,
-        y: ((clientY - bounds.top) * stageNode.height()) / bounds.height,
-      };
-      const inverse = group.getAbsoluteTransform().copy().invert();
-      const local = inverse.point(point);
-      let resolvedKind = kind;
-      if (kind === 'pan') {
-        const threshold = Math.max(5, 12 / zoom);
-        const horizontal =
-          local.x <= threshold
-            ? 'left'
-            : local.x >= cropDraft.state.frame.width - threshold
-              ? 'right'
-              : '';
-        const vertical =
-          local.y <= threshold
-            ? 'top'
-            : local.y >= cropDraft.state.frame.height - threshold
-              ? 'bottom'
-              : '';
-        resolvedKind =
-          horizontal && vertical
-            ? (`${vertical}-${horizontal}` as CropHandle)
-            : ((horizontal || vertical || 'pan') as CropHandle | 'pan');
-      }
-      cropGesture.current = {
+      cropGesture.current = createStudioCropGesture({
+        draft: cropDraft,
+        stage: stage.current,
         nodeId,
-        kind: resolvedKind,
-        start: local,
-        inverse,
-        initial: cropDraft.state,
-      };
+        kind,
+        clientX,
+        clientY,
+        zoom,
+      });
     };
 
     const cropControls = (node: StudioNode) => {
@@ -1692,18 +1650,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   touchSuppressed.current
                 )
                   return;
-                if (node.type === 'richText' && props.editable && !node.locked) {
-                  props.selectExact?.([node.id]);
-                  setPendingTextEdit(node.id);
-                }
-                if (
-                  !cropDraft &&
-                  node.type === 'media' &&
-                  props.editable &&
-                  !node.locked &&
-                  (node.mediaType === 'image' || node.mediaType === 'video')
-                )
-                  void startCrop(node.id);
+                openNode(node);
               }}
               onDblTap={event => {
                 if (
@@ -1712,18 +1659,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   touchSuppressed.current
                 )
                   return;
-                if (node.type === 'richText' && props.editable && !node.locked) {
-                  props.selectExact?.([node.id]);
-                  setPendingTextEdit(node.id);
-                }
-                if (
-                  !cropDraft &&
-                  node.type === 'media' &&
-                  props.editable &&
-                  !node.locked &&
-                  (node.mediaType === 'image' || node.mediaType === 'video')
-                )
-                  void startCrop(node.id);
+                openNode(node);
               }}
               onDragStart={event => {
                 if (event.target !== event.currentTarget || touchSuppressed.current) return;
@@ -1992,22 +1928,16 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             if (event.evt.pointerType === 'touch' && touchSuppressed.current) return;
             if (event.evt.button !== 0 && event.evt.pointerType !== 'touch') return;
             if (cropDraft) {
-              const stageNode = stage.current;
-              const group = stageNode?.findOne(`#${cropDraft.nodeId}`);
-              if (stageNode && group) {
-                const bounds = stageNode.container().getBoundingClientRect();
-                const local = group
-                  .getAbsoluteTransform()
-                  .copy()
-                  .invert()
-                  .point({
-                    x: ((event.evt.clientX - bounds.left) * stageNode.width()) / bounds.width,
-                    y: ((event.evt.clientY - bounds.top) * stageNode.height()) / bounds.height,
-                  });
-                const { width, height } = cropDraft.state.frame;
-                if (local.x >= -5 && local.x <= width + 5 && local.y >= -5 && local.y <= height + 5)
-                  beginCropGesture(cropDraft.nodeId, 'pan', event.evt.clientX, event.evt.clientY);
-              }
+              cropGesture.current = createStudioCropGesture({
+                draft: cropDraft,
+                stage: event.currentTarget as Konva.Stage,
+                nodeId: cropDraft.nodeId,
+                kind: 'pan',
+                clientX: event.evt.clientX,
+                clientY: event.evt.clientY,
+                zoom,
+                insideFrameOnly: true,
+              });
               return;
             }
             const point = scenePoint(event.evt.clientX, event.evt.clientY);
@@ -2030,13 +1960,10 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 };
                 marqueeRef.current = next;
                 setMarquee(next);
-                const target = event.evt.target;
-                if (target instanceof Element && 'setPointerCapture' in target) {
-                  try {
-                    target.setPointerCapture(event.evt.pointerId);
-                  } catch {
-                    /* Synthetic pointer events have no active browser pointer. */
-                  }
+                try {
+                  (event.evt.target as HTMLCanvasElement).setPointerCapture(event.evt.pointerId);
+                } catch {
+                  /* Unavailable capture or a synthetic pointer has no active browser pointer. */
                 }
               }
               return;
@@ -2091,23 +2018,15 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             }
             if (cropGesture.current) {
               const gesture = cropGesture.current;
-              const stageNode = stage.current;
-              if (stageNode) {
-                const bounds = stageNode.container().getBoundingClientRect();
-                const local = gesture.inverse.point({
-                  x: ((event.evt.clientX - bounds.left) * stageNode.width()) / bounds.width,
-                  y: ((event.evt.clientY - bounds.top) * stageNode.height()) / bounds.height,
-                });
-                const dx = local.x - gesture.start.x;
-                const dy = local.y - gesture.start.y;
-                const state =
-                  gesture.kind === 'pan'
-                    ? panMediaCrop(gesture.initial, dx, dy)
-                    : resizeMediaCrop(gesture.initial, gesture.kind, dx, dy);
-                setCropDraft(current =>
-                  current?.nodeId === gesture.nodeId ? { ...current, state } : current
-                );
-              }
+              setCropDraft(current =>
+                updateStudioCropGesture({
+                  draft: current,
+                  gesture,
+                  stage: event.currentTarget as Konva.Stage,
+                  clientX: event.evt.clientX,
+                  clientY: event.evt.clientY,
+                })
+              );
               return;
             }
             if (!gesture) return;
@@ -2335,8 +2254,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 ref={transformer}
                 rotateEnabled
                 onTransform={refreshContextToolbarBounds}
-                onTransformEnd={() => {
-                  const items = transformer.current?.nodes() ?? [];
+                onTransformEnd={event => {
+                  const items = (event.currentTarget as Konva.Transformer).nodes();
                   if (touchSuppressed.current) {
                     restoreStudioCanvasTransforms(props.document, items);
                     return;

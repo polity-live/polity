@@ -108,9 +108,15 @@ import {
   type ArrangementReference,
 } from '../logic/selection-geometry';
 import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
-import { paletteColor, themeFontFamily } from '../logic/theme';
+import { applyStudioSelectionTextStyle } from '../logic/studio-text-style';
+import { selectStudioEditorTheme, insertStudioEditorTable } from '../logic/studio-editor-commands';
 import { renameStudioNode } from '../logic/rename-studio-node';
 import { buildStudioPresence } from '../logic/studio-presence';
+import { executeStudioCanvasClipboard } from '../logic/studio-canvas-clipboard';
+import {
+  pasteStudioProjectClipboard,
+  studioClipboardErrorMessage,
+} from '../logic/studio-project-clipboard';
 import {
   updateStudioNode,
   updateStudioNodeConstraint,
@@ -127,15 +133,7 @@ import {
   toggleStudioSelectionLock,
   cutStudioSelection,
 } from '../logic/studio-selection-commands';
-import {
-  createStudioV3ClipboardPayload,
-  getProjectStudioClipboard,
-  parseStudioClipboard,
-  pasteStudioV3Clipboard,
-  setProjectStudioClipboard,
-  stringifyStudioClipboard,
-  type StudioClipboardV2Payload,
-} from '../logic/studio-clipboard';
+import { pasteStudioV3Clipboard, type StudioClipboardV2Payload } from '../logic/studio-clipboard';
 import { useStudioViewportStore, type StudioTool } from '../state/studio-viewport-store';
 import type {
   StudioCanvasHandle,
@@ -192,29 +190,16 @@ export function StudioEditor({
     emptyPasteBusy.current = true;
     setEmptyPastePending(true);
     try {
-      let payload = getProjectStudioClipboard(projectId);
-      if (!payload) {
-        try {
-          const text = (await navigator.clipboard?.readText?.()) ?? '';
-          payload = text ? parseStudioClipboard(text) : null;
-        } catch {
-          // The project-bound in-memory clipboard is the permission-independent fallback.
-        }
-      }
-      if (!payload) throw new Error('The Studio clipboard is empty.');
-      if (payload.projectId !== projectId)
-        throw new Error('Elements can only be pasted within the same Studio project.');
-      let selectedNodeIds: string[] = [];
-      c.transactV3(document => {
-        const pasted = pasteStudioV3Clipboard({ document, payload, projectId });
-        Object.assign(document, pasted.document);
-        selectedNodeIds = pasted.selectedNodeIds;
+      await pasteStudioProjectClipboard({
+        projectId,
+        clipboard: navigator.clipboard,
+        transact: c.transactV3,
+        select: c.selectExact,
+        setPageId: c.setPageId,
       });
-      c.selectExact(selectedNodeIds);
-      if (selectedNodeIds[0]) c.setPageId(selectedNodeIds[0]);
       setEmptyClipboardError('');
     } catch (error) {
-      setEmptyClipboardError(error instanceof Error ? error.message : String(error));
+      setEmptyClipboardError(studioClipboardErrorMessage(error));
     } finally {
       emptyPasteBusy.current = false;
       setEmptyPastePending(false);
@@ -698,38 +683,18 @@ function StudioEditorReady({
     });
   const changeCanvasText = (id: string, content: StudioPlateElement[]) =>
     changeStudioCanvasText({ id, content, transact: c.transactV3 });
-  const canvasClipboard = async (action: 'copy' | 'cut' | 'paste') => {
-    if (!c.v3Value) return;
-    if (action === 'copy' || action === 'cut') {
-      const payload = createStudioV3ClipboardPayload({
-        projectId,
-        selectedNodeIds,
-        document: c.v3Value,
-      });
-      if (!payload) return;
-      setProjectStudioClipboard(payload);
-      try {
-        await navigator.clipboard.writeText(stringifyStudioClipboard(payload));
-      } catch {
-        /* Project clipboard remains available. */
-      }
-      if (action === 'cut') {
-        cutV3Clipboard(selectedNodeIds);
-        c.selectExact([]);
-      }
-      return;
-    }
-    let clipboard = '';
-    try {
-      clipboard = await navigator.clipboard.readText();
-    } catch {
-      /* Use project clipboard. */
-    }
-    const parsed = parseStudioClipboard(clipboard) ?? getProjectStudioClipboard(projectId);
-    if (!parsed) return;
-    const ids = pasteV3Clipboard(parsed, page.id);
-    c.selectExact(ids);
-  };
+  const canvasClipboard = (action: 'copy' | 'cut' | 'paste') =>
+    executeStudioCanvasClipboard({
+      action,
+      document: c.v3Value,
+      projectId,
+      selectedNodeIds,
+      targetFrameId: page.id,
+      clipboard: navigator.clipboard,
+      cut: cutV3Clipboard,
+      paste: pasteV3Clipboard,
+      select: c.selectExact,
+    });
   const formatText = (key: string, v: unknown) => {
     if (textEditor.current) {
       if (['align', 'list'].includes(key)) textEditor.current.paragraph(key, v);
@@ -739,23 +704,15 @@ function StudioEditorReady({
       }
     } else formatStudioCanvasText({ active, property: key, value: v, transact: c.transactV3 });
   };
-  const applyTextStyle = (styleId: string) => {
-    const style = c.theme?.textStyles.find(item => item.id === styleId);
-    if (!style || !c.themePalette) return;
-    if (textEditor.current && active?.type === 'text') {
-      textEditor.current.setMark('textStyleId', style.id);
-      textEditor.current.setMark('fontFamily', themeFontFamily(style.font));
-      textEditor.current.setMark('fontSize', style.size);
-      textEditor.current.setMark('colorBinding', style.color);
-      textEditor.current.setMark('color', paletteColor(c.themePalette, style.color));
-      textEditor.current.setMark('bold', style.bold);
-      textEditor.current.setMark('italic', style.italic);
-      textEditor.current.setMark('underline', style.underline);
-      textEditor.current.paragraph('align', style.align);
-      return;
-    }
-    c.applyTextStyle(styleId);
-  };
+  const applyTextStyle = (styleId: string) =>
+    applyStudioSelectionTextStyle({
+      styleId,
+      theme: c.theme,
+      palette: c.themePalette,
+      editor: textEditor.current,
+      active,
+      applyToSelection: c.applyTextStyle,
+    });
   useEffect(() => {
     const key = (ev: KeyboardEvent) => {
       const target = ev.target as HTMLElement;
@@ -1587,12 +1544,13 @@ function StudioEditorReady({
             <TableSizePicker
               key={tableInsertCount}
               label={tr('tableSize')}
-              onSelect={dimensions => {
-                const id = c.addTable(dimensions);
-                if (id) {
-                  setTableInsertCount(value => value + 1);
-                }
-              }}
+              onSelect={dimensions =>
+                insertStudioEditorTable({
+                  dimensions,
+                  insert: c.addTable,
+                  inserted: () => setTableInsertCount(value => value + 1),
+                })
+              }
             />
           </StudioToolbarMenu>
           <ToolbarButton
@@ -2017,10 +1975,14 @@ function StudioEditorReady({
                 className={input}
                 value={c.theme?.themeId}
                 disabled={disabled}
-                onChange={event => {
-                  const theme = c.themes.find(item => item.themeId === event.currentTarget.value);
-                  if (theme) c.applyTheme({ ...theme, mode: c.theme?.mode ?? 'light' });
-                }}
+                onChange={event =>
+                  selectStudioEditorTheme({
+                    themes: c.themes,
+                    themeId: event.currentTarget.value,
+                    current: c.theme,
+                    apply: c.applyTheme,
+                  })
+                }
               >
                 {c.themes.map(theme => (
                   <option
