@@ -1,3 +1,4 @@
+import { useProjectTextSelection } from '@/features/project-chat/hooks/editor-bridge';
 import * as React from 'react';
 
 import { type Value, type TElement } from 'platejs';
@@ -160,6 +161,7 @@ export function PlateEditor({
   }, [isControlled, initialValue, currentUser, users, documentTitle, documentId, showFixedToolbar]);
 
   const editor = usePlateEditor(editorConfig);
+  useProjectTextSelection(documentId, () => editor.selection);
 
   const hasLoggedDebugReady = React.useRef(false);
   React.useEffect(() => {
@@ -946,7 +948,7 @@ const platePlaygroundDemoValue = [
       {
         children: [
           {
-            children: [{ children: [{ text: 'Collaboration (Yjs)' }], type: 'p' }],
+            children: [{ children: [{ text: 'Realtime collaboration' }], type: 'p' }],
             type: 'td',
           },
           {
@@ -960,7 +962,7 @@ const platePlaygroundDemoValue = [
             type: 'td',
           },
           {
-            children: [{ children: [{ text: 'Hocuspocus (OSS/Paid)' }], type: 'p' }],
+            children: [{ children: [{ text: 'External provider' }], type: 'p' }],
             type: 'td',
           },
         ],

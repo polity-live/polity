@@ -1,6 +1,5 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlInput } from '@/features/shared/ui/form';
 /**
  * Editor Header Component
@@ -9,8 +8,9 @@ import { FormControlInput } from '@/features/shared/ui/form';
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Loader2, Eye, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { EditorSaveStatus } from './EditorSaveStatus';
 
 interface EditorHeaderProps {
   title: string;
@@ -82,30 +82,11 @@ export function EditorHeader({
       {/* Status badge */}
       {statusBadge}
 
-      {/* Save status */}
-      <div className="text-muted-foreground flex w-full min-w-0 items-center gap-2 text-xs md:w-auto md:shrink-0">
-        {saveStatus === 'saving' || isSavingTitle ? (
-          <>
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>{t('features.editor.header.saving')}</span>
-          </>
-        ) : saveStatus === 'error' ? (
-          <>
-            <span className="text-destructive">⚠️ {t('features.editor.header.saveFailed')}</span>
-          </>
-        ) : hasUnsavedChanges ? (
-          <>
-            <span className={featureThemeClassName('editorEditorHeaderWarningText')}>
-              {t('features.editor.header.unsavedChanges')}
-            </span>
-          </>
-        ) : (
-          <>
-            <Eye className="h-3 w-3" />
-            <span>{t('features.editor.header.allSaved')}</span>
-          </>
-        )}
-      </div>
+      <EditorSaveStatus
+        saveStatus={saveStatus}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isSavingTitle={isSavingTitle}
+      />
     </div>
   );
 }

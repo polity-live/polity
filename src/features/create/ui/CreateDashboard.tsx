@@ -7,6 +7,7 @@ import {
   DollarSign,
   FileText,
   Scale,
+  PanelsTopLeft,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -44,6 +45,12 @@ export function CreateDashboard() {
           icon: BookOpen,
           title: t('pages.create.blog.pageTitle'),
           description: t('pages.create.blog.description'),
+        },
+        {
+          href: '/create/studio-project',
+          icon: PanelsTopLeft,
+          title: t('pages.create.studioProject.title'),
+          description: t('pages.create.studioProject.description'),
         },
       ],
     },

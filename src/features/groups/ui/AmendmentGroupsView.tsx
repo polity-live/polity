@@ -23,6 +23,8 @@ interface AmendmentGroupsViewProps {
     key: GroupAmendmentDisplayStatus;
     label: string;
     count: number;
+    ids?: string[];
+    context?: object;
     items: {
       id: string;
       cardAmendment: ComponentProps<typeof AmendmentTimelineCard>['amendment'];
@@ -82,17 +84,19 @@ export function AmendmentGroupsView({
                 <div className="p-4">
                   {groupId ? (
                     <PolityZeroGridView<any, { created_at: number; id: string }, any>
-                      context={{
-                        groupId,
-                        displayStatus: section.key,
-                        query: queryFilters.searchQuery,
-                        hashtag: queryFilters.hashtagFilter,
-                      }}
+                      context={
+                        section.context ?? {
+                          groupId,
+                          displayStatus: section.key,
+                          query: queryFilters.searchQuery,
+                          hashtag: queryFilters.hashtagFilter,
+                        }
+                      }
                       historyKey={`group-${groupId}-amendments-${section.key}`}
                       getPageQuery={({ limit, start, dir, settled }) => ({
                         query: queries.amendments.groupAmendmentPage({
                           groupId,
-                          displayStatus: section.key,
+                          ids: section.ids,
                           query: queryFilters.searchQuery,
                           hashtag: queryFilters.hashtagFilter || undefined,
                           limit,

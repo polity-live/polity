@@ -1,4 +1,11 @@
-const GUEST_ACCESSIBLE_ENTITY_PREFIXES = ['/user/', '/group/', '/amendment/', '/event/', '/blog/'];
+const GUEST_ACCESSIBLE_ENTITY_PREFIXES = [
+  '/user/',
+  '/group/',
+  '/amendment/',
+  '/event/',
+  '/blog/',
+  '/studio/',
+];
 
 const GUEST_RESTRICTED_ENTITY_SEGMENTS = [
   '/settings',

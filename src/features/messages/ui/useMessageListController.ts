@@ -7,6 +7,7 @@ import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 import { queries } from '@/zero/queries';
 import { getOtherParticipant } from '../logic/messageUtils';
 import type { Conversation, Message } from '../types/message.types';
+import type { MessageTimelineItem } from './MessageList';
 
 interface StreamingAssistantMessage {
   text: string;
@@ -26,7 +27,14 @@ interface MessageStart {
 }
 
 export type VirtualMessageRow =
-  | { type: 'message'; index: number; key: string | number; message?: Message }
+  | {
+      type: 'message';
+      index: number;
+      key: string | number;
+      message?: Message;
+      timelineBefore?: MessageTimelineItem[];
+      timelineAfter?: MessageTimelineItem[];
+    }
   | { type: 'streaming'; key: 'streaming'; streaming: StreamingAssistantMessage }
   | { type: 'conversation-request'; key: 'conversation-request' };
 
@@ -41,6 +49,8 @@ interface MessageListProps {
   onRejectConversation: (conversation: Conversation) => void;
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: StreamingAssistantMessage;
+  timelineItems?: MessageTimelineItem[];
+  active?: boolean;
 }
 
 function isNearBottom(element: HTMLElement, threshold = 96) {
@@ -56,6 +66,8 @@ export function useMessageListController({
   onRejectConversation,
   resolveAttachmentCardData,
   streamingAssistantMessage,
+  timelineItems = [],
+  active = true,
 }: MessageListProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -76,7 +88,9 @@ export function useMessageListController({
   const virtualList = usePolityZeroList<typeof listContextParams, Message, MessageStart>({
     scrollStateKey: `messages-thread-${conversation.id}`,
     listContextParams,
-    getScrollElement: useCallback(() => scrollRef.current, []),
+    // A minimized dock keeps the conversation mounted, but has no viewport.
+    // Detach its virtualizer so zero-height geometry cannot drive pagination.
+    getScrollElement: useCallback(() => (active ? scrollRef.current : null), [active]),
     estimateSize: useCallback(() => 92, []),
     overscan: 10,
     getRowKey: message => message.id,
@@ -102,9 +116,18 @@ export function useMessageListController({
     ),
     permalinkID: initialAnchorRef.current.messageId ?? undefined,
   });
-  useStickToBottom(virtualList);
+  useStickToBottom(virtualList, { enabled: active });
 
-  const otherUser = getOtherParticipant(conversation, currentUserId);
+  const otherUser =
+    conversation.type === 'project_ai'
+      ? {
+          id: 'a12a0000-0000-4000-a000-000000000001',
+          first_name: 'Aria & Kai',
+          last_name: null,
+          avatar: '/avatars/aria-kai-avatar-256.webp',
+          handle: 'aria-kai',
+        }
+      : getOtherParticipant(conversation, currentUserId);
   const otherParticipantName =
     [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
     t('common.labels.unspecifiedUser');
@@ -116,6 +139,24 @@ export function useMessageListController({
       message: item.row,
     }));
 
+    const messageRows = rows.filter(
+      (row): row is Extract<VirtualMessageRow, { type: 'message' }> => row.type === 'message'
+    );
+    const resolvedRows = messageRows.filter(
+      (row): row is Extract<VirtualMessageRow, { type: 'message' }> & { message: Message } =>
+        Boolean(row.message)
+    );
+    for (const item of [...timelineItems].sort((a, b) => a.createdAt - b.createdAt)) {
+      const preceding = [...resolvedRows]
+        .reverse()
+        .find(row => Number(row.message.created_at) <= item.createdAt);
+      if (preceding) {
+        preceding.timelineAfter = [...(preceding.timelineAfter ?? []), item];
+      } else if (resolvedRows[0]) {
+        resolvedRows[0].timelineBefore = [...(resolvedRows[0].timelineBefore ?? []), item];
+      }
+    }
+
     if (streamingAssistantMessage) {
       rows.push({ type: 'streaming', key: 'streaming', streaming: streamingAssistantMessage });
     }
@@ -123,7 +164,7 @@ export function useMessageListController({
       rows.push({ type: 'conversation-request', key: 'conversation-request' });
     }
     return rows;
-  }, [conversation, streamingAssistantMessage, virtualList.items]);
+  }, [conversation, streamingAssistantMessage, timelineItems, virtualList.items]);
 
   const [isAtEnd, setIsAtEnd] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
@@ -171,7 +212,7 @@ export function useMessageListController({
     virtualRows,
     spaceBefore: virtualList.spaceBefore,
     spaceAfter: virtualList.spaceAfter,
-    rowsEmpty: virtualList.rowsEmpty,
+    rowsEmpty: virtualList.rowsEmpty && timelineItems.length === 0,
     scrollToBottom,
     handleScroll,
   };

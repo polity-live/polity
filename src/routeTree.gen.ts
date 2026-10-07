@@ -56,10 +56,13 @@ import { Route as AuthedCreateEventRouteImport } from './routes/_authed/create/e
 import { Route as AuthedCreateGroupRouteImport } from './routes/_authed/create/group'
 import { Route as AuthedCreatePaymentRouteImport } from './routes/_authed/create/payment'
 import { Route as AuthedCreateStatementRouteImport } from './routes/_authed/create/statement'
+import { Route as AuthedCreateStudioProjectRouteImport } from './routes/_authed/create/studio-project'
 import { Route as AuthedCreateTodoRouteImport } from './routes/_authed/create/todo'
 import { Route as AuthedEventIdRouteImport } from './routes/_authed/event/$id'
 import { Route as AuthedGroupIdRouteImport } from './routes/_authed/group/$id'
 import { Route as AuthedStatementIdRouteImport } from './routes/_authed/statement/$id'
+import { Route as AuthedStudioIndexRouteImport } from './routes/_authed/studio/index'
+import { Route as AuthedStudioProjectIdRouteImport } from './routes/_authed/studio/$projectId'
 import { Route as AuthedTodosIdRouteImport } from './routes/_authed/todos/$id'
 import { Route as AuthedUserIdRouteImport } from './routes/_authed/user/$id'
 import { Route as ApiAiCatalogRouteImport } from './routes/api/ai/catalog'
@@ -67,6 +70,7 @@ import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
 import { Route as ApiAiCommandRouteImport } from './routes/api/ai/command'
 import { Route as ApiAiCopilotRouteImport } from './routes/api/ai/copilot'
 import { Route as ApiAiCredentialsRouteImport } from './routes/api/ai/credentials'
+import { Route as ApiAiTracesRouteImport } from './routes/api/ai/traces'
 import { Route as ApiCurrencyCurrenciesRouteImport } from './routes/api/currency/currencies'
 import { Route as ApiCurrencyRatesRouteImport } from './routes/api/currency/rates'
 import { Route as ApiDatasetsArchiveRouteImport } from './routes/api/datasets/archive'
@@ -137,13 +141,18 @@ import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/da
 import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
 import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
 import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jobId'
+import { Route as ApiStudioExportsIdRouteImport } from './routes/api/studio/exports/$id'
+import { Route as ApiStudioMediaIdRouteImport } from './routes/api/studio/media/$id'
 import { Route as ApiStudioPublishedMediaIdRouteImport } from './routes/api/studio/published-media/$id'
+import { Route as ApiStudioReadIdRouteImport } from './routes/api/studio/read/$id'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
 import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
 import { Route as AuthedGroupIdBlogEntryIdRouteImport } from './routes/_authed/group/$id/blog/$entryId'
 import { Route as AuthedGroupIdEditorIndexRouteImport } from './routes/_authed/group/$id/editor/index'
 import { Route as AuthedGroupIdEditorDocIdRouteImport } from './routes/_authed/group/$id/editor/$docId'
+import { Route as AuthedGroupIdStudioIndexRouteImport } from './routes/_authed/group/$id/studio/index'
+import { Route as AuthedGroupIdStudioProjectIdRouteImport } from './routes/_authed/group/$id/studio/$projectId'
 import { Route as AuthedUserIdBlogEntryIdRouteImport } from './routes/_authed/user/$id/blog/$entryId'
 import { Route as AuthedUserIdEditorDocIdRouteImport } from './routes/_authed/user/$id/editor/$docId'
 import { Route as AuthedGroupIdBlogEntryIdIndexRouteImport } from './routes/_authed/group/$id/blog/$entryId/index'
@@ -390,6 +399,12 @@ const AuthedCreateStatementRoute = AuthedCreateStatementRouteImport.update({
   path: '/create/statement',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCreateStudioProjectRoute =
+  AuthedCreateStudioProjectRouteImport.update({
+    id: '/create/studio-project',
+    path: '/create/studio-project',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedCreateTodoRoute = AuthedCreateTodoRouteImport.update({
   id: '/create/todo',
   path: '/create/todo',
@@ -409,6 +424,16 @@ const AuthedStatementIdRoute = AuthedStatementIdRouteImport.update({
   id: '/statement/$id',
   path: '/statement/$id',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedStudioIndexRoute = AuthedStudioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedStudioRoute,
+} as any)
+const AuthedStudioProjectIdRoute = AuthedStudioProjectIdRouteImport.update({
+  id: '/$projectId',
+  path: '/$projectId',
+  getParentRoute: () => AuthedStudioRoute,
 } as any)
 const AuthedTodosIdRoute = AuthedTodosIdRouteImport.update({
   id: '/$id',
@@ -443,6 +468,11 @@ const ApiAiCopilotRoute = ApiAiCopilotRouteImport.update({
 const ApiAiCredentialsRoute = ApiAiCredentialsRouteImport.update({
   id: '/api/ai/credentials',
   path: '/api/ai/credentials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiTracesRoute = ApiAiTracesRouteImport.update({
+  id: '/api/ai/traces',
+  path: '/api/ai/traces',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCurrencyCurrenciesRoute = ApiCurrencyCurrenciesRouteImport.update({
@@ -816,12 +846,27 @@ const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
   path: '/$jobId',
   getParentRoute: () => ApiPushTestRoute,
 } as any)
+const ApiStudioExportsIdRoute = ApiStudioExportsIdRouteImport.update({
+  id: '/exports/$id',
+  path: '/exports/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
+const ApiStudioMediaIdRoute = ApiStudioMediaIdRouteImport.update({
+  id: '/media/$id',
+  path: '/media/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
 const ApiStudioPublishedMediaIdRoute =
   ApiStudioPublishedMediaIdRouteImport.update({
     id: '/published-media/$id',
     path: '/published-media/$id',
     getParentRoute: () => ApiStudioRoute,
   } as any)
+const ApiStudioReadIdRoute = ApiStudioReadIdRouteImport.update({
+  id: '/read/$id',
+  path: '/read/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
     id: '/',
@@ -856,6 +901,18 @@ const AuthedGroupIdEditorDocIdRoute =
     id: '/$docId',
     path: '/$docId',
     getParentRoute: () => AuthedGroupIdEditorRoute,
+  } as any)
+const AuthedGroupIdStudioIndexRoute =
+  AuthedGroupIdStudioIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedGroupIdStudioRoute,
+  } as any)
+const AuthedGroupIdStudioProjectIdRoute =
+  AuthedGroupIdStudioProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthedGroupIdStudioRoute,
   } as any)
 const AuthedUserIdBlogEntryIdRoute = AuthedUserIdBlogEntryIdRouteImport.update({
   id: '/$entryId',
@@ -935,7 +992,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
-  '/studio': typeof AuthedStudioRoute
+  '/studio': typeof AuthedStudioRouteWithChildren
   '/todos': typeof AuthedTodosRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
@@ -962,10 +1019,12 @@ export interface FileRoutesByFullPath {
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/event/$id': typeof AuthedEventIdRouteWithChildren
   '/group/$id': typeof AuthedGroupIdRouteWithChildren
   '/statement/$id': typeof AuthedStatementIdRoute
+  '/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/todos/$id': typeof AuthedTodosIdRoute
   '/user/$id': typeof AuthedUserIdRouteWithChildren
   '/api/ai/catalog': typeof ApiAiCatalogRoute
@@ -973,6 +1032,7 @@ export interface FileRoutesByFullPath {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -997,6 +1057,7 @@ export interface FileRoutesByFullPath {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create/': typeof AuthedCreateIndexRoute
+  '/studio/': typeof AuthedStudioIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1025,7 +1086,7 @@ export interface FileRoutesByFullPath {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioRouteWithChildren
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1039,7 +1100,10 @@ export interface FileRoutesByFullPath {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1048,11 +1112,13 @@ export interface FileRoutesByFullPath {
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
   '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/studio/': typeof AuthedGroupIdStudioIndexRoute
   '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1079,7 +1145,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
-  '/studio': typeof AuthedStudioRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
@@ -1104,14 +1169,17 @@ export interface FileRoutesByTo {
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/statement/$id': typeof AuthedStatementIdRoute
+  '/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/todos/$id': typeof AuthedTodosIdRoute
   '/api/ai/catalog': typeof ApiAiCatalogRoute
   '/api/ai/chat': typeof ApiAiChatRoute
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -1136,6 +1204,7 @@ export interface FileRoutesByTo {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create': typeof AuthedCreateIndexRoute
+  '/studio': typeof AuthedStudioIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1161,7 +1230,6 @@ export interface FileRoutesByTo {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1175,7 +1243,10 @@ export interface FileRoutesByTo {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1183,10 +1254,12 @@ export interface FileRoutesByTo {
   '/user/$id': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/event/$id/agenda': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioIndexRoute
   '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1217,7 +1290,7 @@ export interface FileRoutesById {
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/search': typeof AuthedSearchRoute
-  '/_authed/studio': typeof AuthedStudioRoute
+  '/_authed/studio': typeof AuthedStudioRouteWithChildren
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
@@ -1244,10 +1317,12 @@ export interface FileRoutesById {
   '/_authed/create/group': typeof AuthedCreateGroupRoute
   '/_authed/create/payment': typeof AuthedCreatePaymentRoute
   '/_authed/create/statement': typeof AuthedCreateStatementRoute
+  '/_authed/create/studio-project': typeof AuthedCreateStudioProjectRoute
   '/_authed/create/todo': typeof AuthedCreateTodoRoute
   '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
   '/_authed/group/$id': typeof AuthedGroupIdRouteWithChildren
   '/_authed/statement/$id': typeof AuthedStatementIdRoute
+  '/_authed/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/_authed/todos/$id': typeof AuthedTodosIdRoute
   '/_authed/user/$id': typeof AuthedUserIdRouteWithChildren
   '/api/ai/catalog': typeof ApiAiCatalogRoute
@@ -1255,6 +1330,7 @@ export interface FileRoutesById {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/ai/traces': typeof ApiAiTracesRoute
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
@@ -1279,6 +1355,7 @@ export interface FileRoutesById {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/_authed/create/': typeof AuthedCreateIndexRoute
+  '/_authed/studio/': typeof AuthedStudioIndexRoute
   '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/_authed/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1307,7 +1384,7 @@ export interface FileRoutesById {
   '/_authed/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/_authed/group/$id/studio': typeof AuthedGroupIdStudioRoute
+  '/_authed/group/$id/studio': typeof AuthedGroupIdStudioRouteWithChildren
   '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1321,7 +1398,10 @@ export interface FileRoutesById {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1330,11 +1410,13 @@ export interface FileRoutesById {
   '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/_authed/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
   '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/_authed/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/_authed/group/$id/studio/': typeof AuthedGroupIdStudioIndexRoute
   '/_authed/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/_authed/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1392,10 +1474,12 @@ export interface FileRouteTypes {
     | '/create/group'
     | '/create/payment'
     | '/create/statement'
+    | '/create/studio-project'
     | '/create/todo'
     | '/event/$id'
     | '/group/$id'
     | '/statement/$id'
+    | '/studio/$projectId'
     | '/todos/$id'
     | '/user/$id'
     | '/api/ai/catalog'
@@ -1403,6 +1487,7 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1427,6 +1512,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create/'
+    | '/studio/'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
@@ -1469,7 +1555,10 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1478,11 +1567,13 @@ export interface FileRouteTypes {
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/blog/$entryId'
     | '/group/$id/editor/$docId'
+    | '/group/$id/studio/$projectId'
     | '/user/$id/blog/$entryId'
     | '/user/$id/editor/$docId'
     | '/event/$id/agenda/'
     | '/group/$id/blog/'
     | '/group/$id/editor/'
+    | '/group/$id/studio/'
     | '/group/$id/blog/$entryId/edit'
     | '/group/$id/blog/$entryId/editor'
     | '/group/$id/blog/$entryId/notifications'
@@ -1509,7 +1600,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/search'
-    | '/studio'
     | '/todos'
     | '/api/collaboration'
     | '/api/mutate'
@@ -1534,14 +1624,17 @@ export interface FileRouteTypes {
     | '/create/group'
     | '/create/payment'
     | '/create/statement'
+    | '/create/studio-project'
     | '/create/todo'
     | '/statement/$id'
+    | '/studio/$projectId'
     | '/todos/$id'
     | '/api/ai/catalog'
     | '/api/ai/chat'
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1566,6 +1659,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create'
+    | '/studio'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
@@ -1591,7 +1685,6 @@ export interface FileRouteTypes {
     | '/group/$id/operation'
     | '/group/$id/relationships'
     | '/group/$id/settings'
-    | '/group/$id/studio'
     | '/user/$id/blog'
     | '/user/$id/editor'
     | '/user/$id/meet'
@@ -1605,7 +1698,10 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1613,10 +1709,12 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/editor/$docId'
+    | '/group/$id/studio/$projectId'
     | '/user/$id/editor/$docId'
     | '/event/$id/agenda'
     | '/group/$id/blog'
     | '/group/$id/editor'
+    | '/group/$id/studio'
     | '/group/$id/blog/$entryId/edit'
     | '/group/$id/blog/$entryId/editor'
     | '/group/$id/blog/$entryId/notifications'
@@ -1673,10 +1771,12 @@ export interface FileRouteTypes {
     | '/_authed/create/group'
     | '/_authed/create/payment'
     | '/_authed/create/statement'
+    | '/_authed/create/studio-project'
     | '/_authed/create/todo'
     | '/_authed/event/$id'
     | '/_authed/group/$id'
     | '/_authed/statement/$id'
+    | '/_authed/studio/$projectId'
     | '/_authed/todos/$id'
     | '/_authed/user/$id'
     | '/api/ai/catalog'
@@ -1684,6 +1784,7 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/ai/traces'
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
@@ -1708,6 +1809,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/_authed/create/'
+    | '/_authed/studio/'
     | '/_authed/amendment/$id/change-requests'
     | '/_authed/amendment/$id/citydesign'
     | '/_authed/amendment/$id/collaborators'
@@ -1750,7 +1852,10 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -1759,11 +1864,13 @@ export interface FileRouteTypes {
     | '/_authed/event/$id/agenda/$agendaItemId'
     | '/_authed/group/$id/blog/$entryId'
     | '/_authed/group/$id/editor/$docId'
+    | '/_authed/group/$id/studio/$projectId'
     | '/_authed/user/$id/blog/$entryId'
     | '/_authed/user/$id/editor/$docId'
     | '/_authed/event/$id/agenda/'
     | '/_authed/group/$id/blog/'
     | '/_authed/group/$id/editor/'
+    | '/_authed/group/$id/studio/'
     | '/_authed/group/$id/blog/$entryId/edit'
     | '/_authed/group/$id/blog/$entryId/editor'
     | '/_authed/group/$id/blog/$entryId/notifications'
@@ -1798,6 +1905,7 @@ export interface RootRouteChildren {
   ApiAiCommandRoute: typeof ApiAiCommandRoute
   ApiAiCopilotRoute: typeof ApiAiCopilotRoute
   ApiAiCredentialsRoute: typeof ApiAiCredentialsRoute
+  ApiAiTracesRoute: typeof ApiAiTracesRoute
   ApiCurrencyCurrenciesRoute: typeof ApiCurrencyCurrenciesRoute
   ApiCurrencyRatesRoute: typeof ApiCurrencyRatesRoute
   ApiDatasetsArchiveRoute: typeof ApiDatasetsArchiveRoute
@@ -2154,6 +2262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCreateStatementRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/create/studio-project': {
+      id: '/_authed/create/studio-project'
+      path: '/create/studio-project'
+      fullPath: '/create/studio-project'
+      preLoaderRoute: typeof AuthedCreateStudioProjectRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/create/todo': {
       id: '/_authed/create/todo'
       path: '/create/todo'
@@ -2181,6 +2296,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/statement/$id'
       preLoaderRoute: typeof AuthedStatementIdRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/studio/': {
+      id: '/_authed/studio/'
+      path: '/'
+      fullPath: '/studio/'
+      preLoaderRoute: typeof AuthedStudioIndexRouteImport
+      parentRoute: typeof AuthedStudioRoute
+    }
+    '/_authed/studio/$projectId': {
+      id: '/_authed/studio/$projectId'
+      path: '/$projectId'
+      fullPath: '/studio/$projectId'
+      preLoaderRoute: typeof AuthedStudioProjectIdRouteImport
+      parentRoute: typeof AuthedStudioRoute
     }
     '/_authed/todos/$id': {
       id: '/_authed/todos/$id'
@@ -2229,6 +2358,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai/credentials'
       fullPath: '/api/ai/credentials'
       preLoaderRoute: typeof ApiAiCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/traces': {
+      id: '/api/ai/traces'
+      path: '/api/ai/traces'
+      fullPath: '/api/ai/traces'
+      preLoaderRoute: typeof ApiAiTracesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/currency/currencies': {
@@ -2721,11 +2857,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushTestJobIdRouteImport
       parentRoute: typeof ApiPushTestRoute
     }
+    '/api/studio/exports/$id': {
+      id: '/api/studio/exports/$id'
+      path: '/exports/$id'
+      fullPath: '/api/studio/exports/$id'
+      preLoaderRoute: typeof ApiStudioExportsIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
+    '/api/studio/media/$id': {
+      id: '/api/studio/media/$id'
+      path: '/media/$id'
+      fullPath: '/api/studio/media/$id'
+      preLoaderRoute: typeof ApiStudioMediaIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
     '/api/studio/published-media/$id': {
       id: '/api/studio/published-media/$id'
       path: '/published-media/$id'
       fullPath: '/api/studio/published-media/$id'
       preLoaderRoute: typeof ApiStudioPublishedMediaIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
+    '/api/studio/read/$id': {
+      id: '/api/studio/read/$id'
+      path: '/read/$id'
+      fullPath: '/api/studio/read/$id'
+      preLoaderRoute: typeof ApiStudioReadIdRouteImport
       parentRoute: typeof ApiStudioRoute
     }
     '/_authed/event/$id/agenda/': {
@@ -2769,6 +2926,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/group/$id/editor/$docId'
       preLoaderRoute: typeof AuthedGroupIdEditorDocIdRouteImport
       parentRoute: typeof AuthedGroupIdEditorRoute
+    }
+    '/_authed/group/$id/studio/': {
+      id: '/_authed/group/$id/studio/'
+      path: '/'
+      fullPath: '/group/$id/studio/'
+      preLoaderRoute: typeof AuthedGroupIdStudioIndexRouteImport
+      parentRoute: typeof AuthedGroupIdStudioRoute
+    }
+    '/_authed/group/$id/studio/$projectId': {
+      id: '/_authed/group/$id/studio/$projectId'
+      path: '/$projectId'
+      fullPath: '/group/$id/studio/$projectId'
+      preLoaderRoute: typeof AuthedGroupIdStudioProjectIdRouteImport
+      parentRoute: typeof AuthedGroupIdStudioRoute
     }
     '/_authed/user/$id/blog/$entryId': {
       id: '/_authed/user/$id/blog/$entryId'
@@ -2842,6 +3013,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthedStudioRouteChildren {
+  AuthedStudioProjectIdRoute: typeof AuthedStudioProjectIdRoute
+  AuthedStudioIndexRoute: typeof AuthedStudioIndexRoute
+}
+
+const AuthedStudioRouteChildren: AuthedStudioRouteChildren = {
+  AuthedStudioProjectIdRoute: AuthedStudioProjectIdRoute,
+  AuthedStudioIndexRoute: AuthedStudioIndexRoute,
+}
+
+const AuthedStudioRouteWithChildren = AuthedStudioRoute._addFileChildren(
+  AuthedStudioRouteChildren,
+)
 
 interface AuthedTodosRouteChildren {
   AuthedTodosIdRoute: typeof AuthedTodosIdRoute
@@ -2984,6 +3169,19 @@ const AuthedGroupIdEditorRouteChildren: AuthedGroupIdEditorRouteChildren = {
 const AuthedGroupIdEditorRouteWithChildren =
   AuthedGroupIdEditorRoute._addFileChildren(AuthedGroupIdEditorRouteChildren)
 
+interface AuthedGroupIdStudioRouteChildren {
+  AuthedGroupIdStudioProjectIdRoute: typeof AuthedGroupIdStudioProjectIdRoute
+  AuthedGroupIdStudioIndexRoute: typeof AuthedGroupIdStudioIndexRoute
+}
+
+const AuthedGroupIdStudioRouteChildren: AuthedGroupIdStudioRouteChildren = {
+  AuthedGroupIdStudioProjectIdRoute: AuthedGroupIdStudioProjectIdRoute,
+  AuthedGroupIdStudioIndexRoute: AuthedGroupIdStudioIndexRoute,
+}
+
+const AuthedGroupIdStudioRouteWithChildren =
+  AuthedGroupIdStudioRoute._addFileChildren(AuthedGroupIdStudioRouteChildren)
+
 interface AuthedGroupIdRouteChildren {
   AuthedGroupIdAmendmentsRoute: typeof AuthedGroupIdAmendmentsRoute
   AuthedGroupIdBlogRoute: typeof AuthedGroupIdBlogRouteWithChildren
@@ -2996,7 +3194,7 @@ interface AuthedGroupIdRouteChildren {
   AuthedGroupIdOperationRoute: typeof AuthedGroupIdOperationRoute
   AuthedGroupIdRelationshipsRoute: typeof AuthedGroupIdRelationshipsRoute
   AuthedGroupIdSettingsRoute: typeof AuthedGroupIdSettingsRoute
-  AuthedGroupIdStudioRoute: typeof AuthedGroupIdStudioRoute
+  AuthedGroupIdStudioRoute: typeof AuthedGroupIdStudioRouteWithChildren
   AuthedGroupIdIndexRoute: typeof AuthedGroupIdIndexRoute
 }
 
@@ -3012,7 +3210,7 @@ const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
   AuthedGroupIdOperationRoute: AuthedGroupIdOperationRoute,
   AuthedGroupIdRelationshipsRoute: AuthedGroupIdRelationshipsRoute,
   AuthedGroupIdSettingsRoute: AuthedGroupIdSettingsRoute,
-  AuthedGroupIdStudioRoute: AuthedGroupIdStudioRoute,
+  AuthedGroupIdStudioRoute: AuthedGroupIdStudioRouteWithChildren,
   AuthedGroupIdIndexRoute: AuthedGroupIdIndexRoute,
 }
 
@@ -3100,7 +3298,7 @@ interface AuthedRouteChildren {
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedSearchRoute: typeof AuthedSearchRoute
-  AuthedStudioRoute: typeof AuthedStudioRoute
+  AuthedStudioRoute: typeof AuthedStudioRouteWithChildren
   AuthedTodosRoute: typeof AuthedTodosRouteWithChildren
   AuthedAmendmentIdRoute: typeof AuthedAmendmentIdRouteWithChildren
   AuthedBlogIdRoute: typeof AuthedBlogIdRouteWithChildren
@@ -3112,6 +3310,7 @@ interface AuthedRouteChildren {
   AuthedCreateGroupRoute: typeof AuthedCreateGroupRoute
   AuthedCreatePaymentRoute: typeof AuthedCreatePaymentRoute
   AuthedCreateStatementRoute: typeof AuthedCreateStatementRoute
+  AuthedCreateStudioProjectRoute: typeof AuthedCreateStudioProjectRoute
   AuthedCreateTodoRoute: typeof AuthedCreateTodoRoute
   AuthedEventIdRoute: typeof AuthedEventIdRouteWithChildren
   AuthedGroupIdRoute: typeof AuthedGroupIdRouteWithChildren
@@ -3127,7 +3326,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedNotificationsRoute: AuthedNotificationsRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedSearchRoute: AuthedSearchRoute,
-  AuthedStudioRoute: AuthedStudioRoute,
+  AuthedStudioRoute: AuthedStudioRouteWithChildren,
   AuthedTodosRoute: AuthedTodosRouteWithChildren,
   AuthedAmendmentIdRoute: AuthedAmendmentIdRouteWithChildren,
   AuthedBlogIdRoute: AuthedBlogIdRouteWithChildren,
@@ -3139,6 +3338,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCreateGroupRoute: AuthedCreateGroupRoute,
   AuthedCreatePaymentRoute: AuthedCreatePaymentRoute,
   AuthedCreateStatementRoute: AuthedCreateStatementRoute,
+  AuthedCreateStudioProjectRoute: AuthedCreateStudioProjectRoute,
   AuthedCreateTodoRoute: AuthedCreateTodoRoute,
   AuthedEventIdRoute: AuthedEventIdRouteWithChildren,
   AuthedGroupIdRoute: AuthedGroupIdRouteWithChildren,
@@ -3191,11 +3391,17 @@ const DocsRouteChildren: DocsRouteChildren = {
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 interface ApiStudioRouteChildren {
+  ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
+  ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
   ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
+  ApiStudioReadIdRoute: typeof ApiStudioReadIdRoute
 }
 
 const ApiStudioRouteChildren: ApiStudioRouteChildren = {
+  ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
+  ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
   ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
+  ApiStudioReadIdRoute: ApiStudioReadIdRoute,
 }
 
 const ApiStudioRouteWithChildren = ApiStudioRoute._addFileChildren(
@@ -3250,6 +3456,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCommandRoute: ApiAiCommandRoute,
   ApiAiCopilotRoute: ApiAiCopilotRoute,
   ApiAiCredentialsRoute: ApiAiCredentialsRoute,
+  ApiAiTracesRoute: ApiAiTracesRoute,
   ApiCurrencyCurrenciesRoute: ApiCurrencyCurrenciesRoute,
   ApiCurrencyRatesRoute: ApiCurrencyRatesRoute,
   ApiDatasetsArchiveRoute: ApiDatasetsArchiveRoute,

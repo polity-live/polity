@@ -29,17 +29,14 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import { useMemo, type ComponentType, type ReactNode } from 'react';
 
 import { InviteCollaboratorDialog } from '@/features/editor/ui/InviteCollaboratorDialog';
 import { FixedToolbar } from '@/features/shared/ui/ui-platejs/fixed-toolbar';
 import { ToolbarButton, ToolbarGroup } from '@/features/shared/ui/layout';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
-import {
-  EditingModeMenuItems,
-  getEditingModeOption,
-  type SelectableEditingMode,
-} from '@/features/shared/ui/status';
+import type { SelectableEditingMode } from '@/features/shared/ui/status';
+import { EditingModeToolbarButton } from '@/features/shared/ui/status/EditingModeToolbarButton';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/features/shared/ui/ui/dialog';
 import {
@@ -393,7 +390,7 @@ export function CityDesignTopBarView({
       </ToolbarGroup>
 
       <ToolbarGroup>
-        <CityDesignModeToolbarButton
+        <EditingModeToolbarButton
           data-action-id="amendments.city-topbar.open.editing-mode"
           availableModes={availableModes}
           canChangeMode={canChangeMode}
@@ -751,61 +748,6 @@ export function CityDesignSecondaryActionBarView({
         </Button>
       </div>
     </div>
-  );
-}
-
-function CityDesignModeToolbarButton({
-  'data-action-id': actionId,
-  availableModes,
-  canChangeMode,
-  disabledModeReasons,
-  mode,
-  onModeChange,
-}: {
-  'data-action-id': string;
-  availableModes?: readonly SelectableEditingMode[];
-  canChangeMode: boolean;
-  disabledModeReasons: Partial<Record<SelectableEditingMode, string>>;
-  mode: SelectableEditingMode;
-  onModeChange: (mode: SelectableEditingMode) => void | Promise<void>;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const currentOption = getEditingModeOption(mode, t);
-
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          data-action-id={actionId}
-          type="button"
-          aria-label={currentOption.label}
-          pressed={open}
-          tooltip={t('plateJs.toolbar.editingMode')}
-        >
-          <currentOption.Icon className="size-4" />
-        </ToolbarButton>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="start" className="w-80">
-        {!canChangeMode ? (
-          <div className="text-muted-foreground px-2 py-1.5 text-xs">
-            {t('plateJs.toolbar.mode.viewOnly')}
-          </div>
-        ) : null}
-        <EditingModeMenuItems
-          modes={availableModes}
-          showAutomaticEventModes={!availableModes}
-          value={mode}
-          disabled={!canChangeMode}
-          disabledModeReasons={disabledModeReasons}
-          onValueChange={nextMode => {
-            void onModeChange(nextMode);
-            setOpen(false);
-          }}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

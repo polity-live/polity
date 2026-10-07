@@ -62,6 +62,34 @@ describe('amendmentSharedMutators.createCityDesignChangeRequests', () => {
 });
 
 describe('amendmentSharedMutators city-design edit context', () => {
+  it.each([undefined, 7])(
+    'uses the optimistic revision %s before a city design is present in the client cache',
+    async expected => {
+      const update = vi.fn();
+      const tx = {
+        run: vi.fn().mockResolvedValue(undefined),
+        mutate: { amendment_city_design: { update } },
+      } as never;
+      await amendmentSharedMutators.updateCityDesign.fn({
+        tx,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          id: 'pending-city-design',
+          design_state: { objects: [] },
+          expected_content_revision: expected,
+        },
+      });
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'pending-city-design',
+          design_state: { objects: [] },
+          content_revision: (expected ?? 0) + 1,
+        })
+      );
+      expect(update.mock.calls[0][0]).not.toHaveProperty('expected_content_revision');
+    }
+  );
+
   it('does not persist the process branch authorization context', async () => {
     const insert = vi.fn();
     const update = vi.fn();

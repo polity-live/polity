@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -8,6 +8,10 @@ import { queries } from '@/zero/queries';
 import type {
   GroupAmendmentBadgeStatus,
   GroupAmendmentDisplayStatus,
+} from '../logic/groupAmendmentStatus';
+import {
+  getGroupAmendmentDisplayStatusForGroup,
+  type GroupStatusAmendment,
 } from '../logic/groupAmendmentStatus';
 
 interface AmendmentItem {
@@ -37,26 +41,7 @@ interface AmendmentItem {
 }
 
 type AmendmentSectionKey = GroupAmendmentDisplayStatus;
-
-function useSectionCount(
-  groupId: string | undefined,
-  section: AmendmentSectionKey,
-  filters: { searchQuery: string; statusFilter: string; hashtagFilter: string },
-  fallbackCount: number
-) {
-  const enabled = !!groupId && (filters.statusFilter === 'all' || filters.statusFilter === section);
-  const [rows] = useQuery(
-    enabled
-      ? queries.amendments.groupAmendmentCountRows({
-          groupId,
-          displayStatus: section,
-          query: filters.searchQuery,
-          hashtag: filters.hashtagFilter || undefined,
-        })
-      : null
-  );
-  return groupId ? (enabled ? (rows?.length ?? 0) : 0) : fallbackCount;
-}
+const SECTION_KEYS: AmendmentSectionKey[] = ['accepted', 'pending', 'rejected', 'withdrawn'];
 
 interface UseAmendmentGroupsControllerProps {
   groupedAmendments: {
@@ -84,41 +69,79 @@ export function useAmendmentGroupsController({
     withdrawn: true,
   });
   const queryFilters = filters ?? { searchQuery: '', statusFilter: 'all', hashtagFilter: '' };
-  const sectionCounts = {
-    accepted: useSectionCount(groupId, 'accepted', queryFilters, groupedAmendments.accepted.length),
-    pending: useSectionCount(groupId, 'pending', queryFilters, groupedAmendments.pending.length),
-    rejected: useSectionCount(groupId, 'rejected', queryFilters, groupedAmendments.rejected.length),
-    withdrawn: useSectionCount(
-      groupId,
-      'withdrawn',
-      queryFilters,
-      groupedAmendments.withdrawn.length
-    ),
-  };
+  const [rows] = useQuery(
+    groupId
+      ? queries.amendments.groupAmendmentCountRows({
+          groupId,
+          query: queryFilters.searchQuery,
+          hashtag: queryFilters.hashtagFilter || undefined,
+        })
+      : null
+  );
+  const sectionIds = useMemo(() => {
+    const ids: Record<AmendmentSectionKey, string[]> = {
+      accepted: [],
+      pending: [],
+      rejected: [],
+      withdrawn: [],
+    };
+    if (!groupId) return ids;
+    for (const amendment of (rows ?? []) as unknown as readonly GroupStatusAmendment[]) {
+      const section = getGroupAmendmentDisplayStatusForGroup(amendment, groupId);
+      if (queryFilters.statusFilter === 'all' || queryFilters.statusFilter === section) {
+        ids[section].push(amendment.id);
+      }
+    }
+    return ids;
+  }, [groupId, rows, queryFilters.statusFilter]);
+  const sectionContexts = useMemo(
+    () =>
+      Object.fromEntries(
+        SECTION_KEYS.map(key => [
+          key,
+          {
+            groupId,
+            displayStatus: key,
+            query: queryFilters.searchQuery,
+            hashtag: queryFilters.hashtagFilter,
+            ids: sectionIds[key],
+          },
+        ])
+      ) as Record<AmendmentSectionKey, object>,
+    [groupId, queryFilters.searchQuery, queryFilters.hashtagFilter, sectionIds]
+  );
 
   const sectionOrder = [
     {
       key: 'accepted' as const,
       items: groupedAmendments.accepted,
-      count: sectionCounts.accepted,
+      ids: sectionIds.accepted,
+      context: sectionContexts.accepted,
+      count: groupId ? sectionIds.accepted.length : groupedAmendments.accepted.length,
       label: t('features.groups.common.status.acceptedApproved'),
     },
     {
       key: 'pending' as const,
       items: groupedAmendments.pending,
-      count: sectionCounts.pending,
+      ids: sectionIds.pending,
+      context: sectionContexts.pending,
+      count: groupId ? sectionIds.pending.length : groupedAmendments.pending.length,
       label: t('features.groups.common.status.pending'),
     },
     {
       key: 'rejected' as const,
       items: groupedAmendments.rejected,
-      count: sectionCounts.rejected,
+      ids: sectionIds.rejected,
+      context: sectionContexts.rejected,
+      count: groupId ? sectionIds.rejected.length : groupedAmendments.rejected.length,
       label: t('features.groups.common.status.rejected'),
     },
     {
       key: 'withdrawn' as const,
       items: groupedAmendments.withdrawn,
-      count: sectionCounts.withdrawn,
+      ids: sectionIds.withdrawn,
+      context: sectionContexts.withdrawn,
+      count: groupId ? sectionIds.withdrawn.length : groupedAmendments.withdrawn.length,
       label: t('features.groups.common.status.withdrawn'),
     },
   ].map(section => ({

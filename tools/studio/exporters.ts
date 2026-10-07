@@ -1,3 +1,5 @@
+import { studioV5RenderBundle } from './studio-v5-render-bundle';
+import { editableV5Layers } from './editable-v5-layers';
 import { chromium } from 'playwright';
 import PptxGenJS from 'pptxgenjs';
 import ExcelJS from 'exceljs';
@@ -6,7 +8,15 @@ import { zipSync, strToU8 } from 'fflate';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { paintStudioPage } from '../../src/features/communication-studio/logic/paint';
+import {
+  studioDocumentV3Schema,
+  type StudioDocumentV3,
+} from '../../src/features/communication-studio/logic/document-v3';
+import {
+  legacyDocumentToV3,
+  v3DocumentToLegacy,
+} from '../../src/features/communication-studio/logic/v3-adapter';
+import { mediaDrawGeometry } from '../../src/features/communication-studio/logic/media-geometry';
 import {
   formats,
   channels,
@@ -27,7 +37,44 @@ const slug = (s: string) =>
     .replace(/[^a-zA-Z0-9-]+/g, '-')
     .slice(0, 70) || 'polity';
 export const pageFile = (p: StudioPage, index: number) => `${pad(index)}-${slug(p.name)}.png`;
-export async function workbook(doc: StudioDocument) {
+export function selectStudioExportDocument(document: StudioDocumentV3, selected: string[]) {
+  const roots = document.nodes.filter(
+    node =>
+      node.type === 'frame' &&
+      node.parentFrameId === null &&
+      node.id !== document.masterLayout.frameId
+  );
+  const available = new Set(roots.map(frame => frame.id));
+  if (selected.some(id => !available.has(id)))
+    throw new Error('A selected Studio frame no longer exists or cannot be exported.');
+  const selectedIds = new Set(selected.length ? selected : roots.map(frame => frame.id));
+  if (!selectedIds.size) throw new Error('Select at least one frame to export.');
+  const retained = new Set(selectedIds);
+  if (document.masterLayout.frameId) retained.add(document.masterLayout.frameId);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of document.nodes)
+      if (node.parentFrameId && retained.has(node.parentFrameId) && !retained.has(node.id)) {
+        retained.add(node.id);
+        changed = true;
+      }
+  }
+  return studioDocumentV3Schema.parse({
+    ...document,
+    nodes: document.nodes.filter(node => retained.has(node.id)),
+    deliverables: document.deliverables
+      .map(deliverable => ({
+        ...deliverable,
+        frameIds: deliverable.frameIds.filter(id => selectedIds.has(id)),
+      }))
+      .filter(deliverable => deliverable.frameIds.length),
+    componentInstances: document.componentInstances.filter(instance =>
+      Object.values(instance.sourceToInstance).some(id => retained.has(id))
+    ),
+  });
+}
+export async function workbook(doc: StudioDocument, originalPageIndex?: Map<string, number>) {
   const book = new ExcelJS.Workbook();
   book.creator = 'Polity';
   const plan = book.addWorksheet('Redaktionsplan');
@@ -64,7 +111,7 @@ export async function workbook(doc: StudioDocument) {
         post.pageIds
           .map(id => {
             const i = doc.pages.findIndex(p => p.id === id);
-            return i < 0 ? '' : pageFile(doc.pages[i], i);
+            return i < 0 ? '' : pageFile(doc.pages[i], originalPageIndex?.get(id) ?? i);
           })
           .join('\n'),
       ]);
@@ -104,33 +151,34 @@ async function fonts() {
     'ubuntu',
     'jetbrains-mono',
   ])
-    for (const weight of [400, 700]) {
-      try {
-        const file = await readFile(
-          path.resolve(
-            'node_modules/@fontsource',
-            font,
-            'files',
-            `${font}-latin-${weight}-normal.woff2`
-          )
-        );
-        const names: Record<string, string> = {
-          'ibm-plex-serif': 'IBM Plex Serif',
-          'open-sans': 'Open Sans',
-          'pt-sans': 'PT Sans',
-          'public-sans': 'Public Sans',
-          'work-sans': 'Work Sans',
-          'jetbrains-mono': 'JetBrains Mono',
-        };
-        css += `@font-face{font-family:"${names[font] || font}";font-weight:${weight};src:url(data:font/woff2;base64,${file.toString('base64')})}`;
-      } catch {
-        /* Unsupported installed weight falls back to the same family's 400 face. */
+    for (const weight of [400, 700])
+      for (const style of ['normal', 'italic']) {
+        try {
+          const file = await readFile(
+            path.resolve(
+              'node_modules/@fontsource',
+              font,
+              'files',
+              `${font}-latin-${weight}-${style}.woff2`
+            )
+          );
+          const names: Record<string, string> = {
+            'ibm-plex-serif': 'IBM Plex Serif',
+            'open-sans': 'Open Sans',
+            'pt-sans': 'PT Sans',
+            'public-sans': 'Public Sans',
+            'work-sans': 'Work Sans',
+            'jetbrains-mono': 'JetBrains Mono',
+          };
+          css += `@font-face{font-family:"${names[font] || font}";font-weight:${weight};font-style:${style};src:url(data:font/woff2;base64,${file.toString('base64')})}`;
+        } catch {
+          /* Unsupported installed weight falls back to the same family's 400 face. */
+        }
       }
-    }
   return css;
 }
 export async function render(
-  doc: StudioDocument,
+  input: StudioDocument | StudioDocumentV3,
   media: MediaMap,
   format: string,
   selected: string[],
@@ -138,14 +186,39 @@ export async function render(
   progress: (n: number) => Promise<void>,
   cancelled: () => Promise<boolean>
 ): Promise<ExportResult> {
-  const pages = selected.length ? doc.pages.filter(p => selected.includes(p.id)) : doc.pages;
+  const sourceDocument = 'schemaVersion' in input ? input : legacyDocumentToV3(input);
+  const originalPageIndex = new Map(
+    sourceDocument.nodes
+      .filter(
+        node =>
+          node.type === 'frame' &&
+          node.parentFrameId === null &&
+          node.id !== sourceDocument.masterLayout.frameId
+      )
+      .sort((left, right) => left.zIndex - right.zIndex || left.id.localeCompare(right.id))
+      .map((frame, index) => [frame.id, index] as const)
+  );
+  const v5Document = selectStudioExportDocument(sourceDocument, selected);
+  const doc: StudioDocument = v3DocumentToLegacy(v5Document, {
+    includeMaster: true,
+    allowLongVideo: true,
+  });
+  const pages = doc.pages;
   const name = slug(doc.title);
-  if (format === 'xlsx')
-    return {
-      bytes: await workbook(doc),
-      name: name + '.xlsx',
-      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    };
+  if (format === 'xlsx') {
+    const bytes = await workbook(doc, originalPageIndex);
+    return pages.length > 1
+      ? {
+          bytes: zipSync({ [name + '.xlsx']: bytes }, { level: 4 }),
+          name: name + '.zip',
+          mime: 'application/zip',
+        }
+      : {
+          bytes,
+          name: name + '.xlsx',
+          mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        };
+  }
   await mkdir(workdir, { recursive: true });
   const browser = await chromium.launch({
     headless: true,
@@ -165,6 +238,7 @@ export async function render(
     await tab.setContent(
       `<html><head><style>${await fonts()}body{margin:0}</style></head><body><canvas></canvas></body></html>`
     );
+    await tab.addScriptTag({ content: await studioV5RenderBundle() });
     await tab.evaluate(async () => {
       for (const font of [
         'Newsreader',
@@ -180,14 +254,11 @@ export async function render(
       ])
         for (const weight of [400, 700]) await document.fonts.load(`${weight} 40px "${font}"`);
     });
-    await tab.evaluate(
-      `window.__name=(target)=>target;window.paintStudioPage=${paintStudioPage.toString()}`
-    );
-    const frame = async (p: StudioPage, time = 1, animateScene = false) => {
+    const frame = async (p: StudioPage, time = 1, _animateScene = false) => {
       const url = await tab.evaluate(
-        async ({ p, data, time, animateScene }) =>
-          (window as any).paintStudioPage(p, data, time, animateScene),
-        { p, data, time, animateScene }
+        async ({ p, data, time, v5Document }) =>
+          (window as any).PolityStudioV5Renderer.renderFrame(v5Document, p.id, data, time),
+        { p: p as any, data, time, v5Document: v5Document as any }
       );
       return new Uint8Array(Buffer.from(url.split(',')[1], 'base64'));
     };
@@ -201,10 +272,8 @@ export async function render(
       for (const p of pages)
         files[
           'PNG/' +
-            pageFile(
-              p,
-              doc.pages.findIndex(x => x.id === p.id)
-            )
+            // Every selected frame belongs to the original root-frame index.
+            pageFile(p, originalPageIndex.get(p.id) as number)
         ] = images[p.id];
     };
     const addPdf = async () => {
@@ -218,67 +287,230 @@ export async function render(
       }
       files[name + '.pdf'] = await pdf.save();
     };
-    const addPpt = async () => {
-      for (const f of [...new Set(pages.map(p => p.format))]) {
-        const ppt = new PptxGenJS();
-        const [w, h] = formats[f];
-        ppt.defineLayout({ name: 'Polity', width: w / 144, height: h / 144 });
-        ppt.layout = 'Polity';
-        ppt.author = 'Polity';
-        ppt.subject = doc.title;
-        for (const p of pages.filter(p => p.format === f)) {
-          const slide = ppt.addSlide();
-          slide.background = { color: p.background.slice(1) };
-          slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
-          for (const e of p.elements) {
-            const box = {
-              x:
+    const addPpt = async (canvaCompatible = false, folder = '') => {
+      const ppt = new PptxGenJS();
+      const [slideWidth, slideHeight] = formats[pages[0].format];
+      ppt.defineLayout({ name: 'Polity', width: slideWidth / 144, height: slideHeight / 144 });
+      ppt.layout = 'Polity';
+      ppt.author = 'Polity';
+      ppt.subject = doc.title;
+      for (const p of pages) {
+        const [w, h] = formats[p.format];
+        const scale = Math.min(slideWidth / w, slideHeight / h);
+        const offsetX = (slideWidth - w * scale) / 2;
+        const offsetY = (slideHeight - h * scale) / 2;
+        const slide = ppt.addSlide();
+        slide.background = { color: p.background.slice(1) };
+        slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
+        for (const layer of editableV5Layers(v5Document, p.id)) {
+          if (layer.kind === 'drawing') {
+            const { node, matrix } = layer;
+            const points = node.points.map(([x, y]) => `${x},${y}`).join(' ');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${node.style.stroke ?? '#12362D'}" stroke-width="${Math.max(2, node.style.strokeWidth)}" stroke-linecap="round" stroke-linejoin="round" opacity="${node.style.opacity}" transform="matrix(${matrix.join(' ')})"/></svg>`;
+            slide.addImage({
+              data: 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64'),
+              x: offsetX / 144,
+              y: offsetY / 144,
+              w: (w * scale) / 144,
+              h: (h * scale) / 144,
+            });
+            continue;
+          }
+          const e = layer.element;
+          const box = {
+            x:
+              (offsetX +
                 (e.x +
                   ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.width) / 2 -
-                  (Math.sin((e.rotation * Math.PI) / 180) * e.height) / 2) /
-                144,
-              y:
+                  (Math.sin((e.rotation * Math.PI) / 180) * e.height) / 2) *
+                  scale) /
+              144,
+            y:
+              (offsetY +
                 (e.y +
                   (Math.sin((e.rotation * Math.PI) / 180) * e.width) / 2 +
-                  ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.height) / 2) /
-                144,
-              w: e.width / 144,
-              h: e.height / 144,
-              rotate: e.rotation,
-              transparency: (1 - e.opacity) * 100,
-            };
-            if (e.type === 'text')
-              slide.addText(e.text, {
+                  ((Math.cos((e.rotation * Math.PI) / 180) - 1) * e.height) / 2) *
+                  scale) /
+              144,
+            w: (e.width * scale) / 144,
+            h: (e.height * scale) / 144,
+            rotate: e.rotation,
+            transparency: (1 - e.opacity) * 100,
+          };
+          if (e.type === 'text')
+            slide.addText(
+              // semanticElement preserves at least one paragraph from the validated V5 node.
+              e.richText.flatMap((p, i) =>
+                p.children.map((r, j) => ({
+                  text: r.text,
+                  options: {
+                    align: p.align ?? e.align,
+                    bold: r.bold ?? e.bold,
+                    italic: r.italic ?? e.italic,
+                    underline: (r.underline ?? e.underline) ? { style: 'sng' as const } : undefined,
+                    strike:
+                      (r.strikethrough ?? e.strikethrough) ? ('sngStrike' as const) : undefined,
+                    color: (r.color ?? e.fill).slice(1),
+                    fontFace: r.fontFamily ?? e.font,
+                    fontSize: ((r.fontSize ?? e.fontSize) * scale) / 2,
+                    hyperlink: r.url ? { url: r.url } : undefined,
+                    breakLine: j === p.children.length - 1 && i < e.richText.length - 1,
+                    bullet:
+                      p.list === 'bullet'
+                        ? {}
+                        : p.list === 'number'
+                          ? { type: 'number' as const }
+                          : undefined,
+                  },
+                }))
+              ),
+              {
                 ...box,
                 fontFace: e.font,
-                fontSize: e.fontSize / 2,
+                fontSize: (e.fontSize * scale) / 2,
                 bold: e.bold,
+                italic: e.italic,
+                underline: e.underline ? { style: 'sng' } : undefined,
+                strike: e.strikethrough ? 'sngStrike' : undefined,
+                valign: e.verticalAlign,
                 color: e.fill.slice(1),
                 align: e.align,
                 margin: 0,
                 breakLine: false,
-                valign: 'top',
-                lineSpacingMultiple: 1.2,
-              });
-            else if (e.type === 'rect' || e.type === 'ellipse')
-              slide.addShape(e.type === 'rect' ? ppt.ShapeType.rect : ppt.ShapeType.ellipse, {
+                lineSpacingMultiple: e.lineHeight,
+              }
+            );
+          else if (e.type === 'table' && e.table) {
+            const table = e.table;
+            slide.addTable(
+              table.rows.map(r =>
+                r.cells.map(c => ({
+                  text: c.text,
+                  options: {
+                    fill: { color: c.fill.slice(1), transparency: (1 - e.opacity) * 100 },
+                    color: c.color.slice(1),
+                    align: c.align,
+                    bold: c.bold,
+                    border: (['top', 'right', 'bottom', 'left'] as const).map(side =>
+                      c.borders?.[side] === false
+                        ? { type: 'none' as const, pt: 0 }
+                        : { type: 'solid' as const, color: table.border.slice(1), pt: scale }
+                    ) as [
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                      { type: 'none' | 'solid'; pt: number; color?: string },
+                    ],
+                  },
+                }))
+              ),
+              {
+                ...box,
+                colW: table.widths.map(v => (box.w * v) / table.widths.reduce((a, b) => a + b, 0)),
+                rowH: box.h / table.rows.length,
+                fontFace: e.font,
+                fontSize: (e.fontSize * scale) / 2,
+                margin: 3 * scale,
+                autoPage: false,
+              }
+            );
+          } else if (e.type === 'chart' && e.chart) {
+            const chart = e.chart;
+            slide.addChart(
+              chart.kind,
+              chart.series.map(s => ({
+                name: s.name,
+                labels: chart.labels,
+                values: s.values,
+              })),
+              {
+                ...box,
+                showLegend: chart.legend,
+                showTitle: false,
+                chartColors:
+                  chart.kind === 'pie'
+                    ? (
+                        chart.colors ?? [
+                          '#B88A3B',
+                          '#12362D',
+                          '#588DB2',
+                          '#9A597F',
+                          '#75965D',
+                          '#D46E48',
+                        ]
+                      ).map(c => c.slice(1))
+                    : chart.series.map(s => s.color.slice(1)),
+                showValue: false,
+                catAxisLabelFontSize: 10 * scale,
+                valAxisLabelFontSize: 10 * scale,
+              }
+            );
+          } else if (e.type === 'line' || e.type === 'arrow')
+            slide.addShape(ppt.ShapeType.line, {
+              ...box,
+              line: {
+                color: e.stroke.slice(1),
+                width: (Math.max(1, e.strokeWidth) * scale) / 2,
+                endArrowType: e.type === 'arrow' ? 'triangle' : undefined,
+              },
+            });
+          else if (e.type === 'rect' || e.type === 'ellipse')
+            slide.addShape(
+              e.type === 'ellipse'
+                ? ppt.ShapeType.ellipse
+                : 'node' in layer && layer.node.type === 'shape' && layer.node.shape === 'diamond'
+                  ? ppt.ShapeType.diamond
+                  : 'node' in layer &&
+                      layer.node.type === 'shape' &&
+                      layer.node.shape === 'rounded-rectangle'
+                    ? ppt.ShapeType.roundRect
+                    : ppt.ShapeType.rect,
+              {
                 ...box,
                 fill: { color: e.fill.slice(1), transparency: (1 - e.opacity) * 100 },
-                line: { color: e.fill.slice(1), transparency: 100 },
+                line: {
+                  color: e.stroke.slice(1),
+                  transparency: e.strokeWidth ? 0 : 100,
+                  width: (e.strokeWidth * scale) / 2,
+                },
+              }
+            );
+          else if (e.assetId && media[e.assetId]) {
+            const m = media[e.assetId];
+            if (e.type === 'video' && !e.crop && !canvaCompatible)
+              slide.addMedia({
+                ...box,
+                type: 'video',
+                data: `${m.mime};base64,${Buffer.from(m.bytes).toString('base64')}`,
+                extn: 'mp4',
               });
-            else if (e.assetId && media[e.assetId]) {
-              const m = media[e.assetId];
-              if (e.type === 'video' && format !== 'canva')
-                slide.addMedia({
-                  ...box,
-                  type: 'video',
-                  data: `${m.mime};base64,${Buffer.from(m.bytes).toString('base64')}`,
-                  extn: 'mp4',
-                });
-              else {
-                const raster = await tab.evaluate(id => {
-                  const source = (window as any).__studioMedia[id] as
-                    HTMLImageElement | HTMLVideoElement;
+            else {
+              const raster = await tab.evaluate(
+                async ({ id, url, video, seek }) => {
+                  let source = (window as any).__studioMedia?.[id] as
+                    HTMLImageElement | HTMLVideoElement | undefined;
+                  if (!source) {
+                    source = video ? document.createElement('video') : new Image();
+                    const loading = source;
+                    await new Promise<void>((resolve, reject) => {
+                      loading.onerror = () => reject(new Error('Media could not be decoded'));
+                      if (loading instanceof HTMLVideoElement) {
+                        loading.muted = true;
+                        loading.preload = 'auto';
+                        loading.onloadeddata = () => resolve();
+                      } else loading.onload = () => resolve();
+                      loading.src = url;
+                    });
+                  }
+                  ((window as any).__studioMedia ??= {})[id] = source;
+                  if (source instanceof HTMLVideoElement && seek > 0) {
+                    const target = Math.min(seek, Math.max(0, source.duration - 0.05));
+                    if (target > 0)
+                      await new Promise<void>(resolve => {
+                        source.onseeked = () => resolve();
+                        source.currentTime = target;
+                      });
+                  }
                   const canvas = document.createElement('canvas');
                   canvas.width =
                     source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
@@ -292,39 +524,47 @@ export async function render(
                     height: canvas.height,
                     data: canvas.toDataURL('image/png'),
                   };
-                }, e.assetId);
-                const scale = (e.fit === 'cover' ? Math.max : Math.min)(
-                  box.w / raster.width,
-                  box.h / raster.height
-                );
-                const iw = raster.width * scale,
-                  ih = raster.height * scale;
-                slide.addImage({
-                  ...box,
-                  w: iw,
-                  h: ih,
-                  data: raster.data,
-                  sizing: {
-                    type: 'crop',
-                    w: box.w,
-                    h: box.h,
-                    x: (iw - box.w) * e.cropX,
-                    y: (ih - box.h) * e.cropY,
-                  },
-                });
-              }
+                },
+                {
+                  id: e.assetId,
+                  url: data[e.assetId],
+                  video: e.type === 'video',
+                  seek: e.trimStart + 1,
+                }
+              );
+              const placement = mediaDrawGeometry(e, raster.width, raster.height);
+              const poster = await tab.evaluate(
+                ({ id, width, height, placement }) => {
+                  const source = (window as any).__studioMedia[id] as
+                    HTMLImageElement | HTMLVideoElement;
+                  const canvas = document.createElement('canvas');
+                  canvas.width = Math.max(1, Math.round(width));
+                  canvas.height = Math.max(1, Math.round(height));
+                  const context = canvas.getContext('2d');
+                  if (!context) throw new Error('Canvas unavailable');
+                  context.drawImage(
+                    source,
+                    placement.x,
+                    placement.y,
+                    placement.width,
+                    placement.height
+                  );
+                  return canvas.toDataURL('image/png');
+                },
+                { id: e.assetId, width: e.width, height: e.height, placement }
+              );
+              slide.addImage({ ...box, data: poster, flipH: e.flipX, flipV: e.flipY });
+              if (e.type === 'video' && e.crop && format !== 'zip')
+                files[`Medien/${e.assetId}.mp4`] = m.bytes;
             }
           }
         }
-        files[`${name}-${f}.pptx`] = new Uint8Array(
-          (await ppt.write({ outputType: 'uint8array' })) as Uint8Array
-        );
       }
-    };
-    const addVideo = async () => {
-      const posts = doc.posts.filter(
-        p => p.kind === 'video' && p.pageIds.some(id => pages.some(x => x.id === id))
+      files[`${folder}${name}.pptx`] = new Uint8Array(
+        (await ppt.write({ outputType: 'uint8array' })) as Uint8Array
       );
+    };
+    const addVideo = async (posts = doc.posts.filter(p => p.kind === 'video')) => {
       const sequences = posts.length
         ? posts.map(post => ({
             name: post.code,
@@ -334,8 +574,8 @@ export async function render(
       for (const seq of sequences) {
         const seconds = seq.pages.reduce((sum, p) => sum + p.duration, 0);
         if (seconds > 60) throw new Error('Video exceeds 60 seconds. Select one video post.');
-        if (seq.pages.some(p => p.format !== 'story'))
-          throw new Error('Video requires portrait pages');
+        if (seq.pages.some(p => p.format !== seq.pages[0].format))
+          throw new Error('Video pages must have the same format');
         let index = 0;
         const directory = path.join(workdir, slug(seq.name));
         await mkdir(directory, { recursive: true });
@@ -407,19 +647,46 @@ export async function render(
     };
     if (format === 'png' || format === 'zip') addPng();
     if (format === 'pdf' || format === 'zip') await addPdf();
-    if (['pptx', 'canva', 'zip'].includes(format)) await addPpt();
-    if (format === 'mp4' || (format === 'zip' && doc.posts.some(p => p.kind === 'video')))
-      await addVideo();
-    if (format === 'canva')
-      files['Canva-Import.md'] = strToU8(
+    if (format === 'pptx' || format === 'zip') await addPpt();
+    if (format === 'canva' || format === 'zip')
+      await addPpt(true, format === 'zip' ? 'Canva/' : '');
+    if (format === 'mp4') await addVideo();
+    if (format === 'zip' && doc.posts.some(post => post.kind === 'video')) {
+      const videoPosts = doc.posts.filter(post => post.kind === 'video');
+      const ineligible = videoPosts.filter(post => {
+        const frames = pages.filter(page => post.pageIds.includes(page.id));
+        return (
+          frames.reduce((total, frame) => total + frame.duration, 0) > 60 ||
+          frames.some(frame => frame.format !== frames[0]?.format)
+        );
+      });
+      if (ineligible.length)
+        files['Video-Hinweis.md'] = strToU8(
+          `MP4 ausgelassen für: ${ineligible.map(post => post.title).join(', ')}. Die Auswahl überschreitet 60 Sekunden oder enthält Frames mit unterschiedlichen Formaten.`
+        );
+      const eligible = videoPosts.filter(post => !ineligible.includes(post));
+      if (eligible.length) await addVideo(eligible);
+    }
+    if (format === 'canva' || format === 'zip')
+      files[format === 'zip' ? 'Canva/Canva-Import.md' : 'Canva-Import.md'] = strToU8(
         'PowerPoint-Datei in Canva importieren. Texte und Formen sind bearbeitbar. Schriftarten, Bildausschnitte und Videoposter prüfen. Animationen liegen in MP4 vor.'
       );
     if (format === 'zip') {
-      for (const [id, m] of Object.entries(media))
+      files['Polity-Projekt.json'] = strToU8(JSON.stringify(v5Document));
+      const referencedMedia = new Set(
+        v5Document.nodes.flatMap(node =>
+          node.type === 'media'
+            ? [node.assetId]
+            : node.type === 'chart' && node.sourceAssetId
+              ? [node.sourceAssetId]
+              : []
+        )
+      );
+      for (const [id, m] of Object.entries(media).filter(([id]) => referencedMedia.has(id)))
         files[
           `Medien/${id}.${m.mime === 'video/mp4' ? 'mp4' : m.mime === 'image/jpeg' ? 'jpg' : m.mime === 'image/webp' ? 'webp' : 'png'}`
         ] = m.bytes;
-      files['Kampagnenplan.xlsx'] = await workbook(doc);
+      files['Kampagnenplan.xlsx'] = await workbook(doc, originalPageIndex);
       files['Kanaltexte.md'] = strToU8(
         doc.posts
           .map(
@@ -431,7 +698,7 @@ export async function render(
     }
     await progress(95);
     const entries = Object.entries(files);
-    if (entries.length === 1) {
+    if (entries.length === 1 && (pages.length === 1 || format === 'pdf' || format === 'pptx')) {
       const [filename, bytes] = entries[0];
       return {
         bytes,

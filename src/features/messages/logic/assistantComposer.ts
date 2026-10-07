@@ -24,7 +24,7 @@ export interface ActiveMentionQuery {
   start: number;
   end: number;
   raw: string;
-  entityType?: AiAttachmentEntity;
+  entityType?: AiAttachmentEntity | 'frame' | 'element';
   searchText: string;
 }
 
@@ -398,7 +398,12 @@ export function parseActiveMentionQuery(
   }
 
   const candidateType = withoutAt.slice(0, secondAtIndex).trim().toLowerCase();
-  const entityType = isAiAttachmentEntity(candidateType) ? candidateType : undefined;
+  const entityType =
+    candidateType === 'frame' || candidateType === 'element'
+      ? candidateType
+      : isAiAttachmentEntity(candidateType)
+        ? candidateType
+        : undefined;
 
   return {
     start: atIndex,

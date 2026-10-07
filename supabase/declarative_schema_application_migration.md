@@ -11,7 +11,11 @@ database objects.
    DML-managed operational state and are not reliably emitted by `db diff`.
 5. Apply versioned migrations with `supabase migration up`, or rebuild the
    disposable local database and seed data with `supabase db reset`.
-6. Run `supabase test db --local` and verify that a subsequent
+6. Provision storage buckets from `supabase/config.toml` with
+   `supabase seed buckets --local` (or `--linked` for the deployed project).
+   Bucket configuration is operational state and does not belong in the
+   relational declarative schema.
+7. Run `supabase test db --local` and verify that a subsequent
    `supabase db diff` has no functional changes.
 
 See the

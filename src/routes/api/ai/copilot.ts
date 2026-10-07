@@ -1,4 +1,11 @@
-import { generateText } from 'ai';
+import { generateText } from '@/server/ai-generation';
+import { startEditorAiTrace } from '@/server/ai-editor-trace';
+import {
+  traceAiRequest,
+  logAiEvent,
+  normalizeAiError,
+  type AiTraceContext,
+} from '@/server/ai-trace';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
@@ -32,8 +39,8 @@ const copilotRequestSchema = z.object({
 
 let copilotProviderCooldownUntilMs = 0;
 
-function copilotNoSuggestionResponse(): Response {
-  return Response.json({ text: '0' });
+function copilotNoSuggestionResponse(trace?: AiTraceContext): Response {
+  return Response.json({ text: '0' }, { headers: trace ? { 'X-AI-Trace-Id': trace.traceId } : {} });
 }
 
 function getErrorStatusCode(error: unknown): number | null {
@@ -138,53 +145,78 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
     return copilotNoSuggestionResponse();
   }
 
+  let trace: AiTraceContext | undefined;
   try {
-    if (isCopilotProviderCooldownActive()) {
-      return copilotNoSuggestionResponse();
-    }
-
-    const catalog = await getAiCatalog(session.user.id);
-    const preferredModel = getPreferredDefaultAiModel(catalog.models);
-
-    if (!preferredModel) {
-      return copilotNoSuggestionResponse();
-    }
-
-    const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
+    const activeTrace = await startEditorAiTrace(
+      request,
       session.user.id,
-      toAiModelDescriptor(preferredModel),
-      'low'
+      'copilot',
+      parsedBody.data
     );
-
-    const result = await generateText({
-      model,
-      providerOptions,
-      system: parsedBody.data.system?.trim() || DEFAULT_COPILOT_SYSTEM_PROMPT,
-      prompt,
-      temperature: 0.2,
-      maxOutputTokens: COPILOT_MAX_TOKENS,
-    });
-
-    const text = normalizeCopilotCompletion(result.text);
-
-    if (text !== '0' && credentialProvider) {
-      try {
-        await touchAiCredential(session.user.id, credentialProvider);
-      } catch (error) {
-        console.error('Failed to update AI credential usage after copilot completion:', error);
+    trace = activeTrace;
+    return await traceAiRequest(activeTrace, async () => {
+      if (isCopilotProviderCooldownActive()) {
+        return copilotNoSuggestionResponse();
       }
-    }
 
-    return Response.json({ text });
+      const catalog = await getAiCatalog(session.user.id);
+      const preferredModel = getPreferredDefaultAiModel(catalog.models);
+
+      if (!preferredModel) {
+        return copilotNoSuggestionResponse();
+      }
+
+      const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
+        session.user.id,
+        toAiModelDescriptor(preferredModel),
+        'low'
+      );
+
+      const result = await generateText({
+        model,
+        providerOptions,
+        system: parsedBody.data.system?.trim() || DEFAULT_COPILOT_SYSTEM_PROMPT,
+        prompt,
+        temperature: 0.2,
+        maxOutputTokens: COPILOT_MAX_TOKENS,
+      });
+
+      const text = normalizeCopilotCompletion(result.text);
+
+      if (text !== '0' && credentialProvider) {
+        try {
+          await touchAiCredential(session.user.id, credentialProvider);
+        } catch (error) {
+          logAiEvent(
+            'ai.operation.failed',
+            {
+              operation: 'Failed to update AI credential usage after copilot completion:',
+              ...normalizeAiError(error),
+            },
+            trace
+          );
+        }
+      }
+
+      return Response.json({ text }, { headers: { 'X-AI-Trace-Id': activeTrace.traceId } });
+    });
   } catch (error) {
     if (isTransientAiProviderError(error)) {
       startCopilotProviderCooldown();
-      console.warn('AI copilot completion temporarily unavailable:', error);
+      logAiEvent(
+        'ai.provider.retry_later',
+        { operation: 'AI copilot completion temporarily unavailable:', ...normalizeAiError(error) },
+        trace
+      );
     } else {
-      console.error('AI copilot completion failed:', error);
+      logAiEvent(
+        'ai.operation.failed',
+        { operation: 'AI copilot completion failed:', ...normalizeAiError(error) },
+        trace
+      );
     }
 
-    return copilotNoSuggestionResponse();
+    return copilotNoSuggestionResponse(trace);
   }
 }
 

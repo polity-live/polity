@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Plate } from 'platejs/react';
+import { AiEditorTraceContext } from './ai-editor-trace-context';
+import { AiTraceDetails } from '@/features/messages/ui/AiTraceDetails';
 
 import { ChartDatasetContextProvider } from '@/features/charts/context/ChartDatasetContext';
 import { SettingsDialog } from '@/features/shared/ui/kit-platejs/settings-dialog.tsx';
@@ -141,39 +143,44 @@ export function PlateEditorView({
         }}
       >
         <ChartDatasetContextProvider value={datasetContext}>
-          <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
-            {/* Sync external mode with PlateJS internal state */}
-            <ModeSync currentMode={currentMode} readOnly={readOnly} />
+          <AiEditorTraceContext.Provider value={documentId}>
+            <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
+              {/* Sync external mode with PlateJS internal state */}
+              <ModeSync currentMode={currentMode} readOnly={readOnly} />
 
-            {/* Sync remote cursors via Supabase Realtime */}
-            {remoteCursors?.enabled && (
-              <RemoteCursorsSync
-                entityId={remoteCursors.entityId}
-                userId={remoteCursors.userId}
-                userName={remoteCursors.userName}
-                userColor={remoteCursors.userColor}
-                enabled={remoteCursors.enabled}
-                onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
-              />
-            )}
+              {/* Sync remote cursors via Supabase Realtime */}
+              {remoteCursors?.enabled && (
+                <RemoteCursorsSync
+                  entityId={remoteCursors.entityId}
+                  userId={remoteCursors.userId}
+                  userName={remoteCursors.userName}
+                  userColor={remoteCursors.userColor}
+                  enabled={remoteCursors.enabled}
+                  onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
+                />
+              )}
 
-            <EditorContainer
-              variant={containerVariant}
-              className={containerClassName}
-              data-swipe-lock
-            >
-              <Editor
-                id={id}
-                variant={editorVariant}
-                placeholder={placeholder}
-                className={editorClassName}
-                onFocus={handleEditorFocus}
-                onPasteCapture={handleEditorPaste}
-              />
-            </EditorContainer>
+              <EditorContainer
+                variant={containerVariant}
+                className={containerClassName}
+                data-swipe-lock
+              >
+                <Editor
+                  id={id}
+                  variant={editorVariant}
+                  placeholder={placeholder}
+                  className={editorClassName}
+                  onFocus={handleEditorFocus}
+                  onPasteCapture={handleEditorPaste}
+                />
+              </EditorContainer>
 
-            {showSettingsDialog && <SettingsDialog />}
-          </Plate>
+              {showSettingsDialog && <SettingsDialog />}
+            </Plate>
+            {documentId && /^[0-9a-f-]{36}$/i.test(documentId) ? (
+              <AiTraceDetails documentId={documentId} />
+            ) : null}
+          </AiEditorTraceContext.Provider>
         </ChartDatasetContextProvider>
       </SuggestionCallbacksProvider>
     </ModeProvider>

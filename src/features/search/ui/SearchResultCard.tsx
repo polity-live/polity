@@ -21,6 +21,7 @@ import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-
 import { useSearchCardState } from '../SearchCardStateProvider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
+import { studioSearchKindLabel } from '../logic/studioSearchLabels';
 
 type SearchResultType = SearchContentItem['type'];
 interface SearchTimelineCardDefinition {
@@ -323,6 +324,8 @@ function SearchPreviewCard({ document }: { document: SearchDocument }) {
   const model = getSearchCardModel(document);
   const fallback = t('common.entities.result');
   const hashtagTone = getHashtagToneClasses();
+  const subtitle = studioSearchKindLabel(document, t) ?? model.subtitle;
+  const excerpt = document.entity_type === 'studio' ? document.summary : model.excerpt;
 
   return (
     <a
@@ -339,18 +342,18 @@ function SearchPreviewCard({ document }: { document: SearchDocument }) {
       >
         <div className="border-border/70 bg-muted/35 border-b p-4">
           <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-            {model.type || fallback}
+            {model.type === 'studio'
+              ? t('features.timeline.contentTypes.studio')
+              : model.type || fallback}
           </span>
           <h2 className="mt-1 line-clamp-2 text-base font-semibold">{model.title || fallback}</h2>
-          {model.subtitle ? (
-            <p className="text-muted-foreground mt-1 truncate text-xs">{model.subtitle}</p>
+          {subtitle ? (
+            <p className="text-muted-foreground mt-1 truncate text-xs">{subtitle}</p>
           ) : null}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col p-4">
-          {model.excerpt ? (
-            <p className="text-muted-foreground line-clamp-5 text-sm">{model.excerpt}</p>
-          ) : null}
+          {excerpt ? <p className="text-muted-foreground line-clamp-5 text-sm">{excerpt}</p> : null}
           {model.tags.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-1.5">
               {model.tags.slice(0, 3).map(tag => (
@@ -396,12 +399,27 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
         contentType="action"
         title={document.title || fallback}
         href={getSearchDocumentHref(document)}
-        subtitle={document.subtitle || document.group?.name || undefined}
-        badge={<TimelineCardBadge label={document.entity_type || fallback} icon={Search} />}
+        subtitle={
+          studioSearchKindLabel(document, t) ||
+          document.subtitle ||
+          document.group?.name ||
+          undefined
+        }
+        badge={
+          <TimelineCardBadge
+            label={
+              document.entity_type === 'studio'
+                ? t('features.timeline.contentTypes.studio')
+                : document.entity_type || fallback
+            }
+            icon={Search}
+          />
+        }
       />
 
       <TimelineCardContent>
-        {(document.summary || document.search_text) && (
+        {(document.summary ||
+          (document.entity_type === 'studio' ? null : document.search_text)) && (
           <p className="text-muted-foreground mb-3 line-clamp-4 text-sm">
             {document.summary || document.search_text}
           </p>

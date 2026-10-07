@@ -28,12 +28,16 @@ export const aiMessageContextV1Schema = z.object({
   version: z.literal(1),
   attachments: z.array(aiChatAttachmentSchema).default([]),
   presentations: z.array(aiPresentationBlockSchema).default([]),
+  aiTrace: z
+    .object({ traceId: z.string().uuid(), originMessageId: z.string().uuid().optional() })
+    .optional(),
 });
 
 export interface AiMessageContextV1 {
   version: 1;
   attachments: AiChatAttachment[];
   presentations: AiPresentationBlock[];
+  aiTrace?: { traceId: string; originMessageId?: string };
 }
 
 export function dedupeAiPresentations(
@@ -79,7 +83,7 @@ export function parseAiMessageContext(value?: string | null): AiMessageContextV1
       return createAiMessageContext();
     }
 
-    const record = parsed as { attachments?: unknown; presentations?: unknown };
+    const record = parsed as { attachments?: unknown; presentations?: unknown; aiTrace?: unknown };
     const attachments = aiChatAttachmentSchema.array().safeParse(record.attachments);
     const presentationValues = z.array(z.unknown()).safeParse(record.presentations);
     const presentations = presentationValues.success
@@ -89,7 +93,13 @@ export function parseAiMessageContext(value?: string | null): AiMessageContextV1
         })
       : [];
 
-    return createAiMessageContext(attachments.success ? attachments.data : [], presentations);
+    const context = createAiMessageContext(
+      attachments.success ? attachments.data : [],
+      presentations
+    );
+    const trace = aiMessageContextV1Schema.shape.aiTrace.safeParse(record.aiTrace);
+    if (trace.success && trace.data) context.aiTrace = trace.data;
+    return context;
   } catch {
     return createAiMessageContext();
   }

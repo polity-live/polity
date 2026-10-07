@@ -230,6 +230,7 @@ describe('AssistantMessageInput A05 branch contracts', () => {
       provider: 'custom',
       id: 'paid',
       label: 'Paid model',
+      source: 'byok',
     };
     const chat = createAssistantChat({
       models: [labeledFree, warningModel],
@@ -243,9 +244,13 @@ describe('AssistantMessageInput A05 branch contracts', () => {
     expect(currentProps().searchTools).toHaveLength(2);
     expect(currentProps().createTools).toHaveLength(1);
     expect(currentProps().updateTools).toHaveLength(1);
-    expect(currentProps().freeRouterModelKey).toBe('openrouter:free-labeled');
-    expect(currentProps().getModelDisplayLabel(labeledFree)).toBe(freeLabel);
-    expect(currentProps().getModelDisplayLabel(warningModel)).toBe('Paid model');
+    expect(currentProps().freeRouterModelKey).toBe('openrouter:app:free-labeled');
+    expect(currentProps().getModelDisplayLabel(labeledFree)).toBe(
+      `${freeLabel} · features.messages.ai.sources.app`
+    );
+    expect(currentProps().getModelDisplayLabel(warningModel)).toBe(
+      'Paid model · features.messages.ai.sources.byok'
+    );
     expect(currentProps().selectedModelHint).toEqual({
       className: 'theme:messageAssistantMessageInputSuccessRoundIcon',
       message: 'features.messages.ai.modelReliability.freeRouter',
@@ -270,7 +275,7 @@ describe('AssistantMessageInput A05 branch contracts', () => {
         }
       />
     );
-    expect(currentProps().freeRouterModelKey).toBe('openrouter:fallback');
+    expect(currentProps().freeRouterModelKey).toBe('openrouter:app:fallback');
     expect(currentProps().selectedModelHint).toEqual({
       className: 'theme:messageAssistantMessageInputWarningRoundIcon',
       message: 'features.messages.ai.modelReliability.warning',
@@ -525,4 +530,26 @@ describe('AssistantMessageInput A05 branch contracts', () => {
       expect.any(Object)
     );
   });
+});
+
+it('restores a project draft after remount and clears it only after sending', async () => {
+  const key = 'project-chat-draft:actor:focus-test';
+  sessionStorage.removeItem(key);
+  const chat = createAssistantChat({
+    projectDraftKey: key,
+    sendAssistantMessage: vi.fn(
+      async (_message: string, options: { onUserMessageSent?: () => void }) => {
+        options.onUserMessageSent?.();
+        return true;
+      }
+    ),
+  });
+  const ui = render(<AssistantMessageInput assistantChat={chat as never} />);
+  act(() => currentProps().setMessageText('Unsent canvas question'));
+  expect(sessionStorage.getItem(key)).toBe('Unsent canvas question');
+  ui.unmount();
+  render(<AssistantMessageInput assistantChat={chat as never} />);
+  expect(currentProps().messageText).toBe('Unsent canvas question');
+  await act(async () => currentProps().handleSubmit());
+  expect(sessionStorage.getItem(key)).toBeNull();
 });

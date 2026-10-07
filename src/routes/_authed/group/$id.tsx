@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import { EntityVisibilityGuard } from '@/features/auth/EntityVisibilityGuard';
 import { useEntityRouteAccess } from '@/features/auth/hooks/useEntityRouteAccess';
 import { useZeroReady } from '@/providers/zero-ready-context';
@@ -10,12 +10,16 @@ export const Route = createFileRoute('/_authed/group/$id')({
 
 function GroupLayout() {
   const { id } = Route.useParams();
+  const pathname = useRouterState({ select: state => state.location.pathname });
   const zeroReady = useZeroReady();
   useGroupRouteFamilyPreloads(id);
   const { data, isLoading, error, recoveryDraft } = useEntityRouteAccess({
     entityType: 'group',
     entityId: id,
   });
+
+  const studioPath = `/group/${id}/studio`;
+  if (pathname === studioPath || pathname.startsWith(`${studioPath}/`)) return <Outlet />;
 
   return (
     <EntityVisibilityGuard

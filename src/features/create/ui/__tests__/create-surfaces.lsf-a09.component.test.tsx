@@ -159,6 +159,9 @@ it('renders create layout wrappers and basic inputs', () => {
   expect(mocks.carouselProps.canGoNext).toBe(true);
   render(<CreateDashboard />);
   expect(mocks.dashboardProps.sections).toHaveLength(3);
+  expect(mocks.dashboardProps.sections.flatMap((section: any) => section.items)).toEqual(
+    expect.arrayContaining([expect.objectContaining({ href: '/create/studio-project' })])
+  );
   render(
     <CreateStepRendererView
       step={{

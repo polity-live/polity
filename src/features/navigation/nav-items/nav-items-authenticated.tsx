@@ -23,7 +23,9 @@ export const navItemsAuthenticated = (
   // Translation function can be passed as parameter for i18n support
 
   // Define navigation items for primary navigation with Next.js router integration
-  const studioEnabled = import.meta.env.DEV || import.meta.env.VITE_STUDIO_ENABLED === 'true';
+  const studioEnabled =
+    (import.meta.env.DEV || import.meta.env.VITE_STUDIO_ENABLED === 'true') &&
+    (import.meta.env.DEV || import.meta.env.VITE_STUDIO_V3_ENABLED === 'true');
   const primaryNavItems: NavigationItem[] = [
     {
       id: 'home',
@@ -265,7 +267,7 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    if (studioEnabled && (_isMember || isAdmin))
+    if (studioEnabled)
       items.push({
         id: 'studio',
         label: translate('navigation.primary.studio'),

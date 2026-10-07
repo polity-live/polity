@@ -31,8 +31,8 @@ describe('Zero client factory', () => {
       userID: 'user-1',
       context: { userID: 'user-1', email: 'ada@example.test' },
       cacheURL: 'http://zero.test',
-      queryURL: 'https://app.test/api/zero/query',
-      mutateURL: 'https://app.test/api/zero/mutate',
+      queryURL: 'https://app.test/api/query',
+      mutateURL: 'https://app.test/api/mutate',
     });
   });
 });

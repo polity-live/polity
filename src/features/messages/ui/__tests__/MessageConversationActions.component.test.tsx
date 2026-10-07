@@ -10,6 +10,7 @@ import { ConversationItem } from '../ConversationItem';
 import { DeleteConversationDialog } from '../DeleteConversationDialog';
 import { LinkPreviewCardView } from '../LinkPreviewView';
 import { NewConversationDialogView } from '../NewConversationDialogView';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, children, ...props }: { to: string; children: ReactNode }) => (
@@ -43,6 +44,36 @@ const directConversation = {
 };
 
 describe('message conversation action contracts', () => {
+  it('explains shared project conversation context when its information popover opens', async () => {
+    render(
+      <ConversationHeader
+        conversation={
+          {
+            ...directConversation,
+            type: 'project_ai',
+            name: 'Shared design',
+            assistant_for_user_id: 'user-1',
+          } as any
+        }
+        currentUserId="user-1"
+        compact
+        isOnline={false}
+        onBack={vi.fn()}
+        onTogglePin={vi.fn()}
+        onDeleteClick={vi.fn()}
+        onMembersClick={vi.fn()}
+        onRenameConversation={vi.fn().mockResolvedValue(true)}
+      />
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="messages.conversation.ai-information.open"]')!
+    );
+    expect(await screen.findByText(translate('features.projectChat.shared'))).toBeTruthy();
+    expect(screen.getByText(translate('features.projectChat.sharedAttachments'))).toBeTruthy();
+    expect(screen.getByText(translate('features.messages.ai.disclaimer'))).toBeTruthy();
+    expect(document.querySelector('[data-slot="card-header"]')?.className).toContain('p-3');
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+  });
   it('renames an assistant conversation and exposes information through stable actions', async () => {
     const onRenameConversation = vi.fn().mockResolvedValue(true);
     render(

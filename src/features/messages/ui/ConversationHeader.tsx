@@ -21,6 +21,8 @@ interface ConversationHeaderProps {
   onDeleteClick: (id: string) => void;
   onMembersClick: () => void;
   onRenameConversation: (id: string, name: string | null) => Promise<boolean>;
+  canManage?: boolean;
+  compact?: boolean;
 }
 import { ConversationHeaderView } from './ConversationHeaderView';
 export function ConversationHeader({
@@ -32,6 +34,8 @@ export function ConversationHeader({
   onDeleteClick,
   onMembersClick,
   onRenameConversation,
+  canManage = true,
+  compact = false,
 }: ConversationHeaderProps) {
   const { t } = useTranslation();
   const display = getConversationDisplay(conversation, currentUserId);
@@ -160,27 +164,29 @@ export function ConversationHeader({
                   </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" variant="rich">
-                  <AiResponseInformation t={t} />
+                  <AiResponseInformation t={t} project={conversation.type === 'project_ai'} />
                 </TooltipContent>
               </Tooltip>
               <PopoverContent align="start" className="w-80 space-y-3">
-                <AiResponseInformation t={t} />
+                <AiResponseInformation t={t} project={conversation.type === 'project_ai'} />
               </PopoverContent>
             </Popover>
-            <Button
-              data-action-id="messages.conversation.rename.open"
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 flex-shrink-0"
-              onClick={event => {
-                event.preventDefault();
-                setIsEditingName(true);
-              }}
-              title={t('features.messages.ai.renameConversation')}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
+            {canManage && (
+              <Button
+                data-action-id="messages.conversation.rename.open"
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 flex-shrink-0"
+                onClick={event => {
+                  event.preventDefault();
+                  setIsEditingName(true);
+                }}
+                title={t('features.messages.ai.renameConversation')}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </>
         )}
       </div>
@@ -245,15 +251,22 @@ export function ConversationHeader({
       avatarContent={avatarContent}
       titleContent={titleContent}
       identityContent={identityContent}
+      canManage={canManage}
+      compact={compact}
     />
   );
 }
 
-function AiResponseInformation({ t }: { t: (key: string) => string }) {
+function AiResponseInformation({ t, project }: { t: (key: string) => string; project?: boolean }) {
   return (
     <div className="space-y-2">
       <p className="font-medium">{t('features.messages.ai.information')}</p>
-      <p className="text-xs leading-relaxed">{t('features.messages.ai.helperText')}</p>
+      <p className="text-xs leading-relaxed">
+        {project ? t('features.projectChat.shared') : t('features.messages.ai.helperText')}
+      </p>
+      {project && (
+        <p className="text-xs leading-relaxed">{t('features.projectChat.sharedAttachments')}</p>
+      )}
       <p className="text-xs leading-relaxed">{t('features.messages.ai.disclaimer')}</p>
     </div>
   );

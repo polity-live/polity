@@ -1,5 +1,15 @@
 export const userPageTranslations = {
   ai: {
+    chatgpt: {
+      title: 'ChatGPT',
+      description: 'Link ChatGPT as a sign-in method for your existing Polity account.',
+      connected: 'Polity sign-in: ChatGPT linked.',
+      disconnected: 'Polity sign-in: ChatGPT not linked.',
+      link: 'Link ChatGPT sign-in',
+      loginUnavailable: 'ChatGPT sign-in is awaiting activation for Polity.',
+      planUnavailable:
+        'ChatGPT plan usage is not available in Polity yet. Linking sign-in does not enable AI access. You can use your personal OpenAI API key separately.',
+    },
     credentials: {
       delete: 'Delete credential',
     },

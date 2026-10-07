@@ -1,3 +1,4 @@
+import { projectChatQueries } from './project-chat/queries';
 import { defineQueries } from '@rocicorp/zero';
 
 import { userQueries } from './users/queries';
@@ -37,6 +38,7 @@ export const queries = defineQueries({
   agendas: agendaQueries,
   todos: todoQueries,
   messages: messageQueries,
+  projectChat: projectChatQueries,
   notifications: notificationQueries,
   blogs: blogQueries,
   payments: paymentQueries,

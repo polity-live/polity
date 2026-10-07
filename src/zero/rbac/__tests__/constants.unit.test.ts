@@ -197,6 +197,11 @@ describe('DEFAULT_GROUP_ROLES', () => {
     expect(keys.has('amendments:create')).toBe(true);
     expect(keys.has('events:manage')).toBe(true);
     expect(keys.has('messages:manage')).toBe(true);
+    expect(DEFAULT_GROUP_ROLES.find(role => role.name === 'Admin')?.permissions).toContainEqual({
+      resource: 'projects',
+      action: 'manage',
+    });
+    expect(member?.permissions).not.toContainEqual({ resource: 'projects', action: 'view' });
     expect(member?.permissions).toContainEqual({ resource: 'groups', action: 'view' });
     expectNoRights(keys, removedGroupScopeRights);
   });

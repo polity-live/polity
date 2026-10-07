@@ -162,5 +162,5 @@ export function createDocument(
         );
     }
   else addPost(kind === 'event' ? 'single' : kind, title, 0, '01');
-  return { version: 1, title, kind, brand, pages, posts, startDate: '', source: null };
+  return { version: 2, title, kind, brand, pages, posts, startDate: '', source: null };
 }

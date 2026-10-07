@@ -79,7 +79,11 @@ describe('useAmendmentGroupsController', () => {
   });
 
   it('uses queried counts only for enabled sections and toggles sections both ways', () => {
-    mocks.rows = [{ id: 1 }, { id: 2 }];
+    mocks.rows = [
+      { id: 'a', group_decisions: [{ group_id: 'g', status: 'accepted' }] },
+      { id: 'b', group_decisions: [{ group_id: 'g', status: 'approved' }] },
+      { id: 'c', group_decisions: [{ group_id: 'g', status: 'rejected' }] },
+    ];
     const { result } = renderHook(() =>
       useAmendmentGroupsController({
         groupedAmendments: groups(),
@@ -89,10 +93,43 @@ describe('useAmendmentGroupsController', () => {
       })
     );
     expect(result.current.sectionOrder.map(section => section.count)).toEqual([2, 0, 0, 0]);
+    expect(result.current.sectionOrder[0].ids).toEqual(['a', 'b']);
     act(() => result.current.onToggleSection('accepted'));
     expect(result.current.openSections.accepted).toBe(false);
     act(() => result.current.onToggleSection('accepted'));
     expect(result.current.openSections.accepted).toBe(true);
+  });
+
+  it('assigns each queried amendment to one group status before an event exists', () => {
+    mocks.rows = [
+      {
+        id: 'start',
+        current_process_run: { selected_source_group_id: 'g', step_runs: [] },
+      },
+      {
+        id: 'target',
+        current_process_run: {
+          selected_target_group_id: 'g',
+          step_runs: [{ target_group_id: 'g', status: 'pending_event', event: null }],
+        },
+      },
+      {
+        id: 'decided',
+        group_decisions: [{ group_id: 'g', status: 'accepted' }],
+        current_process_run: {
+          step_runs: [{ target_group_id: 'g', status: 'pending_event', event: null }],
+        },
+      },
+    ];
+    const { result } = renderHook(() =>
+      useAmendmentGroupsController({ groupedAmendments: groups(), groupId: 'g' })
+    );
+    expect(result.current.sectionOrder.map(section => section.ids)).toEqual([
+      ['decided'],
+      ['start', 'target'],
+      [],
+      [],
+    ]);
   });
 
   it('normalizes missing query rows and empty hashtag for all enabled sections', () => {

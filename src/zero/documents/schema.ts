@@ -26,6 +26,7 @@ export const updateDocumentSchema = baseDocumentSchema
   .extend({
     id: z.string(),
     reconcile_orphaned_change_requests: z.boolean().optional(),
+    expected_content_revision: z.number().int().nonnegative().optional(),
   });
 
 export const updateGroupDocumentTitleSchema = z.object({

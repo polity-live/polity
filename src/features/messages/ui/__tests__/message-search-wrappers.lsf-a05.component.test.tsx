@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -17,6 +17,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../ConversationHeader', () => ({ ConversationHeader: mocks.header }));
 vi.mock('../MessageList', () => ({ MessageList: mocks.list }));
 vi.mock('../AssistantMessageInput', () => ({ AssistantMessageInput: mocks.input }));
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ session: { access_token: 'test-session' } }),
+}));
 vi.mock('@/features/search/hooks/useSpatialSearchController', () => ({
   useSpatialSearchController: mocks.spatialController,
 }));
@@ -38,9 +41,46 @@ import { VirtualSearchGrid } from '@/features/search/ui/VirtualSearchGrid';
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('message and search LSF wrapper contracts', () => {
+  it('renders context actions and opens the active trace through the real diagnostics surface', async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ traces: [] }));
+    vi.stubGlobal('fetch', fetch);
+    const { container } = render(
+      <AssistantMessageContentView
+        {...({
+          conversation: { id: 'conversation-1' },
+          messages: [],
+          onBack: vi.fn(),
+          onTogglePin: vi.fn(),
+          onDeleteClick: vi.fn(),
+          onMembersClick: vi.fn(),
+          onRenameConversation: vi.fn(),
+          onAcceptConversation: vi.fn(),
+          onRejectConversation: vi.fn(),
+          assistantChat: {
+            resolveAttachmentCardData: vi.fn(),
+            activeTraceId: 'active-project-trace',
+          },
+          contextActions: <button>Inspect project context</button>,
+          streamingAssistantMessage: null,
+        } as any)}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Inspect project context' })).toBeTruthy();
+    const details = container.querySelector('details')!;
+    expect(details).toBeTruthy();
+    details.open = true;
+    fireEvent(details, new Event('toggle'));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/ai/traces?traceId=active-project-trace',
+        expect.objectContaining({ headers: { Authorization: 'Bearer test-session' } })
+      )
+    );
+  });
   it('connects the assistant conversation to its three child surfaces', () => {
     const assistantChat = { resolveAttachmentCardData: vi.fn() };
     render(

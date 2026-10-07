@@ -74,6 +74,8 @@ export function getEntityHref(
       return `/group/${id}`;
     case 'statement':
       return `/statement/${id}`;
+    case 'studio':
+      return options.groupId ? `/group/${options.groupId}/studio/${id}` : `/studio/${id}`;
     case 'todo':
       return `/todos/${id}`;
     case 'user':

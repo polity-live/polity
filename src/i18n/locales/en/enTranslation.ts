@@ -1,3 +1,4 @@
+import { projectChatTranslations } from './features/projectChat';
 import { studioTranslations } from './features/studio';
 import type { DeepReplace } from '@/i18n/i18n.types.ts';
 
@@ -125,6 +126,7 @@ const baseEnTranslation = {
       },
     },
     studio: studioTranslations,
+    projectChat: projectChatTranslations,
     agendas: agendasTranslations,
     appTutorial: appTutorialTranslations,
     auth: authTranslations,

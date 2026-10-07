@@ -2,6 +2,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { StrictMode, type ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -60,6 +61,39 @@ beforeEach(() => {
 });
 
 describe('useAuthCallbackPageController', () => {
+  it('completes authorization once when React replays its mount effect', async () => {
+    window.history.replaceState({}, '', '/auth/callback?code=single-use-code');
+    const { rerender } = renderHook(() => useAuthCallbackPageController(), {
+      wrapper: ({ children }: { children: ReactNode }) => <StrictMode>{children}</StrictMode>,
+    });
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: '/' }));
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledExactlyOnceWith('single-use-code');
+    expect(mocks.getUser).toHaveBeenCalledOnce();
+    expect(mocks.navigate).toHaveBeenCalledOnce();
+    rerender();
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(2));
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledOnce();
+    expect(mocks.getUser).toHaveBeenCalledOnce();
+  });
+
+  it('returns a verified linked identity to the original account AI settings', async () => {
+    sessionStorage.setItem('polity_chatgpt_link_user', 'user-1');
+    window.history.replaceState({}, '', '/auth/callback?chatgpt=link&code=verified-link');
+    mocks.getUser.mockResolvedValue({
+      data: { user: { ...user(), identities: [{ provider: 'custom:openai' }] } },
+      error: null,
+    });
+    renderHook(() => useAuthCallbackPageController());
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: '/user/$id/settings',
+        params: { id: 'user-1' },
+        search: { tab: 'ai' },
+      })
+    );
+    expect(sessionStorage.getItem('polity_chatgpt_link_user')).toBeNull();
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
   it('exchanges an authorization code and respects the validated destination', async () => {
     window.history.replaceState({}, '', '/auth/callback?code=oauth-code&next=%2Fgroups%2Fg-1');
     renderHook(() => useAuthCallbackPageController());

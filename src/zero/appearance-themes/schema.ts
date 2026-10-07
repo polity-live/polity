@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { themeFontsSchema, themePaletteSchema } from '@/features/shared/appearance-theme/contract';
+import {
+  themeFontsSchema,
+  themePaletteSchema,
+  themeTextStyleSchema,
+} from '@/features/shared/appearance-theme/contract';
 
 const baseThemeInputSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -7,6 +11,7 @@ const baseThemeInputSchema = z.object({
   light_palette: themePaletteSchema,
   dark_palette: themePaletteSchema,
   fonts: themeFontsSchema,
+  text_styles: z.array(themeTextStyleSchema).max(50).optional(),
 });
 
 export const createGroupAppearanceThemeSchema = baseThemeInputSchema.extend({
@@ -19,6 +24,17 @@ export const createGroupAppearanceThemeSchema = baseThemeInputSchema.extend({
     .max(80)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   group_id: z.string().uuid(),
+});
+
+export const createPersonalAppearanceThemeSchema = baseThemeInputSchema.extend({
+  id: z.string().uuid(),
+  revision_id: z.string().uuid(),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 });
 
 export const updateAppearanceThemeDraftSchema = baseThemeInputSchema.extend({
@@ -38,3 +54,4 @@ export const deleteAppearanceThemeSchema = z.object({
 });
 
 export type CreateGroupAppearanceTheme = z.infer<typeof createGroupAppearanceThemeSchema>;
+export type CreatePersonalAppearanceTheme = z.infer<typeof createPersonalAppearanceThemeSchema>;

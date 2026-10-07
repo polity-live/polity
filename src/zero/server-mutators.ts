@@ -1,3 +1,5 @@
+import { studioServerMutators } from './communication-studio/server-mutators';
+import { projectChatServerMutators } from './project-chat/server-mutators';
 /**
  * Server-only mutator overrides — thin composition file.
  *
@@ -39,6 +41,8 @@ export const serverMutators = defineMutators(mutators, {
   common: commonServerMutators,
   statements: statementServerMutators,
   messages: messageServerMutators,
+  studio: studioServerMutators,
+  projectChat: projectChatServerMutators,
   votingPassword: votingPasswordServerMutators,
   accreditation: accreditationServerMutators,
   network: networkServerMutators,

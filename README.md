@@ -149,11 +149,17 @@ are generated and reviewed from the declarative source of truth in
 ### 4. Create storage buckets
 
 ```bash
-pnpm exec supabase seed buckets
+pnpm exec supabase seed buckets --local
 ```
 
-This provisions the `avatars` and `uploads` storage buckets defined in `supabase/config.toml`.
-Buckets are **not** auto-created by `supabase start` — this step is required for image uploads to work.
+This provisions the `avatars`, `uploads`, `studio`, and `dataset-snapshots` storage buckets defined
+in `supabase/config.toml`. Buckets are **not** auto-created by `supabase start` — this step is
+required for uploads to work.
+
+The deployed Supabase project must use a global Storage file-size limit of at least 100 MiB before
+the private `studio` bucket can be provisioned. Supabase Free projects are limited to 50 MB and
+cannot satisfy the Studio upload contract without a plan upgrade or a coordinated application-limit
+change.
 
 ### 5. Start the app and Zero Cache
 

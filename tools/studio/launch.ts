@@ -7,6 +7,5 @@ if (process.env.NODE_ENV !== 'production') {
   Object.assign(process.env, inherited);
 }
 const target = process.argv[2];
-if (!['collaboration-server', 'worker'].includes(target))
-  throw new Error('Expected collaboration-server or worker');
+if (!['worker'].includes(target)) throw new Error('Expected worker');
 await import(`./${target}.ts`);

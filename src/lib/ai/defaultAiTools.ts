@@ -1,5 +1,8 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export const DEFAULT_AI_TOOL_NAMES = [
+  'studio_generate_suggestion',
+  'create_studio_project',
+  'open_project_chat',
   'find_my_todos',
   'find_my_calendar',
   'find_my_groups',
@@ -41,6 +44,24 @@ export interface DefaultAiToolDefinition {
 }
 
 export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
+  {
+    name: 'studio_generate_suggestion',
+    label: translateText('features.studio.generateSuggestion'),
+    kind: 'create',
+    description: translateText('features.studio.generateSuggestionDescription'),
+  },
+  {
+    name: 'create_studio_project',
+    label: translateText('features.projectChat.createStudio'),
+    kind: 'create',
+    description: translateText('features.projectChat.createStudioDescription'),
+  },
+  {
+    name: 'open_project_chat',
+    label: translateText('features.projectChat.open'),
+    kind: 'create',
+    description: translateText('features.projectChat.openDescription'),
+  },
   {
     name: 'find_my_todos',
     label: translateText('generated.inline.0576_eigene_todos_a77c745f'),

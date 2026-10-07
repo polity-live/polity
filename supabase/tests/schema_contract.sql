@@ -31,8 +31,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND relation.relkind = 'r'
   ),
-  163,
-  'the application owns 163 public tables'
+  172,
+  'the application owns 172 public tables'
 );
 
 SELECT is(
@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1743,
-  'all 1743 application columns are installed'
+  1814,
+  'all 1814 application columns are installed'
 );
 
 SELECT is(
@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  138,
-  'all 138 business CHECK constraints are installed'
+  153,
+  'all 153 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  398,
-  'all 398 foreign keys are installed'
+  419,
+  'all 419 foreign keys are installed'
 );
 
 SELECT is(
@@ -116,8 +116,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'u'
   ),
-  63,
-  'all 63 UNIQUE constraints are installed'
+  66,
+  'all 66 UNIQUE constraints are installed'
 );
 
 SELECT is(
@@ -132,8 +132,8 @@ SELECT is(
       AND index_definition.indisunique
       AND constraint_definition.oid IS NULL
   ),
-  28,
-  'all 28 standalone and partial uniqueness rules are installed'
+  30,
+  'all 30 standalone and partial uniqueness rules are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  680,
-  'all 680 application indexes are installed'
+  710,
+  'all 710 application indexes are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  70,
-  'all 70 privileged functions are SECURITY DEFINER'
+  81,
+  'all 81 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  87,
-  'all 87 application triggers are installed'
+  83,
+  'all 83 application triggers are installed'
 );
 
 SELECT is(
@@ -260,8 +260,8 @@ SELECT is(
     FROM pg_policies policy_definition
     WHERE policy_definition.schemaname IN ('public', 'storage')
   ),
-  155,
-  'all 155 RLS policies are installed'
+  162,
+  'all 162 RLS policies are installed'
 );
 
 SELECT is(

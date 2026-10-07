@@ -7,7 +7,7 @@ CREATE TABLE public.appearance_theme (
   slug TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
-  kind TEXT NOT NULL CHECK (kind IN ('builtin', 'group')),
+  kind TEXT NOT NULL CHECK (kind IN ('builtin', 'personal', 'group')),
   group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
   created_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   current_revision_id UUID,
@@ -15,6 +15,7 @@ CREATE TABLE public.appearance_theme (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT appearance_theme_scope_check CHECK (
     (kind = 'builtin' AND group_id IS NULL)
+    OR (kind = 'personal' AND group_id IS NULL AND created_by_id IS NOT NULL)
     OR (kind = 'group' AND group_id IS NOT NULL)
   ),
   CONSTRAINT appearance_theme_group_slug_unique UNIQUE NULLS NOT DISTINCT (group_id, slug)
@@ -33,6 +34,7 @@ CREATE TABLE public.appearance_theme_revision (
   light_palette JSONB NOT NULL,
   dark_palette JSONB NOT NULL,
   fonts JSONB NOT NULL,
+  text_styles JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

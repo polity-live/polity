@@ -37,6 +37,7 @@ it('keeps the Studio entry hidden in a production build until explicitly enabled
   const view = render(<StudioStatementEntry form={{ text: 'draft' }} />);
   expect(screen.queryByRole('button')).toBeNull();
   vi.stubEnv('VITE_STUDIO_ENABLED', 'true');
+  vi.stubEnv('VITE_STUDIO_V3_ENABLED', 'true');
   view.rerender(<StudioStatementEntry form={{ text: 'draft' }} />);
   expect(screen.getByRole('button')).toBeTruthy();
 });

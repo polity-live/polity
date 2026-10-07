@@ -1,3 +1,5 @@
+import { getCityDesignOsmFeatures } from '../logic/cityDesignOsm';
+import { useProjectEditorBridge } from '@/features/project-chat/hooks/editor-bridge';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
@@ -84,7 +86,7 @@ function isSameCenter(left: CityDesignGeoPoint, right: CityDesignGeoPoint) {
   return left.lat === right.lat && left.lon === right.lon;
 }
 
-export function useCityDesignPageController(amendmentId: string) {
+export function useCityDesignPageController(amendmentId: string, requestedBranchId?: string) {
   const { user } = useAuth();
   const { displayCurrency, isLoading: isPreferenceLoading } = usePreferenceState();
   const initialDesignCurrencyRef = useRef<string | null>(null);
@@ -145,6 +147,7 @@ export function useCityDesignPageController(amendmentId: string) {
     [amendmentLocationOrigin, isPreferenceLoading, primaryCityDesign?.design_state]
   );
   const editor = useCityDesignEditorState(persistedDesign);
+  const cityBaseRevision = useRef(primaryCityDesign?.content_revision ?? 0);
   const [isLoadingOsm, setIsLoadingOsm] = useState(false);
   const [osmError, setOsmError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -153,8 +156,15 @@ export function useCityDesignPageController(amendmentId: string) {
     useState<CityDesignChangeRequestColorMode>('natural');
 
   useEffect(() => {
+    if (editor.state.isDirty) return;
+    cityBaseRevision.current = primaryCityDesign?.content_revision ?? 0;
     editor.replaceDesign(persistedDesign, false);
-  }, [editor.replaceDesign, persistedDesign]);
+  }, [
+    editor.replaceDesign,
+    persistedDesign,
+    primaryCityDesign?.content_revision,
+    editor.state.isDirty,
+  ]);
 
   useEffect(() => {
     if (
@@ -188,7 +198,7 @@ export function useCityDesignPageController(amendmentId: string) {
     null;
   const selectedProcessBranchId = resolveSelectedBranchId({
     branches: processBranches,
-    requestedBranchId: null,
+    requestedBranchId: requestedBranchId ?? null,
     activeBranchId,
   });
   const selectedProcessBranch =
@@ -258,7 +268,9 @@ export function useCityDesignPageController(amendmentId: string) {
       (mode === 'suggest_event' && cityDesignAccess.canSuggestInEvent));
   const canEditMapContext =
     branchAllowsDesignMutation && mode === 'edit' && cityDesignAccess.canEditDirectly;
-  const readOnly = !canMutateDesign;
+  const invalidBranch =
+    !!requestedBranchId && !processBranches.some(branch => branch.id === requestedBranchId);
+  const readOnly = !canMutateDesign || invalidBranch;
   const canVoteOnStreetChangeRequests = cityDesignAccess.canEdit && isVotingMode(mode);
   const canFinalizeStreetChangeRequests = cityDesignAccess.canEdit && mode === 'vote_internal';
   const canEdit = cityDesignAccess.canEdit;
@@ -469,124 +481,210 @@ export function useCityDesignPageController(amendmentId: string) {
     [editor.design, persistedDesign]
   );
 
-  const handleSave = useCallback(async () => {
-    if (readOnly) return;
+  const handleSave = useCallback(
+    async (propagate = false) => {
+      if (readOnly) return;
 
-    setIsSaving(true);
-    setSaveError(null);
+      setIsSaving(true);
+      setSaveError(null);
 
-    const title = amendment?.title
-      ? translateText('features.amendments.cityDesign.savedTitleWithAmendment', {
-          title: amendment.title,
-        })
-      : translateText('features.amendments.cityDesign.defaultTitle');
+      const title = amendment?.title
+        ? translateText('features.amendments.cityDesign.savedTitleWithAmendment', {
+            title: amendment.title,
+          })
+        : translateText('features.amendments.cityDesign.defaultTitle');
 
-    try {
-      if (isSuggestingMode(mode)) {
-        const changeRequestPayloads = createCityDesignChangeRequestPayloads({
-          amendmentId,
-          processBranchId: selectedProcessBranch?.id ?? null,
-          cityDesignId: primaryCityDesign?.id ?? null,
-          baseDesign: persistedDesign,
-          draftDesign: designForPersistence,
-        });
+      try {
+        if (isSuggestingMode(mode)) {
+          const changeRequestPayloads = createCityDesignChangeRequestPayloads({
+            amendmentId,
+            processBranchId: selectedProcessBranch?.id ?? null,
+            cityDesignId: primaryCityDesign?.id ?? null,
+            baseDesign: persistedDesign,
+            draftDesign: designForPersistence,
+          });
 
-        if (changeRequestPayloads.length === 0) {
+          if (changeRequestPayloads.length === 0) {
+            return;
+          }
+
+          const result = createCityDesignChangeRequests({
+            amendment_id: amendmentId,
+            process_branch_id: selectedProcessBranch?.id ?? null,
+            requests: changeRequestPayloads,
+          } as unknown as Parameters<typeof createCityDesignChangeRequests>[0]);
+          await waitForClientApply(result);
+          await serverConfirmed(result);
+
+          editor.replaceDesign(persistedDesign, false);
+          toast.success(translateText('features.amendments.toasts.changeRequestCreated'));
+          if (amendment?.tutorial_run_id) {
+            reportAppTutorialAction({
+              type: 'mutation',
+              event: 'city-design.saved',
+            });
+          }
           return;
         }
 
-        const result = createCityDesignChangeRequests({
+        const persistence = createCityDesignPersistenceSnapshot(designForPersistence);
+        const payload = {
           amendment_id: amendmentId,
-          process_branch_id: selectedProcessBranch?.id ?? null,
-          requests: changeRequestPayloads,
-        } as unknown as Parameters<typeof createCityDesignChangeRequests>[0]);
-        await waitForClientApply(result);
-        await serverConfirmed(result);
+          title,
+          bbox: persistence.bbox,
+          center_lat: persistence.center_lat,
+          center_lon: persistence.center_lon,
+          osm_snapshot: persistence.osm_snapshot,
+          design_state: persistence.design_state,
+          currency: persistence.currency,
+          estimated_total_cost_minor: persistence.estimated_total_cost_minor,
+          cost_catalog_version: persistence.cost_catalog_version,
+          cost_summary: persistence.cost_summary,
+        };
 
-        editor.replaceDesign(persistedDesign, false);
-        toast.success(translateText('features.amendments.toasts.changeRequestCreated'));
+        if (primaryCityDesign?.id) {
+          const result = updateCityDesign({
+            id: primaryCityDesign.id,
+            expected_content_revision: cityBaseRevision.current,
+            process_branch_id: selectedProcessBranch?.id ?? null,
+            title: payload.title,
+            bbox: payload.bbox,
+            center_lat: payload.center_lat,
+            center_lon: payload.center_lon,
+            osm_snapshot: payload.osm_snapshot,
+            design_state: payload.design_state,
+            currency: payload.currency,
+            estimated_total_cost_minor: payload.estimated_total_cost_minor,
+            cost_catalog_version: payload.cost_catalog_version,
+            cost_summary: payload.cost_summary,
+          });
+          await waitForClientApply(result);
+          await serverConfirmed(result);
+        } else {
+          const result = createCityDesign({
+            id: crypto.randomUUID(),
+            process_branch_id: selectedProcessBranch?.id ?? null,
+            ...payload,
+          });
+          await waitForClientApply(result);
+          await serverConfirmed(result);
+        }
+
+        editor.replaceDesign(designForPersistence, false);
         if (amendment?.tutorial_run_id) {
           reportAppTutorialAction({
             type: 'mutation',
             event: 'city-design.saved',
           });
         }
-        return;
+      } catch (error) {
+        if (propagate) throw error;
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : translateText('features.amendments.cityDesign.errors.saveFailed')
+        );
+      } finally {
+        setIsSaving(false);
       }
+    },
+    [
+      amendment?.title,
+      amendment?.tutorial_run_id,
+      amendmentId,
+      createCityDesignChangeRequests,
+      createCityDesign,
+      designForPersistence,
+      editor,
+      mode,
+      persistedDesign,
+      primaryCityDesign?.id,
+      readOnly,
+      selectedProcessBranch?.id,
+      updateCityDesign,
+    ]
+  );
 
-      const persistence = createCityDesignPersistenceSnapshot(designForPersistence);
-      const payload = {
-        amendment_id: amendmentId,
-        title,
-        bbox: persistence.bbox,
-        center_lat: persistence.center_lat,
-        center_lon: persistence.center_lon,
-        osm_snapshot: persistence.osm_snapshot,
-        design_state: persistence.design_state,
-        currency: persistence.currency,
-        estimated_total_cost_minor: persistence.estimated_total_cost_minor,
-        cost_catalog_version: persistence.cost_catalog_version,
-        cost_summary: persistence.cost_summary,
+  useProjectEditorBridge(
+    { kind: 'amendment', amendmentId },
+    async () => {
+      if (invalidBranch) throw new Error('The selected branch is no longer available.');
+      if (isSaving) throw new Error('Wait until City Design has finished saving.');
+      if (editor.state.isDirty) await handleSave(true);
+      return {
+        surface: 'city_design',
+        branchId: selectedProcessBranch?.id ?? null,
+        cityDesignId: primaryCityDesign?.id,
+        objectIds: editor.state.selectedObjectId ? [editor.state.selectedObjectId] : [],
+        featureIds: editor.state.selectedOsmWayId ? [editor.state.selectedOsmWayId] : [],
+        contentRevision: cityBaseRevision.current,
       };
-
-      if (primaryCityDesign?.id) {
-        const result = updateCityDesign({
-          id: primaryCityDesign.id,
-          process_branch_id: selectedProcessBranch?.id ?? null,
-          title: payload.title,
-          bbox: payload.bbox,
-          center_lat: payload.center_lat,
-          center_lon: payload.center_lon,
-          osm_snapshot: payload.osm_snapshot,
-          design_state: payload.design_state,
-          currency: payload.currency,
-          estimated_total_cost_minor: payload.estimated_total_cost_minor,
-          cost_catalog_version: payload.cost_catalog_version,
-          cost_summary: payload.cost_summary,
-        });
-        await waitForClientApply(result);
-        await serverConfirmed(result);
-      } else {
-        const result = createCityDesign({
-          id: crypto.randomUUID(),
-          process_branch_id: selectedProcessBranch?.id ?? null,
-          ...payload,
-        });
-        await waitForClientApply(result);
-        await serverConfirmed(result);
-      }
-
-      editor.replaceDesign(designForPersistence, false);
-      if (amendment?.tutorial_run_id) {
-        reportAppTutorialAction({
-          type: 'mutation',
-          event: 'city-design.saved',
-        });
-      }
-    } catch (error) {
-      setSaveError(
-        error instanceof Error
-          ? error.message
-          : translateText('features.amendments.cityDesign.errors.saveFailed')
-      );
-    } finally {
-      setIsSaving(false);
+    },
+    {
+      context: {
+        surface: 'city_design',
+        branchId: selectedProcessBranch?.id ?? null,
+        cityDesignId: primaryCityDesign?.id,
+        objectIds: editor.state.selectedObjectId ? [editor.state.selectedObjectId] : [],
+        featureIds: editor.state.selectedOsmWayId ? [editor.state.selectedOsmWayId] : [],
+        contentRevision: cityBaseRevision.current,
+        references: [
+          {
+            kind: 'amendment',
+            id: amendmentId,
+            label: amendment?.title || translateText('features.projectChat.context.amendment'),
+            origin: 'automatic',
+          },
+          ...(selectedProcessBranch?.id
+            ? [
+                {
+                  kind: 'branch' as const,
+                  id: selectedProcessBranch.id,
+                  label: selectedProcessBranch.title || selectedProcessBranch.id,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(primaryCityDesign?.id
+            ? [
+                {
+                  kind: 'city_design' as const,
+                  id: primaryCityDesign.id,
+                  label: translateText('features.projectChat.context.city_design'),
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(editor.state.selectedObjectId
+            ? [
+                {
+                  kind: 'city_object' as const,
+                  id: editor.state.selectedObjectId,
+                  label:
+                    editor.design.objects.find(
+                      object => object.id === editor.state.selectedObjectId
+                    )?.type || editor.state.selectedObjectId,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+          ...(editor.state.selectedOsmWayId
+            ? [
+                {
+                  kind: 'city_feature' as const,
+                  id: editor.state.selectedOsmWayId,
+                  label:
+                    getCityDesignOsmFeatures(editor.design.osmSnapshot).find(
+                      feature => feature.id === editor.state.selectedOsmWayId
+                    )?.label || editor.state.selectedOsmWayId,
+                  origin: 'automatic' as const,
+                },
+              ]
+            : []),
+        ],
+      },
     }
-  }, [
-    amendment?.title,
-    amendment?.tutorial_run_id,
-    amendmentId,
-    createCityDesignChangeRequests,
-    createCityDesign,
-    designForPersistence,
-    editor,
-    mode,
-    persistedDesign,
-    primaryCityDesign?.id,
-    readOnly,
-    selectedProcessBranch?.id,
-    updateCityDesign,
-  ]);
+  );
 
   const handleModeChange = useCallback(
     async (nextMode: NonTerminalEditingMode) => {
@@ -787,7 +885,7 @@ export function useCityDesignPageController(amendmentId: string) {
     saveError,
     changeRequestColorMode,
     onChangeRequestColorModeChange: setChangeRequestColorMode,
-    onSave: handleSave,
+    onSave: () => handleSave(),
     costCatalogCurrency: editor.design.currency,
     allStreetChangeRequests: streetChangeRequests,
     streetChangeRequests: visibleStreetChangeRequests,

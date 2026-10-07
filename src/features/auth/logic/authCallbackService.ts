@@ -13,6 +13,7 @@ export interface AuthCallbackUser {
   id: string;
   created_at: string;
   user_metadata: Record<string, unknown>;
+  identities?: { provider: string }[];
 }
 
 export interface AuthCallbackGateway {
@@ -31,7 +32,7 @@ export type AuthCallbackOutcome =
   | {
       ok: false;
       destination: '/auth/sign-in';
-      reason: 'missing-session';
+      reason: 'missing-session' | 'oauth-denied' | 'code-exchange-failed' | 'identity-mismatch';
     };
 
 export async function completeAuthCallback(options: {
@@ -39,6 +40,7 @@ export async function completeAuthCallback(options: {
   pendingLanguage: Language | null;
   search: string | URLSearchParams;
   now?: number;
+  expectedLinkUserId?: string | null;
 }): Promise<AuthCallbackOutcome> {
   const searchParams =
     typeof options.search === 'string' ? new URLSearchParams(options.search) : options.search;
@@ -47,17 +49,26 @@ export async function completeAuthCallback(options: {
     next: searchParams.get('next'),
   });
   const destination = getSafeAuthRedirect(query.next);
+  const chatGptMode = searchParams.get('chatgpt');
+  const strictChatGpt = chatGptMode === 'login' || chatGptMode === 'link';
+  const failed = (
+    reason: 'oauth-denied' | 'code-exchange-failed' | 'identity-mismatch'
+  ): AuthCallbackOutcome => ({ ok: false, destination: '/auth/sign-in', reason });
+  if (strictChatGpt && searchParams.has('error')) return failed('oauth-denied');
+  if (strictChatGpt && !query.code) return failed('code-exchange-failed');
 
   if (query.code) {
     try {
       const exchange = await options.gateway.exchangeCodeForSession(query.code);
       if (exchange.error) {
+        if (strictChatGpt) return failed('code-exchange-failed');
         console.warn(
           'Code exchange failed, falling back to an existing session:',
           exchange.error.message
         );
       }
     } catch (error) {
+      if (strictChatGpt) return failed('code-exchange-failed');
       console.warn(
         'Code exchange threw, falling back to an existing session:',
         error instanceof Error ? error.message : String(error)
@@ -71,9 +82,16 @@ export async function completeAuthCallback(options: {
     result = await options.gateway.getUser();
   }
   const user = result.user;
-  if (!user?.id) {
+  if (!user?.id || (strictChatGpt && result.error)) {
     return { ok: false, destination: '/auth/sign-in', reason: 'missing-session' };
   }
+  if (
+    strictChatGpt &&
+    (!user.identities?.some(identity => identity.provider === 'custom:openai') ||
+      (chatGptMode === 'link' &&
+        (!options.expectedLinkUserId || user.id !== options.expectedLinkUserId)))
+  )
+    return failed('identity-mismatch');
 
   let languageSynchronized = false;
   if (

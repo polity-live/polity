@@ -42,6 +42,8 @@ export const collectionAreaSchema = z.enum([
   'changeRequests',
   'calendar',
   'network.events',
+  'studio.personal',
+  'studio.group',
 ]);
 export type CollectionArea = z.infer<typeof collectionAreaSchema>;
 export type CollectionView = 'cards' | 'compact';

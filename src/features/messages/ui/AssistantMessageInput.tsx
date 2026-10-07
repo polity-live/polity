@@ -1,6 +1,10 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  contextReferenceKey,
+  type ProjectContextReference,
+} from '@/features/project-chat/logic/context-references';
+import { useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { featureThemeClassName } from '@/features/shared/theme';
@@ -14,13 +18,12 @@ import {
   slugifySkillName,
   type SuggestionAnchorPosition,
 } from '../logic/assistantComposer';
-import type { useAssistantChat } from '../hooks/useAssistantChat';
+import type { AssistantChatController } from '../hooks/useAssistantChat';
+import { buildAiModelKey as buildModelKey, aiSourceTranslationKey } from '@/lib/ai/models';
 
 interface AssistantMessageInputProps {
-  assistantChat: ReturnType<typeof useAssistantChat>;
-}
-function buildModelKey(model: { provider: string; id: string }): string {
-  return `${model.provider}:${model.id}`;
+  assistantChat: AssistantChatController;
+  compact?: boolean;
 }
 import { AssistantMessageInputView } from './AssistantMessageInputView';
 import {
@@ -28,10 +31,38 @@ import {
   requestAppTutorialSpotlightTarget,
 } from '@/features/app-tutorial/events';
 import { matchesAppTutorialExpectedInput } from '@/features/app-tutorial/catalog';
-export function AssistantMessageInput({ assistantChat }: AssistantMessageInputProps) {
+export function AssistantMessageInput({
+  assistantChat,
+  compact = false,
+}: AssistantMessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [messageText, setMessageText] = useState('');
+  const draftKey = assistantChat.projectDraftKey;
+  const readDraft = () => {
+    try {
+      return draftKey ? (sessionStorage.getItem(draftKey) ?? '') : '';
+    } catch {
+      return '';
+    }
+  };
+  const [messageText, updateMessageText] = useState(readDraft);
+  const setMessageText = (value: SetStateAction<string>) => {
+    updateMessageText(current => {
+      const next = typeof value === 'function' ? value(current) : value;
+      try {
+        if (draftKey) {
+          if (next) sessionStorage.setItem(draftKey, next);
+          else sessionStorage.removeItem(draftKey);
+        }
+      } catch {
+        /* The mounted composer still retains the draft. */
+      }
+      return next;
+    });
+  };
+  useLayoutEffect(() => {
+    updateMessageText(readDraft());
+  }, [draftKey]);
   const [caretPosition, setCaretPosition] = useState(0);
   const [suggestionAnchorPosition, setSuggestionAnchorPosition] =
     useState<SuggestionAnchorPosition | null>(null);
@@ -68,6 +99,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     [assistantChat.availableTools]
   );
 
+  const projectTools = useMemo(
+    () => assistantChat.availableTools.filter(tool => tool.kind === 'project'),
+    [assistantChat.availableTools]
+  );
+
   const mentionQuery = useMemo(
     () => parseActiveMentionQuery(messageText, caretPosition),
     [messageText, caretPosition]
@@ -93,6 +129,22 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     [assistantChat.selectedAttachments]
   );
 
+  const projectOptions = useMemo(
+    () =>
+      (assistantChat.projectContextOptions ?? [])
+        .filter(ref => ref.kind === 'frame' || ref.kind === 'element')
+        .map(ref => ({
+          key: contextReferenceKey(ref),
+          entityType: ref.kind as 'frame' | 'element',
+          label: ref.label,
+          subtitle: ref.parentId
+            ? assistantChat.projectContextOptions.find(frame => frame.id === ref.parentId)?.label
+            : t('features.projectChat.context.frame'),
+          searchText: ref.label.toLowerCase(),
+          reference: ref,
+        })),
+    [assistantChat.projectContextOptions, t]
+  );
   const attachmentTypeSuggestions = useMemo(() => {
     if (!mentionQuery) {
       return [];
@@ -100,23 +152,45 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
     const typedType = mentionQuery.raw.slice(1).split('@')[0].trim().toLowerCase();
 
-    return ASSISTANT_ATTACHMENT_TYPE_OPTIONS.filter(
+    return [
+      ...ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
+      ...(projectOptions.length
+        ? [
+            {
+              entityType: 'frame' as const,
+              token: '@frame@',
+              label: t('features.projectChat.context.frames'),
+            },
+            {
+              entityType: 'element' as const,
+              token: '@element@',
+              label: t('features.projectChat.context.elements'),
+            },
+          ]
+        : []),
+    ].filter(
       option =>
         !mentionQuery.entityType &&
         (typedType.length === 0 ||
           option.entityType.includes(typedType) ||
           option.label.toLowerCase().includes(typedType))
     );
-  }, [mentionQuery]);
+  }, [mentionQuery, projectOptions, t]);
 
   const attachmentSuggestions = useMemo(() => {
     if (!mentionQuery) {
       return [];
     }
 
-    return assistantChat.attachmentOptions
+    return [...assistantChat.attachmentOptions, ...projectOptions]
       .filter(option => {
-        if (selectedAttachmentKeys.has(option.key)) {
+        if (
+          selectedAttachmentKeys.has(option.key) ||
+          ('reference' in option &&
+            (assistantChat.projectContextReferences ?? []).some(
+              ref => ref.origin === 'manual' && contextReferenceKey(ref) === option.key
+            ))
+        ) {
           return false;
         }
 
@@ -131,7 +205,13 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         return option.searchText.includes(mentionQuery.searchText);
       })
       .slice(0, 8);
-  }, [assistantChat.attachmentOptions, mentionQuery, selectedAttachmentKeys]);
+  }, [
+    assistantChat.attachmentOptions,
+    projectOptions,
+    assistantChat.projectContextReferences,
+    mentionQuery,
+    selectedAttachmentKeys,
+  ]);
 
   const skillSuggestions = useMemo(() => {
     if (!skillCommand) {
@@ -190,7 +270,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
   const freeRouterModelKey = useMemo(() => {
     const labeledModel = assistantChat.models.find(
-      candidate => candidate.label.trim().toLowerCase() === freeRouterLabel.trim().toLowerCase()
+      candidate =>
+        candidate.source === 'app' &&
+        candidate.label.trim().toLowerCase() === freeRouterLabel.trim().toLowerCase()
     );
 
     if (labeledModel) {
@@ -206,12 +288,14 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
   }, [assistantChat.models, freeRouterLabel]);
 
   const getModelDisplayLabel = (model: (typeof assistantChat.models)[number]) => {
-    const modelKey = `${model.provider}:${model.id}`;
+    const modelKey = buildModelKey(model);
     if (freeRouterModelKey && modelKey === freeRouterModelKey) {
-      return freeRouterLabel;
+      return `${freeRouterLabel} · ${t(aiSourceTranslationKey(model.source))}`;
     }
 
-    return model.label;
+    return model.supports_tools === false
+      ? `${model.label} · ${t(aiSourceTranslationKey(model.source))} · ${t('features.studio.modelNoTools')}`
+      : `${model.label} · ${t(aiSourceTranslationKey(model.source))}`;
   };
 
   const selectedModelHint = useMemo(() => {
@@ -283,7 +367,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
   };
 
   const handleAttachmentTypeSelect = (
-    entityType: (typeof ASSISTANT_ATTACHMENT_TYPE_OPTIONS)[number]['entityType']
+    entityType:
+      (typeof ASSISTANT_ATTACHMENT_TYPE_OPTIONS)[number]['entityType'] | 'frame' | 'element'
   ) => {
     if (!mentionQuery) {
       return;
@@ -298,12 +383,16 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     );
   };
 
-  const handleAttachmentSelect = (option: (typeof assistantChat.attachmentOptions)[number]) => {
+  const handleAttachmentSelect = (
+    option:
+      (typeof assistantChat.attachmentOptions)[number] | { reference: ProjectContextReference }
+  ) => {
     if (!mentionQuery) {
       return;
     }
 
-    assistantChat.addAttachment(option);
+    if ('reference' in option) assistantChat.addProjectContext?.(option.reference);
+    else assistantChat.addAttachment(option);
 
     const replacement =
       messageText.slice(mentionQuery.end).startsWith(' ') || mentionQuery.start === 0 ? '' : ' ';
@@ -428,6 +517,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       searchTools={searchTools}
       createTools={createTools}
       updateTools={updateTools}
+      projectTools={projectTools}
+      compact={compact}
       mentionQuery={mentionQuery}
       skillCommand={skillCommand}
       toolCommand={toolCommand}

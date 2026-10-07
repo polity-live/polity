@@ -18,6 +18,7 @@ interface RevisionLike {
   light_palette: unknown;
   dark_palette: unknown;
   fonts: unknown;
+  text_styles?: unknown;
 }
 
 interface ThemeRowLike {
@@ -27,6 +28,7 @@ interface ThemeRowLike {
   description?: string | null;
   kind: string;
   group_id?: string | null;
+  created_by_id?: string | null;
   current_revision?: RevisionLike | null;
 }
 
@@ -39,20 +41,22 @@ export function definitionFromThemeRow(row: ThemeRowLike): AppearanceThemeDefini
     description: row.description ?? undefined,
     kind: row.kind,
     groupId: row.group_id ?? null,
+    ownerId: row.created_by_id ?? null,
     version: row.current_revision.version,
     light: row.current_revision.light_palette,
     dark: row.current_revision.dark_palette,
     fonts: row.current_revision.fonts,
+    textStyles: row.current_revision.text_styles ?? [],
   });
   return parsed.success ? parsed.data : null;
 }
 
 export function useAvailableAppearanceThemes() {
   const [catalogRows, result] = useQuery(queries.appearanceThemes.catalog({}));
-  const groupThemes = useMemo(
+  const customThemes = useMemo(
     () =>
       (Array.isArray(catalogRows) ? catalogRows : []).flatMap(row => {
-        if ((row as ThemeRowLike).kind !== 'group') return [];
+        if (!['group', 'personal'].includes((row as ThemeRowLike).kind)) return [];
         const theme = definitionFromThemeRow(row as ThemeRowLike);
         return theme ? [theme] : [];
       }),
@@ -61,8 +65,9 @@ export function useAvailableAppearanceThemes() {
 
   return {
     builtinThemes: BUILTIN_THEMES,
-    groupThemes,
-    themes: [...BUILTIN_THEMES, ...groupThemes],
+    groupThemes: customThemes.filter(theme => theme.kind === 'group'),
+    personalThemes: customThemes.filter(theme => theme.kind === 'personal'),
+    themes: [...BUILTIN_THEMES, ...customThemes],
     isLoading: result.type === 'unknown',
   };
 }

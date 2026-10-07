@@ -29,10 +29,14 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 vi.mock('lucide-react', () => ({ MessageSquareWarning: () => <span data-icon="warning" /> }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({
     t: (key: string, values?: Record<string, unknown>) =>
       values?.branch ? `${key}:${values.branch}` : key,
   }),
+}));
+vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
+  ProjectChatWorkspace: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock('@/features/editor/ui/EditorView', () => ({
   EditorView: (props: Record<string, unknown>) => {

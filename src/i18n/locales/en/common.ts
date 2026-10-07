@@ -1,4 +1,25 @@
 export const commonTranslations = {
+  aiTrace: {
+    title: 'AI history',
+    refresh: 'Refresh',
+    loading: 'Loading AI history …',
+    unavailable: 'The AI history could not be loaded.',
+    empty: 'No AI history is available for this request.',
+    origin: 'Go to original message',
+    prompt: 'Original prompt',
+    input: 'Input',
+    output: 'Result',
+    error: 'Error',
+    metadata: 'Further details',
+    attempt: 'Attempt',
+    status: {
+      running: 'Running',
+      completed: 'Completed',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+      queued: 'Awaiting confirmation',
+    },
+  },
   workspace: {
     cardsView: 'Cards',
     collectionView: 'View',
@@ -218,6 +239,18 @@ export const commonTranslations = {
     contactHintFileIssue: 'file an issue on GitHub',
   },
   appErrors: {
+    ai_provider_rate_limited:
+      'The model provider is temporarily rate-limited. Please try again later.',
+    ai_invalid_identifier:
+      'A required project or object ID is missing or invalid. Read the project again.',
+    ai_workspace_unavailable: 'The selected proposal is unavailable or you no longer have access.',
+    invalid_target: 'The context does not reference a matching element. Please select it again.',
+    target_ambiguous: 'No unique matching element was found. Please choose the intended element.',
+    target_locked: 'The selected element or frame is locked.',
+    context_stale: 'The editor context changed. Please select it again.',
+    repair_limit: 'The change failed again. Please clarify the intended target.',
+    ai_workspace_invalid: 'The selected proposal cannot be used as an AI editing target.',
+
     unknown: 'Something went wrong. Please try again.',
     action_blocked: 'This action is blocked by a conflict.',
     already_exists: 'This item already exists.',
@@ -227,6 +260,10 @@ export const commonTranslations = {
     mutation_server_failed: 'The change could not be saved on the server.',
     collaboration_client_outdated:
       'This editor version is outdated. Reload the page and recover local changes through draft recovery.',
+    project_revision_conflict:
+      'The content changed while you were editing. Load the current version before saving again.',
+    project_undo_conflict:
+      'This resource changed after the AI action. Undo was stopped to preserve newer changes.',
     collaboration_maintenance:
       'Editing and voting are temporarily paused for the migration. Please try again after maintenance.',
     auth_service_unavailable: 'The authentication service is currently unavailable.',
@@ -252,6 +289,14 @@ export const commonTranslations = {
     tutorial_operation_failed: 'The tutorial operation could not be completed.',
     ai_operation_failed: 'The AI response could not be completed.',
     ai_model_unavailable: 'The selected AI model is not available.',
+    ai_credentials_missing:
+      'The selected personal AI access is missing. Add your API key or explicitly select another access source.',
+    ai_credentials_invalid:
+      'The selected AI access was rejected. Check your API key and permissions or explicitly select another access source.',
+    ai_usage_limit:
+      'The selected AI access has reached a usage or billing limit. Check your provider account or explicitly select another access source.',
+    ai_access_unavailable:
+      'The selected AI access is not enabled for Polity. Explicitly select a personal API key or a free Polity model.',
   },
   contactDialog: {
     title: 'Contact Us',

@@ -1,5 +1,11 @@
 import { Conversation, Message } from '../types/message.types';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
+import type { ReactNode } from 'react';
+export interface MessageTimelineItem {
+  id: string;
+  createdAt: number;
+  content: ReactNode;
+}
 interface StreamingAssistantMessage {
   text: string;
   isCompressing: boolean;
@@ -22,6 +28,8 @@ interface MessageListProps {
   onRejectConversation: (conversation: Conversation) => void;
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: StreamingAssistantMessage;
+  timelineItems?: MessageTimelineItem[];
+  active?: boolean;
 }
 
 import { useMessageListController } from './useMessageListController';
@@ -38,8 +46,11 @@ export function MessageList({
   onRejectConversation,
   resolveAttachmentCardData,
   streamingAssistantMessage,
+  timelineItems,
+  active = true,
 }: MessageListProps) {
   const viewProps = useMessageListController({
+    active,
     conversation,
     messages,
     hasMoreOlderMessages,
@@ -50,6 +61,7 @@ export function MessageList({
     onRejectConversation,
     resolveAttachmentCardData,
     streamingAssistantMessage,
+    timelineItems,
   });
 
   return <MessageListView {...viewProps} />;

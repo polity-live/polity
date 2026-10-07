@@ -12,6 +12,7 @@ class MockImage {
   naturalHeight = 100;
   onload?: () => void;
   onerror?: () => void;
+  decode = vi.fn(async () => undefined);
   constructor() {
     media.push(this);
   }
@@ -78,6 +79,7 @@ beforeEach(() => {
       'save',
       'restore',
       'translate',
+      'scale',
       'rotate',
       'beginPath',
       'ellipse',
@@ -110,6 +112,70 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('Studio canvas export drawing', () => {
+  it.each([
+    ['widescreen', 1920, 1080],
+    ['standard', 1440, 1080],
+  ])('exports %s at its documented canvas size', async (format, width, height) => {
+    await paintStudioPage(page([], { format }), {});
+    expect(canvas.width).toBe(width);
+    expect(canvas.height).toBe(height);
+    expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, width, height);
+  });
+  it('rejects live native elements when the isolated export renderer is unavailable but accepts deleted elements', async () => {
+    await expect(
+      paintStudioPage(page([], { canvas: { elements: [{ isDeleted: false }] } }), {})
+    ).rejects.toThrow('Excalidraw export renderer is unavailable');
+    expect(canvas.toDataURL).not.toHaveBeenCalled();
+    await paintStudioPage(page([], { canvas: { elements: [{ isDeleted: true }] } }), {});
+    expect(canvas.toDataURL).toHaveBeenCalledOnce();
+  });
+  it('decodes native SVG layers in renderer order, skips empty native layers and uses the serialized structured renderer', async () => {
+    const nativeElements = [{ id: 'native', isDeleted: false }];
+    const structured = element('rect');
+    const renderNative = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
+      svg: '<svg><text>Literal &amp; content</text></svg>',
+      x: 7,
+      y: 9,
+      width: 80,
+      height: 40,
+    });
+    const canvasLayers = vi.fn(() => [
+      { kind: 'native', elements: [] },
+      { kind: 'native', elements: nativeElements },
+      { kind: 'polity', element: structured },
+    ]);
+    const draw = vi.fn();
+    Object.assign(window, {
+      PolityCanvasRenderer: { canvasLayers, renderNative },
+      drawStudioElement: draw,
+    });
+    const p = page([structured], { canvas: { elements: nativeElements, appState: { zoom: 1 } } });
+    await paintStudioPage(p, {});
+    expect(canvasLayers).toHaveBeenCalledWith(p);
+    expect(renderNative).toHaveBeenLastCalledWith({
+      elements: nativeElements,
+      appState: { zoom: 1 },
+    });
+    expect(media).toHaveLength(1);
+    expect(media[0].decode).toHaveBeenCalledOnce();
+    expect(ctx.drawImage).toHaveBeenCalledWith(media[0], 7, 9, 80, 40);
+    expect(draw).toHaveBeenCalledWith(ctx, structured);
+    expect(ctx.drawImage.mock.invocationCallOrder[0]).toBeLessThan(
+      draw.mock.invocationCallOrder[0]
+    );
+  });
+  it('reflects media on both axes and skips media elements without an asset ID', async () => {
+    await paintStudioPage(
+      page([
+        element('image', { assetId: 'reflected', flipX: true, flipY: true }),
+        element('image', { assetId: null }),
+      ]),
+      { reflected: 'image.png' }
+    );
+    expect(ctx.translate).toHaveBeenCalledWith(100, 100);
+    expect(ctx.scale).toHaveBeenCalledWith(-1, -1);
+    expect(ctx.drawImage).toHaveBeenCalledOnce();
+  });
   it('creates correctly sized canvases and renders layers in stable order with shapes and scene fades', async () => {
     existing = false;
     const p = page(
@@ -127,7 +193,7 @@ describe('Studio canvas export drawing', () => {
     expect(ctx.ellipse).toHaveBeenCalledWith(50, 50, 50, 50, 0, 0, Math.PI * 2);
     expect(ctx.rotate).toHaveBeenCalledWith(Math.PI / 2);
     expect(ctx.globalAlpha).toBeCloseTo(0.5);
-    expect(ctx.restore).toHaveBeenCalledTimes(3);
+    expect(ctx.restore).toHaveBeenCalledTimes(6);
     await paintStudioPage(page([], { format: 'square' }), {});
     expect(canvas.height).toBe(1080);
     await paintStudioPage(page([]), {});
@@ -144,24 +210,21 @@ describe('Studio canvas export drawing', () => {
             text: 'one two three\n<script>',
             font: 'Manrope',
             fontSize: 20,
+            lineHeight: 1.2,
+            verticalAlign: 'top',
+            richText: [],
             bold: align === 'right',
             align,
           }),
         ]),
         {}
       );
-      expect(ctx.fillText.mock.calls.map((call: any[]) => call[0])).toEqual([
-        'one two',
-        'three',
-        '<script>',
-      ]);
-      expect(ctx.fillText.mock.calls[1]).toEqual([
-        'three',
-        align === 'left' ? 0 : align === 'center' ? 25 : 50,
-        24,
-      ]);
+      const calls = ctx.fillText.mock.calls as [string, number, number][];
+      expect(calls.map(c => c[0]).join('')).toBe('one two three<script>');
+      expect(calls.find(c => c[0] === 'three')?.[2]).toBe(24);
+      expect(calls.find(c => c[0] === '<script>')?.[2]).toBe(48);
       expect(ctx.clip).toHaveBeenCalled();
-      expect(ctx.font).toBe(`${align === 'right' ? 'bold' : 'normal'} 20px "Manrope"`);
+      expect(ctx.font).toBe(`${align === 'right' ? 'bold ' : ''}20px "Manrope"`);
     }
   });
   it('loads and reuses media, applies crop and fit, seeks video within its duration and ignores absent assets', async () => {
@@ -181,6 +244,42 @@ describe('Studio canvas export drawing', () => {
     expect(ctx.drawImage).toHaveBeenCalledTimes(4);
     cache = (window as any).__studioMedia;
     expect(cache.image).toBe(media[0]);
+  });
+  it('exports a native crop without rescaling the complete source into the cropped bounds', async () => {
+    await paintStudioPage(
+      page([
+        element('image', {
+          id: 'cropped',
+          assetId: 'cropped',
+          width: 100,
+          height: 80,
+          fit: 'contain',
+          crop: {
+            x: 50,
+            y: 10,
+            width: 100,
+            height: 80,
+            naturalWidth: 200,
+            naturalHeight: 100,
+          },
+        }),
+      ]),
+      { cropped: 'cropped.png' }
+    );
+    expect(ctx.drawImage).toHaveBeenLastCalledWith(media[0], -50, -10, 200, 100);
+  });
+  it('applies horizontal and vertical reflection to structured and media exports', async () => {
+    await paintStudioPage(
+      page([
+        element('rect', { id: 'shape', flipX: true, flipY: false }),
+        element('image', { id: 'image', assetId: 'image', flipX: false, flipY: true }),
+      ]),
+      { image: 'image.png' }
+    );
+    expect(ctx.scale).toHaveBeenCalledWith(-1, 1);
+    expect(ctx.scale).toHaveBeenCalledWith(1, -1);
+    expect(ctx.translate).toHaveBeenCalledWith(100, 0);
+    expect(ctx.translate).toHaveBeenCalledWith(0, 100);
   });
   it('fails failed decoding and bounded media or video waits instead of exporting blank successful frames', async () => {
     loadMode = 'error';

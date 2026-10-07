@@ -65,6 +65,7 @@ const NOTIFICATION_ICON_MAP = {
   group_document_added: FilePlus,
   group_document_removed: FileX,
   document_collaborator_invited: FilePlus,
+  studio_collaboration_invite: UserPlus,
 
   // Group — Admin
   group_admin_promoted: ShieldCheck,

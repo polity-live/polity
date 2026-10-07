@@ -19,9 +19,6 @@ vi.mock('@rocicorp/zero/server/adapters/postgresjs', () => ({
 }));
 vi.mock('../schema', () => ({ schema: {} }));
 vi.mock('@/lib/env', () => ({ getRequiredEnvVar: () => 'local-test' }));
-vi.mock('@/server/collaboration/finalize', () => ({
-  initializeTransactionDocuments: io.initialize,
-}));
 import { dbProvider } from '../db-provider';
 beforeEach(() => {
   io.events = [];
@@ -33,21 +30,21 @@ beforeEach(() => {
     io.events.push('initialize');
   });
 });
-it('acquires authority before domain reads and initializes new documents before the same commit', async () => {
+it('acquires authority before domain reads before committing domain writes', async () => {
   const result = await dbProvider.connection.transaction(async () => {
     io.events.push('domain');
     return 'created';
   });
   expect(result).toBe('created');
   expect(io.query).toHaveBeenCalledWith('select pg_advisory_xact_lock($1)', [1886351981]);
-  expect(io.events).toEqual(['begin', 'authority', 'domain', 'initialize', 'commit']);
+  expect(io.events).toEqual(['begin', 'authority', 'domain', 'commit']);
 });
-it('rolls the entire creation back if shared state initialization fails', async () => {
-  io.initialize.mockRejectedValue(new Error('integrity_failure'));
+it('rolls the transaction back when the domain command fails', async () => {
   await expect(
     dbProvider.connection.transaction(async () => {
       io.events.push('domain');
+      throw new Error('write_failed');
     })
-  ).rejects.toThrow('integrity_failure');
+  ).rejects.toThrow('write_failed');
   expect(io.events).toEqual(['begin', 'authority', 'domain', 'rollback']);
 });

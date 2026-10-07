@@ -67,6 +67,7 @@ vi.mock('lucide-react', () => {
     Image: Icon,
     ImageIcon: Icon,
     ListOrdered: Icon,
+    PanelsTopLeft: Icon,
     PlayCircle: Icon,
     Quote: Icon,
     User: Icon,

@@ -166,7 +166,7 @@ describe('message composer action contracts', () => {
       selectedAttachments: [{ entityType: 'group', entityId: 'group-1', title: 'Council' }],
       isUploadingAttachments: false,
       uploadingAttachmentName: null,
-      selectedModelKey: 'test:model',
+      selectedModelKey: 'test:app:model',
       setSelectedModelKey: vi.fn(),
       selectedModel: {
         provider: 'test',
@@ -174,7 +174,7 @@ describe('message composer action contracts', () => {
         name: 'Test model',
         context_window: 128000,
         free: true,
-        source: 'builtin',
+        source: 'app',
         supports_reasoning_effort: true,
       },
       models: [
@@ -184,7 +184,7 @@ describe('message composer action contracts', () => {
           name: 'Second model',
           context_window: 128000,
           free: false,
-          source: 'builtin',
+          source: 'app',
           supports_reasoning_effort: true,
         },
       ],
@@ -313,7 +313,7 @@ describe('message composer action contracts', () => {
     expect(handlers.handleAttachmentSelect).toHaveBeenCalledWith(
       expect.objectContaining({ key: 'event:1' })
     );
-    expect(assistantChat.setSelectedModelKey).toHaveBeenCalledWith('test:model-2');
+    expect(assistantChat.setSelectedModelKey).toHaveBeenCalledWith('test:app:model-2');
     expect(assistantChat.setReasoningEffort).toHaveBeenCalledWith('low');
     expect(assistantChat.setToolSelection).toHaveBeenCalled();
     expect(handlers.setAssistantSettingsOpen).toHaveBeenCalled();

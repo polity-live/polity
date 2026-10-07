@@ -59,6 +59,14 @@ describe('ZeroAppProvider identity', () => {
     expect(import.meta.env.VITE_APP_URL).toBe('https://app.example.test');
   });
 
+  it('uses localhost for a native development Zero server when no API URL is configured', () => {
+    vi.stubEnv('VITE_ZERO_CACHE_URL', 'http://127.0.0.1:4848');
+    vi.stubEnv('VITE_APP_URL', 'http://localhost:3000');
+    render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.queryURL).toBe('http://localhost:3000/api/query');
+    expect(mocks.zeroProps?.mutateURL).toBe('http://localhost:3000/api/mutate');
+  });
+
   it('passes the authenticated identity and context to Zero', () => {
     mocks.session = {
       access_token: 'access-token',

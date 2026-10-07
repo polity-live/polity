@@ -68,6 +68,7 @@ vi.mock('../PlateEditorView', () => ({
 }));
 
 import { PlateEditor } from '../plate-editor';
+import { projectTextSelection } from '@/features/project-chat/hooks/editor-bridge';
 
 function latestProps() {
   return mocks.view.mock.calls.at(-1)?.[0];
@@ -109,6 +110,17 @@ afterEach(() => {
 });
 
 describe('PlateEditor controller', () => {
+  it('publishes the current editor selection for its document and releases it on unmount', () => {
+    const documentId = crypto.randomUUID();
+    const selected = { anchor: { path: [0, 0], offset: 1 }, focus: { path: [0, 0], offset: 4 } };
+    mocks.editor.selection = selected;
+    const view = render(<PlateEditor documentId={documentId} />);
+    expect(projectTextSelection(documentId)).toEqual(selected);
+    mocks.editor.selection = { ...selected, focus: { path: [0, 0], offset: 5 } };
+    expect(projectTextSelection(documentId)).toMatchObject({ focus: { offset: 5 } });
+    view.unmount();
+    expect(projectTextSelection(documentId)).toBeUndefined();
+  });
   it('uses uncontrolled defaults, floating toolbar configuration, and guarded local changes', () => {
     const rendered = render(<PlateEditor showFixedToolbar={false} />);
     const props = latestProps();

@@ -44,6 +44,7 @@ export type ResourceType =
   | 'payments'
   | 'pqlFilters'
   | 'preferences'
+  | 'projects'
   | 'roles'
   | 'actionRights'
   | 'statements'

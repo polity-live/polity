@@ -170,7 +170,7 @@ export function ImageEditorDialog({
   return (
     <Dialog modal={false} open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-background !fixed !inset-0 !top-0 !left-0 !h-dvh !max-h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 overflow-hidden !rounded-none !border-0 !p-0"
+        className="bg-background !fixed !inset-0 !top-0 !left-0 z-[70] !h-dvh !max-h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 overflow-hidden !rounded-none !border-0 !p-0"
         onFocusOutside={keepFilerobotPortalInteraction}
         onInteractOutside={keepFilerobotPortalInteraction}
         onPointerDownOutside={keepFilerobotPortalInteraction}

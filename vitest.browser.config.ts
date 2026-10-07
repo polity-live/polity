@@ -3,9 +3,23 @@ import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  optimizeDeps: {
+    include: [
+      '@radix-ui/react-toggle-group',
+      '@radix-ui/react-toggle',
+      '@xyflow/react',
+      'date-fns/locale',
+      'leaflet',
+      'react-leaflet',
+    ],
+  },
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
+      '@tanstack/react-start/server': path.resolve(
+        import.meta.dirname,
+        './src/test/browser-server-boundary.ts'
+      ),
       'katex/dist/katex.min.css': path.resolve(import.meta.dirname, './src/test/empty-style.ts'),
     },
   },

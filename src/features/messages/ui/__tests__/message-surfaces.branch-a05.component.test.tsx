@@ -33,6 +33,7 @@ vi.mock('../AiContextCards', () => ({
     return <div>context</div>;
   },
 }));
+vi.mock('../AiTraceDetails', () => ({ AiTraceDetails: () => <div>trace details</div> }));
 vi.mock('../../logic/messageUtils', () => ({
   formatTime: (value: unknown) => `time:${String(value)}`,
 }));
@@ -51,6 +52,7 @@ vi.mock('@/features/shared/ui/ui/card', () => ({
 vi.mock('@/features/shared/ui/ui/skeleton', () => ({ Skeleton: () => <i /> }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  translate: (key: string) => key,
 }));
 vi.mock('../ConversationHeader', () => ({
   ConversationHeader: (props: any) => {
@@ -74,6 +76,12 @@ vi.mock('../AssistantMessageView', () => ({
   AssistantMessageView: (props: any) => {
     mocks.views.push(['assistant', props]);
     return <div>assistant</div>;
+  },
+}));
+vi.mock('@/features/project-chat/ui/ProjectConversation', () => ({
+  ProjectConversation: (props: any) => {
+    mocks.views.push(['project-assistant', props]);
+    return <div>project assistant</div>;
   },
 }));
 
@@ -170,6 +178,19 @@ describe('message bubble and view exhaustive branches', () => {
     const conversation = { id: 'conversation', messages: [] } as any;
     const rendered = render(<MessageView {...viewProps()} />);
     expect(document.body.textContent).toContain('features.messages.conversation.selectDescription');
+
+    rendered.rerender(
+      <MessageView
+        {...viewProps({
+          conversation: { ...conversation, type: 'project_ai' },
+          className: 'project-chat',
+        })}
+      />
+    );
+    expect(mocks.views.at(-1)?.[0]).toBe('project-assistant');
+    expect(mocks.views.at(-1)?.[1]).toEqual(
+      expect.objectContaining({ conversationId: conversation.id, className: 'project-chat' })
+    );
 
     mocks.assistantConversation = true;
     rendered.rerender(<MessageView {...viewProps({ conversation, className: 'custom' })} />);

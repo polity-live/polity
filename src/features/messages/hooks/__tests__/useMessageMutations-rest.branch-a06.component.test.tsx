@@ -26,7 +26,8 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: { error: mocks.toastError, success: mocks.toastSuccess },
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({ translate: (key: string) => key }));
-vi.mock('@/zero/mutate-with-server-check', () => ({
+vi.mock('@/zero/mutate-with-server-check', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/zero/mutate-with-server-check')>()),
   waitForClientApply: (value: unknown) => mocks.wait(value),
 }));
 vi.mock('@/features/notifications/utils/mutation-finalization', () => ({
@@ -48,6 +49,37 @@ const conversation = (overrides: Record<string, unknown> = {}) =>
   }) as unknown as Conversation;
 
 describe('useMessageMutations branch remainder', () => {
+  it('waits for actual server confirmation before returning a committed message', async () => {
+    let confirm!: (value: { type: 'success' }) => void;
+    mocks.actions.sendMessage.mockReturnValueOnce({
+      client: Promise.resolve(),
+      server: new Promise(resolve => {
+        confirm = resolve;
+      }),
+    });
+    const { result } = renderHook(() => useMessageMutations());
+    let finished = false;
+    let pending!: ReturnType<typeof result.current.sendMessage>;
+    act(() => {
+      pending = result.current
+        .sendMessage('confirmed-conversation', 'sender', 'Awaiting confirmation', undefined, {
+          confirmServer: true,
+        })
+        .then(value => {
+          finished = true;
+          return value;
+        });
+    });
+    expect(finished).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+    await act(async () => {
+      confirm({ type: 'success' });
+      expect(await pending).toMatchObject({ success: true });
+    });
+    expect(finished).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(mocks.wait).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);

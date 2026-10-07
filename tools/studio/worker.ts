@@ -5,7 +5,7 @@ import { writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createClient } from '../../src/lib/supabase/server';
 import { studioSql, assertStudioAccess } from '../../src/server/studio/db';
-import { documentSchema } from '../../src/features/communication-studio/logic/document';
+import { studioDocumentV3Schema } from '../../src/features/communication-studio/logic/document-v3';
 import { render, type MediaMap } from './exporters';
 const sql = studioSql();
 const storage = createClient().storage.from('studio');
@@ -61,9 +61,9 @@ while (!stop) {
   try {
     await assertStudioAccess(job.requested_by_id, job.project_id);
     const [rev] = await sql`select document from studio_revision where id=${job.revision_id}`;
-    const document = documentSchema.parse(rev.document);
+    const document = studioDocumentV3Schema.parse(rev.document);
     const rows =
-      await sql`select * from studio_asset where project_id=${job.project_id} and ready=true`;
+      await sql`select * from studio_asset where project_id=${job.project_id} and workspace_id is null and ready=true`;
     const media: MediaMap = {};
     for (const row of rows) {
       const { data, error } = await storage.download(row.storage_path);
@@ -100,7 +100,7 @@ while (!stop) {
       contentType: result.mime,
       upsert: true,
     });
-    if (error) throw new Error('Cannot store export');
+    if (error) throw new Error(`Cannot store export: ${error.message}`);
     await sql`update studio_export set status='completed',progress=100,storage_path=${storagePath},file_name=${result.name},updated_at=${Date.now()} where id=${job.id} and status='running'`;
   } catch (error) {
     console.error('studio.export.failed', {

@@ -14,7 +14,10 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
-import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
+import {
+  CanvasChangeRequestMarker,
+  getChangeRequestMarkerClassName,
+} from '@/features/shared/ui/change-requests/CanvasChangeRequestMarker';
 import {
   Collapsible,
   CollapsibleContent,
@@ -46,10 +49,7 @@ import {
   buildCityDesignLegendSections,
   type CityDesignLegendEntry,
 } from '../logic/cityDesignLegend';
-import type {
-  CityDesignChangeRequest,
-  CityDesignChangeRequestTone,
-} from '../logic/cityDesignChangeRequests';
+import type { CityDesignChangeRequest } from '../logic/cityDesignChangeRequests';
 import { getCityDesignChangeRequestMarker } from '../logic/cityDesignChangeRequests';
 import { formatMinorCurrency } from '../logic/cityDesignCostCatalog';
 import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
@@ -360,35 +360,21 @@ export function StreetSceneCanvasViewView({
         {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
           <div className="pointer-events-none absolute inset-0 z-20">
             {positionedChangeRequestMarkers.map(marker => (
-              <TooltipHint key={marker.id} content={marker.label}>
-                <button
-                  data-action-id="amendments.city-canvas.select.change-request-marker"
-                  type="button"
-                  className={cn(
-                    'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
-                    getChangeRequestMarkerClassName(marker.tone),
-                    selectedChangeRequestId === marker.id && 'ring-ring ring-2'
-                  )}
-                  style={{
-                    left: `${marker.leftPercent}%`,
-                    top: `${marker.topPercent}%`,
-                  }}
-                  data-testid={`city-design-cr-marker-${marker.id}`}
-                  data-change-request-tone={marker.tone}
-                  aria-label={marker.label}
-                  onClick={() => onChangeRequestSelect?.(marker.id)}
-                >
-                  <span className="font-mono text-[11px]">{marker.displayId}</span>
-                  <span
-                    className={cn(
-                      'size-3 flex-none rounded-full border',
-                      marker.tone === 'remove' && 'border-dashed',
-                      marker.tone === 'update' && 'ring-2 ring-current/30'
-                    )}
-                  />
-                  <span className="min-w-0 truncate">{marker.title}</span>
-                </button>
-              </TooltipHint>
+              <CanvasChangeRequestMarker
+                key={marker.id}
+                actionId="amendments.city-canvas.select.change-request-marker"
+                displayId={marker.displayId}
+                label={marker.label}
+                title={marker.title}
+                tone={marker.tone}
+                selected={selectedChangeRequestId === marker.id}
+                style={{
+                  left: `${marker.leftPercent}%`,
+                  top: `${marker.topPercent}%`,
+                }}
+                testId={`city-design-cr-marker-${marker.id}`}
+                onSelect={() => onChangeRequestSelect?.(marker.id)}
+              />
             ))}
           </div>
         ) : null}
@@ -1406,19 +1392,6 @@ function getStackedChangeRequestMarkers(
       topPercent: clamp(marker.topPercent + index * 5, 8, 92),
     };
   });
-}
-
-function getChangeRequestMarkerClassName(tone: CityDesignChangeRequestTone) {
-  switch (tone) {
-    case 'add':
-      return 'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]';
-    case 'remove':
-      return 'border-dashed border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]';
-    case 'update':
-      return 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]';
-    default:
-      return 'border-border bg-background/90 text-foreground';
-  }
 }
 
 function CityDesignLegendPreview({ entry }: { entry: CityDesignLegendEntry }) {

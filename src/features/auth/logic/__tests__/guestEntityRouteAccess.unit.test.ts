@@ -11,6 +11,7 @@ describe('guestEntityRouteAccess', () => {
     expect(isGuestAccessibleEntityPath('/blog/blog-1')).toBe(true);
     expect(isGuestAccessibleEntityPath('/user/user-1/blog/blog-1')).toBe(true);
     expect(isGuestAccessibleEntityPath('/user/user-1/meet')).toBe(true);
+    expect(isGuestAccessibleEntityPath('/studio/project-1')).toBe(true);
     expect(isGuestAccessibleEntityPath('/amendment/amendment-1/text')).toBe(true);
     expect(isGuestAccessibleEntityPath('/amendment/amendment-1/change-requests')).toBe(true);
   });

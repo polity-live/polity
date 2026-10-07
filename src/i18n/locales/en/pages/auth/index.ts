@@ -1,4 +1,9 @@
 export const authPageTranslations = {
+  chatgpt: {
+    button: 'Continue with ChatGPT',
+    loading: 'Connecting to ChatGPT…',
+    failed: 'ChatGPT sign-in could not be completed. Your AI access has not changed.',
+  },
   login: {
     title: 'Sign in to Polity',
     description: "Enter your email address and we'll send you a secure magic code",

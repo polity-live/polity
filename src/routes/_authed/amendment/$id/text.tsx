@@ -1,3 +1,4 @@
+import { ProjectChatWorkspace } from '@/features/project-chat/ui/ProjectChatPanel';
 import { useEffect, useMemo } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -21,6 +22,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 const amendmentTextSearchSchema = z.object({
   branch: z.string().optional().catch(undefined),
+  conversationId: z.string().uuid().optional(),
 });
 
 export const Route = createFileRoute('/_authed/amendment/$id/text')({
@@ -62,7 +64,7 @@ function AmendmentTextPage() {
     navigate({
       to: '/amendment/$id/text',
       params: { id },
-      search: { branch: selectedBranchId ?? undefined },
+      search: { ...search, branch: selectedBranchId ?? undefined },
       replace: true,
     });
   }, [branches.length, id, navigate, search.branch, selectedBranchId]);
@@ -118,7 +120,7 @@ function AmendmentTextPage() {
             navigate({
               to: '/amendment/$id/text',
               params: { id },
-              search: { branch: branchId ?? undefined },
+              search: { ...search, branch: branchId ?? undefined },
             })
           }
         />
@@ -140,18 +142,28 @@ function AmendmentTextPage() {
         </div>
       ) : null}
 
-      <EditorView
-        entityType="amendment"
-        entityId={id}
-        userId={user?.id}
-        readOnly={!user}
-        showTopToolbar={Boolean(user)}
-        userRecord={mappedUserRecord}
-        agendaItemId={agendaItemId}
-        processBranchId={selectedBranchId}
-        compactToolbarSpacing
-        backUrl={`/amendment/${id}/process`}
-      />
+      <ProjectChatWorkspace
+        scope={{ kind: 'amendment', amendmentId: id }}
+        context={{
+          surface: 'amendment_text',
+          branchId: selectedBranchId,
+          documentId: selectedBranch?.document_id ?? amendment?.document_id ?? undefined,
+        }}
+        conversationId={search.conversationId}
+      >
+        <EditorView
+          entityType="amendment"
+          entityId={id}
+          userId={user?.id}
+          readOnly={!user}
+          showTopToolbar={Boolean(user)}
+          userRecord={mappedUserRecord}
+          agendaItemId={agendaItemId}
+          processBranchId={selectedBranchId}
+          compactToolbarSpacing
+          backUrl={`/amendment/${id}/process`}
+        />
+      </ProjectChatWorkspace>
     </div>
   );
 }

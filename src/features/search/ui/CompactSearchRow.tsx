@@ -7,6 +7,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export { entityTypeDotClasses as searchTypeDotClasses } from '@/features/shared/ui/collections/EntityListRow';
 import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
+import { studioSearchKindLabel } from '../logic/studioSearchLabels';
 
 export function CompactSearchRow({
   document,
@@ -19,6 +20,7 @@ export function CompactSearchRow({
   const href = getSearchDocumentHref(document);
   const summary =
     document.summary ||
+    studioSearchKindLabel(document, t) ||
     (document.entity_type === 'todo' && document.subtitle
       ? t(`features.todos.status.${document.subtitle}`)
       : document.subtitle);

@@ -14,15 +14,12 @@ describe('user contact email schema contract', () => {
 
   it('adds an empty nullable column without backfilling login addresses', () => {
     const migration = readFileSync(
-      new URL(
-        '../../../../supabase/migrations/20260822120000_user_contact_email.sql',
-        import.meta.url
-      ),
+      new URL('../../../../supabase/schemas/01_user.sql', import.meta.url),
       'utf8'
     );
 
-    expect(migration).toMatch(/add column if not exists contact_email text/i);
-    expect(migration).not.toMatch(/\b(update|insert)\b/i);
-    expect(migration).not.toMatch(/\bemail\b(?!\s+text)/i);
+    expect(migration).toMatch(/contact_email\s+TEXT\s*,/);
+    expect(migration).not.toMatch(/contact_email\s+TEXT\s+(?:NOT NULL|DEFAULT)/i);
+    expect(migration).not.toMatch(/SET\s+contact_email\s*=\s*email/i);
   });
 });

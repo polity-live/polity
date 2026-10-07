@@ -132,6 +132,7 @@ CREATE TABLE public.amendment_city_design (
   center_lon NUMERIC,
   osm_snapshot JSONB,
   design_state JSONB,
+  content_revision INTEGER NOT NULL DEFAULT 0 CHECK (content_revision >= 0),
   currency TEXT NOT NULL DEFAULT 'EUR',
   estimated_total_cost_minor INTEGER NOT NULL DEFAULT 0,
   cost_catalog_version TEXT,

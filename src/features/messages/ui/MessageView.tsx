@@ -1,3 +1,4 @@
+import { ProjectConversation } from '@/features/project-chat/ui/ProjectConversation';
 import { Card } from '@/features/shared/ui/ui/card';
 import type { CSSProperties } from 'react';
 import { cn } from '@/features/shared/utils/utils';
@@ -53,6 +54,27 @@ export function MessageView({
   className,
 }: MessageViewProps) {
   const { t } = useTranslation();
+
+  if (conversation?.type === 'project_ai')
+    return (
+      <ProjectConversation
+        key={conversation.id}
+        conversationId={conversation.id}
+        messages={messages}
+        hasMoreOlderMessages={hasMoreOlderMessages}
+        onLoadOlderMessages={onLoadOlderMessages}
+        onAtEndChange={onAtEndChange}
+        onBack={onBack}
+        onTogglePin={onTogglePin}
+        onDeleteClick={onDeleteClick}
+        onMembersClick={onMembersClick}
+        onRenameConversation={onRenameConversation}
+        onAcceptConversation={onAcceptConversation}
+        onRejectConversation={onRejectConversation}
+        swipeHandlers={swipeHandlers}
+        className={className}
+      />
+    );
 
   if (conversation && isAssistantConversation(conversation)) {
     return (

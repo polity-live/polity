@@ -431,7 +431,9 @@ describe('NavItemListView', () => {
       </KeyboardPlatformProvider>
     );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Home' }));
+    const home = screen.getByRole('link', { name: 'Home' });
+    expect(home.getAttribute('data-navigation-item-id')).toBe(navigationItems[0].id);
+    fireEvent.click(home);
     expect(onClick).toHaveBeenCalledOnce();
   });
 

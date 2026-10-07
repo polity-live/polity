@@ -15,6 +15,7 @@ import {
   ListOrdered,
   Wallet,
   GitBranch,
+  PanelsTopLeft,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,7 +40,8 @@ export type ContentType =
   | 'payment'
   | 'action'
   | 'workflow'
-  | 'user';
+  | 'user'
+  | 'studio';
 
 export interface ContentTypeConfig {
   icon: LucideIcon;
@@ -100,6 +102,7 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     'features.timeline.contentTypes.workflow'
   ),
   user: createContentTypeConfig('user', User, 'features.timeline.contentTypes.user'),
+  studio: createContentTypeConfig('studio', PanelsTopLeft, 'features.timeline.contentTypes.studio'),
 };
 
 /**
@@ -129,4 +132,5 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   action: 'features.timeline.contentTypes.action',
   workflow: 'features.timeline.contentTypes.workflow',
   user: 'features.timeline.contentTypes.user',
+  studio: 'features.timeline.contentTypes.studio',
 };

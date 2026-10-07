@@ -1,3 +1,5 @@
+import { studioSharedMutators } from './communication-studio/shared-mutators';
+import { projectChatSharedMutators } from './project-chat/shared-mutators';
 import { defineMutators } from '@rocicorp/zero';
 
 import { userSharedMutators } from './users/shared-mutators';
@@ -33,6 +35,8 @@ export const mutators = defineMutators({
   agendas: agendaSharedMutators,
   todos: todoSharedMutators,
   messages: messageSharedMutators,
+  studio: studioSharedMutators,
+  projectChat: projectChatSharedMutators,
   notifications: notificationSharedMutators,
   blogs: blogSharedMutators,
   payments: paymentSharedMutators,

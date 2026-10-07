@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { DEFAULT_AI_TOOL_NAMES } from '@/lib/ai/defaultAiTools';
 
 export const aiProviderSchema = z.enum(['openrouter', 'openai', 'anthropic']);
+export const aiCredentialSourceSchema = z.enum(['app', 'byok', 'chatgpt']);
 export const aiReasoningEffortSchema = z.enum(['low', 'medium', 'high']);
 export const aiToolNameSchema = z.enum(DEFAULT_AI_TOOL_NAMES);
 export const aiAttachmentContextTypeSchema = z.enum(['output', 'update']);
@@ -42,9 +43,12 @@ export const aiChatAttachmentSchema = z.object({
 export const aiModelDescriptorSchema = z.object({
   provider: aiProviderSchema,
   id: z.string().min(1),
+  // Optional only for compatibility with previously saved requests.
+  source: aiCredentialSourceSchema.optional(),
 });
 
 export type AiProvider = z.infer<typeof aiProviderSchema>;
+export type AiCredentialSource = z.infer<typeof aiCredentialSourceSchema>;
 export type AiReasoningEffort = z.infer<typeof aiReasoningEffortSchema>;
 export type AiToolName = z.infer<typeof aiToolNameSchema>;
 export type AiAttachmentContextType = z.infer<typeof aiAttachmentContextTypeSchema>;

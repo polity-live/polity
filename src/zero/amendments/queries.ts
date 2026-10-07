@@ -42,9 +42,31 @@ function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
   return applyAmendmentQueryAccess(q, userID);
 }
 
-type GroupAmendmentDisplayStatus = 'accepted' | 'pending' | 'rejected' | 'withdrawn';
+function groupStepRunForGroup(stepRun: any, groupId: string) {
+  return stepRun.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('source_group_id', groupId),
+      cmp('target_group_id', groupId),
+      exists('event', (event: any) => event.where('group_id', groupId))
+    )
+  );
+}
 
-const GROUP_AMENDMENT_DISPLAY_STATUSES: Record<GroupAmendmentDisplayStatus, string[]> = {
+function groupProcessRunForGroup(run: any, groupId: string) {
+  return run.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('selected_source_group_id', groupId),
+      cmp('selected_target_group_id', groupId),
+      exists('step_runs', (stepRun: any) => groupStepRunForGroup(stepRun, groupId)),
+      exists('compatibility_paths', (path: any) =>
+        path.whereExists('segments', (segment: any) => segment.where('group_id', groupId))
+      )
+    )
+  );
+}
+
+type GroupAmendmentDisplayStatus = 'accepted' | 'pending' | 'rejected' | 'withdrawn';
+const LEGACY_GROUP_AMENDMENT_STATUSES: Record<GroupAmendmentDisplayStatus, string[]> = {
   accepted: ['accepted', 'supported', 'approved', 'merged', 'completed'],
   rejected: ['rejected', 'declined'],
   withdrawn: ['withdrawn', 'cancelled'],
@@ -75,35 +97,29 @@ function applyGroupAmendmentFilters({
   query: string;
   userID?: string;
 }) {
-  const stepRunForGroup = (stepRun: any) =>
-    stepRun.whereExists('event', (event: any) => event.where('group_id', groupId));
   let q: any = applyAmendmentAccess(zql.amendment, userID).where(({ or, cmp, exists }: any) =>
     or(
       cmp('group_id', groupId),
       exists('group_decisions', (decision: any) => decision.where('group_id', groupId)),
       exists('event', (event: any) => event.where('group_id', groupId)),
-      exists('current_process_run', (run: any) =>
-        run.whereExists('branches', (branch: any) =>
-          branch.whereExists('step_runs', stepRunForGroup)
-        )
-      )
+      exists('current_process_run', (run: any) => groupProcessRunForGroup(run, groupId))
     )
   );
   if (status) q = q.whereExists('current_process_run', (run: any) => run.where('status', status));
   if (displayStatus) {
-    const statuses = GROUP_AMENDMENT_DISPLAY_STATUSES[displayStatus];
+    const statuses = LEGACY_GROUP_AMENDMENT_STATUSES[displayStatus];
     q = q.where(({ or, exists }: any) =>
       or(
         exists('group_decisions', (decision: any) =>
           decision.where('group_id', groupId).where('status', 'IN', statuses)
         ),
         exists('current_process_run', (run: any) =>
-          run.whereExists('branches', (branch: any) =>
-            branch.whereExists('step_runs', (stepRun: any) =>
-              stepRunForGroup(stepRun).where(({ or: stepOr, cmp }: any) =>
+          run.whereExists('step_runs', (stepRun: any) =>
+            stepRun
+              .whereExists('event', (event: any) => event.where('group_id', groupId))
+              .where(({ or: stepOr, cmp }: any) =>
                 stepOr(cmp('decision_status', 'IN', statuses), cmp('status', 'IN', statuses))
               )
-            )
           )
         )
       )
@@ -598,7 +614,7 @@ const amendmentQueriesBase = {
       groupId: z.string(),
       status: z.string().optional(),
       displayStatus: z.enum(['accepted', 'pending', 'rejected', 'withdrawn']).optional(),
-      statuses: z.array(z.string()).default([]),
+      ids: z.array(z.string()).optional(),
       hashtag: z.string().optional(),
       query: z.string().default(''),
       limit: virtualPageLimitSchema,
@@ -606,17 +622,18 @@ const amendmentQueriesBase = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({
-      args: { groupId, status, displayStatus, hashtag, query, limit, start, dir },
+      args: { groupId, status, displayStatus, ids, hashtag, query, limit, start, dir },
       ctx: { userID },
     }) => {
       let q: any = applyGroupAmendmentFilters({
         groupId,
         status,
-        displayStatus,
+        displayStatus: ids ? undefined : displayStatus,
         hashtag,
         query,
         userID,
       });
+      if (ids) q = q.where('id', 'IN', ids);
       const direction = dir === 'backward' ? 'asc' : 'desc';
       q = q.orderBy('created_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
@@ -633,7 +650,7 @@ const amendmentQueriesBase = {
   groupAmendmentCountRows: defineQuery(
     z.object({
       groupId: z.string(),
-      displayStatus: z.enum(['accepted', 'pending', 'rejected', 'withdrawn']),
+      displayStatus: z.enum(['accepted', 'pending', 'rejected', 'withdrawn']).optional(),
       hashtag: z.string().optional(),
       query: z.string().default(''),
     }),
@@ -645,6 +662,10 @@ const amendmentQueriesBase = {
         query,
         userID,
       })
+        .related('group_decisions', (decision: any) => decision.where('group_id', groupId))
+        .related('current_process_run', (run: any) =>
+          run.related('step_runs', (stepRun: any) => stepRun.related('event'))
+        )
         .orderBy('created_at', 'desc')
         .orderBy('id', 'desc')
   ),

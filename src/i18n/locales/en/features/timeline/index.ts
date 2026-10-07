@@ -91,6 +91,7 @@ export const timelineTranslations = {
     group: 'Group',
     blog: 'Blog',
     user: 'User',
+    studio: 'Studio project',
     amendmentCreated: 'created an amendment',
     amendmentUpdated: 'updated an amendment',
     amendmentApproved: 'Amendment was approved',
@@ -141,6 +142,7 @@ export const timelineTranslations = {
     action: 'Activity',
     workflow: 'Workflow',
     user: 'User',
+    studio: 'Studio project',
   },
   imageSources: {
     user: 'User photo',

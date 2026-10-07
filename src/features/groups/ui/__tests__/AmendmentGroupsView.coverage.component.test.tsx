@@ -35,7 +35,13 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({ translate: (key: str
 
 import { AmendmentGroupsView } from '../AmendmentGroupsView';
 
-const section = (key: any, count: number, items: any[] = []) => ({ key, label: key, count, items });
+const section = (key: any, count: number, items: any[] = [], ids?: string[]) => ({
+  key,
+  label: key,
+  count,
+  items,
+  ids,
+});
 beforeEach(() => {
   mocks.zero = [];
   mocks.local = [];
@@ -114,7 +120,7 @@ describe('AmendmentGroupsView branches', () => {
       <AmendmentGroupsView
         groupId="g"
         openSections={{ accepted: true, pending: true, rejected: true, withdrawn: true }}
-        sectionOrder={[section('accepted', 1)]}
+        sectionOrder={[section('accepted', 1, [], ['amendment-1'])]}
         onToggleSection={vi.fn()}
         queryFilters={{ searchQuery: '', statusFilter: 'all', hashtagFilter: 'tag' }}
       />
@@ -123,6 +129,9 @@ describe('AmendmentGroupsView branches', () => {
       mocks.zero[0].getPageQuery({ limit: 1, start: null, dir: 'forward', settled: true }).query
         .hashtag
     ).toBe('tag');
+    expect(
+      mocks.zero[0].getPageQuery({ limit: 1, start: null, dir: 'forward', settled: true }).query.ids
+    ).toEqual(['amendment-1']);
   });
 
   it('configures the mounted local grid while retaining a closed section trigger', () => {

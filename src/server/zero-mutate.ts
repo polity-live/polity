@@ -1,9 +1,11 @@
 import type { ZeroContext } from '@/zero/context';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { dbProvider } from '@/zero/db-provider';
 import { encodeAppError, parseAppError } from '@/features/shared/errors/app-error';
 import { GROUP_CONFLICT_ERROR_PREFIX } from '@/features/groups/logic/groupConflict';
 
 export type ZeroTransaction = Parameters<Parameters<typeof dbProvider.transaction>[0]>[0];
+const activeZeroTransaction = new AsyncLocalStorage<ZeroTransaction>();
 
 interface ZeroMutatorRequest<TArgs> {
   readonly mutator: {
@@ -82,13 +84,21 @@ export async function executeZeroTransaction<TResult>(
   ctx: ZeroContext,
   callback: (tx: ZeroTransaction, ctx: ZeroContext) => Promise<TResult>
 ): Promise<TResult> {
-  return dbProvider.transaction(async tx => callback(tx, ctx));
+  const existing = activeZeroTransaction.getStore();
+  if (existing) return callback(existing, ctx);
+  return dbProvider.transaction(async tx =>
+    activeZeroTransaction.run(tx, async () => callback(tx, ctx))
+  );
 }
 
 export async function executeZeroRead<TResult>(
   callback: (tx: ZeroTransaction) => Promise<TResult>
 ): Promise<TResult> {
-  return dbProvider.transaction(async tx => callback(tx));
+  const existing = activeZeroTransaction.getStore();
+  if (existing) return callback(existing);
+  return dbProvider.transaction(async tx =>
+    activeZeroTransaction.run(tx, async () => callback(tx))
+  );
 }
 
 export async function runZeroMutator<TArgs>(

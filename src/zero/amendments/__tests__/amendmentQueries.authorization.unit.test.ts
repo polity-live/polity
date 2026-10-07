@@ -81,6 +81,7 @@ vi.mock('../../schema', () => {
 });
 
 import { amendmentQueries } from '../queries';
+import { getGroupAmendmentDisplayStatusForGroup } from '@/features/groups/logic/groupAmendmentStatus';
 
 const ctx = { userID: 'user-1', email: 'user@example.com' };
 const anonymousCtx = { userID: undefined, email: undefined } as never;
@@ -135,6 +136,74 @@ function predicateCalls(predicate: unknown): QueryCall[] {
 
   if (typeof predicate === 'function') predicate(helpers);
   return calls;
+}
+
+type QueryFixtureRow = Record<string, any>;
+
+function relatedFixtureRows(row: QueryFixtureRow, relation: string): QueryFixtureRow[] {
+  const related = row[relation];
+  return related == null ? [] : Array.isArray(related) ? related : [related];
+}
+
+function matchesFixtureValue(row: QueryFixtureRow, args: readonly unknown[]): boolean {
+  const [field, operatorOrValue, expected] = args;
+  const value = row[String(field)];
+  if (args.length === 2) return value === operatorOrValue;
+  if (operatorOrValue === 'IS') return value == expected;
+  if (operatorOrValue === 'IN') return (expected as unknown[]).includes(value);
+  if (operatorOrValue === 'ILIKE')
+    return String(value ?? '')
+      .toLowerCase()
+      .includes(String(expected).slice(1, -1).toLowerCase());
+  throw new Error(`Unsupported fixture operator: ${String(operatorOrValue)}`);
+}
+
+function matchesFixturePredicate(row: QueryFixtureRow, predicate: unknown): boolean {
+  const matchesRelated = (relation: string, cb: (q: any) => unknown) =>
+    relatedFixtureRows(row, relation).some(relatedRow => {
+      const clauses: boolean[] = [];
+      const child = {
+        where: (...args: unknown[]) => {
+          clauses.push(matchesFixtureWhere(relatedRow, args));
+          return child;
+        },
+        whereExists: (name: string, nested: (q: any) => unknown) => {
+          clauses.push(
+            matchesFixturePredicate(relatedRow, ({ exists }: any) => exists(name, nested))
+          );
+          return child;
+        },
+      };
+      cb(child);
+      return clauses.every(Boolean);
+    });
+  const expressions = {
+    cmp: (...args: unknown[]) => matchesFixtureValue(row, args),
+    exists: matchesRelated,
+    or: (...values: boolean[]) => values.some(Boolean),
+    and: (...values: boolean[]) => values.every(Boolean),
+    not: (value: boolean) => !value,
+  };
+  return (predicate as (builder: any) => boolean)(expressions);
+}
+
+function matchesFixtureWhere(row: QueryFixtureRow, args: readonly unknown[]): boolean {
+  return typeof args[0] === 'function'
+    ? matchesFixturePredicate(row, args[0])
+    : matchesFixtureValue(row, args);
+}
+
+function matchesFixtureQuery(query: FakeQuery, row: QueryFixtureRow): boolean {
+  return query.calls.every(call => {
+    if (call[0] === 'where') return matchesFixtureWhere(row, call.slice(1));
+    if (call[0] === 'whereExists')
+      return relatedFixtureRows(row, String(call[1])).some(relatedRow =>
+        (call[2] as QueryCall[]).every(nested =>
+          nested[0] === 'where' ? matchesFixtureWhere(relatedRow, nested.slice(1)) : true
+        )
+      );
+    return true;
+  });
 }
 
 beforeEach(() => {
@@ -380,8 +449,7 @@ describe('amendment query nested authorization', () => {
       args: {
         groupId: 'group-1',
         status: 'active',
-        displayStatus: 'accepted',
-        statuses: [],
+        ids: ['amendment-1'],
         hashtag: 'mobility',
         query: ' streets ',
         limit: 25,
@@ -400,11 +468,11 @@ describe('amendment query nested authorization', () => {
     expect(
       filtered.some(call => call[0] === 'whereExists' && call[1] === 'amendment_hashtags')
     ).toBe(true);
+    expect(filtered).toContainEqual(['where', 'id', 'IN', ['amendment-1']]);
 
     amendmentQueries.groupAmendmentPage.fn({
       args: {
         groupId: 'group-1',
-        statuses: [],
         query: ' ',
         limit: 10,
         start: null,
@@ -413,6 +481,150 @@ describe('amendment query nested authorization', () => {
       ctx,
     });
     expect(lastQuery('amendment').calls).toContainEqual(['orderBy', 'created_at', 'desc']);
+  });
+
+  it('lists current process endpoints and stations before an event in both page and count', () => {
+    const amendment = {
+      id: 'amendment-1',
+      visibility: 'public',
+      tutorial_run_id: null,
+      group_id: null,
+      event: null,
+      group_decisions: [],
+      current_process_run: {
+        selected_source_group_id: 'start',
+        selected_target_group_id: 'target',
+        step_runs: [
+          {
+            source_group_id: 'start',
+            target_group_id: 'station',
+            status: 'pending_event',
+            decision_status: 'previous_decision_outstanding',
+            event: null,
+          },
+          {
+            source_group_id: 'source-only',
+            target_group_id: 'station',
+            status: 'pending_event',
+            decision_status: null,
+            event: null,
+          },
+        ],
+        compatibility_paths: [{ segments: [{ group_id: 'path-only' }] }],
+      },
+      process_runs: [
+        { selected_source_group_id: 'historical', selected_target_group_id: 'historical' },
+      ],
+    };
+
+    for (const groupId of ['start', 'target', 'station', 'source-only', 'path-only']) {
+      amendmentQueries.groupAmendmentPage.fn({
+        args: {
+          groupId,
+          ids: [amendment.id],
+          query: '',
+          limit: 20,
+          start: null,
+          dir: 'forward',
+        },
+        ctx: anonymousCtx,
+      });
+      expect(matchesFixtureQuery(lastQuery('amendment'), amendment)).toBe(true);
+
+      amendmentQueries.groupAmendmentCountRows.fn({
+        args: { groupId, query: '' },
+        ctx: anonymousCtx,
+      });
+      expect(matchesFixtureQuery(lastQuery('amendment'), amendment)).toBe(true);
+      expect(getGroupAmendmentDisplayStatusForGroup(amendment, groupId)).toBe('pending');
+    }
+
+    for (const groupId of ['historical', 'unrelated']) {
+      amendmentQueries.groupAmendmentPage.fn({
+        args: {
+          groupId,
+          ids: [amendment.id],
+          query: '',
+          limit: 20,
+          start: null,
+          dir: 'forward',
+        },
+        ctx: anonymousCtx,
+      });
+      expect(matchesFixtureQuery(lastQuery('amendment'), amendment)).toBe(false);
+    }
+  });
+
+  it('keeps decisions and event statuses ahead of the pending fallback and enforces visibility', () => {
+    const base = {
+      id: 'amendment-1',
+      visibility: 'public',
+      tutorial_run_id: null,
+      group_id: null,
+      event: null,
+      group_decisions: [],
+      current_process_run: {
+        selected_source_group_id: 'group-1',
+        selected_target_group_id: 'group-2',
+        step_runs: [],
+        compatibility_paths: [],
+      },
+    };
+    const decision = {
+      ...base,
+      group_decisions: [{ group_id: 'group-1', status: 'accepted' }],
+    };
+    const scheduled = {
+      ...base,
+      current_process_run: {
+        ...base.current_process_run,
+        step_runs: [
+          {
+            source_group_id: 'group-1',
+            target_group_id: 'group-2',
+            status: 'scheduled',
+            decision_status: 'approved',
+            event: { group_id: 'group-2' },
+          },
+        ],
+      },
+    };
+
+    expect(getGroupAmendmentDisplayStatusForGroup(decision, 'group-1')).toBe('accepted');
+    expect(getGroupAmendmentDisplayStatusForGroup(scheduled, 'group-2')).toBe('accepted');
+    expect(getGroupAmendmentDisplayStatusForGroup(scheduled, 'group-1')).toBe('pending');
+
+    amendmentQueries.groupAmendmentCountRows.fn({
+      args: { groupId: 'group-2', query: '' },
+      ctx: anonymousCtx,
+    });
+    const countRows = lastQuery('amendment').calls;
+    expect(relatedCalls(countRows, 'group_decisions')).toContainEqual([
+      'where',
+      'group_id',
+      'group-2',
+    ]);
+    expect(
+      relatedCalls(
+        relatedCalls(relatedCalls(countRows, 'current_process_run'), 'step_runs'),
+        'event'
+      )
+    ).toBeDefined();
+
+    amendmentQueries.groupAmendmentPage.fn({
+      args: {
+        groupId: 'group-1',
+        ids: [base.id],
+        query: '',
+        limit: 20,
+        start: null,
+        dir: 'forward',
+      },
+      ctx: anonymousCtx,
+    });
+    expect(matchesFixtureQuery(lastQuery('amendment'), { ...base, visibility: 'private' })).toBe(
+      false
+    );
   });
 
   it('covers collaborator, collaboration, and change-request page filters', () => {

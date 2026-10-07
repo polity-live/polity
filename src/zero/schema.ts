@@ -128,6 +128,7 @@ import {
 } from './network/table';
 import { userPreference } from './preferences/table';
 import { pqlFilter } from './pql/table';
+import { aiRun, aiChangeSet } from './project-chat/table';
 import { aiSkill, aiTool } from './ai/table';
 import { calendarSubscription } from './calendar-subscriptions/table';
 // Voting Password
@@ -136,7 +137,15 @@ import { votingPassword } from './voting-password/table';
 import { accreditation, accreditationAudit } from './accreditation/table';
 import { dataset, datasetSnapshot } from './datasets/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
-import { studioProject, studioExport } from './communication-studio/table';
+import {
+  studioProject,
+  studioProjectCollaborator,
+  studioExport,
+  studioState,
+  studioOperation,
+  canvasProposal,
+  canvasWorkspaceReader,
+} from './communication-studio/table';
 import {
   appTutorialRun,
   appTutorialCheckpointEffect,
@@ -285,6 +294,8 @@ const zeroTables = [
   // PQL
   pqlFilter,
   // AI
+  aiRun,
+  aiChangeSet,
   aiSkill,
   aiTool,
   // Common
@@ -311,7 +322,12 @@ const zeroTables = [
   // Appearance themes
   appearanceTheme,
   appearanceThemeRevision,
+  studioState,
+  studioOperation,
+  canvasProposal,
+  canvasWorkspaceReader,
   studioProject,
+  studioProjectCollaborator,
   studioExport,
   // Live tutorial
   appTutorialRun,

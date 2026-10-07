@@ -1,16 +1,25 @@
+import { traceAiOperation, logAiEvent, normalizeAiError, currentAiTrace } from './ai-trace';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
+import { aiProviderFetch } from './ai-provider-fetch';
 import type { SharedV4ProviderOptions } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
 import { z } from 'zod';
-import { OPENROUTER_FREE_MODEL_ID } from '@/lib/ai/models';
-import type { AiModelDescriptor, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
+import { AiAccessError } from '@/lib/ai/errors';
+import { buildAiModelKey, matchesAiModel, OPENROUTER_FREE_MODEL_ID } from '@/lib/ai/models';
+import type {
+  AiCredentialSource,
+  AiModelDescriptor,
+  AiProvider,
+  AiReasoningEffort,
+} from '@/lib/ai/schemas';
 import { getDecryptedAiCredential, listAiCredentialSummaries } from './ai-db';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const OPENROUTER_FREE_MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const openRouterModelSchema = z.object({
+  supported_parameters: z.array(z.string()).optional(),
   id: z.string(),
   name: z.string().nullable().optional(),
   context_length: z.union([z.number(), z.string()]).nullable().optional(),
@@ -31,9 +40,12 @@ export interface AiModelOption {
   provider: AiProvider;
   id: string;
   label: string;
-  source: 'app' | 'byok';
+  source: AiCredentialSource;
   free: boolean;
   supports_reasoning_effort: boolean;
+  supports_tools?: boolean;
+  verified_free?: boolean;
+  supports_structured_output?: boolean;
   context_window: number | null;
 }
 
@@ -190,7 +202,12 @@ async function fetchOpenRouterModels(
       label: model.name?.trim() || model.id,
       source,
       free: isOpenRouterFreeModel(model),
-      supports_reasoning_effort: true,
+      verified_free:
+        parsePrice(model.pricing?.prompt) === 0 && parsePrice(model.pricing?.completion) === 0,
+      supports_structured_output: model.supported_parameters?.includes('response_format') ?? false,
+      supports_reasoning_effort: model.supported_parameters?.includes('reasoning') ?? false,
+      supports_tools:
+        model.supported_parameters?.includes('tools') ?? model.id === 'openrouter/free',
       context_window: parseContextWindow(model.context_length),
     }));
 }
@@ -233,7 +250,7 @@ async function fetchAppOpenRouterFreeModels(apiKey: string): Promise<AiModelOpti
 function dedupeModels(models: readonly AiModelOption[]): AiModelOption[] {
   const seen = new Set<string>();
   return models.filter(model => {
-    const key = `${model.provider}:${model.id}`;
+    const key = buildAiModelKey(model);
     if (seen.has(key)) {
       return false;
     }
@@ -254,7 +271,10 @@ export async function getAiCatalog(userId: string): Promise<{
     try {
       models.push(...(await fetchAppOpenRouterFreeModels(appOpenRouterKey)));
     } catch (error) {
-      console.error('Failed to load free OpenRouter models:', error);
+      logAiEvent('ai.configuration.failed', {
+        operation: 'Failed to load free OpenRouter models:',
+        ...normalizeAiError(error),
+      });
     }
   }
 
@@ -263,7 +283,10 @@ export async function getAiCatalog(userId: string): Promise<{
     try {
       models.push(...(await fetchOpenRouterModels(userOpenRouterKey, 'byok', false)));
     } catch (error) {
-      console.error('Failed to load user OpenRouter models:', error);
+      logAiEvent('ai.configuration.failed', {
+        operation: 'Failed to load user OpenRouter models:',
+        ...normalizeAiError(error),
+      });
     }
   }
 
@@ -318,13 +341,68 @@ async function assertAppOpenRouterFreeModel(modelId: string): Promise<void> {
   }
 }
 
-export async function resolveLanguageModelForUser(
+/** Studio generation uses the application key and only models with confirmed zero prices. */
+export async function resolveStudioFreeModel(): Promise<{
+  model: LanguageModel;
+  id: string;
+  supportsStructuredOutput: boolean;
+}> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('Free Studio AI is not configured');
+  const models = (await fetchAppOpenRouterFreeModels(apiKey)).filter(
+    option => option.verified_free
+  );
+  const preferred = process.env.STUDIO_AI_MODEL_ID;
+  const selected =
+    (preferred ? models.find(option => option.id === preferred) : undefined) ?? models[0];
+  if (!selected) throw new Error('No verified free Studio AI model is available');
+  const provider = createOpenAI({
+    fetch: aiProviderFetch,
+    apiKey,
+    baseURL: 'https://openrouter.ai/api/v1',
+    headers: {
+      'HTTP-Referer': process.env.VITE_APP_URL ?? 'http://localhost:3000',
+      'X-Title': 'Polity',
+    },
+  });
+  return {
+    model: provider.chat(selected.id),
+    id: selected.id,
+    supportsStructuredOutput: !!selected.supports_structured_output,
+  };
+}
+
+async function resolveLanguageModelForUserImpl(
   userId: string,
   modelDescriptor: AiModelDescriptor,
   reasoningEffort: AiReasoningEffort
 ): Promise<ResolveModelResult> {
+  // Hosted ChatGPT plan usage requires its own approved integration. Identity
+  // sign-in must never be treated as an inference grant or an API key.
+  if (modelDescriptor.source === 'chatgpt') {
+    throw new AiAccessError(
+      'ai_access_unavailable',
+      'ChatGPT plan usage is not available for this application.'
+    );
+  }
+  if (modelDescriptor.source === 'app' && modelDescriptor.provider !== 'openrouter') {
+    throw new AiAccessError(
+      'ai_access_unavailable',
+      'Application credentials are available only for free OpenRouter models.'
+    );
+  }
   if (modelDescriptor.provider === 'openrouter') {
-    const userKey = await getDecryptedAiCredential(userId, 'openrouter');
+    const userKey =
+      modelDescriptor.source === 'app'
+        ? null
+        : await getDecryptedAiCredential(userId, 'openrouter');
+
+    if (modelDescriptor.source === 'byok' && !userKey) {
+      throw new AiAccessError(
+        'ai_credentials_missing',
+        'No personal OpenRouter API key is configured.'
+      );
+    }
 
     if (!userKey) {
       await assertAppOpenRouterFreeModel(modelDescriptor.id);
@@ -335,6 +413,7 @@ export async function resolveLanguageModelForUser(
       }
 
       const provider = createOpenAI({
+        fetch: aiProviderFetch,
         apiKey: appKey,
         baseURL: 'https://openrouter.ai/api/v1',
         headers: {
@@ -350,6 +429,7 @@ export async function resolveLanguageModelForUser(
     }
 
     const provider = createOpenAI({
+      fetch: aiProviderFetch,
       apiKey: userKey,
       baseURL: 'https://openrouter.ai/api/v1',
       headers: {
@@ -367,10 +447,16 @@ export async function resolveLanguageModelForUser(
   if (modelDescriptor.provider === 'openai') {
     const apiKey = await getDecryptedAiCredential(userId, 'openai');
     if (!apiKey) {
-      throw new Error('No personal OpenAI API key is configured.');
+      throw new AiAccessError(
+        'ai_credentials_missing',
+        'No personal OpenAI API key is configured.'
+      );
     }
 
-    const provider = createOpenAI({ apiKey });
+    const provider = createOpenAI({
+      fetch: aiProviderFetch,
+      apiKey,
+    });
 
     return {
       model: provider(modelDescriptor.id),
@@ -383,10 +469,13 @@ export async function resolveLanguageModelForUser(
 
   const apiKey = await getDecryptedAiCredential(userId, 'anthropic');
   if (!apiKey) {
-    throw new Error('No personal Anthropic API key is configured.');
+    throw new AiAccessError(
+      'ai_credentials_missing',
+      'No personal Anthropic API key is configured.'
+    );
   }
 
-  const provider = createAnthropic({ apiKey });
+  const provider = createAnthropic({ apiKey, fetch: aiProviderFetch });
 
   return {
     model: provider(modelDescriptor.id),
@@ -397,4 +486,46 @@ export async function resolveLanguageModelForUser(
     },
     credentialProvider: 'anthropic',
   };
+}
+
+/** The chosen actor pays for generation; only legacy callers use Studio's free default. */
+export async function resolveStudioGenerationModelForUser(
+  userId: string,
+  descriptor?: AiModelDescriptor,
+  reasoningEffort: AiReasoningEffort = 'medium'
+): Promise<{
+  model: LanguageModel;
+  providerOptions?: SharedV4ProviderOptions;
+  supportsStructuredOutput: boolean;
+}> {
+  if (!descriptor) return resolveStudioFreeModel();
+  const catalog = await getAiCatalog(userId);
+  const selected = catalog.models.find(option => matchesAiModel(option, descriptor));
+  if (!selected)
+    throw new AiAccessError('ai_model_unavailable', 'The selected Studio model is unavailable.');
+  if (selected.source === 'app' && !selected.verified_free) {
+    throw new AiAccessError(
+      'ai_model_unavailable',
+      'Studio requires confirmed zero prices for application models.'
+    );
+  }
+  const resolved = await resolveLanguageModelForUser(userId, descriptor, reasoningEffort);
+  return {
+    model: resolved.model,
+    providerOptions: resolved.providerOptions,
+    supportsStructuredOutput: selected.supports_structured_output ?? selected.provider === 'openai',
+  };
+}
+
+export async function resolveLanguageModelForUser(
+  ...args: Parameters<typeof resolveLanguageModelForUserImpl>
+) {
+  const context = currentAiTrace();
+  if (context) context.model = args[1];
+  return traceAiOperation(
+    'configuration',
+    'resolve_model',
+    { model: args[1], reasoningEffort: args[2] },
+    () => resolveLanguageModelForUserImpl(...args)
+  );
 }

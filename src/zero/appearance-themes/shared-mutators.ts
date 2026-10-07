@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import {
   createGroupAppearanceThemeSchema,
+  createPersonalAppearanceThemeSchema,
   deleteAppearanceThemeSchema,
   publishAppearanceThemeSchema,
   updateAppearanceThemeDraftSchema,
@@ -10,6 +11,7 @@ import { can } from '../rbac/can';
 import {
   themeFontsSchema,
   themePaletteSchema,
+  themeTextStyleSchema,
   validateThemeForPublishing,
 } from '@/features/shared/appearance-theme/contract';
 
@@ -30,7 +32,50 @@ async function requireManageTheme(
   return theme;
 }
 
+async function requireEditTheme(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  themeId: string
+) {
+  const theme = await tx.run(zql.appearance_theme.where('id', themeId).one());
+  if (!theme) throw new Error('Theme not found');
+  if (theme.kind === 'personal') {
+    if (theme.created_by_id !== ctx.userID) throw new Error('Theme not found');
+    return theme;
+  }
+  return requireManageTheme(tx, ctx, themeId);
+}
+
 export const appearanceThemeSharedMutators = {
+  createPersonal: defineMutator(createPersonalAppearanceThemeSchema, async ({ tx, ctx, args }) => {
+    const now = Date.now();
+    await tx.mutate.appearance_theme.insert({
+      id: args.id,
+      slug: args.slug,
+      name: args.name,
+      description: args.description ?? null,
+      kind: 'personal',
+      group_id: null,
+      created_by_id: ctx.userID,
+      current_revision_id: null,
+      created_at: now,
+      updated_at: now,
+    });
+    await tx.mutate.appearance_theme_revision.insert({
+      id: args.revision_id,
+      theme_id: args.id,
+      version: 1,
+      status: 'draft',
+      light_palette: args.light_palette,
+      dark_palette: args.dark_palette,
+      fonts: args.fonts,
+      text_styles: args.text_styles ?? [],
+      created_by_id: ctx.userID,
+      created_at: now,
+      updated_at: now,
+      published_at: null,
+    });
+  }),
   createGroup: defineMutator(createGroupAppearanceThemeSchema, async ({ tx, ctx, args }) => {
     await can(tx, ctx, {
       action: 'manage',
@@ -58,6 +103,7 @@ export const appearanceThemeSharedMutators = {
       light_palette: args.light_palette,
       dark_palette: args.dark_palette,
       fonts: args.fonts,
+      text_styles: args.text_styles ?? [],
       created_by_id: ctx.userID,
       created_at: now,
       updated_at: now,
@@ -66,7 +112,7 @@ export const appearanceThemeSharedMutators = {
   }),
 
   updateDraft: defineMutator(updateAppearanceThemeDraftSchema, async ({ tx, ctx, args }) => {
-    const theme = await requireManageTheme(tx, ctx, args.theme_id);
+    const theme = await requireEditTheme(tx, ctx, args.theme_id);
     const now = Date.now();
     await tx.mutate.appearance_theme.update({
       id: theme.id,
@@ -84,6 +130,7 @@ export const appearanceThemeSharedMutators = {
         light_palette: args.light_palette,
         dark_palette: args.dark_palette,
         fonts: args.fonts,
+        text_styles: args.text_styles ?? [],
         updated_at: now,
       });
     } else {
@@ -95,6 +142,7 @@ export const appearanceThemeSharedMutators = {
         light_palette: args.light_palette,
         dark_palette: args.dark_palette,
         fonts: args.fonts,
+        text_styles: args.text_styles ?? [],
         created_by_id: ctx.userID,
         created_at: now,
         updated_at: now,
@@ -104,7 +152,7 @@ export const appearanceThemeSharedMutators = {
   }),
 
   publish: defineMutator(publishAppearanceThemeSchema, async ({ tx, ctx, args }) => {
-    const theme = await requireManageTheme(tx, ctx, args.theme_id);
+    const theme = await requireEditTheme(tx, ctx, args.theme_id);
     const revision = await tx.run(
       zql.appearance_theme_revision
         .where('id', args.revision_id)
@@ -117,6 +165,10 @@ export const appearanceThemeSharedMutators = {
     const light = themePaletteSchema.parse(revision.light_palette);
     const dark = themePaletteSchema.parse(revision.dark_palette);
     themeFontsSchema.parse(revision.fonts);
+    themeTextStyleSchema
+      .array()
+      .max(50)
+      .parse(revision.text_styles ?? []);
     const issues = validateThemeForPublishing({ light, dark });
     if (issues.length > 0) {
       throw new Error('Theme cannot be published because one or more color pairs fail WCAG AA');
@@ -137,7 +189,7 @@ export const appearanceThemeSharedMutators = {
   }),
 
   delete: defineMutator(deleteAppearanceThemeSchema, async ({ tx, ctx, args }) => {
-    await requireManageTheme(tx, ctx, args.id);
+    await requireEditTheme(tx, ctx, args.id);
     await tx.mutate.appearance_theme.delete({ id: args.id });
   }),
 };

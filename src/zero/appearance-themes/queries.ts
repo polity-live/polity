@@ -11,6 +11,7 @@ export const appearanceThemeQueries = {
       .where(({ and, cmp, exists, or }: any) =>
         or(
           cmp('kind', 'builtin'),
+          and(cmp('kind', 'personal'), cmp('created_by_id', userID)),
           and(
             cmp('kind', 'group'),
             cmp('current_revision_id', 'IS NOT', null),
@@ -28,6 +29,15 @@ export const appearanceThemeQueries = {
       .related('group')
       .related('current_revision')
       .orderBy('name', 'asc')
+  ),
+
+  personalEditor: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.appearance_theme
+      .where('kind', 'personal')
+      .where('created_by_id', userID)
+      .related('current_revision')
+      .related('revisions', revision => revision.orderBy('version', 'desc'))
+      .orderBy('updated_at', 'desc')
   ),
 
   availableGroupThemes: defineQuery(z.object({}), ({ ctx: { userID } }) =>
@@ -50,12 +60,21 @@ export const appearanceThemeQueries = {
     ({ args: { themeId }, ctx: { userID } }) =>
       zql.appearance_theme
         .where('id', themeId)
-        .where('kind', 'group')
         .where('current_revision_id', 'IS NOT', null)
         .whereExists('current_revision', revision => revision.where('status', 'published'))
-        .whereExists('group', group =>
-          group.whereExists('memberships', membership =>
-            membership.where('user_id', userID).where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+        .where(({ and, cmp, exists, or }: any) =>
+          or(
+            and(cmp('kind', 'personal'), cmp('created_by_id', userID)),
+            and(
+              cmp('kind', 'group'),
+              exists('group', (group: any) =>
+                group.whereExists('memberships', (membership: any) =>
+                  membership
+                    .where('user_id', userID)
+                    .where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+                )
+              )
+            )
           )
         )
         .related('group')

@@ -156,6 +156,7 @@ export type NotificationType =
   | 'conversation_accepted' // Conversation accepted
   // Additional Notifications (8.x)
   | 'document_collaborator_invited' // 8.0: Document collaborator invited
+  | 'studio_collaboration_invite' // Personal Studio project invitation
   | 'role_assigned' // 8.1: Role assigned
   | 'role_removed' // 8.1: Role removed
   | 'election_results_published' // 8.2: Election results

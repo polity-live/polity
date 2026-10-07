@@ -23,10 +23,10 @@ export async function studioRequest<T = any>(
 export function useStudioApi() {
   return {
     request: studioRequest,
-    async upload(projectId: string, file: File) {
+    async upload(projectId: string, file: File, workspaceId?: string) {
       const intent = await studioRequest<{ id: string; path: string; token: string }>(
         'beginUpload',
-        { projectId, name: file.name.slice(0, 200), mime: file.type, size: file.size }
+        { projectId, workspaceId, name: file.name.slice(0, 200), mime: file.type, size: file.size }
       );
       try {
         const { error } = await createClient()

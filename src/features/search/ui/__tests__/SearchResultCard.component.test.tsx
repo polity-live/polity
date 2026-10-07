@@ -379,4 +379,48 @@ describe('SearchResultCard', () => {
       groupId: 'group-1',
     });
   });
+
+  it('shows translated Studio labels without raw index text', () => {
+    const document = makeSearchDocument({
+      entity_id: 'project-1',
+      entity_type: 'studio',
+      title: 'g4',
+      subtitle: 'single',
+      summary: null,
+      search_text: 'g4 single',
+      card_payload: { type: 'studio' },
+    });
+    const view = render(<SearchResultCard mode="preview" document={document} />);
+    expect(screen.getByText('Studio project')).toBeTruthy();
+    expect(screen.getByText('Single post')).toBeTruthy();
+    expect(screen.queryByText('g4 single')).toBeNull();
+    view.unmount();
+
+    act(() => useLanguageStore.setState({ language: 'de' }));
+    render(<SearchResultCard mode="preview" document={document} />);
+    expect(screen.getByText('Studio-Projekt')).toBeTruthy();
+    expect(screen.getByText('Einzelpost')).toBeTruthy();
+  });
+
+  it('labels an interactive Studio fallback card without displaying raw indexed text', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          entity_type: 'studio',
+          entity_id: crypto.randomUUID(),
+          title: 'Shared campaign',
+          subtitle: 'campaign',
+          summary: null,
+          search_text: 'INTERNAL_INDEX_SENTINEL',
+          card_payload: { type: 'studio' },
+        })}
+      />
+    );
+    expect(screen.getByText('Studio project')).toBeTruthy();
+    expect(screen.getByText('Campaign')).toBeTruthy();
+    expect(screen.queryByText('INTERNAL_INDEX_SENTINEL')).toBeNull();
+    expect(screen.getByRole('link', { name: /Shared campaign/ }).getAttribute('href')).toContain(
+      '/studio/'
+    );
+  });
 });

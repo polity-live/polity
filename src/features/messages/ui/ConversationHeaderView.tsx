@@ -2,6 +2,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { CardHeader } from '@/features/shared/ui/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
 import { isConversationRequester } from '../logic/messageUtils';
+import { cn } from '@/features/shared/utils/utils';
 export interface ConversationHeaderViewProps {
   conversation: any;
   currentUserId: any;
@@ -28,6 +29,8 @@ export interface ConversationHeaderViewProps {
   avatarContent: any;
   titleContent: any;
   identityContent: any;
+  canManage?: boolean;
+  compact?: boolean;
 }
 
 export function ConversationHeaderView({
@@ -38,11 +41,16 @@ export function ConversationHeaderView({
   onDeleteClick,
   t,
   identityContent,
+  canManage = true,
+  compact = false,
 }: ConversationHeaderViewProps) {
   return (
     <CardHeader
       separator
-      className="flex-shrink-0 flex-row items-center justify-between space-y-0 pt-2 pr-6 pb-3 pl-0 md:p-6"
+      className={cn(
+        'flex-shrink-0 flex-row items-center justify-between space-y-0 pt-2 pr-6 pb-3 pl-0 md:p-6',
+        compact && 'p-3 md:p-3'
+      )}
     >
       <div className="flex min-w-0 flex-1 items-center">
         <Button
@@ -86,7 +94,8 @@ export function ConversationHeaderView({
             )}
           </Button>
         )}
-        {conversation.type !== 'group' &&
+        {canManage &&
+          conversation.type !== 'group' &&
           conversation.type !== 'event' &&
           (conversation.status !== 'pending' ||
             isConversationRequester(conversation, currentUserId)) && (

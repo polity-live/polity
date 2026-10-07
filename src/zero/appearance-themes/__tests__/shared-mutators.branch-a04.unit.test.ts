@@ -65,13 +65,16 @@ describe('appearance theme shared mutator remaining branches', () => {
         ctx: ctx(),
         args: { id: themeId },
       })
-    ).rejects.toThrow('Group theme not found');
+    ).rejects.toThrow(theme ? 'Group theme not found' : 'Theme not found');
     expect(canMock).not.toHaveBeenCalled();
   });
 
   it('updates an existing draft and inserts a missing draft with a null description', async () => {
     const tx = createTx();
-    tx.run.mockResolvedValueOnce(validTheme()).mockResolvedValueOnce({ id: revisionId });
+    tx.run
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce({ id: revisionId });
     await appearanceThemeSharedMutators.updateDraft.fn({
       tx: tx as never,
       ctx: ctx(),
@@ -82,7 +85,10 @@ describe('appearance theme shared mutator remaining branches', () => {
     );
 
     const insertTx = createTx();
-    insertTx.run.mockResolvedValueOnce(validTheme()).mockResolvedValueOnce(null);
+    insertTx.run
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(null);
     await appearanceThemeSharedMutators.updateDraft.fn({
       tx: insertTx as never,
       ctx: ctx(),
@@ -96,7 +102,10 @@ describe('appearance theme shared mutator remaining branches', () => {
 
   it('rejects a missing draft and publishes a valid draft', async () => {
     const missingTx = createTx();
-    missingTx.run.mockResolvedValueOnce(validTheme()).mockResolvedValueOnce(null);
+    missingTx.run
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(null);
     await expect(
       appearanceThemeSharedMutators.publish.fn({
         tx: missingTx as never,
@@ -106,12 +115,15 @@ describe('appearance theme shared mutator remaining branches', () => {
     ).rejects.toThrow('Theme draft not found');
 
     const tx = createTx();
-    tx.run.mockResolvedValueOnce(validTheme()).mockResolvedValueOnce({
-      id: revisionId,
-      light_palette: POLITY_THEME.light,
-      dark_palette: POLITY_THEME.dark,
-      fonts: POLITY_THEME.fonts,
-    });
+    tx.run
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce(validTheme())
+      .mockResolvedValueOnce({
+        id: revisionId,
+        light_palette: POLITY_THEME.light,
+        dark_palette: POLITY_THEME.dark,
+        fonts: POLITY_THEME.fonts,
+      });
     await appearanceThemeSharedMutators.publish.fn({
       tx: tx as never,
       ctx: ctx(),

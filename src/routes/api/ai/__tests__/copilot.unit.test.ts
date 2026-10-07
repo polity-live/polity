@@ -1,3 +1,8 @@
+vi.mock('@/server/ai-trace-store', () => ({
+  insertAiTrace: vi.fn(),
+  insertAiOperation: vi.fn(),
+  finishAiOperation: vi.fn(),
+}));
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -167,7 +172,7 @@ describe('AI copilot route', () => {
     await expect(response.json()).resolves.toEqual({ text: 'a useful continuation.' });
     expect(mockedResolveLanguageModelForUser).toHaveBeenCalledWith(
       'user-1',
-      { provider: 'openrouter', id: 'openrouter/free' },
+      { provider: 'openrouter', id: 'openrouter/free', source: 'app' },
       'low'
     );
     expect(mockedGenerateText).toHaveBeenCalledWith(
@@ -265,7 +270,10 @@ describe('AI copilot route', () => {
     const response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue this' }));
     await expect(response.json()).resolves.toEqual({ text: '0' });
     expect(consoleWarnSpy).toHaveBeenCalledTimes(warns ? 1 : 0);
-    expect(consoleErrorSpy).toHaveBeenCalledTimes(warns ? 0 : 1);
+    const finalFailures = consoleErrorSpy.mock.calls.filter(([record]: unknown[]) =>
+      String(record).includes('AI copilot completion failed:')
+    );
+    expect(finalFailures).toHaveLength(warns ? 0 : 1);
   });
 
   it('tracks credential use and tolerates tracking failures', async () => {
@@ -299,8 +307,7 @@ describe('AI copilot route', () => {
     response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue again' }));
     expect(response.status).toBe(200);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to update AI credential usage after copilot completion:',
-      expect.any(Error)
+      expect.stringContaining('Failed to update AI credential usage after copilot completion:')
     );
   });
 

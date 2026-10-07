@@ -112,7 +112,9 @@ export async function promptDeployTargets(options = {}) {
 export async function waitForZeroHealth(options = {}) {
   const fetcher = options.fetcher ?? fetch;
   const now = options.now ?? Date.now;
-  const wait = options.wait ?? (milliseconds => new Promise(resolveWait => setTimeout(resolveWait, milliseconds)));
+  const wait =
+    options.wait ??
+    (milliseconds => new Promise(resolveWait => setTimeout(resolveWait, milliseconds)));
   const timeout = options.timeout ?? 180_000;
   const interval = options.interval ?? 5_000;
   const start = now();
@@ -157,9 +159,7 @@ export async function runDeployCli(options = {}) {
 
   reporter.step('Pre-flight checks');
   const execute = options.execute ?? execSync;
-  const branch = String(
-    execute('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' })
-  ).trim();
+  const branch = String(execute('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' })).trim();
   const allowedBranches = ['master', 'deploy'];
   if (!allowedBranches.includes(branch)) {
     throw new Error(
@@ -190,8 +190,10 @@ export async function runDeployCli(options = {}) {
   }
 
   const projectLinked = options.projectLinked ?? existsSync(resolve('.vercel/project.json'));
-  if (targets.vercel && !projectLinked) throw new Error('Vercel project not linked. Run: vercel link');
-  if (parsed.dryRun) reporter.warn('Running in dry-run mode — commands will be printed but not executed.\n');
+  if (targets.vercel && !projectLinked)
+    throw new Error('Vercel project not linked. Run: vercel link');
+  if (parsed.dryRun)
+    reporter.warn('Running in dry-run mode — commands will be printed but not executed.\n');
 
   const run = (label, command) => {
     reporter.info(`${label}: ${BOLD}${command}${RESET}`);
@@ -206,8 +208,14 @@ export async function runDeployCli(options = {}) {
     reporter.step('Supabase — push migrations');
     run('Pushing migrations', 'supabase db push');
     reporter.success('Supabase migrations applied');
+    reporter.step('Supabase — provision storage buckets');
+    run('Provisioning storage buckets', 'supabase seed buckets --linked');
+    reporter.success('Supabase storage buckets provisioned');
     reporter.step('Supabase — apply production seed');
-    run('Applying production seed', 'supabase db query --linked --file supabase/seed.production.sql');
+    run(
+      'Applying production seed',
+      'supabase db query --linked --file supabase/seed.production.sql'
+    );
     reporter.success('Supabase production seed applied');
   } else {
     reporter.info('Supabase step skipped');

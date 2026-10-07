@@ -7,6 +7,7 @@ export const document = table('document')
     amendment_id: string().optional(),
     content: json<MutableJSONValue>().optional(),
     editing_mode: string().optional(),
+    content_revision: number().optional(),
     created_at: number(),
     updated_at: number(),
   })

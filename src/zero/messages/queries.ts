@@ -1,3 +1,4 @@
+import { studioChatAccess, amendmentChatAccess } from '../project-chat/access';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { requireQueryUser } from '../rbac/query-access';
@@ -25,21 +26,33 @@ function isUnsetTimestamp({ or, cmp }: any, field: string) {
   return or(cmp(field, 'IS', null), cmp(field, 0));
 }
 
-function conversationAccessFilter<T>(q: T, userID: string | undefined): T {
+export function conversationAccessFilter<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
     return query.where('id', '__unauthorized__') as T;
   }
 
-  return query.where(({ or, cmp, exists }: any) =>
+  return query.where(({ or, and, cmp, exists }: any) =>
     or(
-      cmp('assistant_for_user_id', userID),
-      cmp('requested_by_id', userID),
-      exists('participants', (participant: any) =>
-        participant
-          .where('user_id', userID)
-          .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
+      and(
+        cmp('type', 'project_ai'),
+        or(
+          exists('studio_project', (p: any) => studioChatAccess(p, userID)),
+          exists('amendment', (a: any) => amendmentChatAccess(a, userID))
+        )
+      ),
+      and(
+        or(cmp('type', 'IS', null), cmp('type', '!=', 'project_ai')),
+        or(
+          cmp('assistant_for_user_id', userID),
+          cmp('requested_by_id', userID),
+          exists('participants', (participant: any) =>
+            participant
+              .where('user_id', userID)
+              .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
+          )
+        )
       )
     )
   ) as T;
@@ -53,7 +66,9 @@ export const messageQueries = {
 
   // Shell badge projection: persisted unread state plus pending-request timing only.
   unreadSummary: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    requireQueryUser(zql.conversation_participant, userID).related('conversation')
+    requireQueryUser(zql.conversation_participant, userID)
+      .whereExists('conversation', q => conversationAccessFilter(q, userID))
+      .related('conversation')
   ),
 
   // Single conversation by ID
@@ -190,6 +205,7 @@ export const messageQueries = {
         // isAssistantConversation(), which also recognizes Aria & Kai by participant.
         q = q.where(({ or, cmp, exists }: any) =>
           or(
+            cmp('type', 'project_ai'),
             cmp('assistant_for_user_id', userID),
             exists('participants', (participant: any) =>
               participant
@@ -241,7 +257,7 @@ export const messageQueries = {
   // Lighter conversation query for unread counting (participants + messages→sender)
   conversationsForUnread: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.conversation_participant.where('user_id', userID).related('conversation', q =>
-      q
+      conversationAccessFilter(q, userID)
         .related('participants', pq => pq.related('user'))
         .related('messages', mq =>
           mq.orderBy('created_at', 'desc').orderBy('id', 'desc').limit(1).related('sender')

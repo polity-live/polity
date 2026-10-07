@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/project-chat/ui/ProjectChatPanel.tsx": [],
+    "src/features/project-chat/ui/ProjectConversation.tsx": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the shared assistant view, flushes the editor and sends through the existing transport"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "does not start an AI run if the editor cannot confirm its save"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows shared progress and offers undo for an applied change by the current sender"
+      },
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "links to the project and review and saves the selected amendment surface"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-598a1a97f5": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-87b7613f8e": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-98e2f3d436": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.button-cf59481bd9": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.project-chat-panel.action": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.project-chat-panel.set-collapsed": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectChatPanel.tsx#project-chat.projectchatpanel.activate.select-34cebf65e8": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-messages": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the shared assistant view, flushes the editor and sends through the existing transport",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-project": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "links to the project and review and saves the selected amendment surface",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-review": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "links to the project and review and saves the selected amendment surface",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-text-features-project-chat-city-design": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "links to the project and review and saves the selected amendment surface",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/project-chat/ui/ProjectConversation.tsx#project-chat.project-conversation.features-project-chat-undo": [
+      {
+        "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows shared progress and offers undo for an applied change by the current sender",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

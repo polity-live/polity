@@ -1,4 +1,6 @@
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { currentAiTrace, persistAiDiagnostic, traceAiOperation } from './ai-trace';
+import { linkAiResponse } from './ai-trace-store';
 import { isAssistantErrorContext } from '@/features/messages/logic/contextAttachments';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import {
@@ -549,15 +551,23 @@ export async function getConversationMessagesForAi(
   );
 }
 
-export async function persistAssistantMessage(
+async function persistAssistantMessageImpl(
   conversationId: string,
   content: string,
   context: AiMessageContextV1
 ): Promise<void> {
   const supabase = createClient();
   const now = new Date().toISOString();
+  const messageId = crypto.randomUUID();
+  const trace = currentAiTrace();
+  if (trace)
+    context = {
+      ...context,
+      aiTrace: { traceId: trace.traceId, originMessageId: trace.originMessageId },
+    };
 
   const { error: messageError } = await supabase.from('message').insert({
+    id: messageId,
     conversation_id: conversationId,
     sender_id: ARIA_KAI_USER_ID,
     content,
@@ -571,6 +581,7 @@ export async function persistAssistantMessage(
   if (messageError) {
     throw new Error(`Failed to persist assistant message: ${messageError.message}`);
   }
+  if (trace) await persistAiDiagnostic(() => linkAiResponse(trace.traceId, messageId));
 
   const { error: conversationError } = await supabase
     .from('conversation')
@@ -582,6 +593,17 @@ export async function persistAssistantMessage(
       `Failed to update assistant conversation timestamp: ${conversationError.message}`
     );
   }
+}
+
+export async function persistAssistantMessage(
+  ...args: Parameters<typeof persistAssistantMessageImpl>
+) {
+  return traceAiOperation(
+    'persistence',
+    'save_assistant_message',
+    { conversationId: args[0], content: args[1] },
+    () => persistAssistantMessageImpl(...args)
+  );
 }
 
 export async function getAiSkillBySlug(

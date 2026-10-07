@@ -93,6 +93,20 @@ describe('published Studio media access and byte ranges', () => {
     expect(io.info).not.toHaveBeenCalled();
     expect(io.sign).toHaveBeenCalledWith('exports/file.png', 30);
   });
+  it('serves archived published media through statement visibility after its Whiteboard is deleted', async () => {
+    io.sql
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { storage_path: 'retired/published.png', file_name: 'published.png' },
+      ]);
+    io.session.mockResolvedValue({ user: { id: 'reader' } });
+    const response = await publishedStudioMedia(request(), id);
+    expect(response.status).toBe(307);
+    expect(io.access).not.toHaveBeenCalled();
+    expect(io.visible).toHaveBeenCalledOnce();
+    expect(io.sign).toHaveBeenCalledWith('retired/published.png', 30);
+  });
   it('validates ranges using current storage metadata even when the application database is an isolated copy', async () => {
     expect((await publishedStudioMedia(request({ Range: 'bytes=0-15' }), id)).status).toBe(307);
     expect(io.info).toHaveBeenCalledWith('exports/file.png');
@@ -115,6 +129,7 @@ describe('published Studio media access and byte ranges', () => {
     expect((await publishedStudioMedia(request(), 'not-a-uuid')).status).toBe(404);
     expect(io.sql).not.toHaveBeenCalled();
     io.sql
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ storage_path: 'x', file_name: 'deck.pptx' }]);
     expect((await publishedStudioMedia(request(), id)).status).toBe(404);

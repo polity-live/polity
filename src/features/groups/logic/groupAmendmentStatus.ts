@@ -11,11 +11,11 @@ function mapSingleStatus(status?: string | null): GroupAmendmentBadgeStatus | nu
     return null;
   }
 
-  if (status === 'rejected') {
+  if (status === 'rejected' || status === 'declined') {
     return 'rejected';
   }
 
-  if (status === 'withdrawn') {
+  if (status === 'withdrawn' || status === 'cancelled') {
     return 'withdrawn';
   }
 
@@ -82,6 +82,40 @@ export function normalizeGroupAmendmentDisplayStatus(
   }
 
   return null;
+}
+
+export interface GroupStatusAmendment {
+  id: string;
+  group_decisions?: readonly { group_id: string; status: string | null }[] | null;
+  current_process_run?: {
+    step_runs?:
+      | readonly {
+          source_group_id?: string | null;
+          target_group_id?: string | null;
+          event?: { group_id: string } | null;
+          decision_status?: string | null;
+          status?: string | null;
+        }[]
+      | null;
+  } | null;
+}
+
+export function getGroupAmendmentDisplayStatusForGroup(
+  amendment: GroupStatusAmendment,
+  groupId: string
+): GroupAmendmentDisplayStatus {
+  const decisions = amendment.group_decisions?.filter(decision => decision.group_id === groupId);
+  if (decisions?.length) {
+    return (
+      normalizeGroupAmendmentDisplayStatus(...decisions.map(decision => decision.status)) ??
+      'pending'
+    );
+  }
+
+  const statuses = (amendment.current_process_run?.step_runs ?? [])
+    .filter(step => step.target_group_id === groupId || step.event?.group_id === groupId)
+    .flatMap(step => [step.decision_status, step.status]);
+  return normalizeGroupAmendmentDisplayStatus(...statuses) ?? 'pending';
 }
 
 export function groupAmendmentsByDisplayStatus<T extends { decision_status?: string | null }>(

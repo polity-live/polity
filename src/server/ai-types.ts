@@ -1,3 +1,4 @@
+import { editorContextSchema } from '@/features/project-chat/logic/contracts';
 import { z } from 'zod';
 
 import {
@@ -25,8 +26,12 @@ export type {
   AiToolName,
 } from '@/lib/ai/schemas';
 
-export const aiChatRequestSchema = z.object({
+export const aiChatStartRequestSchema = z.object({
   conversationId: z.string(),
+  requestId: z.string().uuid().optional(),
+  originMessageId: z.string().uuid().optional(),
+  resume: z.literal(false).optional(),
+  editorContext: editorContextSchema.optional(),
   content: z.string().trim().min(1),
   model: aiModelDescriptorSchema,
   reasoningEffort: aiReasoningEffortSchema.default('medium'),
@@ -35,6 +40,14 @@ export const aiChatRequestSchema = z.object({
   attachments: z.array(aiChatAttachmentSchema).default([]),
   timeZone: z.string().trim().min(1).default('UTC'),
 });
+
+export const aiChatResumeRequestSchema = z.object({
+  conversationId: z.string(),
+  requestId: z.string().uuid(),
+  resume: z.literal(true),
+});
+
+export const aiChatRequestSchema = z.union([aiChatResumeRequestSchema, aiChatStartRequestSchema]);
 
 export const aiCredentialSaveSchema = z.object({
   provider: aiProviderSchema,
@@ -46,3 +59,5 @@ export const aiCredentialDeleteSchema = z.object({
 });
 
 export type AiChatRequest = z.infer<typeof aiChatRequestSchema>;
+export type AiChatStartRequest = z.infer<typeof aiChatStartRequestSchema>;
+export type AiChatResumeRequest = z.infer<typeof aiChatResumeRequestSchema>;

@@ -2,6 +2,8 @@
 
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import { AiEditorTraceContext } from '../ai-editor-trace-context';
 
 const mocks = vi.hoisted(() => ({
   configFactory: null as any,
@@ -87,6 +89,34 @@ describe('copilot plugin branches', () => {
       expect.objectContaining({
         headers: expect.objectContaining({ authorization: 'Bearer token', existing: 'yes' }),
       })
+    );
+  });
+
+  it('scopes completion diagnostics to the current document and removes a stale document header', () => {
+    const { config, getOption, setOption } = createConfig();
+    getOption.mockReturnValue({
+      headers: { 'X-AI-Document-Id': 'old-document', Existing: 'retained' },
+    });
+    let documentId: string | undefined = 'current-document';
+    const view = renderHook(() => config.useHooks(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <AiEditorTraceContext.Provider value={documentId}>{children}</AiEditorTraceContext.Provider>
+      ),
+    });
+    expect(setOption).toHaveBeenLastCalledWith(
+      'completeOptions',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-ai-document-id': 'current-document',
+          existing: 'retained',
+        }),
+      })
+    );
+    documentId = undefined;
+    view.rerender();
+    expect(setOption).toHaveBeenLastCalledWith(
+      'completeOptions',
+      expect.objectContaining({ headers: { existing: 'retained' } })
     );
   });
 });

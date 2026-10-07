@@ -1,4 +1,73 @@
-import type { AppearanceThemeDefinition, ThemeFonts, ThemePalette } from './contract';
+import type {
+  AppearanceThemeDefinition,
+  ThemeFonts,
+  ThemePalette,
+  ThemeTextStyle,
+} from './contract';
+
+const BUILTIN_TEXT_STYLE_IDS = {
+  headline: '10000000-0000-4000-8000-000000000001',
+  subheadline: '10000000-0000-4000-8000-000000000002',
+  body: '10000000-0000-4000-8000-000000000003',
+  caption: '10000000-0000-4000-8000-000000000004',
+} as const;
+
+export function defaultTextStyles(fonts: ThemeFonts): ThemeTextStyle[] {
+  return [
+    {
+      id: BUILTIN_TEXT_STYLE_IDS.headline,
+      name: 'Headline',
+      font: fonts.display,
+      size: 72,
+      color: 'foreground',
+      bold: true,
+      italic: false,
+      underline: false,
+      lineHeight: 1.05,
+      letterSpacing: -1,
+      align: 'left',
+    },
+    {
+      id: BUILTIN_TEXT_STYLE_IDS.subheadline,
+      name: 'Subheadline',
+      font: fonts.display,
+      size: 42,
+      color: 'foreground',
+      bold: false,
+      italic: false,
+      underline: false,
+      lineHeight: 1.15,
+      letterSpacing: 0,
+      align: 'left',
+    },
+    {
+      id: BUILTIN_TEXT_STYLE_IDS.body,
+      name: 'Body',
+      font: fonts.sans,
+      size: 28,
+      color: 'foreground',
+      bold: false,
+      italic: false,
+      underline: false,
+      lineHeight: 1.4,
+      letterSpacing: 0,
+      align: 'left',
+    },
+    {
+      id: BUILTIN_TEXT_STYLE_IDS.caption,
+      name: 'Caption',
+      font: fonts.sans,
+      size: 18,
+      color: 'mutedForeground',
+      bold: false,
+      italic: false,
+      underline: false,
+      lineHeight: 1.3,
+      letterSpacing: 0.2,
+      align: 'left',
+    },
+  ];
+}
 
 export const BUILTIN_THEME_IDS = {
   polity: '00000000-0000-4000-8000-000000000001',
@@ -102,6 +171,7 @@ function preset(input: PresetInput): AppearanceThemeDefinition {
     description: input.description,
     kind: 'builtin',
     groupId: null,
+    ownerId: null,
     version: 1,
     light: {
       ...polityLight,
@@ -146,6 +216,7 @@ function preset(input: PresetInput): AppearanceThemeDefinition {
       charts: input.charts,
     },
     fonts: input.fonts,
+    textStyles: defaultTextStyles(input.fonts),
   };
 }
 
@@ -157,10 +228,16 @@ export const BUILTIN_THEMES: readonly AppearanceThemeDefinition[] = [
     description: '',
     kind: 'builtin',
     groupId: null,
+    ownerId: null,
     version: 1,
     light: polityLight,
     dark: polityDark,
     fonts: { display: 'newsreader', sans: 'manrope', mono: 'jetbrains-mono' },
+    textStyles: defaultTextStyles({
+      display: 'newsreader',
+      sans: 'manrope',
+      mono: 'jetbrains-mono',
+    }),
   },
   preset({
     id: BUILTIN_THEME_IDS.spd,

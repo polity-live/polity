@@ -123,7 +123,7 @@ describe('E2E fixture lifecycle contract', () => {
     );
     expect(
       playwrightSource.match(/gracefulShutdown: webServerGracefulShutdown/g) ?? []
-    ).toHaveLength(3);
+    ).toHaveLength(2);
     expect(setupSource).toContain('await waitForZeroReady()');
     expect(teardownSource).not.toContain('cleanupE2ERows');
     expect(teardownSource).toContain('await closeDb()');

@@ -1,11 +1,14 @@
+import { ProjectContextNavigation } from '@/features/project-chat/ui/ProjectContextNavigation';
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { MessageBubble } from '../MessageBubble';
 import { StreamingBubble } from '../MessageListView';
+import { translate } from '@/features/shared/hooks/use-translation';
 
+vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ session: null }) }));
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
     <a href={to} {...props}>
@@ -123,3 +126,43 @@ describe('AI chat entity previews', () => {
     );
   });
 });
+
+it('activates the exact stored element context from a sent message', () => {
+  const reference = { kind: 'element', id: 'title', label: 'Heading', origin: 'automatic' };
+  const editorContext = { surface: 'studio', proposalId: null, references: [reference] };
+  const activate = vi.fn();
+  render(
+    <ProjectContextNavigation.Provider value={activate}>
+      <MessageBubble
+        message={
+          { ...message, context_json: JSON.stringify({ project: { editorContext } }) } as never
+        }
+        isOwnMessage
+      />
+    </ProjectContextNavigation.Provider>
+  );
+  fireEvent.click(screen.getByRole('button', { name: /Heading/ }));
+  expect(activate).toHaveBeenCalledWith(reference, editorContext);
+});
+
+it.each(['proposed', 'needs_clarification', 'failed'] as const)(
+  'renders the stored project outcome %s while preserving the message content',
+  outcome => {
+    render(
+      <MessageBubble
+        message={
+          {
+            ...message,
+            content: 'Stored project response',
+            context_json: JSON.stringify({ project: { outcome } }),
+          } as never
+        }
+        isOwnMessage={false}
+      />
+    );
+    expect(screen.getByText('Stored project response')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(
+      translate(`features.projectChat.context.${outcome}`)
+    );
+  }
+);

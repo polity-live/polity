@@ -147,9 +147,17 @@ describe('GitHub workflow contracts', () => {
     expect(ci).not.toContain('\n  coverage-tests:');
     expect(ratchet).toContain('name: Coverage Ratchet');
     expect(ratchet).toContain('if: always()');
-    expect(ratchet).toContain('needs: coverage-shards');
+    expect(ratchet).toContain('needs: [coverage-shards, browser-component-tests, database-tests]');
     expect(ratchet).toContain('COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}');
     expect(ratchet).toContain('if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]');
+    expect(ratchet).toContain('BROWSER_RESULT: ${{ needs.browser-component-tests.result }}');
+    expect(ratchet).toContain('DATABASE_RESULT: ${{ needs.database-tests.result }}');
+    expect(ratchet).toContain(
+      'if [[ "$BROWSER_RESULT" != "success" || "$DATABASE_RESULT" != "success" ]]'
+    );
+    expect(ratchet).toContain('coverage-browser/coverage-final.json');
+    expect(ratchet).toContain('coverage-database/coverage-final.json');
+    expect(ratchet).toContain('node tools/testing/merge-coverage-projects.mjs coverage');
     expect(ratchet).toContain('fetch-depth: 0');
     expect(ratchet).toContain('--merge-reports "$RUNNER_TEMP/coverage-blobs"');
     expect(ratchet).toContain('"--coverage.reportsDirectory=coverage"');

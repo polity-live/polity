@@ -1430,6 +1430,15 @@ export const amendmentServerMutators = {
   }),
 
   updateCityDesign: defineMutator(updateAmendmentCityDesignSchema, async ({ tx, ctx, args }) => {
+    if (args.design_state !== undefined) {
+      const { assertContentRevision } = await import('@/server/project-chat/revisions');
+      await assertContentRevision(
+        tx,
+        'amendment_city_design',
+        args.id,
+        args.expected_content_revision
+      );
+    }
     const cityDesign = await loadCityDesignForMutation(tx, args.id);
     await assertCanMutateAmendment(tx, ctx, cityDesign.amendment_id, 'update');
     await assertCityDesignDirectEditMode(

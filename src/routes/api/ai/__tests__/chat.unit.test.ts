@@ -1,3 +1,8 @@
+vi.mock('@/server/ai-trace-store', () => ({
+  insertAiTrace: vi.fn(),
+  insertAiOperation: vi.fn(),
+  finishAiOperation: vi.fn(),
+}));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -152,6 +157,85 @@ describe('AI chat route setup errors', () => {
     });
   });
 
+  it('passes the explicit personal source and authenticated actor to nested Studio tools', async () => {
+    mockSuccessfulChatSetup();
+    const descriptor = { provider: 'openai', id: 'gpt-4.1-mini', source: 'byok' };
+    mocks.getAiCatalog.mockResolvedValue({
+      credentials: [],
+      models: [{ ...descriptor, supports_tools: true }],
+    });
+    const response = await handleAiChatRequest(chatRequest({ ...validBody, model: descriptor }));
+    await response.text();
+    expect(mocks.resolveLanguageModelForUser).toHaveBeenCalledWith('user-1', descriptor, 'medium');
+    expect(mocks.buildAiTools).toHaveBeenCalledWith('user-1', 'UTC', 'Hello', [], {
+      model: descriptor,
+      reasoningEffort: 'medium',
+    });
+  });
+
+  it('logs the persisted originating message once, rather than the constructed model prompt', async () => {
+    vi.stubEnv('AI_LOG_PROMPTS', 'true');
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      const originMessageId = crypto.randomUUID();
+      mockSuccessfulChatSetup({
+        history: [
+          {
+            id: originMessageId,
+            sender_id: 'user-1',
+            content: 'Original saved message',
+            context_json: '[]',
+            created_at: '1',
+          },
+        ],
+      });
+      const response = await handleAiChatRequest(chatRequest({ ...validBody, originMessageId }));
+      await response.text();
+      const records = info.mock.calls.map(([value]) => JSON.parse(String(value)));
+      expect(records.filter(record => record.event === 'ai.trace.started')).toEqual([
+        expect.objectContaining({
+          traceId: originMessageId,
+          originMessageId,
+          originalMessageText: 'Original saved message',
+        }),
+      ]);
+      expect(records.filter(record => record.originalMessageText !== undefined)).toHaveLength(1);
+    } finally {
+      info.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('does not substitute the app source for the same unavailable personal model', async () => {
+    mockSuccessfulChatSetup();
+    const response = await handleAiChatRequest(
+      chatRequest({ ...validBody, model: { ...validBody.model, source: 'byok' } })
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.resolveLanguageModelForUser).not.toHaveBeenCalled();
+    expect(mocks.streamText).not.toHaveBeenCalled();
+  });
+
+  it('stops after a provider limit without retries or persisting an incomplete answer', async () => {
+    mockSuccessfulChatSetup({
+      fullStream: (async function* () {
+        yield { type: 'text-delta', text: 'partial' };
+        yield { type: 'error', error: { statusCode: 429 } };
+        yield { type: 'text-delta', text: 'must not continue' };
+      })(),
+    });
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    const body = await response.text();
+    expect(body).toContain('ai_provider_rate_limited');
+    expect(body).not.toContain('must not continue');
+    const options = mocks.streamText.mock.calls[0][0];
+    expect(options.maxRetries).toBe(0);
+    expect(options.abortSignal.aborted).toBe(true);
+    await options.onFinish({ text: 'partial', toolResults: [] });
+    expect(mocks.persistAssistantMessage).not.toHaveBeenCalled();
+    expect(mocks.resolveLanguageModelForUser).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a structured 400 response for invalid input', async () => {
     mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
     const response = await handleAiChatRequest(chatRequest({ content: '' }));
@@ -286,10 +370,18 @@ describe('AI chat route setup errors', () => {
     expect(streamOptions.system).toContain('Do not use Markdown');
     expect(mocks.stepCountIs).toHaveBeenCalledWith(5);
 
+    await streamOptions.onStepStart({
+      modelId: 'openrouter/free',
+      provider: 'openrouter',
+      stepNumber: 0,
+      messages: [],
+    });
+
     await expect(
-      streamOptions.tools.set_chat_title.execute({
-        title: 'Kommunale Beteiligung verbessern',
-      })
+      streamOptions.tools.set_chat_title.execute(
+        { title: 'Kommunale Beteiligung verbessern' },
+        { toolCallId: 'title-success', messages: [], abortSignal: new AbortController().signal }
+      )
     ).resolves.toEqual({ updated: true });
     expect(mocks.setAssistantConversationTitle).toHaveBeenCalledWith(
       'user-1',
@@ -430,8 +522,17 @@ describe('AI chat route setup errors', () => {
 
     const response = await handleAiChatRequest(chatRequest(validBody));
 
+    await streamOptions.onStepStart({
+      modelId: 'openrouter/free',
+      provider: 'openrouter',
+      stepNumber: 0,
+      messages: [],
+    });
     await expect(
-      streamOptions.tools.set_chat_title.execute({ title: 'Sinnvoller Titel' })
+      streamOptions.tools.set_chat_title.execute(
+        { title: 'Sinnvoller Titel' },
+        { toolCallId: 'title-failure', messages: [], abortSignal: new AbortController().signal }
+      )
     ).resolves.toEqual({ updated: false });
     expect(await response.text()).toBe(
       '{"type":"text-delta","text":"Antwort trotz Titelfehler"}\n'
@@ -630,13 +731,137 @@ describe('AI chat route setup errors', () => {
 
     await streamOptions.onStepFinish({ toolResults: undefined });
     expect(errorSpy).toHaveBeenCalledWith(
-      'Failed to collect AI tool attachments:',
-      expect.any(Error)
+      expect.stringContaining('Failed to collect AI tool attachments:')
     );
 
     mocks.persistAssistantMessage.mockRejectedValueOnce(new Error('database failed'));
     await streamOptions.onFinish({ text: 'answer', toolResults: [] });
-    expect(errorSpy).toHaveBeenCalledWith('Failed to persist AI chat response:', expect.any(Error));
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to persist AI chat response:')
+    );
     errorSpy.mockRestore();
+  });
+
+  it.each(['missing', 'another-sender'] as const)(
+    'rejects an explicit origin message that is %s instead of attributing another prompt',
+    async state => {
+      const id = crypto.randomUUID();
+      mockSuccessfulChatSetup({
+        history:
+          state === 'missing'
+            ? []
+            : [
+                {
+                  id,
+                  sender_id: 'other',
+                  content: 'Private prompt',
+                  context_json: '{}',
+                  created_at: new Date().toISOString(),
+                },
+              ],
+      });
+      const response = await handleAiChatRequest(
+        chatRequest({ ...validBody, originMessageId: id })
+      );
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: { code: 'validation_failed' } });
+      expect(mocks.streamText).not.toHaveBeenCalled();
+    }
+  );
+
+  it('aborts provider generation when the HTTP consumer cancels its response stream', async () => {
+    let release: () => void = () => undefined;
+    let returned = false;
+    const waiting = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    mockSuccessfulChatSetup({
+      fullStream: (async function* () {
+        yield { type: 'text-delta', text: 'First chunk' };
+        await waiting;
+        returned = true;
+      })(),
+    });
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    const reader = response.body!.getReader();
+    const first = await reader.read();
+    expect(new TextDecoder().decode(first.value)).toContain('First chunk');
+    await reader.cancel();
+    expect(mocks.streamText.mock.calls[0][0].abortSignal.aborted).toBe(true);
+    release();
+    await vi.waitFor(() => expect(returned).toBe(true));
+  });
+
+  it('continues after an ordinary failed tool and never streams its private error payload', async () => {
+    mockSuccessfulChatSetup({
+      fullStream: (async function* () {
+        yield {
+          type: 'tool-error',
+          error: new Error('Private tool error'),
+          toolCallId: 'failed-call',
+          toolName: 'search_groups',
+        };
+        yield { type: 'text-delta', text: 'Try a different query' };
+      })(),
+    });
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    expect(response.status).toBe(200);
+    const stream = await response.text();
+    expect(stream).toContain('Try a different query');
+    expect(stream).not.toContain('Private tool error');
+    expect(stream).not.toContain('"type":"error"');
+  });
+
+  it('aborts a known tool access failure and emits only its safe code', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      mockSuccessfulChatSetup({
+        fullStream: (async function* () {
+          yield {
+            type: 'tool-error',
+            error: Object.assign(new Error('Private invalid identifier'), { code: '22P02' }),
+            toolCallId: 'failed-call',
+            toolName: 'search_groups',
+          };
+          yield { type: 'text-delta', text: 'Must not be emitted' };
+        })(),
+      });
+      const response = await handleAiChatRequest(chatRequest(validBody));
+      const stream = await response.text();
+      expect(stream).toContain('ai_invalid_identifier');
+      expect(stream).not.toContain('Private invalid identifier');
+      expect(stream).not.toContain('Must not be emitted');
+      expect(mocks.streamText.mock.calls[0][0].abortSignal.aborted).toBe(true);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('keeps the original diagnostic trace identity when model setup fails after the trace has started', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const originId = crypto.randomUUID();
+      mockSuccessfulChatSetup({
+        history: [
+          {
+            id: originId,
+            sender_id: 'user-1',
+            content: validBody.content,
+            context_json: '{}',
+            created_at: new Date().toISOString(),
+          },
+        ],
+      });
+      mocks.getAiCatalog.mockRejectedValueOnce(new Error('Private catalogue failure'));
+      const response = await handleAiChatRequest(
+        chatRequest({ ...validBody, originMessageId: originId })
+      );
+      expect(response.status).toBe(500);
+      expect(response.headers.get('X-AI-Trace-Id')).toBe(originId);
+      expect(await response.json()).toMatchObject({ error: { code: 'ai_operation_failed' } });
+      expect(mocks.streamText).not.toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

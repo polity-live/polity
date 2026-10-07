@@ -25,6 +25,7 @@ export const appearanceThemeRevision = table('appearance_theme_revision')
     light_palette: json<MutableJSONValue>(),
     dark_palette: json<MutableJSONValue>(),
     fonts: json<MutableJSONValue>(),
+    text_styles: json<MutableJSONValue>(),
     created_by_id: string().optional(),
     created_at: number(),
     updated_at: number(),

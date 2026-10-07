@@ -4,10 +4,13 @@ import { afterEach, expect, it, vi } from 'vitest';
 const io = vi.hoisted(() => ({
   query: vi.fn(),
   list: vi.fn(args => ({ list: args })),
+  project: vi.fn(args => ({ project: args })),
   exports: vi.fn(args => ({ exports: args })),
 }));
 vi.mock('@rocicorp/zero/react', () => ({ useQuery: io.query }));
-vi.mock('../../queries', () => ({ queries: { studio: { list: io.list, exports: io.exports } } }));
+vi.mock('../../queries', () => ({
+  queries: { studio: { list: io.list, project: io.project, exports: io.exports } },
+}));
 import { useStudioState } from '../useStudioState';
 afterEach(() => {
   cleanup();
@@ -24,12 +27,16 @@ it('does not request private exports before selecting a project, then tracks its
   io.query.mockImplementation((q: any) =>
     q.list
       ? [[{ id: 'project' }], { type: 'complete' }]
-      : [[{ id: 'export', status: 'completed' }], { type: 'complete' }]
+      : q.project
+        ? [{ id: 'project', title: 'Selected project' }, { type: 'complete' }]
+        : [[{ id: 'export', status: 'completed' }], { type: 'complete' }]
   );
   hook.rerender({ id: 'project' });
   expect(io.exports).toHaveBeenCalledWith({ projectId: 'project' });
+  expect(io.project).toHaveBeenCalledWith({ id: 'project' });
   expect(hook.result.current).toMatchObject({
     projects: [{ id: 'project' }],
+    project: { id: 'project', title: 'Selected project' },
     exports: [{ status: 'completed' }],
     isLoading: false,
     exportResult: { type: 'complete' },

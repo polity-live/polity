@@ -6,6 +6,7 @@ import { FormButton, FormCard, PasswordField, TextField } from '@/features/share
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 import { GoogleIcon } from '@/features/shared/ui/icons';
+import { ChatGptLoginButton } from './ChatGptLoginButton';
 
 interface SignUpFormCopy {
   title: string;
@@ -229,6 +230,7 @@ export function SignUpFormView({
         {isRedirecting ? <Spinner className="mr-2" /> : <GoogleIcon className="mr-2 h-5 w-5" />}
         {isRedirecting ? copy.googleLoading : copy.googleButton}
       </FormButton>
+      <ChatGptLoginButton disabled={isLoading} />
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">

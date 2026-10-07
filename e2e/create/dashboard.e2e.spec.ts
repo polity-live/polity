@@ -14,6 +14,7 @@ const createRoutes = [
   '/create/payment',
   '/create/election-candidate',
   '/create/blog-entry',
+  '/create/studio-project',
 ] as const;
 
 test.describe('create/dashboard', () => {

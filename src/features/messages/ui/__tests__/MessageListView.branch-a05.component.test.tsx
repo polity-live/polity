@@ -98,6 +98,27 @@ describe('MessageListView exhaustive branches', () => {
   });
   afterEach(cleanup);
 
+  it('renders chronological annotations on both sides of a virtual message row', () => {
+    const view = render(
+      <MessageListView
+        {...props({
+          rowsEmpty: false,
+          virtualRows: [
+            {
+              type: 'message',
+              key: 'annotated',
+              index: 0,
+              message: { id: 'message', sender: { id: 'viewer' } },
+              timelineBefore: [{ id: 'before', content: <p>Earlier activity</p> }],
+              timelineAfter: [{ id: 'after', content: <p>Later activity</p> }],
+            },
+          ],
+        })}
+      />
+    );
+    expect(view.container.textContent).toContain('Earlier activitymessage-bubbleLater activity');
+  });
+
   it('covers absent user and every streaming activity/error presentation', () => {
     const rendered = render(
       <StreamingBubble
