@@ -26023,6 +26023,226 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
           "caseId": "changes the %s property without moving other objects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows compact Elements rows with accessible actions and a native drag source"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "copies canvas selection onto the Elements sidebar button and preserves normal moves elsewhere"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "copies a canvas node dropped into the open Elements menu"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "inserts a dropped library element at frame-local coordinates on a shifted canvas frame"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "opens collaborator invitations only for the owner of a personal Studio project"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "renders one icon toolbar and a separate compact project status row"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "dispatches canvas tools and zoom through the typed canvas handle"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps line tools in their menu and inserts charts and sized tables from toolbar buttons"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats selected text through the %s menu"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "opens automation-targeted menus and returns focus on Escape"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "anchors secondary-navigation panels to the right sidebar and keeps only one open"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats selected text in the inline inspector without a second properties menu"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "opens and edits properties for the canonical %s element"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "embeds shared references in alignment and distribution menus and disables unavailable choices"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shares the %s reference from alignment to distribution"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shares the distribution reference with alignment and resets it on deselection"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "searches and operates the canonical frame tree through the Layers popover"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "renames a %s through Layers without modifying its content or geometry"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "moves layers into frames and reorders root frames with drag and drop"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "uploads media from its toolbar button and keeps a failed image edit open"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "searches frames, marks the selected frame, and exports only checked frames"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows preparation immediately and then animates queued and running progress"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "downloads a newly completed export once and keeps manual download available"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows the API reason in the export dropdown when queueing fails"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats text from the main toolbar while preserving selection and unrelated objects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "dispatches history, inserts a chart and toggles guides from the main toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the phase explanation and shared procedure tools for %s projects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "routes keyboard copy, paste and cut through the canvas exactly once"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "persists frame geometry and fill in one V3 transaction"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "restores the only cut frame and its deliverable from the project clipboard"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "offers crop for one unlocked image or video and commits geometry in one transaction"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "exposes contextual text and image actions through the canvas toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "uses contextual group alignment and distribution with the shared reference"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows project loading before a document arrives and activates the editor after its canonical state is available"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "publishes the current workspace title and freezes the AI selection until its save is confirmed"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "consumes a successful route focus without requiring a pending bridge request"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "consumes route focus safely when the canvas is %s"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "rejects a bridge focus request when the canvas cannot find its target"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores completion of an older canvas focus after a newer request has completed"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "settles a pending bridge focus on unmount and ignores subsequent canvas completion"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "generates encoded project destinations in the %s overview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "focuses repeatedly through the bridge and waits for a loaded workspace without remounting chat"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the current workspace and draft when saving before navigation fails"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "consumes route focus only after canvas availability and reports a missing target"
         }
       ],
       "suggestedTestRefs": [
@@ -47621,11 +47841,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47657,11 +47877,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47711,11 +47931,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47757,11 +47977,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47783,6 +48003,26 @@
             "coveredStatements": 84,
             "totalStatements": 179
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects actual project elements through native mentions, shows their frame and excludes manually selected duplicates"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "offers frame and element mention types and permits explicit frame selection even when the frame is automatically contextual"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "identifies text-only models through the real model selector without implying tool support"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "retains the mounted draft when session storage is unavailable"
         }
       ],
       "suggestedTestRefs": [
@@ -47793,11 +48033,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47819,6 +48059,56 @@
             "coveredStatements": 63,
             "totalStatements": 91
           }
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects actual project elements through native mentions, shows their frame and excludes manually selected duplicates"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "offers frame and element mention types and permits explicit frame selection even when the frame is automatically contextual"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "identifies text-only models through the real model selector without implying tool support"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "retains the mounted draft when session storage is unavailable"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "renders compact project context and shared attachment disclosures while keeping project tools always active"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "cancels a running response, prevents cancellation while settling and returns to sending after completion"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "handles every prompt key path in priority order"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "formats all context-window ranges and renders selected and placeholder model states"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "renders uploading, sending, always-active, selected and unselected tool and skill states"
+        },
+        {
+          "file": "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
+          "project": "component",
+          "caseId": "executes skill form field callbacks and both slug-placeholder branches"
         }
       ],
       "suggestedTestRefs": [
@@ -47829,11 +48119,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47865,11 +48155,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47901,11 +48191,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47937,11 +48227,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -47973,11 +48263,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48009,11 +48299,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48045,11 +48335,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48081,11 +48371,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48117,11 +48407,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48153,11 +48443,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48189,11 +48479,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48225,11 +48515,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48261,11 +48551,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48297,11 +48587,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48333,11 +48623,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48369,11 +48659,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48405,11 +48695,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48441,11 +48731,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48477,11 +48767,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48513,11 +48803,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48550,10 +48840,10 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationList.component.test.tsx"
       ]
     },
     {
@@ -48585,11 +48875,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -48654,6 +48944,16 @@
     },
     {
       "path": "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+      "domain": "features:messages",
+      "owner": "polity/features:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
       "domain": "features:messages",
       "owner": "polity/features:messages",
       "kind": "test-infrastructure",
@@ -48941,11 +49241,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -49012,11 +49312,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ]
     },
     {
@@ -103649,6 +103949,41 @@
           "file": "src/server/__tests__/ai-trace.database-integration.test.ts",
           "project": "database-integration",
           "caseId": "keeps diagnostics outside replication/direct client access and purges deleted message payloads"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects anonymous requests before opening a diagnostic transaction"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rejects invalid or ambiguous diagnostic selector %s"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "rechecks current %s access before exposing persisted diagnostics"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "requires every resource referenced by a diagnostic to remain accessible"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "uses the registered HTTP handler and returns empty diagnostics for another actor"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "returns a safe noncacheable error when diagnostic database access fails"
+        },
+        {
+          "file": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+          "project": "database-integration",
+          "caseId": "withholds a conversation diagnostic if its conversation is deleted between reading traces and checking access"
         }
       ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
@@ -105402,6 +105737,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/__tests__/ai-traces-access.database-integration.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/__tests__/ai-update-tools.contract.unit.test.ts",
       "domain": "server:__tests__",
       "owner": "polity/server:__tests__",
@@ -106364,7 +106709,8 @@
       "suggestedTestRefs": [
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/server/__tests__/ai-trace.database-integration.test.ts",
-        "src/server/__tests__/ai-trace.unit.test.ts"
+        "src/server/__tests__/ai-trace.unit.test.ts",
+        "src/server/__tests__/ai-traces-access.database-integration.test.ts"
       ]
     },
     {
@@ -108216,10 +108562,10 @@
         "src/features/messages/logic/__tests__/shareContextAttachment.unit.test.ts",
         "src/features/messages/ui/__tests__/AiContextCards.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AiContextCards.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/project-chat/hooks/__tests__/composer-context-boundaries.component.test.tsx",
         "src/features/project-chat/hooks/__tests__/composer-context.component.test.tsx",
-        "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/context-link.branch-a01.component.test.tsx"
+        "src/features/project-chat/ui/__tests__/ProjectContextChips.component.test.tsx"
       ]
     },
     {

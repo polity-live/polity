@@ -192,9 +192,7 @@ function WorkspaceContent({
                 kind: 'workspace',
                 id: workspaceId ?? 'canonical',
                 workspaceId: workspaceId ?? null,
-                label: workspaceId
-                  ? c.v3Value.title || workspaceId
-                  : t('features.projectChat.context.canonical'),
+                label: workspaceId ? c.v3Value.title : t('features.projectChat.context.canonical'),
                 origin: 'automatic',
               },
               ...c.v3Value.nodes
@@ -202,7 +200,7 @@ function WorkspaceContent({
                 .map(node => ({
                   kind: node.type === 'frame' ? ('frame' as const) : ('element' as const),
                   id: node.id,
-                  label: node.name || node.type,
+                  label: node.name,
                   origin: 'automatic' as const,
                   workspaceId: workspaceId ?? null,
                   parentId: node.parentFrameId ?? undefined,
@@ -213,7 +211,7 @@ function WorkspaceContent({
     options: c.v3Value?.nodes.map(node => ({
       kind: node.type === 'frame' ? ('frame' as const) : ('element' as const),
       id: node.id,
-      label: node.name || node.type,
+      label: node.name,
       origin: 'manual' as const,
       workspaceId: workspaceId ?? null,
       parentId: node.parentFrameId ?? undefined,

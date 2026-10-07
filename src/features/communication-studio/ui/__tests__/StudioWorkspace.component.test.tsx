@@ -1,5 +1,17 @@
-import { io, ydoc, notifyAll, value, setup, show, setDocument } from './StudioWorkspace.fixture';
-import { focusProjectEditor } from '@/features/project-chat/hooks/editor-bridge';
+import {
+  io,
+  ydoc,
+  notifyAll,
+  value,
+  setup,
+  show,
+  setDocument,
+  useCanonicalDocument,
+} from './StudioWorkspace.fixture';
+import {
+  focusProjectEditor,
+  flushProjectEditor,
+} from '@/features/project-chat/hooks/editor-bridge';
 /* @vitest-environment jsdom */
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -1474,6 +1486,187 @@ it('uses contextual group alignment and distribution with the shared reference',
 });
 
 const focusScope = { kind: 'studio' as const, projectId: 'project' };
+it('shows project loading before a document arrives and activates the editor after its canonical state is available', async () => {
+  const valueDescriptor = Object.getOwnPropertyDescriptor(io.editor, 'value')!;
+  const canonicalDescriptor = Object.getOwnPropertyDescriptor(io.editor, 'v3Value')!;
+  Object.defineProperty(io.editor, 'value', { get: () => null });
+  Object.defineProperty(io.editor, 'v3Value', { get: () => null });
+  io.loading = true;
+  await show();
+  expect(screen.getByRole('status').textContent).toBe('loading');
+  expect(screen.queryByTestId('canvas')).toBeNull();
+  Object.defineProperty(io.editor, 'value', valueDescriptor);
+  Object.defineProperty(io.editor, 'v3Value', canonicalDescriptor);
+  io.loading = false;
+  act(notifyAll);
+  await screen.findByTestId('canvas');
+});
+
+it('publishes the current workspace title and freezes the AI selection until its save is confirmed', async () => {
+  useCanonicalDocument();
+  let confirm!: (revision: number) => void;
+  io.editor.collaboration.commit = vi.fn(
+    () =>
+      new Promise<number>(resolve => {
+        confirm = resolve;
+      })
+  );
+  await show({ projectId: 'project', workspaceId: 'draft', open: vi.fn() });
+  expect(io.projectChat.mock.lastCall?.[0].context.references).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'workspace', label: value().title, id: 'draft' }),
+    ])
+  );
+  let pending!: Promise<unknown>;
+  await act(async () => {
+    pending = flushProjectEditor(focusScope, { surface: 'studio' });
+  });
+  const selected = io.canvasProps.document.nodes.find((node: any) => node.type === 'richText');
+  act(() => io.canvasProps.selectExact([selected.id]));
+  expect(io.projectChat.mock.lastCall?.[0].context.elementIds).toEqual([selected.id]);
+  await act(async () => {
+    confirm(77);
+    await pending;
+  });
+  expect(await pending).toMatchObject({
+    surface: 'studio',
+    proposalId: 'draft',
+    contentRevision: 77,
+    elementIds: [],
+  });
+});
+
+it('consumes a successful route focus without requiring a pending bridge request', async () => {
+  const handled = vi.fn();
+  await show({
+    projectId: 'project',
+    open: vi.fn(),
+    focusNodeId: 'available',
+    onFocusHandled: handled,
+  });
+  await waitFor(() => expect(handled).toHaveBeenCalledOnce());
+  expect(io.canvasExecute).toHaveBeenCalledWith({ type: 'focus', nodeId: 'available' });
+});
+it.each(['disabled', 'failed', 'empty', 'legacy'] as const)(
+  'consumes route focus safely when the canvas is %s',
+  async state => {
+    const handled = vi.fn();
+    if (state === 'disabled') io.editor.canvasEnabled = false;
+    if (state === 'failed') {
+      Object.defineProperty(io.editor, 'value', { get: () => null });
+      io.editor.error = 'Project load failed';
+    }
+    if (state === 'empty') ydoc.pages = [];
+    if (state === 'legacy') Object.defineProperty(io.editor, 'v3Value', { get: () => null });
+    await show({
+      projectId: 'project',
+      groupId: 'group',
+      open: vi.fn(),
+      focusNodeId: 'missing',
+      onFocusHandled: handled,
+    });
+    await waitFor(() => expect(handled).toHaveBeenCalledOnce());
+    expect(io.canvasExecute).not.toHaveBeenCalledWith({ type: 'focus', nodeId: 'missing' });
+    if (state === 'disabled')
+      expect(screen.getByRole('alert').textContent).toBe('canvasPreviewRequired');
+    if (state === 'failed')
+      expect(screen.getByRole('alert').textContent).toBe('Project load failed');
+  }
+);
+
+it('rejects a bridge focus request when the canvas cannot find its target', async () => {
+  await show();
+  const failure = new Error('Target was deleted');
+  io.canvasExecute.mockRejectedValueOnce(failure);
+  let assertion!: Promise<unknown>;
+  await act(async () => {
+    assertion = expect(
+      focusProjectEditor(focusScope, { nodeId: 'deleted', workspaceId: null })
+    ).rejects.toBe(failure);
+  });
+  await assertion;
+  expect(screen.getByText('Shared project chat')).toBeTruthy();
+});
+
+it('ignores completion of an older canvas focus after a newer request has completed', async () => {
+  const handled = vi.fn();
+  await show({ projectId: 'project', open: vi.fn(), onFocusHandled: handled });
+  let finishEarlier!: () => void;
+  io.canvasExecute.mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        finishEarlier = resolve;
+      })
+  );
+  let earlier!: Promise<boolean>;
+  await act(async () => {
+    earlier = focusProjectEditor(focusScope, { nodeId: 'earlier', workspaceId: null });
+  });
+  let latest!: Promise<boolean>;
+  await act(async () => {
+    latest = focusProjectEditor(focusScope, { nodeId: 'latest', workspaceId: null });
+  });
+  expect(await earlier).toBe(true);
+  expect(await latest).toBe(true);
+  expect(handled).toHaveBeenCalledOnce();
+  await act(async () => {
+    finishEarlier();
+    await Promise.resolve();
+  });
+  expect(handled).toHaveBeenCalledOnce();
+  expect(
+    io.canvasExecute.mock.calls
+      .filter(([command]) => command.type === 'focus')
+      .map(([command]) => command.nodeId)
+  ).toEqual(['earlier', 'latest']);
+});
+
+it('settles a pending bridge focus on unmount and ignores subsequent canvas completion', async () => {
+  const handled = vi.fn();
+  const mounted = await show({ projectId: 'project', open: vi.fn(), onFocusHandled: handled });
+  let finish!: () => void;
+  io.canvasExecute.mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        finish = resolve;
+      })
+  );
+  let pending!: Promise<boolean>;
+  await act(async () => {
+    pending = focusProjectEditor(focusScope, { nodeId: 'pending', workspaceId: null });
+  });
+  mounted.unmount();
+  expect(await pending).toBe(true);
+  await act(async () => {
+    finish();
+    await Promise.resolve();
+  });
+  expect(handled).not.toHaveBeenCalled();
+});
+
+it.each([null, 'group with spaces'])(
+  'generates encoded project destinations in the %s overview',
+  async groupId => {
+    const projectId = 'project with spaces';
+    io.projects = [
+      {
+        id: projectId,
+        title: 'Encoded destination',
+        kind: 'single',
+        updated_at: 0,
+        owner_id: 'author',
+        group_id: groupId,
+        visibility: 'private',
+      },
+    ];
+    await show({ groupId, open: vi.fn() });
+    const destination = screen.getByRole('link', { name: /Encoded destination/ });
+    expect(destination.getAttribute('href')).toBe(
+      `${groupId ? `/group/${encodeURIComponent(groupId)}` : ''}/studio/${encodeURIComponent(projectId)}`
+    );
+  }
+);
+
 it('focuses repeatedly through the bridge and waits for a loaded workspace without remounting chat', async () => {
   await show();
   const nodeId = io.canvasProps.document.nodes.find((node: any) => node.type === 'richText').id;

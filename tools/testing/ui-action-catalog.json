@@ -48296,11 +48296,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48334,11 +48334,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48372,11 +48372,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48411,11 +48411,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48450,11 +48450,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48496,11 +48496,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48535,11 +48535,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48567,11 +48567,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -48621,11 +48621,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48660,11 +48660,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48699,11 +48699,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48738,11 +48738,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48776,11 +48776,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48814,11 +48814,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48853,11 +48853,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48892,11 +48892,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -48946,11 +48946,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -48984,11 +48984,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49023,11 +49023,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49062,11 +49062,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -49115,11 +49115,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49154,11 +49154,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49192,11 +49192,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49231,11 +49231,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49270,11 +49270,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49309,11 +49309,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49348,11 +49348,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49387,11 +49387,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49426,11 +49426,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49465,11 +49465,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49504,11 +49504,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49543,11 +49543,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49582,11 +49582,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49621,11 +49621,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49660,11 +49660,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49699,11 +49699,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49731,11 +49731,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -49784,11 +49784,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49822,11 +49822,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49860,11 +49860,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49899,11 +49899,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49938,11 +49938,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -49976,11 +49976,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50014,11 +50014,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50053,11 +50053,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50092,11 +50092,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50131,11 +50131,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50169,11 +50169,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50208,11 +50208,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50247,11 +50247,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50286,11 +50286,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50325,11 +50325,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50364,11 +50364,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50403,11 +50403,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50447,11 +50447,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50485,11 +50485,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50523,11 +50523,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50561,11 +50561,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50599,11 +50599,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50637,11 +50637,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50676,11 +50676,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50714,11 +50714,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50752,11 +50752,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50791,11 +50791,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50830,11 +50830,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50869,11 +50869,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50907,11 +50907,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50945,11 +50945,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -50984,11 +50984,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -51023,11 +51023,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -51062,11 +51062,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -51101,11 +51101,11 @@
         "src/features/messages/ui/__tests__/AiTraceDetails.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx",
+        "src/features/messages/ui/__tests__/AssistantMessageInput.project-context.browser-component.test.tsx",
         "src/features/messages/ui/__tests__/AssistantMessageInputView.branch-a05.component.test.tsx",
         "src/features/messages/ui/__tests__/ComposerShape.component.test.tsx",
         "src/features/messages/ui/__tests__/ConversationList.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx",
-        "src/features/messages/ui/__tests__/ConversationRequestView.component.test.tsx"
+        "src/features/messages/ui/__tests__/ConversationListView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

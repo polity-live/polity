@@ -9,7 +9,16 @@ import {
   type AssistantMessageInputViewProps,
 } from '../AssistantMessageInputView';
 
-afterEach(cleanup);
+const scrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(
+  Element.prototype,
+  'scrollIntoView'
+);
+afterEach(() => {
+  cleanup();
+  if (scrollIntoViewDescriptor)
+    Object.defineProperty(Element.prototype, 'scrollIntoView', scrollIntoViewDescriptor);
+  else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+});
 
 function assistantChat(overrides: Record<string, unknown> = {}) {
   return {
@@ -101,6 +110,90 @@ function prompt() {
 }
 
 describe('AssistantMessageInputView remaining branches', () => {
+  it('renders compact project context and shared attachment disclosures while keeping project tools always active', () => {
+    // jsdom has no scrolling implementation; cmdk invokes this browser IO when opening its list.
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    const chat = assistantChat({
+      projectContextReferences: [
+        {
+          kind: 'studio_project',
+          id: crypto.randomUUID(),
+          label: 'Current project',
+          origin: 'automatic',
+        },
+      ],
+      removeProjectContext: vi.fn(),
+      selectedAttachments: [
+        { entityType: 'document', entityId: crypto.randomUUID(), title: 'Project document' },
+      ],
+      sharesAttachmentsWithProject: true,
+    });
+    const props = viewProps({
+      assistantChat: chat,
+      compact: true,
+      createSkillOpen: false,
+      assistantSettingsOpen: false,
+      projectTools: [{ name: 'studio_inspect', label: 'Inspect project' }],
+    });
+    const view = render(<AssistantMessageInputView {...props} />);
+    expect(screen.getByText(/Current project/)).toBeTruthy();
+    expect(screen.getByText(/features.projectChat.shareWithProject/)).toBeTruthy();
+    expect(
+      document
+        .querySelector('[data-action-id="messages.assistant.settings.popover.open"]')
+        ?.classList.contains('hidden')
+    ).toBe(true);
+    view.rerender(<AssistantMessageInputView {...props} compact={false} />);
+    fireEvent.click(
+      document.querySelector('[data-action-id="messages.assistant.settings.popover.open"]')!
+    );
+    expect(screen.getByText('Inspect project')).toBeTruthy();
+    expect(screen.getByText('features.messages.ai.alwaysActive')).toBeTruthy();
+    expect(chat.setToolSelection).not.toHaveBeenCalled();
+  });
+
+  it('cancels a running response, prevents cancellation while settling and returns to sending after completion', () => {
+    const cancel = vi.fn().mockResolvedValue(undefined);
+    const chat = assistantChat({
+      isSending: true,
+      canCancel: true,
+      cancelAssistantMessage: cancel,
+    });
+    const props = viewProps({
+      assistantChat: chat,
+      messageText: 'Next request',
+      createSkillOpen: false,
+      assistantSettingsOpen: false,
+    });
+    const view = render(<AssistantMessageInputView {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'features.projectChat.cancel' }));
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(props.handleSubmit).not.toHaveBeenCalled();
+    view.rerender(
+      <AssistantMessageInputView {...props} assistantChat={{ ...chat, canCancel: false }} />
+    );
+    const settling = screen.getByRole('button', { name: 'features.projectChat.cancel' });
+    expect((settling as HTMLButtonElement).disabled).toBe(true);
+    expect(settling.querySelector('svg')?.classList.contains('animate-spin')).toBe(true);
+    fireEvent.click(settling);
+    expect(cancel).toHaveBeenCalledOnce();
+    view.rerender(
+      <AssistantMessageInputView
+        {...props}
+        assistantChat={{
+          ...chat,
+          isSending: false,
+          selectedModel: { provider: 'p', id: 'm', name: 'Model' },
+        }}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'common.send' }));
+    expect(props.handleSubmit).toHaveBeenCalledOnce();
+  });
+
   it('handles every prompt key path in priority order', () => {
     const setTextareaScrollVersion = vi.fn((update: (value: number) => number) => update(1));
     const base = viewProps({
