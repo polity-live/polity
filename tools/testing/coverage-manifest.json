@@ -22922,6 +22922,31 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects alignment references and applies all six directions through native menus with retained toolbar focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "distributes actual selected nodes on both axes with native menu focus and disables insufficient selections"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reorders and groups canonical nodes through native menus while preserving selection and focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "applies both native text list actions and submits only an HTTP link from its focused popover"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects themes and both appearance modes with native focus then applies a text style and disables all theme editing after permission revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -24138,6 +24163,31 @@
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "inserts keyboard-selected table dimensions into the Studio document and returns focus to its toolbar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects alignment references and applies all six directions through native menus with retained toolbar focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "distributes actual selected nodes on both axes with native menu focus and disables insufficient selections"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "reorders and groups canonical nodes through native menus while preserving selection and focus"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "applies both native text list actions and submits only an HTTP link from its focused popover"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects themes and both appearance modes with native focus then applies a text style and disables all theme editing after permission revocation"
         }
       ],
       "suggestedTestRefs": [

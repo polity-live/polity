@@ -359,6 +359,7 @@ it.each([
       element => element.getAttribute('aria-label') === itemName
     )!;
     expect(item).toBeTruthy();
+    expect(item.getAttribute('data-action-id')).toBe('communication-studio.toolbar.item.activate');
     item.focus();
     expect(document.activeElement).toBe(item);
     await userEvent.keyboard('{Enter}');

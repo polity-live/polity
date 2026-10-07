@@ -74,12 +74,14 @@ export function StudioToolbarMenu({
 }
 
 export function StudioMenuItem({
+  'data-action-id': actionId,
   label,
   icon,
   iconOnly = false,
   disabled,
   onSelect,
 }: {
+  'data-action-id'?: string;
   label: string;
   icon: ReactNode;
   iconOnly?: boolean;
@@ -88,6 +90,7 @@ export function StudioMenuItem({
 }) {
   return (
     <DropdownMenuItem
+      data-action-id={actionId ?? 'communication-studio.toolbar.item.activate'}
       data-action-kind="interaction"
       aria-label={label}
       title={iconOnly ? label : undefined}

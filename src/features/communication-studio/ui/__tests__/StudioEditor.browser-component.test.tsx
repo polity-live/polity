@@ -7,7 +7,7 @@ import {
   useCanonicalDocument,
   setup,
 } from './StudioWorkspace.fixture';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { element } from '../../logic/document';
@@ -55,7 +55,11 @@ async function selectOption(control: HTMLSelectElement, value: string) {
 }
 
 async function menu(name: string) {
-  const trigger = screen.getByRole('button', { name });
+  const triggers = screen
+    .getAllByRole('button', { name })
+    .filter(button => button.getAttribute('aria-haspopup') === 'menu');
+  expect(triggers).toHaveLength(1);
+  const trigger = triggers[0];
   await activate(trigger);
   return { trigger, menu: within(await screen.findByRole('menu')) };
 }
@@ -473,4 +477,244 @@ it('inserts keyboard-selected table dimensions into the Studio document and retu
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'table' }))
   );
+});
+
+it('selects alignment references and applies all six directions through native menus with retained toolbar focus', async () => {
+  await mount();
+  const empty = await menu('elementAlignment');
+  for (const name of ['frame', 'view'])
+    expect(empty.menu.getByRole('menuitemradio', { name }).hasAttribute('data-disabled')).toBe(
+      true
+    );
+  expect(empty.menu.getByRole('menuitem', { name: 'left' }).hasAttribute('data-disabled')).toBe(
+    true
+  );
+  await userEvent.keyboard('{Escape}');
+  const id = await selectText();
+  for (const name of ['frame', 'view', 'selection', 'view']) {
+    const opened = await menu('elementAlignment');
+    const chosen = opened.menu.getByRole('menuitemradio', { name });
+    expect(chosen.getAttribute('data-action-id')).toBe(
+      'communication-studio.arrangement.reference.select'
+    );
+    expect(chosen.getAttribute('aria-checked')).toBe('false');
+    await activate(chosen);
+    await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+    const verify = await menu('elementAlignment');
+    expect(verify.menu.getByRole('menuitemradio', { name }).getAttribute('aria-checked')).toBe(
+      'true'
+    );
+    await userEvent.keyboard('{Escape}');
+  }
+  for (const direction of ['left', 'center', 'right', 'top', 'middle', 'bottom']) {
+    const opened = await menu('elementAlignment');
+    const command = opened.menu.getByRole('menuitem', { name: direction });
+    expect(command.getAttribute('data-action-id')).toBe(
+      'communication-studio.selection.align.apply'
+    );
+    await activate(command);
+    const node = current(id);
+    if (direction === 'left') expect(node.x).toBeCloseTo(100);
+    if (direction === 'center') expect(node.x + node.width / 2).toBeCloseTo(500);
+    if (direction === 'right') expect(node.x + node.width).toBeCloseTo(900);
+    if (direction === 'top') expect(node.y).toBeCloseTo(200);
+    if (direction === 'middle') expect(node.y + node.height / 2).toBeCloseTo(600);
+    if (direction === 'bottom') expect(node.y + node.height).toBeCloseTo(1000);
+    await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  }
+});
+
+it('distributes actual selected nodes on both axes with native menu focus and disables insufficient selections', async () => {
+  ydoc.pages[0].elements = [
+    element('rect', { x: 20, y: 30, width: 50, height: 50 }),
+    element('rect', { x: 150, y: 140, width: 50, height: 50 }),
+    element('rect', { x: 500, y: 500, width: 50, height: 50 }),
+  ];
+  await mount();
+  let opened = await menu('distribute');
+  for (const axis of ['horizontal', 'vertical'])
+    expect(
+      opened.menu
+        .getByRole('menuitem', { name: `distribute ${axis}` })
+        .hasAttribute('data-disabled')
+    ).toBe(true);
+  await userEvent.keyboard('{Escape}');
+  await userEvent.click(screen.getByRole('button', { name: 'Select all' }));
+  for (const axis of ['horizontal', 'vertical'] as const) {
+    opened = await menu('distribute');
+    const item = opened.menu.getByRole('menuitem', { name: `distribute ${axis}` });
+    expect(item.getAttribute('data-action-id')).toBe(
+      `communication-studio.selection.distribute.${axis}`
+    );
+    await activate(item);
+    const positions = value()
+      .pages[0].elements.map(node => (axis === 'horizontal' ? node.x : node.y))
+      .sort((a, b) => a - b);
+    expect(positions[1] - positions[0]).toBeCloseTo(positions[2] - positions[1]);
+    await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  }
+});
+
+it('reorders and groups canonical nodes through native menus while preserving selection and focus', async () => {
+  await mount();
+  let opened = await menu('order');
+  for (const name of ['front', 'back', 'forward', 'backward'])
+    expect(opened.menu.getByRole('menuitem', { name }).hasAttribute('data-disabled')).toBe(true);
+  await userEvent.keyboard('{Escape}');
+  opened = await menu('groupElements');
+  for (const name of ['groupElements', 'ungroup'])
+    expect(opened.menu.getByRole('menuitem', { name }).hasAttribute('data-disabled')).toBe(true);
+  await userEvent.keyboard('{Escape}');
+  const id = await selectText();
+  const siblings = () =>
+    io.editor.v3Value.nodes
+      .filter(
+        (node: any) =>
+          node.parentFrameId ===
+          io.editor.v3Value.nodes.find((item: any) => item.id === id).parentFrameId
+      )
+      .sort((a: any, b: any) => a.zIndex - b.zIndex);
+  for (const [action, expected] of [
+    ['back', 0],
+    ['forward', 1],
+    ['backward', 0],
+    ['front', siblings().length - 1],
+  ] as const) {
+    opened = await menu('order');
+    const item = opened.menu.getByRole('menuitem', { name: action });
+    expect(item.getAttribute('data-action-id')).toBe('communication-studio.selection.order.apply');
+    await activate(item);
+    expect(siblings().findIndex((node: any) => node.id === id)).toBe(expected);
+    await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  }
+  await userEvent.click(screen.getByRole('button', { name: 'Select all' }));
+  const selected = [...io.canvasProps.selected];
+  opened = await menu('groupElements');
+  const group = opened.menu.getByRole('menuitem', { name: 'groupElements' });
+  expect(group.getAttribute('data-action-id')).toBe('communication-studio.selection.group.toggle');
+  await activate(group);
+  const members = () => io.editor.v3Value.nodes.filter((node: any) => selected.includes(node.id));
+  expect(members().every((node: any) => node.groupIds.length === 1)).toBe(true);
+  expect(new Set(members().map((node: any) => node.groupIds[0])).size).toBe(1);
+  await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  opened = await menu('groupElements');
+  await activate(opened.menu.getByRole('menuitem', { name: 'ungroup' }));
+  expect(members().every((node: any) => node.groupIds.length === 0)).toBe(true);
+  expect(io.canvasProps.selected).toEqual(selected);
+  await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+});
+
+it('applies both native text list actions and submits only an HTTP link from its focused popover', async () => {
+  await mount();
+  const id = await selectText();
+  for (const [name, list, action] of [
+    ['bulletList', 'bullet', 'bullet'],
+    ['numberedList', 'number', 'numbered'],
+  ] as const) {
+    const opened = await menu('text');
+    const item = opened.menu.getByRole('menuitem', { name });
+    expect(item.getAttribute('data-action-id')).toBe(`communication-studio.text.list.${action}`);
+    await activate(item);
+    expect(current(id).richText.every(paragraph => paragraph.list === list)).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(opened.trigger));
+  }
+  const opened = await menu('text');
+  const link = opened.menu.getByRole('menuitem', { name: 'link' });
+  expect(link.getAttribute('data-action-id')).toBe('communication-studio.text.link.open');
+  await activate(link);
+  const input = await screen.findByRole('textbox', { name: 'link' });
+  expect(input.getAttribute('data-action-id')).toBe('communication-studio.text.link.edit');
+  await userEvent.fill(input, 'javascript:alert(1)');
+  expect(document.activeElement).toBe(input);
+  await userEvent.keyboard('{Enter}');
+  expect(screen.getByRole('textbox', { name: 'link' })).toBe(input);
+  expect(current(id).richText.every(paragraph => paragraph.children.every(run => !run.url))).toBe(
+    true
+  );
+  await userEvent.fill(input, 'https://example.org/native-studio');
+  expect(document.activeElement).toBe(input);
+  await userEvent.keyboard('{Enter}');
+  expect(screen.queryByRole('textbox', { name: 'link' })).toBeNull();
+  expect(
+    current(id).richText.every(paragraph =>
+      paragraph.children.every(run => run.url === 'https://example.org/native-studio')
+    )
+  ).toBe(true);
+});
+
+it('selects themes and both appearance modes with native focus then applies a text style and disables all theme editing after permission revocation', async () => {
+  await mount();
+  const id = await selectText();
+  render(
+    <nav
+      data-navigation-type="secondary"
+      style={{ position: 'fixed', right: 0, top: 50, width: 48, height: 500 }}
+    >
+      <button
+        data-navigation-item-id="theme"
+        onClick={() =>
+          openStudioPanel({
+            panelKey: 'theme',
+            origin: 'secondary-navigation',
+            navigationItemId: 'theme',
+          })
+        }
+      >
+        Open theme panel
+      </button>
+    </nav>
+  );
+  await activate(screen.getByRole('button', { name: 'Open theme panel' }));
+  const select = (await screen.findByRole('combobox', { name: 'theme' })) as HTMLSelectElement;
+  expect(select.getAttribute('data-action-id')).toBe(
+    'communication-studio.theme.definition.select'
+  );
+  const first = select.options[0].value;
+  const last = select.options[select.options.length - 1].value;
+  await selectOption(select, last);
+  expect(io.editor.v3Value.theme.themeId).toBe(last);
+  await selectOption(select, first);
+  expect(io.editor.v3Value.theme.themeId).toBe(first);
+  for (const mode of ['dark', 'light'] as const) {
+    const button = screen.getByRole('button', { name: mode });
+    expect(button.getAttribute('data-action-id')).toBe(
+      'communication-studio.theme.appearance-mode.select'
+    );
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    await activate(button);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(io.editor.v3Value.theme.mode).toBe(mode);
+    expect(document.activeElement).toBe(button);
+  }
+  const style = io.editor.v3Value.theme.textStyles[0];
+  const styleButton = screen.getByRole('button', {
+    name: new RegExp(`^${style.name}\\s*${style.size}px$`),
+  }) as HTMLButtonElement;
+  expect(styleButton.getAttribute('data-action-id')).toBe(
+    'communication-studio.theme.text-style.apply'
+  );
+  expect(styleButton.disabled).toBe(false);
+  await activate(styleButton);
+  const node = io.editor.v3Value.nodes.find((node: any) => node.id === id);
+  expect(node.typography.textStyleId).toBe(style.id);
+  expect(node.typography.fontSize).toBe(style.size);
+  expect(
+    node.content.every((paragraph: any) =>
+      paragraph.children.every(
+        (run: any) => run.textStyleId === style.id && run.fontSize === style.size
+      )
+    )
+  ).toBe(true);
+  expect(document.activeElement).toBe(styleButton);
+  const before = structuredClone(io.editor.v3Value);
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  expect(select.disabled).toBe(true);
+  for (const mode of ['dark', 'light'])
+    expect((screen.getByRole('button', { name: mode }) as HTMLButtonElement).disabled).toBe(true);
+  expect(styleButton.disabled).toBe(true);
+  await userEvent.keyboard(' ');
+  expect(io.editor.v3Value).toEqual(before);
 });

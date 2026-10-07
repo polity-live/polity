@@ -697,6 +697,8 @@ function StudioEditorReady({
       >
         {(['selection', 'frame', 'view'] as const).map(value => (
           <DropdownMenuRadioItem
+            data-action-id="communication-studio.arrangement.reference.select"
+            data-action-kind="selection"
             key={value}
             value={value}
             disabled={
@@ -1940,6 +1942,7 @@ function StudioEditorReady({
                 ] as const
               ).map(([direction, Icon]) => (
                 <StudioMenuItem
+                  data-action-id="communication-studio.selection.align.apply"
                   data-action-kind="interaction"
                   key={direction}
                   label={tr(direction)}
@@ -1957,6 +1960,7 @@ function StudioEditorReady({
             {referenceOptions()}
             <DropdownMenuLabel>{tr('distribute')}</DropdownMenuLabel>
             <StudioMenuItem
+              data-action-id="communication-studio.selection.distribute.horizontal"
               data-action-kind="interaction"
               label={`${tr('distribute')} ${tr('horizontal')}`}
               icon={<MoveHorizontal />}
@@ -1969,6 +1973,7 @@ function StudioEditorReady({
               onSelect={() => distributeSelection('horizontal')}
             />
             <StudioMenuItem
+              data-action-id="communication-studio.selection.distribute.vertical"
               data-action-kind="interaction"
               label={`${tr('distribute')} ${tr('vertical')}`}
               icon={<MoveVertical />}
@@ -1992,6 +1997,7 @@ function StudioEditorReady({
               ] as const
             ).map(([action, Icon]) => (
               <StudioMenuItem
+                data-action-id="communication-studio.selection.order.apply"
                 data-action-kind="interaction"
                 key={action}
                 label={tr(action)}
@@ -2010,6 +2016,7 @@ function StudioEditorReady({
             <DropdownMenuLabel>{tr('groupElements')}</DropdownMenuLabel>
             {(['group', 'ungroup'] as const).map(action => (
               <StudioMenuItem
+                data-action-id="communication-studio.selection.group.toggle"
                 data-action-kind="interaction"
                 key={action}
                 label={action === 'group' ? tr('groupElements') : tr(action)}
@@ -2163,6 +2170,7 @@ function StudioEditorReady({
                     }}
                   >
                     <StudioMenuItem
+                      data-action-id="communication-studio.text.list.bullet"
                       data-action-kind="interaction"
                       label={tr('bulletList')}
                       icon={<List />}
@@ -2172,6 +2180,7 @@ function StudioEditorReady({
                       }}
                     />
                     <StudioMenuItem
+                      data-action-id="communication-studio.text.list.numbered"
                       data-action-kind="interaction"
                       label={tr('numberedList')}
                       icon={<ListOrdered />}
@@ -2182,6 +2191,7 @@ function StudioEditorReady({
                     />
                     <DropdownMenuSeparator />
                     <StudioMenuItem
+                      data-action-id="communication-studio.text.link.open"
                       data-action-kind="interaction"
                       label={tr('link')}
                       icon={<Link2 />}
@@ -2197,6 +2207,8 @@ function StudioEditorReady({
                 <label className="block space-y-1 text-sm">
                   <span>{tr('link')}</span>
                   <input
+                    data-action-id="communication-studio.text.link.edit"
+                    data-action-kind="interaction"
                     autoFocus
                     aria-label={tr('link')}
                     className={input}
@@ -2221,6 +2233,7 @@ function StudioEditorReady({
             <label className="block space-y-1 text-sm">
               <span>{tr('theme')}</span>
               <select
+                data-action-id="communication-studio.theme.definition.select"
                 className={input}
                 value={c.theme?.themeId}
                 disabled={disabled}
@@ -2242,6 +2255,7 @@ function StudioEditorReady({
             <div className="grid grid-cols-2 gap-2">
               {(['light', 'dark'] as const).map(mode => (
                 <button
+                  data-action-id="communication-studio.theme.appearance-mode.select"
                   key={mode}
                   type="button"
                   className={button}
@@ -2286,6 +2300,7 @@ function StudioEditorReady({
                 <h3 className="pt-2 text-sm font-semibold">{tr('textStyles')}</h3>
                 {c.theme.textStyles.map(style => (
                   <button
+                    data-action-id="communication-studio.theme.text-style.apply"
                     key={style.id}
                     type="button"
                     className={button + ' flex w-full items-center justify-between text-left'}
