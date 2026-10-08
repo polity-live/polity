@@ -61,6 +61,9 @@ updates:
       # Major migrations require an explicit compatibility/security review.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Tabs 1.1.22 dispatches duplicate filter changes during focus/mousedown.
+      - dependency-name: "@radix-ui/react-tabs"
+        versions: ["1.1.22"]
       # Preserve the existing, tested prerelease integrations.
       - dependency-name: "nitro"
         versions: ["*"]
