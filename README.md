@@ -26,6 +26,10 @@ Production and development dependency audits must remain clean; CI checks both. 
 
 Radix Tabs remains pinned to 1.1.21: patch 1.1.22 focuses the clicked trigger before dispatching its value change, producing duplicate filter callbacks in the existing controlled subscription-filter test. Preserve the single-change contract and revisit the pin when a later patch fixes the regression. Dependabot ignores only the failing 1.1.22 release.
 
+Supabase CLI remains pinned to 2.115.0, the highest version that passes the unchanged database permission contract. CLI 2.116.0 and 2.117.0 reproduce the same permission regression locally as 2.118.0 and 2.120.0 in CI: their fresh stacks grant `service_role` execution on four internal trigger functions (`delete_message_ai_trace`, `sync_studio_search_acl`, `upsert_studio_search_document`, and `refresh_studio_search_acl`). Preserve the RPC allowlist and database schema. Adopting 2.116+ requires a separate database-permission migration; Dependabot excludes those CLI releases. All nine workflow pins remain synchronized at 2.115.0. The Supabase JS/SSR clients are updated independently to 2.117.3/0.12.7.
+
+Stripe 22.6.2 types its latest API date, 2026-08-26.dahlia. The client deliberately retains 2026-07-29.dahlia using the SDK's [documented older-version configuration](https://github.com/stripe/stripe-node#using-old-api-versions-with-typescript), with a single checked TypeScript exception at initialization. The existing constructor, checkout, and webhook tests enforce the retained contract. Revisit the exception during an explicit Stripe API migration.
+
 ---
 
 ## Running the Project
