@@ -438,19 +438,25 @@ describe('Studio toolbar workflows', () => {
       }
     }
   );
-  it('opens automation-targeted menus and returns focus on Escape', async () => {
-    await show();
-    selectText();
-    for (const key of ['project', 'table', 'text']) {
-      const trigger = screen
-        .getAllByRole('button', { name: key })
-        .find(button => button.getAttribute('aria-haspopup') === 'menu')!;
+  it.each(['project', 'table', 'text', 'arrange'])(
+    'opens the automation-targeted %s menu and returns focus on Escape',
+    async key => {
+      await show();
+      selectText();
+      const trigger =
+        key === 'arrange'
+          ? screen.getByRole('button', { name: 'elementAlignment' })
+          : screen
+              .getAllByRole('button', { name: key })
+              .find(button => button.getAttribute('aria-haspopup') === 'menu')!;
       trigger.focus();
       await act(async () => {
         window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: key }));
       });
       const menu = await screen.findByRole('menu');
-      if (key === 'table') {
+      if (key === 'arrange') {
+        expect(within(menu).getByRole('menuitem', { name: 'center' })).toBeTruthy();
+      } else if (key === 'table') {
         expect(within(menu).getByRole('button', { name: 'tableSize: 0 x 0' })).toBeTruthy();
       } else {
         expect(menu.querySelectorAll('[role="menuitem"]').length).toBeGreaterThan(0);
@@ -459,17 +465,7 @@ describe('Studio toolbar workflows', () => {
       await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
       expect(document.activeElement).toBe(trigger);
     }
-    const alignTrigger = screen.getByRole('button', { name: 'elementAlignment' });
-    alignTrigger.focus();
-    await act(async () => {
-      window.dispatchEvent(new CustomEvent('studio-open-panel', { detail: 'arrange' }));
-    });
-    const alignMenu = await screen.findByRole('menu');
-    expect(within(alignMenu).getByRole('menuitem', { name: 'center' })).toBeTruthy();
-    fireEvent.keyDown(alignMenu, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
-    expect(document.activeElement).toBe(alignTrigger);
-  });
+  );
   it('anchors secondary-navigation panels to the right sidebar and keeps only one open', async () => {
     await show();
     const navigation = document.createElement('nav');
