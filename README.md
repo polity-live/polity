@@ -24,6 +24,8 @@ Dependabot groups editor/AI, React/UI, service, and toolchain updates weekly. Ma
 
 Production and development dependency audits must remain clean; CI checks both. Inspect the actual dependency paths before adding or removing a scoped security override. Preserve pnpm's hoisted linker and explicit dependency build permissions. The explicit Babel 7 development dependency satisfies the existing image editor's required peer while packages that need Babel 8 retain their own compatible dependency.
 
+Radix Tabs remains pinned to 1.1.21: patch 1.1.22 focuses the clicked trigger before dispatching its value change, producing duplicate filter callbacks in the existing controlled subscription-filter test. Preserve the single-change contract and revisit the pin when a later patch fixes the regression. Dependabot ignores only the failing 1.1.22 release.
+
 ---
 
 ## Running the Project

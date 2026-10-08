@@ -1576,6 +1576,12 @@ it('opens media cropping on native double-click and pans its source inside the f
   );
   const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
   await waitFor(() => expect(group.findOne('Image')).toBeTruthy());
+  await waitFor(() => {
+    expect(stage().width()).toBe(700);
+    expect(stage().getIntersection(group.getAbsoluteTransform().point({ x: 80, y: 50 }))).toBe(
+      group.findOne('Image')
+    );
+  });
   const point = canvasPoint(group, { x: 80, y: 50 });
   await userEvent.dblClick(point.surface, { position: { x: point.x, y: point.y } } as never);
   await screen.findByRole('toolbar', { name: 'Crop' });
