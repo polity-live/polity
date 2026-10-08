@@ -896,6 +896,7 @@ it('resizes root nodes without a parent transform and stops toolbar pointer even
     </div>
   );
   const toolbar = await screen.findByRole('toolbar', { name: 'Selection actions' });
+  await waitFor(() => expect(stage().width()).toBe(1000));
   expect(toolbar.style.left).not.toBe('');
   await userEvent.click(screen.getByRole('button', { name: 'Context action' }));
   expect(clicked).toHaveBeenCalledTimes(1);
@@ -903,6 +904,13 @@ it('resizes root nodes without a parent transform and stops toolbar pointer even
   const transformer = stage().findOne<Konva.Transformer>('Transformer')!;
   await waitFor(() => expect(transformer.nodes()).toHaveLength(1));
   const anchor = transformer.findOne('.middle-right')!;
+  await waitFor(() => expect(anchor.isVisible()).toBe(true));
+  await waitFor(() => {
+    const position = anchor
+      .getAbsoluteTransform()
+      .point({ x: anchor.width() / 2, y: anchor.height() / 2 });
+    expect(stage().getIntersection(position)).toBe(anchor);
+  });
   const point = canvasPoint(anchor, { x: anchor.width() / 2, y: anchor.height() / 2 });
   await userEvent.dragAndDrop(point.surface, point.surface, {
     sourcePosition: { x: point.x, y: point.y },
