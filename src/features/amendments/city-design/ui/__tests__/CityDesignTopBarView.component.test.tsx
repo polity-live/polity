@@ -1,8 +1,9 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { DEFAULT_CITY_DESIGN_OSM_LAYER_VISIBILITY } from '../../logic/cityDesignOsm';
 import { createPointCityDesignObject } from '../../logic/cityDesignPlacement';
 import type { CityDesignCostSummary } from '../../types';
@@ -18,12 +19,16 @@ vi.mock('@/features/shared/ui/ui-platejs/fixed-toolbar', async () => {
   );
 
   return {
-    FixedToolbar: (props: ComponentProps<typeof Toolbar>) => <Toolbar {...props} />,
+    FixedToolbar: ({
+      positionMode: _positionMode,
+      ...props
+    }: ComponentProps<typeof Toolbar> & { positionMode?: string }) => <Toolbar {...props} />,
   };
 });
 
 vi.mock('@/features/editor/ui/InviteCollaboratorDialog', () => ({
-  InviteCollaboratorDialog: () => <button type="button">Invite</button>,
+  InviteCollaboratorDialog: ({ trigger }: { trigger?: ReactNode }) =>
+    trigger ?? <button type="button">Invite</button>,
 }));
 
 afterEach(() => {
@@ -127,6 +132,91 @@ function renderSecondaryActionBar(
 }
 
 describe('CityDesignTopBarView', () => {
+  it('reports saving and failed saves in the workspace toolbar', () => {
+    const workspace = {
+      title: 'Street',
+      selectionAddressLabel: 'Berlin',
+      osmWayCount: 0,
+      collaborators: null,
+      help: null,
+    };
+    renderTopBar({ workspace, isSaving: true });
+    expect(screen.getByRole('status').textContent).toMatch(/saving/i);
+    cleanup();
+    renderTopBar({ workspace, saveError: 'Offline' });
+    expect(screen.getByRole('status').textContent).toMatch(/failed|error/i);
+  });
+
+  it('returns tinted change requests to their natural color from the compact menu', async () => {
+    const onChangeRequestColorModeChange = vi.fn();
+    renderTopBar({
+      collaboration: {
+        amendmentId: 'a',
+        title: 'Street',
+        existingCollaboratorIds: [],
+        changeRequests: [],
+        selectedChangeRequestId: null,
+        showChangeRequests: false,
+        changeRequestColorMode: 'tinted',
+        onShowChangeRequestsChange: vi.fn(),
+        onChangeRequestSelect: vi.fn(),
+        onChangeRequestColorModeChange,
+      },
+    });
+    fireEvent.pointerDown(screen.getByRole('button', { name: '0 CRs' }));
+    const color = await screen.findByRole('menuitemcheckbox', { name: 'Color changes' });
+    expect(color.getAttribute('aria-checked')).toBe('true');
+    await userEvent.click(color);
+    expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('natural');
+  });
+  it('integrates workspace information, collaboration and save state into the toolbar', async () => {
+    const onShowChangeRequestsChange = vi.fn();
+    const onChangeRequestColorModeChange = vi.fn();
+    const onChangeRequestSelect = vi.fn();
+    renderTopBar({
+      workspace: {
+        title: 'Safer street',
+        selectionAddressLabel: 'Alexanderplatz, Berlin',
+        osmWayCount: 134,
+        collaborators: <span>Online collaborator</span>,
+        help: <button>Navigation help</button>,
+      },
+      collaboration: {
+        amendmentId: 'a',
+        title: 'Safer street',
+        currentUserId: 'u',
+        collaborationDocumentId: 'd',
+        existingCollaboratorIds: [],
+        changeRequests: [streetChangeRequest],
+        selectedChangeRequestId: null,
+        showChangeRequests: true,
+        changeRequestColorMode: 'natural',
+        onShowChangeRequestsChange,
+        onChangeRequestColorModeChange,
+        onChangeRequestSelect,
+      },
+    });
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Invite' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Objects' }).textContent).toContain('1');
+    expect(screen.getByRole('button', { name: 'Costs' }).textContent).toContain('450');
+    expect(screen.getByRole('status').textContent).toMatch(/unsaved changes/i);
+    expect(screen.getByText('Online collaborator')).toBeTruthy();
+    fireEvent.pointerDown(screen.getByRole('button', { name: '1 CR' }));
+    const overlay = await screen.findByRole('menuitemcheckbox', { name: 'Show canvas overlay' });
+    expect(overlay.getAttribute('aria-checked')).toBe('true');
+    await userEvent.click(overlay);
+    expect(onShowChangeRequestsChange).toHaveBeenCalledWith(false);
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Color changes' }));
+    expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('tinted');
+    fireEvent.click(screen.getByRole('menuitem', { name: /Add canopy tree/ }));
+    expect(onChangeRequestSelect).toHaveBeenCalledWith('cr-tree');
+    await userEvent.click(screen.getByRole('button', { name: 'Project information' }));
+    expect(await screen.findByText('Alexanderplatz, Berlin')).toBeTruthy();
+    expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
+    expect(screen.getByText('134 existing')).toBeTruthy();
+  });
+
   it('handles global city design actions from the fixed icon toolbar', () => {
     const props = renderTopBar();
 
@@ -442,7 +532,7 @@ describe('CityDesignTopBarView', () => {
     fireEvent.pointerDown(screen.getByRole('button', { name: '0 CRs' }));
     await vi.waitFor(() => {
       expect(
-        document.querySelector<HTMLElement>('[data-action-scope="presentation"]')?.textContent
+        screen.getByRole('menuitem', { name: 'No City Design change requests.' }).textContent
       ).toContain('change requests');
     });
     expect(topBar.onObjectSelect).not.toHaveBeenCalled();

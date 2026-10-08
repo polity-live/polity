@@ -71,7 +71,21 @@ vi.mock('../CityDesignTopBarView', () => ({
     areaPickerOpen,
     onAreaPickerOpenChange,
     onObjectCategoryDelete,
+    workspace,
+    collaboration,
+    isDirty,
   }: {
+    workspace: {
+      title: string;
+      selectionAddressLabel: string;
+      osmWayCount: number;
+      help: ReactNode;
+    };
+    collaboration: {
+      onChangeRequestSelect: (id: string | null) => void;
+      onChangeRequestColorModeChange: (mode: 'natural') => void;
+    };
+    isDirty: boolean;
     areaPickerContent: ReactNode;
     areaPickerOpen: boolean;
     onAreaPickerOpenChange: (open: boolean) => void;
@@ -85,26 +99,21 @@ vi.mock('../CityDesignTopBarView', () => ({
       <button type="button" onClick={() => onObjectCategoryDelete('greenery')}>
         Delete greenery
       </button>
-      {areaPickerOpen ? areaPickerContent : null}
-    </div>
-  ),
-  CityDesignSecondaryActionBarView: ({
-    onChangeRequestSelect,
-    onChangeRequestColorModeChange,
-  }: {
-    onChangeRequestSelect: (id: string | null) => void;
-    onChangeRequestColorModeChange: (mode: 'natural') => void;
-  }) => (
-    <div data-testid="city-design-secondary-action-bar">
-      <button type="button" onClick={() => onChangeRequestSelect('cr-1')}>
+      <span>{workspace.title}</span>
+      <span>{workspace.selectionAddressLabel}</span>
+      <span>{workspace.osmWayCount} existing</span>
+      <span data-testid="toolbar-save-state" data-dirty={String(isDirty)} />
+      {workspace.help}
+      <button type="button" onClick={() => collaboration.onChangeRequestSelect('cr-1')}>
         Select CR
       </button>
-      <button type="button" onClick={() => onChangeRequestSelect(null)}>
+      <button type="button" onClick={() => collaboration.onChangeRequestSelect(null)}>
         Clear CR
       </button>
-      <button type="button" onClick={() => onChangeRequestColorModeChange('natural')}>
+      <button type="button" onClick={() => collaboration.onChangeRequestColorModeChange('natural')}>
         Set natural colors
       </button>
+      {areaPickerOpen ? areaPickerContent : null}
     </div>
   ),
 }));
@@ -112,14 +121,20 @@ vi.mock('../CityDesignTopBarView', () => ({
 vi.mock('../StreetSceneCanvasView', () => ({
   StreetSceneCanvasView: ({
     initialLegendOpen,
+    fillContainer,
     onOsmWayImport,
     onOsmImportUndo,
   }: {
     initialLegendOpen: boolean;
+    fillContainer: boolean;
     onOsmWayImport: (id: string) => void;
     onOsmImportUndo: (id: string) => void;
   }) => (
-    <div data-testid="street-scene-canvas" data-initial-legend-open={String(initialLegendOpen)}>
+    <div
+      data-testid="street-scene-canvas"
+      data-initial-legend-open={String(initialLegendOpen)}
+      data-fill-container={String(fillContainer)}
+    >
       <button type="button" onClick={() => onOsmWayImport('osm-1')}>
         Import OSM
       </button>
@@ -158,13 +173,15 @@ describe('CityDesignPageView', () => {
     expect(screen.getByTestId('street-scene-canvas')).toBeTruthy();
   });
 
-  it('shows KPI badges and opens the navigation help popover', () => {
+  it('moves workspace metadata into the toolbar and opens the navigation help popover', () => {
     render(<CityDesignPageView {...createPageProps()} />);
 
     expect(screen.getByText('253 existing')).toBeTruthy();
-    expect(screen.getByText('0 elements')).toBeTruthy();
-    expect(screen.getByText(content => /€\s*0(?:[.,]00)?/.test(content))).toBeTruthy();
-    expect(screen.getByText('0 CRs')).toBeTruthy();
+    expect(screen.queryByText('0 elements')).toBeNull();
+    expect(screen.queryByTestId('city-design-secondary-action-bar')).toBeNull();
+    expect(screen.getByTestId('street-scene-canvas').getAttribute('data-fill-container')).toBe(
+      'true'
+    );
     expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
     expect(screen.getByTestId('street-scene-canvas').getAttribute('data-initial-legend-open')).toBe(
       'false'
@@ -205,15 +222,14 @@ describe('CityDesignPageView', () => {
     expect(screen.getByText(/Q and E turn/)).toBeTruthy();
   });
 
-  it('shows an unsaved changes warning badge only when the design is dirty', () => {
+  it('forwards the dirty state to the toolbar', () => {
     const { rerender } = render(<CityDesignPageView {...createPageProps()} />);
 
-    expect(screen.queryByText('Unsaved changes')).toBeNull();
+    expect(screen.getByTestId('toolbar-save-state').getAttribute('data-dirty')).toBe('false');
 
     rerender(<CityDesignPageView {...createPageProps({ isDirty: true })} />);
 
-    expect(screen.getByRole('status', { name: 'Unsaved changes' })).toBeTruthy();
-    expect(screen.getByText('Unsaved changes')).toBeTruthy();
+    expect(screen.getByTestId('toolbar-save-state').getAttribute('data-dirty')).toBe('true');
   });
 
   it('closes the area picker dialog when loading OSM from the picker', () => {

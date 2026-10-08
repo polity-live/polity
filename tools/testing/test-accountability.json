@@ -4318,7 +4318,7 @@
       {
         "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
         "project": "component",
-        "caseId": "shows an unsaved changes warning badge only when the design is dirty",
+        "caseId": "forwards the dirty state to the toolbar",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "direct",
@@ -44228,7 +44228,7 @@
       {
         "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
         "project": "component",
-        "caseId": "shows KPI badges and opens the navigation help popover",
+        "caseId": "moves workspace metadata into the toolbar and opens the navigation help popover",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
@@ -44236,7 +44236,7 @@
       {
         "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
         "project": "component",
-        "caseId": "shows KPI badges and opens the navigation help popover",
+        "caseId": "moves workspace metadata into the toolbar and opens the navigation help popover",
         "scenarios": ["selected", "unselected", "keyboard", "focus"]
       }
     ],

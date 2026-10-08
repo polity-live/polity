@@ -26,6 +26,7 @@ interface StreetSceneCanvasViewProps {
   initialLegendOpen?: boolean;
   embeddedPreview?: boolean;
   embeddedWorkspace?: boolean;
+  fillContainer?: boolean;
   initialCameraPose?: CityDesignCameraPose;
   isLoadingOsm: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
@@ -95,6 +96,7 @@ export function StreetSceneCanvasView({
   initialLegendOpen = false,
   embeddedPreview = false,
   embeddedWorkspace = false,
+  fillContainer = false,
   initialCameraPose,
   isLoadingOsm,
   placementPreview,
@@ -157,6 +159,7 @@ export function StreetSceneCanvasView({
     initialLegendOpen,
     embeddedPreview,
     embeddedWorkspace,
+    fillContainer,
     initialCameraPose,
     isLoadingOsm,
     placementPreview,

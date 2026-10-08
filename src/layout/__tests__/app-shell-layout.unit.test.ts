@@ -120,10 +120,11 @@ describe('app shell page frame routing', () => {
     }
   });
 
-  it('contains the full text and City Design amendment editors', () => {
-    for (const path of ['/amendment/amendment-1/text', '/amendment/amendment-1/citydesign']) {
-      expect(getUnauthenticatedPageFrame(path)).toBe('contained');
-      expect(getAuthenticatedPageFrame(path)).toBe('contained');
+  it('contains text editors and gives City Design the full canvas frame', () => {
+    for (const getFrame of [getUnauthenticatedPageFrame, getAuthenticatedPageFrame]) {
+      expect(getFrame('/amendment/amendment-1/text')).toBe('contained');
+      expect(getFrame('/amendment/amendment-1/citydesign')).toBe('bare');
+      expect(getFrame('/amendment/amendment-1/citydesign-other')).toBe('contained');
     }
   });
 

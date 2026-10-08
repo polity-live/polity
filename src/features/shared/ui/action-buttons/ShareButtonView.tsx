@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ export interface ShareButtonViewProps {
   size: any;
   className: any;
   compactOnMobile?: boolean;
+  trigger?: ReactNode;
   actionId?: string;
   t: any;
   copied: any;
@@ -50,6 +52,7 @@ export function ShareButtonView({
   size,
   className,
   compactOnMobile = false,
+  trigger,
   actionId,
   t,
   copied,
@@ -66,11 +69,13 @@ export function ShareButtonView({
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button data-action-id={actionId} variant={variant} size={size} className={className}>
-            <Share2 className={compactOnMobile ? 'mr-0 h-4 w-4 sm:mr-2' : 'mr-2 h-4 w-4'} />
-            {t('common.actions.share')}
-          </Button>
+        <DropdownMenuTrigger data-action-scope="presentation" asChild>
+          {trigger ?? (
+            <Button data-action-id={actionId} variant={variant} size={size} className={className}>
+              <Share2 className={compactOnMobile ? 'mr-0 h-4 w-4 sm:mr-2' : 'mr-2 h-4 w-4'} />
+              {t('common.actions.share')}
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="max-h-[70vh] w-[280px] overflow-y-auto">
           <div className="p-2">

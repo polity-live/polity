@@ -55,7 +55,7 @@ describe('StreetCostSummaryView A04 alternatives', () => {
         onComparisonModeChange={vi.fn()}
       />
     );
-    expect(screen.getByText(/no cost categories/i)).toBeTruthy();
+    expect(screen.queryByText(/no cost categories/i)).toBeNull();
     expect(screen.getByText(/no elements yet/i)).toBeTruthy();
     expect(screen.queryByText(/comparison/i)).toBeNull();
   });

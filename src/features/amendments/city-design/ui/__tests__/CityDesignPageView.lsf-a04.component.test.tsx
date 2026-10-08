@@ -11,7 +11,7 @@ vi.mock('@/features/shared/ui/ui/not-found', () => ({ NotFound: () => null }));
 vi.mock('../StreetAreaPicker', () => ({ StreetAreaPicker: () => null }));
 vi.mock('../StreetCostSummaryView', () => ({ StreetCostSummaryView: () => null }));
 vi.mock('../CityDesignTopBarView', () => ({
-  CityDesignTopBarView: () => null,
+  CityDesignTopBarView: ({ workspace }: any) => <>{workspace.help}</>,
   CityDesignSecondaryActionBarView: () => null,
 }));
 vi.mock('../CityDesignWorkspaceView', () => ({
