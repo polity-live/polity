@@ -109,6 +109,8 @@ test('uploads, maintains an element library, clones media, exports and hands off
     await page.locator('[data-action-id="communication-studio.elements.set.archive"]').click();
     await expect(page.getByText('Zero media library', { exact: true })).toHaveCount(0);
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Elements', exact: true })).toHaveCount(0);
+    await expect(page.locator('[data-navigation-item-id="studio-elements"]')).toBeFocused();
 
     await page.getByRole('button', { name: 'Project', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Copy project', exact: true }).press('Enter');
