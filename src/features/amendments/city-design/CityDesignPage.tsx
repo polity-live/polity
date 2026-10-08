@@ -109,6 +109,8 @@ export function CityDesignPage({ amendmentId, conversationId, branchId }: CityDe
         onPlacementUnitCostChange={controller.updatePlacementUnitCost}
         onPropertyChange={controller.updateObjectProperty}
         onWidthChange={controller.updateObjectWidth}
+        onLengthChange={controller.updateObjectLength}
+        onPositionChange={controller.updateObjectPosition}
         onRotationChange={controller.rotateObject}
         onUnitCostChange={controller.updateObjectUnitCost}
         onDeleteObject={controller.deleteObject}

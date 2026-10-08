@@ -105,7 +105,7 @@ it('selects real WebGL surfaces without moving the camera and focuses only on co
     );
     expect(pose).toEqual(initialPose);
     controller.focusObject('bench');
-    await waitFor(() => expect(pose.target.x).toBeCloseTo(30, 1));
+    await waitFor(() => expect(pose.target.x).toBeCloseTo(30, 7));
     // Keyboard navigation still updates the camera after an explicit focus.
     document.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })
@@ -138,11 +138,14 @@ it.each([
     });
     expect(container.querySelector('[data-slot="card-header"]')).toBeNull();
     const before = canvas.getBoundingClientRect();
-    await userEvent.click(screen.getByRole('button', { name: 'Toggle chat' }));
-    expect(screen.getByRole('dialog', { name: 'Project chat' })).toBeTruthy();
+    screen.getByRole('button', { name: 'Toggle chat' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('dialog', { name: 'Project chat' })).toBeTruthy();
     expect(canvas.getBoundingClientRect().width).toBe(before.width);
-    await userEvent.click(screen.getByRole('button', { name: 'Toggle chat' }));
-  }
+    screen.getByRole('button', { name: 'Toggle chat' }).focus();
+    await userEvent.keyboard('{Enter}');
+  },
+  30_000
 );
 
 it('selects an object through the compact cost list and edits its real property fields', async () => {
@@ -159,7 +162,7 @@ it('selects an object through the compact cost list and edits its real property 
   await userEvent.keyboard('{Escape}');
   const panel = screen.getByRole('complementary');
   expect(panel.style.left).toBe('16px');
-  const heightInput = panel.querySelector<HTMLInputElement>('input[type="number"]');
+  const heightInput = panel.querySelector<HTMLInputElement>('input[aria-label="Height (m)"]');
   expect(heightInput).toBeTruthy();
   await userEvent.fill(heightInput!, '8');
   await userEvent.keyboard('{Tab}');

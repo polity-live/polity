@@ -320,6 +320,9 @@ export type CityDesignOsmFeatureLayer =
 
 export interface CityDesignOsmFeature {
   id: string;
+  /** Ordered OSM way node IDs, aligned with points when available. */
+  nodeIds?: string[];
+  widthSource?: 'osm' | 'lanes' | 'default';
   kind: CityDesignOsmFeatureKind;
   geometryKind: CityDesignOsmFeatureGeometryKind;
   label?: string;

@@ -214,6 +214,8 @@ export function CityDesignWorkspaceFixture({
             onObjectCategoryVisibilityChange: editor.setObjectCategoryVisibility,
             onPropertyChange: editor.updateObjectProperty,
             onWidthChange: editor.updateObjectWidth,
+            onLengthChange: editor.updateObjectLength,
+            onPositionChange: editor.updateObjectPosition,
             onRotationChange: editor.rotateObject,
             onUnitCostChange: editor.updateObjectUnitCost,
             onDeleteObject: editor.deleteObject,

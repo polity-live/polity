@@ -26,6 +26,8 @@ import {
   isPathCorridorObjectType,
   rotateCityDesignObject,
   updateCorridorWidth,
+  updateCorridorLength,
+  updateCityDesignObjectPosition,
 } from '../logic/cityDesignPlacement';
 import {
   CITY_DESIGN_COST_CATALOG_VERSION,
@@ -108,6 +110,13 @@ export type CityDesignEditorAction =
       value: CityDesignPropertyValue;
     }
   | { type: 'update_object_width'; objectId: string; width: number }
+  | {
+      type: 'update_object_length';
+      objectId: string;
+      length: number;
+      sourceGeometry?: CityDesignObject['geometry'];
+    }
+  | { type: 'update_object_position'; objectId: string; position: CityDesignLocalPoint }
   | { type: 'rotate_object'; objectId: string; rotationDeg: number }
   | { type: 'update_object_unit_cost'; objectId: string; unitCostMinor: number | null }
   | { type: 'delete_object'; objectId: string }
@@ -177,6 +186,25 @@ function updateObject(
   updater: (object: CityDesignObject) => CityDesignObject
 ) {
   return objects.map(object => (object.id === objectId ? updater(object) : object));
+}
+
+function applyObjectUpdate(
+  state: CityDesignEditorState,
+  objectId: string,
+  updater: (object: CityDesignObject) => CityDesignObject
+): CityDesignEditorState {
+  const object = state.design.objects.find(item => item.id === objectId);
+  if (!object) return state;
+  const updated = updater(object);
+  if (updated === object) return state;
+  return {
+    ...state,
+    design: {
+      ...state.design,
+      objects: state.design.objects.map(item => (item.id === objectId ? updated : item)),
+    },
+    isDirty: true,
+  };
 }
 
 function getObjectCategory(object: CityDesignObject) {
@@ -864,59 +892,77 @@ export function cityDesignReducer(
       };
     }
 
-    case 'update_object_property':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object => ({
-            ...object,
-            properties: updateCityDesignObjectProperties(
-              object.type,
-              object.properties,
-              action.key,
-              action.value
-            ),
-          })),
-        },
-        isDirty: true,
-      };
+    case 'update_object_property': {
+      const object = state.design.objects.find(item => item.id === action.objectId);
+      const field =
+        object &&
+        getCityDesignObjectDefinition(object.type).propertySchema.find(
+          item => item.key === action.key
+        );
+      if (!object || object.properties[action.key] === action.value) return state;
+      if (
+        typeof action.value === 'number' &&
+        (!Number.isFinite(action.value) ||
+          (field?.min != null && action.value < field.min) ||
+          (field?.max != null && action.value > field.max))
+      )
+        return state;
+      return applyObjectUpdate(state, action.objectId, object => ({
+        ...object,
+        properties: updateCityDesignObjectProperties(
+          object.type,
+          object.properties,
+          action.key,
+          action.value
+        ),
+      }));
+    }
+
+    case 'update_object_length': {
+      if (!Number.isFinite(action.length) || action.length < 0.05) return state;
+      return applyObjectUpdate(state, action.objectId, object => {
+        if (object.geometry.kind !== 'corridor' && object.geometry.kind !== 'path_corridor')
+          return object;
+        if (Math.abs(object.geometry.length - action.length) < 0.001) return object;
+        const source =
+          action.sourceGeometry?.kind === object.geometry.kind
+            ? { ...object, geometry: action.sourceGeometry }
+            : object;
+        return updateCorridorLength(source, action.length);
+      });
+    }
+
+    case 'update_object_position':
+      return applyObjectUpdate(state, action.objectId, object =>
+        updateCityDesignObjectPosition(object, action.position)
+      );
 
     case 'update_object_width':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            updateCorridorWidth(object, action.width)
-          ),
-        },
-        isDirty: true,
-      };
+      if (!Number.isFinite(action.width) || action.width < 0.1) return state;
+      return applyObjectUpdate(state, action.objectId, object =>
+        updateCorridorWidth(object, action.width)
+      );
 
     case 'rotate_object':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            rotateCityDesignObject(object, action.rotationDeg)
-          ),
-        },
-        isDirty: true,
-      };
+      return applyObjectUpdate(state, action.objectId, object =>
+        rotateCityDesignObject(object, action.rotationDeg)
+      );
 
     case 'update_object_unit_cost':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            updateObjectUnitCost(object, action.unitCostMinor)
-          ),
-        },
-        isDirty: true,
-      };
+      if (
+        action.unitCostMinor != null &&
+        (!Number.isFinite(action.unitCostMinor) || action.unitCostMinor < 0)
+      )
+        return state;
+      return applyObjectUpdate(state, action.objectId, object => {
+        const cost = action.unitCostMinor == null ? undefined : Math.round(action.unitCostMinor);
+        if (
+          object.cost.customUnitCostMinor === cost ||
+          (cost == null && object.cost.customUnitCostMinor == null)
+        )
+          return object;
+        return updateObjectUnitCost(object, action.unitCostMinor);
+      });
 
     case 'delete_object':
       return {

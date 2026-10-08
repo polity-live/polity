@@ -840,20 +840,20 @@ const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
   getParentRoute: () => ApiPushTestRoute,
 } as any)
 const ApiStudioExportsIdRoute = ApiStudioExportsIdRouteImport.update({
-  id: '/exports/$id',
-  path: '/exports/$id',
-  getParentRoute: () => ApiStudioRoute,
+  id: '/api/studio/exports/$id',
+  path: '/api/studio/exports/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStudioMediaIdRoute = ApiStudioMediaIdRouteImport.update({
-  id: '/media/$id',
-  path: '/media/$id',
-  getParentRoute: () => ApiStudioRoute,
+  id: '/api/studio/media/$id',
+  path: '/api/studio/media/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStudioPublishedMediaIdRoute =
   ApiStudioPublishedMediaIdRouteImport.update({
-    id: '/published-media/$id',
-    path: '/published-media/$id',
-    getParentRoute: () => ApiStudioRoute,
+    id: '/api/studio/published-media/$id',
+    path: '/api/studio/published-media/$id',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
@@ -1904,6 +1904,9 @@ export interface RootRouteChildren {
   ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
   ApiDatasetsSnapshotIdProjectionRoute: typeof ApiDatasetsSnapshotIdProjectionRoute
   ApiDatasetsSnapshotIdValuesRoute: typeof ApiDatasetsSnapshotIdValuesRoute
+  ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
+  ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
+  ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2827,24 +2830,24 @@ declare module '@tanstack/react-router' {
     }
     '/api/studio/exports/$id': {
       id: '/api/studio/exports/$id'
-      path: '/exports/$id'
+      path: '/api/studio/exports/$id'
       fullPath: '/api/studio/exports/$id'
       preLoaderRoute: typeof ApiStudioExportsIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/studio/media/$id': {
       id: '/api/studio/media/$id'
-      path: '/media/$id'
+      path: '/api/studio/media/$id'
       fullPath: '/api/studio/media/$id'
       preLoaderRoute: typeof ApiStudioMediaIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/studio/published-media/$id': {
       id: '/api/studio/published-media/$id'
-      path: '/published-media/$id'
+      path: '/api/studio/published-media/$id'
       fullPath: '/api/studio/published-media/$id'
       preLoaderRoute: typeof ApiStudioPublishedMediaIdRouteImport
-      parentRoute: typeof ApiStudioRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/event/$id/agenda/': {
       id: '/_authed/event/$id/agenda/'
@@ -3422,6 +3425,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,
   ApiDatasetsSnapshotIdProjectionRoute: ApiDatasetsSnapshotIdProjectionRoute,
   ApiDatasetsSnapshotIdValuesRoute: ApiDatasetsSnapshotIdValuesRoute,
+  ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
+  ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
+  ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -98,8 +98,9 @@ export function getCityDesignOsmSideWidthMeters(args: {
   side: 'left' | 'right';
 }) {
   const { tags, kind, side } = args;
+  const prefix = kind === 'bike_lane' ? 'cycleway' : kind;
   const explicit = finiteNumber(
-    sidePropertyTag(tags, kind === 'bike_lane' ? 'cycleway' : kind, 'width', side)
+    tags[`${prefix}:${side}:width`] ?? tags[`${prefix}:both:width`] ?? tags[`${prefix}:width`]
   );
   if (explicit && explicit > 0) return explicit;
 
@@ -113,6 +114,21 @@ export function getCityDesignOsmSideWidthMeters(args: {
   if (orientation === 'perpendicular') return 4.8;
   if (orientation === 'diagonal') return 3.6;
   return 2.3;
+}
+
+export function getCityDesignOsmWidthSource(
+  tags: Record<string, string>,
+  kind: string,
+  side?: 'left' | 'right'
+): 'osm' | 'lanes' | 'default' {
+  const prefix = kind === 'bike_lane' ? 'cycleway' : kind;
+  const raw = side
+    ? (tags[`${prefix}:${side}:width`] ?? tags[`${prefix}:both:width`] ?? tags[`${prefix}:width`])
+    : (tags['width:carriageway'] ?? tags.width);
+  const width = finiteNumber(raw);
+  if (width && width > 0) return 'osm';
+  if (kind === 'road' && (integer(tags.lanes) ?? 0) > 0) return 'lanes';
+  return 'default';
 }
 
 export function getCityDesignOsmSemanticMapping(
@@ -142,10 +158,20 @@ export function getCityDesignOsmSemanticMapping(
         lanes:
           integer(tags.lanes) ??
           Math.max(1, Math.round(getCityDesignOsmRoadWidthMeters(tags) / 3.25)),
-        direction: tags.oneway === 'yes' || tags.oneway === '1' ? 'one_way' : 'two_way',
+        direction:
+          ['yes', '1', 'true', '-1'].includes(tags.oneway) ||
+          (tags.junction === 'roundabout' && tags.oneway !== 'no')
+            ? 'one_way'
+            : 'two_way',
+        lanesForward: integer(tags['lanes:forward']),
+        onewayReversed: tags.oneway === '-1' ? true : undefined,
+        lanesBackward: integer(tags['lanes:backward']),
+        lanesBothWays: integer(tags['lanes:both_ways']),
         surface: stringValue(tags.surface) ?? 'asphalt',
         maxspeed: finiteNumber(tags.maxspeed),
         turnLanes: stringValue(tags['turn:lanes']),
+        turnLanesForward: stringValue(tags['turn:lanes:forward']),
+        turnLanesBackward: stringValue(tags['turn:lanes:backward']),
         busLanes: integer(tags['lanes:bus']),
         taxiLanes: integer(tags['lanes:taxi']),
         laneMarkings: tags.lane_markings !== 'no',

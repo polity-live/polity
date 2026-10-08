@@ -13,6 +13,7 @@ import {
   applyCityDesignOsmSemanticMapping,
   getCityDesignOsmRoadWidthMeters,
   getCityDesignOsmSideWidthMeters,
+  getCityDesignOsmWidthSource,
 } from '@/features/amendments/city-design/logic/cityDesignOsmMapping';
 
 const streetSceneSchema = z.object({
@@ -27,6 +28,7 @@ const streetSceneSchema = z.object({
 interface OverpassElement {
   type: string;
   id: number;
+  nodes?: number[];
   tags?: Record<string, string>;
   lat?: number;
   lon?: number;
@@ -197,7 +199,7 @@ export function buildOverpassQuery(bbox: CityDesignBoundingBox) {
       relation["waterway"~"riverbank|river|canal"](${bounds});
       relation["man_made"="bridge"](${bounds});
     );
-    out tags geom;
+    out body geom;
   `;
 }
 
@@ -821,7 +823,9 @@ function createDerivedStreetSideFeature(args: {
     geometryKind: 'line' as const,
     label: feature.label,
     points: feature.points ?? [],
+    nodeIds: feature.nodeIds,
     widthMeters,
+    widthSource: getCityDesignOsmWidthSource(feature.tags ?? {}, kind, side),
     offsetMeters: side === 'right' ? offsetMeters : -offsetMeters,
     side,
     subkind,
@@ -968,8 +972,10 @@ export function normalizeOverpassPayload(
       geometryKind: getFeatureGeometryKind(kind, points),
       label: getFeatureLabel(tags, kind),
       points,
+      nodeIds: element.nodes?.map(String),
       height,
       widthMeters: getFeatureWidthMeters(kind, tags),
+      widthSource: getCityDesignOsmWidthSource(tags, kind),
       subkind: getFeatureSubkind(kind, tags),
       semanticUse,
       renderColor:

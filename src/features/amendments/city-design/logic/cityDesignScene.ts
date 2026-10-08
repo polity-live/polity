@@ -1,3 +1,5 @@
+import { createCityDesignRenderBatches } from './cityDesignRenderBatches';
+import { createCityDesignNavigationQuality } from './cityDesignNavigationQuality';
 import type {
   CorridorGeometry,
   PathCorridorGeometry,
@@ -41,6 +43,18 @@ import {
   getCityDesignPointerAction,
 } from './cityDesignInputRouter';
 import { projectGeoPointToLocal } from './cityDesignProjection';
+import { type MultiPolygon } from 'polygon-clipping';
+import {
+  getDesignStreetNetwork,
+  getOsmStreetNetwork,
+  streetPolygon,
+  streetLaneProperties,
+  streetPolygonOperations as polygonClipping,
+  type StreetNetworkFeature,
+  type StreetNetworkSource,
+} from './cityDesignStreetNetwork';
+import { createStreetMarkings, getStreetMarkings } from './cityDesignStreetMarkings';
+import { getCityDesignOsmSemanticMapping } from './cityDesignOsmMapping';
 
 export interface CityDesignSceneMountOptions {
   canvas: HTMLCanvasElement;
@@ -50,6 +64,10 @@ export interface CityDesignSceneMountOptions {
   placementStart: CityDesignLocalPoint | null;
   selectedObjectId: string | null;
   selectedOsmWayId: string | null;
+  selectedObjectIds?: readonly string[];
+  selectedOsmWayIds?: readonly string[];
+  measurementActive?: boolean;
+  onMeasurementPoint?: (point: CityDesignLocalPoint, layer: CityDesignComparisonLayer) => void;
   selectedChangeRequestId?: string | null;
   hiddenObjectIds: string[];
   hiddenObjectCategories: CityDesignObjectCategory[];
@@ -63,8 +81,8 @@ export interface CityDesignSceneMountOptions {
   onPointerDown: (point: CityDesignLocalPoint) => void;
   onPointerMove: (point: CityDesignLocalPoint) => void;
   onPointerHover: (point: CityDesignLocalPoint | null, layer: CityDesignComparisonLayer) => void;
-  onObjectSelect: (objectId: string | null) => void;
-  onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectSelect: (objectId: string | null, additive?: boolean) => void;
+  onOsmWaySelect: (osmWayId: string | null, additive?: boolean) => void;
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onCameraPoseChange: (pose: CityDesignCameraPose) => void;
 }
@@ -81,6 +99,8 @@ export interface CityDesignSceneController {
       CityDesignSceneMountOptions,
       | 'selectedObjectId'
       | 'selectedOsmWayId'
+      | 'selectedObjectIds'
+      | 'selectedOsmWayIds'
       | 'selectedChangeRequestId'
       | 'focusObjectId'
       | 'focusOsmWayId'
@@ -101,12 +121,13 @@ export interface CityDesignSceneController {
     >
   ) => void;
   updateInteractionMode: (
-    options: Pick<CityDesignSceneMountOptions, 'interactionMode' | 'readOnly'>
+    options: Pick<CityDesignSceneMountOptions, 'interactionMode' | 'readOnly' | 'measurementActive'>
   ) => void;
   updateHandlers: (
     options: Pick<
       CityDesignSceneMountOptions,
       | 'onPointerDown'
+      | 'onMeasurementPoint'
       | 'onPointerMove'
       | 'onPointerHover'
       | 'onObjectSelect'
@@ -118,6 +139,11 @@ export interface CityDesignSceneController {
   focusObject: (objectId: string | null) => void;
   focusOsmWay: (osmWayId: string | null) => void;
   flushPointerMove: () => void;
+  getGroundPointAtClient?: (
+    clientX: number,
+    clientY: number,
+    layer: CityDesignComparisonLayer
+  ) => CityDesignLocalPoint;
   dispose: () => void;
 }
 
@@ -293,6 +319,7 @@ function addPickPolygon(args: {
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = y;
   mesh.userData.pickTarget = true;
+  mesh.visible = false;
 
   if (objectId) setObjectId(mesh, objectId);
   if (osmWayId) setOsmWayId(mesh, osmWayId);
@@ -324,6 +351,7 @@ function addExtrudedPickVolume(args: {
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.02;
   mesh.userData.pickTarget = true;
+  mesh.visible = false;
 
   if (objectId) setObjectId(mesh, objectId);
   if (osmWayId) setOsmWayId(mesh, osmWayId);
@@ -335,6 +363,7 @@ function addFlatPolygon(args: {
   THREE: ThreeModule;
   group: Group;
   points: CityDesignLocalPoint[];
+  polygons?: MultiPolygon;
   color: string;
   opacity?: number;
   y?: number;
@@ -342,9 +371,30 @@ function addFlatPolygon(args: {
   osmWayId?: string;
 }) {
   const { THREE, group, points, color, opacity = 1, y = 0.02, objectId, osmWayId } = args;
-  if (points.length < 3) return null;
-
-  const geometry = new THREE.ShapeGeometry(makeShape(THREE, points));
+  if (points.length < 3 && !args.polygons) return null;
+  const traffic = group.userData.streetNetwork as StreetNetworkFeature | undefined;
+  const polygons =
+    args.polygons ??
+    (traffic?.junctions.length
+      ? polygonClipping.difference(streetPolygon(points), traffic.junctions)
+      : undefined);
+  if (polygons && !polygons.length) return null;
+  const shapes = polygons?.map(polygon => {
+    const shape = makeShape(
+      THREE,
+      polygon[0].map(([x, z]) => ({ x, z }))
+    );
+    polygon.slice(1).forEach(ring =>
+      shape.holes.push(
+        makeShape(
+          THREE,
+          ring.map(([x, z]) => ({ x, z }))
+        )
+      )
+    );
+    return shape;
+  });
+  const geometry = new THREE.ShapeGeometry(shapes ?? makeShape(THREE, points));
   const material = new THREE.MeshStandardMaterial({
     color,
     transparent: opacity < 1,
@@ -352,6 +402,7 @@ function addFlatPolygon(args: {
     roughness: 0.78,
     metalness: 0,
     side: THREE.DoubleSide,
+    forceSinglePass: true,
   });
   if (opacity < 1) {
     material.depthWrite = false;
@@ -363,7 +414,9 @@ function addFlatPolygon(args: {
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = y;
   mesh.receiveShadow = true;
-  mesh.userData.pickTarget = true;
+  // Visible surfaces also support picking; keep them distinct from invisible pick proxies
+  // so the render batches include asphalt, kerbs and polygon markings.
+  mesh.userData.pickSurface = true;
 
   setIdentities({ object: mesh, objectId, osmWayId });
 
@@ -377,10 +430,27 @@ function addCorridorMesh(args: {
   geometry: RenderableCorridorGeometry;
   color: string;
   opacity?: number;
-  y?: number;
+  y: number;
   objectId?: string;
   osmWayId?: string;
 }) {
+  const traffic = args.group.userData.streetNetwork as StreetNetworkFeature | undefined;
+  if (
+    traffic &&
+    !args.group.userData.streetSurfaceDrawn &&
+    Math.abs(args.geometry.width - traffic.geometry.width) < 0.01
+  ) {
+    args.group.userData.streetSurfaceDrawn = true;
+    const mesh = addFlatPolygon({ ...args, points: [], polygons: traffic.surface });
+    addFlatPolygon({
+      ...args,
+      points: [],
+      polygons: traffic.edges,
+      color: '#d7d2c3',
+      y: args.y + 0.025,
+    });
+    return mesh;
+  }
   return addFlatPolygon({
     THREE: args.THREE,
     group: args.group,
@@ -402,6 +472,7 @@ function addCorridorOutline(args: {
   objectId?: string;
   osmWayId?: string;
 }) {
+  if (args.group.userData.streetNetwork && args.color !== '#facc15') return;
   const { THREE, group, geometry, color, y = 0.16, objectId, osmWayId } = args;
   const vertices = geometry.polygon.map(point => toGroundVector(THREE, point, y));
   const lineGeometry = new THREE.BufferGeometry().setFromPoints(vertices);
@@ -821,25 +892,44 @@ function addStreetMarkings(args: {
   y?: number;
   objectId?: string;
   osmWayId?: string;
+  lanes?: Partial<StreetNetworkSource>;
 }) {
   const { THREE, group, geometry, color = '#f8fafc', y = 0.14, objectId, osmWayId } = args;
-  const dashLength = 2.4;
-  const gapLength = 3.2;
-  const width = 0.16;
-  const centerline = getCorridorCenterline(geometry);
-  const length = geometry.length;
-
-  if (length < dashLength || centerline.length < 2) return;
-
+  const traffic = group.userData.streetNetwork as StreetNetworkFeature | undefined;
+  const markings = traffic
+    ? getStreetMarkings(traffic)
+    : createStreetMarkings({ geometry, source: args.lanes ?? {} });
   const strips: { start: CityDesignLocalPoint; end: CityDesignLocalPoint; width: number }[] = [];
-  for (let offset = gapLength / 2; offset < length - 0.4; offset += dashLength + gapLength) {
-    const dashEndOffset = Math.min(offset + dashLength, length);
-    const start = getCenterlineSample(centerline, offset).point;
-    const end = getCenterlineSample(centerline, dashEndOffset).point;
-
-    strips.push({ start, end, width });
+  for (const marking of markings) {
+    if (marking.polygons) {
+      const mesh = addFlatPolygon({
+        THREE,
+        group,
+        points: [],
+        polygons: marking.polygons,
+        color,
+        opacity: 0.95,
+        y,
+        objectId,
+        osmWayId,
+      });
+      // Markings with empty clipped polygons are removed by createStreetMarkings.
+      const markingMesh = mesh as import('three').Mesh;
+      markingMesh.userData.decorative = true;
+      markingMesh.userData.pickTarget = false;
+      markingMesh.userData.streetMarking = marking.kind;
+      markingMesh.userData.laneOffset = marking.offset;
+    } else
+      for (let index = 1; index < marking.points.length; index++) {
+        strips.push({
+          start: marking.points[index - 1],
+          end: marking.points[index],
+          width: marking.width,
+        });
+      }
   }
-  addFlatStripInstances({ THREE, group, strips, color, opacity: 0.95, y, objectId, osmWayId });
+  if (strips.length)
+    addFlatStripInstances({ THREE, group, strips, color, opacity: 0.95, y, objectId, osmWayId });
 }
 
 function addFlatStripInstances(args: {
@@ -851,8 +941,30 @@ function addFlatStripInstances(args: {
   y: number;
   objectId?: string;
   osmWayId?: string;
+  navigationDetail?: boolean;
 }) {
   const { THREE, group, strips, color, opacity, y, objectId, osmWayId } = args;
+  const traffic = group.userData.streetNetwork as StreetNetworkFeature | undefined;
+  if (traffic?.junctions.length) {
+    strips.forEach(({ start, end, width }) => {
+      const mesh = addFlatPolygon({
+        THREE,
+        group,
+        points: createCorridorGeometry(start, end, width).polygon,
+        color,
+        opacity,
+        y,
+        objectId,
+        osmWayId,
+      });
+      if (mesh) {
+        mesh.userData.decorative = true;
+        mesh.userData.navigationDetail = Boolean(args.navigationDetail);
+        mesh.userData.pickTarget = false;
+      }
+    });
+    return;
+  }
   const mesh = new THREE.InstancedMesh(
     new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({
@@ -861,6 +973,7 @@ function addFlatStripInstances(args: {
       transparent: opacity < 1,
       depthWrite: opacity >= 1,
       side: THREE.DoubleSide,
+      forceSinglePass: true,
       polygonOffset: true,
       polygonOffsetFactor: -0.5,
       polygonOffsetUnits: -0.5,
@@ -881,6 +994,7 @@ function addFlatStripInstances(args: {
   mesh.computeBoundingSphere();
   setIdentities({ object: mesh, objectId, osmWayId });
   mesh.userData.decorative = true;
+  mesh.userData.navigationDetail = Boolean(args.navigationDetail);
   group.add(mesh);
 }
 
@@ -1150,6 +1264,7 @@ function addDeciduousTreeCanopy(args: {
       canopyRadius * offset.scale
     );
     setSceneShadows(canopy, true, true);
+    canopy.userData.navigationCanopy = true;
     root.add(canopy);
   });
 
@@ -1173,6 +1288,7 @@ function addDeciduousTreeCanopy(args: {
       offset.z * canopyRadius
     );
     setSceneShadows(fruitMesh, true, false);
+    fruitMesh.userData.navigationDetail = true;
     root.add(fruitMesh);
   });
 }
@@ -1198,6 +1314,7 @@ function addConiferTreeCanopy(args: {
     );
     cone.position.y = trunkHeight + canopyRadius * 0.25 + index * canopyRadius * 0.42;
     setSceneShadows(cone, true, true);
+    cone.userData.navigationCanopy = true;
     root.add(cone);
   });
 }
@@ -1221,6 +1338,7 @@ function addColumnarPoplarCanopy(args: {
     canopy.position.y = trunkHeight + canopyRadius * (0.55 + index * 0.48);
     canopy.scale.set(canopyRadius * 0.52, canopyRadius * 1.05, canopyRadius * 0.48);
     setSceneShadows(canopy, true, true);
+    canopy.userData.navigationCanopy = true;
     root.add(canopy);
   });
 }
@@ -1229,11 +1347,10 @@ function addPointObject(args: {
   THREE: ThreeModule;
   group: Group;
   object: CityDesignObject;
-  selected: boolean;
   point?: CityDesignLocalPoint;
   rotation?: number;
 }) {
-  const { THREE, group, object, selected } = args;
+  const { THREE, group, object } = args;
   const point =
     args.point ??
     (object.geometry as Extract<CityDesignObject['geometry'], { kind: 'point' }>).point;
@@ -1296,6 +1413,7 @@ function addPointObject(args: {
       const scale = 0.42 + seededUnit(index + point.x * 0.13 + point.z * 0.07) * 0.22;
       bush.scale.set(scale * 1.22, scale * 0.66, scale);
       setSceneShadows(bush, true, true);
+      bush.userData.navigationCanopy = true;
       root.add(bush);
     }
   } else if (
@@ -1529,16 +1647,6 @@ function addPointObject(args: {
     });
   }
 
-  if (selected) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1.12, 0.025, 8, 36),
-      new THREE.MeshBasicMaterial({ color: '#facc15' })
-    );
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.04;
-    root.add(ring);
-  }
-
   setObjectId(root, object.id);
   group.add(root);
   return root;
@@ -1548,10 +1656,9 @@ function addPlantRowObject(args: {
   THREE: ThreeModule;
   group: Group;
   object: CityDesignObject;
-  selected: boolean;
   animatedObjects?: Object3D[];
 }) {
-  const { THREE, group, object, selected, animatedObjects = [] } = args;
+  const { THREE, group, object, animatedObjects = [] } = args;
   const definition = getCityDesignObjectDefinition(object.type);
   const geometry = object.geometry as RenderableCorridorGeometry;
   const defaultSpacing = numberProperty(definition.defaultProperties.spacing, 2);
@@ -1563,7 +1670,7 @@ function addPlantRowObject(args: {
       THREE,
       group,
       object,
-      selected: false,
+
       point: sample.point,
       rotation: Math.atan2(sample.direction.x, sample.direction.z),
     });
@@ -1581,16 +1688,6 @@ function addPlantRowObject(args: {
     objectId: object.id,
     y: 0.22,
   });
-
-  if (selected) {
-    addCorridorOutline({
-      THREE,
-      group,
-      geometry,
-      color: '#facc15',
-      objectId: object.id,
-    });
-  }
 }
 
 function numberProperty(value: unknown, fallback: number) {
@@ -1865,10 +1962,9 @@ function addBuildingObject(args: {
   THREE: ThreeModule;
   group: Group;
   object: CityDesignObject;
-  selected: boolean;
   opacity?: number;
 }) {
-  const { THREE, group, object, selected, opacity = 1 } = args;
+  const { THREE, group, object, opacity = 1 } = args;
   if (object.geometry.kind !== 'corridor' && object.geometry.kind !== 'path_corridor') return;
   if (object.geometry.polygon.length < 3) return;
 
@@ -1921,17 +2017,6 @@ function addBuildingObject(args: {
   edges.position.y = 0.05;
   setObjectId(edges, object.id);
   group.add(edges);
-
-  if (selected) {
-    addCorridorOutline({
-      THREE,
-      group,
-      geometry: object.geometry,
-      color: '#facc15',
-      y: height + 0.22,
-      objectId: object.id,
-    });
-  }
 }
 
 function addExtrudedPolygon(args: {
@@ -2079,6 +2164,7 @@ function addBuildingFacadeDetails(args: {
     mesh.computeBoundingSphere();
     setIdentities({ object: mesh, objectId, osmWayId });
     mesh.userData.decorative = true;
+    mesh.userData.navigationDetail = true;
     group.add(mesh);
   }
 }
@@ -2164,6 +2250,7 @@ function addFlowerBedDetails(args: {
       flower.userData.baseY = flower.position.y;
       flower.userData.phase = sampleIndex * 0.37 + offsetIndex * 0.91;
       flower.userData.motion = 'flower';
+      flower.userData.navigationDetail = true;
 
       setIdentities({ object: flower, objectId, osmWayId });
       animatedObjects.push(flower);
@@ -2201,6 +2288,7 @@ function addGrassDetails(args: {
     color: '#ffffff',
     roughness: 0.95,
     side: THREE.DoubleSide,
+    forceSinglePass: true,
   });
   const bladeColors = ['#6f9e4f', '#8fba62', '#567f3f'].map(color => new THREE.Color(color));
   const mesh = new THREE.InstancedMesh(
@@ -2209,6 +2297,7 @@ function addGrassDetails(args: {
     samples.length * lateralOffsets.length * 2
   );
   mesh.userData.decorative = true;
+  mesh.userData.navigationDetail = true;
   setIdentities({ object: mesh, objectId, osmWayId });
   mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.count * 3), 3);
   const blade = new THREE.Object3D();
@@ -2298,6 +2387,7 @@ function addWaterSurface(args: {
       clearcoat: 0.85,
       clearcoatRoughness: 0.24,
       side: THREE.DoubleSide,
+      forceSinglePass: true,
     });
     surface.receiveShadow = true;
   }
@@ -2362,6 +2452,8 @@ function addWaterDetails(args: {
     wave.userData.baseY = wave.position.y;
     wave.userData.phase = index * 0.48;
     wave.userData.motion = 'waterRipple';
+    wave.userData.navigationDetail = true;
+    (wave.material as import('three').Material).forceSinglePass = true;
     wave.userData.baseOpacity = index % 3 === 2 ? 0.18 : 0.28;
     setIdentities({ object: wave, objectId, osmWayId });
     animatedObjects.push(wave);
@@ -2374,6 +2466,8 @@ function addWaterDetails(args: {
       glint.userData.baseY = glint.position.y;
       glint.userData.phase = index * 0.73;
       glint.userData.motion = 'waterGlint';
+      glint.userData.navigationDetail = true;
+      glint.material.forceSinglePass = true;
       glint.userData.baseOpacity = 0.14;
       setIdentities({ object: glint, objectId, osmWayId });
       animatedObjects.push(glint);
@@ -2459,7 +2553,17 @@ function addSurfaceTexture(args: {
     );
     return { start, end, width: seededRange(seed + 3, 0.025, 0.06) };
   });
-  addFlatStripInstances({ THREE, group, strips, color, opacity, y, objectId, osmWayId });
+  addFlatStripInstances({
+    THREE,
+    group,
+    strips,
+    color,
+    opacity,
+    y,
+    objectId,
+    osmWayId,
+    navigationDetail: true,
+  });
 }
 
 function addCorridorEdgeStrips(args: {
@@ -2473,6 +2577,9 @@ function addCorridorEdgeStrips(args: {
   osmWayId?: string;
 }) {
   const { THREE, group, geometry, color, opacity = 0.72, y = 0.14, objectId, osmWayId } = args;
+  const traffic = group.userData.streetNetwork as StreetNetworkFeature | undefined;
+  if (traffic?.source.kind === 'road' && Math.abs(traffic.geometry.width - geometry.width) < 0.01)
+    return;
   const centerline = getCorridorCenterline(geometry);
   if (centerline.length < 2) return;
 
@@ -2578,6 +2685,7 @@ function addSlopedCorridorMesh(args: {
   const mesh = new THREE.Mesh(bufferGeometry, material);
   mesh.receiveShadow = true;
   mesh.userData.pickTarget = true;
+  mesh.visible = false;
   group.add(mesh);
   return mesh;
 }
@@ -3304,7 +3412,6 @@ function addDesignObject(args: {
   THREE: ThreeModule;
   group: Group;
   object: CityDesignObject;
-  selected: boolean;
   showStreetMarkings: boolean;
   animatedObjects?: Object3D[];
   opacity?: number;
@@ -3314,7 +3421,6 @@ function addDesignObject(args: {
     THREE,
     group,
     object,
-    selected,
     showStreetMarkings,
     animatedObjects = [],
     opacity = 1,
@@ -3326,12 +3432,12 @@ function addDesignObject(args: {
     object.geometry.kind === 'path_corridor' &&
     (definition.renderKind === 'tree' || definition.renderKind === 'bush')
   ) {
-    addPlantRowObject({ THREE, group, object, selected, animatedObjects });
+    addPlantRowObject({ THREE, group, object, animatedObjects });
     return;
   }
 
   if (object.geometry.kind === 'point') {
-    const pointObject = addPointObject({ THREE, group, object, selected });
+    const pointObject = addPointObject({ THREE, group, object });
     if (definition.renderKind === 'tree' || definition.renderKind === 'bush') {
       const animatedPointObject = pointObject as Object3D;
       animatedPointObject.userData.baseY = animatedPointObject.position.y;
@@ -3344,7 +3450,7 @@ function addDesignObject(args: {
   }
 
   if (definition.renderKind === 'building') {
-    addBuildingObject({ THREE, group, object, selected, opacity });
+    addBuildingObject({ THREE, group, object, opacity });
     return;
   }
 
@@ -3370,9 +3476,9 @@ function addDesignObject(args: {
       THREE,
       group,
       points: object.geometry.points,
-      color: selected ? '#facc15' : '#27323a',
+      color: '#27323a',
       objectId: object.id,
-      y: y + (selected ? 0.18 : 0.08),
+      y: y + 0.08,
     });
     return;
   }
@@ -3457,16 +3563,6 @@ function addDesignObject(args: {
     });
 
     if (!flatSurfaceGeometry && hasElevationRampSegments(elevationRampSegments)) {
-      if (selected) {
-        addCorridorOutline({
-          THREE,
-          group,
-          geometry: object.geometry,
-          color: '#facc15',
-          objectId: object.id,
-          y: pickY + 0.18,
-        });
-      }
       return;
     }
 
@@ -3924,35 +4020,29 @@ function addDesignObject(args: {
         objectId: object.id,
         y: surfaceY + 0.088,
       });
-    } else if (showStreetMarkings && definition.renderKind === 'road') {
+    } else if (
+      showStreetMarkings &&
+      definition.renderKind === 'road' &&
+      object.properties.laneMarkings !== false
+    ) {
       addStreetMarkings({
         THREE,
         group,
         geometry: detailGeometry,
         objectId: object.id,
         y: surfaceY + 0.07,
+        lanes: streetLaneProperties(object.properties),
       });
     }
 
-    if (!selected) {
-      addCorridorOutline({
-        THREE,
-        group,
-        geometry: object.geometry,
-        color: '#27323a',
-        objectId: object.id,
-        y: pickY + 0.04,
-      });
-    } else {
-      addCorridorOutline({
-        THREE,
-        group,
-        geometry: object.geometry,
-        color: '#facc15',
-        objectId: object.id,
-        y: pickY + 0.18,
-      });
-    }
+    addCorridorOutline({
+      THREE,
+      group,
+      geometry: object.geometry,
+      color: '#27323a',
+      objectId: object.id,
+      y: pickY + 0.04,
+    });
   }
 }
 
@@ -4093,7 +4183,7 @@ function addChangeRequestOverlayObject(args: {
     THREE,
     group: overlayGroup,
     object,
-    selected: false,
+
     showStreetMarkings: true,
     opacity,
     y: selected ? 0.2 : 0.14,
@@ -4178,16 +4268,14 @@ function addOsmTreePoint(args: {
   group: Group;
   way: CityDesignOsmWay;
   point: CityDesignLocalPoint;
-  selected: boolean;
   animatedObjects: Object3D[];
   rotation?: number;
 }) {
-  const { THREE, group, way, point, selected, animatedObjects, rotation } = args;
+  const { THREE, group, way, point, animatedObjects, rotation } = args;
   const tree = addPointObject({
     THREE,
     group,
     object: createOsmTreeObject({ id: way.id, point, rotation }),
-    selected,
   });
   const animatedTree = tree as Object3D;
   clearObjectId(animatedTree);
@@ -4203,13 +4291,12 @@ function addOsmPointFeature(args: {
   group: Group;
   way: CityDesignOsmWay;
   point: CityDesignLocalPoint;
-  selected: boolean;
 }) {
-  const { THREE, group, way, point, selected } = args;
+  const { THREE, group, way, point } = args;
   // Every valid OSM kind receives a mapped object type during normalization.
   const objectType = way.mappedObjectType as CityDesignObjectType;
   const object = createOsmPointObject({ id: way.id, type: objectType, point });
-  const pointObject = addPointObject({ THREE, group, object, selected });
+  const pointObject = addPointObject({ THREE, group, object });
   const renderedPointObject = pointObject as Object3D;
   clearObjectId(renderedPointObject);
   setOsmWayId(renderedPointObject, way.id);
@@ -4220,10 +4307,9 @@ function addOsmTreeRow(args: {
   group: Group;
   way: CityDesignOsmWay;
   localPoints: CityDesignLocalPoint[];
-  selected: boolean;
   animatedObjects: Object3D[];
 }) {
-  const { THREE, group, way, localPoints, selected, animatedObjects } = args;
+  const { THREE, group, way, localPoints, animatedObjects } = args;
   const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.8);
 
   const samples = getCorridorSamples(geometry, 6).slice(0, 90);
@@ -4233,7 +4319,7 @@ function addOsmTreeRow(args: {
       group,
       way,
       point: sample.point,
-      selected: false,
+
       animatedObjects,
       rotation: Math.atan2(sample.direction.x, sample.direction.z),
     });
@@ -4246,16 +4332,6 @@ function addOsmTreeRow(args: {
     osmWayId: way.id,
     y: 0.22,
   });
-
-  if (selected) {
-    addCorridorOutline({
-      THREE,
-      group,
-      geometry,
-      color: '#facc15',
-      y: 0.24,
-    });
-  }
 }
 
 const cityDesignOsmRenderPriorities: Record<CityDesignOsmFeatureKind, number> = {
@@ -4372,25 +4448,38 @@ function prepareOsmRenderContext(design: CityDesignStateV1) {
     segments.push(segment);
     elevationRampsByFeatureId.set(segment.sourceId, segments);
   }
-  return { features, localPointsById, elevationRampsByFeatureId };
+  const network = getOsmStreetNetwork(design, features);
+  return { features, localPointsById, elevationRampsByFeatureId, network };
 }
 
 function addOsmWays(args: {
   THREE: ThreeModule;
   group: Group;
   design: CityDesignStateV1;
-  selectedOsmWayId: string | null;
   animatedObjects: Object3D[];
   renderContext: ReturnType<typeof prepareOsmRenderContext>;
 }) {
-  const { THREE, group, design, selectedOsmWayId, animatedObjects } = args;
+  const { THREE, group, design, animatedObjects } = args;
   const showStreetMarkings = design.showStreetMarkings ?? true;
   const context = args.renderContext;
   const { elevationRampsByFeatureId } = context;
 
   context.features.forEach(way => {
     const localPoints = context.localPointsById.get(way.id) as CityDesignLocalPoint[];
-    const isSelected = way.id === selectedOsmWayId;
+    const traffic = context.network.features.get(way.id);
+    if (
+      traffic &&
+      !traffic.source.polygon &&
+      !isElevatedOsmStructure(way) &&
+      way.level !== 'tunnel' &&
+      way.subkind !== 'steps'
+    ) {
+      group.userData.streetNetwork = traffic;
+    }
+    const corridorGeometry = (points: CityDesignLocalPoint[], width: number) =>
+      traffic && Math.abs(traffic.geometry.width - width) < 0.01
+        ? traffic.geometry
+        : createOsmCorridorGeometry(points, width);
 
     if (way.kind === 'tree') {
       addOsmTreePoint({
@@ -4398,14 +4487,14 @@ function addOsmWays(args: {
         group,
         way,
         point: localPoints[0] as CityDesignLocalPoint,
-        selected: isSelected,
+
         animatedObjects,
       });
       return;
     }
 
     if (way.kind === 'tree_row') {
-      addOsmTreeRow({ THREE, group, way, localPoints, selected: isSelected, animatedObjects });
+      addOsmTreeRow({ THREE, group, way, localPoints, animatedObjects });
       return;
     }
 
@@ -4415,13 +4504,12 @@ function addOsmWays(args: {
         group,
         way,
         point: localPoints[0] as CityDesignLocalPoint,
-        selected: isSelected,
       });
       return;
     }
 
     if (way.kind === 'rail') {
-      const geometry = createOsmCorridorGeometry(
+      const geometry = corridorGeometry(
         localPoints,
         way.widthMeters ?? 1.6
       ) as RenderableCorridorGeometry;
@@ -4472,16 +4560,7 @@ function addOsmWays(args: {
         osmWayId: way.id,
         y: surfaceY + 0.22,
       });
-      if (isSelected) {
-        addCorridorOutline({
-          THREE,
-          group,
-          geometry,
-          color: '#facc15',
-          y: surfaceY + 0.18,
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
@@ -4490,7 +4569,7 @@ function addOsmWays(args: {
       const geometry =
         way.geometryKind === 'polygon'
           ? { polygon: localPoints, width: way.widthMeters ?? 0.7, length: 0 }
-          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 0.5);
+          : corridorGeometry(localPoints, way.widthMeters ?? 0.5);
       if (geometry.polygon.length < 3) {
         return;
       }
@@ -4510,15 +4589,7 @@ function addOsmWays(args: {
         osmWayId: way.id,
       });
       addPickPolygon({ THREE, group, points: geometry.polygon, osmWayId: way.id, y: 1.35 });
-      if (isSelected) {
-        addPolygonOutline({
-          THREE,
-          group,
-          points: geometry.polygon,
-          color: '#facc15',
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
@@ -4531,7 +4602,7 @@ function addOsmWays(args: {
       const polygon =
         way.geometryKind === 'polygon'
           ? localPoints
-          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2).polygon;
+          : corridorGeometry(localPoints, way.widthMeters ?? 1.2).polygon;
       if (polygon.length < 3) {
         return;
       }
@@ -4548,7 +4619,7 @@ function addOsmWays(args: {
         addCrossingMarkings({
           THREE,
           group,
-          geometry: createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2),
+          geometry: corridorGeometry(localPoints, way.widthMeters ?? 1.2),
           osmWayId: way.id,
           y: 0.18,
         });
@@ -4557,7 +4628,7 @@ function addOsmWays(args: {
         addSurfaceTexture({
           THREE,
           group,
-          geometry: createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2),
+          geometry: corridorGeometry(localPoints, way.widthMeters ?? 1.2),
           osmWayId: way.id,
           color: '#f59e0b',
           opacity: 0.42,
@@ -4565,8 +4636,6 @@ function addOsmWays(args: {
         });
       }
       addPickPolygon({ THREE, group, points: polygon, osmWayId: way.id, y: 0.28 });
-      if (isSelected)
-        addPolygonOutline({ THREE, group, points: polygon, color: '#facc15', osmWayId: way.id });
       return;
     }
 
@@ -4619,19 +4688,11 @@ function addOsmWays(args: {
         });
       }
       addPickPolygon({ THREE, group, points: localPoints, osmWayId: way.id, y: 0.18 });
-      if (isSelected)
-        addPolygonOutline({
-          THREE,
-          group,
-          points: localPoints,
-          color: '#facc15',
-          osmWayId: way.id,
-        });
       return;
     }
 
     if (way.kind === 'road') {
-      const geometry = createOsmCorridorGeometry(
+      const geometry = corridorGeometry(
         localPoints,
         way.widthMeters ?? 4.8
       ) as RenderableCorridorGeometry;
@@ -4667,7 +4728,7 @@ function addOsmWays(args: {
           group,
           geometry: flatGeometry,
           color: way.renderColor ?? (isConstruction ? '#b7791f' : isTrack ? '#8a6a42' : '#4b545a'),
-          opacity: way.level === 'tunnel' ? 0.42 : isConstruction ? 0.62 : 0.8,
+          opacity: way.level === 'tunnel' ? 0.42 : 1,
           y: surfaceY,
           osmWayId: way.id,
         });
@@ -4698,25 +4759,23 @@ function addOsmWays(args: {
         osmWayId: way.id,
         y: surfaceY + 0.13,
       });
-      if (showStreetMarkings && flatGeometry) {
+      if (
+        showStreetMarkings &&
+        flatGeometry &&
+        way.tags?.lane_markings !== 'no' &&
+        !isConstruction &&
+        !isTrack
+      ) {
         addStreetMarkings({
           THREE,
           group,
           geometry: flatGeometry,
           y: surfaceY + 0.046,
           osmWayId: way.id,
+          lanes: streetLaneProperties(getCityDesignOsmSemanticMapping(way).properties),
         });
       }
-      if (isSelected) {
-        addCorridorOutline({
-          THREE,
-          group,
-          geometry,
-          color: '#facc15',
-          y: surfaceY + 0.16,
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
@@ -4750,19 +4809,11 @@ function addOsmWays(args: {
           osmWayId: way.id,
           y: 0.18,
         });
-        if (isSelected) {
-          addPolygonOutline({
-            THREE,
-            group,
-            points: localPoints,
-            color: '#facc15',
-            osmWayId: way.id,
-          });
-        }
+
         return;
       }
 
-      const geometry = createOsmCorridorGeometry(
+      const geometry = corridorGeometry(
         localPoints,
         way.widthMeters ?? 2.2
       ) as RenderableCorridorGeometry;
@@ -4814,7 +4865,7 @@ function addOsmWays(args: {
               : way.subkind === 'bridleway'
                 ? '#9b7a55'
                 : '#b9af9f',
-          opacity: isParking ? 0.74 : 0.86,
+          opacity: 1,
           y: surfaceY,
           osmWayId: way.id,
         });
@@ -4871,16 +4922,7 @@ function addOsmWays(args: {
         osmWayId: way.id,
         y: Math.max(surfaceY, getCityDesignOsmFeatureRenderY(way, surfaceY)) + 0.18,
       });
-      if (isSelected) {
-        addCorridorOutline({
-          THREE,
-          group,
-          geometry,
-          color: '#facc15',
-          y: Math.max(surfaceY, getCityDesignOsmFeatureRenderY(way, surfaceY)) + 0.2,
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
@@ -4920,38 +4962,12 @@ function addOsmWays(args: {
         osmWayId: way.id,
         y: height + 0.22,
       });
-      if (isSelected) {
-        addExtrudedPolygon({
-          THREE,
-          group,
-          points: localPoints,
-          height: height + 0.08,
-          color: '#facc15',
-          opacity: 0.16,
-          osmWayId: way.id,
-        });
-        addPolygonOutline({
-          THREE,
-          group,
-          points: localPoints,
-          color: '#facc15',
-          y: 0.16,
-          osmWayId: way.id,
-        });
-        addPolygonOutline({
-          THREE,
-          group,
-          points: localPoints,
-          color: '#facc15',
-          y: height + 0.24,
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
     if (way.kind === 'water' && way.geometryKind === 'line') {
-      const geometry = createOsmCorridorGeometry(
+      const geometry = corridorGeometry(
         localPoints,
         way.widthMeters ?? 4
       ) as RenderableCorridorGeometry;
@@ -4980,16 +4996,7 @@ function addOsmWays(args: {
         osmWayId: way.id,
         y: waterY + 0.12,
       });
-      if (isSelected) {
-        addCorridorOutline({
-          THREE,
-          group,
-          geometry,
-          color: '#facc15',
-          y: waterY + 0.18,
-          osmWayId: way.id,
-        });
-      }
+
       return;
     }
 
@@ -5100,15 +5107,6 @@ function addOsmWays(args: {
       osmWayId: way.id,
       y: 0.16,
     });
-    if (isSelected) {
-      addPolygonOutline({
-        THREE,
-        group,
-        points: localPoints,
-        color: '#facc15',
-        osmWayId: way.id,
-      });
-    }
   });
 }
 
@@ -5134,6 +5132,7 @@ function addRotateHandle(args: { THREE: ThreeModule; group: Group; object: CityD
     new THREE.SphereGeometry(0.72, 12, 8),
     new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.001 })
   );
+  pickSphere.visible = false;
   handle.add(ring, pickSphere);
   setRotateHandleObjectId(handle, object.id);
 
@@ -5217,7 +5216,8 @@ export async function mountCityDesignScene(
   const noMouseAction = -1 as ThreeMouseAction;
   const noTouchAction = -1 as ThreeTouchAction;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  const fullPixelRatio = Math.min(window.devicePixelRatio, 1.5);
+  renderer.setPixelRatio(fullPixelRatio);
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.setClearColor(0x06110d, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -5229,6 +5229,9 @@ export async function mountCityDesignScene(
   renderer.shadowMap.needsUpdate = true;
 
   const scene = new THREE.Scene();
+  // Structural changes update world matrices explicitly; navigation updates the camera only.
+  scene.matrixWorldAutoUpdate = false;
+  let staticMatricesDirty = true;
   scene.fog = new THREE.Fog(0x14211a, 110, 245);
 
   const camera = new THREE.PerspectiveCamera(
@@ -5264,12 +5267,18 @@ export async function mountCityDesignScene(
     );
   }
   controls.mouseButtons = {
-    LEFT: options.interactionMode === 'camera' ? THREE.MOUSE.PAN : noMouseAction,
+    LEFT:
+      options.interactionMode === 'camera' && !options.measurementActive
+        ? THREE.MOUSE.PAN
+        : noMouseAction,
     MIDDLE: THREE.MOUSE.PAN,
     RIGHT: THREE.MOUSE.ROTATE,
   };
   controls.touches = {
-    ONE: options.interactionMode === 'camera' ? THREE.TOUCH.PAN : noTouchAction,
+    ONE:
+      options.interactionMode === 'camera' && !options.measurementActive
+        ? THREE.TOUCH.PAN
+        : noTouchAction,
     TWO: THREE.TOUCH.DOLLY_PAN,
   };
   controls.update();
@@ -5324,16 +5333,32 @@ export async function mountCityDesignScene(
     selectionLayerGroup,
     placementLayerGroup,
   } = createSceneGroups(THREE, scene);
+  const multiDraw = Boolean(renderer.extensions?.has('WEBGL_multi_draw'));
+  const originalBatches = createCityDesignRenderBatches(THREE, originalLayerGroup, multiDraw);
+  const designBatches = createCityDesignRenderBatches(THREE, designObjectLayerGroup, multiDraw);
+  const originalHighlights = new THREE.Group();
+  const designHighlights = new THREE.Group();
+  originalGroup.add(originalHighlights);
+  designGroup.add(designHighlights);
+  const dynamicLayers = [
+    originalHighlights,
+    designHighlights,
+    selectionLayerGroup,
+    placementLayerGroup,
+    changeRequestLayerGroup,
+  ];
   const animatedObjects: Object3D[] = [];
   const originalAnimatedObjects: Object3D[] = [];
   const designAnimatedObjects: Object3D[] = [];
   interface SceneEntry<T> {
     source: T;
-    selected: boolean;
     group: Group;
     animatedObjects: Object3D[];
     pickTargets: Object3D[];
     rampSignature?: string;
+    network?: StreetNetworkFeature;
+    sourceSignature?: string;
+    networkSignature?: string;
   }
   const designEntries = new Map<string, SceneEntry<CityDesignObject>>();
   const originalEntries = new Map<string, SceneEntry<CityDesignOsmWay>>();
@@ -5379,6 +5404,7 @@ export async function mountCityDesignScene(
       designGroup.position.x !== nextDesignX
     ) {
       renderer.shadowMap.needsUpdate = true;
+      staticMatricesDirty = true;
     }
     originalGroup.visible = layers.showOriginal;
     designGroup.visible = layers.showDesign;
@@ -5402,7 +5428,8 @@ export async function mountCityDesignScene(
   function collectPickTargets(group: Group, identity: { objectId?: string; osmWayId?: string }) {
     const targets: Object3D[] = [];
     group.traverse(child => {
-      if (child.userData.pickTarget && !child.userData.decorative) targets.push(child);
+      if ((child.userData.pickTarget || child.userData.pickSurface) && !child.userData.decorative)
+        targets.push(child);
     });
     if (targets.length === 0) {
       const bounds = new THREE.Box3().setFromObject(group);
@@ -5431,7 +5458,7 @@ export async function mountCityDesignScene(
     layer: Group
   ) {
     if (!layer.visible) return [];
-    layer.updateWorldMatrix(true, true);
+    if (staticMatricesDirty) layer.updateWorldMatrix(true, true, true);
     return [...entries.values()].flatMap(entry => entry.pickTargets);
   }
 
@@ -5441,6 +5468,7 @@ export async function mountCityDesignScene(
     const visibleIds = new Set(visibleFeatures.map(feature => feature.id));
     for (const [id, entry] of originalEntries) {
       if (force || !visibleIds.has(id)) {
+        originalBatches.remove(id);
         originalLayerGroup.remove(entry.group);
         disposeObjectTree(entry.group);
         originalEntries.delete(id);
@@ -5449,38 +5477,44 @@ export async function mountCityDesignScene(
     }
     originalAnimatedObjects.length = 0;
     for (const feature of visibleFeatures) {
-      const selected = feature.id === options.selectedOsmWayId;
+      // Normalization creates fresh objects even for unchanged OSM features.
+      const sourceSignature = JSON.stringify(feature);
+      const networkSignature = JSON.stringify(osmRenderContext.network.features.get(feature.id));
       const rampSignature = JSON.stringify(
         osmRenderContext.elevationRampsByFeatureId.get(feature.id) ?? []
       );
       let entry = originalEntries.get(feature.id);
       if (
         entry &&
-        entry.source === feature &&
-        entry.selected === selected &&
-        entry.rampSignature === rampSignature
+        entry.sourceSignature === sourceSignature &&
+        entry.rampSignature === rampSignature &&
+        entry.networkSignature === networkSignature
       ) {
+        entry.source = feature;
+        entry.network = osmRenderContext.network.features.get(feature.id);
         originalAnimatedObjects.push(...entry.animatedObjects);
         continue;
       }
       if (entry) {
+        originalBatches.remove(feature.id);
         originalLayerGroup.remove(entry.group);
         disposeObjectTree(entry.group);
       }
       entry = {
         source: feature,
-        selected,
         group: new THREE.Group(),
         animatedObjects: [],
         pickTargets: [],
         rampSignature,
+        network: osmRenderContext.network.features.get(feature.id),
+        sourceSignature,
+        networkSignature,
       };
       entry.group.name = `osm:${feature.id}`;
       addOsmWays({
         THREE,
         group: entry.group,
         design: options.design,
-        selectedOsmWayId: options.selectedOsmWayId,
         animatedObjects: entry.animatedObjects,
         renderContext: { ...osmRenderContext, features: [feature] },
       });
@@ -5500,7 +5534,7 @@ export async function mountCityDesignScene(
         const isSelection = styled.color?.getHexString() === 'facc15';
         if (!isSelection && styled.color) styled.color.lerp(neutral, 0.55);
         if (!isSelection && styled.emissive) styled.emissive.multiplyScalar(0.35);
-        if (!isSelection) {
+        if (!isSelection && layers.showOverlay) {
           styled.opacity = Math.min(styled.opacity, 0.75);
           styled.transparent = true;
           styled.depthWrite = false;
@@ -5508,19 +5542,23 @@ export async function mountCityDesignScene(
       });
       entry.pickTargets = collectPickTargets(entry.group, { osmWayId: feature.id });
       originalLayerGroup.add(entry.group);
+      originalBatches.add(feature.id, entry.group);
       originalEntries.set(feature.id, entry);
       originalAnimatedObjects.push(...entry.animatedObjects);
       renderer.shadowMap.needsUpdate = true;
     }
     syncAnimatedObjects();
+    staticMatricesDirty = true;
     requestRender();
   }
 
   function rebuildDesignLayer(force = false) {
     const visibleObjects = layers.showDesign ? getVisibleDesignObjects() : [];
+    const network = getDesignStreetNetwork(visibleObjects);
     const visibleIds = new Set(visibleObjects.map(object => object.id));
     for (const [id, entry] of designEntries) {
       if (force || !visibleIds.has(id)) {
+        designBatches.remove(id);
         designObjectLayerGroup.remove(entry.group);
         disposeObjectTree(entry.group);
         designEntries.delete(id);
@@ -5530,36 +5568,50 @@ export async function mountCityDesignScene(
     designAnimatedObjects.length = 0;
     const designOpacity = layers.showOverlay ? 0.72 : 1;
     for (const object of visibleObjects) {
-      const selected = object.id === options.selectedObjectId;
+      const networkSignature = JSON.stringify(network.features.get(object.id));
       let entry = designEntries.get(object.id);
       if (
         entry &&
         entry.source.type === object.type &&
         entry.source.geometry === object.geometry &&
         entry.source.properties === object.properties &&
-        entry.selected === selected
+        entry.networkSignature === networkSignature
       ) {
         entry.source = object;
+        entry.network = network.features.get(object.id);
         designAnimatedObjects.push(...entry.animatedObjects);
         continue;
       }
       if (entry) {
+        designBatches.remove(object.id);
         designObjectLayerGroup.remove(entry.group);
         disposeObjectTree(entry.group);
       }
       entry = {
         source: object,
-        selected,
         group: new THREE.Group(),
         animatedObjects: [],
         pickTargets: [],
+        networkSignature,
       };
+      entry.network = network.features.get(object.id);
+      if (
+        entry.network &&
+        !entry.network.source.polygon &&
+        getDesignObjectSurfaceY(object, 0) < 0.5 &&
+        object.properties.level !== 'tunnel'
+      ) {
+        entry.group.userData.streetNetwork = entry.network;
+      }
       entry.group.name = `design:${object.id}`;
       addDesignObject({
         THREE,
         group: entry.group,
-        object,
-        selected,
+        object:
+          entry.network && !entry.network.source.polygon
+            ? { ...object, geometry: entry.network.geometry }
+            : object,
+
         showStreetMarkings: options.design.showStreetMarkings ?? true,
         animatedObjects: entry.animatedObjects,
         opacity: designOpacity,
@@ -5567,11 +5619,13 @@ export async function mountCityDesignScene(
       });
       entry.pickTargets = collectPickTargets(entry.group, { objectId: object.id });
       designObjectLayerGroup.add(entry.group);
+      designBatches.add(object.id, entry.group);
       designEntries.set(object.id, entry);
       designAnimatedObjects.push(...entry.animatedObjects);
       renderer.shadowMap.needsUpdate = true;
     }
     syncAnimatedObjects();
+    staticMatricesDirty = true;
     requestRender();
   }
 
@@ -5593,6 +5647,77 @@ export async function mountCityDesignScene(
   }
 
   function rebuildSelectionLayer() {
+    clearSceneGroup(originalHighlights);
+    clearSceneGroup(designHighlights);
+    const objectIds = new Set([options.selectedObjectId, ...(options.selectedObjectIds ?? [])]);
+    const osmIds = new Set([options.selectedOsmWayId, ...(options.selectedOsmWayIds ?? [])]);
+    const addPointHighlight = (
+      group: Group,
+      point: CityDesignLocalPoint,
+      identity: { objectId?: string; osmWayId?: string }
+    ) => {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.12, 0.025, 8, 36),
+        new THREE.MeshBasicMaterial({ color: '#facc15' })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(point.x, 0.04, point.z);
+      setIdentities({ object: ring, ...identity });
+      group.add(ring);
+    };
+    for (const [id, entry] of designEntries) {
+      if (!objectIds.has(id)) continue;
+      const object = entry.source;
+      if (object.geometry.kind === 'point') {
+        addPointHighlight(designHighlights, object.geometry.point, { objectId: id });
+      } else {
+        const points =
+          object.geometry.kind === 'polygon'
+            ? object.geometry.points
+            : (entry.network?.geometry ?? object.geometry).polygon;
+        addPolygonOutline({
+          THREE,
+          group: designHighlights,
+          points,
+          color: '#facc15',
+          objectId: id,
+          y:
+            getCityDesignObjectDefinition(object.type).renderKind === 'building'
+              ? numberProperty(object.properties.height, 9) + 0.22
+              : getDesignObjectSurfaceY(object, 0.05) + 0.18,
+        });
+      }
+    }
+    for (const [id, entry] of originalEntries) {
+      if (!osmIds.has(id)) continue;
+      const way = entry.source;
+      // Normalization and the prepared context guarantee points for every visible feature.
+      const localPoints = osmRenderContext.localPointsById.get(id) as CityDesignLocalPoint[];
+      if (way.geometryKind === 'point') {
+        addPointHighlight(originalHighlights, localPoints[0] as CityDesignLocalPoint, {
+          osmWayId: id,
+        });
+      } else {
+        const points =
+          way.geometryKind === 'polygon'
+            ? localPoints
+            : (
+                entry.network?.geometry ??
+                createOsmCorridorGeometry(localPoints, way.widthMeters ?? 3)
+              ).polygon;
+        addPolygonOutline({
+          THREE,
+          group: originalHighlights,
+          points,
+          color: '#facc15',
+          osmWayId: id,
+          y:
+            way.kind === 'building'
+              ? Math.max(way.height ?? 8, 3) + 0.22
+              : getCityDesignOsmFeatureRenderY(way, 0.07) + 0.18,
+        });
+      }
+    }
     clearSceneGroup(selectionLayerGroup);
     if (!layers.showDesign || options.interactionMode !== 'select' || options.readOnly) {
       requestRender();
@@ -5636,6 +5761,7 @@ export async function mountCityDesignScene(
             opacity: 0.45,
             depthWrite: false,
             side: THREE.DoubleSide,
+            forceSinglePass: true,
           })
         );
         previewOutline = new THREE.LineLoop(
@@ -5786,7 +5912,7 @@ export async function mountCityDesignScene(
     overrides: { isObjectRotateHandle?: boolean } = {}
   ) {
     return getCityDesignPointerAction({
-      mode: options.interactionMode,
+      mode: options.measurementActive ? 'select' : options.interactionMode,
       button: event.button,
       pointerType: event.pointerType,
       isSpacePressed,
@@ -5801,7 +5927,7 @@ export async function mountCityDesignScene(
     controls.mouseButtons.LEFT =
       action === 'move' || action === 'turn'
         ? THREE.MOUSE.PAN
-        : options.interactionMode === 'camera'
+        : options.interactionMode === 'camera' && !options.measurementActive
           ? THREE.MOUSE.PAN
           : noMouseAction;
   }
@@ -5882,6 +6008,7 @@ export async function mountCityDesignScene(
     const rect = canvas.getBoundingClientRect();
     pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    camera.updateWorldMatrix(true, false);
     raycaster.setFromCamera(pointer, camera);
     raycaster.ray.intersectPlane(groundPlane, pointerPoint);
     return {
@@ -5950,11 +6077,17 @@ export async function mountCityDesignScene(
 
   function handleSelectPointerDown(event: PointerEvent) {
     const { point, designIntersections } = getPointerHitContext(event);
+    if (options.measurementActive) {
+      const layer = getPointerLayer(point);
+      options.onMeasurementPoint?.(toLayerPoint(point, layer), layer);
+      return;
+    }
 
     const hitObjectId = getIntersectionUserDataValue(designIntersections, 'objectId');
 
     if (hitObjectId) {
-      options.onObjectSelect(hitObjectId);
+      if (event.ctrlKey || event.metaKey) options.onObjectSelect(hitObjectId, true);
+      else options.onObjectSelect(hitObjectId);
       return;
     }
 
@@ -5971,7 +6104,8 @@ export async function mountCityDesignScene(
       );
       const osmWayId = getIntersectionUserDataValue(originalIntersections, 'osmWayId');
       if (osmWayId) {
-        options.onOsmWaySelect(osmWayId);
+        if (event.ctrlKey || event.metaKey) options.onOsmWaySelect(osmWayId, true);
+        else options.onOsmWaySelect(osmWayId);
       } else {
         options.onObjectSelect(null);
         options.onOsmWaySelect(null);
@@ -5986,7 +6120,8 @@ export async function mountCityDesignScene(
     const osmWayId = getIntersectionUserDataValue(originalIntersections, 'osmWayId');
 
     if (osmWayId) {
-      options.onOsmWaySelect(osmWayId);
+      if (event.ctrlKey || event.metaKey) options.onOsmWaySelect(osmWayId, true);
+      else options.onOsmWaySelect(osmWayId);
       return;
     }
 
@@ -6010,7 +6145,9 @@ export async function mountCityDesignScene(
   function handlePointerDown(event: PointerEvent) {
     flushPointerMove();
     const rotateObjectId =
-      options.interactionMode === 'select' ? getRotateObjectIdAtPointer(event) : undefined;
+      options.interactionMode === 'select' && !options.measurementActive
+        ? getRotateObjectIdAtPointer(event)
+        : undefined;
     const action = getPointerAction(event, {
       isObjectRotateHandle: Boolean(rotateObjectId),
     });
@@ -6301,7 +6438,16 @@ export async function mountCityDesignScene(
     });
   }
 
-  const renderScheduler = createCityDesignRenderScheduler(() => {
+  const navigationQuality = createCityDesignNavigationQuality((moving, pixelRatio) => {
+    originalBatches.setMoving(moving);
+    designBatches.setMoving(moving);
+    renderer.setPixelRatio(pixelRatio);
+    resize();
+    requestRender();
+  }, fullPixelRatio);
+  let cameraChangedSinceFrame = false;
+  let controlsNeedUpdate = false;
+  const renderScheduler = createCityDesignRenderScheduler(timestamp => {
     resize();
     flushPointerMove();
     let isFocusAnimationActive = false;
@@ -6326,15 +6472,28 @@ export async function mountCityDesignScene(
       isFocusAnimationActive = progress < 1;
       if (!isFocusAnimationActive) {
         focusAnimation = null;
-        renderer.shadowMap.needsUpdate = true;
       }
     }
 
-    if (isFocusAnimationActive) {
-      updateAmbientAnimations(performance.now() / 1000);
+    // Once damping has settled, a detail/preview/restore frame must not advance
+    // the remaining sub-pixel damping and restart navigation.
+    const controlsChanged = controlsNeedUpdate || activeFocusAnimation ? controls.update() : false;
+    controlsNeedUpdate = controlsChanged;
+    // OrbitControls filters negligible damping changes. Rounded pose signatures can
+    // cross a rounding boundary on the restore frame and incorrectly restart low quality.
+    if (cameraChangedSinceFrame || controlsChanged || activeFocusAnimation)
+      navigationQuality.cameraChanged();
+    cameraChangedSinceFrame = false;
+    navigationQuality.setSettling(controlsChanged || isFocusAnimationActive);
+    navigationQuality.recordFrame(timestamp);
+    if (!navigationQuality.moving) updateAmbientAnimations(performance.now() / 1000);
+    originalBatches.flush();
+    designBatches.flush();
+    if (staticMatricesDirty) {
+      scene.updateMatrixWorld(true);
+      staticMatricesDirty = false;
     }
-
-    const controlsChanged = controls.update();
+    for (const layer of dynamicLayers) layer.updateWorldMatrix(true, true);
     renderer.render(scene, camera);
     emitCameraPoseChangeIfNeeded();
 
@@ -6344,8 +6503,14 @@ export async function mountCityDesignScene(
   });
 
   requestRender = () => renderScheduler.requestRender();
-  const handleControlsChange = () => requestRender();
+  const handleControlsChange = () => {
+    cameraChangedSinceFrame = true;
+    controlsNeedUpdate = true;
+    requestRender();
+  };
   const handleWindowResize = () => requestRender();
+  const handleControlsStart = () => navigationQuality.setGesture(true);
+  const handleControlsEnd = () => navigationQuality.setGesture(false);
   const resizeObserver =
     typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => requestRender());
 
@@ -6359,6 +6524,10 @@ export async function mountCityDesignScene(
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
   controls.addEventListener('change', handleControlsChange);
+  controls.addEventListener('start', handleControlsStart);
+  controls.addEventListener('end', handleControlsEnd);
+  window.addEventListener('blur', handleControlsEnd);
+  canvas.addEventListener('pointercancel', handleControlsEnd);
   resizeObserver?.observe(canvas);
   window.addEventListener('resize', handleWindowResize);
   window.addEventListener('blur', handleWindowBlur);
@@ -6368,8 +6537,15 @@ export async function mountCityDesignScene(
     pendingPointerMove = null;
     if (pointerMoveFrame != null) window.cancelAnimationFrame(pointerMoveFrame);
     options.onPointerHover(null, 'design');
+    navigationQuality.dispose();
     renderScheduler.dispose();
+    originalBatches.dispose();
+    designBatches.dispose();
     controls.removeEventListener('change', handleControlsChange);
+    controls.removeEventListener('start', handleControlsStart);
+    controls.removeEventListener('end', handleControlsEnd);
+    window.removeEventListener('blur', handleControlsEnd);
+    canvas.removeEventListener('pointercancel', handleControlsEnd);
     resizeObserver?.disconnect();
     window.removeEventListener('resize', handleWindowResize);
     window.removeEventListener('blur', handleWindowBlur);
@@ -6418,12 +6594,6 @@ export async function mountCityDesignScene(
     updateSelection(nextOptions) {
       const previousOptions = options;
       mergeSceneOptions(nextOptions);
-      if (previousOptions.selectedOsmWayId !== options.selectedOsmWayId) {
-        rebuildOriginalLayer();
-      }
-      if (previousOptions.selectedObjectId !== options.selectedObjectId) {
-        rebuildDesignLayer();
-      }
       if (previousOptions.selectedChangeRequestId !== options.selectedChangeRequestId) {
         rebuildChangeRequestLayer();
       }
@@ -6460,6 +6630,9 @@ export async function mountCityDesignScene(
       startFocusAnimation(null, osmWayId);
     },
     flushPointerMove,
+    getGroundPointAtClient(clientX, clientY, layer) {
+      return toLayerPoint(updatePointer({ clientX, clientY } as PointerEvent), layer);
+    },
     dispose,
   };
 }

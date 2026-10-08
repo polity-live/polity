@@ -883,3 +883,47 @@ describe('cityDesignReducer', () => {
     expect(parsed?.hiddenOsmFeatureIds).toContain('legacy-road-1');
   });
 });
+
+it('persists committed lengths and widths while rejecting invalid dimensions', () => {
+  const object = createPathCorridorCityDesignObject({
+    id: 'curve',
+    type: 'street',
+    width: 6,
+    points: [
+      { x: 0, z: 0 },
+      { x: 20, z: 0 },
+      { x: 30, z: 10 },
+    ],
+  });
+  const initial = createInitialCityDesignEditorState({
+    ...createEmptyCityDesignState(),
+    objects: [object],
+  });
+  for (const length of [NaN, Infinity, 0, -4])
+    expect(
+      cityDesignReducer(initial, { type: 'update_object_length', objectId: object.id, length })
+    ).toBe(initial);
+  const shortened = cityDesignReducer(initial, {
+    type: 'update_object_length',
+    objectId: object.id,
+    length: 15,
+  });
+  const widened = cityDesignReducer(shortened, {
+    type: 'update_object_width',
+    objectId: object.id,
+    width: 8,
+  });
+  const loaded = parseStoredCityDesignState(JSON.parse(JSON.stringify(widened.design)));
+  expect(loaded?.objects[0].id).toBe(object.id);
+  expect(loaded?.objects[0].geometry).toEqual(widened.design.objects[0].geometry);
+  expect(loaded?.objects[0].geometry).toMatchObject({
+    length: 15,
+    width: 8,
+    roundedCenterline: [
+      { x: 0, z: 0 },
+      { x: 15, z: 0 },
+    ],
+  });
+  expect(widened.isDirty).toBe(true);
+  expect(JSON.stringify(widened.design)).not.toContain('measurement');
+});

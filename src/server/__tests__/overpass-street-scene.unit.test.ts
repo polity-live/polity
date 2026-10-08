@@ -3,17 +3,60 @@ import {
   buildOverpassQuery,
   fetchOverpassSnapshot,
   normalizeOverpassPayload,
+  overpassStreetSceneInternals,
 } from '../overpass-street-scene';
 
 const bbox = { south: 0, west: 0, north: 1, east: 1 };
 
 describe('overpass street scene normalization', () => {
+  it('uses default width provenance for a derived side with no parent tags', () => {
+    expect(
+      overpassStreetSceneInternals.createDerivedStreetSideFeature({
+        feature: { id: 'road', kind: 'road', geometryKind: 'line' },
+        kind: 'sidewalk',
+        side: 'left',
+        widthMeters: 2,
+        offsetMeters: 4,
+      })
+    ).toMatchObject({ widthSource: 'default', offsetMeters: -4 });
+  });
+  it('retains way node IDs and records separate width provenance for derived bands', () => {
+    const snapshot = normalizeOverpassPayload(bbox, {
+      elements: [
+        {
+          type: 'way',
+          id: 99,
+          nodes: [10, 11],
+          geometry: [
+            { lat: 0, lon: 0 },
+            { lat: 0.001, lon: 0 },
+          ],
+          tags: {
+            highway: 'residential',
+            width: '8',
+            cycleway: 'lane',
+            sidewalk: 'both',
+            'cycleway:right:width': '2.1',
+          },
+        },
+      ],
+    });
+    const road = snapshot.features?.find(feature => feature.kind === 'road');
+    expect(road).toMatchObject({ nodeIds: ['10', '11'], widthMeters: 8, widthSource: 'osm' });
+    expect(
+      snapshot.features?.find(feature => feature.kind === 'bike_lane' && feature.side === 'right')
+    ).toMatchObject({ nodeIds: ['10', '11'], widthMeters: 2.1, widthSource: 'osm' });
+    expect(snapshot.features?.find(feature => feature.kind === 'sidewalk')).toMatchObject({
+      widthMeters: 2.4,
+      widthSource: 'default',
+    });
+  });
   it('requests full way geometry instead of center-only output', () => {
     const query = buildOverpassQuery(bbox);
 
     expect(query).toContain('[timeout:8]');
-    expect(query).toContain('out tags geom;');
-    expect(query).not.toContain('out tags geom center');
+    expect(query).toContain('out body geom;');
+    expect(query).not.toContain('out body geom center');
     expect(query).toContain('node["amenity"~"bench|bicycle_parking');
     expect(query).toContain('way["railway"~"rail|tram|light_rail|subway');
     expect(query).toContain(

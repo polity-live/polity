@@ -76,6 +76,12 @@ interface StreetSceneCanvasViewProps {
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
@@ -148,6 +154,8 @@ export function StreetSceneCanvasView({
   onObjectRotate,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
@@ -213,6 +221,8 @@ export function StreetSceneCanvasView({
     onObjectRotate,
     onPropertyChange,
     onWidthChange,
+    onLengthChange,
+    onPositionChange,
     onRotationChange,
     onUnitCostChange,
     onDeleteObject,

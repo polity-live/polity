@@ -30,6 +30,7 @@ const sceneDoubles = vi.hoisted(() => ({
     target: import('three').Vector3;
     update: ReturnType<typeof vi.fn>;
     emitChange: () => void;
+    emitEvent: (type: string) => void;
     dispose: ReturnType<typeof vi.fn>;
     mouseButtons: Record<string, number>;
     touches: Record<string, number>;
@@ -145,6 +146,10 @@ vi.mock('three/examples/jsm/controls/OrbitControls.js', () => {
 
     emitChange() {
       this.listeners.get('change')?.forEach(listener => listener());
+    }
+
+    emitEvent(type: string) {
+      this.listeners.get(type)?.forEach(listener => listener());
     }
   }
 
@@ -729,6 +734,159 @@ function createOsmFeatureMatrix(): CityDesignOsmFeature[] {
 }
 
 describe('mountCityDesignScene', () => {
+  it('waits for damping to finish before restoring quality and stops the render loop afterwards', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      controller = await mountCityDesignScene(createOptions());
+      flushFrame();
+      const renderer = sceneDoubles.renderers[0] as (typeof sceneDoubles.renderers)[number] & {
+        getPixelRatio: () => number;
+      };
+      const controls = sceneDoubles.controls[0]!;
+      controls.update.mockReturnValueOnce(true).mockReturnValueOnce(true).mockReturnValue(false);
+      controls.target.x += 1;
+      controls.emitChange();
+      flushFrame(32);
+      vi.advanceTimersByTime(250);
+      expect(renderer.getPixelRatio()).toBe(1);
+      flushFrame(282);
+      expect(renderer.getPixelRatio()).toBe(1);
+      flushFrame(298);
+      expect(animationFrames).toHaveLength(0);
+      vi.advanceTimersByTime(199);
+      expect(renderer.getPixelRatio()).toBe(1);
+      vi.advanceTimersByTime(1);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      expect(animationFrames).toHaveLength(1);
+      const updates = controls.update.mock.calls.length;
+      flushFrame(498);
+      expect(controls.update).toHaveBeenCalledTimes(updates);
+      expect(animationFrames).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('switches quality on actual motion, holds it during a gesture and restores with a single idle render', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const object = createPointCityDesignObject({
+        id: 'quality-tree',
+        type: 'tree',
+        point: { x: 0, z: 0 },
+      });
+      const options = createOptions({
+        design: { ...createEmptyCityDesignState(), objects: [object] },
+      });
+      controller = await mountCityDesignScene(options);
+      flushFrame();
+      const renderer = sceneDoubles.renderers[0] as (typeof sceneDoubles.renderers)[number] & {
+        getPixelRatio: () => number;
+      };
+      const controls = sceneDoubles.controls[0]!;
+      const scene = renderer.render.mock.calls[0]![0] as import('three').Scene;
+      const source = scene.getObjectByName('design:quality-tree')!;
+      const matrices = vi.spyOn(source, 'updateMatrixWorld');
+      controls.emitEvent('start');
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      controls.target.x += 3;
+      controls.emitChange();
+      flushFrame(32);
+      expect(renderer.getPixelRatio()).toBe(1);
+      vi.advanceTimersByTime(300);
+      expect(renderer.getPixelRatio()).toBe(1);
+      controls.emitEvent('end');
+      controls.update.mockImplementation(() => {
+        controls.target.x += 0.0008;
+        return false;
+      });
+      vi.advanceTimersByTime(200);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      flushFrame(500);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      expect(matrices).not.toHaveBeenCalled();
+      expect(animationFrames).toHaveLength(0);
+      options.canvas.dispatchEvent(pointerEvent('pointercancel'));
+      controller.dispose();
+      controller = null;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('routes multi-selection modifiers and measurement clicks without rebuilding static batches', async () => {
+    const object = createPointCityDesignObject({
+      id: 'multi-tree',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const design = {
+      ...createEmptyCityDesignState(),
+      objects: [object],
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features: [
+          createOsmFeatureMatrix()[0]!,
+          {
+            ...createOsmFeatureMatrix().find(feature => feature.kind === 'building')!,
+            renderColor: '#facc15',
+          },
+        ],
+      },
+    };
+    const options = createOptions({
+      design,
+      interactionMode: 'select',
+      onMeasurementPoint: vi.fn(),
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const THREE = await import('three');
+    const raycast = vi.spyOn(THREE.Raycaster.prototype, 'intersectObjects');
+    const hit = (data: object) =>
+      [{ object: { userData: data } }] as unknown as import('three').Intersection[];
+    raycast.mockReturnValue(hit({ objectId: object.id }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, ctrlKey: true, bubbles: true })
+    );
+    expect(options.onObjectSelect).toHaveBeenLastCalledWith(object.id, true);
+    raycast.mockReturnValueOnce([]).mockReturnValueOnce(hit({ osmWayId: 'tree' }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, metaKey: true, bubbles: true })
+    );
+    expect(options.onOsmWaySelect).toHaveBeenLastCalledWith('tree', true);
+    controller.updateDesign({
+      design: { ...design, comparisonMode: 'split' },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    controller.updateInteractionMode({
+      interactionMode: 'select',
+      readOnly: false,
+      measurementActive: true,
+    });
+    vi.spyOn(THREE.Ray.prototype, 'intersectPlane').mockImplementation((_plane, target) => {
+      target.set(-60, 0, 5);
+      return target;
+    });
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(options.onMeasurementPoint).toHaveBeenCalledWith({ x: -8, z: 5 }, 'original');
+    expect(controller.getGroundPointAtClient!(20, 30, 'original')).toEqual({ x: -8, z: 5 });
+    controller.updateInteractionMode({
+      interactionMode: 'select',
+      readOnly: false,
+      measurementActive: false,
+    });
+    raycast.mockReturnValueOnce([]).mockReturnValueOnce(hit({ osmWayId: 'tree' }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, ctrlKey: true, bubbles: true })
+    );
+    expect(options.onOsmWaySelect).toHaveBeenLastCalledWith('tree', true);
+  });
+
   it('preserves untouched GPU geometry across selection, insertion, editing and removal', async () => {
     const objects = ['one', 'two', 'three'].map((id, i) =>
       createCorridorCityDesignObject({
@@ -833,6 +991,80 @@ describe('mountCityDesignScene', () => {
     expect(scene.getObjectByName('osm:road')).toBeUndefined();
   });
 
+  it('retains unrelated road buffers when refreshing normalized OSM features and editing a separate street', async () => {
+    const osmFeatures = createOsmFeatureMatrix().filter(feature =>
+      ['tree', 'road', 'building'].includes(feature.id)
+    );
+    const objects = [0, 1].map(index =>
+      createCorridorCityDesignObject({
+        id: `separate-${index}`,
+        type: 'street',
+        start: { x: index * 70, z: -40 },
+        end: { x: index * 70 + 15, z: -40 },
+        width: 6,
+      })
+    );
+    const design = {
+      ...createEmptyCityDesignState(),
+      objects,
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features: osmFeatures,
+      },
+    };
+    controller = await mountCityDesignScene(createOptions({ design }));
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const originalRoad = scene.getObjectByName('osm:road');
+    const separateRoad = scene.getObjectByName('design:separate-1');
+    const building = scene.getObjectByName('osm:building');
+    const nextDesign = {
+      ...design,
+      objects: [
+        {
+          ...objects[0]!,
+          geometry: createCorridorGeometry({ x: 0, z: -40 }, { x: 15, z: -40 }, 8),
+        },
+        objects[1]!,
+      ],
+      osmSnapshot: {
+        ...design.osmSnapshot,
+        features: osmFeatures.map(feature =>
+          feature.id === 'building' ? { ...feature, height: undefined } : feature
+        ),
+      },
+    };
+    controller.updateDesign({
+      design: nextDesign,
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(originalRoad);
+    expect(scene.getObjectByName('design:separate-1')).toBe(separateRoad);
+    expect(scene.getObjectByName('osm:building')).not.toBe(building);
+    flushFrame();
+    const matrices = vi.spyOn(separateRoad!, 'updateMatrixWorld');
+    controller.updateSelection({
+      selectedObjectId: 'separate-1',
+      selectedObjectIds: ['separate-1'],
+      selectedOsmWayId: 'building',
+      selectedOsmWayIds: ['building', 'tree'],
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    controller.updatePlacementPreview({
+      placementPreview: createCorridorGeometry({ x: 0, z: 0 }, { x: 10, z: 0 }, 3),
+      placementPreviewType: 'street',
+      placementStart: { x: 0, z: 0 },
+    });
+    flushFrame();
+    expect(scene.getObjectByName('osm:road')).toBe(originalRoad);
+    expect(matrices).not.toHaveBeenCalled();
+  });
+
   it('renders default road markings for older saved designs without a markings setting', async () => {
     const road = createOsmFeatureMatrix().find(feature => feature.id === 'road')!;
     const options = createOptions({
@@ -842,23 +1074,76 @@ describe('mountCityDesignScene', () => {
         osmSnapshot: {
           bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
           fetchedAt: 1,
-          features: [road],
+          features: [{ ...road, tags: { ...road.tags, lanes: '2' } }],
         },
       },
     });
     controller = await mountCityDesignScene(options);
     flushFrame();
     const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
-    const markings: import('three').InstancedMesh[] = [];
+    const markings: import('three').Mesh[] = [];
     scene.getObjectByName('osm:road')!.traverse(child => {
-      if ('isInstancedMesh' in child) markings.push(child as import('three').InstancedMesh);
+      if ('isMesh' in child && child.userData.decorative && !child.userData.navigationDetail)
+        markings.push(child as import('three').Mesh);
     });
     expect(
       markings.some(
         mesh =>
-          mesh.count > 0 && (mesh.material as import('three').MeshBasicMaterial).opacity === 0.75
+          mesh.geometry.getAttribute('position').count > 0 &&
+          (mesh.material as import('three').MeshBasicMaterial).opacity === 0.75
       )
     ).toBe(true);
+  });
+
+  it('renders lane guides as decorative geometry and removes them with the markings setting', async () => {
+    const main = createCorridorCityDesignObject({
+      id: 'main',
+      type: 'street',
+      start: { x: -30, z: 0 },
+      end: { x: 30, z: 0 },
+      width: 12,
+    });
+    main.properties.lanes = 4;
+    const cross = createCorridorCityDesignObject({
+      id: 'cross',
+      type: 'street',
+      start: { x: 0, z: -30 },
+      end: { x: 0, z: 30 },
+      width: 6,
+    });
+    const design = {
+      ...createEmptyCityDesignState(),
+      comparisonMode: 'new_design' as const,
+      objects: [main, cross],
+    };
+    controller = await mountCityDesignScene(createOptions({ design }));
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const guides: import('three').Object3D[] = [];
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.streetMarking === 'guide') guides.push(child);
+    });
+    expect([...new Set(guides.map(guide => guide.userData.laneOffset))]).toEqual([-3, 3]);
+    expect(guides.every(guide => guide.userData.decorative && !guide.userData.pickTarget)).toBe(
+      true
+    );
+    expect(guides.every(guide => guide.visible)).toBe(true);
+    const visibleSurfaces: import('three').Object3D[] = [];
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.pickSurface && !child.userData.decorative) visibleSurfaces.push(child);
+    });
+    expect(visibleSurfaces.length).toBeGreaterThan(0);
+    expect(visibleSurfaces.every(surface => surface.visible)).toBe(true);
+    controller.updateDesign({
+      design: { ...design, showStreetMarkings: false },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    let count = 0;
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.streetMarking) count++;
+    });
+    expect(count).toBe(0);
   });
 
   it('coalesces movement and reuses preview geometry, flushing the latest input before a click', async () => {

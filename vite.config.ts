@@ -87,6 +87,9 @@ export default defineConfig({
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       'react-dom/client',
+      // The city-design route is lazy-loaded; prepare its geometry dependency at startup.
+      'polygon-clipping',
+      'three/examples/jsm/utils/BufferGeometryUtils.js',
       '@rocicorp/zero/react',
       '@rocicorp/zero-virtual/react',
     ],

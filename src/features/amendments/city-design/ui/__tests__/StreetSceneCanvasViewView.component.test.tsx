@@ -144,14 +144,14 @@ describe('StreetSceneCanvasViewView', () => {
     });
     const cursor = screen.getByTestId('city-design-remote-cursor-peer');
     const initialLeft = cursor.style.left;
-    const input = screen.getAllByRole('spinbutton')[0]!;
+    const input = screen.getByRole('textbox', { name: 'Rotation' });
     input.focus();
     act(() => {
       pose = { position: { x: 20, y: 75, z: 85 }, target: { x: 20, y: 0, z: 0 } };
       listeners.forEach(listener => listener());
     });
     expect(cursor.style.left).not.toBe(initialLeft);
-    expect(screen.getAllByRole('spinbutton')[0]).toBe(input);
+    expect(screen.getByRole('textbox', { name: 'Rotation' })).toBe(input);
     expect(document.activeElement).toBe(input);
     view.unmount();
     expect(listeners.size).toBe(0);

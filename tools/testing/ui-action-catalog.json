@@ -7221,6 +7221,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7231,8 +7232,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7259,6 +7259,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7269,8 +7270,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7297,6 +7297,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7307,8 +7308,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7336,6 +7336,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7346,8 +7347,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7374,6 +7374,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7384,8 +7385,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7413,6 +7413,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7423,8 +7424,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7452,6 +7452,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7462,8 +7463,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7490,6 +7490,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7500,8 +7501,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7528,6 +7528,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7538,8 +7539,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7560,6 +7560,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7570,8 +7571,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -7614,6 +7614,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7624,8 +7625,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7653,6 +7653,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7663,8 +7664,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7692,6 +7692,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7702,8 +7703,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7731,6 +7731,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7741,8 +7742,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7770,6 +7770,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7780,8 +7781,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7809,6 +7809,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7819,8 +7820,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7848,6 +7848,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7858,8 +7859,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -7901,6 +7901,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7911,8 +7912,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7940,6 +7940,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7950,8 +7951,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -7979,6 +7979,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7989,8 +7990,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -8032,6 +8032,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8042,8 +8043,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8070,6 +8070,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8080,8 +8081,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8108,6 +8108,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8118,8 +8119,230 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.clear.line",
+      "debtKey": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#Button-fd700214d0",
+      "file": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "actionId": "amendments.city-measurement.clear.line",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 94,
+      "column": 14,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "clearMeasurement",
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.select.layer",
+      "debtKey": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#select-1da1282d71",
+      "file": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "actionId": "amendments.city-measurement.select.layer",
+      "identifierSource": "data-action-id",
+      "tag": "select",
+      "line": 108,
+      "column": 14,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.select.level",
+      "debtKey": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#select-668ba19dbd",
+      "file": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "actionId": "amendments.city-measurement.select.level",
+      "identifierSource": "data-action-id",
+      "tag": "select",
+      "line": 125,
+      "column": 14,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.toggle.multiselect",
+      "debtKey": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#Button-d13a1251d9",
+      "file": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "actionId": "amendments.city-measurement.toggle.multiselect",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 21,
+      "column": 6,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setMultiSelectActive",
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.toggle.tool",
+      "debtKey": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#Button-637fde0ee6",
+      "file": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "actionId": "amendments.city-measurement.toggle.tool",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 31,
+      "column": 6,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "setMeasurementActive",
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8130,7 +8353,7 @@
       "actionId": "amendments.city-design.confirm.category-delete",
       "identifierSource": "data-action-id",
       "tag": "AlertDialogAction",
-      "line": 501,
+      "line": 509,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -8147,6 +8370,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8157,8 +8381,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8169,7 +8392,7 @@
       "actionId": "amendments.city-design.open.navigation-help",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 660,
+      "line": 684,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -8186,6 +8409,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8196,8 +8420,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8208,7 +8431,7 @@
       "actionId": "amendments.city-design.select.help-tab",
       "identifierSource": "data-action-id",
       "tag": "TabsTrigger",
-      "line": 686,
+      "line": 710,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -8224,6 +8447,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8234,8 +8458,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8263,6 +8486,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8273,8 +8497,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8301,6 +8524,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8311,8 +8535,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8340,6 +8563,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8350,8 +8574,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8379,6 +8602,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8389,8 +8613,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8418,6 +8641,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8428,8 +8652,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8457,6 +8680,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8467,8 +8691,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8496,6 +8719,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8506,8 +8730,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8535,6 +8758,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8545,8 +8769,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8574,6 +8797,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8584,8 +8808,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8613,6 +8836,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8623,8 +8847,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8652,6 +8875,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8662,8 +8886,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8690,6 +8913,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8700,8 +8924,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8728,6 +8951,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8738,8 +8962,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8766,6 +8989,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8776,8 +9000,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8804,6 +9027,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8814,8 +9038,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8843,6 +9066,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8853,8 +9077,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8882,6 +9105,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8892,8 +9116,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8921,6 +9144,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8931,8 +9155,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8960,6 +9183,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8970,8 +9194,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -8991,6 +9214,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9001,8 +9225,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -9037,6 +9260,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9047,8 +9271,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -9083,6 +9306,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9093,8 +9317,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -9129,6 +9352,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9139,8 +9363,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -9182,6 +9405,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9192,8 +9416,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9220,6 +9443,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9230,8 +9454,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9258,6 +9481,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9268,8 +9492,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9297,6 +9520,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9307,8 +9531,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -9336,6 +9559,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9346,8 +9570,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9375,6 +9598,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9385,8 +9609,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9407,6 +9630,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9417,8 +9641,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -9460,6 +9683,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9470,8 +9694,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9499,6 +9722,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9509,8 +9733,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9538,6 +9761,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9548,8 +9772,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9577,6 +9800,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9587,8 +9811,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9616,6 +9839,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9626,8 +9850,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9654,6 +9877,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9664,8 +9888,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9693,6 +9916,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9703,8 +9927,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9732,6 +9955,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9742,8 +9966,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9771,6 +9994,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9781,8 +10005,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9809,6 +10032,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9819,8 +10043,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9848,6 +10071,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9858,8 +10082,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -9902,6 +10125,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9912,8 +10136,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -9940,6 +10163,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9950,8 +10174,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -9979,6 +10202,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -9989,8 +10213,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -10018,6 +10241,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10028,8 +10252,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10058,6 +10281,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10068,8 +10292,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -10097,6 +10320,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10107,8 +10331,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10137,6 +10360,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10147,8 +10371,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -10176,6 +10399,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10186,8 +10410,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10215,6 +10438,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10225,8 +10449,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10254,6 +10477,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10264,8 +10488,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10292,6 +10515,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10302,8 +10526,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10330,6 +10553,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10340,8 +10564,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10368,6 +10591,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10378,8 +10602,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10406,6 +10629,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10416,8 +10640,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10444,6 +10667,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10454,8 +10678,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10483,6 +10706,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10493,8 +10717,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10522,6 +10745,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10532,8 +10756,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10561,6 +10784,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10571,8 +10795,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10600,6 +10823,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10610,8 +10834,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10639,6 +10862,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10649,8 +10873,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10678,6 +10901,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10688,8 +10912,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10709,6 +10932,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10719,8 +10943,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -10755,6 +10978,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10765,8 +10989,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -10801,6 +11024,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10811,8 +11035,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -10847,6 +11070,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10857,8 +11081,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -10900,6 +11123,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10910,8 +11134,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -10931,6 +11154,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10941,8 +11165,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -10978,6 +11201,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -10988,8 +11212,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -11032,6 +11255,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11042,8 +11266,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11071,6 +11294,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11081,8 +11305,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11109,6 +11332,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11119,8 +11343,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11148,6 +11371,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11158,8 +11382,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11187,6 +11410,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11197,8 +11421,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11226,6 +11449,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11236,8 +11460,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11265,6 +11488,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11275,8 +11499,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11304,6 +11527,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11314,8 +11538,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11342,6 +11565,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11352,8 +11576,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11373,6 +11596,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11383,8 +11607,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -11410,7 +11633,7 @@
       "actionId": "amendments.city-canvas.cancel.path-placement",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 450,
+      "line": 488,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11427,6 +11650,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11437,8 +11661,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11449,7 +11672,7 @@
       "actionId": "amendments.city-canvas.finish.path-placement",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 440,
+      "line": 478,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11466,6 +11689,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11476,8 +11700,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11488,7 +11711,7 @@
       "actionId": "amendments.city-canvas.toggle.legend",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 395,
+      "line": 433,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -11504,6 +11727,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11514,8 +11738,45 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-measurement.move.endpoint",
+      "debtKey": "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#button-3332d3cf19",
+      "file": "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx",
+      "actionId": "amendments.city-measurement.move.endpoint",
+      "identifierSource": "data-action-id",
+      "tag": "button",
+      "line": 2113,
+      "column": 16,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11526,7 +11787,7 @@
       "actionId": "amendments.city-object-popover.close.details",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 572,
+      "line": 626,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -11543,6 +11804,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11553,8 +11815,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11565,7 +11826,7 @@
       "actionId": "amendments.city-object-popover.delete.object",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 834,
+      "line": 943,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11582,6 +11843,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11592,8 +11854,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11604,7 +11865,7 @@
       "actionId": "amendments.city-object-popover.focus.object",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 589,
+      "line": 643,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -11621,6 +11882,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11631,8 +11893,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11643,7 +11904,7 @@
       "actionId": "amendments.city-object-popover.reset.unit-cost",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 791,
+      "line": 900,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11660,6 +11921,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11670,8 +11932,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11682,8 +11943,8 @@
       "actionId": "amendments.city-object-popover.select.object-property",
       "identifierSource": "data-action-id",
       "tag": "Select",
-      "line": 677,
-      "column": 16,
+      "line": 774,
+      "column": 18,
       "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
@@ -11699,6 +11960,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11709,8 +11971,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11721,8 +11982,8 @@
       "actionId": "amendments.city-object-popover.select.object-property",
       "identifierSource": "data-action-id",
       "tag": "SelectTrigger",
-      "line": 683,
-      "column": 18,
+      "line": 780,
+      "column": 20,
       "kind": "interaction",
       "classification": "transparent-wrapper",
       "aliasOfLegacyFingerprint": "amendments.city-object-popover.select.object-property",
@@ -11738,6 +11999,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11748,8 +12010,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -11775,8 +12036,8 @@
       "actionId": "amendments.city-object-popover.select.object-property-option",
       "identifierSource": "data-action-id",
       "tag": "SelectItem",
-      "line": 691,
-      "column": 22,
+      "line": 788,
+      "column": 24,
       "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
@@ -11791,6 +12052,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11801,8 +12063,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11813,8 +12074,8 @@
       "actionId": "amendments.city-object-popover.toggle.object-property",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 661,
-      "column": 16,
+      "line": 758,
+      "column": 18,
       "kind": "selection",
       "classification": "canonical-action",
       "accessibilityIssues": [],
@@ -11829,6 +12090,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11839,8 +12101,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11851,7 +12112,7 @@
       "actionId": "amendments.city-object-popover.toggle.visibility",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 820,
+      "line": 929,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11868,6 +12129,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11878,8 +12140,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11890,7 +12151,7 @@
       "actionId": "amendments.city-object-popover.undo.osm-import",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 807,
+      "line": 916,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -11907,6 +12168,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11917,8 +12179,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11929,7 +12190,7 @@
       "actionId": "amendments.city-osm-popover.close.details",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 895,
+      "line": 1004,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -11946,6 +12207,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11956,8 +12218,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -11968,7 +12229,7 @@
       "actionId": "amendments.city-osm-popover.focus.feature",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 912,
+      "line": 1021,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -11985,6 +12246,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -11995,8 +12257,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -12007,7 +12268,7 @@
       "actionId": "amendments.city-osm-popover.import.as-planned",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 993,
+      "line": 1102,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -12024,6 +12285,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -12034,8 +12296,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -12046,7 +12307,7 @@
       "actionId": "amendments.city-osm-popover.remove.from-map",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1005,
+      "line": 1114,
       "column": 8,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -12063,6 +12324,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -12073,8 +12335,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -12085,7 +12346,7 @@
       "actionId": "amendments.street-scene-canvas-view.features-amendments-city-design-canvas-legend",
       "identifierSource": "accessible-text",
       "tag": "CollapsibleTrigger",
-      "line": 394,
+      "line": 432,
       "column": 10,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -12095,6 +12356,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -12105,8 +12367,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -85025,6 +85286,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignInputRouter.unit.test.ts",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignNumberInput.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/CreateInputActions.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/CreateInputVariants.coverage.component.test.tsx",
@@ -85034,8 +85296,7 @@
         "src/features/create/ui/inputs/__tests__/TodoDeadlineInput.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/UserSearchInput.component.test.tsx",
         "src/features/elections/ui/__tests__/ElectionModeInput.component.test.tsx",
-        "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
-        "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx"
+        "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

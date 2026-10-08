@@ -14,6 +14,8 @@ export default defineConfig({
       'date-fns/locale',
       'leaflet',
       'react-leaflet',
+      'polygon-clipping',
+      'three/examples/jsm/utils/BufferGeometryUtils.js',
     ],
   },
   resolve: {

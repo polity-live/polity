@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/amendments/city-design/logic/cityDesignStreetMarkings.ts": [
+      {
+        "file": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetMarkings.unit.test.ts",
+        "project": "unit",
+        "caseId": "clips opposing centre lines and guides only through lanes in a four-arm junction"
+      }
+    ],
+    "src/features/amendments/city-design/logic/cityDesignStreetNetwork.ts": [
+      {
+        "file": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetNetwork.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the central void of a roundabout"
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignNumberInput.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignNumberInput.component.test.tsx",
+        "project": "component",
+        "caseId": "applies valid numbers immediately, preserves comma drafts and does not duplicate changes on Enter"
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/useCityDesignMeasurements.ts": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/logic/cityDesignNavigationQuality.ts": [
+      {
+        "file": "src/features/amendments/city-design/logic/__tests__/cityDesignNavigationQuality.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps full quality for a stationary gesture and restores only after damping and the gesture finish"
+      }
+    ],
+    "src/features/amendments/city-design/logic/cityDesignRenderBatches.ts": [
+      {
+        "file": "src/features/amendments/city-design/logic/__tests__/cityDesignRenderBatches.unit.test.ts",
+        "project": "unit",
+        "caseId": "shares primitive buffers across identities and preserves colors, split offsets, slots and untouched buffers"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.clear.line": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.select.layer": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.select.level": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.toggle.multiselect": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx#amendments.city-measurement.toggle.tool": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-measurement.move.endpoint": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.position": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.rotation": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.width": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.length": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.object-number": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.edit.unit-cost": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "updates position, rotation, dimensions, object properties and price live without moving the camera",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "resets same-valued selections and disables every numeric property in read-only mode",
+        "scenarios": ["disabled"]
+      }
+    ]
+  },
+  "sourceReferenceAdditions": {
+    "src/features/amendments/city-design/ui/useStreetSceneCanvasViewController.ts": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/useStreetSceneCanvasViewController.component.test.tsx",
+        "project": "component",
+        "caseId": "deletes the selected design object with Delete, follows selection changes and removes the listener on unmount"
+      }
+    ]
+  }
+}
