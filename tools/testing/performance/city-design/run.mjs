@@ -17,26 +17,29 @@ const resume = process.env.CITY_DESIGN_BENCH_RESUME === '1';
 const reportPath = resolve(artifactDir, 'results.json');
 const expectedSamples = repeats * 6 + 3;
 const execute = promisify(execFile);
+async function testProcessesActive() {
+  const { stdout } =
+    process.platform === 'win32'
+      ? await execute(
+          'powershell.exe',
+          [
+            '-NoProfile',
+            '-Command',
+            "@(Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'vitest.mjs.*\\brun\\b|playwright.*\\btest\\b' }).Count",
+          ],
+          { windowsHide: true }
+        )
+      : await execute('ps', ['-eo', 'args']);
+  const active =
+    process.platform === 'win32'
+      ? Number(stdout.trim()) > 0
+      : /vitest(?:\.mjs)? .*\brun\b|playwright .*\btest\b/.test(stdout);
+  return active;
+}
 async function waitForTestProcesses() {
   let announced = false;
   for (;;) {
-    const { stdout } =
-      process.platform === 'win32'
-        ? await execute(
-            'powershell.exe',
-            [
-              '-NoProfile',
-              '-Command',
-              "@(Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'vitest.mjs.*\\brun\\b|playwright.*\\btest\\b' }).Count",
-            ],
-            { windowsHide: true }
-          )
-        : await execute('ps', ['-eo', 'args']);
-    const active =
-      process.platform === 'win32'
-        ? Number(stdout.trim()) > 0
-        : /vitest(?:\.mjs)? .*\brun\b|playwright .*\btest\b/.test(stdout);
-    if (!active) return;
+    if (!(await testProcessesActive())) return;
     if (!announced) {
       console.log('Waiting for concurrent tests to finish before the hardware measurements.');
       announced = true;
@@ -71,6 +74,7 @@ async function buildHash() {
   return hash.digest('hex');
 }
 const previous = resume ? JSON.parse(await readFile(reportPath, 'utf8')) : null;
+await waitForTestProcesses();
 const productionSourceHash = await sourceHash();
 await build({ configFile });
 const productionBuildHash = await buildHash();
@@ -83,7 +87,6 @@ if (
   throw new Error(
     'Cannot resume a different production build or benchmark configuration. Run without CITY_DESIGN_BENCH_RESUME.'
   );
-await waitForTestProcesses();
 const server = await preview({ configFile });
 let browser;
 let failure = null;
@@ -144,7 +147,14 @@ async function gesture(page, kind, milliseconds, measured) {
 }
 
 try {
-  browser = await chromium.launch({ headless: false });
+  browser = await chromium.launch({
+    headless: false,
+    args: [
+      '--disable-background-timer-throttling',
+      '--disable-renderer-backgrounding',
+      '--disable-backgrounding-occluded-windows',
+    ],
+  });
   const page = await browser.newPage({ viewport: { width: 1940, height: 1160 } });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://127.0.0.1:4321');
@@ -166,8 +176,17 @@ try {
         if (/swiftshader|software/i.test(metadata.gpu))
           throw new Error(`Hardware acceleration required: ${metadata.gpu}`);
         for (const kind of kinds) {
-          await gesture(page, kind, 1000, false);
-          const sample = await gesture(page, kind, duration, true);
+          let sample;
+          for (;;) {
+            await waitForTestProcesses();
+            await page.bringToFront();
+            await gesture(page, kind, 1000, false);
+            sample = await gesture(page, kind, duration, true);
+            if (!(await testProcessesActive())) break;
+            console.log(
+              `Discarding ${kind} sample because concurrent tests started; retrying after they finish.`
+            );
+          }
           const quality = await page.evaluate(() => window.streetPerformance.quality());
           if (errors.length) throw new Error(errors.join('\n'));
           const accepted =
@@ -203,6 +222,8 @@ try {
       }
     }
   }
+  if ((await sourceHash()) !== productionSourceHash)
+    throw new Error('Scene source changed during the hardware benchmark; rerun the final build.');
   await page.screenshot({ path: resolve(artifactDir, 'scene.png') });
 } catch (error) {
   failure = String(error);

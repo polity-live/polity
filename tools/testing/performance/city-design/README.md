@@ -6,6 +6,9 @@ the actual scene renderer for production, serves it on `127.0.0.1:4321`, and ope
 an isolated Chromium window. It closes its browser and preview server when done.
 Before opening the browser, it waits for active Vitest or Playwright test runs to
 finish so those runs cannot contaminate the hardware measurements.
+It also checks between gestures and retries a sample if another test started.
+Chromium background throttling is disabled to keep the hardware measurements
+independent of which desktop window has focus; hardware acceleration is retained.
 
 The default run uses 298 OSM features and mixed scenarios with 100 and 500 design
 elements on a 1100 × 720 canvas. Each repetition warms up navigation, then measures

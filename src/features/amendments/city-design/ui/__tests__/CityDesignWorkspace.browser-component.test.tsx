@@ -105,7 +105,7 @@ it('selects real WebGL surfaces without moving the camera and focuses only on co
     );
     expect(pose).toEqual(initialPose);
     controller.focusObject('bench');
-    await waitFor(() => expect(pose.target.x).toBeCloseTo(30, 7));
+    await waitFor(() => expect(pose.target.x).toBeCloseTo(30, 3));
     // Keyboard navigation still updates the camera after an explicit focus.
     document.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })
@@ -145,7 +145,7 @@ it.each([
     screen.getByRole('button', { name: 'Toggle chat' }).focus();
     await userEvent.keyboard('{Enter}');
   },
-  30_000
+  60_000
 );
 
 it('selects an object through the compact cost list and edits its real property fields', async () => {

@@ -133396,6 +133396,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/performance/city-design/README.md",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/performance/city-design/index.html",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
