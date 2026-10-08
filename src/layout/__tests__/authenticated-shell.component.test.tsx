@@ -104,6 +104,14 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('AuthenticatedShell', () => {
+  it('contains mobile navigation margins on the City Design canvas route', () => {
+    mocks.pathname = '/amendment/a/citydesign';
+    const { container } = render(<AuthenticatedShell>Canvas</AuthenticatedShell>);
+    expect(container.querySelector('main')?.parentElement?.classList.contains('flow-root')).toBe(
+      true
+    );
+    expect(container.querySelector('main > .max-w-7xl')).toBeNull();
+  });
   it('renders onboarding fullscreen while keeping sync, preload, warning, and tutorial contracts active', () => {
     mocks.pathname = '/onboarding';
     mocks.secondary = undefined;

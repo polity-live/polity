@@ -132,6 +132,43 @@ function renderSecondaryActionBar(
 }
 
 describe('CityDesignTopBarView', () => {
+  it('reports saving and failed saves in the workspace toolbar', () => {
+    const workspace = {
+      title: 'Street',
+      selectionAddressLabel: 'Berlin',
+      osmWayCount: 0,
+      collaborators: null,
+      help: null,
+    };
+    renderTopBar({ workspace, isSaving: true });
+    expect(screen.getByRole('status').textContent).toMatch(/saving/i);
+    cleanup();
+    renderTopBar({ workspace, saveError: 'Offline' });
+    expect(screen.getByRole('status').textContent).toMatch(/failed|error/i);
+  });
+
+  it('returns tinted change requests to their natural color from the compact menu', async () => {
+    const onChangeRequestColorModeChange = vi.fn();
+    renderTopBar({
+      collaboration: {
+        amendmentId: 'a',
+        title: 'Street',
+        existingCollaboratorIds: [],
+        changeRequests: [],
+        selectedChangeRequestId: null,
+        showChangeRequests: false,
+        changeRequestColorMode: 'tinted',
+        onShowChangeRequestsChange: vi.fn(),
+        onChangeRequestSelect: vi.fn(),
+        onChangeRequestColorModeChange,
+      },
+    });
+    fireEvent.pointerDown(screen.getByRole('button', { name: '0 CRs' }));
+    const color = await screen.findByRole('menuitemcheckbox', { name: 'Color changes' });
+    expect(color.getAttribute('aria-checked')).toBe('true');
+    await userEvent.click(color);
+    expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('natural');
+  });
   it('integrates workspace information, collaboration and save state into the toolbar', async () => {
     const onShowChangeRequestsChange = vi.fn();
     const onChangeRequestColorModeChange = vi.fn();

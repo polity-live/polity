@@ -8073,6 +8073,11 @@
             "coveredStatements": 59,
             "totalStatements": 65
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
         }
       ],
       "suggestedTestRefs": [
@@ -8108,6 +8113,11 @@
           "project": "browser-component",
           "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
           "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores secondary and unrelated pointers and stops dragging after cancellation"
         }
       ],
       "suggestedTestRefs": [
@@ -8180,6 +8190,16 @@
             "coveredStatements": 108,
             "totalStatements": 108
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+          "project": "component",
+          "caseId": "reports saving and failed saves in the workspace toolbar"
         }
       ],
       "suggestedTestRefs": [
@@ -8360,6 +8380,11 @@
             "coveredStatements": 43,
             "totalStatements": 43
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
         }
       ],
       "suggestedTestRefs": [
@@ -8396,6 +8421,11 @@
             "coveredStatements": 5,
             "totalStatements": 5
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
         }
       ],
       "suggestedTestRefs": [
@@ -8432,6 +8462,11 @@
             "coveredStatements": 246,
             "totalStatements": 254
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
         }
       ],
       "suggestedTestRefs": [
@@ -8854,6 +8889,11 @@
             "coveredStatements": 115,
             "totalStatements": 115
           }
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects an object through the compact cost list and edits its real property fields"
         }
       ],
       "suggestedTestRefs": [
@@ -102357,6 +102397,11 @@
             "coveredStatements": 29,
             "totalStatements": 29
           }
+        },
+        {
+          "file": "src/layout/__tests__/app-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "contains mobile navigation margins on the City Design canvas route"
         }
       ],
       "suggestedTestRefs": [
@@ -102376,6 +102421,11 @@
           "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
           "project": "component",
           "caseId": "renders both navigation surfaces and moves between isolated entity tabs by callback or route"
+        },
+        {
+          "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "contains mobile navigation margins on the City Design canvas route"
         }
       ],
       "suggestedTestRefs": ["src/layout/__tests__/authenticated-shell.component.test.tsx"]

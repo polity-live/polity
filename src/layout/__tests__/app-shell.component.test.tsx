@@ -99,6 +99,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('AppShell', () => {
+  it('contains mobile navigation margins on the City Design canvas route', () => {
+    mocks.pathname = '/amendment/a/citydesign';
+    const { container } = render(<AppShell>Canvas</AppShell>);
+    expect(container.querySelector('main')?.parentElement?.classList.contains('flow-root')).toBe(
+      true
+    );
+  });
   it('loads the authenticated shell only when both auth and Zero are ready', async () => {
     mocks.user = { id: 'user-1' };
     mocks.zeroReady = true;

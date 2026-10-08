@@ -12,6 +12,11 @@
         "project": "browser-component",
         "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
         "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.component.test.tsx",
+        "project": "component",
+        "caseId": "ignores secondary and unrelated pointers and stops dragging after cancellation"
       }
     ]
   },
@@ -54,6 +59,69 @@
         "project": "browser-component",
         "caseId": "opens the compact invitation and share controls with keyboard focus",
         "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ]
+  },
+  "sourceReferenceAdditions": {
+    "src/features/amendments/city-design/ui/CityDesignPageView.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignTopBarView.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.component.test.tsx",
+        "project": "component",
+        "caseId": "reports saving and failed saves in the workspace toolbar"
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasView.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetCostSummaryView.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      }
+    ],
+    "src/features/amendments/city-design/ui/useStreetSceneCanvasViewController.ts": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects an object through the compact cost list and edits its real property fields"
+      }
+    ],
+    "src/layout/app-shell.tsx": [
+      {
+        "file": "src/layout/__tests__/app-shell.component.test.tsx",
+        "project": "component",
+        "caseId": "contains mobile navigation margins on the City Design canvas route"
+      }
+    ],
+    "src/layout/authenticated-shell.tsx": [
+      {
+        "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+        "project": "component",
+        "caseId": "contains mobile navigation margins on the City Design canvas route"
       }
     ]
   }
