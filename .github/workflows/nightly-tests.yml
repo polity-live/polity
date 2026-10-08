@@ -93,7 +93,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: supabase/setup-cli@v3.0.1
         with:
-          version: 2.115.0
+          version: 2.120.0
       - name: Install selected browser
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: Start seeded isolated stack
@@ -151,7 +151,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: supabase/setup-cli@v3.0.1
         with:
-          version: 2.115.0
+          version: 2.120.0
       - run: pnpm exec playwright install --with-deps chromium
       - run: |
           supabase start
@@ -201,7 +201,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: supabase/setup-cli@v3.0.1
         with:
-          version: 2.115.0
+          version: 2.120.0
       - run: pnpm exec playwright install --with-deps chromium
       - name: Start clean isolated stack
         run: |

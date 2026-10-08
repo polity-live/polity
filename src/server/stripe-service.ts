@@ -100,6 +100,9 @@ function getStripe(): Stripe {
   const secretKey = getRequiredEnv('STRIPE_SECRET_KEY');
   assertSecretKeyMatchesMode(secretKey);
   return new Stripe(secretKey, {
+    // Stripe 22.6 types only its latest Dahlia date; retain the application's tested API contract.
+    // https://github.com/stripe/stripe-node#using-old-api-versions-with-typescript
+    // @ts-expect-error stripe-version-2026-07-29.dahlia
     apiVersion: STRIPE_API_VERSION,
   });
 }

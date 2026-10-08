@@ -282,17 +282,17 @@ importers:
         specifier: 1.9.0
         version: 1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0))
       '@rocicorp/zero-virtual':
-        specifier: 0.6.3
-        version: 0.6.3(@rocicorp/zero@1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        specifier: 0.6.4
+        version: 0.6.4(@rocicorp/zero@1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
       '@supabase/ssr':
-        specifier: ^0.12.4
-        version: 0.12.4(@supabase/supabase-js@2.112.3(@opentelemetry/api@1.9.0))
+        specifier: ^0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.117.3(@opentelemetry/api@1.9.0))
       '@supabase/supabase-js':
-        specifier: ^2.112.3
-        version: 2.112.3(@opentelemetry/api@1.9.0)
+        specifier: ^2.117.3
+        version: 2.117.3(@opentelemetry/api@1.9.0)
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
@@ -339,8 +339,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       csv-parse:
-        specifier: ^7.0.2
-        version: 7.0.2
+        specifier: ^7.0.3
+        version: 7.0.3
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -354,8 +354,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       fast-xml-parser:
-        specifier: ^5.11.0
-        version: 5.11.0
+        specifier: ^5.11.2
+        version: 5.11.2
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
@@ -369,8 +369,8 @@ importers:
         specifier: ^26.4.2
         version: 26.4.2(typescript@7.0.2)
       ical-generator:
-        specifier: ^11.1.0
-        version: 11.1.0(@types/node@24.19.1)(dayjs@1.11.23)(rrule@2.8.1)
+        specifier: ^11.1.2
+        version: 11.1.2(@types/node@24.19.1)(dayjs@1.11.23)(rrule@2.8.1)
       immer:
         specifier: ^11.1.21
         version: 11.1.21
@@ -480,8 +480,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       resend:
-        specifier: ^6.22.0
-        version: 6.22.0(@react-email/render@2.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
+        specifier: ^6.32.1
+        version: 6.32.1(@react-email/render@2.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
       rrule:
         specifier: ^2.8.1
         version: 2.8.1
@@ -489,8 +489,8 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       stripe:
-        specifier: ^22.5.0
-        version: 22.5.0(@types/node@24.19.1)
+        specifier: ^22.6.2
+        version: 22.6.2(@types/node@24.19.1)
       styled-components:
         specifier: ^6.5.3
         version: 6.5.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -510,7 +510,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       use-file-picker:
-        specifier: ^2.1.2
+        specifier: ^2.1.4
         version: 2.1.4(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react@19.3.0)
       vaul:
         specifier: ^1.1.2
@@ -634,8 +634,8 @@ importers:
         specifier: ^1.6.8
         version: 1.6.8
       supabase:
-        specifier: ^2.115.0
-        version: 2.115.0
+        specifier: ^2.120.0
+        version: 2.120.0
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -1964,8 +1964,8 @@ packages:
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
 
-  '@nodable/entities@3.0.0':
-    resolution: {integrity: sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw==}
+  '@nodable/entities@3.1.0':
+    resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
 
   '@oozcitak/dom@1.15.10':
     resolution: {integrity: sha512-0JT29/LaxVgRcGKvHmSrUTEvZ8BXvZhGl2LASRUgHqDTC1M5g1pLmVv56IYNyt3bG2CUjDkc67wnyZC14pbQrQ==}
@@ -3971,8 +3971,8 @@ packages:
     engines: {bun: '>=1.1.0', node: 22.x || 24.x}
     hasBin: true
 
-  '@rocicorp/zero-virtual@0.6.3':
-    resolution: {integrity: sha512-QtX5NoUzlPpYFcCLGuwaY1WQPdXAhUD0hUN7yeLk4oUNDr46c2xU8jTnn0sxGh6FqQknWfM0/sUgRts8ELvOoQ==}
+  '@rocicorp/zero-virtual@0.6.4':
+    resolution: {integrity: sha512-aA2mCSVIG0rkgjOgnthMujVd3aHgs0/ZKXeUd5h2NIKl83jnCLGN2Ts8hPIsVlboATdXgpcPaRy8Kgoz26SLOA==}
     peerDependencies:
       '@rocicorp/zero': ^1.7.0
       react: ^19.2.4
@@ -4252,80 +4252,80 @@ packages:
       '@stryker-mutator/core': 10.0.0
       vitest: '>=2.0.0'
 
-  '@supabase/auth-js@2.112.3':
-    resolution: {integrity: sha512-NA0rsgAlWZPvbhw8aUdmgfpHVgUAcd8zK5ov43l++o1bLIPXZhRiAlRobhwF5AatQuovpqxsMH50F4oyyV4XZw==}
+  '@supabase/auth-js@2.117.3':
+    resolution: {integrity: sha512-XOZV+jllcU2Hzij8SwgM78zl0lOEr6BTjzi2MYkBb39nOAQzb5AelGpMUvVj7lwGSB11JmpAs/FEQroAyFzWEA==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/cli-darwin-arm64@2.115.0':
-    resolution: {integrity: sha512-yUNw1KG+fyuBqBGvFT8ASC7aAkFkx2Kx+qPjUTW50ttiKKgg8D/eMSCoSjQuaAbL0vafw98bHEZ2dAfdyYyXMA==}
+  '@supabase/cli-darwin-arm64@2.120.0':
+    resolution: {integrity: sha512-GXjW2+J4dGYjbZW0oeDs9y8+Eo/AloRYkbc7LpZmKagc1NYVPzQyviSHZ8LzidCXGlNF3Gds3k8UetjTQQmXbQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@supabase/cli-darwin-x64@2.115.0':
-    resolution: {integrity: sha512-e4bbWADYcjSjXgSSErreoqyEeEjrFQunxCYummUoiGdVanck/itAIFwhtRykKpBtoKqCYh4CFxUiDxOFMBdNHQ==}
+  '@supabase/cli-darwin-x64@2.120.0':
+    resolution: {integrity: sha512-o6ISS9smQnNfpws2nqs3e9lxA0UTsWGI9LAvz2zMymRm11Iy8vZIeOXHV8BbGQWtqxLgfiHHCVvBLE9/41AKQA==}
     cpu: [x64]
     os: [darwin]
 
-  '@supabase/cli-linux-arm64-musl@2.115.0':
-    resolution: {integrity: sha512-2OCzD4qZx8RFbW2vfOlXpup+1UnVqSauUsSGH4mKiUIveMD/UyMI6Md8CLKLszwV2XwM+6bZG6w7d7Ems9vxCQ==}
+  '@supabase/cli-linux-arm64-musl@2.120.0':
+    resolution: {integrity: sha512-+4IwiBpGOQgLFeEG6RImxSUrMHo+LDsFNGJ4WLoLBOozFaippoz5J6CnNpVSTeJj9QaOX3G9iVsL/wYF6P1Cxw==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@supabase/cli-linux-arm64@2.115.0':
-    resolution: {integrity: sha512-JBcnnFuVekMR9+EOCcup1QihW+CHMBWcL/+N1Uz4HB6leX8d894VQ+sX0pFgbXLqnpGcc35IiXKwjLz4FCb8Dw==}
+  '@supabase/cli-linux-arm64@2.120.0':
+    resolution: {integrity: sha512-pmR61xpBmzUc79gkh3sE42KtBkludBXex1TIQTVY6jkTjs2+JhJYNKxR7udeaFgxFpiV+zTeAyqJBYXLibxQJw==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@supabase/cli-linux-x64-musl@2.115.0':
-    resolution: {integrity: sha512-t36QEEQxy0AsOn0rr1L8aEzZKYS+kRH4fvYr5KdB+rHA1x39A1dUeOCTqCucCr0V5oQ3+odJLlO6tinNczHKMQ==}
+  '@supabase/cli-linux-x64-musl@2.120.0':
+    resolution: {integrity: sha512-YIrqu1+hBiLwYIk1HKesrfIm2ycQIsOfN5VGV3r/okQx8JyWl9Jrw7emKVS/F+1afe+1MqKEBP70B0PbuvX+jQ==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@supabase/cli-linux-x64@2.115.0':
-    resolution: {integrity: sha512-ZvZ5QbPB3cvenEam6TDgngWPPm9GBO5m/5GYCOsqIfx2Gz5++WsEhlypWy9U4gTFae7ENtih0RqPzgiyWDKE+w==}
+  '@supabase/cli-linux-x64@2.120.0':
+    resolution: {integrity: sha512-IWJ0yFefhX/69ofcgJfN8MyOC9TtCG4SLrlMCvXjH3vZXxnRkiVNggxQqUCIhshS9Afa+q17DRbQen7/IZTL4A==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@supabase/cli-windows-arm64@2.115.0':
-    resolution: {integrity: sha512-MkYbWrNZXpWZxwglVaTexj+w6EWYUi34c7Y9SRGbcQBC/infteM/8zhVVRUmO3ltSEqnJCacHowLPISXIF6g/w==}
+  '@supabase/cli-windows-arm64@2.120.0':
+    resolution: {integrity: sha512-U+IDegKWC4xXxk7aCRUUy2ZTJ4bwwrcVlnzG1VJqC7nB7SLgMiyUMyvuo1tB+Xt8hHf0hkuViNtohnXPdZHCIQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@supabase/cli-windows-x64@2.115.0':
-    resolution: {integrity: sha512-jRXsJjbw/h0ssSpFQeClTTO2wtMw0YYS1yMzN2f/px4DehigBZNxSFB4thOtzmIJoisInm1gYV5pQJZla1Ytpw==}
+  '@supabase/cli-windows-x64@2.120.0':
+    resolution: {integrity: sha512-y96p4JdUuKygzUDCRo1T8yEiLbyWIiL/4Qdnmgu/X84WJOZmji/TlW5ThqDllsQuGWbkgovy+6LLqWKHk330XQ==}
     cpu: [x64]
     os: [win32]
 
-  '@supabase/functions-js@2.112.3':
-    resolution: {integrity: sha512-gfv481mTOVWtZIJgXupxZpni2V2UWPf6jeF/jOK7HdMHdH+mt6sU0sHHwf0POsPip8ltlulu9OUHgwVzl5ddRw==}
+  '@supabase/functions-js@2.117.3':
+    resolution: {integrity: sha512-6GuizbP4N5xWaxEVUsI+UQpJdmMmn0t3sYNpObo9gCAldvM22gFjnYzRVmkHxp5ylU21azEYmiWVwk9iDgCMkQ==}
     engines: {node: '>=22.0.0'}
 
   '@supabase/phoenix@0.4.5':
     resolution: {integrity: sha512-aAn9H9ovVyeApKy11OWOrrOGq8DV68yWeH4ud2lN9fzn4aO8Zb5GLL9m1pUg9nLqIcT+ZDfAcsZe0E/nqdv2lw==}
 
-  '@supabase/postgrest-js@2.112.3':
-    resolution: {integrity: sha512-+Mf6uCpzr00bqxwX8hTK2X2L9eAL/1vuOjdEjx6upz9ulb0RmQT16XeU/JkMUlVHw/B46ZnPa2busY4Kd9YCzw==}
+  '@supabase/postgrest-js@2.117.3':
+    resolution: {integrity: sha512-NpyTgullu6tw11ojYKTdZg9HannZ4mu4FUlhc9V5zDXOVllUJzEmuyLM+WWoYF0BurfrRvarimpm3SR8P0Gzfw==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/realtime-js@2.112.3':
-    resolution: {integrity: sha512-E6wljXWs7DUOloyIB69i3YFInWE6IyCvgTAbQ0KYxOHv26FdA1KzEXTuzxrYEdf70t406Z9BRwUlGyclGF2FXA==}
+  '@supabase/realtime-js@2.117.3':
+    resolution: {integrity: sha512-4W4ISbreRygNXbhwqxeqyuRul8RPx+SF+Hp2IT8wctebQEHSVCULfKatiRiEhmasfoXvYm2AHV4XFsOxhoousA==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/ssr@0.12.4':
-    resolution: {integrity: sha512-xHzcgI8cC1TpBKSwJcR5Yd8CCwfIq0SBc5yb4yz/YFw5tbCrEQ0QT3a+2jymCxHgQWLfzwN93HZ6eRbcoMkOlA==}
+  '@supabase/ssr@0.12.7':
+    resolution: {integrity: sha512-wiBtEie1KkRJi9RrZWY3R2imRhX1JY7qMyUCH2z9AUk15gQebNEplM+urbCKamdxaTJLXUU6LlpkJsaxhojCEg==}
     peerDependencies:
-      '@supabase/supabase-js': ^2.111.0
+      '@supabase/supabase-js': ^2.114.0
 
-  '@supabase/storage-js@2.112.3':
-    resolution: {integrity: sha512-oSK61tzlUvg+BWPqpKQCu9qqonsO26btaoAR9D6Gest2aj7xUqToj9rKyaoYOJczkhg9BjqA1REbYy9tPI4bDA==}
+  '@supabase/storage-js@2.117.3':
+    resolution: {integrity: sha512-QhUxFC33Crlw6WDeA4hLADdi1PzjI3c4UJs7ivWHHEnU7ulmCWEZSDaRCuIfmsjUwbHYaIfRNFQNsm+IsGYS6w==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/supabase-js@2.112.3':
-    resolution: {integrity: sha512-Jv1bxVQmEJNkjvPEhFaKjPzsh+Ozyew6lWGD+SoYcsclDEP1z7yEvKvfUQfzy0DkxRIQnZNxmmWtAzw5XLTQoA==}
+  '@supabase/supabase-js@2.117.3':
+    resolution: {integrity: sha512-K+f8PimXDunPWQ63CKRXaF5pbVPJxmfw5ryAnh0s9S9PkwcuqBjiSpIaqpF7KLDljeYwXIL85ST8QxaO0+XuvA==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0'
@@ -5643,8 +5643,8 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
-  csv-parse@7.0.2:
-    resolution: {integrity: sha512-uKZghv9UmPkMVLYy//KZ9HFAIJsl7wkhoEdIL0+rhuSY9pZQlhaeGEDPIe+/w7eh81MOql8Q/9+inAGWG6ZHYA==}
+  csv-parse@7.0.3:
+    resolution: {integrity: sha512-YFd3QM/yo17vH91L1IOZuvl09zM0zEEtdfTcOCKWcMdM++MNaQSyp09slXyFCLaPXvHstQFx/xC8myiFHSMUvw==}
 
   custom-media-element@1.4.6:
     resolution: {integrity: sha512-/HRYqJOa1ob5ik4q7FIJVYxTJCFs/FL3+cQPAJjUf2uiqrDEzbTgB315gQ2rG8oK3w094W9m5tcB8S5Qah+caA==}
@@ -6150,8 +6150,8 @@ packages:
   fast-xml-builder@1.2.0:
     resolution: {integrity: sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q==}
 
-  fast-xml-parser@5.11.0:
-    resolution: {integrity: sha512-9IGxMqvqLOnqP+Egi1nqDHKv5k8aZ7r9n558enxcucmyVGEBNPAU+MOg/8jPIS7rO7sSq4gFm1/nHtiaubMruw==}
+  fast-xml-parser@5.11.2:
+    resolution: {integrity: sha512-R9iDuNrQYeQut46cn2r2wHKn4HYzVDvDm5J1wW+koZewykv0yuO2HChTYeZtrULyHIDM9cj9TUXloCsueCQUog==}
     hasBin: true
 
   fastest-levenshtein@1.0.16:
@@ -6470,8 +6470,8 @@ packages:
       typescript:
         optional: true
 
-  ical-generator@11.1.0:
-    resolution: {integrity: sha512-/CSyXcelySK5qYAUxXnwzhAi1UPVnapnVMXqkRQ+L0RXHCFtzqLm92o5PD0ZRhaWBCtkS0hP8YIxMrSRZ+8Zug==}
+  ical-generator@11.1.2:
+    resolution: {integrity: sha512-/pr2IbEhMoEGsLvCsgRoK5yEtFwLC08JuI6sQy0jejJq/94CTttaRHgnrmsvsM2290YOXfZjwyZc9J4UQhB+vA==}
     engines: {node: 22 || >=24.0.0}
     peerDependencies:
       '@touch4it/ical-timezones': '>=1.6.0'
@@ -7798,8 +7798,8 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postal-mime@2.7.5:
-    resolution: {integrity: sha512-GNEXKvWFQnbgO5NlrGzVa0FmWzBZ24PersAWErttSg1Hjpf0ATxTwS5DOMGaOpTG6bUh5cTr7xi0jAD942wCJA==}
+  postal-mime@2.7.6:
+    resolution: {integrity: sha512-UUlyE2KlxmvwMGq060onF/VWU3zD6dVW31FwokQ5v26jWd35fbs2MoTFzh+jXnPwAyV2MULMKXcBInGOl5TO6Q==}
 
   postcss-selector-parser@7.1.6:
     resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
@@ -8290,8 +8290,8 @@ packages:
   reselect@5.2.0:
     resolution: {integrity: sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==}
 
-  resend@6.22.0:
-    resolution: {integrity: sha512-dP1jyl0n1Dx7GYDb0bcsbv9Yx0oBRLhUtSyNFRIOsSzV9MvCVbua/3WP6YUP2JptAU5BciEWGInV+hFjUuYLUw==}
+  resend@6.32.1:
+    resolution: {integrity: sha512-Z9DxkIZt5uvVNkjxjc+r4rCPI0MdDIJ7H+GvU50o9GkhrD0tVTwP6caE8KYEco90sos312l6R72jAEMCBFBiFQ==}
     engines: {node: '>=20'}
     peerDependencies:
       '@react-email/render': '*'
@@ -8560,8 +8560,8 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
-  standardwebhooks@1.0.0:
-    resolution: {integrity: sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg==}
+  standardwebhooks@1.1.1:
+    resolution: {integrity: sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ==}
 
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
@@ -8620,8 +8620,8 @@ packages:
     resolution: {integrity: sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==}
     engines: {node: '>=18'}
 
-  stripe@22.5.0:
-    resolution: {integrity: sha512-QVwMwriC0bbySx6R4dpsvJ0W//GojC1kwWVS6rPSoVqDUIZX4Hy3TaUrd2AZeXEAaKbfWIjQjvo3vKAReHZ0vQ==}
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -8676,8 +8676,8 @@ packages:
   stylis@4.3.6:
     resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
 
-  supabase@2.115.0:
-    resolution: {integrity: sha512-8fL9vOd6jOntmU8N5DVlHGE2GWR1r57ulsrOzSyO6IRYq5QMyKie8T8DH+hb+caGhYUVJLvmpY7XYwic60Uafg==}
+  supabase@2.120.0:
+    resolution: {integrity: sha512-NF8ueHsOZMbyiFJARKbiZy9AhNtj5E5R49P+cVqlv2u/T2JpMtsvp29YgPgrIWkVUjsfhJseTmKEdckatSeWZQ==}
     hasBin: true
 
   super-media-element@1.4.2:
@@ -10705,7 +10705,7 @@ snapshots:
 
   '@noble/hashes@1.8.0': {}
 
-  '@nodable/entities@3.0.0': {}
+  '@nodable/entities@3.1.0': {}
 
   '@oozcitak/dom@1.15.10':
     dependencies:
@@ -12914,7 +12914,7 @@ snapshots:
     dependencies:
       node-gyp-build: 4.8.4
 
-  '@rocicorp/zero-virtual@0.6.3(@rocicorp/zero@1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@rocicorp/zero-virtual@0.6.4(@rocicorp/zero@1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     optionalDependencies:
       '@rocicorp/zero': 1.9.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0))
       react: 19.3.0
@@ -13176,66 +13176,66 @@ snapshots:
       tslib: 2.8.1
       vitest: 4.1.11(@opentelemetry/api@1.9.0)(@types/node@24.19.1)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@30.1.2(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@24.19.1)(typescript@7.0.2))(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  '@supabase/auth-js@2.112.3':
+  '@supabase/auth-js@2.117.3':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/cli-darwin-arm64@2.115.0':
+  '@supabase/cli-darwin-arm64@2.120.0':
     optional: true
 
-  '@supabase/cli-darwin-x64@2.115.0':
+  '@supabase/cli-darwin-x64@2.120.0':
     optional: true
 
-  '@supabase/cli-linux-arm64-musl@2.115.0':
+  '@supabase/cli-linux-arm64-musl@2.120.0':
     optional: true
 
-  '@supabase/cli-linux-arm64@2.115.0':
+  '@supabase/cli-linux-arm64@2.120.0':
     optional: true
 
-  '@supabase/cli-linux-x64-musl@2.115.0':
+  '@supabase/cli-linux-x64-musl@2.120.0':
     optional: true
 
-  '@supabase/cli-linux-x64@2.115.0':
+  '@supabase/cli-linux-x64@2.120.0':
     optional: true
 
-  '@supabase/cli-windows-arm64@2.115.0':
+  '@supabase/cli-windows-arm64@2.120.0':
     optional: true
 
-  '@supabase/cli-windows-x64@2.115.0':
+  '@supabase/cli-windows-x64@2.120.0':
     optional: true
 
-  '@supabase/functions-js@2.112.3':
+  '@supabase/functions-js@2.117.3':
     dependencies:
       tslib: 2.8.1
 
   '@supabase/phoenix@0.4.5': {}
 
-  '@supabase/postgrest-js@2.112.3':
+  '@supabase/postgrest-js@2.117.3':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/realtime-js@2.112.3':
+  '@supabase/realtime-js@2.117.3':
     dependencies:
       '@supabase/phoenix': 0.4.5
       tslib: 2.8.1
 
-  '@supabase/ssr@0.12.4(@supabase/supabase-js@2.112.3(@opentelemetry/api@1.9.0))':
+  '@supabase/ssr@0.12.7(@supabase/supabase-js@2.117.3(@opentelemetry/api@1.9.0))':
     dependencies:
-      '@supabase/supabase-js': 2.112.3(@opentelemetry/api@1.9.0)
+      '@supabase/supabase-js': 2.117.3(@opentelemetry/api@1.9.0)
       cookie: 1.1.1
 
-  '@supabase/storage-js@2.112.3':
+  '@supabase/storage-js@2.117.3':
     dependencies:
       iceberg-js: 0.8.1
       tslib: 2.8.1
 
-  '@supabase/supabase-js@2.112.3(@opentelemetry/api@1.9.0)':
+  '@supabase/supabase-js@2.117.3(@opentelemetry/api@1.9.0)':
     dependencies:
-      '@supabase/auth-js': 2.112.3
-      '@supabase/functions-js': 2.112.3
-      '@supabase/postgrest-js': 2.112.3
-      '@supabase/realtime-js': 2.112.3
-      '@supabase/storage-js': 2.112.3
+      '@supabase/auth-js': 2.117.3
+      '@supabase/functions-js': 2.117.3
+      '@supabase/postgrest-js': 2.117.3
+      '@supabase/realtime-js': 2.117.3
+      '@supabase/storage-js': 2.117.3
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
 
@@ -14590,7 +14590,7 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  csv-parse@7.0.2: {}
+  csv-parse@7.0.3: {}
 
   custom-media-element@1.4.6: {}
 
@@ -15156,9 +15156,9 @@ snapshots:
       path-expression-matcher: 1.6.2
       xml-naming: 0.1.0
 
-  fast-xml-parser@5.11.0:
+  fast-xml-parser@5.11.2:
     dependencies:
-      '@nodable/entities': 3.0.0
+      '@nodable/entities': 3.1.0
       fast-xml-builder: 1.2.0
       is-unsafe: 2.0.0
       path-expression-matcher: 1.6.2
@@ -15514,7 +15514,7 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  ical-generator@11.1.0(@types/node@24.19.1)(dayjs@1.11.23)(rrule@2.8.1):
+  ical-generator@11.1.2(@types/node@24.19.1)(dayjs@1.11.23)(rrule@2.8.1):
     optionalDependencies:
       '@types/node': 24.19.1
       dayjs: 1.11.23
@@ -17009,7 +17009,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postal-mime@2.7.5: {}
+  postal-mime@2.7.6: {}
 
   postcss-selector-parser@7.1.6:
     dependencies:
@@ -17540,10 +17540,10 @@ snapshots:
 
   reselect@5.2.0: {}
 
-  resend@6.22.0(@react-email/render@2.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)):
+  resend@6.32.1(@react-email/render@2.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)):
     dependencies:
-      postal-mime: 2.7.5
-      standardwebhooks: 1.0.0
+      postal-mime: 2.7.6
+      standardwebhooks: 1.1.1
     optionalDependencies:
       '@react-email/render': 2.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
 
@@ -17860,7 +17860,7 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  standardwebhooks@1.0.0:
+  standardwebhooks@1.1.1:
     dependencies:
       '@stablelib/base64': 1.0.1
       fast-sha256: 1.3.0
@@ -17916,7 +17916,7 @@ snapshots:
 
   strip-final-newline@4.0.0: {}
 
-  stripe@22.5.0(@types/node@24.19.1):
+  stripe@22.6.2(@types/node@24.19.1):
     optionalDependencies:
       '@types/node': 24.19.1
 
@@ -17956,19 +17956,19 @@ snapshots:
 
   stylis@4.3.6: {}
 
-  supabase@2.115.0:
+  supabase@2.120.0:
     dependencies:
       eciesjs: 0.5.0
       jose: 6.2.10
     optionalDependencies:
-      '@supabase/cli-darwin-arm64': 2.115.0
-      '@supabase/cli-darwin-x64': 2.115.0
-      '@supabase/cli-linux-arm64': 2.115.0
-      '@supabase/cli-linux-arm64-musl': 2.115.0
-      '@supabase/cli-linux-x64': 2.115.0
-      '@supabase/cli-linux-x64-musl': 2.115.0
-      '@supabase/cli-windows-arm64': 2.115.0
-      '@supabase/cli-windows-x64': 2.115.0
+      '@supabase/cli-darwin-arm64': 2.120.0
+      '@supabase/cli-darwin-x64': 2.120.0
+      '@supabase/cli-linux-arm64': 2.120.0
+      '@supabase/cli-linux-arm64-musl': 2.120.0
+      '@supabase/cli-linux-x64': 2.120.0
+      '@supabase/cli-linux-x64-musl': 2.120.0
+      '@supabase/cli-windows-arm64': 2.120.0
+      '@supabase/cli-windows-x64': 2.120.0
 
   super-media-element@1.4.2: {}
 
