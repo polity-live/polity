@@ -147,6 +147,8 @@ interface CityDesignPageViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onObjectCategoryVisibilityChange: (category: CityDesignObjectCategory, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
@@ -160,6 +162,12 @@ interface CityDesignPageViewProps {
   onPlacementUnitCostChange: (unitCostMinor: number | null) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
@@ -243,6 +251,8 @@ export function CityDesignPageView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onObjectCategoryVisibilityChange,
   onOsmWayHide,
@@ -252,6 +262,8 @@ export function CityDesignPageView({
   onShowStreetMarkingsChange,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
@@ -552,6 +564,8 @@ export function CityDesignPageView({
           onCancelPlacement={onCancelPlacement}
           onObjectSelect={selectObject}
           onOsmWaySelect={selectOsmWay}
+          onObjectFocus={onObjectFocus}
+          onOsmWayFocus={onOsmWayFocus}
           onObjectVisibilityChange={onObjectVisibilityChange}
           onOsmWayHide={onOsmWayHide}
           onOsmWayImport={onOsmWayImport}
@@ -559,6 +573,8 @@ export function CityDesignPageView({
           onObjectRotate={onRotationChange}
           onPropertyChange={onPropertyChange}
           onWidthChange={onWidthChange}
+          onLengthChange={onLengthChange}
+          onPositionChange={onPositionChange}
           onRotationChange={onRotationChange}
           onUnitCostChange={onUnitCostChange}
           onDeleteObject={onDeleteObject}
@@ -597,7 +613,10 @@ function CityDesignNavigationHelp() {
           items: [t('features.amendments.cityDesign.help.touch.camera')],
         },
       ],
-      globalItems: [t('features.amendments.cityDesign.help.touch.global')],
+      globalItems: [
+        t('features.amendments.cityDesign.help.touch.pan'),
+        t('features.amendments.cityDesign.help.touch.zoom'),
+      ],
     },
     {
       key: 'mouse',
@@ -622,7 +641,12 @@ function CityDesignNavigationHelp() {
           items: [t('features.amendments.cityDesign.help.mouse.camera')],
         },
       ],
-      globalItems: [t('features.amendments.cityDesign.help.mouse.global')],
+      globalItems: [
+        t('features.amendments.cityDesign.help.mouse.pan'),
+        t('features.amendments.cityDesign.help.mouse.spacePan'),
+        t('features.amendments.cityDesign.help.mouse.zoom'),
+        t('features.amendments.cityDesign.help.mouse.turn'),
+      ],
     },
     {
       key: 'keyboard',
@@ -644,7 +668,13 @@ function CityDesignNavigationHelp() {
           items: [t('features.amendments.cityDesign.help.keyboard.camera')],
         },
       ],
-      globalItems: [t('features.amendments.cityDesign.help.keyboard.global')],
+      globalItems: [
+        t('features.amendments.cityDesign.help.keyboard.panForward'),
+        t('features.amendments.cityDesign.help.keyboard.panSideways'),
+        t('features.amendments.cityDesign.help.keyboard.zoom'),
+        t('features.amendments.cityDesign.help.keyboard.turn'),
+        t('features.amendments.cityDesign.help.keyboard.focus'),
+      ],
     },
   ];
 
@@ -657,7 +687,7 @@ function CityDesignNavigationHelp() {
           aria-label={t('features.amendments.cityDesign.help.trigger')}
           aria-expanded={open}
           aria-haspopup="dialog"
-          className="bg-muted/20 hover:bg-muted/40 focus-visible:ring-ring text-muted-foreground hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
+          className="bg-muted/20 hover:bg-muted/40 text-muted-foreground hover:text-foreground focus-visible:ring-ring flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
           onClick={() => setOpen(current => !current)}
           onFocus={() => setOpen(true)}
           onMouseEnter={() => setOpen(true)}

@@ -6863,6 +6863,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignNavigationQuality.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/amendments/city-design/logic/__tests__/cityDesignObjectRegistry.unit.test.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -6963,6 +6973,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignProperties.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignRenderBatches.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/amendments/city-design/logic/__tests__/cityDesignScene.mount.unit.test.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -6984,6 +7014,36 @@
     },
     {
       "path": "src/features/amendments/city-design/logic/__tests__/cityDesignSelectionAddress.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetMarkings.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetNetwork.boundaries.unit.test.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetNetwork.unit.test.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
       "kind": "test-infrastructure",
@@ -7409,6 +7469,35 @@
       ]
     },
     {
+      "path": "src/features/amendments/city-design/logic/cityDesignNavigationQuality.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/logic/__tests__/cityDesignNavigationQuality.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps full quality for a stationary gesture and restores only after damping and the gesture finish"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBuildingUse.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/amendments/city-design/logic/cityDesignObjectRegistry.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -7661,6 +7750,35 @@
       ]
     },
     {
+      "path": "src/features/amendments/city-design/logic/cityDesignRenderBatches.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/logic/__tests__/cityDesignRenderBatches.unit.test.ts",
+          "project": "unit",
+          "caseId": "shares primitive buffers across identities and preserves colors, split offsets, slots and untouched buffers"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBuildingUse.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/amendments/city-design/logic/cityDesignScene.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -7715,6 +7833,64 @@
             "coveredStatements": 19,
             "totalStatements": 19
           }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBuildingUse.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/cityDesignStreetMarkings.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetMarkings.unit.test.ts",
+          "project": "unit",
+          "caseId": "clips opposing centre lines and guides only through lanes in a four-arm junction"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBuildingUse.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/cityDesignStreetNetwork.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/logic/__tests__/cityDesignStreetNetwork.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves the central void of a roundabout"
         }
       ],
       "suggestedTestRefs": [
@@ -7927,6 +8103,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7937,8 +8114,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -7968,6 +8144,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -7978,8 +8155,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8004,6 +8180,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8014,8 +8191,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8040,6 +8216,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8050,8 +8227,72 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/CityDesignMeasurementPanel.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/CityDesignNumberInput.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignNumberInput.component.test.tsx",
+          "project": "component",
+          "caseId": "applies valid numbers immediately, preserves comma drafts and does not duplicate changes on Enter"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8081,6 +8322,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8091,8 +8333,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8121,6 +8362,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8131,8 +8373,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8157,6 +8398,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8167,8 +8409,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8203,6 +8444,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8213,8 +8455,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8239,6 +8480,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8249,8 +8491,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8275,6 +8516,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8285,8 +8527,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8311,6 +8552,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8321,8 +8563,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8347,6 +8588,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8357,8 +8599,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8388,6 +8629,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8398,8 +8640,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8429,6 +8670,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8439,8 +8681,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8475,6 +8716,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8485,9 +8727,18 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
@@ -8581,6 +8832,36 @@
     },
     {
       "path": "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignNumberInput.component.test.tsx",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
       "kind": "test-infrastructure",
@@ -8800,6 +9081,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/amendments/city-design/ui/__tests__/useCityDesignMeasurements.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/amendments/city-design/ui/__tests__/useStreetAreaPickerController.component.test.tsx",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -8840,6 +9131,42 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/amendments/city-design/ui/useCityDesignMeasurements.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurements.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "selects multiple real surfaces, measures without dirtying the document and commits dimensions",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "toggles touch selection and measures isolated comparison layers and elevations through focused controls",
+          "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/amendments/city-design/ui/useStreetAreaPickerController.ts",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -8861,6 +9188,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8871,8 +9199,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -8899,9 +9226,15 @@
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "selects an object through the compact cost list and edits its real property fields"
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/useStreetSceneCanvasViewController.component.test.tsx",
+          "project": "component",
+          "caseId": "deletes the selected design object with Delete, follows selection changes and removes the listener on unmount"
         }
       ],
       "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignCameraPerformance.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
@@ -8912,8 +9245,7 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
-        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx"
       ]
     },
     {
@@ -12888,7 +13220,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -34785,7 +35118,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -37371,7 +37705,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -37594,7 +37929,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -37626,11 +37962,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37662,11 +37998,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37698,11 +38034,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37757,11 +38093,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37793,11 +38129,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37831,9 +38167,9 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37865,11 +38201,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37901,11 +38237,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37937,11 +38273,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37973,11 +38309,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38009,11 +38345,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38045,11 +38381,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38081,11 +38417,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38117,11 +38453,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38155,9 +38491,9 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38189,11 +38525,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38225,11 +38561,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38261,11 +38597,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38330,6 +38666,16 @@
     },
     {
       "path": "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+      "domain": "features:editor",
+      "owner": "polity/features:editor",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
       "domain": "features:editor",
       "owner": "polity/features:editor",
       "kind": "test-infrastructure",
@@ -38428,8 +38774,8 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
+        "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx"
       ]
     },
     {
@@ -38521,7 +38867,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/editor/ui/metadata/__tests__/metadata.contract.component.test.tsx",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -41358,7 +41705,8 @@
         "src/features/events/ui/calendar/__tests__/calendar-components.contract.component.test.tsx",
         "src/features/events/ui/calendar/__tests__/compactCalendarEventStyles.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -63020,7 +63368,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -65210,7 +65559,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/appearance-theme/__tests__/appearance-theme.unit.test.ts",
         "src/features/shared/appearance-theme/__tests__/runtime.browser.unit.test.ts",
-        "src/features/shared/appearance-theme/__tests__/runtime.node.unit.test.ts"
+        "src/features/shared/appearance-theme/__tests__/runtime.node.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -65361,7 +65711,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/errors/__tests__/app-error.unit.test.ts"
+        "src/features/shared/errors/__tests__/app-error.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -68490,7 +68841,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
         "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
-        "src/features/shared/motion/__tests__/motion.component.test.tsx"
+        "src/features/shared/motion/__tests__/motion.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -68593,7 +68945,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/theme/__tests__/civic.unit.test.ts"
+        "src/features/shared/theme/__tests__/civic.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -69395,7 +69748,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/ui/action-submission/__tests__/ActionSubmissionOverlay.branches.component.test.tsx",
         "src/features/shared/ui/action-submission/__tests__/ActionSubmissionOverlay.component.test.tsx",
-        "src/features/shared/ui/action-submission/__tests__/useActionSubmission.component.test.tsx"
+        "src/features/shared/ui/action-submission/__tests__/useActionSubmission.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -70095,7 +70449,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -70595,7 +70950,8 @@
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/DiscussionActions.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/DiscussionTimestamp.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/DiscussionTimestamp.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -70687,7 +71043,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/ui/contact/__tests__/contact.contract.component.test.tsx"
+        "src/features/shared/ui/contact/__tests__/contact.contract.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -70750,7 +71107,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/ui/currency/__tests__/ConvertedCurrencyAmount.component.test.tsx"
+        "src/features/shared/ui/currency/__tests__/ConvertedCurrencyAmount.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -71053,7 +71411,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -71154,7 +71513,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/ui/dialog/__tests__/DialogShell.component.test.tsx",
-        "src/features/shared/ui/dialog/__tests__/ManagementDialog.component.test.tsx"
+        "src/features/shared/ui/dialog/__tests__/ManagementDialog.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -71204,7 +71564,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -71464,7 +71825,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -71514,7 +71876,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -73643,7 +74006,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/ui/graph/__tests__/GraphEdgeControls.component.test.tsx"
+        "src/features/shared/ui/graph/__tests__/GraphEdgeControls.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -73812,7 +74176,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/ui/hashtags/__tests__/HashtagInput.defaults.component.test.tsx",
         "src/features/shared/ui/hashtags/__tests__/HashtagInputView.component.test.tsx",
-        "src/features/shared/ui/hashtags/__tests__/useHashtagInputController.component.test.tsx"
+        "src/features/shared/ui/hashtags/__tests__/useHashtagInputController.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -73923,7 +74288,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/shared/ui/icons/__tests__/BrandIcons.component.test.tsx"
+        "src/features/shared/ui/icons/__tests__/BrandIcons.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -76940,14 +77306,14 @@
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignMeasurementPanel.component.test.tsx",
         "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanel.a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.agenda.component.test.tsx",
         "src/features/amendments/ui/__tests__/SupportConfirmationPanelView.a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/useSupportConfirmationPanelController.a04.component.test.tsx",
         "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/panel-events.unit.test.ts",
-        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/panel-events.unit.test.ts"
       ]
     },
     {
@@ -77189,7 +77555,8 @@
         "src/features/shared/ui/layout/__tests__/StatsBar.component.test.tsx",
         "src/features/shared/ui/layout/__tests__/SubscriberStatsBar.component.test.tsx",
         "src/features/shared/ui/layout/__tests__/Toolbar.branches.component.test.tsx",
-        "src/features/shared/ui/layout/__tests__/Toolbar.tooltip.component.test.tsx"
+        "src/features/shared/ui/layout/__tests__/Toolbar.tooltip.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -77438,7 +77805,8 @@
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -77580,7 +77948,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
         "src/features/shared/ui/participation/__tests__/MembershipTabs.component.test.tsx",
-        "src/features/shared/ui/participation/__tests__/ParticipationRoleFilterBar.component.test.tsx"
+        "src/features/shared/ui/participation/__tests__/ParticipationRoleFilterBar.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -77863,7 +78232,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/ui/rich-text/__tests__/InlineCombobox.component.test.tsx",
         "src/features/shared/ui/rich-text/__tests__/ResizeHandle.component.test.tsx",
-        "src/features/shared/ui/rich-text/__tests__/rich-text-display.contract.component.test.tsx"
+        "src/features/shared/ui/rich-text/__tests__/rich-text-display.contract.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -86343,6 +86713,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignInputRouter.unit.test.ts",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignNumberInput.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/CreateInputActions.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/CreateInputVariants.coverage.component.test.tsx",
@@ -86352,8 +86723,7 @@
         "src/features/create/ui/inputs/__tests__/TodoDeadlineInput.component.test.tsx",
         "src/features/create/ui/inputs/__tests__/UserSearchInput.component.test.tsx",
         "src/features/elections/ui/__tests__/ElectionModeInput.component.test.tsx",
-        "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx",
-        "src/features/messages/ui/__tests__/AssistantMessageInput.component.test.tsx"
+        "src/features/messages/ui/__tests__/AssistantMessageInput.branch-a05.component.test.tsx"
       ]
     },
     {
@@ -89098,7 +89468,8 @@
         "src/features/shared/virtualization/__tests__/grid-runtime.component.test.tsx",
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -89816,7 +90187,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/features/timeline/constants/__tests__/accessibility.lsf-a04.unit.test.ts"
+        "src/features/timeline/constants/__tests__/accessibility.lsf-a04.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -90503,7 +90875,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98671,7 +99044,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98700,7 +99074,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98729,7 +99104,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98758,7 +99134,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98787,7 +99164,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98816,7 +99194,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98845,7 +99224,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98874,7 +99254,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98903,7 +99284,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98932,7 +99314,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98961,7 +99344,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -98990,7 +99374,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99019,7 +99404,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99048,7 +99434,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99077,7 +99464,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99106,7 +99494,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99135,7 +99524,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99164,7 +99554,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99193,7 +99584,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99222,7 +99614,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99251,7 +99644,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99280,7 +99674,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99331,7 +99726,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99360,7 +99756,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99389,7 +99786,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99447,7 +99845,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99476,7 +99875,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99505,7 +99905,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99534,7 +99935,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99563,7 +99965,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99618,6 +100021,7 @@
         "e2e/navigation-responsive-reload.e2e.spec.ts",
         "src/features/agendas/hooks/__tests__/useAgendaArrowNavigation.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignNavigationQuality.unit.test.ts",
         "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
         "src/features/calendar/logic/__tests__/calendarEventNavigation.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
@@ -99625,8 +100029,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
-        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx"
+        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx"
       ]
     },
     {
@@ -99655,7 +100058,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99684,7 +100088,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99713,7 +100118,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99742,7 +100148,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99771,7 +100178,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99798,7 +100206,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99827,7 +100236,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99856,7 +100266,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99885,7 +100296,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99914,7 +100326,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -99943,7 +100356,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100008,7 +100422,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100037,7 +100452,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100066,7 +100482,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100095,7 +100512,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100124,7 +100542,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100153,7 +100572,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100182,7 +100602,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100211,7 +100632,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100240,7 +100662,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100269,7 +100692,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100298,7 +100722,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100327,7 +100752,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100356,7 +100782,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100385,7 +100812,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100517,7 +100945,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100546,7 +100975,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100575,7 +101005,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100604,7 +101035,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100633,7 +101065,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100662,7 +101095,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100691,7 +101125,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100720,7 +101155,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100749,7 +101185,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100778,7 +101215,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100807,7 +101245,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100836,7 +101275,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100865,7 +101305,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100894,7 +101335,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100923,7 +101365,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100952,7 +101395,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -100981,7 +101425,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101010,7 +101455,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101039,7 +101485,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101068,7 +101515,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101097,7 +101545,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101126,7 +101575,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101177,7 +101627,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101206,7 +101657,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101235,7 +101687,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101293,7 +101746,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101322,7 +101776,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101351,7 +101806,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101380,7 +101836,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101409,7 +101866,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101464,6 +101922,7 @@
         "e2e/navigation-responsive-reload.e2e.spec.ts",
         "src/features/agendas/hooks/__tests__/useAgendaArrowNavigation.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignNavigationQuality.unit.test.ts",
         "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
         "src/features/calendar/logic/__tests__/calendarEventNavigation.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
@@ -101471,8 +101930,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
-        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/small-navigation-controllers.component.test.tsx"
+        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx"
       ]
     },
     {
@@ -101501,7 +101959,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101530,7 +101989,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101559,7 +102019,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101588,7 +102049,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101617,7 +102079,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101644,7 +102107,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101673,7 +102137,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101702,7 +102167,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101731,7 +102197,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101760,7 +102227,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101789,7 +102257,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101854,7 +102323,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101883,7 +102353,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101912,7 +102383,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101941,7 +102413,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101970,7 +102443,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -101999,7 +102473,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102028,7 +102503,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102057,7 +102533,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102086,7 +102563,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102115,7 +102593,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102144,7 +102623,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102173,7 +102653,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102202,7 +102683,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102231,7 +102713,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -102284,7 +102767,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/i18n/locales/__tests__/features-loaders.lsf-a07.unit.test.ts"
+        "src/i18n/locales/__tests__/features-loaders.lsf-a07.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -103291,7 +103775,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -115409,7 +115894,8 @@
         "src/zero/accreditation/__tests__/a10-zero-surfaces.lsf-a10.unit.test.ts",
         "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
         "src/zero/accreditation/__tests__/accreditationWorkflow.unit.test.ts",
-        "src/zero/accreditation/__tests__/useAccreditationActions.lsf-a10.component.test.tsx"
+        "src/zero/accreditation/__tests__/useAccreditationActions.lsf-a10.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -116240,7 +116726,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -117595,7 +118082,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
-        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts"
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -117879,7 +118367,8 @@
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
-        "src/zero/blogs/__tests__/useBlogState.component.test.tsx"
+        "src/zero/blogs/__tests__/useBlogState.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -118155,7 +118644,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts"
+        "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -118495,7 +118985,8 @@
         "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
         "src/zero/change-requests/__tests__/server-resolution.city-design.unit.test.ts",
         "src/zero/change-requests/__tests__/server-resolution.unit.test.ts",
-        "src/zero/change-requests/__tests__/visibility.unit.test.ts"
+        "src/zero/change-requests/__tests__/visibility.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -120090,7 +120581,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -120188,7 +120680,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -122296,7 +122789,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.branch-a04.unit.test.ts",
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
-        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+        "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -124217,7 +124711,8 @@
         "src/zero/payments/__tests__/payment-shared-mutators-partition.branch-a08.unit.test.ts",
         "src/zero/payments/__tests__/paymentServerMutators.notifications.unit.test.ts",
         "src/zero/payments/__tests__/paymentSharedMutators.groupRbac.unit.test.ts",
-        "src/zero/payments/__tests__/usePaymentActions.lsf-a08.component.test.tsx"
+        "src/zero/payments/__tests__/usePaymentActions.lsf-a08.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -124493,7 +124988,8 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
-        "src/zero/pql/__tests__/pql-zero.branch-a09.unit.test.ts"
+        "src/zero/pql/__tests__/pql-zero.branch-a09.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -124754,7 +125250,8 @@
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
         "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
         "src/zero/preferences/__tests__/useWorkspacePreferences.component.test.tsx",
-        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -127246,7 +127743,8 @@
         "src/zero/statements/__tests__/statementQueries.unit.test.ts",
         "src/zero/statements/__tests__/statementServerMutators.unit.test.ts",
         "src/zero/statements/__tests__/statementSharedMutators.branch-a10.unit.test.ts",
-        "src/zero/statements/__tests__/useStatementActions.lsf-a10.component.test.tsx"
+        "src/zero/statements/__tests__/useStatementActions.lsf-a10.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -127943,7 +128441,8 @@
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
         "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
-        "src/zero/users/__tests__/user-actions.lsf-a07.component.test.tsx"
+        "src/zero/users/__tests__/user-actions.lsf-a07.component.test.tsx",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -128698,7 +129197,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/voting-password/__tests__/useVotingPasswordActions.component.test.tsx",
-        "src/zero/voting-password/__tests__/votingPasswordMutators.authorization.unit.test.ts"
+        "src/zero/voting-password/__tests__/votingPasswordMutators.authorization.unit.test.ts",
+        "tools/testing/performance/city-design/index.html"
       ]
     },
     {
@@ -132099,6 +132599,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/accountability/city-design-streets.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/accountability/collaboration.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -132896,6 +133406,96 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/performance/city-design/README.md",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/__tests__/environment.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/__tests__/main.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/__tests__/run.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/environment.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/index.html",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/main.js",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/run.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/vite.config.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/positional-locator-baseline.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -133179,6 +133779,16 @@
     },
     {
       "path": "vitest.browser.coverage.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "vitest.city-design-performance-coverage.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",

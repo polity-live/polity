@@ -109,6 +109,10 @@ function createRoundedCenterline(points: CityDesignLocalPoint[], width: number) 
     const next = cleanPoints[index + 1];
     const incoming = normalizeVector(previous.x - current.x, previous.z - current.z);
     const outgoing = normalizeVector(next.x - current.x, next.z - current.z);
+    if (incoming.x * outgoing.x + incoming.z * outgoing.z < -0.9999) {
+      rounded.push(current);
+      continue;
+    }
     const radius = Math.min(maxCornerRadius, incoming.length * 0.35, outgoing.length * 0.35);
 
     if (radius <= MIN_CORRIDOR_LENGTH || incoming.length <= radius || outgoing.length <= radius) {
@@ -126,7 +130,7 @@ function createRoundedCenterline(points: CityDesignLocalPoint[], width: number) 
     };
 
     rounded.push(trimStart);
-    const steps = Math.max(4, Math.ceil(radius / 2));
+    const steps = Math.max(8, Math.ceil(radius / 0.5));
     for (let step = 1; step < steps; step += 1) {
       const t = step / steps;
       const oneMinusT = 1 - t;
@@ -152,11 +156,14 @@ function createOffsetPolygon(centerline: CityDesignLocalPoint[], width: number) 
   centerline.forEach((point, index) => {
     const previous = centerline[Math.max(index - 1, 0)];
     const next = centerline[Math.min(index + 1, centerline.length - 1)];
-    const direction = normalizeVector(next.x - previous.x, next.z - previous.z);
-    const normal = {
-      x: -direction.z,
-      z: direction.x,
-    };
+    const before = normalizeVector(point.x - previous.x, point.z - previous.z);
+    const after = normalizeVector(next.x - point.x, next.z - point.z);
+    const incoming = index === 0 ? after : before;
+    const outgoing = index === centerline.length - 1 ? before : after;
+    const bisector = normalizeVector(-incoming.z - outgoing.z, incoming.x + outgoing.x);
+    const projection = bisector.x * -outgoing.z + bisector.z * outgoing.x;
+    const miter = Math.min(2, 1 / Math.max(0.5, projection));
+    const normal = { x: bisector.x * miter, z: bisector.z * miter };
 
     left.push({
       x: roundMetric(point.x + normal.x * halfWidth),
@@ -265,7 +272,15 @@ export function getCityDesignGeometryRotationDeg(geometry: CityDesignGeometry) {
 
   const points = geometry.kind === 'path_corridor' ? geometry.points : geometry.points;
   const first = points[0];
-  const last = points[points.length - 1];
+  let last: CityDesignLocalPoint | undefined = points[points.length - 1];
+  if (
+    geometry.kind === 'polygon' ||
+    (first && last && distanceBetweenPoints(first, last) < MIN_CORRIDOR_LENGTH)
+  ) {
+    last = points.find(
+      point => first && distanceBetweenPoints(first, point) >= MIN_CORRIDOR_LENGTH
+    );
+  }
   if (!first || !last || distanceBetweenPoints(first, last) < MIN_CORRIDOR_LENGTH) {
     return 0;
   }
@@ -289,8 +304,10 @@ export function rotateCityDesignObject(
   object: CityDesignObject,
   rotationDeg: number
 ): CityDesignObject {
+  if (!Number.isFinite(rotationDeg)) return object;
   const normalizedRotationDeg = normalizeDegrees(rotationDeg);
   const currentRotationDeg = getCityDesignGeometryRotationDeg(object.geometry);
+  if (Math.abs(currentRotationDeg - normalizedRotationDeg) < 0.001) return object;
   const rotationRad = degToRad(currentRotationDeg - normalizedRotationDeg);
 
   if (object.geometry.kind === 'point') {
@@ -316,10 +333,16 @@ export function rotateCityDesignObject(
   if (object.geometry.kind === 'path_corridor') {
     return {
       ...object,
-      geometry: createPathCorridorGeometry(
-        object.geometry.points.map(point => rotatePointAround(point, center, rotationRad)),
-        object.geometry.width
-      ),
+      geometry: {
+        ...object.geometry,
+        points: object.geometry.points.map(point => rotatePointAround(point, center, rotationRad)),
+        roundedCenterline: object.geometry.roundedCenterline.map(point =>
+          rotatePointAround(point, center, rotationRad)
+        ),
+        polygon: object.geometry.polygon.map(point =>
+          rotatePointAround(point, center, rotationRad)
+        ),
+      },
     };
   }
 
@@ -396,6 +419,70 @@ export function createPathCorridorGeometry(
     length: roundMetric(length),
     area: roundMetric(length * safeWidth),
     cornerRadius: roundMetric(Math.min(safeWidth * 1.5, 12)),
+  };
+}
+
+/** Builds a corridor from an already sampled curve without rounding it a second time. */
+export function createSampledCorridorGeometry(
+  centerline: CityDesignLocalPoint[],
+  width: number,
+  controlPoints = centerline
+): PathCorridorGeometry {
+  const roundedCenterline = removeConsecutiveDuplicatePoints(centerline);
+  const safeWidth = roundMetric(Math.max(width, 0.1));
+  const length = Math.max(getPathLength(roundedCenterline), MIN_CORRIDOR_LENGTH);
+  return {
+    kind: 'path_corridor',
+    points: controlPoints,
+    roundedCenterline,
+    width: safeWidth,
+    polygon: createOffsetPolygon(roundedCenterline, safeWidth),
+    length: roundMetric(length),
+    area: roundMetric(length * safeWidth),
+    cornerRadius: 0,
+  };
+}
+
+/** Trim the measured curve, or extend its last tangent, while preserving its start. */
+export function updateCorridorLength(object: CityDesignObject, length: number): CityDesignObject {
+  if (!Number.isFinite(length) || length < MIN_CORRIDOR_LENGTH) return object;
+  const geometry = object.geometry;
+  if (geometry.kind !== 'corridor' && geometry.kind !== 'path_corridor') return object;
+  if (Math.abs(length - geometry.length) < 0.001) return object;
+  const centerline =
+    geometry.kind === 'corridor' ? [geometry.start, geometry.end] : geometry.roundedCenterline;
+  if (centerline.length < 2) return object;
+  const points = [centerline[0]];
+  let remaining = length;
+  for (let index = 1; index < centerline.length; index += 1) {
+    const start = centerline[index - 1];
+    const end = centerline[index];
+    const distance = distanceBetweenPoints(start, end);
+    if (distance < MIN_CORRIDOR_LENGTH) continue;
+    if (remaining <= distance) {
+      points.push({
+        x: start.x + ((end.x - start.x) * remaining) / distance,
+        z: start.z + ((end.z - start.z) * remaining) / distance,
+      });
+      remaining = 0;
+      break;
+    }
+    points.push(end);
+    remaining -= distance;
+  }
+  if (remaining > 0) {
+    const last = points[points.length - 1];
+    const previous = points[points.length - 2];
+    if (!previous) return object;
+    const direction = normalizeVector(last.x - previous.x, last.z - previous.z);
+    points.push({ x: last.x + direction.x * remaining, z: last.z + direction.z * remaining });
+  }
+  return {
+    ...object,
+    geometry:
+      geometry.kind === 'corridor'
+        ? createCorridorGeometry(points[0], points[points.length - 1], geometry.width)
+        : createSampledCorridorGeometry(points, geometry.width),
   };
 }
 
@@ -533,21 +620,31 @@ export function createPathCorridorCityDesignObject(args: {
 }
 
 export function updateCorridorWidth(object: CityDesignObject, width: number): CityDesignObject {
+  if (!Number.isFinite(width) || width < 0.1) return object;
+  if (
+    (object.geometry.kind !== 'corridor' && object.geometry.kind !== 'path_corridor') ||
+    Math.abs(width - object.geometry.width) < 0.001
+  )
+    return object;
+  const properties = object.properties.widthSource
+    ? { ...object.properties, widthSource: 'user' }
+    : object.properties;
   if (object.geometry.kind === 'corridor') {
     return {
       ...object,
+      properties,
       geometry: createCorridorGeometry(object.geometry.start, object.geometry.end, width),
     };
   }
 
-  if (object.geometry.kind === 'path_corridor') {
-    return {
-      ...object,
-      geometry: createPathCorridorGeometry(object.geometry.points, width),
-    };
-  }
-
-  return object;
+  return {
+    ...object,
+    properties,
+    geometry:
+      object.geometry.cornerRadius === 0
+        ? createSampledCorridorGeometry(object.geometry.roundedCenterline, width)
+        : createPathCorridorGeometry(object.geometry.points, width),
+  };
 }
 
 export function movePointObject(
@@ -562,4 +659,41 @@ export function movePointObject(
     ...object,
     geometry: createPointGeometry(point, object.geometry.rotation),
   };
+}
+
+/** Translate the complete geometry without rebuilding curves or derived measurements. */
+export function updateCityDesignObjectPosition(
+  object: CityDesignObject,
+  position: CityDesignLocalPoint
+): CityDesignObject {
+  if (!Number.isFinite(position.x) || !Number.isFinite(position.z)) return object;
+  const center = getCityDesignGeometryCenter(object.geometry);
+  const dx = roundMetric(position.x - center.x);
+  const dz = roundMetric(position.z - center.z);
+  if (dx === 0 && dz === 0) return object;
+  const translate = (point: CityDesignLocalPoint) => ({ x: point.x + dx, z: point.z + dz });
+  const geometry = object.geometry;
+  if (geometry.kind === 'point')
+    return { ...object, geometry: { ...geometry, point: translate(geometry.point) } };
+  if (geometry.kind === 'corridor')
+    return {
+      ...object,
+      geometry: {
+        ...geometry,
+        start: translate(geometry.start),
+        end: translate(geometry.end),
+        polygon: geometry.polygon.map(translate),
+      },
+    };
+  if (geometry.kind === 'path_corridor')
+    return {
+      ...object,
+      geometry: {
+        ...geometry,
+        points: geometry.points.map(translate),
+        roundedCenterline: geometry.roundedCenterline.map(translate),
+        polygon: geometry.polygon.map(translate),
+      },
+    };
+  return { ...object, geometry: { ...geometry, points: geometry.points.map(translate) } };
 }

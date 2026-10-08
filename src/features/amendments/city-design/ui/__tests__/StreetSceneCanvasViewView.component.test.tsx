@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createCorridorCityDesignObject,
@@ -72,6 +73,90 @@ function createTestDesign(overrides: Partial<CityDesignStateV1> = {}): CityDesig
 }
 
 describe('StreetSceneCanvasViewView', () => {
+  it('fills the supplied container without imposing a fixed canvas height', () => {
+    const { container } = renderCanvasView({ fillContainer: true });
+    expect(container.querySelector('canvas')?.classList.contains('h-full')).toBe(true);
+    expect(container.querySelector('canvas')?.classList.contains('min-h-0')).toBe(true);
+    const workspace = container.querySelector('[data-tutorial-anchor="city-design-map-canvas"]');
+    expect(workspace?.classList.contains('h-full')).toBe(true);
+    expect(workspace?.classList.contains('min-h-0')).toBe(true);
+  });
+  it('focuses the selected design object explicitly in the read-only inspector', async () => {
+    const onObjectFocus = vi.fn();
+    renderCanvasView({ onObjectFocus, readOnly: true });
+    const focus = screen.getByRole('button', { name: 'Focus' });
+    expect((focus as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(focus);
+    expect(onObjectFocus).toHaveBeenCalledExactlyOnceWith('tree-123456');
+    focus.focus();
+    expect(document.activeElement).toBe(focus);
+    await userEvent.keyboard('{Enter}');
+    expect(onObjectFocus).toHaveBeenCalledTimes(2);
+  });
+
+  it('focuses the selected OSM feature explicitly in the read-only inspector', async () => {
+    const onOsmWayFocus = vi.fn();
+    renderCanvasView({
+      selectedObject: null,
+      selectedOsmWay: {
+        id: 'focus-osm',
+        kind: 'tree',
+        geometryKind: 'point',
+        point: { lat: 52.52, lon: 13.405 },
+        tags: {},
+      },
+      onOsmWayFocus,
+      readOnly: true,
+    });
+    const focus = screen.getByRole('button', { name: 'Focus' });
+    expect((focus as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(focus);
+    expect(onOsmWayFocus).toHaveBeenCalledExactlyOnceWith('focus-osm');
+    focus.focus();
+    expect(document.activeElement).toBe(focus);
+    await userEvent.keyboard('{Enter}');
+    expect(onOsmWayFocus).toHaveBeenCalledTimes(2);
+  });
+
+  it('tracks remote cursor overlays through the camera source without replacing the inspector', () => {
+    let pose = { position: { x: 0, y: 75, z: 85 }, target: { x: 0, y: 0, z: 0 } };
+    const listeners = new Set<() => void>();
+    const source = {
+      getSnapshot: () => pose,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+    };
+    const view = renderCanvasView({
+      cameraPoseSource: source,
+      remoteCursors: [
+        {
+          userId: 'peer',
+          name: 'Peer',
+          color: '#ff0000',
+          layer: 'design',
+          position: { x: 0, z: 0 },
+        },
+      ],
+    });
+    const cursor = screen.getByTestId('city-design-remote-cursor-peer');
+    const initialLeft = cursor.style.left;
+    const input = screen.getByRole('textbox', { name: 'Rotation' });
+    input.focus();
+    act(() => {
+      pose = { position: { x: 20, y: 75, z: 85 }, target: { x: 20, y: 0, z: 0 } };
+      listeners.forEach(listener => listener());
+    });
+    expect(cursor.style.left).not.toBe(initialLeft);
+    expect(screen.getByRole('textbox', { name: 'Rotation' })).toBe(input);
+    expect(document.activeElement).toBe(input);
+    view.unmount();
+    expect(listeners.size).toBe(0);
+  });
+
   it('shows semantic OSM mapping and imports an exact feature as a planned change', () => {
     const onImportOsmWay = vi.fn();
     const onClose = vi.fn();

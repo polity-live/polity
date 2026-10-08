@@ -67,6 +67,8 @@ interface StreetSceneCanvasViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
@@ -74,6 +76,12 @@ interface StreetSceneCanvasViewProps {
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
@@ -137,6 +145,8 @@ export function StreetSceneCanvasView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
@@ -144,6 +154,8 @@ export function StreetSceneCanvasView({
   onObjectRotate,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
@@ -200,6 +212,8 @@ export function StreetSceneCanvasView({
     onCancelPlacement,
     onObjectSelect,
     onOsmWaySelect,
+    onObjectFocus,
+    onOsmWayFocus,
     onObjectVisibilityChange,
     onOsmWayHide,
     onOsmWayImport,
@@ -207,6 +221,8 @@ export function StreetSceneCanvasView({
     onObjectRotate,
     onPropertyChange,
     onWidthChange,
+    onLengthChange,
+    onPositionChange,
     onRotationChange,
     onUnitCostChange,
     onDeleteObject,

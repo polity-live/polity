@@ -18,6 +18,7 @@ const { createSceneControllerMock, mountCityDesignSceneMock } = vi.hoisted(() =>
     updateHandlers: vi.fn(),
     focusObject: vi.fn(),
     focusOsmWay: vi.fn(),
+    flushPointerMove: vi.fn(),
     dispose: vi.fn(),
   });
 
@@ -39,6 +40,9 @@ function ControllerHarness({
   onFinishPlacement = vi.fn(),
   onCancelPlacement = vi.fn(),
   onObjectSelect = vi.fn(),
+  onFinishPathPlacement = vi.fn(),
+  onDeleteObject = vi.fn(),
+  embeddedPreview = false,
   placementMode = null,
   canFinishPathPlacement = false,
   readOnly = false,
@@ -55,6 +59,9 @@ function ControllerHarness({
   onFinishPlacement?: () => void;
   onCancelPlacement?: () => void;
   onObjectSelect?: (objectId: string | null) => void;
+  onFinishPathPlacement?: () => void;
+  onDeleteObject?: (objectId: string) => void;
+  embeddedPreview?: boolean;
   placementMode?: 'drag_band' | 'path' | null;
   canFinishPathPlacement?: boolean;
   readOnly?: boolean;
@@ -70,6 +77,7 @@ function ControllerHarness({
 }) {
   const viewProps = useStreetSceneCanvasViewController({
     design: createEmptyCityDesignState(),
+    embeddedPreview,
     isLoadingOsm: false,
     placementPreview: null,
     placementPreviewType: null,
@@ -95,7 +103,7 @@ function ControllerHarness({
     onPointerMove: vi.fn(),
     ...(provideOptionalHandlers ? { onPointerHover: vi.fn() } : {}),
     onFinishPlacement,
-    onFinishPathPlacement: vi.fn(),
+    onFinishPathPlacement,
     onCancelPlacement,
     onObjectSelect,
     onOsmWaySelect: vi.fn(),
@@ -107,7 +115,7 @@ function ControllerHarness({
     onWidthChange: vi.fn(),
     onRotationChange: vi.fn(),
     onUnitCostChange: vi.fn(),
-    onDeleteObject: vi.fn(),
+    onDeleteObject,
   });
   latestControllerViewProps = viewProps;
 
@@ -330,6 +338,22 @@ describe('useStreetSceneCanvasViewController', () => {
     expect(latestControllerViewProps?.onOsmImportUndo('osm-1')).toBeUndefined();
   });
 
+  it('keeps an unchanged initial scene without a redundant option sync', async () => {
+    const controller = createSceneControllerMock();
+    mountCityDesignSceneMock.mockResolvedValueOnce(controller);
+    const view = render(<ControllerHarness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mountCityDesignSceneMock).toHaveBeenCalledTimes(1);
+    expect(controller.updateDesign).not.toHaveBeenCalled();
+    expect(controller.updateSelection).not.toHaveBeenCalled();
+    expect(controller.updateHandlers).not.toHaveBeenCalled();
+    view.unmount();
+    expect(controller.dispose).toHaveBeenCalledOnce();
+  });
+
   it('syncs options changed while an async mount is pending', async () => {
     let resolveMount!: (controller: ReturnType<typeof createSceneControllerMock>) => void;
     const controller = createSceneControllerMock();
@@ -359,11 +383,37 @@ describe('useStreetSceneCanvasViewController', () => {
       handler?.({ position: { x: 4, y: 5, z: 6 }, target: { x: 0, y: 0, z: 0 } });
     });
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    const previousViewProps = latestControllerViewProps;
+    const listener = vi.fn();
+    const unsubscribe = latestControllerViewProps!.cameraPoseSource.subscribe(listener);
     act(() => frameCallback?.(1));
+    expect(listener).toHaveBeenCalledOnce();
+    expect(latestControllerViewProps).toBe(previousViewProps);
+    expect(latestControllerViewProps?.cameraPoseSource.getSnapshot()).toEqual({
+      position: { x: 4, y: 5, z: 6 },
+      target: { x: 0, y: 0, z: 0 },
+    });
     handler?.({ position: { x: 7, y: 8, z: 9 }, target: { x: 0, y: 0, z: 0 } });
+    unsubscribe();
+    act(() => frameCallback?.(2));
+    expect(listener).toHaveBeenCalledOnce();
+    handler?.({ position: { x: 10, y: 11, z: 12 }, target: { x: 0, y: 0, z: 0 } });
     view.unmount();
     expect(cancel).toHaveBeenCalledWith(77);
     vi.restoreAllMocks();
+  });
+
+  it('flushes the last pointer position before completing a path from the toolbar', async () => {
+    const onFinishPathPlacement = vi.fn();
+    render(<ControllerHarness onFinishPathPlacement={onFinishPathPlacement} />);
+    await waitFor(() => expect(mountCityDesignSceneMock).toHaveBeenCalled());
+    const scene = await mountCityDesignSceneMock.mock.results[0]!.value;
+    latestControllerViewProps!.onFinishPathPlacement();
+    expect(scene.flushPointerMove).toHaveBeenCalledOnce();
+    expect(onFinishPathPlacement).toHaveBeenCalledOnce();
+    expect(scene.flushPointerMove.mock.invocationCallOrder[0]).toBeLessThan(
+      onFinishPathPlacement.mock.invocationCallOrder[0]!
+    );
   });
 
   it('consumes object and OSM focus requests once per key', () => {
@@ -450,4 +500,114 @@ describe('useStreetSceneCanvasViewController', () => {
       delete (performance as { now?: () => number }).now;
     }
   });
+});
+
+it('deletes the selected design object with Delete, follows selection changes and removes the listener on unmount', () => {
+  const onDeleteObject = vi.fn();
+  const view = render(
+    <ControllerHarness
+      interactionMode="select"
+      selectedObjectId="road"
+      onDeleteObject={onDeleteObject}
+    />
+  );
+  const event = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true });
+  document.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(true);
+  expect(onDeleteObject).toHaveBeenCalledExactlyOnceWith('road');
+  view.rerender(
+    <ControllerHarness
+      interactionMode="select"
+      selectedObjectId="tree"
+      onDeleteObject={onDeleteObject}
+    />
+  );
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+  expect(onDeleteObject).toHaveBeenLastCalledWith('tree');
+  view.unmount();
+  onDeleteObject.mockClear();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+  expect(onDeleteObject).not.toHaveBeenCalled();
+});
+
+it('ignores Delete in text editors, dialogs and controls and ignores modified, repeated or prevented keys', () => {
+  const onDeleteObject = vi.fn();
+  const view = render(
+    <ControllerHarness
+      interactionMode="select"
+      selectedObjectId="road"
+      onDeleteObject={onDeleteObject}
+    />
+  );
+  const controls = [
+    document.createElement('input'),
+    document.createElement('textarea'),
+    document.createElement('select'),
+    document.createElement('button'),
+    document.createElement('div'),
+    document.createElement('div'),
+    document.createElement('div'),
+  ];
+  controls[4].setAttribute('contenteditable', 'plaintext-only');
+  controls[5].setAttribute('role', 'dialog');
+  controls[6].setAttribute('role', 'combobox');
+  for (const control of controls) {
+    document.body.append(control);
+    fireEvent.keyDown(control, { key: 'Delete' });
+    control.remove();
+  }
+  const input = document.createElement('input');
+  document.body.append(input);
+  input.focus();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+  input.remove();
+  for (const options of [
+    { key: 'Backspace' },
+    { key: 'Delete', repeat: true },
+    { key: 'Delete', isComposing: true },
+    { key: 'Delete', ctrlKey: true },
+    { key: 'Delete', metaKey: true },
+    { key: 'Delete', altKey: true },
+  ]) {
+    document.dispatchEvent(new KeyboardEvent('keydown', { ...options, bubbles: true }));
+  }
+  const prevented = new KeyboardEvent('keydown', {
+    key: 'Delete',
+    bubbles: true,
+    cancelable: true,
+  });
+  prevented.preventDefault();
+  document.dispatchEvent(prevented);
+  expect(onDeleteObject).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('does not delete without a design selection, in read-only or preview mode, while placing or reviewing changes', () => {
+  const onDeleteObject = vi.fn();
+  const view = render(
+    <ControllerHarness interactionMode="select" onDeleteObject={onDeleteObject} />
+  );
+  const blockedStates = [
+    { selectedObjectId: null },
+    { selectedOsmWayId: 'osm', selectedObjectId: null },
+    { readOnly: true },
+    { embeddedPreview: true },
+    { interactionMode: 'place' as const },
+    { selectedChangeRequestId: 'cr' },
+  ];
+  for (const props of blockedStates) {
+    view.rerender(
+      <ControllerHarness
+        interactionMode="select"
+        selectedObjectId="road"
+        onDeleteObject={onDeleteObject}
+        {...props}
+      />
+    );
+    const event = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  }
+  expect(onDeleteObject).not.toHaveBeenCalled();
+  view.unmount();
 });

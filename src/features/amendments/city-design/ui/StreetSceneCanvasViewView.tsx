@@ -1,9 +1,26 @@
-import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
+import {
+  CityDesignMeasurementTools,
+  CityDesignMeasurementPanel,
+} from './CityDesignMeasurementPanel';
+import type { CityDesignMeasurements } from './useCityDesignMeasurements';
+import { CityDesignNumberInput } from './CityDesignNumberInput';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   ChevronDown,
   CopyPlus,
   Eye,
   EyeOff,
+  Focus,
   Layers,
   MousePointer2,
   Trash2,
@@ -30,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import type { CityDesignCameraPoseSource } from './useStreetSceneCanvasViewController';
 import { CityDesignPropertiesWindow } from './CityDesignPropertiesWindow';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -58,7 +76,10 @@ import { majorToMinor, minorToMajor } from '@/features/shared/logic/currency';
 import { getCityDesignObjectDefinition } from '../logic/cityDesignObjectRegistry';
 import { getCityDesignObjectVariantLabelKey } from '../logic/cityDesignVariantCatalog';
 import { getCityDesignComparisonLayers } from '../logic/cityDesignDiff';
-import { getCityDesignGeometryRotationDeg } from '../logic/cityDesignPlacement';
+import {
+  getCityDesignGeometryCenter,
+  getCityDesignGeometryRotationDeg,
+} from '../logic/cityDesignPlacement';
 import {
   getCityDesignOsmFeatureLayer,
   getCityDesignOsmFeaturePoints,
@@ -73,6 +94,7 @@ import {
 } from './CityDesignChangeRequestPanel';
 
 export interface StreetSceneCanvasViewViewProps {
+  measurements?: CityDesignMeasurements;
   design: CityDesignStateV1;
   metricLabels?: string[];
   initialLegendOpen?: boolean;
@@ -96,6 +118,7 @@ export interface StreetSceneCanvasViewViewProps {
   selectedChangeRequestId?: string | null;
   showChangeRequests?: boolean;
   cameraPose?: CityDesignCameraPose | null;
+  cameraPoseSource?: CityDesignCameraPoseSource;
   canVoteOnChangeRequests?: boolean;
   canFinalizeChangeRequests?: boolean;
   currentUserId?: string | null;
@@ -107,12 +130,20 @@ export interface StreetSceneCanvasViewViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
   onOsmImportUndo?: (osmWayId: string) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
@@ -129,6 +160,7 @@ export interface StreetSceneCanvasViewViewProps {
 }
 
 export function StreetSceneCanvasViewView({
+  measurements,
   design,
   initialLegendOpen = false,
   embeddedPreview = false,
@@ -151,6 +183,7 @@ export function StreetSceneCanvasViewView({
   selectedChangeRequestId = null,
   showChangeRequests = false,
   cameraPose = null,
+  cameraPoseSource,
   canVoteOnChangeRequests = false,
   canFinalizeChangeRequests = false,
   currentUserId = null,
@@ -162,12 +195,16 @@ export function StreetSceneCanvasViewView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
   onOsmImportUndo = () => undefined,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
@@ -182,42 +219,6 @@ export function StreetSceneCanvasViewView({
   const { t } = useTranslation();
   const [legendOpen, setLegendOpen] = useState(initialLegendOpen);
   const canvasSize = useCanvasElementSize(canvasRef);
-  const comparisonLayers = useMemo(
-    () => getCityDesignComparisonLayers(design.comparisonMode),
-    [design.comparisonMode]
-  );
-  const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
-  const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
-  const positionedRemoteCursors = useMemo(
-    () =>
-      remoteCursors.flatMap(cursor => {
-        const requestedLayerVisible =
-          cursor.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
-        const renderedLayer = requestedLayerVisible
-          ? cursor.layer
-          : comparisonLayers.showDesign
-            ? 'design'
-            : 'original';
-        const layerOffsetX = renderedLayer === 'design' ? designLayerOffsetX : originalLayerOffsetX;
-        const anchor = getTrackedCanvasAnchorFromLocalPoint({
-          point: cursor.position,
-          cameraPose,
-          canvasSize,
-          layerOffsetX,
-          hideWhenOutside: true,
-        });
-        return anchor ? [{ ...cursor, ...anchor }] : [];
-      }),
-    [
-      cameraPose,
-      canvasSize,
-      comparisonLayers.showDesign,
-      comparisonLayers.showOriginal,
-      designLayerOffsetX,
-      originalLayerOffsetX,
-      remoteCursors,
-    ]
-  );
   const legendSections = useMemo(
     () =>
       buildCityDesignLegendSections({
@@ -227,35 +228,9 @@ export function StreetSceneCanvasViewView({
       }),
     [design, hiddenObjectCategories, hiddenObjectIds]
   );
-  const changeRequestMarkers = useMemo(
-    () =>
-      changeRequests.map(changeRequest => getCityDesignChangeRequestMarker(changeRequest, design)),
-    [changeRequests, design]
-  );
-  const positionedChangeRequestMarkers = useMemo(
-    () =>
-      comparisonLayers.showDesign
-        ? getStackedChangeRequestMarkers(
-            changeRequestMarkers.flatMap(marker => {
-              const anchor = getTrackedCanvasAnchorFromLocalPoint({
-                point: marker.position,
-                cameraPose,
-                canvasSize,
-                layerOffsetX: designLayerOffsetX,
-                hideWhenOutside: true,
-              });
-              return anchor ? [{ ...marker, ...anchor }] : [];
-            })
-          )
-        : [],
-    [cameraPose, canvasSize, changeRequestMarkers, comparisonLayers.showDesign, designLayerOffsetX]
-  );
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
   const selectedChangeRequest =
     changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
-  const selectedChangeRequestMarker = selectedChangeRequest
-    ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
-    : null;
   const closeSelection = () => (selectedObject ? onObjectSelect(null) : onOsmWaySelect(null));
 
   if (loadFailed) {
@@ -304,37 +279,42 @@ export function StreetSceneCanvasViewView({
                 : embeddedPreview
                   ? 'h-[30rem]'
                   : 'h-[42rem] lg:h-[calc(100vh-10rem)]',
-            interactionMode === 'camera'
-              ? 'cursor-grab'
-              : interactionMode === 'select'
-                ? 'cursor-pointer'
-                : 'cursor-crosshair'
+            measurements?.measurementActive
+              ? 'cursor-crosshair'
+              : interactionMode === 'camera'
+                ? 'cursor-grab'
+                : interactionMode === 'select'
+                  ? 'cursor-pointer'
+                  : 'cursor-crosshair'
           )}
         />
-        {positionedRemoteCursors.length > 0 ? (
-          <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-            {positionedRemoteCursors.map(cursor => (
-              <div
-                key={cursor.userId}
-                className="absolute flex items-start drop-shadow-md"
-                style={{
-                  left: `${cursor.leftPercent}%`,
-                  top: `${cursor.topPercent}%`,
-                  color: cursor.color,
-                }}
-                data-testid={`city-design-remote-cursor-${cursor.userId}`}
-              >
-                <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
-                <span
-                  className="mt-4 -ml-1 max-w-44 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
-                  style={{ backgroundColor: cursor.color }}
-                >
-                  {cursor.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        {!embeddedPreview && measurements && (
+          <CityDesignMeasurementTools measurements={measurements} />
+        )}
+        <StreetSceneCameraOverlay
+          measurements={measurements}
+          design={design}
+          cameraPose={cameraPose}
+          cameraPoseSource={cameraPoseSource}
+          canvasSize={canvasSize}
+          embeddedPreview={embeddedPreview}
+          remoteCursors={remoteCursors}
+          changeRequests={changeRequests}
+          selectedChangeRequestId={selectedChangeRequestId}
+          showChangeRequests={showChangeRequests}
+          cityDesignDiscussions={cityDesignDiscussions}
+          collaborators={collaborators}
+          currentUserId={currentUserId}
+          currentUserDisplayName={currentUserDisplayName}
+          currentUserAvatarUrl={currentUserAvatarUrl}
+          canVoteOnChangeRequests={canVoteOnChangeRequests}
+          canFinalizeChangeRequests={canFinalizeChangeRequests}
+          onChangeRequestSelect={onChangeRequestSelect}
+          onChangeRequestVote={onChangeRequestVote}
+          onChangeRequestFinalize={onChangeRequestFinalize}
+          onChangeRequestTitleChange={onChangeRequestTitleChange}
+          onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
+        />
         {isLoadingOsm ? (
           <div
             className="pointer-events-none absolute top-1/2 left-1/2 z-10 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2"
@@ -347,67 +327,12 @@ export function StreetSceneCanvasViewView({
             />
           </div>
         ) : null}
-        {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
-          <div className="pointer-events-none absolute inset-0 z-20">
-            {positionedChangeRequestMarkers.map(marker => (
-              <CanvasChangeRequestMarker
-                key={marker.id}
-                actionId="amendments.city-canvas.select.change-request-marker"
-                displayId={marker.displayId}
-                label={marker.label}
-                title={marker.title}
-                tone={marker.tone}
-                selected={selectedChangeRequestId === marker.id}
-                style={{
-                  left: `${marker.leftPercent}%`,
-                  top: `${marker.topPercent}%`,
-                }}
-                testId={`city-design-cr-marker-${marker.id}`}
-                onSelect={() => onChangeRequestSelect?.(marker.id)}
-              />
-            ))}
-          </div>
-        ) : null}
         {!embeddedPreview && showChangeRequests && changeRequests.length > 0 ? (
           <CityDesignChangeRequestCanvasList
             changeRequests={changeRequests}
             selectedChangeRequestId={selectedChangeRequestId}
             onChangeRequestSelect={changeRequestId => onChangeRequestSelect?.(changeRequestId)}
           />
-        ) : null}
-        {!embeddedPreview && selectedChangeRequest ? (
-          <CanvasSelectionPopover
-            anchor={
-              selectedChangeRequestMarker
-                ? {
-                    leftPercent: selectedChangeRequestMarker.leftPercent,
-                    topPercent: selectedChangeRequestMarker.topPercent,
-                  }
-                : (getTrackedCanvasAnchorFromLocalPoint({
-                    point: { x: 0, z: 0 },
-                    cameraPose,
-                    canvasSize,
-                    layerOffsetX: designLayerOffsetX,
-                  }) as CanvasAnchor)
-            }
-          >
-            <CityDesignChangeRequestPanel
-              changeRequest={selectedChangeRequest}
-              discussions={cityDesignDiscussions}
-              collaborators={collaborators}
-              currentUserId={currentUserId}
-              currentUserDisplayName={currentUserDisplayName}
-              currentUserAvatarUrl={currentUserAvatarUrl}
-              canVote={canVoteOnChangeRequests}
-              canFinalize={canFinalizeChangeRequests}
-              compact
-              onClose={() => onChangeRequestSelect?.(null)}
-              onVote={onChangeRequestVote}
-              onFinalize={onChangeRequestFinalize}
-              onTitleChange={onChangeRequestTitleChange}
-              onCommentSubmit={onChangeRequestCommentSubmit}
-            />
-          </CanvasSelectionPopover>
         ) : null}
         <CityDesignPropertiesWindow
           selectionKey={
@@ -416,23 +341,36 @@ export function StreetSceneCanvasViewView({
                 ? `object:${selectedObject.id}`
                 : selectedOsmWay
                   ? `osm:${selectedOsmWay.id}`
-                  : null
+                  : measurements?.measurementActive || measurements?.measurement
+                    ? 'measurement'
+                    : null
               : null
           }
           canvasSize={canvasSize}
-          onClose={closeSelection}
+          onClose={() => {
+            closeSelection();
+            measurements?.clearMeasurement();
+            measurements?.setMeasurementActive(false);
+          }}
         >
+          {measurements && (
+            <CityDesignMeasurementPanel measurements={measurements} design={design} />
+          )}
           {selectedObject ? (
             <CityDesignObjectPopover
+              key={selectedObject.id}
               inspector
               object={selectedObject}
               costLine={selectedObjectCostLine}
               isHidden={hiddenObjectIdSet.has(selectedObject.id)}
               readOnly={readOnly}
               onClose={closeSelection}
+              onFocus={onObjectFocus}
               onVisibilityChange={onObjectVisibilityChange}
               onPropertyChange={onPropertyChange}
               onWidthChange={onWidthChange}
+              onLengthChange={onLengthChange}
+              onPositionChange={onPositionChange}
               onRotationChange={onRotationChange}
               onUnitCostChange={onUnitCostChange}
               onDeleteObject={onDeleteObject}
@@ -445,6 +383,7 @@ export function StreetSceneCanvasViewView({
               readOnly={readOnly}
               hideReadOnly={mapContextReadOnly}
               onClose={closeSelection}
+              onFocus={onOsmWayFocus}
               onHideOsmWay={onOsmWayHide}
               onImportOsmWay={onOsmWayImport}
             />
@@ -527,7 +466,7 @@ export function StreetSceneCanvasViewView({
         </Collapsible>
       ) : null}
       {placementMode === 'path' ? (
-        <div className="border-border bg-background/95 absolute bottom-6 left-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
+        <div className="bg-background/95 border-border absolute bottom-6 left-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
           <div>
             <p className="font-semibold">{t('features.amendments.cityDesign.canvas.drawPath')}</p>
             <p className="text-muted-foreground">
@@ -621,10 +560,13 @@ export function CityDesignObjectPopover({
   onVisibilityChange,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
   onUndoOsmImport,
+  onFocus,
 }: {
   inspector?: boolean;
   object: CityDesignObject;
@@ -635,12 +577,24 @@ export function CityDesignObjectPopover({
   onVisibilityChange: (objectId: string, visible: boolean) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
   onUndoOsmImport: (osmWayId: string) => void;
+  onFocus?: (objectId: string) => void;
 }) {
   const { t } = useTranslation();
+  const lengthSource = useRef<CityDesignObject['geometry'] | null>(null);
+  useEffect(() => {
+    lengthSource.current = null;
+  }, [object.id]);
+  const center = getCityDesignGeometryCenter(object.geometry);
   const definition = getCityDesignObjectDefinition(object.type);
   const objectLabel = t(getCityDesignObjectVariantLabelKey(object) ?? definition.labelKey);
   const unitCostMajor = minorToMajor(
@@ -656,7 +610,10 @@ export function CityDesignObjectPopover({
       : t(labelKey);
 
   return (
-    <div className={inspector ? undefined : 'max-h-[min(32rem,70vh)] overflow-auto p-4'}>
+    <div
+      key={object.id}
+      className={inspector ? undefined : 'max-h-[min(32rem,70vh)] overflow-auto p-4'}
+    >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-muted-foreground text-xs font-medium uppercase">
@@ -682,179 +639,246 @@ export function CityDesignObjectPopover({
       </div>
 
       <div className="space-y-4">
-        {object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor' ? (
+        {onFocus ? (
+          <Button
+            data-action-id="amendments.city-object-popover.focus.object"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onFocus(object.id)}
+          >
+            <Focus className="size-4" />
+            {t('features.amendments.cityDesign.inspector.focus')}
+          </Button>
+        ) : null}
+        <section
+          aria-label={t('features.amendments.cityDesign.inspector.positionAndDimensions')}
+          className="space-y-2"
+        >
+          <h3 className="text-xs font-semibold">
+            {t('features.amendments.cityDesign.inspector.positionAndDimensions')}
+          </h3>
+          <p className="text-muted-foreground text-xs">
+            {t('features.amendments.cityDesign.inspector.positionReference')}
+          </p>
           <div className="bg-muted/20 grid grid-cols-2 gap-2 rounded-md border p-2">
-            <div className="space-y-1">
-              <Label className="text-xs">
-                {t('features.amendments.cityDesign.inspector.width')}
-              </Label>
-              <Input
-                type="number"
-                min={0.1}
-                step={0.1}
-                value={object.geometry.width}
-                disabled={readOnly}
-                onChange={event => onWidthChange(object.id, Number(event.target.value))}
-              />
-            </div>
-            <ReadonlyMetric
-              label={t('features.amendments.cityDesign.inspector.length')}
-              value={object.geometry.length.toFixed(1)}
-            />
-            <ReadonlyMetric
-              label={t('features.amendments.cityDesign.inspector.area')}
-              value={object.geometry.area.toFixed(1)}
-            />
-            <div className="space-y-1">
-              <Label className="text-xs">
-                {t('features.amendments.cityDesign.inspector.rotation')}
-              </Label>
-              <Input
-                type="number"
-                step={1}
-                value={Number(getCityDesignGeometryRotationDeg(object.geometry).toFixed(1))}
-                disabled={readOnly}
-                onChange={event => onRotationChange(object.id, Number(event.target.value))}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        {object.geometry.kind === 'point' ? (
-          <div className="bg-muted/20 rounded-md border p-2">
-            <div className="space-y-1">
-              <Label className="text-xs">
-                {t('features.amendments.cityDesign.inspector.rotation')}
-              </Label>
-              <Input
-                type="number"
-                step={1}
-                value={Number(getCityDesignGeometryRotationDeg(object.geometry).toFixed(1))}
-                disabled={readOnly}
-                onChange={event => onRotationChange(object.id, Number(event.target.value))}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        {definition.propertySchema.map(field => {
-          const value = object.properties[field.key];
-
-          if (field.fieldType === 'boolean') {
-            return (
-              <label key={field.key} className="flex items-center gap-2 text-sm">
-                <input
-                  data-action-id="amendments.city-object-popover.toggle.object-property"
-                  type="checkbox"
-                  checked={Boolean(value)}
-                  disabled={readOnly}
-                  onChange={event => onPropertyChange(object.id, field.key, event.target.checked)}
+            {(['x', 'z'] as const).map(axis => (
+              <label key={axis} className="space-y-1 text-xs">
+                <span>
+                  {t(`features.amendments.cityDesign.inspector.position${axis.toUpperCase()}`)}{' '}
+                  {t('features.amendments.cityDesign.inspector.meterUnit')}
+                </span>
+                <CityDesignNumberInput
+                  data-action-id="amendments.city-object-popover.edit.position"
+                  aria-label={t(
+                    `features.amendments.cityDesign.inspector.position${axis.toUpperCase()}`
+                  )}
+                  value={center[axis]}
+                  step={0.1}
+                  disabled={readOnly || !onPositionChange}
+                  onCommit={value => onPositionChange?.(object.id, { ...center, [axis]: value })}
                 />
-                {t(field.labelKey)}
               </label>
-            );
-          }
+            ))}
+            <label className="space-y-1 text-xs">
+              <span>{t('features.amendments.cityDesign.inspector.rotation')} (°)</span>
+              <CityDesignNumberInput
+                data-action-id="amendments.city-object-popover.edit.rotation"
+                aria-label={t('features.amendments.cityDesign.inspector.rotation')}
+                step={1}
+                value={getCityDesignGeometryRotationDeg(object.geometry)}
+                disabled={readOnly}
+                onCommit={rotation => onRotationChange(object.id, rotation)}
+              />
+            </label>
+            {(object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor') && (
+              <>
+                <label className="space-y-1 text-xs">
+                  <span>
+                    {t('features.amendments.cityDesign.inspector.width')}{' '}
+                    {t('features.amendments.cityDesign.inspector.meterUnit')}
+                  </span>
+                  <CityDesignNumberInput
+                    data-action-id="amendments.city-object-popover.edit.width"
+                    aria-label={t('features.amendments.cityDesign.inspector.width')}
+                    min={0.1}
+                    step={0.1}
+                    value={object.geometry.width}
+                    disabled={readOnly}
+                    onCommit={width => onWidthChange(object.id, width)}
+                  />
+                </label>
+                <label className="space-y-1 text-xs">
+                  <span>
+                    {t('features.amendments.cityDesign.inspector.length')}{' '}
+                    {t('features.amendments.cityDesign.inspector.meterUnit')}
+                  </span>
+                  <CityDesignNumberInput
+                    data-action-id="amendments.city-object-popover.edit.length"
+                    aria-label={t('features.amendments.cityDesign.inspector.length')}
+                    min={0.05}
+                    step={0.1}
+                    value={object.geometry.length}
+                    disabled={readOnly || !onLengthChange}
+                    onFocus={() => {
+                      lengthSource.current = object.geometry;
+                    }}
+                    onEditEnd={() => {
+                      lengthSource.current = null;
+                    }}
+                    onCommit={length =>
+                      onLengthChange?.(object.id, length, lengthSource.current ?? object.geometry)
+                    }
+                  />
+                </label>
+              </>
+            )}
+            {object.geometry.kind !== 'point' && (
+              <ReadonlyMetric
+                label={`${t('features.amendments.cityDesign.inspector.area')} ${t('features.amendments.cityDesign.inspector.squareMeterUnit')}`}
+                value={object.geometry.area.toFixed(1)}
+              />
+            )}
+          </div>
+        </section>
 
-          if (field.fieldType === 'select') {
-            return (
-              <div key={field.key} className="space-y-1">
-                <Label className="text-xs">{t(field.labelKey)}</Label>
-                <Select
-                  data-action-id="amendments.city-object-popover.select.object-property"
-                  value={asInputValue(value)}
-                  disabled={readOnly}
-                  onValueChange={nextValue => onPropertyChange(object.id, field.key, nextValue)}
-                >
-                  <SelectTrigger
+        <section
+          aria-label={t('features.amendments.cityDesign.inspector.objectProperties')}
+          className="space-y-3"
+        >
+          <h3 className="text-xs font-semibold">
+            {t('features.amendments.cityDesign.inspector.objectProperties')}
+          </h3>
+          {definition.propertySchema.map(field => {
+            const value = object.properties[field.key];
+
+            if (field.fieldType === 'boolean') {
+              return (
+                <label key={field.key} className="flex items-center gap-2 text-sm">
+                  <input
+                    data-action-id="amendments.city-object-popover.toggle.object-property"
+                    type="checkbox"
+                    checked={Boolean(value)}
+                    disabled={readOnly}
+                    onChange={event => onPropertyChange(object.id, field.key, event.target.checked)}
+                  />
+                  {t(field.labelKey)}
+                </label>
+              );
+            }
+
+            if (field.fieldType === 'select') {
+              return (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">{t(field.labelKey)}</Label>
+                  <Select
                     data-action-id="amendments.city-object-popover.select.object-property"
-                    className="h-9"
+                    value={asInputValue(value)}
+                    disabled={readOnly}
+                    onValueChange={nextValue => onPropertyChange(object.id, field.key, nextValue)}
                   >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                    <SelectTrigger
+                      data-action-id="amendments.city-object-popover.select.object-property"
+                      className="h-9"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(field.options ?? []).map(option => (
+                        <SelectItem
+                          key={option.value}
+                          data-action-id="amendments.city-object-popover.select.object-property-option"
+                          value={option.value}
+                        >
+                          {t(option.labelKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            }
+
+            if (field.fieldType === 'combobox') {
+              const datalistId = `city-design-object-${sanitizeDomId(object.id)}-${field.key}`;
+
+              return (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+                  <Input
+                    type="text"
+                    aria-label={fieldLabel(field.labelKey, field.unit)}
+                    list={datalistId}
+                    value={asInputValue(value)}
+                    disabled={readOnly}
+                    onChange={event => onPropertyChange(object.id, field.key, event.target.value)}
+                  />
+                  <datalist id={datalistId}>
                     {(field.options ?? []).map(option => (
-                      <SelectItem
-                        key={option.value}
-                        data-action-id="amendments.city-object-popover.select.object-property-option"
-                        value={option.value}
-                      >
-                        {t(option.labelKey)}
-                      </SelectItem>
+                      <option key={option.value} value={option.value} label={t(option.labelKey)} />
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            );
-          }
+                  </datalist>
+                </div>
+              );
+            }
 
-          if (field.fieldType === 'combobox') {
-            const datalistId = `city-design-object-${sanitizeDomId(object.id)}-${field.key}`;
-
+            if (field.fieldType === 'number') {
+              return (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+                  <CityDesignNumberInput
+                    data-action-id="amendments.city-object-popover.edit.object-number"
+                    aria-label={fieldLabel(field.labelKey, field.unit)}
+                    min={field.min}
+                    max={field.max}
+                    step={field.step}
+                    value={asInputValue(value)}
+                    disabled={readOnly}
+                    onCommit={next => onPropertyChange(object.id, field.key, next)}
+                  />
+                </div>
+              );
+            }
             return (
               <div key={field.key} className="space-y-1">
                 <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
                 <Input
                   type="text"
                   aria-label={fieldLabel(field.labelKey, field.unit)}
-                  list={datalistId}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
                   value={asInputValue(value)}
                   disabled={readOnly}
                   onChange={event => onPropertyChange(object.id, field.key, event.target.value)}
                 />
-                <datalist id={datalistId}>
-                  {(field.options ?? []).map(option => (
-                    <option key={option.value} value={option.value} label={t(option.labelKey)} />
-                  ))}
-                </datalist>
               </div>
             );
-          }
+          })}
+        </section>
 
-          return (
-            <div key={field.key} className="space-y-1">
-              <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
-              <Input
-                type={field.fieldType === 'number' ? 'number' : 'text'}
-                aria-label={fieldLabel(field.labelKey, field.unit)}
-                min={field.min}
-                max={field.max}
-                step={field.step}
-                value={asInputValue(value)}
-                disabled={readOnly}
-                onChange={event =>
-                  onPropertyChange(
-                    object.id,
-                    field.key,
-                    field.fieldType === 'number' ? Number(event.target.value) : event.target.value
-                  )
-                }
-              />
-            </div>
-          );
-        })}
-
-        <div className="bg-muted/20 rounded-md border p-3">
+        <section
+          aria-label={t('features.amendments.cityDesign.inspector.costs')}
+          className="bg-muted/20 space-y-2 rounded-md border p-3"
+        >
+          <h3 className="text-xs font-semibold">
+            {t('features.amendments.cityDesign.inspector.costs')}
+          </h3>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">
                 {t('features.amendments.cityDesign.inspector.price')}
               </Label>
-              <Input
-                type="number"
+              <CityDesignNumberInput
+                data-action-id="amendments.city-object-popover.edit.unit-cost"
                 aria-label={t('features.amendments.cityDesign.inspector.price')}
                 min={0}
                 step={0.01}
                 value={unitCostMajor}
                 disabled={readOnly}
-                onChange={event => {
-                  const value = event.target.value;
-                  onUnitCostChange(
-                    object.id,
-                    value === ''
-                      ? null
-                      : Math.max(0, majorToMinor(Number(value), object.cost.currency))
-                  );
-                }}
+                onCommit={value =>
+                  onUnitCostChange(object.id, majorToMinor(value, object.cost.currency))
+                }
               />
             </div>
             <ReadonlyMetric
@@ -885,7 +909,7 @@ export function CityDesignObjectPopover({
               {t('features.amendments.cityDesign.inspector.resetToSuggestedPrice')}
             </Button>
           ) : null}
-        </div>
+        </section>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           {object.provenance?.source === 'osm' ? (
@@ -942,6 +966,7 @@ export function CityDesignOsmPopover({
   onClose,
   onHideOsmWay,
   onImportOsmWay,
+  onFocus,
 }: {
   inspector?: boolean;
   osmWay: CityDesignOsmWay;
@@ -950,6 +975,7 @@ export function CityDesignOsmPopover({
   onClose: () => void;
   onHideOsmWay: (osmWayId: string) => void;
   onImportOsmWay: (osmWayId: string) => void;
+  onFocus?: (osmWayId: string) => void;
 }) {
   const { t } = useTranslation();
   const osmFeaturePoints = getCityDesignOsmFeaturePoints(osmWay);
@@ -991,6 +1017,18 @@ export function CityDesignOsmPopover({
       </div>
 
       <div className="grid gap-2 text-sm">
+        {onFocus ? (
+          <Button
+            data-action-id="amendments.city-osm-popover.focus.feature"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onFocus(osmWay.id)}
+          >
+            <Focus className="size-4" />
+            {t('features.amendments.cityDesign.inspector.focus')}
+          </Button>
+        ) : null}
         {mappedDefinition ? (
           <ReadonlyCard
             label={t('features.amendments.cityDesign.inspector.mappedAs')}
@@ -1013,7 +1051,7 @@ export function CityDesignOsmPopover({
         {osmWay.widthMeters ? (
           <ReadonlyCard
             label={t('features.amendments.cityDesign.inspector.width')}
-            value={`${osmWay.widthMeters.toFixed(1)} m`}
+            value={`${osmWay.widthMeters.toFixed(1)} m · ${t(`features.amendments.cityDesign.measurement.${osmWay.widthSource === 'osm' ? 'osmWidth' : 'estimated'}`)}`}
           />
         ) : null}
         {osmWay.height ? (
@@ -1907,3 +1945,300 @@ export const streetSceneCanvasViewInternals = {
   getLegendTreeSpecies,
   getLegendStringProperty,
 };
+
+const MemoizedChangeRequestPanel = memo(CityDesignChangeRequestPanel);
+const subscribeToStaticPose = () => () => undefined;
+type StreetSceneCameraOverlayProps = Pick<
+  StreetSceneCanvasViewViewProps,
+  | 'design'
+  | 'measurements'
+  | 'cameraPose'
+  | 'cameraPoseSource'
+  | 'embeddedPreview'
+  | 'remoteCursors'
+  | 'changeRequests'
+  | 'selectedChangeRequestId'
+  | 'showChangeRequests'
+  | 'cityDesignDiscussions'
+  | 'collaborators'
+  | 'currentUserId'
+  | 'currentUserDisplayName'
+  | 'currentUserAvatarUrl'
+  | 'canVoteOnChangeRequests'
+  | 'canFinalizeChangeRequests'
+  | 'onChangeRequestSelect'
+  | 'onChangeRequestVote'
+  | 'onChangeRequestFinalize'
+  | 'onChangeRequestTitleChange'
+  | 'onChangeRequestCommentSubmit'
+> & { canvasSize: CanvasSize | null };
+const StreetSceneCameraOverlay = memo(function StreetSceneCameraOverlay({
+  measurements,
+  design,
+  cameraPose = null,
+  cameraPoseSource,
+  embeddedPreview,
+  remoteCursors = [],
+  changeRequests = [],
+  selectedChangeRequestId = null,
+  showChangeRequests,
+  cityDesignDiscussions = [],
+  collaborators = [],
+  currentUserId = null,
+  currentUserDisplayName = null,
+  currentUserAvatarUrl = null,
+  canVoteOnChangeRequests,
+  canFinalizeChangeRequests,
+  onChangeRequestSelect,
+  onChangeRequestVote,
+  onChangeRequestFinalize,
+  onChangeRequestTitleChange,
+  onChangeRequestCommentSubmit,
+  canvasSize,
+}: StreetSceneCameraOverlayProps) {
+  const { t } = useTranslation();
+  const getStaticPose = useCallback(() => cameraPose, [cameraPose]);
+  const trackedPose = useSyncExternalStore(
+    cameraPoseSource?.subscribe ?? subscribeToStaticPose,
+    cameraPoseSource?.getSnapshot ?? getStaticPose,
+    getStaticPose
+  );
+  cameraPose = trackedPose;
+  const closeChangeRequest = useCallback(
+    () => onChangeRequestSelect?.(null),
+    [onChangeRequestSelect]
+  );
+  const comparisonLayers = useMemo(
+    () => getCityDesignComparisonLayers(design.comparisonMode),
+    [design.comparisonMode]
+  );
+  const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
+  const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
+  const positionedRemoteCursors = useMemo(
+    () =>
+      remoteCursors.flatMap(cursor => {
+        const requestedLayerVisible =
+          cursor.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
+        const renderedLayer = requestedLayerVisible
+          ? cursor.layer
+          : comparisonLayers.showDesign
+            ? 'design'
+            : 'original';
+        const layerOffsetX = renderedLayer === 'design' ? designLayerOffsetX : originalLayerOffsetX;
+        const anchor = getTrackedCanvasAnchorFromLocalPoint({
+          point: cursor.position,
+          cameraPose,
+          canvasSize,
+          layerOffsetX,
+          hideWhenOutside: true,
+        });
+        return anchor ? [{ ...cursor, ...anchor }] : [];
+      }),
+    [
+      cameraPose,
+      canvasSize,
+      comparisonLayers.showDesign,
+      comparisonLayers.showOriginal,
+      designLayerOffsetX,
+      originalLayerOffsetX,
+      remoteCursors,
+    ]
+  );
+
+  const changeRequestMarkers = useMemo(
+    () =>
+      changeRequests.map(changeRequest => getCityDesignChangeRequestMarker(changeRequest, design)),
+    [changeRequests, design]
+  );
+  const positionedChangeRequestMarkers = useMemo(
+    () =>
+      comparisonLayers.showDesign
+        ? getStackedChangeRequestMarkers(
+            changeRequestMarkers.flatMap(marker => {
+              const anchor = getTrackedCanvasAnchorFromLocalPoint({
+                point: marker.position,
+                cameraPose,
+                canvasSize,
+                layerOffsetX: designLayerOffsetX,
+                hideWhenOutside: true,
+              });
+              return anchor ? [{ ...marker, ...anchor }] : [];
+            })
+          )
+        : [],
+    [cameraPose, canvasSize, changeRequestMarkers, comparisonLayers.showDesign, designLayerOffsetX]
+  );
+
+  const selectedChangeRequest =
+    changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
+  const selectedChangeRequestMarker = selectedChangeRequest
+    ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
+    : null;
+
+  const measurement = measurements?.measurement;
+  const layerVisible =
+    measurement?.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
+  const measurementAnchors =
+    measurement && layerVisible && cameraPose && canvasSize
+      ? [measurement.start, measurement.end].map(point =>
+          projectLocalPointToCanvasAnchor(point, cameraPose as CityDesignCameraPose, canvasSize, {
+            layerOffsetX:
+              measurement.layer === 'design' ? designLayerOffsetX : originalLayerOffsetX,
+          })
+        )
+      : [];
+  return (
+    <>
+      {measurement && measurementAnchors[0] && measurementAnchors[1] && (
+        <>
+          <svg
+            className="pointer-events-none absolute inset-0 z-20 h-full w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line
+              x1={measurementAnchors[0].leftPercent}
+              y1={measurementAnchors[0].topPercent}
+              x2={measurementAnchors[1].leftPercent}
+              y2={measurementAnchors[1].topPercent}
+              stroke="#facc15"
+              strokeWidth="3"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          {measurementAnchors.map(
+            (anchor, index) =>
+              anchor && (
+                <button
+                  key={index}
+                  type="button"
+                  data-action-id="amendments.city-measurement.move.endpoint"
+                  data-action-kind="interaction"
+                  aria-label={t(
+                    `features.amendments.cityDesign.measurement.${index ? 'end' : 'start'}`
+                  )}
+                  className="bg-background pointer-events-auto absolute z-20 size-7 -translate-x-1/2 -translate-y-1/2 cursor-move touch-none rounded-full border-2 border-yellow-400 shadow"
+                  style={{ left: `${anchor.leftPercent}%`, top: `${anchor.topPercent}%` }}
+                  onPointerDown={event => {
+                    event.stopPropagation();
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  }}
+                  onPointerMove={event => {
+                    if (event.currentTarget.hasPointerCapture(event.pointerId))
+                      measurements?.moveEndpoint(
+                        index ? 'end' : 'start',
+                        event.clientX,
+                        event.clientY
+                      );
+                  }}
+                  onPointerUp={event => event.currentTarget.releasePointerCapture(event.pointerId)}
+                  onKeyDown={event => {
+                    const directions: Record<string, [number, number]> = {
+                      ArrowLeft: [-1, 0],
+                      ArrowRight: [1, 0],
+                      ArrowUp: [0, -1],
+                      ArrowDown: [0, 1],
+                    };
+                    const delta = directions[event.key];
+                    if (!delta) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const rect = event.currentTarget.getBoundingClientRect(),
+                      step = event.shiftKey ? 10 : 2;
+                    measurements?.moveEndpoint(
+                      index ? 'end' : 'start',
+                      rect.x + rect.width / 2 + delta[0] * step,
+                      rect.y + rect.height / 2 + delta[1] * step
+                    );
+                  }}
+                />
+              )
+          )}
+        </>
+      )}
+
+      {positionedRemoteCursors.length > 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+          {positionedRemoteCursors.map(cursor => (
+            <div
+              key={cursor.userId}
+              className="absolute flex items-start drop-shadow-md"
+              style={{
+                left: `${cursor.leftPercent}%`,
+                top: `${cursor.topPercent}%`,
+                color: cursor.color,
+              }}
+              data-testid={`city-design-remote-cursor-${cursor.userId}`}
+            >
+              <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
+              <span
+                className="mt-4 -ml-1 max-w-44 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
+                style={{ backgroundColor: cursor.color }}
+              >
+                {cursor.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-20">
+          {positionedChangeRequestMarkers.map(marker => (
+            <CanvasChangeRequestMarker
+              key={marker.id}
+              actionId="amendments.city-canvas.select.change-request-marker"
+              displayId={marker.displayId}
+              label={marker.label}
+              title={marker.title}
+              tone={marker.tone}
+              selected={selectedChangeRequestId === marker.id}
+              style={{
+                left: `${marker.leftPercent}%`,
+                top: `${marker.topPercent}%`,
+              }}
+              testId={`city-design-cr-marker-${marker.id}`}
+              onSelect={() => onChangeRequestSelect?.(marker.id)}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {!embeddedPreview && selectedChangeRequest ? (
+        <CanvasSelectionPopover
+          anchor={
+            selectedChangeRequestMarker
+              ? {
+                  leftPercent: selectedChangeRequestMarker.leftPercent,
+                  topPercent: selectedChangeRequestMarker.topPercent,
+                }
+              : (getTrackedCanvasAnchorFromLocalPoint({
+                  point: { x: 0, z: 0 },
+                  cameraPose,
+                  canvasSize,
+                  layerOffsetX: designLayerOffsetX,
+                }) as CanvasAnchor)
+          }
+        >
+          <MemoizedChangeRequestPanel
+            changeRequest={selectedChangeRequest}
+            discussions={cityDesignDiscussions}
+            collaborators={collaborators}
+            currentUserId={currentUserId}
+            currentUserDisplayName={currentUserDisplayName}
+            currentUserAvatarUrl={currentUserAvatarUrl}
+            canVote={canVoteOnChangeRequests}
+            canFinalize={canFinalizeChangeRequests}
+            compact
+            onClose={closeChangeRequest}
+            onVote={onChangeRequestVote}
+            onFinalize={onChangeRequestFinalize}
+            onTitleChange={onChangeRequestTitleChange}
+            onCommentSubmit={onChangeRequestCommentSubmit}
+          />
+        </CanvasSelectionPopover>
+      ) : null}
+    </>
+  );
+});

@@ -3,6 +3,7 @@ import type {
   CityDesignObject,
   CityDesignOrigin,
   CityDesignOsmFeature,
+  PathCorridorGeometry,
 } from '../types';
 import { getCityDesignCostCatalogEntry } from './cityDesignCostCatalog';
 import { getCityDesignObjectDefinition } from './cityDesignObjectRegistry';
@@ -77,6 +78,7 @@ function samplePath(points: CityDesignLocalPoint[], spacing: number) {
 function withProvenance(object: CityDesignObject, feature: CityDesignOsmFeature) {
   return {
     ...object,
+    properties: { ...object.properties, widthSource: feature.widthSource ?? 'default' },
     provenance: {
       source: 'osm' as const,
       featureId: feature.id,
@@ -90,6 +92,7 @@ export function convertCityDesignOsmFeature(args: {
   origin: CityDesignOrigin;
   createId: () => string;
   currency?: string;
+  corridorGeometry?: PathCorridorGeometry;
 }) {
   const { feature, origin, createId, currency } = args;
   const type = feature.mappedObjectType;
@@ -160,10 +163,12 @@ export function convertCityDesignOsmFeature(args: {
         {
           id: createId(),
           type,
-          geometry: createPathCorridorGeometry(
-            corridorPoints,
-            feature.widthMeters ?? (definition.defaultWidth as number)
-          ),
+          geometry:
+            args.corridorGeometry ??
+            createPathCorridorGeometry(
+              corridorPoints,
+              feature.widthMeters ?? (definition.defaultWidth as number)
+            ),
           properties: { ...definition.defaultProperties, ...properties },
           cost: {
             rule: definition.costRule,
@@ -175,18 +180,18 @@ export function convertCityDesignOsmFeature(args: {
       ),
     ];
   }
-  return [
-    withProvenance(
-      createPathCorridorCityDesignObject({
-        id: createId(),
-        type,
-        points: corridorPoints,
-        width: feature.widthMeters ?? definition.defaultWidth,
-        overrides: { properties, currency },
-      }),
-      feature
-    ),
-  ];
+  const object = withProvenance(
+    createPathCorridorCityDesignObject({
+      id: createId(),
+      type,
+      points: corridorPoints,
+      width: feature.widthMeters ?? definition.defaultWidth,
+      overrides: { properties, currency },
+    }),
+    feature
+  );
+  if (args.corridorGeometry) object.geometry = args.corridorGeometry;
+  return [object];
 }
 
 export const cityDesignOsmConversionInternals = {

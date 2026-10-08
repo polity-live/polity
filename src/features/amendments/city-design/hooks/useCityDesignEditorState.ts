@@ -1,3 +1,4 @@
+import { getOsmStreetNetwork } from '../logic/cityDesignStreetNetwork';
 import { useCallback, useMemo, useReducer } from 'react';
 import type {
   CityDesignComparisonMode,
@@ -5,6 +6,7 @@ import type {
   CityDesignLocalPoint,
   CityDesignMapSelection,
   CityDesignObjectCategory,
+  CityDesignObject,
   CityDesignObjectType,
   CityDesignOsmLayerVisibility,
   CityDesignPropertyValue,
@@ -147,6 +149,14 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
     dispatch({ type: 'select_osm_way', osmWayId });
   }, []);
 
+  const focusObject = useCallback((objectId: string) => {
+    dispatch({ type: 'focus_object', objectId });
+  }, []);
+
+  const focusOsmWay = useCallback((osmWayId: string) => {
+    dispatch({ type: 'focus_osm_way', osmWayId });
+  }, []);
+
   const setObjectVisibility = useCallback((objectId: string, visible: boolean) => {
     dispatch({ type: 'set_object_visibility', objectId, visible });
   }, []);
@@ -170,6 +180,7 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
       if (!feature) return;
       const objects = convertCityDesignOsmFeature({
         feature,
+        corridorGeometry: getOsmStreetNetwork(state.design).features.get(feature.id)?.geometry,
         origin: state.design.origin,
         createId: createObjectId,
         currency: state.design.currency,
@@ -192,6 +203,16 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
 
   const updateObjectWidth = useCallback((objectId: string, width: number) => {
     dispatch({ type: 'update_object_width', objectId, width });
+  }, []);
+  const updateObjectLength = useCallback(
+    (objectId: string, length: number, sourceGeometry?: CityDesignObject['geometry']) => {
+      dispatch({ type: 'update_object_length', objectId, length, sourceGeometry });
+    },
+    []
+  );
+
+  const updateObjectPosition = useCallback((objectId: string, position: CityDesignLocalPoint) => {
+    dispatch({ type: 'update_object_position', objectId, position });
   }, []);
 
   const rotateObject = useCallback((objectId: string, rotationDeg: number) => {
@@ -238,6 +259,8 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
     cancelPlacement,
     selectObject,
     selectOsmWay,
+    focusObject,
+    focusOsmWay,
     setObjectVisibility,
     setObjectCategoryVisibility,
     hideOsmWay,
@@ -245,6 +268,8 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
     undoOsmImport,
     updateObjectProperty,
     updateObjectWidth,
+    updateObjectLength,
+    updateObjectPosition,
     rotateObject,
     updateObjectUnitCost,
     deleteObject,

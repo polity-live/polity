@@ -26,6 +26,8 @@ import {
   isPathCorridorObjectType,
   rotateCityDesignObject,
   updateCorridorWidth,
+  updateCorridorLength,
+  updateCityDesignObjectPosition,
 } from '../logic/cityDesignPlacement';
 import {
   CITY_DESIGN_COST_CATALOG_VERSION,
@@ -35,6 +37,7 @@ import {
 import {
   DEFAULT_CITY_DESIGN_OSM_LAYER_VISIBILITY,
   getCityDesignOsmLayerVisibility,
+  getCityDesignOsmFeatures,
   normalizeCityDesignOsmSnapshot,
 } from '../logic/cityDesignOsm';
 import { updateCityDesignBuildingProperties } from '../logic/cityDesignBuildingUse';
@@ -89,6 +92,8 @@ export type CityDesignEditorAction =
   | { type: 'cancel_placement' }
   | { type: 'select_object'; objectId: string | null }
   | { type: 'select_osm_way'; osmWayId: string | null }
+  | { type: 'focus_object'; objectId: string }
+  | { type: 'focus_osm_way'; osmWayId: string }
   | { type: 'set_object_visibility'; objectId: string; visible: boolean }
   | {
       type: 'set_object_category_visibility';
@@ -105,6 +110,13 @@ export type CityDesignEditorAction =
       value: CityDesignPropertyValue;
     }
   | { type: 'update_object_width'; objectId: string; width: number }
+  | {
+      type: 'update_object_length';
+      objectId: string;
+      length: number;
+      sourceGeometry?: CityDesignObject['geometry'];
+    }
+  | { type: 'update_object_position'; objectId: string; position: CityDesignLocalPoint }
   | { type: 'rotate_object'; objectId: string; rotationDeg: number }
   | { type: 'update_object_unit_cost'; objectId: string; unitCostMinor: number | null }
   | { type: 'delete_object'; objectId: string }
@@ -174,6 +186,25 @@ function updateObject(
   updater: (object: CityDesignObject) => CityDesignObject
 ) {
   return objects.map(object => (object.id === objectId ? updater(object) : object));
+}
+
+function applyObjectUpdate(
+  state: CityDesignEditorState,
+  objectId: string,
+  updater: (object: CityDesignObject) => CityDesignObject
+): CityDesignEditorState {
+  const object = state.design.objects.find(item => item.id === objectId);
+  if (!object) return state;
+  const updated = updater(object);
+  if (updated === object) return state;
+  return {
+    ...state,
+    design: {
+      ...state.design,
+      objects: state.design.objects.map(item => (item.id === objectId ? updated : item)),
+    },
+    isDirty: true,
+  };
 }
 
 function getObjectCategory(object: CityDesignObject) {
@@ -315,7 +346,6 @@ function addFinishedPlacementObject(
     },
     selectedObjectId: object.id,
     selectedOsmWayId: null,
-    selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
     hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
     hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
     placementDraft: null,
@@ -626,7 +656,6 @@ export function cityDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
-          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
           hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
           hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
@@ -674,7 +703,6 @@ export function cityDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
-          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
           hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
           hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
@@ -736,14 +764,34 @@ export function cityDesignReducer(
         interactionMode: 'select',
       };
 
+    case 'focus_object':
+      if (!state.design.objects.some(object => object.id === action.objectId)) return state;
+      return {
+        ...state,
+        selectedObjectId: action.objectId,
+        selectedOsmWayId: null,
+        selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
+      };
+
+    case 'focus_osm_way':
+      if (
+        !getCityDesignOsmFeatures(state.design.osmSnapshot).some(
+          feature => feature.id === action.osmWayId
+        )
+      )
+        return state;
+      return {
+        ...state,
+        selectedObjectId: null,
+        selectedOsmWayId: action.osmWayId,
+        selectedOsmFocusRequestKey: state.selectedOsmFocusRequestKey + 1,
+      };
+
     case 'select_object':
       return {
         ...state,
         selectedObjectId: action.objectId,
         selectedOsmWayId: null,
-        selectedObjectFocusRequestKey: action.objectId
-          ? state.selectedObjectFocusRequestKey + 1
-          : state.selectedObjectFocusRequestKey,
         placementDraft: null,
         placementSettings: resetPlacementSettings(state),
         interactionMode: 'select',
@@ -754,9 +802,6 @@ export function cityDesignReducer(
         ...state,
         selectedObjectId: action.osmWayId ? null : state.selectedObjectId,
         selectedOsmWayId: action.osmWayId,
-        selectedOsmFocusRequestKey: action.osmWayId
-          ? state.selectedOsmFocusRequestKey + 1
-          : state.selectedOsmFocusRequestKey,
         placementDraft: null,
         placementSettings: resetPlacementSettings(state),
         interactionMode: 'select',
@@ -825,7 +870,6 @@ export function cityDesignReducer(
         },
         selectedObjectId: firstObject.id,
         selectedOsmWayId: null,
-        selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
         interactionMode: 'select',
         isDirty: true,
       };
@@ -848,59 +892,77 @@ export function cityDesignReducer(
       };
     }
 
-    case 'update_object_property':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object => ({
-            ...object,
-            properties: updateCityDesignObjectProperties(
-              object.type,
-              object.properties,
-              action.key,
-              action.value
-            ),
-          })),
-        },
-        isDirty: true,
-      };
+    case 'update_object_property': {
+      const object = state.design.objects.find(item => item.id === action.objectId);
+      const field =
+        object &&
+        getCityDesignObjectDefinition(object.type).propertySchema.find(
+          item => item.key === action.key
+        );
+      if (!object || object.properties[action.key] === action.value) return state;
+      if (
+        typeof action.value === 'number' &&
+        (!Number.isFinite(action.value) ||
+          (field?.min != null && action.value < field.min) ||
+          (field?.max != null && action.value > field.max))
+      )
+        return state;
+      return applyObjectUpdate(state, action.objectId, object => ({
+        ...object,
+        properties: updateCityDesignObjectProperties(
+          object.type,
+          object.properties,
+          action.key,
+          action.value
+        ),
+      }));
+    }
+
+    case 'update_object_length': {
+      if (!Number.isFinite(action.length) || action.length < 0.05) return state;
+      return applyObjectUpdate(state, action.objectId, object => {
+        if (object.geometry.kind !== 'corridor' && object.geometry.kind !== 'path_corridor')
+          return object;
+        if (Math.abs(object.geometry.length - action.length) < 0.001) return object;
+        const source =
+          action.sourceGeometry?.kind === object.geometry.kind
+            ? { ...object, geometry: action.sourceGeometry }
+            : object;
+        return updateCorridorLength(source, action.length);
+      });
+    }
+
+    case 'update_object_position':
+      return applyObjectUpdate(state, action.objectId, object =>
+        updateCityDesignObjectPosition(object, action.position)
+      );
 
     case 'update_object_width':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            updateCorridorWidth(object, action.width)
-          ),
-        },
-        isDirty: true,
-      };
+      if (!Number.isFinite(action.width) || action.width < 0.1) return state;
+      return applyObjectUpdate(state, action.objectId, object =>
+        updateCorridorWidth(object, action.width)
+      );
 
     case 'rotate_object':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            rotateCityDesignObject(object, action.rotationDeg)
-          ),
-        },
-        isDirty: true,
-      };
+      return applyObjectUpdate(state, action.objectId, object =>
+        rotateCityDesignObject(object, action.rotationDeg)
+      );
 
     case 'update_object_unit_cost':
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: updateObject(state.design.objects, action.objectId, object =>
-            updateObjectUnitCost(object, action.unitCostMinor)
-          ),
-        },
-        isDirty: true,
-      };
+      if (
+        action.unitCostMinor != null &&
+        (!Number.isFinite(action.unitCostMinor) || action.unitCostMinor < 0)
+      )
+        return state;
+      return applyObjectUpdate(state, action.objectId, object => {
+        const cost = action.unitCostMinor == null ? undefined : Math.round(action.unitCostMinor);
+        if (
+          object.cost.customUnitCostMinor === cost ||
+          (cost == null && object.cost.customUnitCostMinor == null)
+        )
+          return object;
+        return updateObjectUnitCost(object, action.unitCostMinor);
+      });
 
     case 'delete_object':
       return {

@@ -69,7 +69,9 @@ it('inserts pointer-selected grid dimensions into the real Plate editor without 
     '[data-table-size-row="3"][data-table-size-column="4"]'
   )!;
   await userEvent.hover(cell);
-  expect(picker.getAttribute('aria-label')).toBe('plateJs.toolbar.table.title: 3 x 4');
+  await waitFor(() =>
+    expect(picker.getAttribute('aria-label')).toBe('plateJs.toolbar.table.title: 3 x 4')
+  );
   await userEvent.click(cell);
   await waitFor(() =>
     expect(editor.children.filter(node => node.type === 'table')).toHaveLength(1)

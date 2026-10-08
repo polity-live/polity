@@ -30,6 +30,7 @@ const sceneDoubles = vi.hoisted(() => ({
     target: import('three').Vector3;
     update: ReturnType<typeof vi.fn>;
     emitChange: () => void;
+    emitEvent: (type: string) => void;
     dispose: ReturnType<typeof vi.fn>;
     mouseButtons: Record<string, number>;
     touches: Record<string, number>;
@@ -145,6 +146,10 @@ vi.mock('three/examples/jsm/controls/OrbitControls.js', () => {
 
     emitChange() {
       this.listeners.get('change')?.forEach(listener => listener());
+    }
+
+    emitEvent(type: string) {
+      this.listeners.get(type)?.forEach(listener => listener());
     }
   }
 
@@ -729,6 +734,525 @@ function createOsmFeatureMatrix(): CityDesignOsmFeature[] {
 }
 
 describe('mountCityDesignScene', () => {
+  it('waits for damping to finish before restoring quality and stops the render loop afterwards', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      controller = await mountCityDesignScene(createOptions());
+      flushFrame();
+      const renderer = sceneDoubles.renderers[0] as (typeof sceneDoubles.renderers)[number] & {
+        getPixelRatio: () => number;
+      };
+      const controls = sceneDoubles.controls[0]!;
+      controls.update.mockReturnValueOnce(true).mockReturnValueOnce(true).mockReturnValue(false);
+      controls.target.x += 1;
+      controls.emitChange();
+      flushFrame(32);
+      vi.advanceTimersByTime(250);
+      expect(renderer.getPixelRatio()).toBe(1);
+      flushFrame(282);
+      expect(renderer.getPixelRatio()).toBe(1);
+      flushFrame(298);
+      expect(animationFrames).toHaveLength(0);
+      vi.advanceTimersByTime(199);
+      expect(renderer.getPixelRatio()).toBe(1);
+      vi.advanceTimersByTime(1);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      expect(animationFrames).toHaveLength(1);
+      const updates = controls.update.mock.calls.length;
+      flushFrame(498);
+      expect(controls.update).toHaveBeenCalledTimes(updates);
+      expect(animationFrames).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('switches quality on actual motion, holds it during a gesture and restores with a single idle render', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const object = createPointCityDesignObject({
+        id: 'quality-tree',
+        type: 'tree',
+        point: { x: 0, z: 0 },
+      });
+      const options = createOptions({
+        design: { ...createEmptyCityDesignState(), objects: [object] },
+      });
+      controller = await mountCityDesignScene(options);
+      flushFrame();
+      const renderer = sceneDoubles.renderers[0] as (typeof sceneDoubles.renderers)[number] & {
+        getPixelRatio: () => number;
+      };
+      const controls = sceneDoubles.controls[0]!;
+      const scene = renderer.render.mock.calls[0]![0] as import('three').Scene;
+      const source = scene.getObjectByName('design:quality-tree')!;
+      const matrices = vi.spyOn(source, 'updateMatrixWorld');
+      controls.emitEvent('start');
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      controls.target.x += 3;
+      controls.emitChange();
+      flushFrame(32);
+      expect(renderer.getPixelRatio()).toBe(1);
+      vi.advanceTimersByTime(300);
+      expect(renderer.getPixelRatio()).toBe(1);
+      controls.emitEvent('end');
+      controls.update.mockImplementation(() => {
+        controls.target.x += 0.0008;
+        return false;
+      });
+      vi.advanceTimersByTime(200);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      flushFrame(500);
+      expect(renderer.getPixelRatio()).toBe(1.5);
+      expect(matrices).not.toHaveBeenCalled();
+      expect(animationFrames).toHaveLength(0);
+      options.canvas.dispatchEvent(pointerEvent('pointercancel'));
+      controller.dispose();
+      controller = null;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('routes multi-selection modifiers and measurement clicks without rebuilding static batches', async () => {
+    const object = createPointCityDesignObject({
+      id: 'multi-tree',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const design = {
+      ...createEmptyCityDesignState(),
+      objects: [object],
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features: [
+          createOsmFeatureMatrix()[0]!,
+          {
+            ...createOsmFeatureMatrix().find(feature => feature.kind === 'building')!,
+            renderColor: '#facc15',
+          },
+        ],
+      },
+    };
+    const options = createOptions({
+      design,
+      interactionMode: 'select',
+      onMeasurementPoint: vi.fn(),
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const THREE = await import('three');
+    const raycast = vi.spyOn(THREE.Raycaster.prototype, 'intersectObjects');
+    const hit = (data: object) =>
+      [{ object: { userData: data } }] as unknown as import('three').Intersection[];
+    raycast.mockReturnValue(hit({ objectId: object.id }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, ctrlKey: true, bubbles: true })
+    );
+    expect(options.onObjectSelect).toHaveBeenLastCalledWith(object.id, true);
+    raycast.mockReturnValueOnce([]).mockReturnValueOnce(hit({ osmWayId: 'tree' }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, metaKey: true, bubbles: true })
+    );
+    expect(options.onOsmWaySelect).toHaveBeenLastCalledWith('tree', true);
+    controller.updateDesign({
+      design: { ...design, comparisonMode: 'split' },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    controller.updateInteractionMode({
+      interactionMode: 'select',
+      readOnly: false,
+      measurementActive: true,
+    });
+    vi.spyOn(THREE.Ray.prototype, 'intersectPlane').mockImplementation((_plane, target) => {
+      target.set(-60, 0, 5);
+      return target;
+    });
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(options.onMeasurementPoint).toHaveBeenCalledWith({ x: -8, z: 5 }, 'original');
+    expect(controller.getGroundPointAtClient!(20, 30, 'original')).toEqual({ x: -8, z: 5 });
+    controller.updateInteractionMode({
+      interactionMode: 'select',
+      readOnly: false,
+      measurementActive: false,
+    });
+    raycast.mockReturnValueOnce([]).mockReturnValueOnce(hit({ osmWayId: 'tree' }));
+    options.canvas.dispatchEvent(
+      new MouseEvent('pointerdown', { button: 0, ctrlKey: true, bubbles: true })
+    );
+    expect(options.onOsmWaySelect).toHaveBeenLastCalledWith('tree', true);
+  });
+
+  it('preserves untouched GPU geometry across selection, insertion, editing and removal', async () => {
+    const objects = ['one', 'two', 'three'].map((id, i) =>
+      createCorridorCityDesignObject({
+        id,
+        type: 'street',
+        start: { x: i * 10, z: 0 },
+        end: { x: i * 10 + 8, z: 0 },
+        width: 3,
+      })
+    );
+    const design = { ...createEmptyCityDesignState(), objects };
+    const options = createOptions({ design, interactionMode: 'select' });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const geometries = (id: string) => {
+      const result: import('three').BufferGeometry[] = [];
+      scene.traverse(child => {
+        if (child.userData.objectId === id && 'geometry' in child)
+          result.push((child as import('three').Mesh).geometry);
+      });
+      return result;
+    };
+    const untouched = geometries('three');
+    expect(untouched.length).toBeGreaterThan(0);
+    controller.updateSelection({
+      selectedObjectId: 'one',
+      selectedOsmWayId: null,
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(geometries('three')).toEqual(untouched);
+    controller.updateSelection({
+      selectedObjectId: 'two',
+      selectedOsmWayId: null,
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(geometries('three')).toEqual(untouched);
+    const added = createPointCityDesignObject({ id: 'added', type: 'tree', point: { x: 0, z: 5 } });
+    controller.updateDesign({
+      design: { ...design, objects: [...objects, added] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(geometries('three')).toEqual(untouched);
+    const edited = { ...objects[0]!, properties: { ...objects[0]!.properties, surface: 'gravel' } };
+    controller.updateDesign({
+      design: { ...design, objects: [edited, objects[1]!, objects[2]!] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(geometries('three')).toEqual(untouched);
+    expect(geometries('added')).toHaveLength(0);
+    controller.updateDesign({ design, hiddenObjectIds: ['three'], hiddenObjectCategories: [] });
+    expect(geometries('three')).toHaveLength(0);
+  });
+
+  it('preserves unselected OSM geometry and updates the shared ramp context after map changes', async () => {
+    const features = createOsmFeatureMatrix();
+    const design = {
+      ...createEmptyCityDesignState(),
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features,
+      },
+    };
+    const options = createOptions({ design });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const road = scene.getObjectByName('osm:road')!;
+    expect(road).toBeDefined();
+    controller.updateSelection({
+      selectedObjectId: null,
+      selectedOsmWayId: 'tree',
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(road);
+    controller.updateSelection({
+      selectedObjectId: null,
+      selectedOsmWayId: 'building',
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(road);
+    controller.updateDesign({
+      design: { ...design, hiddenOsmFeatureIds: ['road'] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(scene.getObjectByName('osm:road')).toBeUndefined();
+  });
+
+  it('retains unrelated road buffers when refreshing normalized OSM features and editing a separate street', async () => {
+    const osmFeatures = createOsmFeatureMatrix().filter(feature =>
+      ['tree', 'road', 'building'].includes(feature.id)
+    );
+    const objects = [0, 1].map(index =>
+      createCorridorCityDesignObject({
+        id: `separate-${index}`,
+        type: 'street',
+        start: { x: index * 70, z: -40 },
+        end: { x: index * 70 + 15, z: -40 },
+        width: 6,
+      })
+    );
+    const design = {
+      ...createEmptyCityDesignState(),
+      objects,
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features: osmFeatures,
+      },
+    };
+    controller = await mountCityDesignScene(createOptions({ design }));
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const originalRoad = scene.getObjectByName('osm:road');
+    const separateRoad = scene.getObjectByName('design:separate-1');
+    const building = scene.getObjectByName('osm:building');
+    const nextDesign = {
+      ...design,
+      objects: [
+        {
+          ...objects[0]!,
+          geometry: createCorridorGeometry({ x: 0, z: -40 }, { x: 15, z: -40 }, 8),
+        },
+        objects[1]!,
+      ],
+      osmSnapshot: {
+        ...design.osmSnapshot,
+        features: osmFeatures.map(feature =>
+          feature.id === 'building' ? { ...feature, height: undefined } : feature
+        ),
+      },
+    };
+    controller.updateDesign({
+      design: nextDesign,
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(originalRoad);
+    expect(scene.getObjectByName('design:separate-1')).toBe(separateRoad);
+    expect(scene.getObjectByName('osm:building')).not.toBe(building);
+    flushFrame();
+    const matrices = vi.spyOn(separateRoad!, 'updateMatrixWorld');
+    controller.updateSelection({
+      selectedObjectId: 'separate-1',
+      selectedObjectIds: ['separate-1'],
+      selectedOsmWayId: 'building',
+      selectedOsmWayIds: ['building', 'tree'],
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    controller.updatePlacementPreview({
+      placementPreview: createCorridorGeometry({ x: 0, z: 0 }, { x: 10, z: 0 }, 3),
+      placementPreviewType: 'street',
+      placementStart: { x: 0, z: 0 },
+    });
+    flushFrame();
+    expect(scene.getObjectByName('osm:road')).toBe(originalRoad);
+    expect(matrices).not.toHaveBeenCalled();
+  });
+
+  it('renders default road markings for older saved designs without a markings setting', async () => {
+    const road = createOsmFeatureMatrix().find(feature => feature.id === 'road')!;
+    const options = createOptions({
+      design: {
+        ...createEmptyCityDesignState(),
+        showStreetMarkings: undefined,
+        osmSnapshot: {
+          bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+          fetchedAt: 1,
+          features: [{ ...road, tags: { ...road.tags, lanes: '2' } }],
+        },
+      },
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const markings: import('three').Mesh[] = [];
+    scene.getObjectByName('osm:road')!.traverse(child => {
+      if ('isMesh' in child && child.userData.decorative && !child.userData.navigationDetail)
+        markings.push(child as import('three').Mesh);
+    });
+    expect(
+      markings.some(
+        mesh =>
+          mesh.geometry.getAttribute('position').count > 0 &&
+          (mesh.material as import('three').MeshBasicMaterial).opacity === 0.75
+      )
+    ).toBe(true);
+  });
+
+  it('renders lane guides as decorative geometry and removes them with the markings setting', async () => {
+    const main = createCorridorCityDesignObject({
+      id: 'main',
+      type: 'street',
+      start: { x: -30, z: 0 },
+      end: { x: 30, z: 0 },
+      width: 12,
+    });
+    main.properties.lanes = 4;
+    const cross = createCorridorCityDesignObject({
+      id: 'cross',
+      type: 'street',
+      start: { x: 0, z: -30 },
+      end: { x: 0, z: 30 },
+      width: 6,
+    });
+    const design = {
+      ...createEmptyCityDesignState(),
+      comparisonMode: 'new_design' as const,
+      objects: [main, cross],
+    };
+    controller = await mountCityDesignScene(createOptions({ design }));
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const guides: import('three').Object3D[] = [];
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.streetMarking === 'guide') guides.push(child);
+    });
+    expect([...new Set(guides.map(guide => guide.userData.laneOffset))]).toEqual([-3, 3]);
+    expect(guides.every(guide => guide.userData.decorative && !guide.userData.pickTarget)).toBe(
+      true
+    );
+    expect(guides.every(guide => guide.visible)).toBe(true);
+    const visibleSurfaces: import('three').Object3D[] = [];
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.pickSurface && !child.userData.decorative) visibleSurfaces.push(child);
+    });
+    expect(visibleSurfaces.length).toBeGreaterThan(0);
+    expect(visibleSurfaces.every(surface => surface.visible)).toBe(true);
+    controller.updateDesign({
+      design: { ...design, showStreetMarkings: false },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    let count = 0;
+    scene.getObjectByName('design:main')!.traverse(child => {
+      if (child.userData.streetMarking) count++;
+    });
+    expect(count).toBe(0);
+  });
+
+  it('coalesces movement and reuses preview geometry, flushing the latest input before a click', async () => {
+    const options = createOptions({ interactionMode: 'place' });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const THREE = await import('three');
+    vi.spyOn(THREE.Ray.prototype, 'intersectPlane').mockImplementation((_plane, target) => {
+      target.set(8, 0, 9);
+      return target;
+    });
+    for (let i = 0; i < 20; i++)
+      options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0, clientX: 300 + i }));
+    expect(options.onPointerMove).not.toHaveBeenCalled();
+    flushFrame();
+    expect(options.onPointerMove).toHaveBeenCalledExactlyOnceWith({ x: 8, z: 9 });
+    options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(options.onPointerMove).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(options.onPointerMove).mock.invocationCallOrder[1]).toBeLessThan(
+      vi.mocked(options.onPointerDown).mock.invocationCallOrder[0]!
+    );
+    const preview = createCorridorGeometry({ x: 0, z: 0 }, { x: 10, z: 0 }, 3);
+    controller.updatePlacementPreview({
+      placementPreview: preview,
+      placementPreviewType: 'street',
+      placementStart: { x: 0, z: 0 },
+    });
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const findPreview = () => {
+      let mesh: import('three').Mesh | undefined;
+      scene.traverse(child => {
+        if (
+          'material' in child &&
+          (child as import('three').Mesh).material instanceof THREE.MeshBasicMaterial &&
+          ((child as import('three').Mesh).material as import('three').MeshBasicMaterial)
+            .opacity === 0.45
+        )
+          mesh = child as import('three').Mesh;
+      });
+      return mesh!;
+    };
+    const mesh = findPreview(),
+      geometry = mesh.geometry,
+      material = mesh.material;
+    controller.updatePlacementPreview({
+      placementPreview: createCorridorGeometry({ x: 0, z: 0 }, { x: 20, z: 0 }, 4),
+      placementPreviewType: 'bike_lane',
+      placementStart: { x: 1, z: 1 },
+    });
+    expect(findPreview()).toBe(mesh);
+    expect(mesh.geometry).toBe(geometry);
+    expect(mesh.material).toBe(material);
+    expect(mesh.geometry.getAttribute('position').getX(1)).toBeGreaterThan(10);
+    controller.updatePlacementPreview({
+      placementPreview: null,
+      placementPreviewType: null,
+      placementStart: null,
+    });
+    expect(findPreview()).toBeUndefined();
+    options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    options.canvas.dispatchEvent(pointerEvent('pointerleave'));
+    flushFrame();
+    expect(options.onPointerMove).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds decorative grass and batches facade details while keeping them out of picking', async () => {
+    const objects = ['grass_strip', 'building'].map((type, i) =>
+      createCorridorCityDesignObject({
+        id: type,
+        type: type as 'grass_strip' | 'building',
+        start: { x: 0, z: i * 10 },
+        end: { x: 140, z: i * 10 },
+        width: 4,
+      })
+    );
+    const options = createOptions({
+      design: { ...createEmptyCityDesignState(), objects },
+      interactionMode: 'select',
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const instances: import('three').InstancedMesh[] = [];
+    scene.traverse(child => {
+      if ('isInstancedMesh' in child) instances.push(child as import('three').InstancedMesh);
+    });
+    expect(instances.filter(mesh => mesh.userData.objectId === 'grass_strip')).toHaveLength(1);
+    expect(
+      instances.find(mesh => mesh.userData.objectId === 'grass_strip')!.count
+    ).toBeLessThanOrEqual(120);
+    expect(instances.filter(mesh => mesh.userData.objectId === 'building')).toHaveLength(2);
+    const THREE = await import('three');
+    const raycast = vi.spyOn(THREE.Raycaster.prototype, 'intersectObjects').mockReturnValue([]);
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    const candidates = raycast.mock.calls.flatMap(call => call[0]);
+    expect(candidates.some(child => child.userData.decorative)).toBe(false);
+    expect(candidates.some(child => child.userData.objectId === 'building')).toBe(true);
+    controller.updateDesign({
+      design: { ...options.design, comparisonMode: 'original' },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    raycast.mockClear();
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(raycast.mock.calls.flatMap(call => call[0])).toHaveLength(0);
+  });
+
   it('mounts, updates and disposes the browser controller deterministically', async () => {
     sceneDoubles.useNestedShadowChild = true;
     const design = {
@@ -783,6 +1307,7 @@ describe('mountCityDesignScene', () => {
     controller.updateInteractionMode({ interactionMode: 'place', readOnly: false });
     options.canvas.dispatchEvent(pointerEvent('pointerdown'));
     options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    flushFrame();
     expect(options.onPointerDown).toHaveBeenCalledOnce();
     expect(options.onPointerMove).toHaveBeenCalledOnce();
 
@@ -865,6 +1390,72 @@ describe('mountCityDesignScene', () => {
     controller.dispose();
     controller = null;
     expect(disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('animates idle water and shrubs with missing metadata and array-backed materials', async () => {
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    const options = createOptions({
+      design: {
+        ...createEmptyCityDesignState(),
+        objects: [
+          createCorridorCityDesignObject({
+            id: 'idle-water',
+            type: 'water_area',
+            start: { x: 0, z: 0 },
+            end: { x: 20, z: 0 },
+            width: 4,
+          }),
+          createPointCityDesignObject({
+            id: 'idle-bush',
+            type: 'bush',
+            point: { x: 0, z: 8 },
+          }),
+        ],
+      },
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const animated: import('three').Object3D[] = [];
+    scene.traverse(object => {
+      if (object.userData.motion) animated.push(object);
+    });
+    const ripples = animated.filter(object => object.userData.motion === 'waterRipple');
+    expect(ripples.length).toBeGreaterThan(1);
+    const arrayRipple = ripples[0] as import('three').Mesh;
+    const rippleMaterial = arrayRipple.material as import('three').Material;
+    const originalOpacity = rippleMaterial.opacity;
+    const originalY = arrayRipple.position.y;
+    arrayRipple.material = [rippleMaterial];
+    delete arrayRipple.userData.baseY;
+    delete arrayRipple.userData.phase;
+    const fallbackRipple = ripples[1] as import('three').Mesh;
+    delete fallbackRipple.userData.baseOpacity;
+    const glint = animated.find(
+      object => object.userData.motion === 'waterGlint'
+    ) as import('three').Mesh;
+    expect(glint).toBeDefined();
+    const glintMaterial = glint.material as import('three').Material;
+    const glintOpacity = glintMaterial.opacity;
+    glint.material = [glintMaterial];
+    const bush = animated.find(object => object.userData.motion === 'bush')!;
+    expect(bush).toBeDefined();
+
+    // Demand rendering needs an explicit idle frame after the metadata changes.
+    window.dispatchEvent(new Event('resize'));
+    flushFrame(32);
+
+    expect(arrayRipple.position.y).toBeCloseTo(
+      originalY + Math.sin(animated.indexOf(arrayRipple)) * 0.014
+    );
+    expect(rippleMaterial.opacity).toBe(originalOpacity);
+    expect((fallbackRipple.material as import('three').Material).opacity).toBeCloseTo(
+      0.42 + Math.sin(fallbackRipple.userData.phase) * 0.08
+    );
+    expect(glintMaterial.opacity).toBe(glintOpacity);
+    expect(bush.rotation.z).toBeCloseTo(Math.sin(bush.userData.phase) * 0.02);
+    expect(sceneDoubles.renderers[0]!.render).toHaveBeenCalledTimes(2);
+    expect(animationFrames).toHaveLength(0);
   });
 
   it('renders every registered object kind and rebuilds filtered comparison layers', async () => {

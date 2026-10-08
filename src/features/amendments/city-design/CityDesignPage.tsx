@@ -94,6 +94,8 @@ export function CityDesignPage({ amendmentId, conversationId, branchId }: CityDe
         onCancelPlacement={controller.cancelPlacement}
         onObjectSelect={controller.selectObject}
         onOsmWaySelect={controller.selectOsmWay}
+        onObjectFocus={controller.focusObject}
+        onOsmWayFocus={controller.focusOsmWay}
         onObjectVisibilityChange={controller.setObjectVisibility}
         onObjectCategoryVisibilityChange={controller.setObjectCategoryVisibility}
         onOsmWayHide={controller.hideOsmWay}
@@ -107,6 +109,8 @@ export function CityDesignPage({ amendmentId, conversationId, branchId }: CityDe
         onPlacementUnitCostChange={controller.updatePlacementUnitCost}
         onPropertyChange={controller.updateObjectProperty}
         onWidthChange={controller.updateObjectWidth}
+        onLengthChange={controller.updateObjectLength}
+        onPositionChange={controller.updateObjectPosition}
         onRotationChange={controller.rotateObject}
         onUnitCostChange={controller.updateObjectUnitCost}
         onDeleteObject={controller.deleteObject}

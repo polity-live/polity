@@ -600,7 +600,7 @@ describe('cityDesignReducer', () => {
     expect(nextState.isDirty).toBe(true);
   });
 
-  it('creates a new OSM focus request when selecting an existing object again', () => {
+  it('keeps the camera stationary when selecting an existing OSM object again', () => {
     const initialState = createInitialCityDesignEditorState();
     const selected = cityDesignReducer(initialState, {
       type: 'select_osm_way',
@@ -612,12 +612,12 @@ describe('cityDesignReducer', () => {
     });
 
     expect(selected.selectedOsmWayId).toBe('building-1');
-    expect(selected.selectedOsmFocusRequestKey).toBe(1);
+    expect(selected.selectedOsmFocusRequestKey).toBe(0);
     expect(selectedAgain.selectedOsmWayId).toBe('building-1');
-    expect(selectedAgain.selectedOsmFocusRequestKey).toBe(2);
+    expect(selectedAgain.selectedOsmFocusRequestKey).toBe(0);
   });
 
-  it('creates a new design object focus request when selecting an element again', () => {
+  it('keeps the camera stationary when selecting a design element again', () => {
     const initialState = createInitialCityDesignEditorState();
     const selected = cityDesignReducer(initialState, {
       type: 'select_object',
@@ -629,9 +629,9 @@ describe('cityDesignReducer', () => {
     });
 
     expect(selected.selectedObjectId).toBe('building-1');
-    expect(selected.selectedObjectFocusRequestKey).toBe(1);
+    expect(selected.selectedObjectFocusRequestKey).toBe(0);
     expect(selectedAgain.selectedObjectId).toBe('building-1');
-    expect(selectedAgain.selectedObjectFocusRequestKey).toBe(2);
+    expect(selectedAgain.selectedObjectFocusRequestKey).toBe(0);
   });
 
   it('keeps a selected design object when clearing OSM selection', () => {
@@ -661,6 +661,71 @@ describe('cityDesignReducer', () => {
     expect(clearedOsmSelection.selectedOsmWayId).toBeNull();
     expect(selectedOsmWay.selectedObjectId).toBeNull();
     expect(selectedOsmWay.selectedOsmWayId).toBe('osm-building-1');
+  });
+
+  it('only focuses valid elements after an explicit focus command without making the design dirty', () => {
+    const tree = createPointCityDesignObject({
+      id: 'focus-tree',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const state = createInitialCityDesignEditorState({
+      ...createEmptyCityDesignState(),
+      objects: [tree],
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features: [
+          {
+            id: 'focus-osm',
+            kind: 'tree',
+            geometryKind: 'point',
+            point: { lat: 52.52, lon: 13.405 },
+            tags: {},
+          },
+        ],
+      },
+    });
+    const focused = cityDesignReducer(state, { type: 'focus_object', objectId: tree.id });
+    const again = cityDesignReducer(focused, { type: 'focus_object', objectId: tree.id });
+    expect(focused.selectedObjectFocusRequestKey).toBe(1);
+    expect(again.selectedObjectFocusRequestKey).toBe(2);
+    expect(again.design).toBe(state.design);
+    expect(again.isDirty).toBe(false);
+    const osm = cityDesignReducer(again, { type: 'focus_osm_way', osmWayId: 'focus-osm' });
+    expect(osm.selectedOsmFocusRequestKey).toBe(1);
+    expect(osm.selectedObjectId).toBeNull();
+    expect(
+      cityDesignReducer(osm, { type: 'focus_osm_way', osmWayId: 'focus-osm' })
+        .selectedOsmFocusRequestKey
+    ).toBe(2);
+    expect(cityDesignReducer(osm, { type: 'focus_object', objectId: 'missing' })).toBe(osm);
+    expect(cityDesignReducer(osm, { type: 'focus_osm_way', osmWayId: 'missing' })).toBe(osm);
+  });
+
+  it('places point, band and path elements without creating a camera focus request', () => {
+    for (const type of ['bank', 'parking_area', 'street'] as const) {
+      let state = cityDesignReducer(createInitialCityDesignEditorState(), {
+        type: 'set_tool',
+        objectType: type,
+      });
+      state = cityDesignReducer(state, {
+        type: 'scene_pointer_down',
+        point: { x: 0, z: 0 },
+        id: 'first',
+      });
+      if (type !== 'bank') {
+        state = cityDesignReducer(state, { type: 'scene_pointer_move', point: { x: 12, z: 0 } });
+        state = cityDesignReducer(state, {
+          type: 'scene_pointer_down',
+          point: { x: 12, z: 0 },
+          id: 'second',
+        });
+        state = cityDesignReducer(state, { type: 'finish_placement', id: 'finished' });
+      }
+      expect(state.design.objects).toHaveLength(1);
+      expect(state.selectedObjectFocusRequestKey).toBe(0);
+    }
   });
 
   it('tracks hidden design elements and groups without changing saved objects', () => {
@@ -817,4 +882,48 @@ describe('cityDesignReducer', () => {
     expect(parsed?.osmLayerVisibility?.sidewalk).toBe(true);
     expect(parsed?.hiddenOsmFeatureIds).toContain('legacy-road-1');
   });
+});
+
+it('persists committed lengths and widths while rejecting invalid dimensions', () => {
+  const object = createPathCorridorCityDesignObject({
+    id: 'curve',
+    type: 'street',
+    width: 6,
+    points: [
+      { x: 0, z: 0 },
+      { x: 20, z: 0 },
+      { x: 30, z: 10 },
+    ],
+  });
+  const initial = createInitialCityDesignEditorState({
+    ...createEmptyCityDesignState(),
+    objects: [object],
+  });
+  for (const length of [NaN, Infinity, 0, -4])
+    expect(
+      cityDesignReducer(initial, { type: 'update_object_length', objectId: object.id, length })
+    ).toBe(initial);
+  const shortened = cityDesignReducer(initial, {
+    type: 'update_object_length',
+    objectId: object.id,
+    length: 15,
+  });
+  const widened = cityDesignReducer(shortened, {
+    type: 'update_object_width',
+    objectId: object.id,
+    width: 8,
+  });
+  const loaded = parseStoredCityDesignState(JSON.parse(JSON.stringify(widened.design)));
+  expect(loaded?.objects[0].id).toBe(object.id);
+  expect(loaded?.objects[0].geometry).toEqual(widened.design.objects[0].geometry);
+  expect(loaded?.objects[0].geometry).toMatchObject({
+    length: 15,
+    width: 8,
+    roundedCenterline: [
+      { x: 0, z: 0 },
+      { x: 15, z: 0 },
+    ],
+  });
+  expect(widened.isDirty).toBe(true);
+  expect(JSON.stringify(widened.design)).not.toContain('measurement');
 });

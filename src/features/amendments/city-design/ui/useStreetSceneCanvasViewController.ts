@@ -1,3 +1,4 @@
+import { useCityDesignMeasurements } from './useCityDesignMeasurements';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type {
   CorridorGeometry,
@@ -28,6 +29,28 @@ import type { CityDesignDiscussionLike } from './CityDesignChangeRequestPanel';
 import type { CityDesignRemoteCursor } from '../hooks/useCityDesignRemoteCursors';
 
 const EMPTY_CHANGE_REQUESTS: readonly CityDesignChangeRequest[] = [];
+export interface CityDesignCameraPoseSource {
+  getSnapshot: () => CityDesignCameraPose;
+  subscribe: (listener: () => void) => () => void;
+}
+
+function createCameraPoseSource(initialPose: CityDesignCameraPose) {
+  let pose = initialPose;
+  const listeners = new Set<() => void>();
+  return {
+    getSnapshot: () => pose,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    setPose(nextPose: CityDesignCameraPose) {
+      pose = nextPose;
+      listeners.forEach(listener => listener());
+    },
+  };
+}
 const DEFAULT_CITY_DESIGN_CAMERA_POSE: CityDesignCameraPose = {
   position: { x: 0, y: 75, z: 85 },
   target: { x: 0, y: 0, z: 0 },
@@ -80,6 +103,8 @@ interface StreetSceneCanvasViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
@@ -87,6 +112,12 @@ interface StreetSceneCanvasViewProps {
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onPropertyChange: (objectId: string, key: string, value: CityDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onLengthChange?: (
+    objectId: string,
+    length: number,
+    sourceGeometry?: CityDesignObject['geometry']
+  ) => void;
+  onPositionChange?: (objectId: string, position: CityDesignLocalPoint) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
@@ -147,6 +178,8 @@ export function useStreetSceneCanvasViewController({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
@@ -154,6 +187,8 @@ export function useStreetSceneCanvasViewController({
   onObjectRotate,
   onPropertyChange,
   onWidthChange,
+  onLengthChange,
+  onPositionChange,
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
@@ -165,6 +200,24 @@ export function useStreetSceneCanvasViewController({
 }: StreetSceneCanvasViewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneControllerRef = useRef<CityDesignSceneController | null>(null);
+  const measurements = useCityDesignMeasurements({
+    design,
+    selectedObjectId,
+    selectedOsmWayId,
+    onObjectSelect,
+    onOsmWaySelect,
+    hiddenObjectIds,
+    hiddenObjectCategories,
+    sceneControllerRef,
+  });
+  const {
+    selectedObjectIds,
+    selectedOsmWayIds,
+    measurementActive,
+    onMeasurementPoint,
+    selectObject: sceneSelectObject,
+    selectOsm: sceneSelectOsm,
+  } = measurements;
   const initialCameraPoseRef = useRef(initialCameraPose ?? DEFAULT_CITY_DESIGN_CAMERA_POSE);
   const cameraPoseRef = useRef<CityDesignCameraPose | null>(initialCameraPoseRef.current);
   const pendingCameraPoseRef = useRef<CityDesignCameraPose | null>(null);
@@ -185,19 +238,22 @@ export function useStreetSceneCanvasViewController({
   };
 
   const [loadFailed, setLoadFailed] = useState(false);
-  const [cameraPose, setCameraPose] = useState<CityDesignCameraPose>(initialCameraPoseRef.current);
-  const handleCameraPoseChange = useCallback((pose: CityDesignCameraPose) => {
-    cameraPoseRef.current = pose;
-    pendingCameraPoseRef.current = pose;
-    if (cameraPoseFrameRef.current != null) return;
+  const [cameraPoseSource] = useState(() => createCameraPoseSource(initialCameraPoseRef.current));
+  const handleCameraPoseChange = useCallback(
+    (pose: CityDesignCameraPose) => {
+      cameraPoseRef.current = pose;
+      pendingCameraPoseRef.current = pose;
+      if (cameraPoseFrameRef.current != null) return;
 
-    cameraPoseFrameRef.current = requestStreetSceneAnimationFrame(() => {
-      cameraPoseFrameRef.current = null;
-      const nextPose = pendingCameraPoseRef.current;
-      pendingCameraPoseRef.current = null;
-      setCameraPose(nextPose as CityDesignCameraPose);
-    });
-  }, []);
+      cameraPoseFrameRef.current = requestStreetSceneAnimationFrame(() => {
+        cameraPoseFrameRef.current = null;
+        const nextPose = pendingCameraPoseRef.current;
+        pendingCameraPoseRef.current = null;
+        cameraPoseSource.setPose(nextPose as CityDesignCameraPose);
+      });
+    },
+    [cameraPoseSource]
+  );
   const renderedChangeRequests = showChangeRequests ? changeRequests : EMPTY_CHANGE_REQUESTS;
   const latestSceneOptionsRef = useRef<Omit<CityDesignSceneMountOptions, 'canvas'>>({
     design,
@@ -207,6 +263,10 @@ export function useStreetSceneCanvasViewController({
     selectedObjectId,
     selectedOsmWayId,
     selectedChangeRequestId,
+    selectedObjectIds,
+    selectedOsmWayIds,
+    measurementActive,
+    onMeasurementPoint,
     hiddenObjectIds,
     hiddenObjectCategories,
     changeRequests: renderedChangeRequests,
@@ -219,8 +279,8 @@ export function useStreetSceneCanvasViewController({
     onPointerDown,
     onPointerMove,
     onPointerHover,
-    onObjectSelect,
-    onOsmWaySelect,
+    onObjectSelect: sceneSelectObject,
+    onOsmWaySelect: sceneSelectOsm,
     onObjectRotate,
     onCameraPoseChange: handleCameraPoseChange,
   });
@@ -232,6 +292,10 @@ export function useStreetSceneCanvasViewController({
     selectedObjectId,
     selectedOsmWayId,
     selectedChangeRequestId,
+    selectedObjectIds,
+    selectedOsmWayIds,
+    measurementActive,
+    onMeasurementPoint,
     hiddenObjectIds,
     hiddenObjectCategories,
     changeRequests: renderedChangeRequests,
@@ -244,8 +308,8 @@ export function useStreetSceneCanvasViewController({
     onPointerDown,
     onPointerMove,
     onPointerHover,
-    onObjectSelect,
-    onOsmWaySelect,
+    onObjectSelect: sceneSelectObject,
+    onOsmWaySelect: sceneSelectOsm,
     onObjectRotate,
     onCameraPoseChange: handleCameraPoseChange,
   };
@@ -275,6 +339,7 @@ export function useStreetSceneCanvasViewController({
         placementMode === 'drag_band' || (placementMode === 'path' && canFinishPathPlacement);
       if (event.key === 'Enter' && canFinishPlacement) {
         event.preventDefault();
+        sceneControllerRef.current?.flushPointerMove();
         onFinishPlacement();
       }
     };
@@ -288,6 +353,51 @@ export function useStreetSceneCanvasViewController({
     onFinishPlacement,
     placementMode,
     readOnly,
+  ]);
+
+  useEffect(() => {
+    if (
+      readOnly ||
+      embeddedPreview ||
+      selectedChangeRequestId ||
+      interactionMode !== 'select' ||
+      !selectedObjectId
+    )
+      return undefined;
+
+    const handleDelete = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Delete' ||
+        event.defaultPrevented ||
+        event.repeat ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        isEditableKeyboardTarget(event.target) ||
+        isEditableKeyboardTarget(document.activeElement)
+      )
+        return;
+      const target = event.target instanceof HTMLElement ? event.target : document.activeElement;
+      if (
+        target?.closest(
+          '[role="dialog"], [role="alertdialog"], [contenteditable]:not([contenteditable="false"]), [role="combobox"], [role="spinbutton"]'
+        )
+      )
+        return;
+      event.preventDefault();
+      onDeleteObject(selectedObjectId);
+    };
+
+    document.addEventListener('keydown', handleDelete);
+    return () => document.removeEventListener('keydown', handleDelete);
+  }, [
+    embeddedPreview,
+    interactionMode,
+    onDeleteObject,
+    readOnly,
+    selectedChangeRequestId,
+    selectedObjectId,
   ]);
 
   useEffect(() => {
@@ -337,15 +447,17 @@ export function useStreetSceneCanvasViewController({
       onPointerDown,
       onPointerMove,
       onPointerHover,
-      onObjectSelect,
-      onOsmWaySelect,
+      onObjectSelect: sceneSelectObject,
+      onOsmWaySelect: sceneSelectOsm,
+      onMeasurementPoint,
       onObjectRotate,
       onCameraPoseChange: latestSceneOptionsRef.current.onCameraPoseChange,
     });
   }, [
     onObjectRotate,
-    onObjectSelect,
-    onOsmWaySelect,
+    sceneSelectObject,
+    sceneSelectOsm,
+    onMeasurementPoint,
     onPointerDown,
     onPointerHover,
     onPointerMove,
@@ -369,6 +481,8 @@ export function useStreetSceneCanvasViewController({
       lastOsmFocusRequestKeyRef,
     });
     controller.updateSelection({
+      selectedObjectIds,
+      selectedOsmWayIds,
       selectedObjectId,
       selectedOsmWayId,
       selectedChangeRequestId,
@@ -378,6 +492,8 @@ export function useStreetSceneCanvasViewController({
       readOnly,
     });
   }, [
+    selectedObjectIds,
+    selectedOsmWayIds,
     interactionMode,
     readOnly,
     selectedChangeRequestId,
@@ -407,10 +523,12 @@ export function useStreetSceneCanvasViewController({
     sceneControllerRef.current?.updateInteractionMode({
       interactionMode,
       readOnly,
+      measurementActive,
     });
-  }, [interactionMode, readOnly]);
+  }, [interactionMode, readOnly, measurementActive]);
 
   return {
+    measurements,
     design,
     metricLabels,
     initialLegendOpen,
@@ -433,7 +551,8 @@ export function useStreetSceneCanvasViewController({
     cityDesignDiscussions,
     selectedChangeRequestId,
     showChangeRequests,
-    cameraPose,
+    cameraPose: initialCameraPoseRef.current,
+    cameraPoseSource,
     canVoteOnChangeRequests,
     canFinalizeChangeRequests,
     currentUserId,
@@ -441,16 +560,23 @@ export function useStreetSceneCanvasViewController({
     currentUserAvatarUrl,
     collaborators,
     remoteCursors,
-    onFinishPathPlacement,
+    onFinishPathPlacement: () => {
+      sceneControllerRef.current?.flushPointerMove();
+      onFinishPathPlacement();
+    },
     onCancelPlacement,
-    onObjectSelect,
-    onOsmWaySelect,
+    onObjectSelect: sceneSelectObject,
+    onOsmWaySelect: sceneSelectOsm,
+    onObjectFocus,
+    onOsmWayFocus,
     onObjectVisibilityChange,
     onOsmWayHide,
     onOsmWayImport,
     onOsmImportUndo,
     onPropertyChange,
     onWidthChange,
+    onLengthChange,
+    onPositionChange,
     onRotationChange,
     onUnitCostChange,
     onDeleteObject,
@@ -469,6 +595,7 @@ function syncSceneController(
   options: Omit<CityDesignSceneMountOptions, 'canvas'>
 ) {
   controller.updateHandlers({
+    onMeasurementPoint: options.onMeasurementPoint,
     onPointerDown: options.onPointerDown,
     onPointerMove: options.onPointerMove,
     onPointerHover: options.onPointerHover,
@@ -483,6 +610,8 @@ function syncSceneController(
     hiddenObjectCategories: options.hiddenObjectCategories,
   });
   controller.updateSelection({
+    selectedObjectIds: options.selectedObjectIds,
+    selectedOsmWayIds: options.selectedOsmWayIds,
     selectedObjectId: options.selectedObjectId,
     selectedOsmWayId: options.selectedOsmWayId,
     selectedChangeRequestId: options.selectedChangeRequestId,
@@ -504,6 +633,7 @@ function syncSceneController(
   controller.updateInteractionMode({
     interactionMode: options.interactionMode,
     readOnly: options.readOnly,
+    measurementActive: options.measurementActive,
   });
 }
 

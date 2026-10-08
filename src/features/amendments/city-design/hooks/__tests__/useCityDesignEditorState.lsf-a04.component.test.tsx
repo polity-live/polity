@@ -21,6 +21,7 @@ vi.mock('../../logic/cityDesignCosting', async importOriginal => ({
   getCityDesignCostSummary: () => ({ totalMinor: 0 }),
 }));
 
+import { createPointCityDesignObject } from '../../logic/cityDesignPlacement';
 import { createEmptyCityDesignState } from '../../state/cityDesignReducer';
 import { useCityDesignEditorState } from '../useCityDesignEditorState';
 
@@ -28,13 +29,11 @@ afterEach(cleanup);
 
 describe('useCityDesignEditorState LSF action contract', () => {
   it('executes every public editor action adapter', () => {
-    const object = {
+    const object = createPointCityDesignObject({
       id: 'object-1',
       type: 'tree',
-      geometry: { kind: 'point', point: { x: 0, z: 0 } },
-      properties: {},
-      visible: true,
-    } as const;
+      point: { x: 0, z: 0 },
+    });
     const initial = { ...createEmptyCityDesignState(), objects: [object] } as any;
     const { result } = renderHook(() => useCityDesignEditorState(initial));
     const selection = {
@@ -70,6 +69,8 @@ describe('useCityDesignEditorState LSF action contract', () => {
       result.current.undoOsmImport('osm-way');
       result.current.updateObjectProperty('object-1', 'species', 'lime');
       result.current.updateObjectWidth('object-1', 3);
+      result.current.updateObjectLength('object-1', 10, object.geometry);
+      result.current.updateObjectPosition('object-1', { x: -5, z: 10 });
       result.current.rotateObject('object-1', 90);
       result.current.updateObjectUnitCost('object-1', 200);
       result.current.deleteObject('object-1');

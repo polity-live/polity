@@ -38,6 +38,11 @@ describe('useCityDesignEditorState A04 branch accountability', () => {
     expect(result.current.selectedObjectCostLine).toBeNull();
     act(() => result.current.selectObject('object'));
     expect(result.current.selectedObjectCostLine).toEqual({ objectId: 'object' });
+    act(() => result.current.focusObject('object'));
+    expect(result.current.state.selectedObjectFocusRequestKey).toBe(1);
+    act(() => result.current.focusOsmWay('way'));
+    expect(result.current.state.selectedOsmFocusRequestKey).toBe(1);
+    expect(result.current.state.selectedOsmWayId).toBe('way');
     act(() => {
       result.current.importOsmWay('missing');
       result.current.importOsmWay('way');

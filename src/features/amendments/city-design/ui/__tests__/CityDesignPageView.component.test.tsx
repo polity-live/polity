@@ -206,20 +206,25 @@ describe('CityDesignPageView', () => {
     expect(screen.getByText('Select')).toBeTruthy();
     expect(screen.getByText('Place')).toBeTruthy();
     expect(screen.getByText('Camera')).toBeTruthy();
-    expect(screen.getByText('Global navigation')).toBeTruthy();
+    expect(screen.getByText('Navigation in all modes')).toBeTruthy();
     expect(screen.getByText(/Tap an element/)).toBeTruthy();
-    expect(screen.getByText(/Use two fingers/)).toBeTruthy();
+    expect(screen.getByText('Pan: Drag with two fingers together.')).toBeTruthy();
+    expect(screen.getByText(/Spread two fingers apart/)).toBeTruthy();
 
     fireEvent.mouseDown(mouseTab, { button: 0, ctrlKey: false });
     fireEvent.click(mouseTab);
-    expect(screen.getByText(/Wheel zooms/)).toBeTruthy();
-    expect(screen.getByText(/Right-drag or Shift\+drag turns/)).toBeTruthy();
+    expect(screen.getByText(/Hold the middle mouse button \(scroll wheel\) and drag/)).toBeTruthy();
+    expect(screen.getByText(/Hold Space and drag with the left mouse button/)).toBeTruthy();
+    expect(screen.getByText(/Scroll the mouse wheel up to zoom in, down to zoom out/)).toBeTruthy();
+    expect(screen.getByText(/Hold the right mouse button and drag, or hold Shift/)).toBeTruthy();
 
     fireEvent.mouseDown(keyboardTab, { button: 0, ctrlKey: false });
     fireEvent.click(keyboardTab);
-    expect(screen.getByText(/WASD or arrow keys move/)).toBeTruthy();
-    expect(screen.getByText(/\+ and - zoom/)).toBeTruthy();
-    expect(screen.getByText(/Q and E turn/)).toBeTruthy();
+    expect(screen.getByText('Pan forward / backward: W / S or Up / Down arrow.')).toBeTruthy();
+    expect(screen.getByText('Pan left / right: A / D or Left / Right arrow.')).toBeTruthy();
+    expect(screen.getByText('Zoom in: + or =. Zoom out: − (minus key).')).toBeTruthy();
+    expect(screen.getByText('Rotate left / right: Q / E.')).toBeTruthy();
+    expect(screen.getByText(/no input field or button has focus/)).toBeTruthy();
   });
 
   it('forwards the dirty state to the toolbar', () => {

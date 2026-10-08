@@ -84,10 +84,14 @@ import { VersionControl } from '../ui/VersionControl';
 describe('amendment composition wrapper contracts', () => {
   it('keeps city design on its original save path without Studio history controls', () => {
     const save = vi.fn();
+    const updateObjectLength = vi.fn();
+    const updateObjectPosition = vi.fn();
     const controller = {
       state: {},
       amendmentId: 'amendment-1',
       onSave: save,
+      updateObjectLength,
+      updateObjectPosition,
       design: { objects: [] },
       readOnly: false,
     };
@@ -98,6 +102,8 @@ describe('amendment composition wrapper contracts', () => {
       design: controller.design,
       readOnly: false,
       onSave: save,
+      onLengthChange: updateObjectLength,
+      onPositionChange: updateObjectPosition,
     });
     expect(screen.queryByRole('button', { name: 'plateJs.toolbar.undo' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'plateJs.toolbar.redo' })).toBeNull();

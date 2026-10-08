@@ -77,6 +77,7 @@ describe('CityDesignObjectPopover A04 branch accountability', () => {
       input.getAttribute('aria-label')?.includes('price')
     );
     fireEvent.change(numberInput!, { target: { value: '7' } });
+    fireEvent.blur(numberInput!);
     fireEvent.change(textInput!, { target: { value: 'note' } });
     fireEvent.change(priceInput!, { target: { value: '' } });
     fireEvent.change(priceInput!, { target: { value: '-5' } });
@@ -85,8 +86,9 @@ describe('CityDesignObjectPopover A04 branch accountability', () => {
     );
     expect(onPropertyChange).toHaveBeenCalledWith('object/one', 'count', 7);
     expect(onPropertyChange).toHaveBeenCalledWith('object/one', 'note', 'note');
-    expect(onUnitCostChange).toHaveBeenCalledWith('object/one', null);
-    expect(onUnitCostChange).toHaveBeenCalledWith('object/one', 0);
+    expect(onUnitCostChange).not.toHaveBeenCalled();
+    fireEvent.change(priceInput!, { target: { value: '2,50' } });
+    expect(onUnitCostChange).toHaveBeenCalledWith('object/one', 250);
     expect(onUndoOsmImport).toHaveBeenCalledWith('');
     expect(
       container.querySelector('[data-action-id="amendments.city-object-popover.toggle.visibility"]')
