@@ -23,6 +23,28 @@ beforeEach(() => {
 });
 
 it.each(['sign-in', 'sign-up'] as const)(
+  'restores the login button focus in the %s form when a failed request leaves no field focused',
+  async mode => {
+    let reject!: (error: Error) => void;
+    io.start.mockReturnValueOnce(
+      new Promise<void>((_resolve, fail) => {
+        reject = fail;
+      })
+    );
+    render(form(mode));
+    const button = screen.getByRole('button', { name: 'auth.chatgpt.button' });
+    button.focus();
+    await userEvent.keyboard('{Enter}');
+    button.blur();
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => reject(new Error('OAuth denied')));
+    await waitFor(() => expect(io.toast).toHaveBeenCalledWith('auth.chatgpt.failed'));
+    await waitFor(() => expect(document.activeElement).toBe(button));
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+  }
+);
+
+it.each(['sign-in', 'sign-up'] as const)(
   'preserves another focused field in the %s form when a pending ChatGPT login fails',
   async mode => {
     let reject: (error: Error) => void = () => {
