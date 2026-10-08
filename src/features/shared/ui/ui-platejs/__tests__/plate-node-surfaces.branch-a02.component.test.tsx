@@ -199,6 +199,7 @@ describe('column node branch campaign A02', () => {
   it('covers widths, controls, dragging, drop directions, and group forwarding', () => {
     const view = render(<ColumnElement {...props({ id: 'column', width: 320 })} />);
     const options = mocks.draggableOptions.at(-1)!;
+    expect(options.canDropNode({ dragEntry: undefined, dropEntry: [{}, [0, 2]] })).toBe(false);
     expect(options.canDropNode({ dragEntry: [{}, [0, 1]], dropEntry: [{}, [0, 2]] })).toBe(true);
     expect(options.canDropNode({ dragEntry: [{}, [0, 1]], dropEntry: [{}, [1, 2]] })).toBe(false);
     const dragEvent = new MouseEvent('click', { bubbles: true, cancelable: true });

@@ -80842,6 +80842,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/ui-platejs/__tests__/docx-roundtrip.browser-component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/ui-platejs/__tests__/editor-shortcuts.unit.test.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",

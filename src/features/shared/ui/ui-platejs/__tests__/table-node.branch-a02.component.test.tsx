@@ -302,6 +302,7 @@ describe('table node branch campaign A02', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(mocks.select).toHaveBeenCalled();
     const options = mocks.draggableOptions.at(-1)!;
+    expect(options.canDropNode({ dragEntry: undefined, dropEntry: [{}, [0, 2]] })).toBe(false);
     expect(options.canDropNode({ dragEntry: [{}, [0, 1]], dropEntry: [{}, [0, 2]] })).toBe(true);
     expect(options.canDropNode({ dragEntry: [{}, [0, 1]], dropEntry: [{}, [1, 2]] })).toBe(false);
     options.onDropHandler(null, { dragItem: { element: { id: 'dragged' } } });
