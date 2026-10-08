@@ -2,7 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '@/styles.css';
-import { CityDesignWorkspaceFixture } from './CityDesignWorkspace.fixture';
+import {
+  CityDesignWorkspaceFixture,
+  createCityDesignWorkspaceProps,
+} from './CityDesignWorkspace.fixture';
+import { StreetSceneCanvasViewView } from '../StreetSceneCanvasViewView';
 import { useState } from 'react';
 import { Toolbar } from '@/features/shared/ui/layout';
 import { CityDesignSecondaryActionBarView } from '../CityDesignTopBarView';
@@ -89,6 +93,46 @@ it('opens project information with keyboard focus and activation', async () => {
   expect(await screen.findByText('Euckenstraße 38, München')).toBeTruthy();
   await userEvent.keyboard('{Escape}');
   expect(information.getAttribute('aria-expanded')).toBe('false');
+});
+
+it('opens existing OSM properties and the legend with native controls', async () => {
+  await page.viewport(1280, 800);
+  const onOsmWaySelect = vi.fn();
+  const onOsmWayImport = vi.fn();
+  render(
+    <StreetSceneCanvasViewView
+      {...createCityDesignWorkspaceProps({
+        selectedOsmWay: {
+          id: 'osm-road',
+          label: 'Existing street',
+          kind: 'road',
+          geometryKind: 'line',
+          points: [
+            { lat: 52.52, lon: 13.4 },
+            { lat: 52.521, lon: 13.401 },
+          ],
+          source: 'osm',
+          mappedObjectType: 'street',
+          mappingConfidence: 'exact',
+          tags: { name: 'Existing street', highway: 'residential' },
+        },
+        onOsmWaySelect,
+        onOsmWayImport,
+      })}
+      canvasRef={{ current: null }}
+      loadFailed={false}
+      initialLegendOpen
+    />
+  );
+  expect(screen.getByRole('complementary')).toBeTruthy();
+  expect(screen.getByText('Existing street')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Collapse Legend' })).toBeTruthy();
+  await userEvent.click(
+    document.querySelector('[data-action-id="amendments.city-osm-popover.import.as-planned"]')!
+  );
+  expect(onOsmWayImport).toHaveBeenCalledWith('osm-road');
+  await userEvent.click(screen.getByRole('button', { name: 'Close properties' }));
+  expect(onOsmWaySelect).toHaveBeenCalledWith(null);
 });
 
 it('opens the compact invitation and share controls with keyboard focus', async () => {

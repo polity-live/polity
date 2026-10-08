@@ -256,6 +256,7 @@ export function StreetSceneCanvasViewView({
   const selectedChangeRequestMarker = selectedChangeRequest
     ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
     : null;
+  const closeSelection = () => (selectedObject ? onObjectSelect(null) : onOsmWaySelect(null));
 
   if (loadFailed) {
     return (
@@ -419,7 +420,7 @@ export function StreetSceneCanvasViewView({
               : null
           }
           canvasSize={canvasSize}
-          onClose={() => (selectedObject ? onObjectSelect(null) : onOsmWaySelect(null))}
+          onClose={closeSelection}
         >
           {selectedObject ? (
             <CityDesignObjectPopover
@@ -428,7 +429,7 @@ export function StreetSceneCanvasViewView({
               costLine={selectedObjectCostLine}
               isHidden={hiddenObjectIdSet.has(selectedObject.id)}
               readOnly={readOnly}
-              onClose={() => onObjectSelect(null)}
+              onClose={closeSelection}
               onVisibilityChange={onObjectVisibilityChange}
               onPropertyChange={onPropertyChange}
               onWidthChange={onWidthChange}
@@ -443,7 +444,7 @@ export function StreetSceneCanvasViewView({
               osmWay={selectedOsmWay}
               readOnly={readOnly}
               hideReadOnly={mapContextReadOnly}
-              onClose={() => onOsmWaySelect(null)}
+              onClose={closeSelection}
               onHideOsmWay={onOsmWayHide}
               onImportOsmWay={onOsmWayImport}
             />

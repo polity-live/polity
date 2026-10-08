@@ -8467,6 +8467,11 @@
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
           "project": "browser-component",
           "caseId": "selects an object through the compact cost list and edits its real property fields"
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "opens existing OSM properties and the legend with native controls"
         }
       ],
       "suggestedTestRefs": [
