@@ -37129,11 +37129,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -37182,11 +37182,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37220,11 +37220,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37259,11 +37259,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37297,11 +37297,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37335,11 +37335,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37374,11 +37374,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37412,11 +37412,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37451,11 +37451,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37490,11 +37490,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37529,11 +37529,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37560,11 +37560,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -37613,11 +37613,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37652,11 +37652,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37691,11 +37691,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -37744,11 +37744,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37775,11 +37775,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -37829,11 +37829,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37867,11 +37867,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37905,11 +37905,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37943,11 +37943,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -37981,11 +37981,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38020,11 +38020,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38059,11 +38059,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38090,11 +38090,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -38137,11 +38137,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -38184,11 +38184,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -38238,11 +38238,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38276,11 +38276,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38315,11 +38315,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38353,11 +38353,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38392,11 +38392,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38431,11 +38431,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38470,11 +38470,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -38509,11 +38509,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

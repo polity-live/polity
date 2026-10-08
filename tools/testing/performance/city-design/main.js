@@ -173,6 +173,8 @@ window.streetPerformance = {
       trianglesP95: percentile(phase.triangles, 0.95),
       pixelRatio: renderer.getPixelRatio(),
       cameraMoved: phase.pose !== JSON.stringify(pose),
+      visibility: document.visibilityState,
+      documentHasFocus: document.hasFocus(),
     };
     phase = null;
     output.textContent = JSON.stringify(result, null, 2);

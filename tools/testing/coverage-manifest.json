@@ -37962,11 +37962,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -37998,11 +37998,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38034,11 +38034,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38093,11 +38093,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38129,11 +38129,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38167,9 +38167,9 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38201,11 +38201,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38237,11 +38237,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38273,11 +38273,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38309,11 +38309,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38345,11 +38345,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38381,11 +38381,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38417,11 +38417,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38453,11 +38453,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38491,9 +38491,9 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38525,11 +38525,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38561,11 +38561,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38597,11 +38597,11 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
         "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/editor-p2-fallbacks.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-toolbar-header-mode.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx"
       ]
     },
     {
@@ -38666,6 +38666,16 @@
     },
     {
       "path": "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
+      "domain": "features:editor",
+      "owner": "polity/features:editor",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
       "domain": "features:editor",
       "owner": "polity/features:editor",
       "kind": "test-infrastructure",
@@ -38764,8 +38774,8 @@
         "src/features/editor/ui/__tests__/EditorViewShell.actions.component.test.tsx",
         "src/features/editor/ui/__tests__/EditorViewShell.branch-a04.component.test.tsx",
         "src/features/editor/ui/__tests__/InlineAmendmentEditor.branch-a04.component.test.tsx",
-        "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx",
-        "src/features/editor/ui/__tests__/editor-management-states.branch-a04.component.test.tsx"
+        "src/features/editor/ui/__tests__/InviteCollaboratorDialog.trigger.component.test.tsx",
+        "src/features/editor/ui/__tests__/OnlineCollaboratorAvatars.component.test.tsx"
       ]
     },
     {
@@ -133406,6 +133416,46 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/performance/city-design/__tests__/environment.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/__tests__/main.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/__tests__/run.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/performance/city-design/environment.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/performance/city-design/index.html",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -133729,6 +133779,16 @@
     },
     {
       "path": "vitest.browser.coverage.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "vitest.city-design-performance-coverage.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",

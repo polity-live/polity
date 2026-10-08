@@ -79,6 +79,7 @@
     "test:e2e:nightly": "cross-env E2E_WITH_SEED=1 pnpm run test:e2e:prepare && playwright test --config=playwright.nightly.config.ts",
     "test:e2e:performance": "pnpm run test:e2e:prepare && playwright test --project=chromium-desktop --grep \"@performance\"",
     "test:performance:city-design": "node tools/testing/performance/city-design/run.mjs",
+    "test:performance:city-design:coverage": "vitest run --config vitest.city-design-performance-coverage.config.ts --project unit tools/testing/performance/city-design/__tests__ --coverage",
     "test:e2e:stress": "pnpm run test:e2e:prepare && playwright test --project=chromium-desktop --grep \"@pr\" --repeat-each=20 --workers=1",
     "test:e2e:ui": "cross-env E2E_WITH_SEED=1 pnpm run test:e2e:prepare && cross-env PLAYWRIGHT_OUTPUT_DIR=test-results-ui PLAYWRIGHT_REPORT_DIR=playwright-report-ui playwright test --ui --project=chromium-desktop",
     "test:e2e:headed": "cross-env E2E_WITH_SEED=1 pnpm run test:e2e:prepare && cross-env PLAYWRIGHT_OUTPUT_DIR=test-results-headed PLAYWRIGHT_REPORT_DIR=playwright-report-headed playwright test --headed --project=chromium-desktop --workers=1",
