@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
@@ -84,7 +84,7 @@ jobs:
           done
       - name: Upload same-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: agent1-promotion-repeat-${{ github.run_attempt }}
           if-no-files-found: error
@@ -106,9 +106,9 @@ jobs:
       matrix:
         stack: [1, 2, 3]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
@@ -169,7 +169,7 @@ jobs:
           exit "$exit_code"
       - name: Upload fresh-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: agent1-promotion-cold-${{ matrix.stack }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -189,8 +189,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           pattern: agent1-promotion-*-${{ github.run_attempt }}
           path: downloaded-promotion
@@ -217,7 +217,7 @@ jobs:
             exit 1
           fi
       - name: Upload verified promotion proof
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: agent1-promotion-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error

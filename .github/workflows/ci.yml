@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Run unit tests
         run: pnpm run test:unit
@@ -75,7 +75,7 @@ jobs:
         run: pnpm run test:performance:city-design:coverage
       - name: Upload City Design benchmark tooling coverage
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-city-design-performance-${{ github.run_attempt }}
           if-no-files-found: error
@@ -85,7 +85,7 @@ jobs:
         run: pnpm run studio:test:coverage
       - name: Upload Studio coverage
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-studio-${{ github.run_attempt }}
           if-no-files-found: error
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Run component integration tests
         run: pnpm run test:component
@@ -111,7 +111,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Run component-flow shard
         run: pnpm run test:component-flow -- --shard=${{ matrix.shard }}/4
@@ -121,7 +121,7 @@ jobs:
           printf '%s\n' '${{ matrix.shard }}/4' > shard-markers/component-flow-${{ matrix.shard }}.txt
       - name: Upload component-flow marker
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: component-flow-marker-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -138,7 +138,7 @@ jobs:
       - name: Download component-flow markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: component-flow-marker-*-${{ github.run_attempt }}
           path: component-flow-markers
@@ -162,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Install Chromium with bounded Ubuntu mirror access
         run: |
@@ -172,7 +172,7 @@ jobs:
       - run: pnpm exec vitest run --config vitest.browser.coverage.config.ts
       - name: Upload browser coverage
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-browser-${{ github.run_attempt }}
           if-no-files-found: error
@@ -190,7 +190,7 @@ jobs:
     env:
       COVERAGE_SHARD_MAX_WORKERS: "2"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Run isolated instrumented shard
         run: >-
@@ -198,7 +198,7 @@ jobs:
           pnpm run test:coverage:shard "${{ matrix.shard }}/4"
       - name: Upload coverage blob
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-blob-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -206,7 +206,7 @@ jobs:
           path: .vitest-reports/blob-${{ matrix.shard }}-4.json
       - name: Upload shard diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -234,12 +234,12 @@ jobs:
             echo "Supplemental coverage tests failed: browser=$BROWSER_RESULT database=$DATABASE_RESULT"
             exit 1
           fi
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
       - name: Download coverage blobs
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: coverage-blob-*-${{ github.run_attempt }}
           path: ${{ runner.temp }}/coverage-blobs
@@ -259,12 +259,12 @@ jobs:
             --coverage \
             "--coverage.reportsDirectory=coverage"
       - name: Download browser coverage
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: coverage-browser-${{ github.run_attempt }}
           path: coverage-browser
       - name: Download database coverage
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: coverage-database-${{ github.run_attempt }}
           path: coverage-database
@@ -282,7 +282,7 @@ jobs:
           pnpm run test:accountability:coverage
       - name: Upload merged coverage diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -294,8 +294,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
+      - name: Audit runtime and development dependencies
+        run: pnpm audit
       - run: pnpm run test:security
 
   service-integration-shards:
@@ -307,7 +309,7 @@ jobs:
       matrix:
         shard: [1, 2]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Run service-integration shard
         run: pnpm run test:service-integration -- --shard=${{ matrix.shard }}/2
@@ -317,7 +319,7 @@ jobs:
           printf '%s\n' '${{ matrix.shard }}/2' > shard-markers/service-integration-${{ matrix.shard }}.txt
       - name: Upload service-integration marker
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: service-integration-marker-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -334,7 +336,7 @@ jobs:
       - name: Download service-integration markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: service-integration-marker-*-${{ github.run_attempt }}
           path: service-integration-markers
@@ -358,10 +360,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - name: Disable seed data for database startup
@@ -402,7 +404,7 @@ jobs:
         run: pnpm exec vitest run --config vitest.database.coverage.config.ts --project database-integration
       - name: Upload database coverage
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-database-${{ github.run_attempt }}
           if-no-files-found: error
@@ -427,7 +429,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Build production bundle
         run: pnpm run build
@@ -488,10 +490,10 @@ jobs:
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - name: Install Chromium
@@ -545,7 +547,7 @@ jobs:
           pnpm exec playwright test "${args[@]}"
       - name: Upload first-failure diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: e2e-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -554,7 +556,7 @@ jobs:
             test-results/
       - name: Upload shard blob report
         if: always() && steps.e2e.outcome != 'skipped'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: e2e-blob-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -571,9 +573,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v8.0.2
         continue-on-error: true
         with:
           pattern: e2e-blob-*-${{ github.run_attempt }}
@@ -591,7 +593,7 @@ jobs:
           fi
       - name: Merge shard reports
         run: pnpm exec playwright merge-reports --reporter html all-blob-reports
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: e2e-html-report-${{ github.run_attempt }}
           if-no-files-found: error
@@ -613,7 +615,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Review dependency changes
         uses: actions/dependency-review-action@v5.0.0
         with:

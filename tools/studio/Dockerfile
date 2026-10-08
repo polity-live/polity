@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim
+FROM node:24.21.0-bookworm-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN corepack enable

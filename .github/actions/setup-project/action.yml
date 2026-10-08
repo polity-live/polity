@@ -14,15 +14,15 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set up pnpm 10.34.5
-      uses: pnpm/action-setup@v6
+    - name: Set up pnpm 10.34.6
+      uses: pnpm/action-setup@v6.1.0
       with:
-        version: 10.34.5
+        version: 10.34.6
         run_install: false
-    - name: Set up Node.js 24.18.0
-      uses: actions/setup-node@v7
+    - name: Set up Node.js 24.21.0
+      uses: actions/setup-node@v7.1.0
       with:
-        node-version: 24.18.0
+        node-version: 24.21.0
         cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}
         cache-dependency-path: pnpm-lock.yaml
     - name: Install dependencies

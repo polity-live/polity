@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -32,7 +32,7 @@ jobs:
         run: pnpm run test:mutation
       - name: Upload deep-quality reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nightly-deep-quality-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -89,9 +89,9 @@ jobs:
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - name: Install selected browser
@@ -123,7 +123,7 @@ jobs:
           pnpm exec playwright test --config=playwright.nightly.config.ts --project="$PROJECT" $EXTRA 2>&1 | tee "e2e-diagnostics/${PROJECT}.log"
       - name: Upload diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nightly-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -147,9 +147,9 @@ jobs:
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
@@ -172,7 +172,7 @@ jobs:
       - run: pnpm exec playwright test --project=chromium-desktop --grep @performance
       - name: Upload measurements and diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nightly-performance-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -197,9 +197,9 @@ jobs:
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup-project
-      - uses: supabase/setup-cli@v3
+      - uses: supabase/setup-cli@v3.0.1
         with:
           version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
@@ -224,7 +224,7 @@ jobs:
         run: pnpm exec playwright test --project=chromium-desktop --grep @pr --repeat-each=20 --workers=1
       - name: Upload stability diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nightly-stability-${{ github.run_attempt }}
           if-no-files-found: ignore
