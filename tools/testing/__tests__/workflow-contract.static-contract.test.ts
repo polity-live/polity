@@ -42,8 +42,8 @@ describe('GitHub workflow contracts', () => {
 
     expect(setup).toContain('pnpm/action-setup@v6');
     expect(setup).toContain('actions/setup-node@v7');
-    expect(setup).toContain('version: 10.34.5');
-    expect(setup).toContain('node-version: 24.18.0');
+    expect(setup).toContain('version: 10.34.6');
+    expect(setup).toContain('node-version: 24.21.0');
     expect(setup).toContain("cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}");
     expect(setup).toContain('pnpm install --frozen-lockfile');
     expect(workspace).toContain('fetchRetries: 5');
@@ -242,7 +242,7 @@ describe('GitHub workflow contracts', () => {
     expect(promotion).toContain('workflow_dispatch:');
     expect(promotion).not.toContain('pull_request:');
     expect(repositoryFile('.github', 'actions', 'setup-project', 'action.yml')).toContain(
-      'node-version: 24.18.0'
+      'node-version: 24.21.0'
     );
     expect(promotion).toContain('for iteration in $(seq 1 10); do');
     expect(promotion).toContain('stack: [1, 2, 3]');

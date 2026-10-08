@@ -21,8 +21,8 @@ describe('package manager contract', () => {
     const manifest = JSON.parse(read('package.json'));
     const workspace = read('pnpm-workspace.yaml');
 
-    expect(manifest.packageManager).toBe('pnpm@10.34.5');
-    expect(manifest.engines).toEqual({ node: '24.18.0' });
+    expect(manifest.packageManager).toBe('pnpm@10.34.6');
+    expect(manifest.engines).toEqual({ node: '24.21.0' });
     expect(manifest).not.toHaveProperty('allowScripts');
     expect(manifest).not.toHaveProperty('overrides');
     expect(fs.existsSync(path.join(root, 'package-lock.json'))).toBe(false);
