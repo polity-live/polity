@@ -147,6 +147,14 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
     dispatch({ type: 'select_osm_way', osmWayId });
   }, []);
 
+  const focusObject = useCallback((objectId: string) => {
+    dispatch({ type: 'focus_object', objectId });
+  }, []);
+
+  const focusOsmWay = useCallback((osmWayId: string) => {
+    dispatch({ type: 'focus_osm_way', osmWayId });
+  }, []);
+
   const setObjectVisibility = useCallback((objectId: string, visible: boolean) => {
     dispatch({ type: 'set_object_visibility', objectId, visible });
   }, []);
@@ -238,6 +246,8 @@ export function useCityDesignEditorState(initialDesign: CityDesignStateV1) {
     cancelPlacement,
     selectObject,
     selectOsmWay,
+    focusObject,
+    focusOsmWay,
     setObjectVisibility,
     setObjectCategoryVisibility,
     hideOsmWay,

@@ -206,6 +206,8 @@ export function CityDesignWorkspaceFixture({
             onToolChange: editor.setSelectedTool,
             onObjectSelect: editor.selectObject,
             onOsmWaySelect: editor.selectOsmWay,
+            onObjectFocus: editor.focusObject,
+            onOsmWayFocus: editor.focusOsmWay,
             onComparisonModeChange: editor.setComparisonMode,
             onInteractionModeChange: editor.setInteractionMode,
             onObjectVisibilityChange: editor.setObjectVisibility,

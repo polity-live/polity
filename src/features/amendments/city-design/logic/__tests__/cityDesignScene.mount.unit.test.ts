@@ -729,6 +729,245 @@ function createOsmFeatureMatrix(): CityDesignOsmFeature[] {
 }
 
 describe('mountCityDesignScene', () => {
+  it('preserves untouched GPU geometry across selection, insertion, editing and removal', async () => {
+    const objects = ['one', 'two', 'three'].map((id, i) =>
+      createCorridorCityDesignObject({
+        id,
+        type: 'street',
+        start: { x: i * 10, z: 0 },
+        end: { x: i * 10 + 8, z: 0 },
+        width: 3,
+      })
+    );
+    const design = { ...createEmptyCityDesignState(), objects };
+    const options = createOptions({ design, interactionMode: 'select' });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const geometries = (id: string) => {
+      const result: import('three').BufferGeometry[] = [];
+      scene.traverse(child => {
+        if (child.userData.objectId === id && 'geometry' in child)
+          result.push((child as import('three').Mesh).geometry);
+      });
+      return result;
+    };
+    const untouched = geometries('three');
+    expect(untouched.length).toBeGreaterThan(0);
+    controller.updateSelection({
+      selectedObjectId: 'one',
+      selectedOsmWayId: null,
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(geometries('three')).toEqual(untouched);
+    controller.updateSelection({
+      selectedObjectId: 'two',
+      selectedOsmWayId: null,
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(geometries('three')).toEqual(untouched);
+    const added = createPointCityDesignObject({ id: 'added', type: 'tree', point: { x: 0, z: 5 } });
+    controller.updateDesign({
+      design: { ...design, objects: [...objects, added] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(geometries('three')).toEqual(untouched);
+    const edited = { ...objects[0]!, properties: { ...objects[0]!.properties, surface: 'gravel' } };
+    controller.updateDesign({
+      design: { ...design, objects: [edited, objects[1]!, objects[2]!] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(geometries('three')).toEqual(untouched);
+    expect(geometries('added')).toHaveLength(0);
+    controller.updateDesign({ design, hiddenObjectIds: ['three'], hiddenObjectCategories: [] });
+    expect(geometries('three')).toHaveLength(0);
+  });
+
+  it('preserves unselected OSM geometry and updates the shared ramp context after map changes', async () => {
+    const features = createOsmFeatureMatrix();
+    const design = {
+      ...createEmptyCityDesignState(),
+      osmSnapshot: {
+        bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+        fetchedAt: 1,
+        features,
+      },
+    };
+    const options = createOptions({ design });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const road = scene.getObjectByName('osm:road')!;
+    expect(road).toBeDefined();
+    controller.updateSelection({
+      selectedObjectId: null,
+      selectedOsmWayId: 'tree',
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(road);
+    controller.updateSelection({
+      selectedObjectId: null,
+      selectedOsmWayId: 'building',
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    expect(scene.getObjectByName('osm:road')).toBe(road);
+    controller.updateDesign({
+      design: { ...design, hiddenOsmFeatureIds: ['road'] },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    expect(scene.getObjectByName('osm:road')).toBeUndefined();
+  });
+
+  it('renders default road markings for older saved designs without a markings setting', async () => {
+    const road = createOsmFeatureMatrix().find(feature => feature.id === 'road')!;
+    const options = createOptions({
+      design: {
+        ...createEmptyCityDesignState(),
+        showStreetMarkings: undefined,
+        osmSnapshot: {
+          bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+          fetchedAt: 1,
+          features: [road],
+        },
+      },
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const markings: import('three').InstancedMesh[] = [];
+    scene.getObjectByName('osm:road')!.traverse(child => {
+      if ('isInstancedMesh' in child) markings.push(child as import('three').InstancedMesh);
+    });
+    expect(
+      markings.some(
+        mesh =>
+          mesh.count > 0 && (mesh.material as import('three').MeshBasicMaterial).opacity === 0.75
+      )
+    ).toBe(true);
+  });
+
+  it('coalesces movement and reuses preview geometry, flushing the latest input before a click', async () => {
+    const options = createOptions({ interactionMode: 'place' });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const THREE = await import('three');
+    vi.spyOn(THREE.Ray.prototype, 'intersectPlane').mockImplementation((_plane, target) => {
+      target.set(8, 0, 9);
+      return target;
+    });
+    for (let i = 0; i < 20; i++)
+      options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0, clientX: 300 + i }));
+    expect(options.onPointerMove).not.toHaveBeenCalled();
+    flushFrame();
+    expect(options.onPointerMove).toHaveBeenCalledExactlyOnceWith({ x: 8, z: 9 });
+    options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(options.onPointerMove).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(options.onPointerMove).mock.invocationCallOrder[1]).toBeLessThan(
+      vi.mocked(options.onPointerDown).mock.invocationCallOrder[0]!
+    );
+    const preview = createCorridorGeometry({ x: 0, z: 0 }, { x: 10, z: 0 }, 3);
+    controller.updatePlacementPreview({
+      placementPreview: preview,
+      placementPreviewType: 'street',
+      placementStart: { x: 0, z: 0 },
+    });
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const findPreview = () => {
+      let mesh: import('three').Mesh | undefined;
+      scene.traverse(child => {
+        if (
+          'material' in child &&
+          (child as import('three').Mesh).material instanceof THREE.MeshBasicMaterial &&
+          ((child as import('three').Mesh).material as import('three').MeshBasicMaterial)
+            .opacity === 0.45
+        )
+          mesh = child as import('three').Mesh;
+      });
+      return mesh!;
+    };
+    const mesh = findPreview(),
+      geometry = mesh.geometry,
+      material = mesh.material;
+    controller.updatePlacementPreview({
+      placementPreview: createCorridorGeometry({ x: 0, z: 0 }, { x: 20, z: 0 }, 4),
+      placementPreviewType: 'bike_lane',
+      placementStart: { x: 1, z: 1 },
+    });
+    expect(findPreview()).toBe(mesh);
+    expect(mesh.geometry).toBe(geometry);
+    expect(mesh.material).toBe(material);
+    expect(mesh.geometry.getAttribute('position').getX(1)).toBeGreaterThan(10);
+    controller.updatePlacementPreview({
+      placementPreview: null,
+      placementPreviewType: null,
+      placementStart: null,
+    });
+    expect(findPreview()).toBeUndefined();
+    options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    options.canvas.dispatchEvent(pointerEvent('pointerleave'));
+    flushFrame();
+    expect(options.onPointerMove).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds decorative grass and batches facade details while keeping them out of picking', async () => {
+    const objects = ['grass_strip', 'building'].map((type, i) =>
+      createCorridorCityDesignObject({
+        id: type,
+        type: type as 'grass_strip' | 'building',
+        start: { x: 0, z: i * 10 },
+        end: { x: 140, z: i * 10 },
+        width: 4,
+      })
+    );
+    const options = createOptions({
+      design: { ...createEmptyCityDesignState(), objects },
+      interactionMode: 'select',
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const instances: import('three').InstancedMesh[] = [];
+    scene.traverse(child => {
+      if ('isInstancedMesh' in child) instances.push(child as import('three').InstancedMesh);
+    });
+    expect(instances.filter(mesh => mesh.userData.objectId === 'grass_strip')).toHaveLength(1);
+    expect(
+      instances.find(mesh => mesh.userData.objectId === 'grass_strip')!.count
+    ).toBeLessThanOrEqual(120);
+    expect(instances.filter(mesh => mesh.userData.objectId === 'building')).toHaveLength(2);
+    const THREE = await import('three');
+    const raycast = vi.spyOn(THREE.Raycaster.prototype, 'intersectObjects').mockReturnValue([]);
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    const candidates = raycast.mock.calls.flatMap(call => call[0]);
+    expect(candidates.some(child => child.userData.decorative)).toBe(false);
+    expect(candidates.some(child => child.userData.objectId === 'building')).toBe(true);
+    controller.updateDesign({
+      design: { ...options.design, comparisonMode: 'original' },
+      hiddenObjectIds: [],
+      hiddenObjectCategories: [],
+    });
+    raycast.mockClear();
+    options.canvas.dispatchEvent(pointerEvent('pointerdown'));
+    expect(raycast.mock.calls.flatMap(call => call[0])).toHaveLength(0);
+  });
+
   it('mounts, updates and disposes the browser controller deterministically', async () => {
     sceneDoubles.useNestedShadowChild = true;
     const design = {
@@ -783,6 +1022,7 @@ describe('mountCityDesignScene', () => {
     controller.updateInteractionMode({ interactionMode: 'place', readOnly: false });
     options.canvas.dispatchEvent(pointerEvent('pointerdown'));
     options.canvas.dispatchEvent(pointerEvent('pointermove', { buttons: 0 }));
+    flushFrame();
     expect(options.onPointerDown).toHaveBeenCalledOnce();
     expect(options.onPointerMove).toHaveBeenCalledOnce();
 

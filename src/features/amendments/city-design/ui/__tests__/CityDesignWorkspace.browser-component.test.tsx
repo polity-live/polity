@@ -10,6 +10,13 @@ import { StreetSceneCanvasViewView } from '../StreetSceneCanvasViewView';
 import { useState } from 'react';
 import { Toolbar } from '@/features/shared/ui/layout';
 import { CityDesignSecondaryActionBarView } from '../CityDesignTopBarView';
+import { mountCityDesignScene } from '../../logic/cityDesignScene';
+import { createEmptyCityDesignState } from '../../state/cityDesignReducer';
+import {
+  createCorridorCityDesignObject,
+  createPointCityDesignObject,
+} from '../../logic/cityDesignPlacement';
+import type { CityDesignCameraPose } from '../../types';
 vi.mock('../StreetAreaPicker', () => ({ StreetAreaPicker: () => null }));
 vi.mock('@/features/editor/hooks/useInviteCollaboratorModel', () => ({
   useInviteCollaboratorModel: () => {
@@ -29,6 +36,86 @@ vi.mock('@/features/editor/hooks/useInviteCollaboratorModel', () => ({
     };
   },
 }));
+
+it('selects real WebGL surfaces without moving the camera and focuses only on command', async () => {
+  await page.viewport(1280, 800);
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'width:900px;height:600px;display:block';
+  document.body.append(canvas);
+  const initialPose: CityDesignCameraPose = {
+    position: { x: 0, y: 75, z: 85 },
+    target: { x: 0, y: 0, z: 0 },
+  };
+  let pose = initialPose;
+  const onObjectSelect = vi.fn();
+  const design = {
+    ...createEmptyCityDesignState(),
+    comparisonMode: 'new_design' as const,
+    objects: [
+      createCorridorCityDesignObject({
+        id: 'street',
+        type: 'street',
+        start: { x: -15, z: 0 },
+        end: { x: 15, z: 0 },
+        width: 8,
+      }),
+      createPointCityDesignObject({ id: 'bench', type: 'bank', point: { x: 30, z: 0 } }),
+    ],
+  };
+  const noop = () => undefined;
+  const controller = await mountCityDesignScene({
+    canvas,
+    design,
+    interactionMode: 'select',
+    readOnly: false,
+    initialCameraPose: initialPose,
+    placementPreview: null,
+    placementPreviewType: null,
+    placementStart: null,
+    selectedObjectId: null,
+    selectedOsmWayId: null,
+    hiddenObjectIds: [],
+    hiddenObjectCategories: [],
+    focusObjectId: null,
+    focusOsmWayId: null,
+    onPointerDown: noop,
+    onPointerMove: noop,
+    onPointerHover: noop,
+    onObjectSelect,
+    onOsmWaySelect: noop,
+    onObjectRotate: noop,
+    onCameraPoseChange: next => {
+      pose = next;
+    },
+  });
+  try {
+    await waitFor(() => expect(canvas.width).toBeGreaterThan(0));
+    await userEvent.click(canvas);
+    expect(onObjectSelect).toHaveBeenCalledWith('street');
+    controller.updateSelection({
+      selectedObjectId: 'street',
+      selectedOsmWayId: null,
+      focusObjectId: null,
+      focusOsmWayId: null,
+      interactionMode: 'select',
+      readOnly: false,
+    });
+    await new Promise<void>(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+    expect(pose).toEqual(initialPose);
+    controller.focusObject('bench');
+    await waitFor(() => expect(pose.target.x).toBeCloseTo(30, 1));
+    // Keyboard navigation still updates the camera after an explicit focus.
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })
+    );
+    await waitFor(() => expect(pose.target.x).toBeLessThan(29));
+  } finally {
+    controller.dispose();
+    canvas.remove();
+  }
+});
 
 it.each([
   { width: 1280, height: 800, navigationView: 'asButtonList' as const, mobile: false },

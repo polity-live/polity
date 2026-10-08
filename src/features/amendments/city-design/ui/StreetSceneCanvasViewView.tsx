@@ -1,9 +1,19 @@
-import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   ChevronDown,
   CopyPlus,
   Eye,
   EyeOff,
+  Focus,
   Layers,
   MousePointer2,
   Trash2,
@@ -30,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import type { CityDesignCameraPoseSource } from './useStreetSceneCanvasViewController';
 import { CityDesignPropertiesWindow } from './CityDesignPropertiesWindow';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -96,6 +107,7 @@ export interface StreetSceneCanvasViewViewProps {
   selectedChangeRequestId?: string | null;
   showChangeRequests?: boolean;
   cameraPose?: CityDesignCameraPose | null;
+  cameraPoseSource?: CityDesignCameraPoseSource;
   canVoteOnChangeRequests?: boolean;
   canFinalizeChangeRequests?: boolean;
   currentUserId?: string | null;
@@ -107,6 +119,8 @@ export interface StreetSceneCanvasViewViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
@@ -151,6 +165,7 @@ export function StreetSceneCanvasViewView({
   selectedChangeRequestId = null,
   showChangeRequests = false,
   cameraPose = null,
+  cameraPoseSource,
   canVoteOnChangeRequests = false,
   canFinalizeChangeRequests = false,
   currentUserId = null,
@@ -162,6 +177,8 @@ export function StreetSceneCanvasViewView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
@@ -182,42 +199,6 @@ export function StreetSceneCanvasViewView({
   const { t } = useTranslation();
   const [legendOpen, setLegendOpen] = useState(initialLegendOpen);
   const canvasSize = useCanvasElementSize(canvasRef);
-  const comparisonLayers = useMemo(
-    () => getCityDesignComparisonLayers(design.comparisonMode),
-    [design.comparisonMode]
-  );
-  const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
-  const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
-  const positionedRemoteCursors = useMemo(
-    () =>
-      remoteCursors.flatMap(cursor => {
-        const requestedLayerVisible =
-          cursor.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
-        const renderedLayer = requestedLayerVisible
-          ? cursor.layer
-          : comparisonLayers.showDesign
-            ? 'design'
-            : 'original';
-        const layerOffsetX = renderedLayer === 'design' ? designLayerOffsetX : originalLayerOffsetX;
-        const anchor = getTrackedCanvasAnchorFromLocalPoint({
-          point: cursor.position,
-          cameraPose,
-          canvasSize,
-          layerOffsetX,
-          hideWhenOutside: true,
-        });
-        return anchor ? [{ ...cursor, ...anchor }] : [];
-      }),
-    [
-      cameraPose,
-      canvasSize,
-      comparisonLayers.showDesign,
-      comparisonLayers.showOriginal,
-      designLayerOffsetX,
-      originalLayerOffsetX,
-      remoteCursors,
-    ]
-  );
   const legendSections = useMemo(
     () =>
       buildCityDesignLegendSections({
@@ -227,35 +208,9 @@ export function StreetSceneCanvasViewView({
       }),
     [design, hiddenObjectCategories, hiddenObjectIds]
   );
-  const changeRequestMarkers = useMemo(
-    () =>
-      changeRequests.map(changeRequest => getCityDesignChangeRequestMarker(changeRequest, design)),
-    [changeRequests, design]
-  );
-  const positionedChangeRequestMarkers = useMemo(
-    () =>
-      comparisonLayers.showDesign
-        ? getStackedChangeRequestMarkers(
-            changeRequestMarkers.flatMap(marker => {
-              const anchor = getTrackedCanvasAnchorFromLocalPoint({
-                point: marker.position,
-                cameraPose,
-                canvasSize,
-                layerOffsetX: designLayerOffsetX,
-                hideWhenOutside: true,
-              });
-              return anchor ? [{ ...marker, ...anchor }] : [];
-            })
-          )
-        : [],
-    [cameraPose, canvasSize, changeRequestMarkers, comparisonLayers.showDesign, designLayerOffsetX]
-  );
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
   const selectedChangeRequest =
     changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
-  const selectedChangeRequestMarker = selectedChangeRequest
-    ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
-    : null;
   const closeSelection = () => (selectedObject ? onObjectSelect(null) : onOsmWaySelect(null));
 
   if (loadFailed) {
@@ -311,30 +266,29 @@ export function StreetSceneCanvasViewView({
                 : 'cursor-crosshair'
           )}
         />
-        {positionedRemoteCursors.length > 0 ? (
-          <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-            {positionedRemoteCursors.map(cursor => (
-              <div
-                key={cursor.userId}
-                className="absolute flex items-start drop-shadow-md"
-                style={{
-                  left: `${cursor.leftPercent}%`,
-                  top: `${cursor.topPercent}%`,
-                  color: cursor.color,
-                }}
-                data-testid={`city-design-remote-cursor-${cursor.userId}`}
-              >
-                <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
-                <span
-                  className="mt-4 -ml-1 max-w-44 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
-                  style={{ backgroundColor: cursor.color }}
-                >
-                  {cursor.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <StreetSceneCameraOverlay
+          design={design}
+          cameraPose={cameraPose}
+          cameraPoseSource={cameraPoseSource}
+          canvasSize={canvasSize}
+          embeddedPreview={embeddedPreview}
+          remoteCursors={remoteCursors}
+          changeRequests={changeRequests}
+          selectedChangeRequestId={selectedChangeRequestId}
+          showChangeRequests={showChangeRequests}
+          cityDesignDiscussions={cityDesignDiscussions}
+          collaborators={collaborators}
+          currentUserId={currentUserId}
+          currentUserDisplayName={currentUserDisplayName}
+          currentUserAvatarUrl={currentUserAvatarUrl}
+          canVoteOnChangeRequests={canVoteOnChangeRequests}
+          canFinalizeChangeRequests={canFinalizeChangeRequests}
+          onChangeRequestSelect={onChangeRequestSelect}
+          onChangeRequestVote={onChangeRequestVote}
+          onChangeRequestFinalize={onChangeRequestFinalize}
+          onChangeRequestTitleChange={onChangeRequestTitleChange}
+          onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
+        />
         {isLoadingOsm ? (
           <div
             className="pointer-events-none absolute top-1/2 left-1/2 z-10 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2"
@@ -347,67 +301,12 @@ export function StreetSceneCanvasViewView({
             />
           </div>
         ) : null}
-        {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
-          <div className="pointer-events-none absolute inset-0 z-20">
-            {positionedChangeRequestMarkers.map(marker => (
-              <CanvasChangeRequestMarker
-                key={marker.id}
-                actionId="amendments.city-canvas.select.change-request-marker"
-                displayId={marker.displayId}
-                label={marker.label}
-                title={marker.title}
-                tone={marker.tone}
-                selected={selectedChangeRequestId === marker.id}
-                style={{
-                  left: `${marker.leftPercent}%`,
-                  top: `${marker.topPercent}%`,
-                }}
-                testId={`city-design-cr-marker-${marker.id}`}
-                onSelect={() => onChangeRequestSelect?.(marker.id)}
-              />
-            ))}
-          </div>
-        ) : null}
         {!embeddedPreview && showChangeRequests && changeRequests.length > 0 ? (
           <CityDesignChangeRequestCanvasList
             changeRequests={changeRequests}
             selectedChangeRequestId={selectedChangeRequestId}
             onChangeRequestSelect={changeRequestId => onChangeRequestSelect?.(changeRequestId)}
           />
-        ) : null}
-        {!embeddedPreview && selectedChangeRequest ? (
-          <CanvasSelectionPopover
-            anchor={
-              selectedChangeRequestMarker
-                ? {
-                    leftPercent: selectedChangeRequestMarker.leftPercent,
-                    topPercent: selectedChangeRequestMarker.topPercent,
-                  }
-                : (getTrackedCanvasAnchorFromLocalPoint({
-                    point: { x: 0, z: 0 },
-                    cameraPose,
-                    canvasSize,
-                    layerOffsetX: designLayerOffsetX,
-                  }) as CanvasAnchor)
-            }
-          >
-            <CityDesignChangeRequestPanel
-              changeRequest={selectedChangeRequest}
-              discussions={cityDesignDiscussions}
-              collaborators={collaborators}
-              currentUserId={currentUserId}
-              currentUserDisplayName={currentUserDisplayName}
-              currentUserAvatarUrl={currentUserAvatarUrl}
-              canVote={canVoteOnChangeRequests}
-              canFinalize={canFinalizeChangeRequests}
-              compact
-              onClose={() => onChangeRequestSelect?.(null)}
-              onVote={onChangeRequestVote}
-              onFinalize={onChangeRequestFinalize}
-              onTitleChange={onChangeRequestTitleChange}
-              onCommentSubmit={onChangeRequestCommentSubmit}
-            />
-          </CanvasSelectionPopover>
         ) : null}
         <CityDesignPropertiesWindow
           selectionKey={
@@ -430,6 +329,7 @@ export function StreetSceneCanvasViewView({
               isHidden={hiddenObjectIdSet.has(selectedObject.id)}
               readOnly={readOnly}
               onClose={closeSelection}
+              onFocus={onObjectFocus}
               onVisibilityChange={onObjectVisibilityChange}
               onPropertyChange={onPropertyChange}
               onWidthChange={onWidthChange}
@@ -445,6 +345,7 @@ export function StreetSceneCanvasViewView({
               readOnly={readOnly}
               hideReadOnly={mapContextReadOnly}
               onClose={closeSelection}
+              onFocus={onOsmWayFocus}
               onHideOsmWay={onOsmWayHide}
               onImportOsmWay={onOsmWayImport}
             />
@@ -625,6 +526,7 @@ export function CityDesignObjectPopover({
   onUnitCostChange,
   onDeleteObject,
   onUndoOsmImport,
+  onFocus,
 }: {
   inspector?: boolean;
   object: CityDesignObject;
@@ -639,6 +541,7 @@ export function CityDesignObjectPopover({
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
   onUndoOsmImport: (osmWayId: string) => void;
+  onFocus?: (objectId: string) => void;
 }) {
   const { t } = useTranslation();
   const definition = getCityDesignObjectDefinition(object.type);
@@ -682,6 +585,18 @@ export function CityDesignObjectPopover({
       </div>
 
       <div className="space-y-4">
+        {onFocus ? (
+          <Button
+            data-action-id="amendments.city-object-popover.focus.object"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onFocus(object.id)}
+          >
+            <Focus className="size-4" />
+            {t('features.amendments.cityDesign.inspector.focus')}
+          </Button>
+        ) : null}
         {object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor' ? (
           <div className="bg-muted/20 grid grid-cols-2 gap-2 rounded-md border p-2">
             <div className="space-y-1">
@@ -942,6 +857,7 @@ export function CityDesignOsmPopover({
   onClose,
   onHideOsmWay,
   onImportOsmWay,
+  onFocus,
 }: {
   inspector?: boolean;
   osmWay: CityDesignOsmWay;
@@ -950,6 +866,7 @@ export function CityDesignOsmPopover({
   onClose: () => void;
   onHideOsmWay: (osmWayId: string) => void;
   onImportOsmWay: (osmWayId: string) => void;
+  onFocus?: (osmWayId: string) => void;
 }) {
   const { t } = useTranslation();
   const osmFeaturePoints = getCityDesignOsmFeaturePoints(osmWay);
@@ -991,6 +908,18 @@ export function CityDesignOsmPopover({
       </div>
 
       <div className="grid gap-2 text-sm">
+        {onFocus ? (
+          <Button
+            data-action-id="amendments.city-osm-popover.focus.feature"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onFocus(osmWay.id)}
+          >
+            <Focus className="size-4" />
+            {t('features.amendments.cityDesign.inspector.focus')}
+          </Button>
+        ) : null}
         {mappedDefinition ? (
           <ReadonlyCard
             label={t('features.amendments.cityDesign.inspector.mappedAs')}
@@ -1907,3 +1836,216 @@ export const streetSceneCanvasViewInternals = {
   getLegendTreeSpecies,
   getLegendStringProperty,
 };
+
+const MemoizedChangeRequestPanel = memo(CityDesignChangeRequestPanel);
+const subscribeToStaticPose = () => () => undefined;
+type StreetSceneCameraOverlayProps = Pick<
+  StreetSceneCanvasViewViewProps,
+  | 'design'
+  | 'cameraPose'
+  | 'cameraPoseSource'
+  | 'embeddedPreview'
+  | 'remoteCursors'
+  | 'changeRequests'
+  | 'selectedChangeRequestId'
+  | 'showChangeRequests'
+  | 'cityDesignDiscussions'
+  | 'collaborators'
+  | 'currentUserId'
+  | 'currentUserDisplayName'
+  | 'currentUserAvatarUrl'
+  | 'canVoteOnChangeRequests'
+  | 'canFinalizeChangeRequests'
+  | 'onChangeRequestSelect'
+  | 'onChangeRequestVote'
+  | 'onChangeRequestFinalize'
+  | 'onChangeRequestTitleChange'
+  | 'onChangeRequestCommentSubmit'
+> & { canvasSize: CanvasSize | null };
+const StreetSceneCameraOverlay = memo(function StreetSceneCameraOverlay({
+  design,
+  cameraPose = null,
+  cameraPoseSource,
+  embeddedPreview,
+  remoteCursors = [],
+  changeRequests = [],
+  selectedChangeRequestId = null,
+  showChangeRequests,
+  cityDesignDiscussions = [],
+  collaborators = [],
+  currentUserId = null,
+  currentUserDisplayName = null,
+  currentUserAvatarUrl = null,
+  canVoteOnChangeRequests,
+  canFinalizeChangeRequests,
+  onChangeRequestSelect,
+  onChangeRequestVote,
+  onChangeRequestFinalize,
+  onChangeRequestTitleChange,
+  onChangeRequestCommentSubmit,
+  canvasSize,
+}: StreetSceneCameraOverlayProps) {
+  const getStaticPose = useCallback(() => cameraPose, [cameraPose]);
+  const trackedPose = useSyncExternalStore(
+    cameraPoseSource?.subscribe ?? subscribeToStaticPose,
+    cameraPoseSource?.getSnapshot ?? getStaticPose,
+    getStaticPose
+  );
+  cameraPose = trackedPose;
+  const closeChangeRequest = useCallback(
+    () => onChangeRequestSelect?.(null),
+    [onChangeRequestSelect]
+  );
+  const comparisonLayers = useMemo(
+    () => getCityDesignComparisonLayers(design.comparisonMode),
+    [design.comparisonMode]
+  );
+  const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
+  const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
+  const positionedRemoteCursors = useMemo(
+    () =>
+      remoteCursors.flatMap(cursor => {
+        const requestedLayerVisible =
+          cursor.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
+        const renderedLayer = requestedLayerVisible
+          ? cursor.layer
+          : comparisonLayers.showDesign
+            ? 'design'
+            : 'original';
+        const layerOffsetX = renderedLayer === 'design' ? designLayerOffsetX : originalLayerOffsetX;
+        const anchor = getTrackedCanvasAnchorFromLocalPoint({
+          point: cursor.position,
+          cameraPose,
+          canvasSize,
+          layerOffsetX,
+          hideWhenOutside: true,
+        });
+        return anchor ? [{ ...cursor, ...anchor }] : [];
+      }),
+    [
+      cameraPose,
+      canvasSize,
+      comparisonLayers.showDesign,
+      comparisonLayers.showOriginal,
+      designLayerOffsetX,
+      originalLayerOffsetX,
+      remoteCursors,
+    ]
+  );
+
+  const changeRequestMarkers = useMemo(
+    () =>
+      changeRequests.map(changeRequest => getCityDesignChangeRequestMarker(changeRequest, design)),
+    [changeRequests, design]
+  );
+  const positionedChangeRequestMarkers = useMemo(
+    () =>
+      comparisonLayers.showDesign
+        ? getStackedChangeRequestMarkers(
+            changeRequestMarkers.flatMap(marker => {
+              const anchor = getTrackedCanvasAnchorFromLocalPoint({
+                point: marker.position,
+                cameraPose,
+                canvasSize,
+                layerOffsetX: designLayerOffsetX,
+                hideWhenOutside: true,
+              });
+              return anchor ? [{ ...marker, ...anchor }] : [];
+            })
+          )
+        : [],
+    [cameraPose, canvasSize, changeRequestMarkers, comparisonLayers.showDesign, designLayerOffsetX]
+  );
+
+  const selectedChangeRequest =
+    changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
+  const selectedChangeRequestMarker = selectedChangeRequest
+    ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
+    : null;
+
+  return (
+    <>
+      {positionedRemoteCursors.length > 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+          {positionedRemoteCursors.map(cursor => (
+            <div
+              key={cursor.userId}
+              className="absolute flex items-start drop-shadow-md"
+              style={{
+                left: `${cursor.leftPercent}%`,
+                top: `${cursor.topPercent}%`,
+                color: cursor.color,
+              }}
+              data-testid={`city-design-remote-cursor-${cursor.userId}`}
+            >
+              <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
+              <span
+                className="mt-4 -ml-1 max-w-44 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
+                style={{ backgroundColor: cursor.color }}
+              >
+                {cursor.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-20">
+          {positionedChangeRequestMarkers.map(marker => (
+            <CanvasChangeRequestMarker
+              key={marker.id}
+              actionId="amendments.city-canvas.select.change-request-marker"
+              displayId={marker.displayId}
+              label={marker.label}
+              title={marker.title}
+              tone={marker.tone}
+              selected={selectedChangeRequestId === marker.id}
+              style={{
+                left: `${marker.leftPercent}%`,
+                top: `${marker.topPercent}%`,
+              }}
+              testId={`city-design-cr-marker-${marker.id}`}
+              onSelect={() => onChangeRequestSelect?.(marker.id)}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {!embeddedPreview && selectedChangeRequest ? (
+        <CanvasSelectionPopover
+          anchor={
+            selectedChangeRequestMarker
+              ? {
+                  leftPercent: selectedChangeRequestMarker.leftPercent,
+                  topPercent: selectedChangeRequestMarker.topPercent,
+                }
+              : (getTrackedCanvasAnchorFromLocalPoint({
+                  point: { x: 0, z: 0 },
+                  cameraPose,
+                  canvasSize,
+                  layerOffsetX: designLayerOffsetX,
+                }) as CanvasAnchor)
+          }
+        >
+          <MemoizedChangeRequestPanel
+            changeRequest={selectedChangeRequest}
+            discussions={cityDesignDiscussions}
+            collaborators={collaborators}
+            currentUserId={currentUserId}
+            currentUserDisplayName={currentUserDisplayName}
+            currentUserAvatarUrl={currentUserAvatarUrl}
+            canVote={canVoteOnChangeRequests}
+            canFinalize={canFinalizeChangeRequests}
+            compact
+            onClose={closeChangeRequest}
+            onVote={onChangeRequestVote}
+            onFinalize={onChangeRequestFinalize}
+            onTitleChange={onChangeRequestTitleChange}
+            onCommentSubmit={onChangeRequestCommentSubmit}
+          />
+        </CanvasSelectionPopover>
+      ) : null}
+    </>
+  );
+});

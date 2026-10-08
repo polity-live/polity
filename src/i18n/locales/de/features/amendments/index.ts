@@ -646,6 +646,7 @@ export const amendmentsTranslations = {
       water: 'Wasser',
     },
     inspector: {
+      focus: 'Fokussieren',
       close: 'Eigenschaften schließen',
       move: 'Eigenschaften verschieben',
       collapse: 'Eigenschaften einklappen',

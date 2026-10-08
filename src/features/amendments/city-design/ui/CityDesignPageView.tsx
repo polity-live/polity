@@ -147,6 +147,8 @@ interface CityDesignPageViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onObjectCategoryVisibilityChange: (category: CityDesignObjectCategory, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
@@ -243,6 +245,8 @@ export function CityDesignPageView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onObjectCategoryVisibilityChange,
   onOsmWayHide,
@@ -552,6 +556,8 @@ export function CityDesignPageView({
           onCancelPlacement={onCancelPlacement}
           onObjectSelect={selectObject}
           onOsmWaySelect={selectOsmWay}
+          onObjectFocus={onObjectFocus}
+          onOsmWayFocus={onOsmWayFocus}
           onObjectVisibilityChange={onObjectVisibilityChange}
           onOsmWayHide={onOsmWayHide}
           onOsmWayImport={onOsmWayImport}

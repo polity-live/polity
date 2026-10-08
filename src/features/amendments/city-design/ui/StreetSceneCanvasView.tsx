@@ -67,6 +67,8 @@ interface StreetSceneCanvasViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
@@ -137,6 +139,8 @@ export function StreetSceneCanvasView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
@@ -200,6 +204,8 @@ export function StreetSceneCanvasView({
     onCancelPlacement,
     onObjectSelect,
     onOsmWaySelect,
+    onObjectFocus,
+    onOsmWayFocus,
     onObjectVisibilityChange,
     onOsmWayHide,
     onOsmWayImport,

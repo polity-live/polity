@@ -633,6 +633,7 @@ export const amendmentsTranslations = {
       water: 'Water',
     },
     inspector: {
+      focus: 'Focus',
       close: 'Close properties',
       move: 'Move properties',
       collapse: 'Collapse properties',

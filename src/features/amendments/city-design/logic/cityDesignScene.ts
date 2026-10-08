@@ -117,6 +117,7 @@ export interface CityDesignSceneController {
   ) => void;
   focusObject: (objectId: string | null) => void;
   focusOsmWay: (osmWayId: string | null) => void;
+  flushPointerMove: () => void;
   dispose: () => void;
 }
 
@@ -291,6 +292,7 @@ function addPickPolygon(args: {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = y;
+  mesh.userData.pickTarget = true;
 
   if (objectId) setObjectId(mesh, objectId);
   if (osmWayId) setOsmWayId(mesh, osmWayId);
@@ -321,6 +323,7 @@ function addExtrudedPickVolume(args: {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.02;
+  mesh.userData.pickTarget = true;
 
   if (objectId) setObjectId(mesh, objectId);
   if (osmWayId) setOsmWayId(mesh, osmWayId);
@@ -360,6 +363,7 @@ function addFlatPolygon(args: {
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = y;
   mesh.receiveShadow = true;
+  mesh.userData.pickTarget = true;
 
   setIdentities({ object: mesh, objectId, osmWayId });
 
@@ -827,22 +831,57 @@ function addStreetMarkings(args: {
 
   if (length < dashLength || centerline.length < 2) return;
 
+  const strips: { start: CityDesignLocalPoint; end: CityDesignLocalPoint; width: number }[] = [];
   for (let offset = gapLength / 2; offset < length - 0.4; offset += dashLength + gapLength) {
     const dashEndOffset = Math.min(offset + dashLength, length);
     const start = getCenterlineSample(centerline, offset).point;
     const end = getCenterlineSample(centerline, dashEndOffset).point;
 
-    addCorridorMesh({
-      THREE,
-      group,
-      geometry: createCorridorGeometry(start, end, width),
-      color,
-      opacity: 0.95,
-      y,
-      objectId,
-      osmWayId,
-    });
+    strips.push({ start, end, width });
   }
+  addFlatStripInstances({ THREE, group, strips, color, opacity: 0.95, y, objectId, osmWayId });
+}
+
+function addFlatStripInstances(args: {
+  THREE: ThreeModule;
+  group: Group;
+  strips: { start: CityDesignLocalPoint; end: CityDesignLocalPoint; width: number }[];
+  color: string;
+  opacity: number;
+  y: number;
+  objectId?: string;
+  osmWayId?: string;
+}) {
+  const { THREE, group, strips, color, opacity, y, objectId, osmWayId } = args;
+  const mesh = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      color,
+      opacity,
+      transparent: opacity < 1,
+      depthWrite: opacity >= 1,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -0.5,
+      polygonOffsetUnits: -0.5,
+    }),
+    strips.length
+  );
+  const strip = new THREE.Object3D();
+  strips.forEach(({ start, end, width }, index) => {
+    const dx = end.x - start.x,
+      dz = end.z - start.z;
+    strip.position.set((start.x + end.x) / 2, y, (start.z + end.z) / 2);
+    strip.rotation.set(-Math.PI / 2, 0, -Math.atan2(dz, dx));
+    strip.scale.set(Math.max(Math.hypot(dx, dz), 0.05), width, 1);
+    strip.updateMatrix();
+    mesh.setMatrixAt(index, strip.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.computeBoundingSphere();
+  setIdentities({ object: mesh, objectId, osmWayId });
+  mesh.userData.decorative = true;
+  group.add(mesh);
 }
 
 export function createLaneArrowPolygon(args: {
@@ -1987,8 +2026,11 @@ function addBuildingFacadeDetails(args: {
     roughness: 0.78,
   });
   let renderedWindows = 0;
+  const windowMatrices: import('three').Matrix4[] = [];
+  const sillMatrices: import('three').Matrix4[] = [];
+  const detail = new THREE.Object3D();
 
-  for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
+  for (let pointIndex = 0; pointIndex < points.length && renderedWindows < 72; pointIndex += 1) {
     const start = points[pointIndex];
     const end = points[(pointIndex + 1) % points.length];
     const edgeLength = Math.hypot(end.x - start.x, end.z - start.z);
@@ -1999,38 +2041,45 @@ function addBuildingFacadeDetails(args: {
     const slots = Math.min(7, Math.max(1, Math.floor(edgeLength / 2.35)));
     const rotationY = -Math.atan2(direction.z, direction.x);
 
-    for (let floor = 0; floor < floors; floor += 1) {
-      for (let slot = 0; slot < slots; slot += 1) {
-        if (renderedWindows >= 72) return;
+    for (let floor = 0; floor < floors && renderedWindows < 72; floor += 1) {
+      for (let slot = 0; slot < slots && renderedWindows < 72; slot += 1) {
         const ratio = (slot + 1) / (slots + 1);
         const center = {
           x: start.x + (end.x - start.x) * ratio + normal.x * 0.045,
           z: start.z + (end.z - start.z) * ratio + normal.z * 0.045,
         };
-        const window = new THREE.Mesh(
-          new THREE.BoxGeometry(Math.min(0.78, edgeLength / (slots * 2.2)), 0.54, 0.035),
-          windowMaterial
-        );
-        window.position.set(center.x, Math.min(height - 0.55, 1.15 + floor * 2.35), center.z);
-        window.rotation.y = rotationY;
-        setSceneShadows(window, false, false);
-        setIdentities({ object: window, objectId, osmWayId });
-        group.add(window);
+        detail.position.set(center.x, Math.min(height - 0.55, 1.15 + floor * 2.35), center.z);
+        detail.rotation.y = rotationY;
+        detail.scale.set(Math.min(0.78, edgeLength / (slots * 2.2)), 0.54, 0.035);
+        detail.updateMatrix();
+        windowMatrices.push(detail.matrix.clone());
 
         if (floor === 0 || slot % 2 === 0) {
-          const sill = new THREE.Mesh(
-            new THREE.BoxGeometry(Math.min(0.88, edgeLength / (slots * 2)), 0.06, 0.045),
-            sillMaterial
-          );
-          sill.position.set(center.x, window.position.y - 0.36, center.z);
-          sill.rotation.y = rotationY;
-          setIdentities({ object: sill, objectId, osmWayId });
-          group.add(sill);
+          detail.position.y -= 0.36;
+          detail.scale.set(Math.min(0.88, edgeLength / (slots * 2)), 0.06, 0.045);
+          detail.updateMatrix();
+          sillMatrices.push(detail.matrix.clone());
         }
 
         renderedWindows += 1;
       }
     }
+  }
+  for (const [matrices, material] of [
+    [windowMatrices, windowMaterial],
+    [sillMatrices, sillMaterial],
+  ] as const) {
+    if (matrices.length === 0) {
+      material.dispose();
+      continue;
+    }
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, matrices.length);
+    matrices.forEach((matrix, index) => mesh.setMatrixAt(index, matrix));
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+    setIdentities({ object: mesh, objectId, osmWayId });
+    mesh.userData.decorative = true;
+    group.add(mesh);
   }
 }
 
@@ -2132,8 +2181,10 @@ function addGrassDetails(args: {
   animatedObjects: Object3D[];
   y?: number;
 }) {
-  const { THREE, group, geometry, objectId, osmWayId, animatedObjects, y = 0.12 } = args;
-  const samples = getCorridorSamples(geometry, Math.max(1.05, geometry.width * 0.45)).slice(0, 90);
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.12 } = args;
+  const allSamples = getCorridorSamples(geometry, Math.max(1.05, geometry.width * 0.45));
+  const sampleStep = Math.max(1, Math.ceil(allSamples.length / 15));
+  const samples = allSamples.filter((_, index) => index % sampleStep === 0);
   const lateralOffsets =
     geometry.width >= 2.6
       ? [
@@ -2146,9 +2197,22 @@ function addGrassDetails(args: {
         ? [-geometry.width * 0.22, geometry.width * 0.22]
         : [0];
   const bladeGeometry = new THREE.PlaneGeometry(0.035, 0.34);
-  const bladeMaterials = ['#6f9e4f', '#8fba62', '#567f3f'].map(
-    color => new THREE.MeshStandardMaterial({ color, roughness: 0.95, side: THREE.DoubleSide })
+  const material = new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    roughness: 0.95,
+    side: THREE.DoubleSide,
+  });
+  const bladeColors = ['#6f9e4f', '#8fba62', '#567f3f'].map(color => new THREE.Color(color));
+  const mesh = new THREE.InstancedMesh(
+    bladeGeometry,
+    material,
+    samples.length * lateralOffsets.length * 2
   );
+  mesh.userData.decorative = true;
+  setIdentities({ object: mesh, objectId, osmWayId });
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.count * 3), 3);
+  const blade = new THREE.Object3D();
+  let instanceIndex = 0;
 
   samples.forEach((sample, sampleIndex) => {
     lateralOffsets.forEach((lateralOffset, offsetIndex) => {
@@ -2159,10 +2223,6 @@ function addGrassDetails(args: {
           sample.direction,
           lateralOffset + seededRange(seed, -0.14, 0.14)
         );
-        const blade = new THREE.Mesh(
-          bladeGeometry,
-          bladeMaterials[(sampleIndex + offsetIndex + bladeIndex) % bladeMaterials.length]
-        );
         blade.position.set(
           point.x + sample.direction.x * seededRange(seed + 1, -0.16, 0.16),
           y + 0.18,
@@ -2171,15 +2231,20 @@ function addGrassDetails(args: {
         blade.rotation.y = sampleIndex * 0.7 + offsetIndex + seededRange(seed + 3, -0.8, 0.8);
         blade.rotation.z = seededRange(seed + 4, -0.22, 0.22);
         blade.scale.y = seededRange(seed + 5, 0.7, 1.35);
-        blade.userData.baseY = blade.position.y;
-        blade.userData.phase = sampleIndex * 0.43 + offsetIndex + bladeIndex * 0.6;
-        blade.userData.motion = 'grass';
-        setIdentities({ object: blade, objectId, osmWayId });
-        animatedObjects.push(blade);
-        group.add(blade);
+        blade.updateMatrix();
+        mesh.setMatrixAt(instanceIndex, blade.matrix);
+        mesh.setColorAt(
+          instanceIndex,
+          bladeColors[(sampleIndex + offsetIndex + bladeIndex) % bladeColors.length]
+        );
+        instanceIndex += 1;
       }
     });
   });
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.instanceColor.needsUpdate = true;
+  mesh.computeBoundingSphere();
+  group.add(mesh);
 }
 
 function addWaterSurface(args: {
@@ -2379,8 +2444,7 @@ function addSurfaceTexture(args: {
 }) {
   const { THREE, group, geometry, objectId, osmWayId, color, opacity = 0.34, y = 0.13 } = args;
   const samples = getCorridorSamples(geometry, Math.max(1.8, geometry.width * 0.75)).slice(0, 86);
-
-  samples.forEach((sample, index) => {
+  const strips = samples.map((sample, index) => {
     const seed = index * 13 + geometry.width * 9;
     const offset = seededRange(seed, -geometry.width * 0.38, geometry.width * 0.38);
     const start = offsetPointFromDirection(
@@ -2393,17 +2457,9 @@ function addSurfaceTexture(args: {
       sample.direction,
       offset + seededRange(seed + 2, 0.24, 0.56)
     );
-    addCorridorMesh({
-      THREE,
-      group,
-      geometry: createCorridorGeometry(start, end, seededRange(seed + 3, 0.025, 0.06)),
-      color,
-      opacity,
-      y,
-      objectId,
-      osmWayId,
-    });
+    return { start, end, width: seededRange(seed + 3, 0.025, 0.06) };
   });
+  addFlatStripInstances({ THREE, group, strips, color, opacity, y, objectId, osmWayId });
 }
 
 function addCorridorEdgeStrips(args: {
@@ -2422,23 +2478,19 @@ function addCorridorEdgeStrips(args: {
 
   const offsets = [-geometry.width * 0.5 + 0.08, geometry.width * 0.5 - 0.08];
   offsets.forEach(offset => {
-    for (let index = 0; index < centerline.length - 1; index += 1) {
-      const startPoint = centerline[index];
-      const endPoint = centerline[index + 1];
-      const direction = normalizeDirection(startPoint, endPoint);
-      const start = offsetPointFromDirection(startPoint, direction, offset);
-      const end = offsetPointFromDirection(endPoint, direction, offset);
-      addCorridorMesh({
-        THREE,
-        group,
-        geometry: createCorridorGeometry(start, end, 0.08),
-        color,
-        opacity,
-        y,
-        objectId,
-        osmWayId,
-      });
-    }
+    addCorridorMesh({
+      THREE,
+      group,
+      geometry: createCorridorGeometryFromCenterline(
+        createOffsetCenterline(geometry, offset),
+        0.08
+      ) as RenderableCorridorGeometry,
+      color,
+      opacity,
+      y,
+      objectId,
+      osmWayId,
+    });
   });
 }
 
@@ -2525,6 +2577,7 @@ function addSlopedCorridorMesh(args: {
   material.polygonOffsetUnits = -0.8;
   const mesh = new THREE.Mesh(bufferGeometry, material);
   mesh.receiveShadow = true;
+  mesh.userData.pickTarget = true;
   group.add(mesh);
   return mesh;
 }
@@ -3244,6 +3297,7 @@ function addPlacementStartMarker(args: {
 
   marker.add(ring, dot);
   group.add(marker);
+  return marker;
 }
 
 function addDesignObject(args: {
@@ -4290,51 +4344,52 @@ function buildOsmElevationRampFeature(args: {
   } satisfies CityDesignElevationRampFeature;
 }
 
+function prepareOsmRenderContext(design: CityDesignStateV1) {
+  const layerVisibility = getCityDesignOsmLayerVisibility(design.osmLayerVisibility);
+  const hiddenIds = getCityDesignHiddenOsmFeatureIds(design);
+  const features = getCityDesignOsmFeatures(design.osmSnapshot)
+    .slice()
+    .sort(
+      (left, right) =>
+        getCityDesignOsmRenderPriority(left.kind) - getCityDesignOsmRenderPriority(right.kind) ||
+        left.id.localeCompare(right.id)
+    )
+    .filter(
+      way => !hiddenIds.has(way.id) && layerVisibility[getCityDesignOsmFeatureLayer(way.kind)]
+    );
+  const localPointsById = new Map(features.map(way => [way.id, getOsmWayLocalPoints(way, design)]));
+  const rampFeatures = features
+    .map(way =>
+      buildOsmElevationRampFeature({
+        way,
+        localPoints: localPointsById.get(way.id) as CityDesignLocalPoint[],
+      })
+    )
+    .filter((feature): feature is CityDesignElevationRampFeature => Boolean(feature));
+  const elevationRampsByFeatureId = new Map<string, CityDesignElevationRampSegment[]>();
+  for (const segment of getCityDesignElevationRampSegments(rampFeatures)) {
+    const segments = elevationRampsByFeatureId.get(segment.sourceId) ?? [];
+    segments.push(segment);
+    elevationRampsByFeatureId.set(segment.sourceId, segments);
+  }
+  return { features, localPointsById, elevationRampsByFeatureId };
+}
+
 function addOsmWays(args: {
   THREE: ThreeModule;
   group: Group;
   design: CityDesignStateV1;
   selectedOsmWayId: string | null;
   animatedObjects: Object3D[];
+  renderContext: ReturnType<typeof prepareOsmRenderContext>;
 }) {
   const { THREE, group, design, selectedOsmWayId, animatedObjects } = args;
-  const snapshot = design.osmSnapshot;
-  if (!snapshot) return;
-
-  const layerVisibility = getCityDesignOsmLayerVisibility(design.osmLayerVisibility);
-  const hiddenOsmWayIds = getCityDesignHiddenOsmFeatureIds(design);
   const showStreetMarkings = design.showStreetMarkings ?? true;
+  const context = args.renderContext;
+  const { elevationRampsByFeatureId } = context;
 
-  const osmFeatures = getCityDesignOsmFeatures(snapshot)
-    .slice()
-    .sort(
-      (left, right) =>
-        getCityDesignOsmRenderPriority(left.kind) - getCityDesignOsmRenderPriority(right.kind) ||
-        left.id.localeCompare(right.id)
-    );
-  const visibleOsmFeatures = osmFeatures.filter(way => {
-    const layer = getCityDesignOsmFeatureLayer(way.kind);
-    return !hiddenOsmWayIds.has(way.id) && layerVisibility[layer];
-  });
-  const elevationRampFeatures = visibleOsmFeatures
-    .map(way =>
-      buildOsmElevationRampFeature({
-        way,
-        localPoints: getOsmWayLocalPoints(way, design),
-      })
-    )
-    .filter((feature): feature is CityDesignElevationRampFeature => Boolean(feature));
-  const elevationRampsByFeatureId = getCityDesignElevationRampSegments(
-    elevationRampFeatures
-  ).reduce<Map<string, CityDesignElevationRampSegment[]>>((result, segment) => {
-    const segments = result.get(segment.sourceId) ?? [];
-    segments.push(segment);
-    result.set(segment.sourceId, segments);
-    return result;
-  }, new Map());
-
-  visibleOsmFeatures.forEach(way => {
-    const localPoints = getOsmWayLocalPoints(way, design);
+  context.features.forEach(way => {
+    const localPoints = context.localPointsById.get(way.id) as CityDesignLocalPoint[];
     const isSelected = way.id === selectedOsmWayId;
 
     if (way.kind === 'tree') {
@@ -5096,27 +5151,30 @@ function addRotateHandle(args: { THREE: ThreeModule; group: Group; object: CityD
 }
 
 function disposeObjectTree(object: Object3D) {
+  const geometries = new Set<{ dispose?: () => void }>();
+  const materials = new Set<ThreeMaterial>();
   object.traverse(child => {
     const disposableChild = child as {
       geometry?: { dispose?: () => void };
       material?: ThreeMaterial | ThreeMaterial[];
     };
 
-    disposableChild.geometry?.dispose?.();
+    if (disposableChild.geometry) geometries.add(disposableChild.geometry);
     const material = disposableChild.material;
     if (Array.isArray(material)) {
-      material.forEach(item => item.dispose());
-    } else {
-      material?.dispose();
+      material.forEach(item => materials.add(item));
+    } else if (material) {
+      materials.add(material);
     }
+    if ('isInstancedMesh' in child) (child as import('three').InstancedMesh).dispose();
   });
+  geometries.forEach(geometry => geometry.dispose?.());
+  materials.forEach(material => material.dispose());
 }
 
 function clearSceneGroup(group: Group) {
-  group.children.slice().forEach(child => {
-    group.remove(child);
-    disposeObjectTree(child);
-  });
+  disposeObjectTree(group);
+  group.clear();
 }
 
 function createSceneGroups(THREE: ThreeModule, scene: import('three').Scene) {
@@ -5159,7 +5217,7 @@ export async function mountCityDesignScene(
   const noMouseAction = -1 as ThreeMouseAction;
   const noTouchAction = -1 as ThreeTouchAction;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.setClearColor(0x06110d, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -5167,6 +5225,8 @@ export async function mountCityDesignScene(
   renderer.toneMappingExposure = 1.08;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x14211a, 110, 245);
@@ -5219,8 +5279,8 @@ export async function mountCityDesignScene(
   const sun = new THREE.DirectionalLight(0xfff6df, 1.85);
   sun.position.set(44, 92, 34);
   sun.castShadow = true;
-  sun.shadow.mapSize.width = 2048;
-  sun.shadow.mapSize.height = 2048;
+  sun.shadow.mapSize.width = 1024;
+  sun.shadow.mapSize.height = 1024;
   sun.shadow.bias = -0.00028;
   const shadowCamera = sun.shadow.camera as import('three').OrthographicCamera;
   shadowCamera.left = -120;
@@ -5267,6 +5327,26 @@ export async function mountCityDesignScene(
   const animatedObjects: Object3D[] = [];
   const originalAnimatedObjects: Object3D[] = [];
   const designAnimatedObjects: Object3D[] = [];
+  interface SceneEntry<T> {
+    source: T;
+    selected: boolean;
+    group: Group;
+    animatedObjects: Object3D[];
+    pickTargets: Object3D[];
+    rampSignature?: string;
+  }
+  const designEntries = new Map<string, SceneEntry<CityDesignObject>>();
+  const originalEntries = new Map<string, SceneEntry<CityDesignOsmWay>>();
+  let osmRenderContext = prepareOsmRenderContext(options.design);
+  let pendingPointerMove: { event: PointerEvent; canPlace: boolean } | null = null;
+  let pointerMoveFrame: number | null = null;
+  let placementStartMarker: Group | null = null;
+  let previewMesh:
+    import('three').Mesh<import('three').BufferGeometry, import('three').MeshBasicMaterial> | null =
+    null;
+  let previewOutline:
+    | import('three').LineLoop<import('three').BufferGeometry, import('three').LineBasicMaterial>
+    | null = null;
   let requestRender: () => void = () => undefined;
   let focusAnimation: {
     startedAt: number;
@@ -5284,16 +5364,26 @@ export async function mountCityDesignScene(
 
   function updateLayerLayout() {
     layers = getCityDesignComparisonLayers(options.design.comparisonMode);
-    originalGroup.visible = layers.showOriginal;
-    designGroup.visible = layers.showDesign;
-    originalGroup.position.x = getCityDesignComparisonLayerOffsetX(
+    const nextOriginalX = getCityDesignComparisonLayerOffsetX(
       options.design.comparisonMode,
       'original'
     );
-    designGroup.position.x = getCityDesignComparisonLayerOffsetX(
+    const nextDesignX = getCityDesignComparisonLayerOffsetX(
       options.design.comparisonMode,
       'design'
     );
+    if (
+      originalGroup.visible !== layers.showOriginal ||
+      designGroup.visible !== layers.showDesign ||
+      originalGroup.position.x !== nextOriginalX ||
+      designGroup.position.x !== nextDesignX
+    ) {
+      renderer.shadowMap.needsUpdate = true;
+    }
+    originalGroup.visible = layers.showOriginal;
+    designGroup.visible = layers.showDesign;
+    originalGroup.position.x = nextOriginalX;
+    designGroup.position.x = nextDesignX;
   }
 
   function getVisibleDesignObjects() {
@@ -5309,19 +5399,96 @@ export async function mountCityDesignScene(
     updateLayerLayout();
   }
 
-  function rebuildOriginalLayer() {
-    clearSceneGroup(originalLayerGroup);
+  function collectPickTargets(group: Group, identity: { objectId?: string; osmWayId?: string }) {
+    const targets: Object3D[] = [];
+    group.traverse(child => {
+      if (child.userData.pickTarget && !child.userData.decorative) targets.push(child);
+    });
+    if (targets.length === 0) {
+      const bounds = new THREE.Box3().setFromObject(group);
+      if (!bounds.isEmpty()) {
+        const size = bounds.getSize(new THREE.Vector3());
+        const proxy = new THREE.Mesh(
+          new THREE.BoxGeometry(
+            Math.max(size.x, 0.2),
+            Math.max(size.y, 0.2),
+            Math.max(size.z, 0.2)
+          ),
+          new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
+        );
+        bounds.getCenter(proxy.position);
+        proxy.visible = false;
+        setIdentities({ object: proxy, ...identity });
+        group.add(proxy);
+        targets.push(proxy);
+      }
+    }
+    return targets;
+  }
+
+  function getLayerPickTargets(
+    entries: Map<string, SceneEntry<CityDesignObject>> | Map<string, SceneEntry<CityDesignOsmWay>>,
+    layer: Group
+  ) {
+    if (!layer.visible) return [];
+    layer.updateWorldMatrix(true, true);
+    return [...entries.values()].flatMap(entry => entry.pickTargets);
+  }
+
+  function rebuildOriginalLayer(force = false, refreshContext = false) {
+    if (refreshContext) osmRenderContext = prepareOsmRenderContext(options.design);
+    const visibleFeatures = layers.showOriginal ? osmRenderContext.features : [];
+    const visibleIds = new Set(visibleFeatures.map(feature => feature.id));
+    for (const [id, entry] of originalEntries) {
+      if (force || !visibleIds.has(id)) {
+        originalLayerGroup.remove(entry.group);
+        disposeObjectTree(entry.group);
+        originalEntries.delete(id);
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
     originalAnimatedObjects.length = 0;
-    if (layers.showOriginal) {
+    for (const feature of visibleFeatures) {
+      const selected = feature.id === options.selectedOsmWayId;
+      const rampSignature = JSON.stringify(
+        osmRenderContext.elevationRampsByFeatureId.get(feature.id) ?? []
+      );
+      let entry = originalEntries.get(feature.id);
+      if (
+        entry &&
+        entry.source === feature &&
+        entry.selected === selected &&
+        entry.rampSignature === rampSignature
+      ) {
+        originalAnimatedObjects.push(...entry.animatedObjects);
+        continue;
+      }
+      if (entry) {
+        originalLayerGroup.remove(entry.group);
+        disposeObjectTree(entry.group);
+      }
+      entry = {
+        source: feature,
+        selected,
+        group: new THREE.Group(),
+        animatedObjects: [],
+        pickTargets: [],
+        rampSignature,
+      };
+      entry.group.name = `osm:${feature.id}`;
       addOsmWays({
         THREE,
-        group: originalLayerGroup,
+        group: entry.group,
         design: options.design,
         selectedOsmWayId: options.selectedOsmWayId,
-        animatedObjects: originalAnimatedObjects,
+        animatedObjects: entry.animatedObjects,
+        renderContext: { ...osmRenderContext, features: [feature] },
       });
       const neutral = new THREE.Color('#9aa0a3');
-      forEachObjectMaterial(originalLayerGroup, material => {
+      const styledMaterials = new Set<ThreeMaterial>();
+      forEachObjectMaterial(entry.group, material => {
+        if (styledMaterials.has(material)) return;
+        styledMaterials.add(material);
         const styled = material as ThreeMaterial & {
           color?: import('three').Color;
           emissive?: import('three').Color;
@@ -5339,28 +5506,70 @@ export async function mountCityDesignScene(
           styled.depthWrite = false;
         }
       });
+      entry.pickTargets = collectPickTargets(entry.group, { osmWayId: feature.id });
+      originalLayerGroup.add(entry.group);
+      originalEntries.set(feature.id, entry);
+      originalAnimatedObjects.push(...entry.animatedObjects);
+      renderer.shadowMap.needsUpdate = true;
     }
     syncAnimatedObjects();
     requestRender();
   }
 
-  function rebuildDesignLayer() {
-    clearSceneGroup(designObjectLayerGroup);
+  function rebuildDesignLayer(force = false) {
+    const visibleObjects = layers.showDesign ? getVisibleDesignObjects() : [];
+    const visibleIds = new Set(visibleObjects.map(object => object.id));
+    for (const [id, entry] of designEntries) {
+      if (force || !visibleIds.has(id)) {
+        designObjectLayerGroup.remove(entry.group);
+        disposeObjectTree(entry.group);
+        designEntries.delete(id);
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
     designAnimatedObjects.length = 0;
-    if (layers.showDesign) {
-      const designOpacity = layers.showOverlay ? 0.72 : 1;
-      getVisibleDesignObjects().forEach(object => {
-        addDesignObject({
-          THREE,
-          group: designObjectLayerGroup,
-          object,
-          selected: object.id === options.selectedObjectId,
-          showStreetMarkings: options.design.showStreetMarkings ?? true,
-          animatedObjects: designAnimatedObjects,
-          opacity: designOpacity,
-          y: layers.showOverlay ? 0.08 : 0.05,
-        });
+    const designOpacity = layers.showOverlay ? 0.72 : 1;
+    for (const object of visibleObjects) {
+      const selected = object.id === options.selectedObjectId;
+      let entry = designEntries.get(object.id);
+      if (
+        entry &&
+        entry.source.type === object.type &&
+        entry.source.geometry === object.geometry &&
+        entry.source.properties === object.properties &&
+        entry.selected === selected
+      ) {
+        entry.source = object;
+        designAnimatedObjects.push(...entry.animatedObjects);
+        continue;
+      }
+      if (entry) {
+        designObjectLayerGroup.remove(entry.group);
+        disposeObjectTree(entry.group);
+      }
+      entry = {
+        source: object,
+        selected,
+        group: new THREE.Group(),
+        animatedObjects: [],
+        pickTargets: [],
+      };
+      entry.group.name = `design:${object.id}`;
+      addDesignObject({
+        THREE,
+        group: entry.group,
+        object,
+        selected,
+        showStreetMarkings: options.design.showStreetMarkings ?? true,
+        animatedObjects: entry.animatedObjects,
+        opacity: designOpacity,
+        y: layers.showOverlay ? 0.08 : 0.05,
       });
+      entry.pickTargets = collectPickTargets(entry.group, { objectId: object.id });
+      designObjectLayerGroup.add(entry.group);
+      designEntries.set(object.id, entry);
+      designAnimatedObjects.push(...entry.animatedObjects);
+      renderer.shadowMap.needsUpdate = true;
     }
     syncAnimatedObjects();
     requestRender();
@@ -5379,6 +5588,7 @@ export async function mountCityDesignScene(
         });
       });
     }
+    renderer.shadowMap.needsUpdate = true;
     requestRender();
   }
 
@@ -5399,13 +5609,17 @@ export async function mountCityDesignScene(
   }
 
   function rebuildPlacementLayer() {
-    clearSceneGroup(placementLayerGroup);
     if (options.placementStart) {
-      addPlacementStartMarker({
+      placementStartMarker ??= addPlacementStartMarker({
         THREE,
         group: placementLayerGroup,
         point: options.placementStart,
       });
+      placementStartMarker.position.set(options.placementStart.x, 0.04, options.placementStart.z);
+    } else if (placementStartMarker) {
+      placementLayerGroup.remove(placementStartMarker);
+      disposeObjectTree(placementStartMarker);
+      placementStartMarker = null;
     }
 
     if (options.placementPreview) {
@@ -5413,21 +5627,60 @@ export async function mountCityDesignScene(
         ? getCityDesignObjectDefinition(options.placementPreviewType).color
         : '#facc15';
 
-      addCorridorMesh({
-        THREE,
-        group: placementLayerGroup,
-        geometry: options.placementPreview,
-        color: previewColor,
-        opacity: 0.45,
-        y: 0.12,
-      });
-      addCorridorOutline({
-        THREE,
-        group: placementLayerGroup,
-        geometry: options.placementPreview,
-        color: '#facc15',
-        y: 0.18,
-      });
+      if (!previewMesh || !previewOutline) {
+        previewMesh = new THREE.Mesh(
+          new THREE.BufferGeometry(),
+          new THREE.MeshBasicMaterial({
+            color: previewColor,
+            transparent: true,
+            opacity: 0.45,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          })
+        );
+        previewOutline = new THREE.LineLoop(
+          new THREE.BufferGeometry(),
+          new THREE.LineBasicMaterial({ color: '#facc15' })
+        );
+        placementLayerGroup.add(previewMesh, previewOutline);
+      }
+      previewMesh.material.color.set(previewColor);
+      const points = options.placementPreview.polygon;
+      for (const [object, height] of [
+        [previewMesh, 0.12],
+        [previewOutline, 0.18],
+      ] as const) {
+        let position = object.geometry.getAttribute('position') as
+          import('three').BufferAttribute | undefined;
+        if (position?.count !== points.length) {
+          object.geometry.dispose();
+          object.geometry = new THREE.BufferGeometry();
+          position = new THREE.Float32BufferAttribute(new Float32Array(points.length * 3), 3);
+          position.setUsage(THREE.DynamicDrawUsage);
+          object.geometry.setAttribute('position', position);
+        }
+        const currentPosition = position as import('three').BufferAttribute;
+        points.forEach((point, index) => currentPosition.setXYZ(index, point.x, height, point.z));
+        position.needsUpdate = true;
+        object.geometry.computeBoundingSphere();
+      }
+      const indices = THREE.ShapeUtils.triangulateShape(
+        points.map(point => new THREE.Vector2(point.x, -point.z)),
+        []
+      ).flat();
+      const index = previewMesh.geometry.getIndex();
+      if (index?.count === indices.length) {
+        indices.forEach((value, offset) => index.setX(offset, value));
+        index.needsUpdate = true;
+      } else {
+        previewMesh.geometry.setIndex(indices);
+      }
+    } else if (previewMesh && previewOutline) {
+      placementLayerGroup.remove(previewMesh, previewOutline);
+      disposeObjectTree(previewMesh);
+      disposeObjectTree(previewOutline);
+      previewMesh = null;
+      previewOutline = null;
     }
     requestRender();
   }
@@ -5664,17 +5917,25 @@ export async function mountCityDesignScene(
 
   function getPointerHitContext(event: PointerEvent) {
     const point = updatePointer(event);
-    const designIntersections = raycaster.intersectObjects(designGroup.children, true);
+    const designIntersections = raycaster.intersectObjects(
+      getLayerPickTargets(designEntries, designGroup),
+      false
+    );
     return { point, designIntersections };
   }
 
   function getRotateObjectIdAtPointer(event: PointerEvent) {
-    const { designIntersections } = getPointerHitContext(event);
-    return getIntersectionUserDataValue(designIntersections, 'rotateHandleObjectId');
+    if (options.readOnly || !designGroup.visible || selectionLayerGroup.children.length === 0)
+      return undefined;
+    updatePointer(event);
+    selectionLayerGroup.updateWorldMatrix(true, true);
+    return getIntersectionUserDataValue(
+      raycaster.intersectObjects(selectionLayerGroup.children, true),
+      'rotateHandleObjectId'
+    );
   }
 
   function startObjectRotateDrag(event: PointerEvent, rotateObjectId: string) {
-    if (options.readOnly) return false;
     const object = options.design.objects.find(item => item.id === rotateObjectId);
     if (!object) return false;
 
@@ -5689,14 +5950,6 @@ export async function mountCityDesignScene(
 
   function handleSelectPointerDown(event: PointerEvent) {
     const { point, designIntersections } = getPointerHitContext(event);
-    const rotateObjectId = getIntersectionUserDataValue(
-      designIntersections,
-      'rotateHandleObjectId'
-    );
-
-    if (rotateObjectId && startObjectRotateDrag(event, rotateObjectId)) {
-      return;
-    }
 
     const hitObjectId = getIntersectionUserDataValue(designIntersections, 'objectId');
 
@@ -5712,7 +5965,10 @@ export async function mountCityDesignScene(
     }
 
     if (layers.split && point.x < 0) {
-      const originalIntersections = raycaster.intersectObjects(originalGroup.children, true);
+      const originalIntersections = raycaster.intersectObjects(
+        getLayerPickTargets(originalEntries, originalGroup),
+        false
+      );
       const osmWayId = getIntersectionUserDataValue(originalIntersections, 'osmWayId');
       if (osmWayId) {
         options.onOsmWaySelect(osmWayId);
@@ -5723,7 +5979,10 @@ export async function mountCityDesignScene(
       return;
     }
 
-    const originalIntersections = raycaster.intersectObjects(originalGroup.children, true);
+    const originalIntersections = raycaster.intersectObjects(
+      getLayerPickTargets(originalEntries, originalGroup),
+      false
+    );
     const osmWayId = getIntersectionUserDataValue(originalIntersections, 'osmWayId');
 
     if (osmWayId) {
@@ -5749,6 +6008,7 @@ export async function mountCityDesignScene(
   }
 
   function handlePointerDown(event: PointerEvent) {
+    flushPointerMove();
     const rotateObjectId =
       options.interactionMode === 'select' ? getRotateObjectIdAtPointer(event) : undefined;
     const action = getPointerAction(event, {
@@ -5756,15 +6016,16 @@ export async function mountCityDesignScene(
     });
 
     if (action === 'move' || action === 'turn' || action === 'zoom' || action === 'none') {
+      focusAnimation = null;
+      return;
+    }
+
+    if (action === 'objectRotate' && rotateObjectId) {
+      startObjectRotateDrag(event, rotateObjectId);
       return;
     }
 
     if (event.pointerType === 'touch') {
-      if (action === 'objectRotate') {
-        startObjectRotateDrag(event, rotateObjectId as string);
-        return;
-      }
-
       pendingTouchAction = {
         pointerId: event.pointerId,
         action: action as 'select' | 'place',
@@ -5802,24 +6063,37 @@ export async function mountCityDesignScene(
 
   function handlePointerMove(event: PointerEvent) {
     updatePendingTouchMove(event);
+    pendingPointerMove = { event, canPlace: !isNavigationPointerMove(event) };
+    if (pointerMoveFrame == null)
+      pointerMoveFrame = window.requestAnimationFrame(() => {
+        pointerMoveFrame = null;
+        flushPointerMove();
+      });
+  }
+
+  function flushPointerMove() {
+    if (pointerMoveFrame != null) {
+      window.cancelAnimationFrame(pointerMoveFrame);
+      pointerMoveFrame = null;
+    }
+    const pending = pendingPointerMove;
+    pendingPointerMove = null;
+    if (!pending) return;
+    const { event, canPlace } = pending;
+    const point = updatePointer(event);
 
     if (event.pointerType !== 'touch') {
-      const hoverPoint = updatePointer(event);
-      const hoverLayer = getPointerLayer(hoverPoint);
-      options.onPointerHover(toLayerPoint(hoverPoint, hoverLayer), hoverLayer);
+      const hoverLayer = getPointerLayer(point);
+      options.onPointerHover(toLayerPoint(point, hoverLayer), hoverLayer);
     }
 
-    if (
-      !options.readOnly &&
-      options.interactionMode === 'place' &&
-      !isNavigationPointerMove(event)
-    ) {
-      const point = updatePointer(event);
+    if (!options.readOnly && options.interactionMode === 'place' && canPlace) {
       options.onPointerMove(toDesignPoint(point));
     }
   }
 
   function handlePointerLeave(event: PointerEvent) {
+    pendingPointerMove = null;
     if (event.pointerType !== 'touch') {
       options.onPointerHover(null, 'design');
     }
@@ -5864,6 +6138,7 @@ export async function mountCityDesignScene(
   }
 
   function handlePointerUp(event: PointerEvent) {
+    flushPointerMove();
     finishRotateDrag(event);
     finishPendingTouchAction(event);
 
@@ -5876,6 +6151,7 @@ export async function mountCityDesignScene(
   }
 
   function handlePointerCancel(event: PointerEvent) {
+    pendingPointerMove = null;
     if (canvas.hasPointerCapture(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId);
     }
@@ -5946,6 +6222,7 @@ export async function mountCityDesignScene(
   }
 
   function handleWindowBlur() {
+    pendingPointerMove = null;
     isSpacePressed = false;
     setPrimaryPointerNavigationControls(options.interactionMode === 'camera' ? 'move' : 'none');
     options.onPointerHover(null, 'design');
@@ -5964,7 +6241,6 @@ export async function mountCityDesignScene(
           const baseOpacity =
             typeof object.userData.baseOpacity === 'number' ? object.userData.baseOpacity : 0.42;
           material.opacity = baseOpacity + Math.sin(elapsedSeconds * 1.1 + phase) * 0.08;
-          material.needsUpdate = true;
         }
         return;
       }
@@ -5975,7 +6251,6 @@ export async function mountCityDesignScene(
         const material = getSingleMaterial(object);
         if (material && 'opacity' in material) {
           material.opacity = 0.1 + Math.sin(elapsedSeconds * 1.4 + phase) * 0.045;
-          material.needsUpdate = true;
         }
         return;
       }
@@ -5983,11 +6258,6 @@ export async function mountCityDesignScene(
       if (motion === 'flower') {
         object.position.y = baseY + Math.sin(elapsedSeconds * 0.9 + phase) * 0.01;
         object.rotation.z = Math.sin(elapsedSeconds * 0.75 + phase) * 0.035;
-        return;
-      }
-
-      if (motion === 'grass') {
-        object.rotation.z = Math.sin(elapsedSeconds * 1.3 + phase) * 0.055;
         return;
       }
 
@@ -6033,6 +6303,7 @@ export async function mountCityDesignScene(
 
   const renderScheduler = createCityDesignRenderScheduler(() => {
     resize();
+    flushPointerMove();
     let isFocusAnimationActive = false;
     const activeFocusAnimation = focusAnimation;
 
@@ -6055,6 +6326,7 @@ export async function mountCityDesignScene(
       isFocusAnimationActive = progress < 1;
       if (!isFocusAnimationActive) {
         focusAnimation = null;
+        renderer.shadowMap.needsUpdate = true;
       }
     }
 
@@ -6093,6 +6365,8 @@ export async function mountCityDesignScene(
   requestRender();
 
   function dispose() {
+    pendingPointerMove = null;
+    if (pointerMoveFrame != null) window.cancelAnimationFrame(pointerMoveFrame);
     options.onPointerHover(null, 'design');
     renderScheduler.dispose();
     controls.removeEventListener('change', handleControlsChange);
@@ -6110,6 +6384,9 @@ export async function mountCityDesignScene(
     document.removeEventListener('keyup', handleKeyUp);
     clearSceneGroup(originalGroup);
     clearSceneGroup(designGroup);
+    disposeObjectTree(ground);
+    disposeObjectTree(grid);
+    sun.shadow.dispose();
     controls.dispose();
     renderer.dispose();
   }
@@ -6119,10 +6396,18 @@ export async function mountCityDesignScene(
       const previousOptions = options;
       mergeSceneOptions(nextOptions);
       if (hasOsmRenderInputsChanged(previousOptions, options)) {
-        rebuildOriginalLayer();
+        rebuildOriginalLayer(
+          previousOptions.design.origin !== options.design.origin ||
+            previousOptions.design.comparisonMode !== options.design.comparisonMode ||
+            previousOptions.design.showStreetMarkings !== options.design.showStreetMarkings,
+          true
+        );
       }
       if (hasDesignRenderInputsChanged(previousOptions, options)) {
-        rebuildDesignLayer();
+        rebuildDesignLayer(
+          previousOptions.design.comparisonMode !== options.design.comparisonMode ||
+            previousOptions.design.showStreetMarkings !== options.design.showStreetMarkings
+        );
       }
       if (previousOptions.design.comparisonMode !== options.design.comparisonMode) {
         rebuildChangeRequestLayer();
@@ -6157,6 +6442,7 @@ export async function mountCityDesignScene(
       rebuildChangeRequestLayer();
     },
     updateInteractionMode(nextOptions) {
+      pendingPointerMove = null;
       mergeSceneOptions(nextOptions);
       syncControlsForInteractionMode();
       rebuildSelectionLayer();
@@ -6173,6 +6459,7 @@ export async function mountCityDesignScene(
       mergeSceneOptions({ focusObjectId: null, focusOsmWayId: osmWayId });
       startFocusAnimation(null, osmWayId);
     },
+    flushPointerMove,
     dispose,
   };
 }

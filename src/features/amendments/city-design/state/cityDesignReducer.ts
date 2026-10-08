@@ -35,6 +35,7 @@ import {
 import {
   DEFAULT_CITY_DESIGN_OSM_LAYER_VISIBILITY,
   getCityDesignOsmLayerVisibility,
+  getCityDesignOsmFeatures,
   normalizeCityDesignOsmSnapshot,
 } from '../logic/cityDesignOsm';
 import { updateCityDesignBuildingProperties } from '../logic/cityDesignBuildingUse';
@@ -89,6 +90,8 @@ export type CityDesignEditorAction =
   | { type: 'cancel_placement' }
   | { type: 'select_object'; objectId: string | null }
   | { type: 'select_osm_way'; osmWayId: string | null }
+  | { type: 'focus_object'; objectId: string }
+  | { type: 'focus_osm_way'; osmWayId: string }
   | { type: 'set_object_visibility'; objectId: string; visible: boolean }
   | {
       type: 'set_object_category_visibility';
@@ -315,7 +318,6 @@ function addFinishedPlacementObject(
     },
     selectedObjectId: object.id,
     selectedOsmWayId: null,
-    selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
     hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
     hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
     placementDraft: null,
@@ -626,7 +628,6 @@ export function cityDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
-          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
           hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
           hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
@@ -674,7 +675,6 @@ export function cityDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
-          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
           hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
           hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
@@ -736,14 +736,34 @@ export function cityDesignReducer(
         interactionMode: 'select',
       };
 
+    case 'focus_object':
+      if (!state.design.objects.some(object => object.id === action.objectId)) return state;
+      return {
+        ...state,
+        selectedObjectId: action.objectId,
+        selectedOsmWayId: null,
+        selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
+      };
+
+    case 'focus_osm_way':
+      if (
+        !getCityDesignOsmFeatures(state.design.osmSnapshot).some(
+          feature => feature.id === action.osmWayId
+        )
+      )
+        return state;
+      return {
+        ...state,
+        selectedObjectId: null,
+        selectedOsmWayId: action.osmWayId,
+        selectedOsmFocusRequestKey: state.selectedOsmFocusRequestKey + 1,
+      };
+
     case 'select_object':
       return {
         ...state,
         selectedObjectId: action.objectId,
         selectedOsmWayId: null,
-        selectedObjectFocusRequestKey: action.objectId
-          ? state.selectedObjectFocusRequestKey + 1
-          : state.selectedObjectFocusRequestKey,
         placementDraft: null,
         placementSettings: resetPlacementSettings(state),
         interactionMode: 'select',
@@ -754,9 +774,6 @@ export function cityDesignReducer(
         ...state,
         selectedObjectId: action.osmWayId ? null : state.selectedObjectId,
         selectedOsmWayId: action.osmWayId,
-        selectedOsmFocusRequestKey: action.osmWayId
-          ? state.selectedOsmFocusRequestKey + 1
-          : state.selectedOsmFocusRequestKey,
         placementDraft: null,
         placementSettings: resetPlacementSettings(state),
         interactionMode: 'select',
@@ -825,7 +842,6 @@ export function cityDesignReducer(
         },
         selectedObjectId: firstObject.id,
         selectedOsmWayId: null,
-        selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
         interactionMode: 'select',
         isDirty: true,
       };

@@ -21,6 +21,22 @@
     ]
   },
   "actionReferences": {
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-object-popover.focus.object": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses the selected design object explicitly in the read-only inspector",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/StreetSceneCanvasViewView.tsx#amendments.city-osm-popover.focus.feature": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/StreetSceneCanvasViewView.component.test.tsx",
+        "project": "component",
+        "caseId": "focuses the selected OSM feature explicitly in the read-only inspector",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
     "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx#amendments.city-inspector.move.window": [
       {
         "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",

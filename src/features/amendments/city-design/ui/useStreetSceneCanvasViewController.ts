@@ -28,6 +28,28 @@ import type { CityDesignDiscussionLike } from './CityDesignChangeRequestPanel';
 import type { CityDesignRemoteCursor } from '../hooks/useCityDesignRemoteCursors';
 
 const EMPTY_CHANGE_REQUESTS: readonly CityDesignChangeRequest[] = [];
+export interface CityDesignCameraPoseSource {
+  getSnapshot: () => CityDesignCameraPose;
+  subscribe: (listener: () => void) => () => void;
+}
+
+function createCameraPoseSource(initialPose: CityDesignCameraPose) {
+  let pose = initialPose;
+  const listeners = new Set<() => void>();
+  return {
+    getSnapshot: () => pose,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    setPose(nextPose: CityDesignCameraPose) {
+      pose = nextPose;
+      listeners.forEach(listener => listener());
+    },
+  };
+}
 const DEFAULT_CITY_DESIGN_CAMERA_POSE: CityDesignCameraPose = {
   position: { x: 0, y: 75, z: 85 },
   target: { x: 0, y: 0, z: 0 },
@@ -80,6 +102,8 @@ interface StreetSceneCanvasViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectFocus?: (objectId: string) => void;
+  onOsmWayFocus?: (osmWayId: string) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmWayImport?: (osmWayId: string) => void;
@@ -147,6 +171,8 @@ export function useStreetSceneCanvasViewController({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectFocus,
+  onOsmWayFocus,
   onObjectVisibilityChange,
   onOsmWayHide,
   onOsmWayImport = () => undefined,
@@ -185,19 +211,22 @@ export function useStreetSceneCanvasViewController({
   };
 
   const [loadFailed, setLoadFailed] = useState(false);
-  const [cameraPose, setCameraPose] = useState<CityDesignCameraPose>(initialCameraPoseRef.current);
-  const handleCameraPoseChange = useCallback((pose: CityDesignCameraPose) => {
-    cameraPoseRef.current = pose;
-    pendingCameraPoseRef.current = pose;
-    if (cameraPoseFrameRef.current != null) return;
+  const [cameraPoseSource] = useState(() => createCameraPoseSource(initialCameraPoseRef.current));
+  const handleCameraPoseChange = useCallback(
+    (pose: CityDesignCameraPose) => {
+      cameraPoseRef.current = pose;
+      pendingCameraPoseRef.current = pose;
+      if (cameraPoseFrameRef.current != null) return;
 
-    cameraPoseFrameRef.current = requestStreetSceneAnimationFrame(() => {
-      cameraPoseFrameRef.current = null;
-      const nextPose = pendingCameraPoseRef.current;
-      pendingCameraPoseRef.current = null;
-      setCameraPose(nextPose as CityDesignCameraPose);
-    });
-  }, []);
+      cameraPoseFrameRef.current = requestStreetSceneAnimationFrame(() => {
+        cameraPoseFrameRef.current = null;
+        const nextPose = pendingCameraPoseRef.current;
+        pendingCameraPoseRef.current = null;
+        cameraPoseSource.setPose(nextPose as CityDesignCameraPose);
+      });
+    },
+    [cameraPoseSource]
+  );
   const renderedChangeRequests = showChangeRequests ? changeRequests : EMPTY_CHANGE_REQUESTS;
   const latestSceneOptionsRef = useRef<Omit<CityDesignSceneMountOptions, 'canvas'>>({
     design,
@@ -275,6 +304,7 @@ export function useStreetSceneCanvasViewController({
         placementMode === 'drag_band' || (placementMode === 'path' && canFinishPathPlacement);
       if (event.key === 'Enter' && canFinishPlacement) {
         event.preventDefault();
+        sceneControllerRef.current?.flushPointerMove();
         onFinishPlacement();
       }
     };
@@ -433,7 +463,8 @@ export function useStreetSceneCanvasViewController({
     cityDesignDiscussions,
     selectedChangeRequestId,
     showChangeRequests,
-    cameraPose,
+    cameraPose: initialCameraPoseRef.current,
+    cameraPoseSource,
     canVoteOnChangeRequests,
     canFinalizeChangeRequests,
     currentUserId,
@@ -441,10 +472,15 @@ export function useStreetSceneCanvasViewController({
     currentUserAvatarUrl,
     collaborators,
     remoteCursors,
-    onFinishPathPlacement,
+    onFinishPathPlacement: () => {
+      sceneControllerRef.current?.flushPointerMove();
+      onFinishPathPlacement();
+    },
     onCancelPlacement,
     onObjectSelect,
     onOsmWaySelect,
+    onObjectFocus,
+    onOsmWayFocus,
     onObjectVisibilityChange,
     onOsmWayHide,
     onOsmWayImport,

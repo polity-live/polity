@@ -18,6 +18,7 @@ const { createSceneControllerMock, mountCityDesignSceneMock } = vi.hoisted(() =>
     updateHandlers: vi.fn(),
     focusObject: vi.fn(),
     focusOsmWay: vi.fn(),
+    flushPointerMove: vi.fn(),
     dispose: vi.fn(),
   });
 
@@ -39,6 +40,7 @@ function ControllerHarness({
   onFinishPlacement = vi.fn(),
   onCancelPlacement = vi.fn(),
   onObjectSelect = vi.fn(),
+  onFinishPathPlacement = vi.fn(),
   placementMode = null,
   canFinishPathPlacement = false,
   readOnly = false,
@@ -55,6 +57,7 @@ function ControllerHarness({
   onFinishPlacement?: () => void;
   onCancelPlacement?: () => void;
   onObjectSelect?: (objectId: string | null) => void;
+  onFinishPathPlacement?: () => void;
   placementMode?: 'drag_band' | 'path' | null;
   canFinishPathPlacement?: boolean;
   readOnly?: boolean;
@@ -95,7 +98,7 @@ function ControllerHarness({
     onPointerMove: vi.fn(),
     ...(provideOptionalHandlers ? { onPointerHover: vi.fn() } : {}),
     onFinishPlacement,
-    onFinishPathPlacement: vi.fn(),
+    onFinishPathPlacement,
     onCancelPlacement,
     onObjectSelect,
     onOsmWaySelect: vi.fn(),
@@ -359,11 +362,37 @@ describe('useStreetSceneCanvasViewController', () => {
       handler?.({ position: { x: 4, y: 5, z: 6 }, target: { x: 0, y: 0, z: 0 } });
     });
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    const previousViewProps = latestControllerViewProps;
+    const listener = vi.fn();
+    const unsubscribe = latestControllerViewProps!.cameraPoseSource.subscribe(listener);
     act(() => frameCallback?.(1));
+    expect(listener).toHaveBeenCalledOnce();
+    expect(latestControllerViewProps).toBe(previousViewProps);
+    expect(latestControllerViewProps?.cameraPoseSource.getSnapshot()).toEqual({
+      position: { x: 4, y: 5, z: 6 },
+      target: { x: 0, y: 0, z: 0 },
+    });
     handler?.({ position: { x: 7, y: 8, z: 9 }, target: { x: 0, y: 0, z: 0 } });
+    unsubscribe();
+    act(() => frameCallback?.(2));
+    expect(listener).toHaveBeenCalledOnce();
+    handler?.({ position: { x: 10, y: 11, z: 12 }, target: { x: 0, y: 0, z: 0 } });
     view.unmount();
     expect(cancel).toHaveBeenCalledWith(77);
     vi.restoreAllMocks();
+  });
+
+  it('flushes the last pointer position before completing a path from the toolbar', async () => {
+    const onFinishPathPlacement = vi.fn();
+    render(<ControllerHarness onFinishPathPlacement={onFinishPathPlacement} />);
+    await waitFor(() => expect(mountCityDesignSceneMock).toHaveBeenCalled());
+    const scene = await mountCityDesignSceneMock.mock.results[0]!.value;
+    latestControllerViewProps!.onFinishPathPlacement();
+    expect(scene.flushPointerMove).toHaveBeenCalledOnce();
+    expect(onFinishPathPlacement).toHaveBeenCalledOnce();
+    expect(scene.flushPointerMove.mock.invocationCallOrder[0]).toBeLessThan(
+      onFinishPathPlacement.mock.invocationCallOrder[0]!
+    );
   });
 
   it('consumes object and OSM focus requests once per key', () => {
