@@ -169,6 +169,7 @@ describe('CityDesignTopBarView', () => {
     await userEvent.click(color);
     expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('natural');
   });
+  // Match the other multi-menu workflows' budget for instrumented accessibility queries.
   it('integrates workspace information, collaboration and save state into the toolbar', async () => {
     const onShowChangeRequestsChange = vi.fn();
     const onChangeRequestColorModeChange = vi.fn();
@@ -215,7 +216,7 @@ describe('CityDesignTopBarView', () => {
     expect(await screen.findByText('Alexanderplatz, Berlin')).toBeTruthy();
     expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
     expect(screen.getByText('134 existing')).toBeTruthy();
-  });
+  }, 15_000);
 
   it('handles global city design actions from the fixed icon toolbar', () => {
     const props = renderTopBar();
