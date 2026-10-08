@@ -1,4 +1,5 @@
 import { createRef, useState } from 'react';
+import Konva from 'konva';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { page, userEvent } from 'vitest/browser';
 import { expect, it, vi } from 'vitest';
@@ -37,6 +38,7 @@ it.each([false, true])(
     const ref = createRef<StudioCanvasHandle>();
     const state: { current: StudioCanvasState | null } = { current: null };
     const errors: unknown[] = [];
+    const focusRequests: Promise<void>[] = [];
     const activations = vi.fn();
     function Harness() {
       const [selected, select] = useState<string[]>([]);
@@ -83,9 +85,11 @@ it.each([false, true])(
               <ProjectContextNavigation.Provider
                 value={reference => {
                   activations(reference.id);
-                  void ref
-                    .current!.execute({ type: 'focus', nodeId: reference.id })
-                    .catch(error => errors.push(error));
+                  focusRequests.push(
+                    ref.current!.execute({ type: 'focus', nodeId: reference.id }).catch(error => {
+                      errors.push(error);
+                    })
+                  );
                 }}
               >
                 <ProjectContextChips
@@ -107,6 +111,11 @@ it.each([false, true])(
     }
     render(<Harness />);
     const host = await screen.findByTestId('studio-canvas');
+    await waitFor(() => {
+      const stage = Konva.stages.find(candidate => host.contains(candidate.container()));
+      expect(stage?.width()).toBe(mobile ? 390 : 1000);
+      expect(stage?.height()).toBe(mobile ? 760 : 600);
+    });
     await waitFor(() => expect(state.current?.zoom).toBeLessThan(1));
     await act(async () => {
       await ref.current!.execute({ type: 'zoom', mode: 'reset' });
@@ -115,10 +124,14 @@ it.each([false, true])(
     const button = screen.getByRole<HTMLButtonElement>('button', { name: 'element · Heading' });
     button.focus();
     await userEvent.keyboard('{Enter}');
-    const rect = host.getBoundingClientRect();
+    await waitFor(() => expect(activations).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await focusRequests[0];
+    });
     const freeCenter = { x: mobile ? 195 : 415, y: mobile ? 110 : 300 };
     const bounds = worldBounds(document, node);
     await waitFor(() => {
+      const rect = host.getBoundingClientRect();
       const point = ref.current!.scenePoint(rect.left + freeCenter.x, rect.top + freeCenter.y);
       expect(point.x).toBeCloseTo((bounds.left + bounds.right) / 2, 1);
       expect(point.y).toBeCloseTo((bounds.top + bounds.bottom) / 2, 1);
@@ -128,10 +141,15 @@ it.each([false, true])(
     await act(async () => {
       await ref.current!.execute({ type: 'zoom', mode: 'all' });
     });
+    await waitFor(() => expect(state.current?.zoom).toBeLessThan(1));
     button.focus();
     await userEvent.keyboard(' ');
     await waitFor(() => expect(activations).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      await focusRequests[1];
+    });
     await waitFor(() => {
+      const rect = host.getBoundingClientRect();
       const point = ref.current!.scenePoint(rect.left + freeCenter.x, rect.top + freeCenter.y);
       expect(point.x).toBeCloseTo((bounds.left + bounds.right) / 2, 1);
     });

@@ -199,10 +199,22 @@ it('uses prebuilt moving quality during keyboard and focus navigation, restores 
   expect(movingBatches().map(object => (object as THREE.Mesh).geometry)).toEqual(geometry);
   expect(renderer.shadowMap.needsUpdate).toBe(false);
   expect(updates).not.toHaveBeenCalled();
+  const keyboardFrames: { moving: boolean; pixelRatio: number }[] = [];
+  vi.spyOn(scene, 'onBeforeRender').mockImplementation(() => {
+    keyboardFrames.push({
+      moving: movingBatches().some(object => object.visible),
+      pixelRatio: renderer.getPixelRatio(),
+    });
+  });
   canvas.focus();
   await userEvent.keyboard('{ArrowRight}');
-  await waitFor(() => expect(movingBatches().some(object => object.visible)).toBe(true));
+  await waitFor(() => expect(keyboardFrames.some(frame => frame.moving)).toBe(true));
+  expect(keyboardFrames.filter(frame => frame.moving).every(frame => frame.pixelRatio <= 1)).toBe(
+    true
+  );
   await waitFor(() => expect(movingBatches().every(object => !object.visible)).toBe(true));
   expect(renderer.getPixelRatio()).toBe(fullRatio);
+  expect(movingBatches().map(object => (object as THREE.Mesh).geometry)).toEqual(geometry);
+  expect(renderer.shadowMap.needsUpdate).toBe(false);
   expect(updates).not.toHaveBeenCalled();
 }, 30_000);

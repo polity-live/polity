@@ -20593,7 +20593,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "opens automation-targeted menus and returns focus on Escape"
+          "caseId": "opens the automation-targeted %s menu and returns focus on Escape"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -28093,7 +28093,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "opens automation-targeted menus and returns focus on Escape"
+          "caseId": "opens the automation-targeted %s menu and returns focus on Escape"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
