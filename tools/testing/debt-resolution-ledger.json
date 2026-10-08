@@ -4470,7 +4470,7 @@
           {
             "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
             "project": "component",
-            "caseId": "shows KPI badges and opens the navigation help popover",
+            "caseId": "moves workspace metadata into the toolbar and opens the navigation help popover",
             "scenarios": ["selected", "unselected", "keyboard", "focus"]
           }
         ]
@@ -4492,7 +4492,7 @@
           {
             "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
             "project": "component",
-            "caseId": "shows KPI badges and opens the navigation help popover",
+            "caseId": "moves workspace metadata into the toolbar and opens the navigation help popover",
             "scenarios": ["idle", "success", "keyboard", "focus"]
           }
         ]

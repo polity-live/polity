@@ -22,7 +22,11 @@ import {
 } from '@/zero/preloads';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.ts';
 import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
-import { getAuthenticatedPageFrame, getAppShellResponsiveClasses } from './app-shell-layout';
+import {
+  getAuthenticatedPageFrame,
+  getAppShellResponsiveClasses,
+  isCityDesignCanvasPath,
+} from './app-shell-layout';
 import { PageFrame } from './page-frame';
 import { AppTutorialSessionGate } from '@/features/app-tutorial/AppTutorialSessionGate';
 import { WorkspacePreviewProvider } from '@/features/shared/ui/preview/WorkspacePreview';
@@ -108,7 +112,9 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
       <AlphaWarningDialog />
     </div>
   ) : (
-    <div className="bg-background min-h-screen">
+    <div
+      className={`bg-background min-h-screen ${isCityDesignCanvasPath(pathname) ? 'flow-root' : ''}`}
+    >
       {['primary', 'combined'].includes(navigationType) && (
         <DynamicNavigation
           navigationType="primary"

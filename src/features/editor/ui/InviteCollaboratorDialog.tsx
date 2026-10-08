@@ -9,5 +9,5 @@ import { InviteCollaboratorDialogView } from './InviteCollaboratorDialogView';
 export function InviteCollaboratorDialog(props: InviteCollaboratorDialogProps) {
   const model = useInviteCollaboratorModel(props);
 
-  return <InviteCollaboratorDialogView model={model} />;
+  return <InviteCollaboratorDialogView model={model} trigger={props.trigger} />;
 }

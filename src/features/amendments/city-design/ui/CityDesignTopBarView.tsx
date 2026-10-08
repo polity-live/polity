@@ -8,6 +8,9 @@ import {
   Eye,
   EyeOff,
   Flower2,
+  Info,
+  Share2,
+  UserPlus,
   Footprints,
   GitCompareArrows,
   Highlighter,
@@ -31,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useMemo, type ComponentType, type ReactNode } from 'react';
 
+import { EditorSaveStatus } from '@/features/editor/ui/EditorSaveStatus';
 import { InviteCollaboratorDialog } from '@/features/editor/ui/InviteCollaboratorDialog';
 import { FixedToolbar } from '@/features/shared/ui/ui-platejs/fixed-toolbar';
 import { ToolbarButton, ToolbarGroup } from '@/features/shared/ui/layout';
@@ -87,6 +91,14 @@ import {
 
 interface CityDesignTopBarViewProps {
   positionMode?: 'viewport' | 'container';
+  workspace?: {
+    title: string;
+    selectionAddressLabel: string;
+    osmWayCount: number;
+    collaborators: ReactNode;
+    help: ReactNode;
+  };
+  collaboration?: Omit<CityDesignSecondaryActionBarViewProps, 'readOnly' | 'compact'>;
   availableModes?: readonly SelectableEditingMode[];
   readOnly: boolean;
   mapContextReadOnly: boolean;
@@ -137,6 +149,7 @@ interface CityDesignTopBarViewProps {
 }
 
 interface CityDesignSecondaryActionBarViewProps {
+  compact?: boolean;
   amendmentId: string;
   title: string;
   readOnly: boolean;
@@ -263,6 +276,8 @@ function isSectionToolSelected(args: {
 
 export function CityDesignTopBarView({
   positionMode = 'viewport',
+  workspace,
+  collaboration,
   availableModes,
   readOnly,
   mapContextReadOnly,
@@ -354,6 +369,33 @@ export function CityDesignTopBarView({
       data-tutorial-horizontal-scroller="city-design-toolbar"
       className="gap-0 rounded-none border-x-0 border-t-0 px-1 py-1 shadow-none"
     >
+      {workspace ? (
+        <ToolbarGroup>
+          <Popover>
+            <PopoverTrigger data-action-scope="presentation" asChild>
+              <ToolbarButton
+                data-action-id="amendments.city-topbar.open.information"
+                aria-label={t('features.amendments.cityDesign.topbar.information')}
+                tooltip={workspace.title}
+                isDropdown
+              >
+                <Info className="size-4" />
+              </ToolbarButton>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] space-y-2">
+              <h2 className="text-sm font-semibold break-words">{workspace.title}</h2>
+              <p className="text-muted-foreground text-xs break-words">
+                {workspace.selectionAddressLabel}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {t('features.amendments.cityDesign.metrics.existing', {
+                  count: workspace.osmWayCount,
+                })}
+              </p>
+            </PopoverContent>
+          </Popover>
+        </ToolbarGroup>
+      ) : null}
       <ToolbarGroup>
         {!readOnly ? (
           <ToolbarButton
@@ -465,11 +507,14 @@ export function CityDesignTopBarView({
               tooltip={formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency)}
             >
               <Calculator className="size-4" />
+              <span className="text-xs tabular-nums">
+                {formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency)}
+              </span>
             </ToolbarButton>
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            className="max-h-[min(72vh,46rem)] w-[min(48rem,calc(100vw-2rem))] overflow-auto p-0"
+            className="max-h-[min(75dvh,var(--radix-popover-content-available-height))] w-[min(28rem,calc(100vw-2rem))] overflow-auto p-2"
             sideOffset={8}
           >
             {costSummaryContent}
@@ -662,11 +707,26 @@ export function CityDesignTopBarView({
           ) : null}
         </ToolbarGroup>
       )}
+      {collaboration ? (
+        <CityDesignSecondaryActionBarView {...collaboration} readOnly={readOnly} compact />
+      ) : null}
+      {workspace ? (
+        <div className="ml-auto flex shrink-0 items-center gap-2 px-1">
+          {workspace.collaborators}
+          <EditorSaveStatus
+            saveStatus={saveError ? 'error' : isSaving ? 'saving' : 'saved'}
+            hasUnsavedChanges={isDirty}
+            className="w-auto whitespace-nowrap"
+          />
+          {workspace.help}
+        </div>
+      ) : null}
     </FixedToolbar>
   );
 }
 
 export function CityDesignSecondaryActionBarView({
+  compact = false,
   amendmentId,
   title,
   readOnly,
@@ -683,6 +743,64 @@ export function CityDesignSecondaryActionBarView({
 }: CityDesignSecondaryActionBarViewProps) {
   const { t } = useTranslation();
   const colorModeIsTinted = changeRequestColorMode === 'tinted';
+
+  if (compact)
+    return (
+      <ToolbarGroup>
+        <ShareButton
+          data-action-id="amendments.city-secondary.open.share"
+          url={`/amendment/${amendmentId}/citydesign`}
+          title={title}
+          description={t('features.amendments.cityDesign.workspaceDescription')}
+          trigger={
+            <ToolbarButton
+              data-action-id="amendments.city-secondary.open.share"
+              aria-label={t('common.actions.share')}
+              tooltip={t('common.actions.share')}
+            >
+              <Share2 className="size-4" />
+            </ToolbarButton>
+          }
+        />
+        {currentUserId && collaborationDocumentId && !readOnly ? (
+          <InviteCollaboratorDialog
+            entityType="amendment"
+            entityId={collaborationDocumentId}
+            currentUserId={currentUserId}
+            entityTitle={title}
+            existingCollaboratorIds={existingCollaboratorIds}
+            trigger={
+              <ToolbarButton
+                data-action-id="editor.collaborator-invite.open"
+                aria-label={t('features.editor.inviteDialog.invite')}
+                tooltip={t('features.editor.inviteDialog.invite')}
+              >
+                <UserPlus className="size-4" />
+              </ToolbarButton>
+            }
+          />
+        ) : (
+          <ToolbarButton
+            data-action-id="amendments.city-secondary.show.invite-disabled"
+            disabled
+            aria-label={t('features.editor.inviteDialog.invite')}
+            tooltip={t('features.editor.inviteDialog.invite')}
+          >
+            <UserPlus className="size-4" />
+          </ToolbarButton>
+        )}
+        <ChangeRequestsDropdown
+          toolbar
+          changeRequests={changeRequests}
+          selectedChangeRequestId={selectedChangeRequestId}
+          onChangeRequestSelect={onChangeRequestSelect}
+          showChangeRequests={showChangeRequests}
+          changeRequestColorMode={changeRequestColorMode}
+          onShowChangeRequestsChange={onShowChangeRequestsChange}
+          onChangeRequestColorModeChange={onChangeRequestColorModeChange}
+        />
+      </ToolbarGroup>
+    );
 
   return (
     <div className="scrollbar-hide mb-6 overflow-x-auto">
@@ -852,6 +970,9 @@ function ObjectsDropdown({
           tooltip={t('features.amendments.cityDesign.topbar.objects')}
         >
           <PanelRight className="size-4" />
+          <span className="text-xs tabular-nums">
+            {objectGroups.reduce((count, group) => count + group.objects.length, 0)}
+          </span>
           <span className="sr-only">{t('features.amendments.cityDesign.topbar.objects')}</span>
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -984,35 +1105,83 @@ function ComparisonDropdown({
 }
 
 function ChangeRequestsDropdown({
+  toolbar = false,
+  showChangeRequests = false,
+  changeRequestColorMode = 'natural',
+  onShowChangeRequestsChange,
+  onChangeRequestColorModeChange,
   changeRequests,
   selectedChangeRequestId,
   onChangeRequestSelect,
 }: Pick<
   CityDesignSecondaryActionBarViewProps,
   'changeRequests' | 'selectedChangeRequestId' | 'onChangeRequestSelect'
->) {
+> & {
+  toolbar?: boolean;
+  showChangeRequests?: boolean;
+  changeRequestColorMode?: CityDesignChangeRequestColorMode;
+  onShowChangeRequestsChange?: (visible: boolean) => void;
+  onChangeRequestColorModeChange?: (mode: CityDesignChangeRequestColorMode) => void;
+}) {
   const { t } = useTranslation();
 
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          data-action-id="amendments.city-cr-menu.open.list"
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <MessageSquare className="size-4" />
-          {t('features.amendments.cityDesign.topbar.changeRequestsCount', {
-            count: changeRequests.length,
-          })}
-        </Button>
+      <DropdownMenuTrigger data-action-scope="presentation" asChild>
+        {toolbar ? (
+          <ToolbarButton
+            data-action-id="amendments.city-cr-menu.open.list"
+            aria-label={t('features.amendments.cityDesign.topbar.changeRequestsCount', {
+              count: changeRequests.length,
+            })}
+            tooltip={t('features.amendments.cityDesign.topbar.changeRequests')}
+            isDropdown
+          >
+            <MessageSquare className="size-4" />
+            <span className="text-xs tabular-nums">{changeRequests.length}</span>
+          </ToolbarButton>
+        ) : (
+          <Button
+            data-action-id="amendments.city-cr-menu.open.list"
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <MessageSquare className="size-4" />
+            {t('features.amendments.cityDesign.topbar.changeRequestsCount', {
+              count: changeRequests.length,
+            })}
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[70vh] w-80">
         <DropdownMenuLabel>
           {t('features.amendments.cityDesign.topbar.changeRequests')}
         </DropdownMenuLabel>
+        {toolbar ? (
+          <>
+            <DropdownMenuCheckboxItem
+              data-action-id="amendments.city-secondary.toggle.cr-overlay"
+              checked={showChangeRequests}
+              onCheckedChange={onShowChangeRequestsChange}
+              onSelect={event => event.preventDefault()}
+            >
+              {t('features.amendments.cityDesign.topbar.showCrOverlay')}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              data-action-id="amendments.city-secondary.toggle.cr-color-mode"
+              checked={changeRequestColorMode === 'tinted'}
+              onCheckedChange={checked =>
+                onChangeRequestColorModeChange?.(checked ? 'tinted' : 'natural')
+              }
+              onSelect={event => event.preventDefault()}
+            >
+              {t('features.amendments.cityDesign.topbar.colorCrChanges')}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem
           data-action-id="amendments.city-cr-menu.select.all"
           onSelect={() => onChangeRequestSelect(null)}

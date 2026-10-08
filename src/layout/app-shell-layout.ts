@@ -4,6 +4,12 @@ export type AppShellPageFrame = 'bare' | 'contained' | 'fullWidth' | 'messages' 
 
 const ENTITY_ROUTE_PATTERN = /^\/(?:group|user|event|amendment|blog)\/[^/]+(?:\/.*)?$/;
 
+const CITY_DESIGN_ROUTE_PATTERN = /^\/amendment\/[^/]+\/citydesign$/;
+
+export function isCityDesignCanvasPath(pathname: string): boolean {
+  return CITY_DESIGN_ROUTE_PATTERN.test(pathname);
+}
+
 const STUDIO_PROJECT_ROUTE_PATTERNS = [/^\/studio\/[^/]+$/, /^\/group\/[^/]+\/studio\/[^/]+$/];
 
 const UNCONTAINED_ENTITY_ROUTE_PATTERNS = [
@@ -33,6 +39,7 @@ export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
   if (
     pathname.startsWith('/docs') ||
     pathname === '/onboarding' ||
+    isCityDesignCanvasPath(pathname) ||
     STUDIO_PROJECT_ROUTE_PATTERNS.some(pattern => pattern.test(pathname))
   ) {
     return 'bare';
@@ -54,7 +61,10 @@ export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
 }
 
 export function getUnauthenticatedPageFrame(pathname: string): AppShellPageFrame {
-  if (STUDIO_PROJECT_ROUTE_PATTERNS.some(pattern => pattern.test(pathname))) {
+  if (
+    isCityDesignCanvasPath(pathname) ||
+    STUDIO_PROJECT_ROUTE_PATTERNS.some(pattern => pattern.test(pathname))
+  ) {
     return 'bare';
   }
 

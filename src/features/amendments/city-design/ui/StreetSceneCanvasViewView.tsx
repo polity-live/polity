@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import { CityDesignPropertiesWindow } from './CityDesignPropertiesWindow';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type {
@@ -57,10 +58,7 @@ import { majorToMinor, minorToMajor } from '@/features/shared/logic/currency';
 import { getCityDesignObjectDefinition } from '../logic/cityDesignObjectRegistry';
 import { getCityDesignObjectVariantLabelKey } from '../logic/cityDesignVariantCatalog';
 import { getCityDesignComparisonLayers } from '../logic/cityDesignDiff';
-import {
-  getCityDesignGeometryCenter,
-  getCityDesignGeometryRotationDeg,
-} from '../logic/cityDesignPlacement';
+import { getCityDesignGeometryRotationDeg } from '../logic/cityDesignPlacement';
 import {
   getCityDesignOsmFeatureLayer,
   getCityDesignOsmFeaturePoints,
@@ -80,6 +78,7 @@ export interface StreetSceneCanvasViewViewProps {
   initialLegendOpen?: boolean;
   embeddedPreview?: boolean;
   embeddedWorkspace?: boolean;
+  fillContainer?: boolean;
   isLoadingOsm: boolean;
   placementMode: 'drag_band' | 'path' | null;
   placementPointCount: number;
@@ -134,6 +133,7 @@ export function StreetSceneCanvasViewView({
   initialLegendOpen = false,
   embeddedPreview = false,
   embeddedWorkspace = false,
+  fillContainer = false,
   isLoadingOsm,
   placementMode,
   placementPointCount,
@@ -256,23 +256,6 @@ export function StreetSceneCanvasViewView({
   const selectedChangeRequestMarker = selectedChangeRequest
     ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
     : null;
-  const selectedObjectAnchor = selectedObject
-    ? getTrackedCanvasAnchorFromLocalPoint({
-        point: getCityDesignGeometryCenter(selectedObject.geometry),
-        cameraPose,
-        canvasSize,
-        layerOffsetX: designLayerOffsetX,
-      })
-    : null;
-  const selectedOsmAnchor = selectedOsmWay
-    ? getCanvasAnchorFromOsmWay(
-        selectedOsmWay,
-        design,
-        cameraPose,
-        canvasSize,
-        originalLayerOffsetX
-      )
-    : null;
 
   if (loadFailed) {
     return (
@@ -286,11 +269,13 @@ export function StreetSceneCanvasViewView({
     <div
       className={cn(
         'bg-background relative overflow-hidden',
-        embeddedWorkspace
-          ? 'min-h-[34rem]'
-          : embeddedPreview
-            ? 'min-h-[30rem]'
-            : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
+        fillContainer
+          ? 'h-full min-h-0'
+          : embeddedWorkspace
+            ? 'min-h-[34rem]'
+            : embeddedPreview
+              ? 'min-h-[30rem]'
+              : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
       )}
       data-swipe-lock
       data-tutorial-anchor="city-design-map-canvas"
@@ -298,22 +283,26 @@ export function StreetSceneCanvasViewView({
       <div
         className={cn(
           'bg-muted/10 relative overflow-hidden',
-          embeddedWorkspace
-            ? 'min-h-[34rem]'
-            : embeddedPreview
-              ? 'min-h-[30rem]'
-              : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
+          fillContainer
+            ? 'h-full min-h-0'
+            : embeddedWorkspace
+              ? 'min-h-[34rem]'
+              : embeddedPreview
+                ? 'min-h-[30rem]'
+                : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
         )}
       >
         <canvas
           ref={canvasRef}
           className={cn(
             'w-full',
-            embeddedWorkspace
-              ? 'h-[34rem]'
-              : embeddedPreview
-                ? 'h-[30rem]'
-                : 'h-[42rem] lg:h-[calc(100vh-10rem)]',
+            fillContainer
+              ? 'block h-full min-h-0'
+              : embeddedWorkspace
+                ? 'h-[34rem]'
+                : embeddedPreview
+                  ? 'h-[30rem]'
+                  : 'h-[42rem] lg:h-[calc(100vh-10rem)]',
             interactionMode === 'camera'
               ? 'cursor-grab'
               : interactionMode === 'select'
@@ -418,9 +407,23 @@ export function StreetSceneCanvasViewView({
               onCommentSubmit={onChangeRequestCommentSubmit}
             />
           </CanvasSelectionPopover>
-        ) : !embeddedPreview && selectedObject && selectedObjectAnchor ? (
-          <CanvasSelectionPopover anchor={selectedObjectAnchor}>
+        ) : null}
+        <CityDesignPropertiesWindow
+          selectionKey={
+            !embeddedPreview && !selectedChangeRequest
+              ? selectedObject
+                ? `object:${selectedObject.id}`
+                : selectedOsmWay
+                  ? `osm:${selectedOsmWay.id}`
+                  : null
+              : null
+          }
+          canvasSize={canvasSize}
+          onClose={() => (selectedObject ? onObjectSelect(null) : onOsmWaySelect(null))}
+        >
+          {selectedObject ? (
             <CityDesignObjectPopover
+              inspector
               object={selectedObject}
               costLine={selectedObjectCostLine}
               isHidden={hiddenObjectIdSet.has(selectedObject.id)}
@@ -434,10 +437,9 @@ export function StreetSceneCanvasViewView({
               onDeleteObject={onDeleteObject}
               onUndoOsmImport={onOsmImportUndo}
             />
-          </CanvasSelectionPopover>
-        ) : !embeddedPreview && selectedOsmWay && selectedOsmAnchor ? (
-          <CanvasSelectionPopover anchor={selectedOsmAnchor}>
+          ) : selectedOsmWay ? (
             <CityDesignOsmPopover
+              inspector
               osmWay={selectedOsmWay}
               readOnly={readOnly}
               hideReadOnly={mapContextReadOnly}
@@ -445,8 +447,8 @@ export function StreetSceneCanvasViewView({
               onHideOsmWay={onOsmWayHide}
               onImportOsmWay={onOsmWayImport}
             />
-          </CanvasSelectionPopover>
-        ) : null}
+          ) : null}
+        </CityDesignPropertiesWindow>
       </div>
       {!embeddedPreview && legendSections.length > 0 ? (
         <Collapsible
@@ -609,6 +611,7 @@ function CanvasSelectionPopover({
 }
 
 export function CityDesignObjectPopover({
+  inspector = false,
   object,
   costLine,
   isHidden,
@@ -622,6 +625,7 @@ export function CityDesignObjectPopover({
   onDeleteObject,
   onUndoOsmImport,
 }: {
+  inspector?: boolean;
   object: CityDesignObject;
   costLine: CityDesignCostLine | null;
   isHidden: boolean;
@@ -651,7 +655,7 @@ export function CityDesignObjectPopover({
       : t(labelKey);
 
   return (
-    <div className="max-h-[min(32rem,70vh)] overflow-auto p-4">
+    <div className={inspector ? undefined : 'max-h-[min(32rem,70vh)] overflow-auto p-4'}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-muted-foreground text-xs font-medium uppercase">
@@ -660,18 +664,20 @@ export function CityDesignObjectPopover({
           <h2 className="truncate text-base font-semibold">{objectLabel}</h2>
           <p className="text-muted-foreground font-mono text-[11px]">{object.id.slice(0, 8)}</p>
         </div>
-        <Button
-          data-action-id="amendments.city-object-popover.close.details"
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          aria-label={t('features.amendments.cityDesign.changeRequests.close')}
-          title={t('features.amendments.cityDesign.changeRequests.close')}
-          onClick={onClose}
-        >
-          <X className="size-4" />
-        </Button>
+        {!inspector && (
+          <Button
+            data-action-id="amendments.city-object-popover.close.details"
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={t('features.amendments.cityDesign.changeRequests.close')}
+            title={t('features.amendments.cityDesign.changeRequests.close')}
+            onClick={onClose}
+          >
+            <X className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -928,6 +934,7 @@ export function CityDesignObjectPopover({
 }
 
 export function CityDesignOsmPopover({
+  inspector = false,
   osmWay,
   readOnly,
   hideReadOnly,
@@ -935,6 +942,7 @@ export function CityDesignOsmPopover({
   onHideOsmWay,
   onImportOsmWay,
 }: {
+  inspector?: boolean;
   osmWay: CityDesignOsmWay;
   readOnly: boolean;
   hideReadOnly: boolean;
@@ -951,7 +959,7 @@ export function CityDesignOsmPopover({
     : null;
 
   return (
-    <div className="max-h-[min(30rem,70vh)] overflow-auto p-4">
+    <div className={inspector ? undefined : 'max-h-[min(30rem,70vh)] overflow-auto p-4'}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-muted-foreground text-xs font-medium uppercase">
@@ -965,18 +973,20 @@ export function CityDesignOsmPopover({
             {osmWay.subkind ? ` · ${osmWay.subkind}` : ''} · {osmWay.id}
           </p>
         </div>
-        <Button
-          data-action-id="amendments.city-osm-popover.close.details"
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          aria-label={t('features.amendments.cityDesign.changeRequests.close')}
-          title={t('features.amendments.cityDesign.changeRequests.close')}
-          onClick={onClose}
-        >
-          <X className="size-4" />
-        </Button>
+        {!inspector && (
+          <Button
+            data-action-id="amendments.city-osm-popover.close.details"
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={t('features.amendments.cityDesign.changeRequests.close')}
+            title={t('features.amendments.cityDesign.changeRequests.close')}
+            onClick={onClose}
+          >
+            <X className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-2 text-sm">

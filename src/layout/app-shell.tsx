@@ -26,6 +26,7 @@ import {
   getAppShellResponsiveClasses,
   getUnauthenticatedPageFrame,
   isLandingPath,
+  isCityDesignCanvasPath,
 } from './app-shell-layout';
 import { PageFrame } from './page-frame';
 
@@ -92,7 +93,9 @@ function UnauthenticatedShell({
 
   return (
     <I18nSyncProvider>
-      <div className="bg-background min-h-screen">
+      <div
+        className={`bg-background min-h-screen ${isCityDesignCanvasPath(pathname) ? 'flow-root' : ''}`}
+      >
         {['primary', 'combined'].includes(navigationType) && (
           <DynamicNavigation
             navigationType="primary"

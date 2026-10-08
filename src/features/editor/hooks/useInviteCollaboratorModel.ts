@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
@@ -11,6 +11,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType } from '../types';
 
 export interface InviteCollaboratorDialogProps {
+  trigger?: ReactNode;
   entityType: EditorEntityType;
   entityId: string;
   currentUserId: string;

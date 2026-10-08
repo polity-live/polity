@@ -154,7 +154,6 @@ export function StreetCostSummaryView({
       {
         category: CityDesignObjectCategory;
         lines: CityDesignCostSummary['lines'];
-        quantity: number;
         totalCostMinor: number;
       }
     >();
@@ -163,11 +162,9 @@ export function StreetCostSummaryView({
       const group = groups.get(line.category) ?? {
         category: line.category,
         lines: [],
-        quantity: 0,
         totalCostMinor: 0,
       };
       group.lines.push(line);
-      group.quantity += line.quantity;
       group.totalCostMinor += line.totalCostMinor;
       groups.set(line.category, group);
     });
@@ -185,102 +182,55 @@ export function StreetCostSummaryView({
     t(`features.amendments.cityDesign.actions.${action}`, { label });
 
   return (
-    <section className={cn('bg-background/95 border-t p-4', variant === 'panel' && 'shadow-none')}>
-      <div
-        className={cn(
-          'grid gap-4',
-          showComparisonControls
-            ? 'xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]'
-            : 'xl:grid-cols-1'
-        )}
-      >
-        <div className="bg-card rounded-md border p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Calculator className="text-muted-foreground size-4" />
-              <h2 className="text-sm font-semibold">
-                {t('features.amendments.cityDesign.cost.title')}
-              </h2>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-semibold">
-                <StreetCurrencyAmount
-                  amountMinor={summary.totalCostMinor}
-                  currency={summary.currency}
-                />
-              </p>
-              <p className="text-muted-foreground text-xs">
-                {t('features.amendments.cityDesign.cost.estimate')}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {summary.categories.length === 0 ? (
-              <div className="bg-muted/20 text-muted-foreground rounded-md border px-3 py-3 text-sm">
-                {t('features.amendments.cityDesign.cost.emptyCategories')}
-              </div>
-            ) : (
-              summary.categories.map((category: CityDesignCostSummary['categories'][number]) => (
-                <div key={category.category} className="bg-muted/20 rounded-md border px-3 py-2">
-                  <p className="text-xs font-medium">{getCategoryLabel(category.category)}</p>
-                  <p className="text-sm font-semibold">
-                    <StreetCurrencyAmount
-                      amountMinor={category.totalCostMinor}
-                      currency={summary.currency}
-                    />
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
+    <section className={cn('bg-background/95', variant === 'panel' ? 'p-0' : 'border-t p-3')}>
+      <div className="flex items-start justify-between gap-3 border-b px-2 py-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <Calculator className="text-muted-foreground size-4" />
+          {t('features.amendments.cityDesign.cost.title')}
+        </h2>
+        <div className="text-right">
+          <p className="text-sm font-semibold tabular-nums">
+            <StreetCurrencyAmount
+              amountMinor={summary.totalCostMinor}
+              currency={summary.currency}
+            />
+          </p>
+          <p className="text-muted-foreground text-[11px]">
+            {t('features.amendments.cityDesign.cost.estimate')}
+          </p>
         </div>
-
-        {showComparisonControls ? (
-          <div className="bg-card rounded-md border p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <GitCompareArrows className="text-muted-foreground size-4" />
-              <h2 className="text-sm font-semibold">
-                {t('features.amendments.cityDesign.cost.comparison')}
-              </h2>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {comparisonModes.map(item => (
-                <Button
-                  key={item.mode}
-                  data-action-id="amendments.city-cost.select.comparison-mode"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'h-10 rounded-md px-2 text-xs',
-                    comparisonMode === item.mode && 'border-brand/40 bg-brand/10 text-brand'
-                  )}
-                  onClick={() => onComparisonModeChange(item.mode)}
-                >
-                  {t(item.labelKey)}
-                </Button>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </div>
-
-      <div className="bg-muted/15 mt-4 rounded-md border p-3">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Layers className="text-muted-foreground size-4" />
-              {t('features.amendments.cityDesign.cost.breakdown')}
-            </div>
-            <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight">
-              {t('features.amendments.cityDesign.cost.breakdownDescription')}
-            </p>
+      {showComparisonControls ? (
+        <div className="bg-card rounded-md border p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <GitCompareArrows className="text-muted-foreground size-4" />
+            <h2 className="text-sm font-semibold">
+              {t('features.amendments.cityDesign.cost.comparison')}
+            </h2>
           </div>
-          <span className="text-muted-foreground text-xs font-medium">{summary.lines.length}</span>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {comparisonModes.map(item => (
+              <Button
+                key={item.mode}
+                data-action-id="amendments.city-cost.select.comparison-mode"
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(
+                  'h-10 rounded-md px-2 text-xs',
+                  comparisonMode === item.mode && 'bg-accent text-accent-foreground'
+                )}
+                onClick={() => onComparisonModeChange(item.mode)}
+              >
+                {t(item.labelKey)}
+              </Button>
+            ))}
+          </div>
         </div>
+      ) : null}
 
-        <div className="max-h-56 space-y-2 overflow-auto">
+      <div className="pt-2">
+        <div className="max-h-[55dvh] space-y-0.5 overflow-auto">
           {summary.lines.length === 0 ? (
             <div className="bg-background/80 text-muted-foreground rounded-md border px-3 py-3 text-sm">
               {t('features.amendments.cityDesign.cost.emptyLines')}
@@ -297,13 +247,13 @@ export function StreetCostSummaryView({
                   key={group.category}
                   open={isCategoryOpen}
                   onOpenChange={open => setCategoryOpen(group.category, open)}
-                  className="space-y-2"
+                  className="space-y-0.5"
                 >
                   <div
                     className={cn(
-                      'bg-background/80 flex h-10 w-full items-center gap-2 rounded-md border px-3 text-xs',
+                      'hover:bg-accent flex min-h-8 w-full items-center gap-1 rounded-sm px-2 text-xs',
                       group.lines.some(line => selectedObjectId === line.objectId) &&
-                        'border-brand/40 bg-brand/10 text-brand'
+                        'bg-accent text-accent-foreground'
                     )}
                   >
                     <CollapsibleTrigger asChild>
@@ -350,14 +300,6 @@ export function StreetCostSummaryView({
                               currency={summary.currency}
                             />
                           </span>
-                          <span
-                            className={cn(
-                              'size-2 rounded-full',
-                              group.lines.some(line => selectedObjectId === line.objectId)
-                                ? 'bg-success'
-                                : 'bg-muted-foreground/35'
-                            )}
-                          />
                         </span>
                       </button>
                     </TooltipHint>
@@ -377,7 +319,7 @@ export function StreetCostSummaryView({
                     </div>
                   </div>
                   <CollapsibleContent>
-                    <div className="space-y-1.5 pl-3">
+                    <div className="space-y-0.5 pl-3">
                       {group.lines.map(line => {
                         const Icon = objectIcons[line.type];
                         const isSelected = selectedObjectId === line.objectId;
@@ -387,8 +329,8 @@ export function StreetCostSummaryView({
                           <div
                             key={line.objectId}
                             className={cn(
-                              'bg-background/70 flex items-center gap-1.5 rounded-md border px-2 py-1.5',
-                              isSelected && 'border-brand/40 bg-brand/10 text-brand'
+                              'hover:bg-accent flex items-center gap-1.5 rounded-sm px-2 py-1.5',
+                              isSelected && 'bg-accent text-accent-foreground'
                             )}
                           >
                             <TooltipHint content={getActionLabel('select', lineLabel)}>
@@ -419,12 +361,6 @@ export function StreetCostSummaryView({
                                       currency={summary.currency}
                                     />
                                   </span>
-                                  <span
-                                    className={cn(
-                                      'size-2 flex-none rounded-full',
-                                      isSelected ? 'bg-success' : 'bg-muted-foreground/35'
-                                    )}
-                                  />
                                 </span>
                               </button>
                             </TooltipHint>

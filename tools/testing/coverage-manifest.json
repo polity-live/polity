@@ -8065,7 +8065,7 @@
         {
           "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
           "project": "component",
-          "caseId": "shows an unsaved changes warning badge only when the design is dirty",
+          "caseId": "forwards the dirty state to the toolbar",
           "evidence": {
             "kind": "instrumented-full-suite",
             "relation": "direct",
@@ -8073,6 +8073,41 @@
             "coveredStatements": 59,
             "totalStatements": 65
           }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestDetailsView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.browser-component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPanel.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignInspectorView.lsf-a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignPageView.lsf-a04.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.component.test.tsx",
+          "project": "component",
+          "caseId": "expands a new selection and retains the keyboard position across selections"
+        },
+        {
+          "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
         }
       ],
       "suggestedTestRefs": [
@@ -8535,6 +8570,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/amendments/city-design/ui/__tests__/CityDesignToolbarView.a04.component.test.tsx",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
@@ -8576,6 +8631,26 @@
     },
     {
       "path": "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.dialog.a04.component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.fixture.tsx",
       "domain": "features:amendments",
       "owner": "polity/features:amendments",
       "kind": "test-infrastructure",
@@ -131950,6 +132025,16 @@
     },
     {
       "path": "tools/testing/accountability/canvas.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/city-design-canvas.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

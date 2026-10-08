@@ -70,6 +70,7 @@ vi.mock('../app-shell-layout', () => ({
     isSecondaryNavVisible ? 'with-secondary' : 'without-secondary',
   getUnauthenticatedPageFrame: (pathname: string) => `frame:${pathname}`,
   isLandingPath: (pathname: string) => pathname === '/',
+  isCityDesignCanvasPath: (pathname: string) => /^\/amendment\/[^/]+\/citydesign$/.test(pathname),
 }));
 vi.mock('../page-frame', () => ({
   PageFrame: ({ children, frame }: any) => <div data-frame={frame}>{children}</div>,

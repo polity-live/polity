@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.component.test.tsx",
+        "project": "component",
+        "caseId": "expands a new selection and retains the keyboard position across selections"
+      },
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx#amendments.city-inspector.move.window": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx#amendments.city-inspector.toggle.window": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignPropertiesWindow.tsx#amendments.city-inspector.close.window": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignPropertiesWindow.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves, collapses and bounds the inspector with native input at %ipx",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignTopBarView.tsx#amendments.city-topbar.open.information": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens project information with keyboard focus and activation",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/ui/CityDesignTopBarView.tsx#editor.collaborator-invite.open": [
+      {
+        "file": "src/features/amendments/city-design/ui/__tests__/CityDesignWorkspace.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "opens the compact invitation and share controls with keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ]
+  }
+}

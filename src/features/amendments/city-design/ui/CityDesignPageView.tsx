@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { formatMinorCurrency } from '../logic/cityDesignCostCatalog';
 import { getCityDesignObjectDefinition } from '../logic/cityDesignObjectRegistry';
 import { getCityDesignOsmFeatures } from '../logic/cityDesignOsm';
 import type {
@@ -48,9 +47,8 @@ import type {
 } from '../types';
 import { StreetAreaPicker } from './StreetAreaPicker';
 import { StreetCostSummaryView } from './StreetCostSummaryView';
-import { CityDesignSecondaryActionBarView, CityDesignTopBarView } from './CityDesignTopBarView';
+import { CityDesignTopBarView } from './CityDesignTopBarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
-import { CityDesignWorkspaceView } from './CityDesignWorkspaceView';
 import type { CityDesignDiscussionLike } from './CityDesignChangeRequestPanel';
 import type { CityDesignRemoteCursor } from '../hooks/useCityDesignRemoteCursors';
 
@@ -291,24 +289,6 @@ export function CityDesignPageView({
     onDeleteObjectCategory(pendingCategoryDeletion);
     setPendingCategoryDeletion(null);
   }, [onDeleteObjectCategory, pendingCategoryDeletion]);
-  const kpis = useMemo(
-    () => [
-      t('features.amendments.cityDesign.metrics.elements', { count: design.objects.length }),
-      t('features.amendments.cityDesign.metrics.cost', {
-        cost: formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
-      }),
-      t('features.amendments.cityDesign.metrics.changeRequests', {
-        count: streetChangeRequests.length,
-      }),
-    ],
-    [
-      costSummary.currency,
-      costSummary.totalCostMinor,
-      design.objects.length,
-      streetChangeRequests.length,
-      t,
-    ]
-  );
   const selectObject = useCallback(
     (objectId: string | null) => {
       setSelectedChangeRequestId(null);
@@ -410,9 +390,43 @@ export function CityDesignPageView({
   }
 
   return (
-    <div className="space-y-2" data-tutorial-anchor="city-design-tree-placement-workspace">
+    <div
+      className="flex h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem))] min-h-0 flex-col overflow-hidden"
+      data-tutorial-anchor="city-design-tree-placement-workspace"
+    >
       {showActionBars ? (
         <CityDesignTopBarView
+          positionMode="container"
+          workspace={{
+            title,
+            selectionAddressLabel,
+            osmWayCount,
+            collaborators: (
+              <OnlineCollaboratorAvatars
+                collaborators={editorCollaborators}
+                onlinePeerMap={onlinePeerMap}
+                activeCursorUserIds={activeCursorUserIds}
+                currentUserId={currentUserId}
+                presenceColorByUserId={presenceColorByUserId}
+                enabled
+              />
+            ),
+            help: <CityDesignNavigationHelp />,
+          }}
+          collaboration={{
+            amendmentId,
+            title,
+            currentUserId,
+            collaborationDocumentId,
+            existingCollaboratorIds,
+            changeRequests: streetChangeRequests,
+            selectedChangeRequestId,
+            showChangeRequests,
+            changeRequestColorMode,
+            onShowChangeRequestsChange: setShowChangeRequests,
+            onChangeRequestColorModeChange,
+            onChangeRequestSelect: selectChangeRequest,
+          }}
           readOnly={readOnly}
           mapContextReadOnly={!canEditMapContext}
           mode={mode}
@@ -494,106 +508,66 @@ export function CityDesignPageView({
         </AlertDialog>
       ) : null}
 
-      <div data-slot="city-design-page-content" className="w-full pt-8 pb-8">
-        {showActionBars ? (
-          <CityDesignSecondaryActionBarView
-            amendmentId={amendmentId}
-            title={title}
-            readOnly={readOnly}
-            currentUserId={currentUserId}
-            collaborationDocumentId={collaborationDocumentId}
-            existingCollaboratorIds={existingCollaboratorIds}
-            changeRequests={streetChangeRequests}
-            selectedChangeRequestId={selectedChangeRequestId}
-            showChangeRequests={showChangeRequests}
-            changeRequestColorMode={changeRequestColorMode}
-            onShowChangeRequestsChange={setShowChangeRequests}
-            onChangeRequestColorModeChange={onChangeRequestColorModeChange}
-            onChangeRequestSelect={selectChangeRequest}
-          />
-        ) : null}
-
-        <CityDesignWorkspaceView
-          contentOnly
-          beforeCard
-          title={title}
-          selectionAddressLabel={selectionAddressLabel}
-          metricLabels={[
-            t('features.amendments.cityDesign.metrics.existing', { count: osmWayCount }),
-            ...kpis,
-          ]}
-          isDirty={isDirty}
-          collaborators={
-            <OnlineCollaboratorAvatars
-              collaborators={editorCollaborators}
-              onlinePeerMap={onlinePeerMap}
-              activeCursorUserIds={activeCursorUserIds}
-              currentUserId={currentUserId}
-              presenceColorByUserId={presenceColorByUserId}
-              enabled
-            />
-          }
-          headerActions={<CityDesignNavigationHelp />}
-        >
-          <StreetSceneCanvasView
-            design={design}
-            initialLegendOpen={false}
-            isLoadingOsm={isLoadingOsm}
-            placementPreview={placementPreview}
-            placementPreviewType={placementPreviewType}
-            placementStart={placementStart}
-            placementMode={placementMode}
-            placementPointCount={placementPointCount}
-            canFinishPathPlacement={canFinishPathPlacement}
-            selectedObjectId={selectedObjectId}
-            selectedObject={selectedObject}
-            selectedObjectCostLine={selectedObjectCostLine}
-            selectedObjectFocusRequestKey={selectedObjectFocusRequestKey}
-            hiddenObjectIds={hiddenObjectIds}
-            hiddenObjectCategories={hiddenObjectCategories}
-            selectedOsmWayId={selectedOsmWay?.id ?? null}
-            selectedOsmWay={selectedOsmWay}
-            selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
-            interactionMode={interactionMode}
-            readOnly={readOnly}
-            mapContextReadOnly={!canEditMapContext}
-            changeRequests={streetChangeRequests}
-            cityDesignDiscussions={cityDesignDiscussions}
-            selectedChangeRequestId={selectedChangeRequestId}
-            showChangeRequests={showChangeRequests}
-            changeRequestColorMode={changeRequestColorMode}
-            canVoteOnChangeRequests={canVoteOnStreetChangeRequests}
-            canFinalizeChangeRequests={canFinalizeStreetChangeRequests}
-            currentUserId={currentUserId}
-            currentUserDisplayName={currentUserDisplayName}
-            currentUserAvatarUrl={currentUserAvatarUrl}
-            collaborators={editorCollaborators}
-            remoteCursors={remoteCursors}
-            onPointerDown={onScenePointerDown}
-            onPointerMove={onScenePointerMove}
-            onPointerHover={onScenePointerHover}
-            onFinishPlacement={onFinishPlacement}
-            onFinishPathPlacement={onFinishPathPlacement}
-            onCancelPlacement={onCancelPlacement}
-            onObjectSelect={selectObject}
-            onOsmWaySelect={selectOsmWay}
-            onObjectVisibilityChange={onObjectVisibilityChange}
-            onOsmWayHide={onOsmWayHide}
-            onOsmWayImport={onOsmWayImport}
-            onOsmImportUndo={onOsmImportUndo}
-            onObjectRotate={onRotationChange}
-            onPropertyChange={onPropertyChange}
-            onWidthChange={onWidthChange}
-            onRotationChange={onRotationChange}
-            onUnitCostChange={onUnitCostChange}
-            onDeleteObject={onDeleteObject}
-            onChangeRequestSelect={selectChangeRequest}
-            onChangeRequestVote={onChangeRequestVote}
-            onChangeRequestFinalize={onChangeRequestFinalize}
-            onChangeRequestTitleChange={onChangeRequestTitleChange}
-            onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
-          />
-        </CityDesignWorkspaceView>
+      <div data-slot="city-design-page-content" className="min-h-0 w-full flex-1">
+        <StreetSceneCanvasView
+          fillContainer
+          design={design}
+          initialLegendOpen={false}
+          isLoadingOsm={isLoadingOsm}
+          placementPreview={placementPreview}
+          placementPreviewType={placementPreviewType}
+          placementStart={placementStart}
+          placementMode={placementMode}
+          placementPointCount={placementPointCount}
+          canFinishPathPlacement={canFinishPathPlacement}
+          selectedObjectId={selectedObjectId}
+          selectedObject={selectedObject}
+          selectedObjectCostLine={selectedObjectCostLine}
+          selectedObjectFocusRequestKey={selectedObjectFocusRequestKey}
+          hiddenObjectIds={hiddenObjectIds}
+          hiddenObjectCategories={hiddenObjectCategories}
+          selectedOsmWayId={selectedOsmWay?.id ?? null}
+          selectedOsmWay={selectedOsmWay}
+          selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
+          interactionMode={interactionMode}
+          readOnly={readOnly}
+          mapContextReadOnly={!canEditMapContext}
+          changeRequests={streetChangeRequests}
+          cityDesignDiscussions={cityDesignDiscussions}
+          selectedChangeRequestId={selectedChangeRequestId}
+          showChangeRequests={showChangeRequests}
+          changeRequestColorMode={changeRequestColorMode}
+          canVoteOnChangeRequests={canVoteOnStreetChangeRequests}
+          canFinalizeChangeRequests={canFinalizeStreetChangeRequests}
+          currentUserId={currentUserId}
+          currentUserDisplayName={currentUserDisplayName}
+          currentUserAvatarUrl={currentUserAvatarUrl}
+          collaborators={editorCollaborators}
+          remoteCursors={remoteCursors}
+          onPointerDown={onScenePointerDown}
+          onPointerMove={onScenePointerMove}
+          onPointerHover={onScenePointerHover}
+          onFinishPlacement={onFinishPlacement}
+          onFinishPathPlacement={onFinishPathPlacement}
+          onCancelPlacement={onCancelPlacement}
+          onObjectSelect={selectObject}
+          onOsmWaySelect={selectOsmWay}
+          onObjectVisibilityChange={onObjectVisibilityChange}
+          onOsmWayHide={onOsmWayHide}
+          onOsmWayImport={onOsmWayImport}
+          onOsmImportUndo={onOsmImportUndo}
+          onObjectRotate={onRotationChange}
+          onPropertyChange={onPropertyChange}
+          onWidthChange={onWidthChange}
+          onRotationChange={onRotationChange}
+          onUnitCostChange={onUnitCostChange}
+          onDeleteObject={onDeleteObject}
+          onChangeRequestSelect={selectChangeRequest}
+          onChangeRequestVote={onChangeRequestVote}
+          onChangeRequestFinalize={onChangeRequestFinalize}
+          onChangeRequestTitleChange={onChangeRequestTitleChange}
+          onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
+        />
       </div>
     </div>
   );

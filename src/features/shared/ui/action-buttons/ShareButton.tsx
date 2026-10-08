@@ -22,6 +22,7 @@ interface ShareButtonProps {
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
   compactOnMobile?: boolean;
+  trigger?: ReactNode;
 }
 import { useShareButtonController } from './useShareButtonController';
 import { ShareButtonView } from './ShareButtonView';
@@ -38,6 +39,7 @@ export function ShareButton({
   size = 'default',
   className = '',
   compactOnMobile = false,
+  trigger,
 }: ShareButtonProps) {
   const viewProps = useShareButtonController({
     url,
@@ -51,5 +53,12 @@ export function ShareButton({
     className: cn(compactOnMobile && compactActionButtonClassName, className),
   });
 
-  return <ShareButtonView {...viewProps} actionId={actionId} compactOnMobile={compactOnMobile} />;
+  return (
+    <ShareButtonView
+      {...viewProps}
+      actionId={actionId}
+      compactOnMobile={compactOnMobile}
+      trigger={trigger}
+    />
+  );
 }

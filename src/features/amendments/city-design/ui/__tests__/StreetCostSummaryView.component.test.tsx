@@ -62,7 +62,8 @@ describe('StreetCostSummaryView', () => {
       />
     );
 
-    expect(screen.getByText('Cost breakdown')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Costs' })).toBeTruthy();
+    expect(screen.queryByText('Cost breakdown')).toBeNull();
     expect(screen.getByRole('button', { name: 'Expand Greenery' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Expand Greenery' }));
     fireEvent.click(screen.getByRole('button', { name: 'Select Tree' }));

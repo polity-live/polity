@@ -559,6 +559,7 @@ export const amendmentsTranslations = {
       mode: 'Mode',
     },
     topbar: {
+      information: 'Project information',
       area: 'Area',
       allChangeRequests: 'All change requests',
       changeRequests: 'Change requests',
@@ -632,6 +633,10 @@ export const amendmentsTranslations = {
       water: 'Water',
     },
     inspector: {
+      close: 'Close properties',
+      move: 'Move properties',
+      collapse: 'Collapse properties',
+      expand: 'Expand properties',
       activeDraft: 'Active draft',
       area: 'Area',
       baseElevation: 'Base elevation',

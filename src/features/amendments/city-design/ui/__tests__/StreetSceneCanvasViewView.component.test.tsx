@@ -246,7 +246,7 @@ describe('StreetSceneCanvasViewView', () => {
     );
     fireEvent.click(
       document.querySelector<HTMLElement>(
-        '[data-action-id="amendments.city-object-popover.close.details"]'
+        '[data-action-id="amendments.city-inspector.close.window"]'
       ) as HTMLElement
     );
 

@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { Check, Loader2, UserPlus, X } from 'lucide-react';
@@ -33,9 +34,13 @@ import type { InviteCollaboratorModel } from '../hooks/useInviteCollaboratorMode
 
 interface InviteCollaboratorDialogViewProps {
   model: InviteCollaboratorModel;
+  trigger?: ReactNode;
 }
 
-export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialogViewProps) {
+export function InviteCollaboratorDialogView({
+  model,
+  trigger,
+}: InviteCollaboratorDialogViewProps) {
   const {
     filteredUsers,
     handleInvite,
@@ -53,11 +58,13 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" data-action-id="editor.collaborator-invite.open">
-          <UserPlus className="mr-2 h-4 w-4" />
-          {t('features.editor.inviteDialog.invite')}
-        </Button>
+      <DialogTrigger data-action-scope="presentation" asChild>
+        {trigger ?? (
+          <Button variant="outline" size="sm" data-action-id="editor.collaborator-invite.open">
+            <UserPlus className="mr-2 h-4 w-4" />
+            {t('features.editor.inviteDialog.invite')}
+          </Button>
+        )}
       </DialogTrigger>
       <ScrollableDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
