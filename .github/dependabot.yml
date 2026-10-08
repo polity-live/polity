@@ -58,6 +58,9 @@ updates:
         update-types: ["minor", "patch"]
         patterns: ["*"]
     ignore:
+      # CLI 2.119+ changes the local Postgres function-grant baseline; migrate separately.
+      - dependency-name: "supabase"
+        versions: [">=2.119.0"]
       # Major migrations require an explicit compatibility/security review.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
