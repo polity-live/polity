@@ -372,6 +372,7 @@ it('searches nested rich text and selects its matching node', async () => {
       />
     </div>
   );
+  await waitFor(() => expect(stage().width()).toBe(700));
   await act(async () => {
     await ref.current!.execute({ type: 'search', query: 'needle' });
   });
