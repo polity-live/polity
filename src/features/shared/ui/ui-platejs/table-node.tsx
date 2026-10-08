@@ -401,7 +401,7 @@ export function TableRowElement(props: PlateElementProps<TTableRowElement>) {
     element,
     type: element.type,
     canDropNode: ({ dragEntry, dropEntry }) =>
-      PathApi.equals(PathApi.parent(dragEntry[1]), PathApi.parent(dropEntry[1])),
+      !!dragEntry && PathApi.equals(PathApi.parent(dragEntry[1]), PathApi.parent(dropEntry[1])),
     onDropHandler: (_, { dragItem }) => {
       const dragElement = (dragItem as { element: TElement }).element;
 

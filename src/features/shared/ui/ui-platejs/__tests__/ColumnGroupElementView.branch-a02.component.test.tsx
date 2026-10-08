@@ -166,6 +166,7 @@ describe('ColumnGroupElementView branch contracts', () => {
     expect(state.handleRef).toHaveBeenCalled();
     expect(state.previewRef).toHaveBeenCalled();
     expect(originalRef).toHaveBeenCalled();
+    expect(state.canDropNode?.({ dragEntry: undefined, dropEntry: [{}, [0, 1]] })).toBe(false);
     expect(state.canDropNode?.({ dragEntry: [{}, [0, 0]], dropEntry: [{}, [0, 1]] })).toBe(true);
     expect(state.canDropNode?.({ dragEntry: [{}, [0, 0]], dropEntry: [{}, [1, 0]] })).toBe(false);
   });
