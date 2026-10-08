@@ -338,6 +338,22 @@ describe('useStreetSceneCanvasViewController', () => {
     expect(latestControllerViewProps?.onOsmImportUndo('osm-1')).toBeUndefined();
   });
 
+  it('keeps an unchanged initial scene without a redundant option sync', async () => {
+    const controller = createSceneControllerMock();
+    mountCityDesignSceneMock.mockResolvedValueOnce(controller);
+    const view = render(<ControllerHarness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mountCityDesignSceneMock).toHaveBeenCalledTimes(1);
+    expect(controller.updateDesign).not.toHaveBeenCalled();
+    expect(controller.updateSelection).not.toHaveBeenCalled();
+    expect(controller.updateHandlers).not.toHaveBeenCalled();
+    view.unmount();
+    expect(controller.dispose).toHaveBeenCalledOnce();
+  });
+
   it('syncs options changed while an async mount is pending', async () => {
     let resolveMount!: (controller: ReturnType<typeof createSceneControllerMock>) => void;
     const controller = createSceneControllerMock();

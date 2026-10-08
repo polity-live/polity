@@ -72,7 +72,7 @@ export function useCityDesignMeasurements({
   useEffect(() => {
     const id = selectedObjectId ?? selectedOsmWayId;
     if (!id) {
-      setSelection([]);
+      setSelection(current => (current.length === 0 ? current : []));
       return;
     }
     const layer: CityDesignComparisonLayer = selectedObjectId ? 'design' : 'original';

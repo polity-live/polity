@@ -626,26 +626,25 @@ export function updateCorridorWidth(object: CityDesignObject, width: number): Ci
     Math.abs(width - object.geometry.width) < 0.001
   )
     return object;
-  if (object.properties.widthSource)
-    object = { ...object, properties: { ...object.properties, widthSource: 'user' } };
+  const properties = object.properties.widthSource
+    ? { ...object.properties, widthSource: 'user' }
+    : object.properties;
   if (object.geometry.kind === 'corridor') {
     return {
       ...object,
+      properties,
       geometry: createCorridorGeometry(object.geometry.start, object.geometry.end, width),
     };
   }
 
-  if (object.geometry.kind === 'path_corridor') {
-    return {
-      ...object,
-      geometry:
-        object.geometry.cornerRadius === 0
-          ? createSampledCorridorGeometry(object.geometry.roundedCenterline, width)
-          : createPathCorridorGeometry(object.geometry.points, width),
-    };
-  }
-
-  return object;
+  return {
+    ...object,
+    properties,
+    geometry:
+      object.geometry.cornerRadius === 0
+        ? createSampledCorridorGeometry(object.geometry.roundedCenterline, width)
+        : createPathCorridorGeometry(object.geometry.points, width),
+  };
 }
 
 export function movePointObject(

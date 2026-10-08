@@ -1392,6 +1392,72 @@ describe('mountCityDesignScene', () => {
     expect(disconnect).toHaveBeenCalledOnce();
   });
 
+  it('animates idle water and shrubs with missing metadata and array-backed materials', async () => {
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    const options = createOptions({
+      design: {
+        ...createEmptyCityDesignState(),
+        objects: [
+          createCorridorCityDesignObject({
+            id: 'idle-water',
+            type: 'water_area',
+            start: { x: 0, z: 0 },
+            end: { x: 20, z: 0 },
+            width: 4,
+          }),
+          createPointCityDesignObject({
+            id: 'idle-bush',
+            type: 'bush',
+            point: { x: 0, z: 8 },
+          }),
+        ],
+      },
+    });
+    controller = await mountCityDesignScene(options);
+    flushFrame();
+    const scene = sceneDoubles.renderers[0]!.render.mock.calls[0]![0] as import('three').Scene;
+    const animated: import('three').Object3D[] = [];
+    scene.traverse(object => {
+      if (object.userData.motion) animated.push(object);
+    });
+    const ripples = animated.filter(object => object.userData.motion === 'waterRipple');
+    expect(ripples.length).toBeGreaterThan(1);
+    const arrayRipple = ripples[0] as import('three').Mesh;
+    const rippleMaterial = arrayRipple.material as import('three').Material;
+    const originalOpacity = rippleMaterial.opacity;
+    const originalY = arrayRipple.position.y;
+    arrayRipple.material = [rippleMaterial];
+    delete arrayRipple.userData.baseY;
+    delete arrayRipple.userData.phase;
+    const fallbackRipple = ripples[1] as import('three').Mesh;
+    delete fallbackRipple.userData.baseOpacity;
+    const glint = animated.find(
+      object => object.userData.motion === 'waterGlint'
+    ) as import('three').Mesh;
+    expect(glint).toBeDefined();
+    const glintMaterial = glint.material as import('three').Material;
+    const glintOpacity = glintMaterial.opacity;
+    glint.material = [glintMaterial];
+    const bush = animated.find(object => object.userData.motion === 'bush')!;
+    expect(bush).toBeDefined();
+
+    // Demand rendering needs an explicit idle frame after the metadata changes.
+    window.dispatchEvent(new Event('resize'));
+    flushFrame(32);
+
+    expect(arrayRipple.position.y).toBeCloseTo(
+      originalY + Math.sin(animated.indexOf(arrayRipple)) * 0.014
+    );
+    expect(rippleMaterial.opacity).toBe(originalOpacity);
+    expect((fallbackRipple.material as import('three').Material).opacity).toBeCloseTo(
+      0.42 + Math.sin(fallbackRipple.userData.phase) * 0.08
+    );
+    expect(glintMaterial.opacity).toBe(glintOpacity);
+    expect(bush.rotation.z).toBeCloseTo(Math.sin(bush.userData.phase) * 0.02);
+    expect(sceneDoubles.renderers[0]!.render).toHaveBeenCalledTimes(2);
+    expect(animationFrames).toHaveLength(0);
+  });
+
   it('renders every registered object kind and rebuilds filtered comparison layers', async () => {
     const performanceNow = vi.spyOn(performance, 'now').mockReturnValue(0);
     const design: CityDesignStateV1 = {
