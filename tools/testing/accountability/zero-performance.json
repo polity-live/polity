@@ -1,6 +1,18 @@
 {
   "version": 1,
   "sourceReferences": {
+    "src/zero/agendas/agenda-times.ts": [
+      {
+        "file": "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates ordered event times and respects actual completion boundaries"
+      },
+      {
+        "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+      }
+    ],
     "src/zero/amendments/useAmendmentActionState.ts": [
       {
         "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
@@ -71,5 +83,28 @@
     ]
   },
   "actionReferences": {},
-  "actionDeclarations": {}
+  "actionDeclarations": {},
+  "sourceReferenceAdditions": {
+    "src/features/agendas/hooks/useEventAgendaItem.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
+        "project": "component",
+        "caseId": "uses stable protected timing demand and clears the estimate after revocation"
+      }
+    ],
+    "src/zero/network/queries.ts": [
+      {
+        "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires validated group foreign keys for every equivalent PK lookup"
+      }
+    ],
+    "src/features/agendas/hooks/useAgendaItems.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+      }
+    ]
+  }
 }

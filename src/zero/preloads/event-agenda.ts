@@ -175,9 +175,9 @@ export function createEventAgendaBasePreloadEntries(eventId: string): ZeroPreloa
       queries.events.agendaItemsFull({ eventId })
     ),
     createPreloadEntry(
-      'queries.agendas.byEvent',
-      { event_id: eventId },
-      queries.agendas.byEvent({ event_id: eventId })
+      'queries.agendas.timingByEventIds',
+      { event_ids: [eventId] },
+      queries.agendas.timingByEventIds({ event_ids: [eventId] })
     ),
   ];
 }
