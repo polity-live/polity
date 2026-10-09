@@ -124,7 +124,7 @@ export function queryObservationFailures(query: QueryObservation, absoluteBudget
   if (query.kind === 'materialized') {
     const retainedLocal =
       Boolean(query.views?.length) &&
-      query.views!.every(
+      query.views?.every(
         view =>
           valid(view.clientMs) &&
           valid(view.clientMeasuredAt) &&

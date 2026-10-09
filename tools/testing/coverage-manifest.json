@@ -115594,6 +115594,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/test/__tests__/local-database.unit.test.ts",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/test/__tests__/uiActionScope.unit.test.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
@@ -115625,6 +115635,16 @@
     },
     {
       "path": "src/test/empty-style.ts",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/test/local-database.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
       "kind": "test-infrastructure",

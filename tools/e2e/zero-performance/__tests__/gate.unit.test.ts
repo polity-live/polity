@@ -20,6 +20,8 @@ import {
   isolatedPorts,
   safeEnvironment,
   isolatedBuildEnvironment,
+  isolatedIntegrityEnvironment,
+  applicationStorageBuckets,
   verifyBuildAssets,
 } from '../isolation.mjs';
 import {
@@ -844,6 +846,50 @@ describe('Zero performance gate', () => {
     expect(() =>
       assertOutputDirectory(process.cwd(), 'output/zero-performance/new-run')
     ).not.toThrow();
+  });
+  it('provisions the app storage limits without importing services or existing objects', () => {
+    const configuration = `[api]\nport=54321\n[storage.buckets.studio]\npublic=false\nfile_size_limit="100MiB"\nallowed_mime_types=["image/png"]\n[analytics]\nenabled=true\n`;
+    expect(applicationStorageBuckets(configuration)).toBe(
+      '[storage.buckets.studio]\npublic=false\nfile_size_limit="100MiB"\nallowed_mime_types=["image/png"]\n'
+    );
+    expect(() =>
+      applicationStorageBuckets('[storage.buckets.studio]\nobjects_path="./development"\n')
+    ).toThrow();
+  });
+  it('overrides every database alias for isolated integrity tests and rejects development targets', () => {
+    const database = 'postgresql://postgres:benchmark@127.0.0.1:55625/postgres';
+    const source = {
+      ZERO_UPSTREAM_DB: database,
+      SUPABASE_URL: 'http://127.0.0.1:55624',
+      DATABASE_URL: 'development',
+      SUPABASE_DB_URL: 'development',
+      STUDIO_DATABASE_URL: 'development',
+      STUDIO_TEST_DATABASE_URL: 'development',
+      E2E_DATABASE_URL: 'development',
+      NODE_ENV: 'production',
+    };
+    const isolated = isolatedIntegrityEnvironment(source, database);
+    expect(isolated.NODE_ENV).toBe('test');
+    for (const name of [
+      'ZERO_UPSTREAM_DB',
+      'DATABASE_URL',
+      'SUPABASE_DB_URL',
+      'STUDIO_DATABASE_URL',
+      'STUDIO_TEST_DATABASE_URL',
+      'E2E_DATABASE_URL',
+    ])
+      expect(isolated[name]).toBe(database);
+    for (const target of [
+      database.replace('55625', '54322'),
+      database.replace('127.0.0.1', 'production.example'),
+      database.replace('/postgres', '/development'),
+      database.replace('55625', '55626'),
+    ])
+      expect(() => isolatedIntegrityEnvironment(source, target)).toThrow();
+    expect(() =>
+      isolatedIntegrityEnvironment({ ...source, SUPABASE_URL: 'http://localhost:54321' }, database)
+    ).toThrow();
+    expect(source.DATABASE_URL).toBe('development');
   });
   it('rejects missing, nonfinite and negative measurements instead of treating them as fast', () => {
     for (const value of [[], [NaN], [Infinity], [-1]])

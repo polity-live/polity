@@ -572,11 +572,14 @@ export const groupQueries = {
       .related('amendments', q => applyAmendmentQueryAccess(q, userID))
       .related('offline_members', q =>
         q
-          .whereExists('group', group =>
-            applyGroupManagerQueryAccess(group, userID, 'manage_members', [
-              'groups',
-              'groupMemberships',
-            ])
+          .whereExists(
+            'group',
+            group =>
+              applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+                'groups',
+                'groupMemberships',
+              ]),
+            { flip: false }
           )
           .related('connected_user')
           .related('created_by')
@@ -604,13 +607,18 @@ export const groupQueries = {
       .related('group_hashtags', q => q.related('hashtag'))
       .related('roles', q =>
         q
-          .whereExists('group', group =>
-            applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+          .whereExists(
+            'group',
+            group =>
+              applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles']),
+            { flip: false }
           )
           .related('holder_history', q => q.related('user'))
       )
       .related('blogs', q =>
-        applyBlogQueryAccess(q, userID).related('blog_hashtags', q => q.related('hashtag'))
+        // This relation is already restricted to one parent group. Keep access
+        // checks on those blogs rather than enumerating 128 global join plans.
+        applyBlogQueryAccess(q, userID, true).related('blog_hashtags', q => q.related('hashtag'))
       )
   ),
 

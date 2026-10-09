@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -33,13 +33,17 @@ jobs:
         id: zero-control
         continue-on-error: true
         run: pnpm zero:analyze --query users.current --case default --output output/zero-performance/ubuntu-control
+      - name: Check database integrity in a separate owned stack
+        id: zero-integrity
+        continue-on-error: true
+        run: node tools/e2e/zero-performance/run.mjs --layer integrity --output output/zero-performance/ubuntu-integrity
       - name: Measure every Zero query and navigation with strict budgets
         env:
           ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: pnpm test:zero:performance
       - name: Upload all measurements, plans, comparisons and service diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: zero-query-performance-${{ github.run_attempt }}
           if-no-files-found: error
@@ -56,17 +60,19 @@ jobs:
             output/zero-performance/**/navigation.cpuprofile
             output/zero-performance/**/screenshots/*.png
             output/zero-performance/**/startup.json
+            output/zero-performance/**/integrity.json
             output/zero-performance/**/failure.json
             output/zero-performance/**/gate-failure.json
             output/zero-performance/**/*.log
       - name: Stop any remaining owned benchmark stacks
         if: always()
         run: node tools/e2e/zero-performance/cleanup.mjs
-      - name: Verify simple control query outcome
+      - name: Verify simple control query and database integrity outcomes
         if: always()
         env:
           CONTROL_OUTCOME: ${{ steps.zero-control.outcome }}
-        run: test "$CONTROL_OUTCOME" = success
+          INTEGRITY_OUTCOME: ${{ steps.zero-integrity.outcome }}
+        run: test "$CONTROL_OUTCOME" = success && test "$INTEGRITY_OUTCOME" = success
 
   static-analysis:
     name: Static Analysis

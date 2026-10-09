@@ -51,6 +51,41 @@ export function isolatedBuildEnvironment(sandbox) {
   };
 }
 
+export function applicationStorageBuckets(configuration) {
+  const sections = configuration
+    .split(/(?=^\[)/m)
+    .filter(section => /^\[storage\.buckets\.[\w-]+\]/.test(section));
+  if (sections.some(section => /^\s*objects_path\s*=/m.test(section)))
+    throw new Error('Benchmark storage buckets cannot seed existing object contents');
+  return sections.join('\n');
+}
+
+/** Run existing DB contracts only against the verified, newly created benchmark DB. */
+export function isolatedIntegrityEnvironment(source, verifiedDatabaseURL) {
+  const address = new URL(verifiedDatabaseURL);
+  const start = Number(address.port) - 5;
+  const ports = isolatedPorts(start);
+  if (
+    address.protocol !== 'postgresql:' ||
+    address.hostname !== '127.0.0.1' ||
+    address.pathname !== '/postgres' ||
+    start % 10 !== 0 ||
+    source.ZERO_UPSTREAM_DB !== verifiedDatabaseURL ||
+    source.SUPABASE_URL !== `http://127.0.0.1:${ports.api}`
+  )
+    throw new Error('Integrity tests require the verified isolated benchmark database');
+  return {
+    ...source,
+    NODE_ENV: 'test',
+    ZERO_UPSTREAM_DB: verifiedDatabaseURL,
+    DATABASE_URL: verifiedDatabaseURL,
+    SUPABASE_DB_URL: verifiedDatabaseURL,
+    E2E_DATABASE_URL: verifiedDatabaseURL,
+    STUDIO_DATABASE_URL: verifiedDatabaseURL,
+    STUDIO_TEST_DATABASE_URL: verifiedDatabaseURL,
+  };
+}
+
 export async function verifyBuildAssets(appURL, request = fetch) {
   const response = await request(appURL);
   if (!response.ok) throw new Error('Production build readiness failed');

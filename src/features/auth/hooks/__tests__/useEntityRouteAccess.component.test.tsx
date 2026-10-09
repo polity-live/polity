@@ -102,7 +102,12 @@ describe('useEntityRouteAccess create recovery', () => {
     auth.session = { access_token: 'token', user: { id: 'member' } };
     vi.mocked(entityRouteAccessFn)
       .mockResolvedValueOnce({ exists: true, visibilities: ['private'], canAccessPrivate: true })
-      .mockImplementation(() => new Promise(() => {}));
+      .mockImplementation(
+        () =>
+          new Promise(() => {
+            // Leave the refresh pending while local authorization is withdrawn.
+          })
+      );
     const owner: RouteOwnerEvidence = {
       entityType: 'group',
       entityId: 'group-1',

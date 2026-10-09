@@ -382,7 +382,7 @@ export async function measureJourneys(
       } catch (error) {
         // Diagnostic replay must not prevent the subscribed update/revocation
         // checks from running. Preserve the failure on the real navigation record.
-        records.at(-1)!.failures.push(`Navigation CPU diagnostics: ${String(error)}`);
+        required(records.at(-1)).failures.push(`Navigation CPU diagnostics: ${String(error)}`);
       } finally {
         const { profile } = await profiler.send('Profiler.stop');
         await writeFile(
@@ -401,7 +401,7 @@ export async function measureJourneys(
         failures: warnings,
       });
     // A real subscribed result must lose private data after membership revocation.
-    const subscribedGroup = routes[1]!;
+    const subscribedGroup = required(routes[1]);
     await navigate(page, subscribedGroup.path, subscribedGroup.search ?? {}, subscribedGroup);
     await page.waitForFunction(
       () => {

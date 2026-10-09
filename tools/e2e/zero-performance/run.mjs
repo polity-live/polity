@@ -11,6 +11,8 @@ import {
   isolatedPorts,
   safeEnvironment,
   isolatedBuildEnvironment,
+  isolatedIntegrityEnvironment,
+  applicationStorageBuckets,
   verifyBuildAssets,
 } from './isolation.mjs';
 import {
@@ -46,7 +48,7 @@ let runtimeContainer;
 let appContainer;
 
 function executable(relative) {
-  return path.join(root, 'node_modules', relative);
+  return path.join(sandbox, 'node_modules', relative);
 }
 function run(command, argv, options = {}) {
   const label = options.label ?? path.basename(command);
@@ -310,6 +312,9 @@ try {
   const cacheURL = `http://127.0.0.1:${start + 1}`;
   // Zero also owns port+1 (change streamer) and port+2 (replication manager).
   const supabaseURL = `http://127.0.0.1:${start + 4}`;
+  const storageBuckets = applicationStorageBuckets(
+    await readFile(path.join(sandbox, 'supabase/config.toml'), 'utf8')
+  );
   await writeFile(
     path.join(sandbox, 'supabase/config.toml'),
     `project_id = "polity-zero-performance-${runID}"
@@ -340,6 +345,7 @@ enable_signup = true
 enable_confirmations = false
 [storage]
 enabled = true
+${storageBuckets}
 `
   );
   console.info(`Isolated benchmark ${runID}; artifacts: ${artifactRoot}`);
@@ -408,7 +414,39 @@ enabled = true
       ? { ZERO_PERFORMANCE_SELECTION: path.join(sandbox, '.zero-performance-selection.json') }
       : {}),
   };
-  if (option('--layer') === 'fixtures') {
+  if (option('--layer') === 'integrity') {
+    if (filter || selectedCase || selectionFile)
+      throw new Error('The isolated integrity layer must run the full database test project');
+    environment = isolatedIntegrityEnvironment(environment, configuration.DB_URL);
+    const integrityAt = performance.now();
+    let integrityError;
+    try {
+      await command(
+        [
+          executable('vitest/vitest.mjs'),
+          'run',
+          '--project',
+          'database-integration',
+          '--maxWorkers=1',
+        ],
+        'integrity'
+      );
+    } catch (error) {
+      integrityError = error;
+    }
+    startup.integrityMs = performance.now() - integrityAt;
+    await writeFile(
+      path.join(artifactRoot, 'integrity.json'),
+      JSON.stringify({
+        layer: 'integrity',
+        isolated: true,
+        projectID: `polity-zero-performance-${runID}`,
+        elapsedMs: startup.integrityMs,
+        outcome: integrityError ? 'failed' : 'passed',
+      })
+    );
+    if (integrityError) throw integrityError;
+  } else if (option('--layer') === 'fixtures') {
     await command(['--import', 'tsx', 'tools/e2e/zero-performance/fixture-check.ts'], 'fixtures');
   } else {
     if (

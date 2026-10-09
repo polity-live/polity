@@ -1,13 +1,11 @@
 import { readFileSync } from 'node:fs';
 import postgres from 'postgres';
+import { isLocalTestDatabase } from '@/test/local-database';
 import { expect, it } from 'vitest';
 
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
-if (
-  !['localhost', '127.0.0.1'].includes(new URL(database).hostname) ||
-  new URL(database).port !== '54322'
-)
+if (!isLocalTestDatabase(database))
   throw new Error('Personal Studio access tests require the local development database');
 
 it('grants edit only after acceptance and removes it on decline or revocation', async () => {
