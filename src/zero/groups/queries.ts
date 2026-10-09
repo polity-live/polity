@@ -154,7 +154,9 @@ export const groupQueries = {
     }) => {
       let q: any = applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
-        .whereExists('group', group => applyGroupAccess(group, userID));
+        .whereExists('group', group => applyGroupQueryAccess(group, userID, true), {
+          flip: false,
+        });
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId)

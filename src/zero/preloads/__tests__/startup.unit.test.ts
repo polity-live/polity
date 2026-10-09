@@ -45,6 +45,7 @@ describe('initial authenticated query registration', () => {
     initializeAppQueries(state.zero as unknown as Zero);
     const starts = events.filter(event => event.phase === 'preload-start');
     expect(starts).toHaveLength(7);
+    expect(starts[0]?.key).toContain('queries.search.searchDocumentPage:');
     expect(starts.map(event => event.key)).toContain(
       preloadKey(
         'queries.search.searchDocumentPage',

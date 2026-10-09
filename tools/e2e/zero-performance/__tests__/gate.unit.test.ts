@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 import {
   BUDGETS,
   REPETITIONS,
@@ -23,6 +24,7 @@ import {
   isolatedIntegrityEnvironment,
   applicationStorageBuckets,
   verifyBuildAssets,
+  pipeRuntimeLogLines,
 } from '../isolation.mjs';
 import {
   reportFailures,
@@ -30,8 +32,10 @@ import {
   serverWarningFailures,
   securityCoverageFailures,
   navigationMaterializationFailures,
+  isAbsoluteBudgetFailure,
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
+  measuredServerWarnings,
 } from '../report';
 import { stopOwnedRuntime, dependencyVersions } from '../linux-runtime.mjs';
 import {
@@ -57,6 +61,7 @@ import {
   viewRuns,
   type QueryObservation,
 } from '../journey-metrics';
+import { measurementSummary, resultsCSV } from '../results';
 
 function measurement(overrides: Partial<Measurement> = {}): Measurement {
   return {
@@ -72,16 +77,18 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
     observedIDs: Array.from({ length: REPETITIONS.materialize }, () => ['fixture']),
     samples: Array.from({ length: REPETITIONS.materialize }, (_, index) => ({
       queryID: 'query',
+      clientCorrelationID: `correlation-${index}`,
       activatedAt: 1000 + index * 100,
       authoritativeAt: 1100 + index * 100,
       api: {
         requestID: `request-${index}`,
+        clientCorrelationID: `correlation-${index}`,
         authMs: 10,
         transformMs: 1,
         requestMs: 20,
         arrivalAt: 1001 + index * 100,
         responseAt: 1021 + index * 100,
-        responseToAuthoritativeMs: 79,
+        clock: 'api-server' as const,
         structure: { bytes: 100, queries: 1, conditions: 1, maxQueryDepth: 1 },
       },
       totalMs: 100,
@@ -110,20 +117,83 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
 }
 
 describe('Zero performance gate', () => {
-  it('correlates repeated query IDs with their actual activation interval and refuses ambiguity', () => {
-    const item = measurement();
-    const records = item.samples.flatMap((sample, index) => [
-      { requestID: `request-${index}`, phase: 'arrival', at: 1001 + index * 100 },
-      { requestID: `request-${index}`, phase: 'auth', elapsed: 10 },
-      { requestID: `request-${index}`, phase: 'transform', name: item.name, elapsed: 1 },
-      {
-        requestID: `request-${index}`,
-        phase: 'query-identities',
-        at: 1020 + index * 100,
-        queries: [{ id: 'query', name: item.name, structure: sample.api!.structure }],
-      },
-      { requestID: `request-${index}`, phase: 'response', at: 1021 + index * 100, elapsed: 20 },
+  it('keeps a large warning intact when stdout and stderr arrive in interleaved chunks', () => {
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    const output = new PassThrough();
+    let captured = '';
+    output.on('data', data => {
+      captured += data.toString();
+    });
+    pipeRuntimeLogLines(stdout, output);
+    pipeRuntimeLogLines(stderr, output);
+    const warning = JSON.stringify({
+      level: 'WARN',
+      where: 'x'.repeat(70_000),
+      message: 'Slow query materialization 110',
+    });
+    const info = JSON.stringify({ level: 'INFO', message: 'query state changed' });
+    stderr.write(warning.slice(0, 64_000));
+    stdout.write(info + '\n');
+    stderr.write(warning.slice(64_000) + '\n');
+    stdout.end();
+    stderr.end();
+    expect(
+      captured
+        .trim()
+        .split('\n')
+        .map(line => JSON.parse(line).level)
+    ).toEqual(['INFO', 'WARN']);
+    expect(measuredServerWarnings(Buffer.from(captured), 0)).toEqual({
+      warnings: [warning],
+      errors: [],
+    });
+  });
+  it('preserves complete warning records crossing a log offset and rejects truncated diagnostics', () => {
+    const info = JSON.stringify({ level: 'INFO', message: 'arguments include Slow query' });
+    const warning = JSON.stringify({
+      level: 'WARN',
+      queryName: 'groups.membershipPage',
+      message: 'Slow query materialization 110',
+    });
+    const otherWarning = JSON.stringify({ level: 'WARN', message: 'unrelated warning' });
+    const log = Buffer.from([info, warning, otherWarning, ''].join('\n'));
+    expect(measuredServerWarnings(log, Buffer.byteLength(info) + 20)).toEqual({
+      warnings: [warning],
+      errors: [],
+    });
+    expect(measuredServerWarnings(log, 0)).toEqual({ warnings: [warning], errors: [] });
+    expect(
+      measuredServerWarnings(log, Buffer.byteLength(info + '\n' + warning + '\n')).warnings
+    ).toEqual([]);
+    expect(
+      measuredServerWarnings(Buffer.from('{"level":"WARN","message":"Slow query'), 0).errors
+    ).toEqual(['Incomplete or invalid server slow-query diagnostic']);
+    expect(measuredServerWarnings(log, log.length + 1).errors).toEqual([
+      'Invalid server warning log boundary',
     ]);
+  });
+  it('keeps five fresh materializations and collects one analysis without warmups', () => {
+    expect(REPETITIONS).toEqual({ materialize: 5, warmup: 0, analyze: 1 });
+    expect(REPORT_FORMAT).toBe(9);
+    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v9');
+  });
+  it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
+    const item = measurement();
+    const records = item.samples.flatMap((sample, index) =>
+      [
+        { requestID: `request-${index}`, phase: 'arrival', at: 1001 + index * 100 },
+        { requestID: `request-${index}`, phase: 'auth', elapsed: 10 },
+        { requestID: `request-${index}`, phase: 'transform', name: item.name, elapsed: 1 },
+        {
+          requestID: `request-${index}`,
+          phase: 'query-identities',
+          at: 1020 + index * 100,
+          queries: [{ id: 'query', name: item.name, structure: sample.api!.structure }],
+        },
+        { requestID: `request-${index}`, phase: 'response', at: 1021 + index * 100, elapsed: 20 },
+      ].map(record => ({ ...record, clientCorrelationID: sample.clientCorrelationID }))
+    );
     correlateQueryAPI([item], records);
     expect(item.samples.map(sample => sample.api?.requestID)).toEqual(
       Array.from({ length: 5 }, (_, index) => `request-${index}`)
@@ -139,6 +209,39 @@ describe('Zero performance gate', () => {
     expect(checkBudgets(valid)).toContain(
       'Missing or invalid correlated Auth/API/transform timings'
     );
+  });
+  it('keeps raw server clocks separate from client clocks without changing measured budgets', () => {
+    for (const offset of [-60_000, 60_000]) {
+      const item = measurement();
+      const records = item.samples.flatMap((sample, index) =>
+        [
+          { phase: 'arrival', at: 1001 + index * 100 + offset },
+          { phase: 'auth', elapsed: 10 },
+          { phase: 'transform', name: item.name, elapsed: 1 },
+          {
+            phase: 'query-identities',
+            at: 1020 + index * 100 + offset,
+            queries: [{ id: 'query', name: item.name, structure: sample.api!.structure }],
+          },
+          { phase: 'response', at: 1021 + index * 100 + offset, elapsed: 20 },
+        ].map(record => ({
+          ...record,
+          requestID: `request-${index}`,
+          clientCorrelationID: sample.clientCorrelationID,
+        }))
+      );
+      // Keep timestamp epochs valid while their clocks remain deliberately far apart.
+      for (const record of records) if (typeof record.at === 'number') record.at += 100_000;
+      correlateQueryAPI([item], records);
+      expect(checkBudgets(item)).toEqual([]);
+      expect(item.samples.map(sample => sample.totalMs)).toEqual([100, 100, 100, 100, 100]);
+      expect(item.samples[0].api!.arrivalAt).toBe(101001 + offset);
+      item.samples[0].totalMs = 1001;
+      expect(checkBudgets(item)).toContain('Total exceeds 1000 ms');
+      records[0].clientCorrelationID = 'another-client';
+      correlateQueryAPI([item], records);
+      expect(item.samples[0].api).toBeUndefined();
+    }
   });
   it('short-circuits anonymous event management while retaining authenticated manager rules', () => {
     const entry = loadCases().find(
@@ -580,6 +683,20 @@ describe('Zero performance gate', () => {
         args: { id: 'allowed' },
       },
     ]);
+    const duplicateView = {
+      activationID: 'duplicate',
+      activatedAt: 1,
+      readAt: 1,
+      at: 2,
+      phase: 'commit' as const,
+      type: 'complete',
+      ids: [],
+      name: 'groups.byId',
+      args: {},
+    };
+    expect(() => viewRuns([duplicateView, { ...duplicateView, activatedAt: 10, at: 11 }])).toThrow(
+      'View activation identity reused'
+    );
     const query: QueryObservation = {
       id: 'hash',
       clientID: 'client',
@@ -648,7 +765,9 @@ describe('Zero performance gate', () => {
       expectedKeys: [],
       infrastructure: [],
       measurements: [],
-      serverWarnings: ['Slow query materialization 110'],
+      serverWarnings: [
+        JSON.stringify({ level: 'WARN', message: 'Slow query materialization 110' }),
+      ],
     };
     expect(await reportFailures(report)).toContain('1 server slow-query warnings');
     expect(serverWarningFailures(report, false)).toEqual([]);
@@ -953,7 +1072,22 @@ describe('Zero performance gate', () => {
     ).toContain('Analyzer returned unavailable or invalid scan counts');
     expect(median([10, 30, 20, 40])).toBe(25);
     expect(comparisonEligible(measurement({ readRows: NaN }))).toBe(false);
-    expect(comparisonEligible(measurement({ analyzeMs: Array(20).fill(110) }))).toBe(true);
+    expect(comparisonEligible(measurement({ analyzeMs: [110] }))).toBe(true);
+    for (const value of [NaN, Infinity, -1, undefined]) {
+      for (const metric of ['serverMs', 'clientMs', 'totalMs'] as const) {
+        const invalid = measurement();
+        invalid.samples[2][metric] = value as number;
+        expect(checkBudgets(invalid).join(' ')).toContain('Missing or invalid timing samples');
+        expect(comparisonEligible(invalid)).toBe(false);
+      }
+      expect(checkBudgets(measurement({ analyzeMs: [value as number] })).join(' ')).toContain(
+        'Missing or invalid timing samples'
+      );
+    }
+    expect(checkBudgets(measurement({ analyzeMs: [] })).join(' ')).toContain('Expected 1 analyses');
+    expect(checkBudgets(measurement({ analyzeMs: [10, 10] })).join(' ')).toContain(
+      'Expected 1 analyses'
+    );
   });
   it('rejects reused client groups and positive cases with missing or incorrect results', () => {
     const reused = measurement();
@@ -966,40 +1100,131 @@ describe('Zero performance gate', () => {
     );
     expect(checkBudgets(measurement({ plans: null }))).toContain('Missing query plans');
   });
-  it('enforces single-run total/client maxima and the server p95', () => {
+  it('enforces every real materialization budget while analyzer duration is diagnostic', () => {
     expect(checkBudgets(measurement())).toEqual([]);
-    expect(
-      checkBudgets(
-        measurement({
-          samples: [
-            {
-              totalMs: BUDGETS.totalMs + 1,
-              clientMs: 0,
-              serverMs: 0,
-              clientGroupID: 'fresh',
-              clientID: 'client',
-              connectionMs: 1,
-            },
-          ],
-        })
-      )
-    ).toContain('Total exceeds 1000 ms');
-    expect(
-      checkBudgets(measurement({ analyzeMs: [1, ...Array.from({ length: 19 }, () => 101)] }))
-    ).toContain('Server p95 exceeds 100 ms');
+    const fastServer = measurement({ analyzeMs: [180] });
+    fastServer.samples.forEach(sample => {
+      sample.serverMs = 30;
+    });
+    expect(checkBudgets(fastServer)).toEqual([]);
+    const boundary = measurement();
+    boundary.samples.forEach(sample => {
+      sample.totalMs = BUDGETS.totalMs;
+      sample.clientMs = BUDGETS.clientMs;
+      sample.serverMs = BUDGETS.serverMs;
+    });
+    expect(checkBudgets(boundary)).toEqual([]);
+    for (const [metric, budget, failure] of [
+      ['totalMs', BUDGETS.totalMs, 'Total exceeds 1000 ms'],
+      ['clientMs', BUDGETS.clientMs, 'Client exceeds 50 ms'],
+      ['serverMs', BUDGETS.serverMs, 'Server materialization exceeds 100 ms'],
+    ] as const) {
+      const slow = measurement({ analyzeMs: [30] });
+      slow.samples[2][metric] = budget + 1;
+      expect(checkBudgets(slow)).toEqual([failure]);
+      expect(comparisonEligible(slow)).toBe(true);
+      expect(isAbsoluteBudgetFailure(failure)).toBe(true);
+    }
     expect(checkBudgets(measurement({ warnings: ['Slow query materialization'] }))).toContain(
       '1 slow-query warnings'
+    );
+    expect(checkBudgets(measurement({ failures: ['Query analyzer timed out'] }))).toContain(
+      'Query analyzer timed out'
     );
   });
   it('requires both relative and absolute timing deltas and a second confirmation', () => {
     const base = measurement();
-    const small = measurement({ analyzeMs: Array(20).fill(15) });
+    const small = measurement();
+    small.samples.forEach(sample => {
+      sample.serverMs = 15;
+    });
     expect(compare([base], [small])).toEqual([]);
-    const head = measurement({ analyzeMs: Array(20).fill(25) });
+    const head = measurement();
+    head.samples.forEach(sample => {
+      sample.serverMs = 25;
+    });
     const first = compare([base], [head]);
     expect(first).toHaveLength(1);
     expect(confirmedRegressions(first, [])).toEqual([]);
     expect(confirmedRegressions(first, compare([base], [head]))).toEqual(first);
+    expect(compare([base], [measurement({ analyzeMs: [500] })])).toEqual([]);
+    const outlier = measurement();
+    outlier.samples[0].serverMs = 99;
+    expect(compare([base], [outlier])).toEqual([]);
+    const exactDelta = measurement();
+    exactDelta.samples.forEach(sample => {
+      sample.serverMs = 20;
+    });
+    expect(compare([base], [exactDelta])).toEqual([]);
+    const slowerBase = measurement();
+    slowerBase.samples.forEach(sample => {
+      sample.serverMs = 60;
+    });
+    const twentyPercent = measurement();
+    twentyPercent.samples.forEach(sample => {
+      sample.serverMs = 72;
+    });
+    expect(compare([slowerBase], [twentyPercent])).toEqual([]);
+    const total = measurement();
+    total.samples.forEach(sample => {
+      sample.totalMs = 201;
+    });
+    expect(compare([base], [total])).toEqual([
+      { key: base.key, metric: 'total', before: 100, after: 201, kind: 'timing' },
+    ]);
+  });
+  it('reports real timing maxima separately from analyzer and plan-export diagnostics', () => {
+    const item = measurement({ analyzeMs: [180] });
+    item.samples[0].serverMs = 99;
+    item.samples[0].totalMs = 999;
+    item.samples[0].clientMs = 49;
+    expect(measurementSummary(item)).toMatchObject({
+      totalMedianMs: 100,
+      totalMaxMs: 999,
+      clientMaxMs: 49,
+      serverMedianMs: 10,
+      serverMaxMs: 99,
+      analyzerMs: 180,
+      planExportMs: 1,
+    });
+    const [header, row] = resultsCSV([item]).split('\n');
+    const columns = header.split(',');
+    const cells = row.split(',');
+    expect(cells).toHaveLength(columns.length);
+    expect(cells[columns.indexOf('serverMaxMs')]).toBe('99');
+    expect(cells[columns.indexOf('analyzerMs')]).toBe('180');
+    expect(columns).not.toContain('serverP95Ms');
+    const invalid = measurement({ samples: [], analyzeMs: [], plans: null });
+    expect(measurementSummary(invalid)).toMatchObject({
+      totalMaxMs: 'missing',
+      clientMaxMs: 'missing',
+      serverMaxMs: 'missing',
+      analyzerMs: 'missing',
+      planExportMs: 'missing',
+    });
+    expect(resultsCSV([invalid]).split('\n')[0]).toBe(header);
+  });
+  it('requires the new protocol rather than accepting legacy analyzer-budget reports', async () => {
+    const report = {
+      format: REPORT_FORMAT,
+      protocol: MEASUREMENT_PROTOCOL,
+      filtered: false,
+      layer: 'all',
+      expectedKeys: [],
+      infrastructure: [],
+      measurements: [],
+      serverWarnings: [],
+    };
+    expect(await reportFailures(report)).not.toContain('A complete all-layer report is required');
+    for (const legacy of [
+      { format: 8, protocol: 'zero-performance/v8' },
+      { format: REPORT_FORMAT, protocol: 'zero-performance/v8' },
+      { format: 8, protocol: MEASUREMENT_PROTOCOL },
+    ]) {
+      expect(await reportFailures({ ...report, ...legacy })).toContain(
+        'A complete all-layer report is required'
+      );
+    }
   });
   it('requires a higher revision and a changed explanation for additional row work without exempting time budgets', () => {
     const base = measurement();
@@ -1014,7 +1239,7 @@ describe('Zero performance gate', () => {
           measurement({
             revision: 2,
             reason: 'Returns a new relation',
-            analyzeMs: Array(20).fill(25),
+            samples: base.samples.map(sample => ({ ...sample, serverMs: 25 })),
           }),
         ]
       )[0].kind
@@ -1032,6 +1257,29 @@ describe('Zero performance gate', () => {
     const removed = new Map(registry);
     removed.delete('users.byId');
     expect(() => loadCases(removed)).toThrow('stale: users.byId');
+  });
+  it('includes null rows after descending cursors and nonnull rows after ascending null cursors', () => {
+    const columns = new Map();
+    const query = (direction: string, cursor: string | null, exclusive = true) =>
+      rootSQL(
+        {
+          table: 'user',
+          orderBy: [['first_name', direction]],
+          start: { row: { first_name: cursor, id: 'cursor-id' }, exclusive },
+        },
+        columns
+      );
+    expect(query('desc', 'name').text).toContain(
+      '(t0."first_name" < $1 OR t0."first_name" IS NULL)'
+    );
+    expect(query('asc', null).text).toContain('(t0."first_name" IS NOT NULL)');
+    expect(query('desc', null).text).toContain('(FALSE)');
+    // Rows tied on a nullable sort key still use the primary-key cursor boundary.
+    expect(query('desc', null).text).toContain(
+      't0."first_name" IS NOT DISTINCT FROM $1 AND t0."id" > $2'
+    );
+    expect(query('asc', null, false).text).toContain('t0."id" IS NOT DISTINCT FROM');
+    expect(query('desc', 'name').values).toEqual(['name', 'name', 'cursor-id']);
   });
   it('uses parametrized root-result SQL, handles empty IN and rejects unsupported AST shapes', () => {
     const columns = new Map([

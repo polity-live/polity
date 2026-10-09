@@ -4,8 +4,28 @@ import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
 import type { NavigationTarget } from './browser-navigation';
 
-export const REPORT_FORMAT = 7;
-export const MEASUREMENT_PROTOCOL = 'zero-performance/v7';
+export const REPORT_FORMAT = 9;
+export const MEASUREMENT_PROTOCOL = 'zero-performance/v9';
+
+/** Include a record crossing the phase boundary without cutting its JSON. */
+export function measuredServerWarnings(log: Buffer, offset: number) {
+  const warnings: string[] = [];
+  const errors: string[] = [];
+  if (!Number.isInteger(offset) || offset < 0 || offset > log.length)
+    return { warnings, errors: ['Invalid server warning log boundary'] };
+  const start = offset === 0 ? 0 : log.lastIndexOf(10, offset - 1) + 1;
+  for (const line of log.subarray(start).toString('utf8').split('\n')) {
+    if (!/Slow query/i.test(line)) continue;
+    try {
+      const record = JSON.parse(line);
+      if (record.level === 'WARN' && /^Slow query\b/i.test(record.message ?? ''))
+        warnings.push(line);
+    } catch {
+      errors.push('Incomplete or invalid server slow-query diagnostic');
+    }
+  }
+  return { warnings, errors: [...new Set(errors)] };
+}
 
 export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
   const byRequest = new Map<string, any[]>();
@@ -33,8 +53,8 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
       ).filter(
         record =>
           record.phase === 'query-identities' &&
-          record.at >= (sample.activatedAt ?? NaN) &&
-          record.at <= (sample.authoritativeAt ?? NaN) &&
+          typeof sample.clientCorrelationID === 'string' &&
+          record.clientCorrelationID === sample.clientCorrelationID &&
           record.queries?.some(
             (query: any) => query.id === sample.queryID && query.name === measurement.name
           )
@@ -63,23 +83,28 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
         !response ||
         !auth ||
         !transform ||
-        transforms.length !== queriesWithName.length
+        transforms.length !== queriesWithName.length ||
+        group.some(record => record.clientCorrelationID !== sample.clientCorrelationID) ||
+        !Number.isFinite(identity.at) ||
+        identity.at < arrival.at ||
+        identity.at > response.at
       )
         continue;
       sample.api = {
         requestID: identity.requestID,
+        clientCorrelationID: sample.clientCorrelationID as string,
         authMs: auth.elapsed,
         transformMs: transform.elapsed,
         requestMs: response.elapsed,
         arrivalAt: arrival.at,
         responseAt: response.at,
-        responseToAuthoritativeMs: (sample.authoritativeAt ?? NaN) - response.at,
+        clock: 'api-server',
         structure: query.structure,
       };
     }
 }
 export function isAbsoluteBudgetFailure(failure: string) {
-  return /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server p95 exceeds \d+ ms|\d+ slow-query warnings|\d+ server slow-query warnings)$/.test(
+  return /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server materialization exceeds \d+ ms|\d+ slow-query warnings|\d+ server slow-query warnings)$/.test(
     failure
   );
 }
@@ -158,7 +183,15 @@ export function navigationMaterializationFailures(
 export function serverWarningFailures(report: Report, absoluteBudgets = true): string[] {
   if (
     !Array.isArray(report.serverWarnings) ||
-    report.serverWarnings.some(line => typeof line !== 'string' || !/Slow query/i.test(line))
+    report.serverWarnings.some(line => {
+      if (typeof line !== 'string') return true;
+      try {
+        const record = JSON.parse(line);
+        return record.level !== 'WARN' || !/^Slow query\b/i.test(record.message ?? '');
+      } catch {
+        return true;
+      }
+    })
   )
     return ['Missing or invalid server slow-query observations'];
   return absoluteBudgets && report.serverWarnings.length

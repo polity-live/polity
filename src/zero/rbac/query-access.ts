@@ -836,9 +836,15 @@ export function applyElectionQueryAccess<T>(
                 (amendment: any) => applyAmendmentQueryAccess(amendment, userID),
                 { flip: planAutomatically ? undefined : false }
               ),
-              roleExists('blog', (blog: any) => applyBlogQueryAccess(blog, userID), {
-                flip: planAutomatically ? undefined : false,
-              })
+              // A correlated election must keep its nested blog access joins
+              // correlated too; otherwise that branch still expands 128 plans.
+              roleExists(
+                'blog',
+                (blog: any) => applyBlogQueryAccess(blog, userID, !planAutomatically),
+                {
+                  flip: planAutomatically ? undefined : false,
+                }
+              )
             )
           ),
         { flip: planAutomatically ? undefined : false }

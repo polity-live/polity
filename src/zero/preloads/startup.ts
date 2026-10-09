@@ -22,7 +22,7 @@ export function initializeAppQueries(zero: Zero) {
       : pathname === '/messages'
         ? createMessagesPreloadTask(address.searchParams.get('conversationId') ?? undefined)
         : createIntentTaskForHref(pathname, zero.userID);
-  const entries = [...createCoreZeroPreloadEntries(zero.userID), ...(task?.entries ?? [])];
+  const entries = [...(task?.entries ?? []), ...createCoreZeroPreloadEntries(zero.userID)];
   const seen = new Set<string>();
   for (const entry of entries) {
     if (seen.has(entry.key)) continue;

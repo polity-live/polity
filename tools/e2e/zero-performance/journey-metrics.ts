@@ -71,6 +71,8 @@ export function viewRuns(events: QueryViewObservation[]): NonNullable<QueryObser
   )) {
     if (!event.activationID) throw new Error('Missing view activation identity');
     let run = runs.get(event.activationID);
+    if (run && run.activatedAt !== event.activatedAt)
+      throw new Error('View activation identity reused for a different lifetime');
     if (!run) {
       run = {
         activationID: event.activationID,

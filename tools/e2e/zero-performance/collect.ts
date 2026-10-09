@@ -4,19 +4,13 @@ import { constants } from 'node:fs';
 import path from 'node:path';
 import { loadCases } from './catalog';
 import { securityCaseManifest } from './security';
-import {
-  BUDGETS,
-  REPETITIONS,
-  checkBudgets,
-  percentile,
-  median,
-  type Measurement,
-} from './metrics';
+import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
 import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
   isAbsoluteBudgetFailure,
+  measuredServerWarnings,
   type Report,
 } from './report';
 import { PROFILE_SUFFIXES, queryBatches, batchCoverageFailures } from './batches';
@@ -24,6 +18,7 @@ import { required } from './required';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { closeDb } from '../../../e2e/fixtures/db';
 import { isJoinPlanArtifact } from './plan-artifacts';
+import { resultsCSV } from './results';
 
 const output = required(process.env.ZERO_PERFORMANCE_OUTPUT);
 const layer = process.env.ZERO_PERFORMANCE_LAYER ?? 'all';
@@ -273,51 +268,21 @@ try {
     });
   correlateQueryAPI(measurements, apiDiagnostics);
   for (const row of measurements) row.failures = checkBudgets(row);
-  const serverWarnings = (await readFile(path.join(output, 'zero.log')))
-    .subarray(warningOffset)
-    .toString('utf8')
-    .split('\n')
-    .filter(line => /Slow query/i.test(line));
-  if (serverWarnings.length)
-    infrastructure.push(`${serverWarnings.length} server slow-query warnings`);
+  const warningLog = measuredServerWarnings(
+    await readFile(path.join(output, 'zero.log')),
+    warningOffset
+  );
+  const serverWarnings = warningLog.warnings;
+  infrastructure.push(...warningLog.errors);
+  const warningFailure = `${serverWarnings.length} server slow-query warnings`;
+  if (serverWarnings.length && !infrastructure.includes(warningFailure))
+    infrastructure.push(warningFailure);
   await writeFile(
     path.join(output, 'measurements.ndjson'),
     measurements.map(row => JSON.stringify(row)).join('\n') + '\n'
   );
   await save(true, { serverWarnings, apiDiagnostics });
-  const metric = (values: number[], p?: number) =>
-    values.length && values.every(n => Number.isFinite(n) && n >= 0)
-      ? p === undefined
-        ? median(values)
-        : percentile(values, p)
-      : 'missing';
-  await writeFile(
-    path.join(output, 'results.csv'),
-    [
-      'query,totalMedianMs,clientMaxMs,serverHydrationMedianMs,serverP95Ms,authMedianMs,transformMedianMs,apiMedianMs,responseToAuthoritativeMedianMs,readRows,scannedRows,failures',
-      ...measurements.map(row =>
-        [
-          row.key,
-          metric(row.samples.map(s => s.totalMs)),
-          metric(
-            row.samples.map(s => s.clientMs),
-            1
-          ),
-          metric(row.samples.map(s => s.serverMs)),
-          metric(row.analyzeMs, 0.95),
-          metric(row.samples.map(s => s.api?.authMs ?? NaN)),
-          metric(row.samples.map(s => s.api?.transformMs ?? NaN)),
-          metric(row.samples.map(s => s.api?.requestMs ?? NaN)),
-          metric(row.samples.map(s => s.api?.responseToAuthoritativeMs ?? NaN)),
-          row.readRows,
-          row.scannedRows,
-          row.failures.join('; '),
-        ]
-          .map(value => JSON.stringify(value))
-          .join(',')
-      ),
-    ].join('\n')
-  );
+  await writeFile(path.join(output, 'results.csv'), resultsCSV(measurements));
   if (journeys)
     await writeFile(
       path.join(output, 'journeys.csv'),

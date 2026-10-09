@@ -26,13 +26,20 @@ subscribe('http.server.request.start', ({ request }) => {
     new URL(request.url, 'http://benchmark.local').pathname !== '/api/query'
   )
     return;
-  const timing = { requestID: randomUUID(), started: performance.now() };
+  const externalClientID = request.headers['x-zero-performance-client-id'];
+  const clientCorrelationID =
+    typeof externalClientID === 'string' &&
+    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(externalClientID)
+      ? externalClientID
+      : undefined;
+  const timing = { requestID: randomUUID(), clientCorrelationID, started: performance.now() };
   incoming.set(request, timing);
   request.headers['x-zero-performance-request-id'] = timing.requestID;
   console.info(
     JSON.stringify({
       benchmark: 'query-http',
       requestID: timing.requestID,
+      clientCorrelationID: timing.clientCorrelationID,
       phase: 'arrival',
       at: Date.now(),
     })
@@ -46,6 +53,7 @@ subscribe('http.server.response.finish', ({ request, response }) => {
     JSON.stringify({
       benchmark: 'query-http',
       requestID: timing.requestID,
+      clientCorrelationID: timing.clientCorrelationID,
       phase: 'response',
       at: Date.now(),
       elapsed: performance.now() - timing.started,

@@ -1,7 +1,10 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 
-const requests = new AsyncLocalStorage<{ id: string }>();
+const requests = new AsyncLocalStorage<{ id: string; clientCorrelationID?: string }>();
+const isUUID = (value: string | null | undefined): value is string =>
+  typeof value === 'string' &&
+  /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
 
 /** Counts the public QueryResponse AST without writing predicates or argument values. */
 export function queryStructure(ast: unknown) {
@@ -37,6 +40,7 @@ export function queryDiagnostic(
     JSON.stringify({
       benchmark: 'query-api',
       requestID: requests.getStore()?.id,
+      clientCorrelationID: requests.getStore()?.clientCorrelationID,
       phase,
       at: Date.now(),
       elapsed: performance.now() - started,
@@ -51,12 +55,10 @@ export async function withQueryDiagnostics<T>(
 ): Promise<T> {
   if (process.env.ZERO_PERFORMANCE_DIAGNOSTICS !== '1') return run();
   const externalID = request?.headers.get('x-zero-performance-request-id');
-  const id =
-    externalID &&
-    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(externalID)
-      ? externalID
-      : randomUUID();
-  return requests.run({ id }, async () => {
+  const id = isUUID(externalID) ? externalID : randomUUID();
+  const externalClientID = request?.headers.get('x-zero-performance-client-id');
+  const clientCorrelationID = isUUID(externalClientID) ? externalClientID : undefined;
+  return requests.run({ id, clientCorrelationID }, async () => {
     queryDiagnostic('handler', performance.now());
     const started = performance.now();
     try {

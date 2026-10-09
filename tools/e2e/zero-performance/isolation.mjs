@@ -1,4 +1,12 @@
 import path from 'node:path';
+import { createInterface } from 'node:readline';
+
+/** Prevent stdout/stderr chunks from interleaving inside structured log records. */
+export function pipeRuntimeLogLines(source, destination) {
+  const reader = createInterface({ input: source, crlfDelay: Infinity });
+  reader.on('line', line => destination.write(`${line}\n`));
+  return reader;
+}
 
 export function assertOutputDirectory(root, directory) {
   const allowed = path.resolve(root, 'output/zero-performance');

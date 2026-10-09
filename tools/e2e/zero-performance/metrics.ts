@@ -1,14 +1,16 @@
-export const BUDGETS = Object.freeze({ totalMs: 1_000, clientMs: 50, serverP95Ms: 100 });
-export const REPETITIONS = Object.freeze({ materialize: 5, warmup: 3, analyze: 20 });
+export const BUDGETS = Object.freeze({ totalMs: 1_000, clientMs: 50, serverMs: 100 });
+export const REPETITIONS = Object.freeze({ materialize: 5, warmup: 0, analyze: 1 });
 export interface Sample {
+  clientCorrelationID?: string;
   api?: {
     requestID: string;
+    clientCorrelationID: string;
     authMs: number;
     transformMs: number;
     requestMs: number;
     arrivalAt: number;
     responseAt: number;
-    responseToAuthoritativeMs: number;
+    clock: 'api-server';
     structure: { bytes: number; queries: number; conditions: number; maxQueryDepth: number };
   };
   queryID?: string;
@@ -65,9 +67,12 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
       const api = sample.api;
       if (
         !sample.queryID ||
+        !sample.clientCorrelationID ||
         !Number.isFinite(sample.activatedAt) ||
         !Number.isFinite(sample.authoritativeAt) ||
         !api?.requestID ||
+        api.clientCorrelationID !== sample.clientCorrelationID ||
+        api.clock !== 'api-server' ||
         !api.structure ||
         [
           api.authMs,
@@ -75,7 +80,6 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
           api.requestMs,
           api.arrivalAt,
           api.responseAt,
-          api.responseToAuthoritativeMs,
           api.structure.bytes,
           api.structure.queries,
           api.structure.conditions,
@@ -86,12 +90,11 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
         api.structure.maxQueryDepth < 1 ||
         api.authMs > api.requestMs ||
         api.transformMs > api.requestMs ||
-        api.arrivalAt < (sample.activatedAt ?? NaN) ||
-        api.responseAt < api.arrivalAt ||
-        api.responseAt > (sample.authoritativeAt ?? NaN) ||
-        Math.abs(
-          api.responseToAuthoritativeMs - ((sample.authoritativeAt ?? NaN) - api.responseAt)
-        ) > 0.001
+        api.requestMs > sample.totalMs ||
+        (sample.authoritativeAt ?? NaN) < (sample.activatedAt ?? NaN) ||
+        // API epochs belong to the server; client and server wall clocks can differ.
+        // All budgets continue to use their original monotonic elapsed measurements.
+        api.responseAt < api.arrivalAt
       )
         failures.push('Missing or invalid correlated Auth/API/transform timings');
     }
@@ -153,6 +156,12 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
     failures.push(
       'Materializations must use distinct fresh client groups with recorded connection setup'
     );
+  if (
+    requireAPI &&
+    new Set(measurement.samples.map(sample => sample.clientCorrelationID)).size !==
+      REPETITIONS.materialize
+  )
+    failures.push('Materializations must use distinct API correlation identities');
   if (measurement.samples.length !== REPETITIONS.materialize)
     failures.push(
       `Expected ${REPETITIONS.materialize} materializations, got ${measurement.samples.length}`
@@ -174,12 +183,15 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
       ) > BUDGETS.clientMs
     )
       failures.push(`Client exceeds ${BUDGETS.clientMs} ms`);
-    if (percentile(measurement.analyzeMs, 0.95) > BUDGETS.serverP95Ms)
-      failures.push(`Server p95 exceeds ${BUDGETS.serverP95Ms} ms`);
-    percentile(
-      measurement.samples.map(s => s.serverMs),
-      1
-    );
+    if (
+      percentile(
+        measurement.samples.map(s => s.serverMs),
+        1
+      ) > BUDGETS.serverMs
+    )
+      failures.push(`Server materialization exceeds ${BUDGETS.serverMs} ms`);
+    // The analyzer is diagnostic, but its original timing must still be valid.
+    percentile(measurement.analyzeMs, 1);
   } catch (error) {
     failures.push(String(error));
   }
@@ -208,7 +220,12 @@ export function compare(base: Measurement[], head: Measurement[]) {
     const issues: { key: string; metric: string; before: number; after: number; kind: string }[] =
       [];
     for (const [metric, before, after, minimum] of [
-      ['server', median(old.analyzeMs), median(item.analyzeMs), 10],
+      [
+        'server',
+        median(old.samples.map(s => s.serverMs)),
+        median(item.samples.map(s => s.serverMs)),
+        10,
+      ],
       [
         'total',
         median(old.samples.map(s => s.totalMs)),
@@ -240,7 +257,7 @@ export function compare(base: Measurement[], head: Measurement[]) {
 /** Absolute budget failures are still comparable; missing or incorrect telemetry is not. */
 export function comparisonEligible(measurement: Measurement) {
   return checkBudgets(measurement).every(failure =>
-    /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server p95 exceeds \d+ ms|\d+ slow-query warnings)$/.test(
+    /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server materialization exceeds \d+ ms|\d+ slow-query warnings)$/.test(
       failure
     )
   );

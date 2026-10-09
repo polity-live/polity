@@ -14,6 +14,7 @@ import {
   isolatedIntegrityEnvironment,
   applicationStorageBuckets,
   verifyBuildAssets,
+  pipeRuntimeLogLines,
 } from './isolation.mjs';
 import {
   verifyLinuxImage,
@@ -61,9 +62,12 @@ function run(command, argv, options = {}) {
   });
   processes.push(child);
   // Supabase's stdout startup summary contains ephemeral API/S3 credentials.
-  if (label !== 'stack-start') child.stdout?.pipe(log, { end: false });
+  if (label === 'zero') {
+    if (child.stdout) pipeRuntimeLogLines(child.stdout, log);
+    if (child.stderr) pipeRuntimeLogLines(child.stderr, log);
+  } else if (label !== 'stack-start') child.stdout?.pipe(log, { end: false });
   else child.stdout?.resume();
-  child.stderr?.pipe(log, { end: false });
+  if (label !== 'zero') child.stderr?.pipe(log, { end: false });
   return {
     child,
     done: new Promise((resolve, reject) => {
@@ -71,15 +75,16 @@ function run(command, argv, options = {}) {
         log.end();
         reject(error);
       });
-      child.once('exit', (code, signal) => {
-        log.end();
-        if (code === 0) resolve();
-        else
-          reject(
-            new Error(
-              `${label} failed (${code ?? signal}); see ${path.join(artifactRoot, `${label}.log`)}`
-            )
-          );
+      child.once('close', (code, signal) => {
+        log.end(() => {
+          if (code === 0) resolve();
+          else
+            reject(
+              new Error(
+                `${label} failed (${code ?? signal}); see ${path.join(artifactRoot, `${label}.log`)}`
+              )
+            );
+        });
       });
     }),
   };
@@ -394,6 +399,9 @@ ${storageBuckets}
     ZERO_CVR_DB: configuration.DB_URL,
     ZERO_CHANGE_DB: configuration.DB_URL,
     ZERO_QUERY_URL: `${appURL}/api/query`,
+    // Documented forwarding allowlist, restricted to the diagnostic UUID.
+    // Production configuration and the pinned Zero package remain unchanged.
+    ZERO_QUERY_ALLOWED_CLIENT_HEADERS: 'x-zero-performance-client-id',
     ZERO_MUTATE_URL: `${appURL}/api/mutate`,
     ZERO_PORT: String(start + 1),
     ZERO_REPLICA_FILE: path.join(artifactRoot, 'replica.db'),

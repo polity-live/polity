@@ -368,10 +368,35 @@ export async function measureJourneys(
       // Replay only after the timed navigation samples. Profiling is diagnostic
       // work and its overhead must never become part of the acceptance timings.
       const profiler = await context.newCDPSession(page);
-      await profiler.send('Profiler.enable');
-      await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
-      await profiler.send('Profiler.start');
+      let profiling = false;
       try {
+        await page.evaluate(() => {
+          const scope = globalThis as any;
+          const original = window.getComputedStyle;
+          const reads = new Map<string, number>();
+          // Attribute the profile's layout/style reads to static component markers,
+          // without retaining text, IDs, query arguments or authentication values.
+          window.getComputedStyle = function (element, pseudo) {
+            const key = JSON.stringify({
+              tag: element.tagName,
+              slot: element.getAttribute('data-slot'),
+              role: element.getAttribute('role'),
+              state: element.getAttribute('data-state'),
+              owner: element.closest('[data-slot]')?.getAttribute('data-slot') ?? null,
+            });
+            reads.set(key, (reads.get(key) ?? 0) + 1);
+            return original.call(window, element, pseudo);
+          };
+          scope.__finishBenchmarkStyleReads = () => {
+            window.getComputedStyle = original;
+            delete scope.__finishBenchmarkStyleReads;
+            return [...reads].map(([key, count]) => ({ ...JSON.parse(key), count }));
+          };
+        });
+        await profiler.send('Profiler.enable');
+        await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
+        await profiler.send('Profiler.start');
+        profiling = true;
         for (const route of routes) {
           await navigate(page, route.path, route.search ?? {}, route);
           await page.waitForFunction(
@@ -388,12 +413,37 @@ export async function measureJourneys(
         // checks from running. Preserve the failure on the real navigation record.
         required(records.at(-1)).failures.push(`Navigation CPU diagnostics: ${String(error)}`);
       } finally {
-        const { profile } = await profiler.send('Profiler.stop');
-        await writeFile(
-          path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation.cpuprofile'),
-          JSON.stringify(profile)
-        );
-        await profiler.detach();
+        try {
+          if (profiling) {
+            const { profile } = await profiler.send('Profiler.stop');
+            await writeFile(
+              path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation.cpuprofile'),
+              JSON.stringify(profile)
+            );
+          }
+        } catch (error) {
+          required(records.at(-1)).failures.push(`Navigation CPU export: ${String(error)}`);
+        } finally {
+          try {
+            const reads = await page.evaluate(
+              () => (globalThis as any).__finishBenchmarkStyleReads?.() ?? null
+            );
+            if (reads !== null)
+              await writeFile(
+                path.join(
+                  required(process.env.ZERO_PERFORMANCE_OUTPUT),
+                  'navigation-style-reads.json'
+                ),
+                JSON.stringify(reads)
+              );
+          } catch (error) {
+            required(records.at(-1)).failures.push(`Navigation style export: ${String(error)}`);
+          } finally {
+            await profiler.detach().catch(error => {
+              required(records.at(-1)).failures.push(`Navigation CPU cleanup: ${String(error)}`);
+            });
+          }
+        }
       }
     }
     if (warnings.length)

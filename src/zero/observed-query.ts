@@ -15,7 +15,6 @@ export interface QueryViewObservation {
   type: string;
   ids: string[];
 }
-let viewSequence = 0;
 
 /** Observes the public hook's result only when the isolated benchmark installs a sink. */
 const observedUseQuery = (...input: Parameters<typeof zeroUseQuery>) => {
@@ -33,7 +32,7 @@ const observedUseQuery = (...input: Parameters<typeof zeroUseQuery>) => {
   const readAt = observe ? performance.now() : undefined;
   if (!key) activation.current = undefined;
   if (key && activation.current?.key !== key)
-    activation.current = { key, id: `view:${++viewSequence}`, at: readAt as number };
+    activation.current = { key, id: `view:${crypto.randomUUID()}`, at: readAt as number };
   const current = key ? activation.current : undefined;
   const result = zeroUseQuery(...input);
   if (observe && current && readAt !== undefined && request && 'query' in request && result[1]) {

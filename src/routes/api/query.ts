@@ -31,7 +31,12 @@ export const Route = createFileRoute('/api/query')({
           };
 
           const started = performance.now();
-          const result = await handleQueryRequest(transformQuery, schema, request);
+          const result = await handleQueryRequest({
+            handler: transformQuery,
+            schema,
+            request,
+            userID: ctx.userID === 'anon' ? null : ctx.userID,
+          });
           queryDiagnostic('transform-batch', started);
           if (
             process.env.ZERO_PERFORMANCE_DIAGNOSTICS === '1' &&

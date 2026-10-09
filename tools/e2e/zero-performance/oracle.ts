@@ -101,7 +101,19 @@ export function rootSQL(ast: AST, columns: Map<string, Map<string, { type: strin
           ([f]) =>
             `${column(ast.table, alias, f)} IS NOT DISTINCT FROM ${bind(required(ast.start).row[f])}`
         );
-      return `(${[...equal, `${column(ast.table, alias, field)} ${direction === 'asc' ? '>' : '<'} ${bind(required(ast.start).row[field])}`].join(' AND ')})`;
+      const orderedColumn = column(ast.table, alias, field);
+      const cursorValue = required(ast.start).row[field];
+      // PostgreSQL comparisons with NULL are unknown. Zero orders NULL first
+      // ascending and last descending, so the cursor predicate must do likewise.
+      const after =
+        cursorValue === null
+          ? direction === 'asc'
+            ? `${orderedColumn} IS NOT NULL`
+            : 'FALSE'
+          : direction === 'asc'
+            ? `${orderedColumn} > ${bind(cursorValue)}`
+            : `(${orderedColumn} < ${bind(cursorValue)} OR ${orderedColumn} IS NULL)`;
+      return `(${[...equal, after].join(' AND ')})`;
     });
     if (!ast.start.exclusive)
       branches.push(

@@ -9,6 +9,25 @@ afterEach(() => {
   query.mockReset();
 });
 describe('Optional application query observation', () => {
+  it('keeps activation identities unique when another bundled observer instance starts', async () => {
+    const sink = vi.fn();
+    vi.stubGlobal('__zeroPerformanceView', sink);
+    query.mockReturnValue([[], { type: 'complete' }]);
+    const request = { query: { queryName: 'groups.byId' }, args: { id: 'visible' } } as any;
+    vi.resetModules();
+    const first = await import('../observed-query');
+    const firstHook = renderHook(() => first.useQuery(request));
+    const firstID = sink.mock.lastCall?.[0].activationID;
+    firstHook.unmount();
+    vi.resetModules();
+    const second = await import('../observed-query');
+    const secondHook = renderHook(() => second.useQuery(request));
+    const secondID = sink.mock.lastCall?.[0].activationID;
+    expect(firstID).toMatch(/^view:[0-9a-f-]{36}$/);
+    expect(secondID).toMatch(/^view:[0-9a-f-]{36}$/);
+    expect(secondID).not.toBe(firstID);
+    secondHook.unmount();
+  });
   it('forwards the public hook arguments and reports real partial/complete results without changing them', async () => {
     const sink = vi.fn();
     vi.stubGlobal('__zeroPerformanceView', sink);

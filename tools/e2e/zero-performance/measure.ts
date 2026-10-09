@@ -13,14 +13,7 @@ import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { buildQuery, loadCases, OWNER, OUTSIDER, type BenchmarkCase } from './catalog';
 import { Fixtures } from './fixtures';
 import { expectedRootIDs, queryAST, resultIDs, relatedResultIDs } from './oracle';
-import {
-  BUDGETS,
-  REPETITIONS,
-  checkBudgets,
-  median,
-  percentile,
-  type Measurement,
-} from './metrics';
+import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
 import { measureJourneys } from './journeys';
 import {
   securityScenarios,
@@ -28,8 +21,14 @@ import {
   type RelatedExpectation,
   type SecurityCaseExpectation,
 } from './security';
-import { REPORT_FORMAT, MEASUREMENT_PROTOCOL, correlateQueryAPI } from './report';
+import {
+  REPORT_FORMAT,
+  MEASUREMENT_PROTOCOL,
+  correlateQueryAPI,
+  measuredServerWarnings,
+} from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
+import { measurementSummary, resultsCSV } from './results';
 
 (globalThis as any).TESTING ??= false;
 
@@ -96,9 +95,11 @@ function deadline<T>(promise: Promise<T>, label: string, milliseconds = 15_000):
     }),
   ]).finally(() => clearTimeout(timer));
 }
+const clientCorrelations = new WeakMap<object, string>();
 async function client(actor: keyof typeof contexts, warnings: string[]) {
   await refreshToken(actor);
   const context = contexts[actor];
+  const clientCorrelationID = randomUUID();
   const zero = new Zero({
     schema,
     context,
@@ -106,6 +107,9 @@ async function client(actor: keyof typeof contexts, warnings: string[]) {
     auth: tokens[actor],
     cacheURL: required(process.env.VITE_ZERO_CACHE_URL),
     queryURL: `${process.env.VITE_ZERO_API_URL ?? process.env.VITE_APP_URL}/api/query`,
+    // Public forwarding option: identifies this fresh client without depending
+    // on synchronized wall clocks or changing any Zero implementation.
+    queryHeaders: { 'x-zero-performance-client-id': clientCorrelationID },
     kvStore: 'mem',
     storageKey: `benchmark-${randomUUID()}`,
     logLevel: 'warn',
@@ -118,6 +122,7 @@ async function client(actor: keyof typeof contexts, warnings: string[]) {
       },
     },
   });
+  clientCorrelations.set(zero, clientCorrelationID);
   try {
     if (zero.connection.state.current.name !== 'connected') {
       await deadline(
@@ -269,6 +274,7 @@ async function measure(
         )
           throw new Error('Missing client/server/total hydration metrics');
         measurement.samples.push({
+          clientCorrelationID: required(clientCorrelations.get(zero)),
           queryID: stats.id,
           activatedAt,
           authoritativeAt: activatedAt + elapsed,
@@ -319,7 +325,7 @@ async function measure(
               };
               measurement.warnings.push(...analyzed.warnings.filter(w => /Slow query/i.test(w)));
             }
-            // Export the expensive join trace once, outside the warmup/timing samples.
+            // Export the expensive join trace once, after the diagnostic analysis.
             // Timings remain the unmodified elapsed values from Zero's analyzer.
             const exportAt = performance.now();
             const exported = await deadline(
@@ -374,13 +380,7 @@ async function measure(
   console.info(
     JSON.stringify({
       key: measurement.key,
-      totalMax: measurement.samples.length
-        ? percentile(
-            measurement.samples.map(s => s.totalMs),
-            1
-          )
-        : null,
-      serverP95: measurement.analyzeMs.length ? percentile(measurement.analyzeMs, 0.95) : null,
+      ...measurementSummary(measurement),
       failures: measurement.failures,
     })
   );
@@ -442,12 +442,6 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
     )
   );
   await rename(`${target}.tmp`, target);
-}
-
-function statistic(values: number[], fraction?: number) {
-  if (!values.length) return 'missing';
-  if (values.some(value => !Number.isFinite(value) || value < 0)) return 'invalid';
-  return fraction === undefined ? median(values) : percentile(values, fraction);
 }
 
 try {
@@ -532,46 +526,21 @@ try {
   if (['all', 'journeys'].includes(layer) && !process.env.ZERO_PERFORMANCE_QUERY && !selection) {
     journeys = await measureJourneys(records => save({ journeys: records }));
   }
-  const zeroLog = (await readFile(path.join(logOutput, 'zero.log')))
-    .subarray(logOffset)
-    .toString('utf8');
-  const slowLogs = zeroLog.split('\n').filter(line => /Slow query/i.test(line));
+  const warningLog = measuredServerWarnings(
+    await readFile(path.join(logOutput, 'zero.log')),
+    logOffset
+  );
+  infrastructure.push(...warningLog.errors);
   // Service startup is excluded via its recorded timestamp; all measurement-phase slow logs fail.
-  const measuredSlowLogs = slowLogs;
+  const measuredSlowLogs = warningLog.warnings;
   if (measuredSlowLogs.length)
     infrastructure.push(`${measuredSlowLogs.length} server slow-query warnings`);
   await save({ readyAt, journeys, serverWarnings: measuredSlowLogs }, true);
-  await writeFile(
-    path.join(output, 'results.csv'),
-    [
-      'query,totalMedianMs,clientMaxMs,serverP95Ms,authMedianMs,transformMedianMs,apiMedianMs,responseToAuthoritativeMedianMs,readRows,scannedRows,failures',
-      ...results.map(result =>
-        [
-          JSON.stringify(result.key),
-          statistic(result.samples.map(s => s.totalMs)),
-          statistic(
-            result.samples.map(s => s.clientMs),
-            1
-          ),
-          statistic(result.analyzeMs, 0.95),
-          statistic(result.samples.map(s => s.api?.authMs ?? NaN)),
-          statistic(result.samples.map(s => s.api?.transformMs ?? NaN)),
-          statistic(result.samples.map(s => s.api?.requestMs ?? NaN)),
-          statistic(result.samples.map(s => s.api?.responseToAuthoritativeMs ?? NaN)),
-          result.readRows,
-          result.scannedRows,
-          JSON.stringify(result.failures.join('; ')),
-        ].join(',')
-      ),
-    ].join('\n')
-  );
+  await writeFile(path.join(output, 'results.csv'), resultsCSV(results));
   console.table(
     results.map(result => ({
-      query: result.key,
-      totalMedian: statistic(result.samples.map(s => s.totalMs)),
-      serverP95: statistic(result.analyzeMs, 0.95),
-      read: result.readRows,
-      scanned: result.scannedRows,
+      ...measurementSummary(result),
+      failures: undefined,
       failed: result.failures.length,
     }))
   );
@@ -620,35 +589,14 @@ try {
 } catch (error) {
   infrastructure.push(error instanceof Error ? error.message : String(error));
   await save({}, true);
-  const rows = results.map(result => ({
-    query: result.key,
-    totalMedianMs: statistic(result.samples.map(sample => sample.totalMs)),
-    clientMaxMs: statistic(
-      result.samples.map(sample => sample.clientMs),
-      1
-    ),
-    serverP95Ms: statistic(result.analyzeMs, 0.95),
-    readRows: result.readRows,
-    scannedRows: result.scannedRows,
-    failures: result.failures.join('; '),
-  }));
+  const rows = results.map(measurementSummary);
   console.table(
     rows.map(({ failures: _failures, ...row }, index) => ({
       ...row,
       failed: results[index].failures.length,
     }))
   );
-  await writeFile(
-    path.join(output, 'results.csv'),
-    [
-      'query,totalMedianMs,clientMaxMs,serverP95Ms,readRows,scannedRows,failures',
-      ...rows.map(row =>
-        Object.values(row)
-          .map(value => JSON.stringify(value))
-          .join(',')
-      ),
-    ].join('\n')
-  );
+  await writeFile(path.join(output, 'results.csv'), resultsCSV(results));
   console.error(infrastructure.at(-1));
   process.exitCode = 1;
 } finally {
