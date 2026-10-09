@@ -962,7 +962,9 @@ export const eventQueries = {
                 .where('scope', 'group')
                 .where('assignment_mode', 'elected')
                 .related('elections', electionQuery =>
-                  applyElectionQueryAccess(electionQuery, userID, true).related(
+                  // This election is already scoped to one allocation's role.
+                  // Keep access joins correlated instead of expanding 64 plans.
+                  applyElectionQueryAccess(electionQuery, userID).related(
                     'agenda_item',
                     agendaItemQuery => agendaItemQuery.related('event')
                   )
@@ -1248,7 +1250,7 @@ export const eventQueries = {
   electionWithVotes: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
-      applyElectionQueryAccess(zql.election.where('id', id), userID, true)
+      applyElectionQueryAccess(zql.election.where('id', id), userID)
         .related('role', q =>
           applyRoleQueryAccess(q, userID, true).related('group', group =>
             applyGroupDiscoveryQueryAccess(group, userID)
@@ -1258,12 +1260,20 @@ export const eventQueries = {
         .related('electors', q => applyElectionElectorOrManagerQueryAccess(q, userID))
         .related('indicative_selections', q =>
           q
-            .whereExists('election', election => applyElectionManagerQueryAccess(election, userID))
+            .whereExists(
+              'election',
+              election => applyElectionManagerQueryAccess(election, userID),
+              { flip: false }
+            )
             .related('candidate')
         )
         .related('final_selections', q =>
           q
-            .whereExists('election', election => applyElectionManagerQueryAccess(election, userID))
+            .whereExists(
+              'election',
+              election => applyElectionManagerQueryAccess(election, userID),
+              { flip: false }
+            )
             .related('candidate')
         )
   ),

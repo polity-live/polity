@@ -12,6 +12,7 @@ import {
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroGrid } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
+import { searchDocumentPageArgs } from '@/zero/shared/search-query-helpers';
 import { SEARCH_GRID_PAGE_SIZE } from '@/zero/preloads/search-context';
 import { observeRouteReadiness } from '@/zero/observed-query';
 import { useSearchCardState } from '../SearchCardStateProvider';
@@ -139,12 +140,9 @@ export function useVirtualSearchGridController({
       const ttl = settled ? ('5m' as const) : ('none' as const);
 
       return {
-        query: queries.search.searchDocumentPage({
-          ...listContextParams,
-          limit,
-          start,
-          dir,
-        }) as any,
+        query: queries.search.searchDocumentPage(
+          searchDocumentPageArgs(listContextParams, { limit, start, dir })
+        ) as any,
         options: { ttl },
       };
     },

@@ -33,12 +33,14 @@ export interface JourneyResult {
   preloadEvents?: PreloadLifecycleEvent[];
   viewEvents?: QueryViewObservation[];
   failures: string[];
+  target?: NavigationTarget;
   diagnostic?: {
     url: string;
     body: string;
     errors: string[];
     activeViews?: QueryViewObservation[];
     layout?: unknown;
+    sync?: { expectedName: string; localName: string | null; localPresent: boolean };
   };
   processing?: {
     browserTimeOrigin: number;
@@ -129,6 +131,7 @@ export async function measureJourneys(
         text: seed.groupName,
         // Name one fixture explicitly, rather than relying on tied creation-time ordering.
         search: { q: seed.groupName, types: 'group' },
+        queryArgs: { query: seed.groupName, types: ['group'] },
         queryNames: ['search.searchDocumentPage'],
       },
       {
@@ -194,6 +197,7 @@ export async function measureJourneys(
           visibleMs: NaN,
           queries: [],
           failures: [],
+          target: route,
         };
         records.push(record);
         try {
@@ -434,6 +438,27 @@ export async function measureJourneys(
         update.failures.push('Subscribed data update exceeds budget');
     } catch (error) {
       update.failures.push(String(error));
+      try {
+        const local = await withDeadline(
+          page.evaluate(async id => {
+            const rows = await (globalThis as any).__zero.inspector.client.rows('group');
+            const row = rows.find((candidate: any) => candidate.id === id);
+            return { localName: row?.name ?? null, localPresent: Boolean(row) };
+          }, seed.groupId),
+          'Subscribed update diagnostics'
+        );
+        update.diagnostic = {
+          url: page.url(),
+          body: (await page.locator('body').innerText()).slice(0, 8_000),
+          errors: [...pageErrors],
+          activeViews: await page.evaluate(() =>
+            (globalThis as any).__zeroPerformanceActiveViews()
+          ),
+          sync: { expectedName: updatedName, ...local },
+        };
+      } catch (diagnosticError) {
+        update.failures.push(`Data-update diagnostics: ${String(diagnosticError)}`);
+      }
     }
     try {
       update.queries = await inspect(page, clientSamples);

@@ -5,6 +5,7 @@ import type {
 } from '@/features/timeline/hooks/useTimelineFilters';
 import { ALL_CONTENT_TYPES } from '@/features/timeline/hooks/useTimelineFilters';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import { searchDocumentPageArgs } from '../shared/search-query-helpers';
 
 export interface SearchRoutePreloadParams {
   q?: string;
@@ -20,19 +21,7 @@ export interface SearchRoutePreloadParams {
 export const SEARCH_GRID_PAGE_SIZE = 48;
 export const SEARCH_INITIAL_PAGE_LIMIT = SEARCH_GRID_PAGE_SIZE + 1;
 
-interface SearchDocumentPagePreloadArgs {
-  query: string;
-  types: string[];
-  topics: string[];
-  createdAfter: number | null;
-  engagement: EngagementFilter;
-  sort: TimelineSortOption;
-  snapshotAt: number | null;
-  limit: number;
-  start: null;
-  dir: 'forward' | 'backward';
-  bounds: null;
-}
+type SearchDocumentPagePreloadArgs = ReturnType<typeof searchDocumentPageArgs>;
 
 export const HOME_DISCOVER_SEARCH_ARGS: SearchDocumentPagePreloadArgs = {
   query: '',
@@ -116,17 +105,17 @@ function normalizeSort(sort?: TimelineSortOption): TimelineSortOption {
 export function createSearchDocumentPageArgs(
   search: SearchRoutePreloadParams
 ): SearchDocumentPagePreloadArgs {
-  return {
-    query: search.q ?? '',
-    types: parseContentTypes(search.types),
-    topics: parseTopics(search.topics, search.hashtag),
-    createdAfter: createdAfterForRange(search.range),
-    engagement: normalizeEngagement(search.engagement),
-    sort: normalizeSort(search.sort),
-    snapshotAt: null,
-    limit: SEARCH_INITIAL_PAGE_LIMIT,
-    start: null,
-    dir: 'forward',
-    bounds: null,
-  };
+  return searchDocumentPageArgs(
+    {
+      query: search.q ?? '',
+      types: parseContentTypes(search.types),
+      topics: parseTopics(search.topics, search.hashtag),
+      createdAfter: createdAfterForRange(search.range),
+      engagement: normalizeEngagement(search.engagement),
+      sort: normalizeSort(search.sort),
+      snapshotAt: null,
+      bounds: null,
+    },
+    { limit: SEARCH_INITIAL_PAGE_LIMIT, start: null, dir: 'forward' }
+  );
 }

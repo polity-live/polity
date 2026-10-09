@@ -113,6 +113,11 @@ describe('search virtualizer controller contracts', () => {
     expect(queries.search.searchDocumentPage).toHaveBeenLastCalledWith(
       createSearchDocumentPageArgs({})
     );
+    // Object equality ignores key order, but the wire request must reuse the
+    // preload's actual serialized arguments instead of registering another ID.
+    expect(
+      JSON.stringify(vi.mocked(queries.search.searchDocumentPage).mock.calls.at(-1)?.[0])
+    ).toBe(JSON.stringify(createSearchDocumentPageArgs({})));
   });
   it('keeps compact and card scroll positions separate across view changes', () => {
     const virtualizer = {

@@ -23,6 +23,27 @@ export default defineConfig({
     traceDeps: ['web-push*'],
   },
   plugins: [
+    ...(process.env.ZERO_PERFORMANCE_DIAGNOSTICS === '1'
+      ? [
+          {
+            name: 'benchmark-public-zero-react-observation',
+            enforce: 'pre' as const,
+            resolveId(source: string, importer?: string) {
+              // Observe public hooks called by zero-virtual as well as app code.
+              // The boundary itself continues to import the unchanged public API.
+              if (
+                source !== '@rocicorp/zero/react' ||
+                importer
+                  ?.replaceAll('\\', '/')
+                  .split('?')[0]
+                  .endsWith('/src/zero/observed-query.ts')
+              )
+                return;
+              return fileURLToPath(new URL('./src/zero/observed-query.ts', import.meta.url));
+            },
+          },
+        ]
+      : []),
     tanstackStart({
       router: {
         routesDirectory: 'routes',

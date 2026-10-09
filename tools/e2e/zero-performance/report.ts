@@ -2,9 +2,10 @@ import { BUDGETS, checkBudgets, type Measurement } from './metrics';
 import { queryObservationFailures, type QueryObservation } from './journey-metrics';
 import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
+import type { NavigationTarget } from './browser-navigation';
 
-export const REPORT_FORMAT = 6;
-export const MEASUREMENT_PROTOCOL = 'zero-performance/v6';
+export const REPORT_FORMAT = 7;
+export const MEASUREMENT_PROTOCOL = 'zero-performance/v7';
 
 export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
   const byRequest = new Map<string, any[]>();
@@ -102,7 +103,56 @@ export interface Report {
     queries: QueryObservation[];
     cachedDisplayMs?: number;
     failures: string[];
+    target?: NavigationTarget;
+    processing?: { navigationStart: number };
   }[];
+}
+
+function routeQuery(route: string) {
+  if (route === '/search') return { name: 'search.searchDocumentPage' };
+  if (route === '/messages') return { name: 'messages.messagePage' };
+  const agenda = route.match(/^\/event\/([^/]+)\/agenda\/?$/);
+  if (agenda) return { name: 'events.agendaItemsFull', args: { eventId: agenda[1] } };
+  const entity = route.match(/^\/(group|event|amendment)\/([^/]+)\/?$/);
+  if (!entity) return;
+  return {
+    name: {
+      group: 'groups.wikiOverview',
+      event: 'events.wikiData',
+      amendment: 'amendments.byIdWiki',
+    }[entity[1]],
+    args: { id: entity[2] },
+  };
+}
+
+/** A visible virtualized route must have a real committed result view, not only a preload. */
+export function navigationMaterializationFailures(
+  journey: NonNullable<Report['journeys']>[number]
+) {
+  const expected = routeQuery(journey.route);
+  const start = journey.processing?.navigationStart;
+  if (
+    !expected ||
+    !journey.target ||
+    journey.target.path !== journey.route ||
+    typeof start !== 'number' ||
+    !Number.isFinite(start) ||
+    start < 0
+  )
+    return [`Missing navigation target/activation: ${journey.route}/${journey.visit}`];
+  const args = { ...expected.args, ...journey.target.queryArgs };
+  const found = journey.queries.some(query => {
+    const actual = (query.args as any[])?.[0];
+    return (
+      query.name === expected.name &&
+      query.kind === 'materialized' &&
+      Object.entries(args).every(
+        ([key, value]) => JSON.stringify(actual?.[key]) === JSON.stringify(value)
+      ) &&
+      query.views?.some(view => view.releasedAt === null || view.releasedAt > start)
+    );
+  });
+  return found ? [] : [`Missing committed visible query: ${journey.route}/${journey.visit}`];
 }
 
 export function serverWarningFailures(report: Report, absoluteBudgets = true): string[] {
@@ -214,7 +264,11 @@ export async function reportFailures(report: Report, absoluteBudgets = true): Pr
   }
   for (const visit of ['first', 'back', 'repeat']) {
     const records = journeys.filter(journey => journey.visit === visit);
-    if (records.length !== 6 || new Set(records.map(journey => journey.route)).size !== 6)
+    if (
+      records.length !== 6 ||
+      new Set(records.map(journey => routeQuery(journey.route)?.name)).size !== 6 ||
+      records.some(journey => !routeQuery(journey.route))
+    )
       failures.push(`Missing ${visit} browser journeys`);
   }
   for (const visit of ['revoke-membership', 'data-update'])
@@ -238,6 +292,7 @@ export async function reportFailures(report: Report, absoluteBudgets = true): Pr
         `Visible content exceeds ${BUDGETS.totalMs} ms: ${journey.route}/${journey.visit}`
       );
     if (['first', 'back', 'repeat'].includes(journey.visit)) {
+      failures.push(...navigationMaterializationFailures(journey));
       if (
         journey.authoritativeMs === undefined ||
         !Number.isFinite(journey.authoritativeMs) ||

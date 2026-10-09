@@ -29,6 +29,7 @@ import {
   correlateQueryAPI,
   serverWarningFailures,
   securityCoverageFailures,
+  navigationMaterializationFailures,
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
 } from '../report';
@@ -729,6 +730,55 @@ describe('Zero performance gate', () => {
         false
       )
     ).toContain('Missing or failed preload completion');
+  });
+  it('requires a committed visible page with the requested arguments and rejects released or preload-only pages', () => {
+    const query: QueryObservation = {
+      id: 'query',
+      clientID: 'client',
+      name: 'messages.messagePage',
+      args: [{ conversationId: 'expected' }],
+      kind: 'preload',
+      got: true,
+      client: null,
+      server: 1,
+      total: null,
+      ttl: '5m',
+      inactive: null,
+      preloads: [],
+    };
+    const journey = {
+      route: '/messages',
+      visit: 'first',
+      visibleMs: 20,
+      authoritativeMs: 10,
+      queries: [query],
+      failures: [],
+      processing: { navigationStart: 100 },
+      target: {
+        path: '/messages',
+        text: 'Visible message',
+        queryArgs: { conversationId: 'expected' },
+      },
+    };
+    expect(navigationMaterializationFailures(journey)).toContain(
+      'Missing committed visible query: /messages/first'
+    );
+    const view = { activationID: 'view', activatedAt: 105, authoritativeAt: 110, releasedAt: null };
+    query.kind = 'materialized';
+    query.views = [view];
+    expect(navigationMaterializationFailures(journey)).toEqual([]);
+    query.args = [{ conversationId: 'another' }];
+    expect(navigationMaterializationFailures(journey)).toContain(
+      'Missing committed visible query: /messages/first'
+    );
+    query.args = [{ conversationId: 'expected' }];
+    query.views = [{ ...view, releasedAt: 90 }];
+    expect(navigationMaterializationFailures(journey)).toContain(
+      'Missing committed visible query: /messages/first'
+    );
+    expect(navigationMaterializationFailures({ ...journey, target: undefined })).toContain(
+      'Missing navigation target/activation: /messages/first'
+    );
   });
   it('retains measured local timings across release without borrowing another view or hiding a violation', () => {
     const samples = new Map();
