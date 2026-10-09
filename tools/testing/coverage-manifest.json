@@ -118183,6 +118183,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+      "domain": "zero:appearance-themes",
+      "owner": "polity/zero:appearance-themes",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
       "domain": "zero:appearance-themes",
       "owner": "polity/zero:appearance-themes",
@@ -118264,6 +118274,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "tools/testing/performance/city-design/index.html"
@@ -118288,6 +118299,11 @@
             "coveredStatements": 2,
             "totalStatements": 18
           }
+        },
+        {
+          "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+          "project": "unit",
+          "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
         }
       ],
       "suggestedTestRefs": [
@@ -118298,11 +118314,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/communication-studio/__tests__/queries.unit.test.ts"
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
       ]
     },
     {
@@ -118331,14 +118347,14 @@
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.streamUrl.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
-        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
-        "src/zero/users/__tests__/contact-email-schema.unit.test.ts"
+        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts"
       ]
     },
     {
@@ -118407,9 +118423,9 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
-        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
-        "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts"
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts"
       ]
     },
     {

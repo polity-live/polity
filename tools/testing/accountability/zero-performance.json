@@ -133,6 +133,13 @@
         "project": "component",
         "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
       }
+    ],
+    "src/zero/appearance-themes/queries.ts": [
+      {
+        "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+        "project": "unit",
+        "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
+      }
     ]
   }
 }

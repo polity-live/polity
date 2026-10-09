@@ -10,6 +10,9 @@ const ACTIVE_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 export const appearanceThemeQueries = {
   catalog: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.appearance_theme
+      // Every access branch already requires one of these kinds. Expose that
+      // common indexed candidate set without changing any branch's permission.
+      .where('kind', 'IN', ['builtin', 'personal', 'group'])
       .where(({ and, cmp, exists, or }: any) =>
         or(
           cmp('kind', 'builtin'),
