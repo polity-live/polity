@@ -12,6 +12,7 @@ export function stopOwnedRuntime(projectID, container, execute = spawnSync) {
     ![
       `polity-zero-performance-runtime-${match[1]}`,
       `polity-zero-performance-app-${match[1]}`,
+      `polity-zero-performance-browser-${match[1]}`,
     ].includes(container)
   )
     throw new Error('Invalid isolated runtime identity');

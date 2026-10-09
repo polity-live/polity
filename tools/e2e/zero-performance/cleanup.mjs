@@ -27,6 +27,7 @@ async function visit(directory) {
     if (!config.includes(`project_id = "${owned.projectID}"`))
       throw new Error('Stack project identity mismatch');
     if (owned.runtimeContainer) stopOwnedRuntime(owned.projectID, owned.runtimeContainer);
+    if (owned.browserContainer) stopOwnedRuntime(owned.projectID, owned.browserContainer);
     if (owned.appContainer) stopOwnedRuntime(owned.projectID, owned.appContainer);
     const stopped = spawnSync(
       process.execPath,

@@ -14,6 +14,7 @@ import {
   viewRuns,
   queryObservationFailures,
   retainViewClientSamples,
+  hasUnmeasuredActiveViews,
   type ViewClientSamples,
   type QueryObservation,
 } from './journey-metrics';
@@ -77,7 +78,9 @@ export async function measureJourneys(
   });
   if (error || data.user?.id !== OWNER_ID || !cookies.length)
     throw new Error('Journey session provisioning failed');
-  const browser = await chromium.launch({ headless: true });
+  const browser = process.env.ZERO_PERFORMANCE_BROWSER_ENDPOINT
+    ? await chromium.connect(process.env.ZERO_PERFORMANCE_BROWSER_ENDPOINT)
+    : await chromium.launch({ headless: true });
   const records: JourneyResult[] = [];
   const clientSamples: ViewClientSamples = new Map();
   const warnings: string[] = [];
@@ -628,6 +631,20 @@ async function navigate(page: Page, path: string, search: unknown = {}, target?:
 }
 
 async function inspect(page: Page, clientSamples: ViewClientSamples): Promise<QueryObservation[]> {
+  const startedAt = performance.now();
+  let snapshot = await inspectOnce(page, clientSamples);
+  // This runs after the timed navigation. Retain genuine local readings before
+  // releasing short-lived departure views; a missed/released view remains an error.
+  while (hasUnmeasuredActiveViews(snapshot) && performance.now() - startedAt < 1_000) {
+    snapshot = await inspectOnce(page, clientSamples);
+  }
+  return snapshot;
+}
+
+async function inspectOnce(
+  page: Page,
+  clientSamples: ViewClientSamples
+): Promise<QueryObservation[]> {
   const snapshot = await withDeadline(
     page.evaluate(
       async password => {

@@ -33,6 +33,16 @@ export interface QueryObservation {
 
 export type ViewClientSamples = Map<string, { clientMs: number; clientMeasuredAt: number }>;
 
+/** A new view can complete while the previous asynchronous Inspector snapshot is in flight. */
+export function hasUnmeasuredActiveViews(queries: QueryObservation[]) {
+  return queries.some(query =>
+    query.views?.some(
+      view =>
+        view.releasedAt === null && (view.authoritativeAt === null || view.clientMs === undefined)
+    )
+  );
+}
+
 /** Retain real Inspector readings while each completed view is still subscribed. */
 export function retainViewClientSamples(
   query: QueryObservation,

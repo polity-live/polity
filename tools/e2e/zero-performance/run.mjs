@@ -47,6 +47,7 @@ let stopping = false;
 let reservation;
 let runtimeContainer;
 let appContainer;
+let browserContainer;
 
 function executable(relative) {
   return path.join(sandbox, 'node_modules', relative);
@@ -111,7 +112,7 @@ async function ports() {
   const locks = path.join(root, 'output/zero-performance/.ports');
   await mkdir(locks, { recursive: true });
   for (let start = 55620; start < 55820; start += 10) {
-    if (Array.from({ length: 7 }, (_, i) => start + i).some(port => allocated.has(port))) continue;
+    if (Array.from({ length: 8 }, (_, i) => start + i).some(port => allocated.has(port))) continue;
     const lock = path.join(locks, `${start}.lock`);
     let handle;
     try {
@@ -142,7 +143,7 @@ async function ports() {
     await handle.writeFile(JSON.stringify({ runID, pid: process.pid }));
     await handle.close();
     if (
-      (await Promise.all(Array.from({ length: 7 }, (_, i) => portFree(start + i)))).every(Boolean)
+      (await Promise.all(Array.from({ length: 8 }, (_, i) => portFree(start + i)))).every(Boolean)
     ) {
       reservation = lock;
       return start;
@@ -230,7 +231,7 @@ async function stop() {
   if (stopping) return;
   stopping = true;
   let runtimeCleanupError;
-  for (const container of [runtimeContainer, appContainer].filter(Boolean)) {
+  for (const container of [browserContainer, runtimeContainer, appContainer].filter(Boolean)) {
     try {
       stopOwnedRuntime(`polity-zero-performance-${runID}`, container);
     } catch (error) {
@@ -285,6 +286,11 @@ for (const signal of ['SIGINT', 'SIGTERM'])
   });
 
 try {
+  if (
+    args.includes('--linux-browser') &&
+    (option('--layer') !== 'journeys' || !args.includes('--linux-app') || !option('--zero-image'))
+  )
+    throw new Error('--linux-browser requires a journeys diagnostic, --linux-app and --zero-image');
   let exists = false;
   try {
     await access(sandbox);
@@ -612,6 +618,88 @@ ${storageBuckets}
     });
     await waitHTTP(`${cacheURL}/keepalive`, zero.child);
     startup.zeroMs = Date.now() - zeroAt;
+    if (args.includes('--linux-browser')) {
+      if (!appContainer || !runtimeContainer)
+        throw new Error('--linux-browser requires --linux-app and a verified --zero-image');
+      const projectID = `polity-zero-performance-${runID}`;
+      browserContainer = `polity-zero-performance-browser-${runID}`;
+      const playwright = JSON.parse(
+        await readFile(executable('@playwright/test/package.json'), 'utf8')
+      ).version;
+      if (!/^\d+\.\d+\.\d+$/.test(playwright)) throw new Error('Invalid pinned browser version');
+      const packageManager = JSON.parse(
+        await readFile(path.join(sandbox, 'package.json'), 'utf8')
+      ).packageManager;
+      if (!/^pnpm@\d+\.\d+\.\d+$/.test(packageManager))
+        throw new Error('Invalid pinned browser package manager');
+      const browserImage = `mcr.microsoft.com/playwright:v${playwright}-noble`;
+      await writeFile(
+        path.join(artifactRoot, 'stack.json'),
+        JSON.stringify({
+          projectID,
+          sandbox,
+          artifactRoot,
+          runtimeContainer,
+          appContainer,
+          browserContainer,
+        })
+      );
+      const launchedAt = Date.now();
+      const server = run(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--name',
+          browserContainer,
+          '--label',
+          `polity.zero-performance.project=${projectID}`,
+          '--network',
+          `supabase_network_${projectID}`,
+          '--publish',
+          `127.0.0.1:${start + 7}:${start + 7}`,
+          '--mount',
+          `type=bind,source=${artifactRoot},target=/benchmark`,
+          '--env',
+          `ZERO_PERFORMANCE_BROWSER_PROJECT=${projectID}`,
+          '--env',
+          `ZERO_PERFORMANCE_BROWSER_PORT=${start}`,
+          '--env',
+          `ZERO_PERFORMANCE_PLAYWRIGHT_VERSION=${playwright}`,
+          browserImage,
+          'sh',
+          '-c',
+          `mkdir -p /tmp/zero-performance-browser && corepack ${packageManager} --dir /tmp/zero-performance-browser add --ignore-scripts --save-exact playwright@${playwright} && node /benchmark/project/tools/e2e/zero-performance/linux-browser.mjs`,
+        ],
+        { label: 'browser' }
+      );
+      server.done.catch(() => {
+        /* Readiness checks retain the startup failure. */
+      });
+      const ready = path.join(artifactRoot, 'browser-ready.json');
+      let browserReady;
+      while (!browserReady) {
+        if (server.child.exitCode !== null || Date.now() - launchedAt > 180_000)
+          throw new Error('Isolated Ubuntu browser readiness failed');
+        try {
+          browserReady = JSON.parse(await readFile(ready, 'utf8'));
+        } catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      await unlink(ready);
+      const endpoint = new URL(browserReady.endpoint);
+      if (endpoint.protocol !== 'ws:' || Number(endpoint.port) !== start + 7)
+        throw new Error('Invalid isolated browser control endpoint');
+      endpoint.hostname = '127.0.0.1';
+      environment.ZERO_PERFORMANCE_BROWSER_ENDPOINT = endpoint.toString();
+      startup.browserRuntime = {
+        image: browserImage,
+        ...browserReady.runtime,
+        setupMs: Date.now() - launchedAt,
+      };
+    }
     await writeFile(
       path.join(artifactRoot, 'startup.json'),
       JSON.stringify(

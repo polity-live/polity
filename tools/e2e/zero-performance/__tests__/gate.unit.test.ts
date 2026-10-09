@@ -38,6 +38,7 @@ import {
   measuredServerWarnings,
 } from '../report';
 import { stopOwnedRuntime, dependencyVersions } from '../linux-runtime.mjs';
+import { browserTargets, browserTarget } from '../linux-browser.mjs';
 import {
   applyElectionQueryAccess,
   applyElectionQueryAccessFromAuthorizedAgendaItem,
@@ -57,6 +58,7 @@ import {
 import {
   queryObservationFailures,
   retainViewClientSamples,
+  hasUnmeasuredActiveViews,
   preloadRuns,
   viewRuns,
   type QueryObservation,
@@ -576,7 +578,40 @@ describe('Zero performance gate', () => {
     ).toContain('Missing separate query plan export timing');
     expect(checkBudgets(measurement())).toEqual([]);
   });
-  it.each(['runtime', 'app'])(
+  it('routes Ubuntu browser loopback traffic only into its own isolated services', () => {
+    const targets = browserTargets('polity-zero-performance-1234abcd', 55620);
+    expect(browserTarget('http://127.0.0.1:55620/search?q=group', targets)).toEqual({
+      hostname: 'polity-zero-performance-app-1234abcd',
+      port: 55620,
+      path: '/search?q=group',
+    });
+    expect(browserTarget('ws://localhost:55621/sync', targets)).toEqual({
+      hostname: 'polity-zero-performance-runtime-1234abcd',
+      port: 55621,
+      path: '/sync',
+    });
+    expect(browserTarget('http://127.0.0.1:55624/auth/v1/user', targets)).toEqual({
+      hostname: 'supabase_kong_polity-zero-performance-1234abcd',
+      port: 8000,
+      path: '/auth/v1/user',
+    });
+    for (const address of [
+      'https://www.polity.live',
+      'http://127.0.0.1:54321',
+      'http://another-stack:55620',
+      'http://actor:secret@127.0.0.1:55620',
+    ])
+      expect(() => browserTarget(address, targets)).toThrow('outside the isolated stack');
+    expect(() => browserTargets('development', 55620)).toThrow('Invalid isolated browser');
+    expect(() => browserTargets('polity-zero-performance-1234abcd', 3000)).toThrow(
+      'Invalid isolated browser'
+    );
+    for (const start of [55621, 55819, 55820])
+      expect(() => browserTargets('polity-zero-performance-1234abcd', start)).toThrow(
+        'Invalid isolated browser'
+      );
+  });
+  it.each(['runtime', 'app', 'browser'])(
     'only stops a %s carrying the exact isolated project ownership label',
     kind => {
       const project = 'polity-zero-performance-1234abcd';
@@ -921,7 +956,10 @@ describe('Zero performance gate', () => {
       preloads: [],
       views: [{ activationID: 'view', activatedAt: 0, authoritativeAt: 10, releasedAt: null }],
     };
-    expect(queryObservationFailures(retainViewClientSamples(query, 20, samples))).toEqual([]);
+    expect(hasUnmeasuredActiveViews([query])).toBe(true);
+    const measured = retainViewClientSamples(query, 20, samples);
+    expect(hasUnmeasuredActiveViews([measured])).toBe(false);
+    expect(queryObservationFailures(measured)).toEqual([]);
     const released = {
       ...query,
       client: null,
@@ -929,6 +967,12 @@ describe('Zero performance gate', () => {
       views: [{ ...query.views![0], releasedAt: 30 }],
     };
     expect(queryObservationFailures(retainViewClientSamples(released, 40, samples))).toEqual([]);
+    expect(hasUnmeasuredActiveViews([released])).toBe(false);
+    expect(
+      hasUnmeasuredActiveViews([
+        { ...query, views: [{ ...measured.views![0], authoritativeAt: null }] },
+      ])
+    ).toBe(true);
     for (const changed of [
       { ...released, clientID: 'another-client' },
       { ...released, views: [{ ...released.views[0], activationID: 'another-view' }] },
