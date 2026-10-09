@@ -131856,6 +131856,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132012,7 +132022,13 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds an unassigned parent FK to the actual constrained child identity"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {

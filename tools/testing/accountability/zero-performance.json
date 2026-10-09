@@ -140,6 +140,13 @@
         "project": "unit",
         "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
       }
+    ],
+    "tools/e2e/zero-performance/fixtures.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+        "project": "unit",
+        "caseId": "binds an unassigned parent FK to the actual constrained child identity"
+      }
     ]
   }
 }

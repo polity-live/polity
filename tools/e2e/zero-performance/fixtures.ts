@@ -28,6 +28,29 @@ const ownFields = new Set([
   'sender_id',
   'recipient_id',
 ]);
+
+/** Only mandatory scalar equalities may bind a correlated parent key. */
+function boundEquality(where: any, column: string): unknown {
+  if (!where) return undefined;
+  if (where.type === 'and') {
+    const values = where.conditions
+      .map((condition: any) => boundEquality(condition, column))
+      .filter((value: unknown) => value !== undefined);
+    if (values.some((value: unknown) => value !== values[0]))
+      throw new Error(`Conflicting correlated child equalities for ${column}`);
+    return values[0];
+  }
+  if (
+    where.type === 'simple' &&
+    where.op === '=' &&
+    where.left?.type === 'column' &&
+    where.left.name === column &&
+    where.right?.type === 'literal' &&
+    where.right.value !== null
+  )
+    return where.right.value;
+  return undefined;
+}
 export class Fixtures {
   readonly columns = new Map<string, Map<string, Column>>();
   private foreignKeys = new Map<string, ForeignKey[]>();
@@ -199,7 +222,8 @@ export class Fixtures {
           )
             record.values[parentColumn] ??= record.values.recipient_entity_id;
           record.values[parentColumn] ??=
-            parentColumn === 'id' ? primary : child.table === 'user' ? OWNER_ID : id();
+            boundEquality(child.where, relationship.correlation.childField[index]) ??
+            (parentColumn === 'id' ? primary : child.table === 'user' ? OWNER_ID : id());
           initial[childColumn] = record.values[parentColumn];
         });
         return plan(child, initial, `${path}.${child.table}`, false);

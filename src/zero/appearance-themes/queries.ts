@@ -10,23 +10,23 @@ const ACTIVE_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 export const appearanceThemeQueries = {
   catalog: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.appearance_theme
-      // Every access branch already requires one of these kinds. Expose that
-      // common indexed candidate set without changing any branch's permission.
+      // One indexed candidate set, with separate gates for each protected kind.
       .where('kind', 'IN', ['builtin', 'personal', 'group'])
       .where(({ and, cmp, exists, or }: any) =>
-        or(
-          cmp('kind', 'builtin'),
-          and(cmp('kind', 'personal'), cmp('created_by_id', userID)),
-          and(
-            cmp('kind', 'group'),
-            cmp('current_revision_id', 'IS NOT', null),
-            exists('current_revision', (revision: any) => revision.where('status', 'published')),
-            exists('group', (group: any) =>
-              group.whereExists('memberships', (membership: any) =>
-                whereAnyOf(
-                  membership.where('user_id', userID),
-                  'status',
-                  ACTIVE_MEMBERSHIP_STATUSES
+        and(
+          or(cmp('kind', '!=', 'personal'), cmp('created_by_id', userID)),
+          or(
+            cmp('kind', '!=', 'group'),
+            and(
+              cmp('current_revision_id', 'IS NOT', null),
+              exists('current_revision', (revision: any) => revision.where('status', 'published')),
+              exists('group', (group: any) =>
+                group.whereExists('memberships', (membership: any) =>
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_MEMBERSHIP_STATUSES
+                  )
                 )
               )
             )
