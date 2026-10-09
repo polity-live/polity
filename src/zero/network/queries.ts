@@ -13,22 +13,22 @@ const networkCursorSchema = z
 function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null): T {
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('from_group', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('from_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('to_group', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('to_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       })
     )
@@ -38,13 +38,13 @@ function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null):
 function applyGroupConnectionRequestAccess<T>(q: T, userID: string | undefined | null): T {
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('initiator_group', (group: any) => applyGroupQueryAccess(group, userID), {
+      exists('initiator_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       })
     )
@@ -468,11 +468,17 @@ export const networkQueries = {
       if (term) {
         q = q.where(({ or, exists }: any) =>
           or(
-            exists('group_a', (group: any) =>
-              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            exists(
+              'group_a',
+              (group: any) =>
+                applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`),
+              { flip: false }
             ),
-            exists('group_b', (group: any) =>
-              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            exists(
+              'group_b',
+              (group: any) =>
+                applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`),
+              { flip: false }
             )
           )
         );
@@ -491,8 +497,10 @@ export const networkQueries = {
         .related('membership_rule_requests', (membership: any) =>
           membership
             .related('required_source_role', (role: any) =>
-              role.whereExists('group', (group: any) =>
-                applyGroupDiscoveryQueryAccess(group, userID)
+              role.whereExists(
+                'group',
+                (group: any) => applyGroupDiscoveryQueryAccess(group, userID),
+                { flip: false }
               )
             )
             .orderBy('updated_at', 'desc')

@@ -7,8 +7,8 @@ import { virtualPageLimitSchema } from '../virtualization';
 
 const blogStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
 
-function applyBlogAccess<T>(q: T, userID: string | undefined): T {
-  return applyBlogQueryAccess(q, userID);
+function applyBlogAccess<T>(q: T, userID: string | undefined, planPerBlog = false): T {
+  return applyBlogQueryAccess(q, userID, planPerBlog);
 }
 
 function applyBlogManagerAccess<T>(q: T, userID: string | undefined): T {
@@ -190,7 +190,7 @@ export const blogQueries = {
     ({ args: { blog_id }, ctx: { userID } }) =>
       zql.blog_blogger
         .where('blog_id', blog_id)
-        .whereExists('blog', blog => applyBlogAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
         .orderBy('created_at', 'desc')
   ),
 
@@ -212,7 +212,7 @@ export const blogQueries = {
     }) => {
       let q: any = zql.blog_blogger
         .where('blog_id', blogId)
-        .whereExists('blog', (blog: any) => applyBlogAccess(blog, userID));
+        .whereExists('blog', (blog: any) => applyBlogAccess(blog, userID, true), { flip: false });
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId) q = q.where('role_id', roleId);

@@ -53,21 +53,31 @@ function applyLinkQueryAccess<T>(q: T, userID: string | undefined | null): T {
   ) as T;
 }
 
-function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null, now: number): T {
+function applyTimelineEventAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  now: number,
+  planPerEvent = false
+): T {
   const query = q as any;
+  const plan = planPerEvent ? { flip: false } : undefined;
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       isAuthenticatedUserId(userID) ? cmp('actor_id', userID) : cmp('actor_id', '__anon__'),
       isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-      exists('user', (user: any) => applyUserQueryAccess(user, userID)),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID)),
-      exists('event', (event: any) => applyEventQueryAccess(event, userID)),
-      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID)),
-      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID)),
-      exists('statement', (statement: any) => applyStatementQueryAccess(statement, userID, now)),
-      exists('election', (election: any) => applyElectionQueryAccess(election, userID))
+      exists('user', (user: any) => applyUserQueryAccess(user, userID), plan),
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, planPerEvent), plan),
+      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), plan),
+      exists('event', (event: any) => applyEventQueryAccess(event, userID), plan),
+      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID, planPerEvent), plan),
+      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID, planPerEvent), plan),
+      exists(
+        'statement',
+        (statement: any) => applyStatementQueryAccess(statement, userID, now, planPerEvent),
+        plan
+      ),
+      exists('election', (election: any) => applyElectionQueryAccess(election, userID), plan)
     )
   ) as T;
 }
@@ -190,7 +200,7 @@ export const commonQueries = {
     ({ args: { blog_id }, ctx: { userID } }) =>
       zql.blog_hashtag
         .where('blog_id', blog_id)
-        .whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogQueryAccess(blog, userID, true), { flip: false })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -295,7 +305,13 @@ export const commonQueries = {
         .where(({ or, cmp, exists }: any) =>
           or(
             isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID, now))
+            exists(
+              'timeline_event',
+              (event: any) => applyTimelineEventAccess(event, userID, now, true),
+              {
+                flip: false,
+              }
+            )
           )
         )
         .orderBy('created_at', 'desc')

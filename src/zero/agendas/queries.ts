@@ -176,7 +176,9 @@ export const agendaQueries = {
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
       zql.agenda_item_change_request
         .where('agenda_item_id', agenda_item_id)
-        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+          flip: false,
+        })
         .orderBy('order_index', 'asc')
         .related('change_request', q => q.related('user'))
         .related('vote', q =>
@@ -185,27 +187,37 @@ export const agendaQueries = {
             .related('voters', vq => applyVoteVoterOrManagerQueryAccess(vq, userID).related('user'))
             .related('indicative_participations', ip =>
               ip
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('decisions', dq => dq.related('choice'))
             )
             .related('indicative_decisions', dq =>
               dq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('offline_tallies', oq =>
               oq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('final_participations', fp =>
               fp
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('decisions', dq => dq.related('choice'))
             )
             .related('final_decisions', dq =>
               dq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
         )

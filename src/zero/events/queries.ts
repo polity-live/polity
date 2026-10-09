@@ -404,8 +404,10 @@ export const eventQueries = {
       )
       .related('offline_participants', offlineParticipantQuery =>
         offlineParticipantQuery
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
+          .whereExists(
+            'event',
+            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+            { flip: false }
           )
           .related('connected_user')
           .related('group_offline_member', q =>
@@ -427,7 +429,7 @@ export const eventQueries = {
           .related('linked_event')
       )
       .related('delegates', delegateQuery =>
-        applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID)
+        applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID, true)
           .related('user')
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       )
@@ -439,8 +441,10 @@ export const eventQueries = {
           )
       )
       .related('roles', roleQuery =>
-        roleQuery.whereExists('event', event =>
-          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        roleQuery.whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
         )
       )
   ),

@@ -796,9 +796,12 @@ const amendmentQueriesBase = {
     ({ args: { amendment_id }, ctx: { userID } }) =>
       applyAmendmentCollaboratorRosterAccess(
         zql.amendment_collaborator.where('amendment_id', amendment_id),
-        userID
+        userID,
+        true
       )
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+          flip: false,
+        })
         .related('user')
         .related('role', role => role.related('action_rights'))
         .orderBy('created_at', 'desc')

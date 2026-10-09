@@ -105,44 +105,70 @@ function applyGroupPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
   ) as T;
 }
 
-function applyEventPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
+function applyEventPrivateRelationshipQueryAccess<T>(
+  q: T,
+  userID: string,
+  planPerEntity = false
+): T {
   const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
+  const plan = planPerEntity ? { flip: false } : undefined;
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
-      exists('participants', (participant: any) =>
-        whereAnyOf(
-          participant.where('user_id', userID),
-          'status',
-          ACTIVE_EVENT_PARTICIPANT_STATUSES
-        )
-      ),
-      exists('group', (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID))
-    )
-  ) as T;
-}
-
-function applyAmendmentPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
-  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) =>
-        whereAnyOf(
-          collaborator.where('user_id', userID),
-          'status',
-          ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
-        )
-      ),
-      exists('group', (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID)),
-      exists('event', (event: any) =>
-        event.whereExists('participants', (participant: any) =>
+      exists(
+        'participants',
+        (participant: any) =>
           whereAnyOf(
             participant.where('user_id', userID),
             'status',
             ACTIVE_EVENT_PARTICIPANT_STATUSES
-          )
-        )
+          ),
+        plan
+      ),
+      exists('group', (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID), plan)
+    )
+  ) as T;
+}
+
+function applyAmendmentPrivateRelationshipQueryAccess<T>(
+  q: T,
+  userID: string,
+  planPerEntity = false
+): T {
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
+  const plan = planPerEntity ? { flip: false } : undefined;
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('created_by_id', userID),
+      exists(
+        'collaborators',
+        (collaborator: any) =>
+          whereAnyOf(
+            collaborator.where('user_id', userID),
+            'status',
+            ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+          ),
+        plan
+      ),
+      exists(
+        'group',
+        (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID),
+        plan
+      ),
+      exists(
+        'event',
+        (event: any) =>
+          event.whereExists(
+            'participants',
+            (participant: any) =>
+              whereAnyOf(
+                participant.where('user_id', userID),
+                'status',
+                ACTIVE_EVENT_PARTICIPANT_STATUSES
+              ),
+            plan
+          ),
+        plan
       )
     )
   ) as T;
@@ -704,9 +730,11 @@ export function applyBlogManagerQueryAccess<T>(q: T, userID: string | undefined 
 export function applyStatementQueryAccess<T>(
   q: T,
   userID: string | undefined | null,
-  now: number
+  now: number,
+  planPerEntity = false
 ): T {
   const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
+  const plan = planPerEntity ? { flip: false } : undefined;
   const activeQuery = isAuthenticatedUserId(userID)
     ? query.where(({ or, cmp }: any) =>
         or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
@@ -723,33 +751,47 @@ export function applyStatementQueryAccess<T>(
     or(
       or(cmp('visibility', '=', 'public'), cmp('visibility', '=', 'authenticated')),
       cmp('user_id', userID),
-      exists('group', (group: any) =>
-        group.where(({ or, cmp, exists }: any) =>
-          or(
-            cmp('owner_id', userID),
-            exists('memberships', (membership: any) =>
-              whereAnyOf(
-                membership.where('user_id', userID),
-                'status',
-                ACTIVE_GROUP_MEMBERSHIP_STATUSES
-              )
-            ),
-            exists('guest_accesses', (guestAccess: any) =>
-              whereAnyOf(
-                guestAccess.where('user_id', userID),
-                'status',
-                ACTIVE_GROUP_GUEST_ACCESS_STATUSES
+      exists(
+        'group',
+        (group: any) =>
+          group.where(({ or, cmp, exists }: any) =>
+            or(
+              cmp('owner_id', userID),
+              exists(
+                'memberships',
+                (membership: any) =>
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_GROUP_MEMBERSHIP_STATUSES
+                  ),
+                plan
+              ),
+              exists(
+                'guest_accesses',
+                (guestAccess: any) =>
+                  whereAnyOf(
+                    guestAccess.where('user_id', userID),
+                    'status',
+                    ACTIVE_GROUP_GUEST_ACCESS_STATUSES
+                  ),
+                plan
               )
             )
-          )
-        )
+          ),
+        plan
       )
     )
   ) as T;
 }
 
-export function applyTodoQueryAccess<T>(q: T, userID: string | undefined | null): T {
+export function applyTodoQueryAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  planPerEntity = false
+): T {
   const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
+  const plan = planPerEntity ? { flip: false } : undefined;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -759,31 +801,47 @@ export function applyTodoQueryAccess<T>(q: T, userID: string | undefined | null)
     or(
       or(cmp('visibility', '=', 'public'), cmp('visibility', '=', 'authenticated')),
       cmp('creator_id', userID),
-      exists('assignments', (assignment: any) => assignment.where('user_id', userID)),
-      exists('group', (group: any) =>
-        group.where(({ or, cmp, exists }: any) =>
-          or(
-            cmp('owner_id', userID),
-            exists('memberships', (membership: any) =>
-              whereAnyOf(
-                membership.where('user_id', userID),
-                'status',
-                ACTIVE_GROUP_MEMBERSHIP_STATUSES
-              )
-            ),
-            exists('guest_accesses', (guestAccess: any) =>
-              whereAnyOf(
-                guestAccess.where('user_id', userID),
-                'status',
-                ACTIVE_GROUP_GUEST_ACCESS_STATUSES
+      exists('assignments', (assignment: any) => assignment.where('user_id', userID), plan),
+      exists(
+        'group',
+        (group: any) =>
+          group.where(({ or, cmp, exists }: any) =>
+            or(
+              cmp('owner_id', userID),
+              exists(
+                'memberships',
+                (membership: any) =>
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_GROUP_MEMBERSHIP_STATUSES
+                  ),
+                plan
+              ),
+              exists(
+                'guest_accesses',
+                (guestAccess: any) =>
+                  whereAnyOf(
+                    guestAccess.where('user_id', userID),
+                    'status',
+                    ACTIVE_GROUP_GUEST_ACCESS_STATUSES
+                  ),
+                plan
               )
             )
-          )
-        )
+          ),
+        plan
       ),
-      exists('event', (event: any) => applyEventPrivateRelationshipQueryAccess(event, userID)),
-      exists('amendment', (amendment: any) =>
-        applyAmendmentPrivateRelationshipQueryAccess(amendment, userID)
+      exists(
+        'event',
+        (event: any) => applyEventPrivateRelationshipQueryAccess(event, userID, planPerEntity),
+        plan
+      ),
+      exists(
+        'amendment',
+        (amendment: any) =>
+          applyAmendmentPrivateRelationshipQueryAccess(amendment, userID, planPerEntity),
+        plan
       )
     )
   ) as T;

@@ -85,9 +85,20 @@ function appendToIndex<T>(index: Map<string, T[]>, key: string | null | undefine
   }
 }
 
-export function SearchCardStateProvider({ children }: { children: ReactNode }) {
+export function SearchCardStateProvider({
+  children,
+  contentTypes,
+}: {
+  children: ReactNode;
+  contentTypes?: readonly string[];
+}) {
   const { user } = useAuth();
   const userId = user?.id;
+  const includes = (type: string) => !contentTypes?.length || contentTypes.includes(type);
+  const groupCards = includes('group');
+  const eventCards = includes('event');
+  const amendmentCards = includes('amendment');
+  const requiredStage = eventCards ? 6 : amendmentCards ? 5 : groupCards ? 3 : 1;
   const [activatedUserId, setActivatedUserId] = useState<string | null>(null);
   const [queryStage, setQueryStage] = useState(0);
 
@@ -131,30 +142,34 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     enabled && queryStage >= 1 ? queries.common.viewerSubscriptions({}) : undefined
   );
   const [memberships, membershipsResult] = useQuery(
-    enabled && queryStage >= 2 ? queries.rbac.viewerMemberships({}) : undefined
+    enabled && (groupCards || eventCards) && queryStage >= 2
+      ? queries.rbac.viewerMemberships({})
+      : undefined
   );
   const [guestAccesses, guestAccessesResult] = useQuery(
-    enabled && queryStage >= 3 ? queries.rbac.viewerGuestAccesses({}) : undefined
+    enabled && groupCards && queryStage >= 3 ? queries.rbac.viewerGuestAccesses({}) : undefined
   );
   const [participations, participationsResult] = useQuery(
-    enabled && queryStage >= 4 ? queries.rbac.viewerParticipations({}) : undefined
+    enabled && eventCards && queryStage >= 4 ? queries.rbac.viewerParticipations({}) : undefined
   );
   const [collaborations, collaborationsResult] = useQuery(
-    enabled && queryStage >= 5 ? queries.amendments.viewerCollaborations({}) : undefined
+    enabled && amendmentCards && queryStage >= 5
+      ? queries.amendments.viewerCollaborations({})
+      : undefined
   );
   const [delegations, delegationsResult] = useQuery(
-    enabled && queryStage >= 6 ? queries.events.viewerDelegations({}) : undefined
+    enabled && eventCards && queryStage >= 6 ? queries.events.viewerDelegations({}) : undefined
   );
 
   useEffect(() => {
-    if (!enabled || queryStage < 1 || queryStage >= 6) return;
+    if (!enabled || queryStage < 1 || queryStage >= requiredStage) return;
 
     const resultTypes = [
       subscriptionsResult.type,
-      membershipsResult.type,
-      guestAccessesResult.type,
-      participationsResult.type,
-      collaborationsResult.type,
+      groupCards || eventCards ? membershipsResult.type : 'complete',
+      groupCards ? guestAccessesResult.type : 'complete',
+      eventCards ? participationsResult.type : 'complete',
+      amendmentCards ? collaborationsResult.type : 'complete',
     ];
     if (resultTypes[queryStage - 1] === 'unknown') return;
 
@@ -183,11 +198,15 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     };
   }, [
     collaborationsResult.type,
+    amendmentCards,
     enabled,
+    eventCards,
     guestAccessesResult.type,
+    groupCards,
     membershipsResult.type,
     participationsResult.type,
     queryStage,
+    requiredStage,
     subscriptionsResult.type,
   ]);
 
@@ -281,7 +300,7 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
       Boolean(userId) &&
       (queryStage < 3 ||
         membershipsResult.type === 'unknown' ||
-        guestAccessesResult.type === 'unknown');
+        (groupCards && guestAccessesResult.type === 'unknown'));
     const participationLoading =
       Boolean(userId) &&
       (queryStage < 6 ||
@@ -293,13 +312,13 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     const isReady =
       !userId ||
       (enabled &&
-        queryStage >= 6 &&
+        queryStage >= requiredStage &&
         subscriptionsResult.type !== 'unknown' &&
-        membershipsResult.type !== 'unknown' &&
-        guestAccessesResult.type !== 'unknown' &&
-        participationsResult.type !== 'unknown' &&
-        collaborationsResult.type !== 'unknown' &&
-        delegationsResult.type !== 'unknown');
+        (!(groupCards || eventCards) || membershipsResult.type !== 'unknown') &&
+        (!groupCards || guestAccessesResult.type !== 'unknown') &&
+        (!eventCards || participationsResult.type !== 'unknown') &&
+        (!amendmentCards || collaborationsResult.type !== 'unknown') &&
+        (!eventCards || delegationsResult.type !== 'unknown'));
 
     return {
       isReady,
@@ -359,11 +378,14 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
       },
     };
   }, [
+    amendmentCards,
     collaborationsResult.type,
     collaborationsByAmendment,
     delegationsByEvent,
     delegationsResult.type,
     enabled,
+    eventCards,
+    groupCards,
     guestAccessesByGroup,
     guestAccessesResult.type,
     membershipsByGroup,
@@ -371,6 +393,7 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     participationsByEvent,
     participationsResult.type,
     queryStage,
+    requiredStage,
     subscriptionsByEntity,
     subscriptionsResult.type,
     userId,
