@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import {
+  useAmendmentCollaborationState,
+  type AmendmentCollaborationStatus,
+} from '@/zero/amendments/useAmendmentActionState';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ProjectedAmendmentCollaborationState } from '@/features/search/types/projected-card-state';
 
-export type CollaborationStatus =
-  'invited' | 'requested' | 'active' | 'collaborator' | 'member' | 'admin';
+export type CollaborationStatus = AmendmentCollaborationStatus;
 
 export function useAmendmentCollaboration(
   amendmentId: string,
@@ -31,7 +33,7 @@ export function useAmendmentCollaboration(
     isInvited,
     collaboratorCount,
     isLoading: queryLoading,
-  } = useAmendmentState({
+  } = useAmendmentCollaborationState({
     amendmentId: projectedState ? undefined : amendmentId,
     userId: projectedState ? undefined : user?.id,
   });

@@ -48,6 +48,7 @@ import { conversationAccessFilter } from '../../../../src/zero/messages/queries'
 import { securityScenarios, securityCaseManifest, SECURITY_SCENARIO_COUNT } from '../security';
 import {
   applyAgendaItemQueryAccess,
+  applyEventQueryAccess,
   applyVoteQueryAccess,
   applyVoteQueryAccessFromAuthorizedAgendaItem,
   applyRoleQueryAccess,
@@ -371,12 +372,32 @@ describe('Zero performance gate', () => {
           entry => entry.name === name && entry.variant === 'default'
         )!;
         const event = queryAST(buildQuery(entry, { userID, email: '' }));
-        const agenda = event.related?.find(
+        const agendaRelation = event.related?.find(
           ({ subquery }) => subquery.table === 'agenda_item'
-        )?.subquery;
-        expect(agenda?.where).toEqual(
-          queryAST(applyAgendaItemQueryAccess(zql.agenda_item, userID)).where
         );
+        const agenda = agendaRelation?.subquery;
+        if (name === 'events.byIdFull') {
+          // Only this projection removes the event check already proved by its
+          // authorized parent and direct FK. Other agenda projections still
+          // require their independent scope predicates.
+          expect(event.where).toEqual(
+            queryAST(
+              applyEventQueryAccess(
+                zql.event.where('id', (entry.args as { id: string }).id),
+                userID
+              )
+            ).where
+          );
+          expect(agendaRelation?.correlation).toEqual({
+            parentField: ['id'],
+            childField: ['event_id'],
+          });
+          expect(agenda?.where).toBeUndefined();
+        } else {
+          expect(agenda?.where).toEqual(
+            queryAST(applyAgendaItemQueryAccess(zql.agenda_item, userID)).where
+          );
+        }
         const election = agenda?.related?.find(
           ({ subquery }) => subquery.table === 'election'
         )?.subquery;

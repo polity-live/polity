@@ -51,11 +51,20 @@ function applyGroupConnectionRequestAccess<T>(q: T, userID: string | undefined |
   ) as T;
 }
 
-function applyWorkflowAccess<T>(q: T, userID: string | undefined | null): T {
+function applyWorkflowAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  planPerWorkflow = false
+): T {
+  const plan = planPerWorkflow ? { flip: false } : undefined;
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('start_group', (group: any) => applyGroupQueryAccess(group, userID))
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, planPerWorkflow), plan),
+      exists(
+        'start_group',
+        (group: any) => applyGroupQueryAccess(group, userID, planPerWorkflow),
+        plan
+      )
     )
   ) as T;
 }
@@ -334,8 +343,12 @@ export const networkQueries = {
         )
         .where(({ or, exists }: any) =>
           or(
-            exists('ancestor_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('descendant_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('ancestor_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            }),
+            exists('descendant_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            })
           )
         )
         .related('ancestor_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -356,8 +369,12 @@ export const networkQueries = {
         )
         .where(({ or, exists }: any) =>
           or(
-            exists('holder_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('scope_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('holder_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            }),
+            exists('scope_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            })
           )
         )
         .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -377,8 +394,12 @@ export const networkQueries = {
         )
         .where(({ or, exists }: any) =>
           or(
-            exists('hierarchy_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('hierarchy_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            }),
+            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            })
           )
         )
         .related('user')
@@ -398,8 +419,12 @@ export const networkQueries = {
         )
         .where(({ or, exists }: any) =>
           or(
-            exists('sibling_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('sibling_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            }),
+            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            })
           )
         )
         .related('user')
@@ -581,12 +606,12 @@ export const networkQueries = {
   workflowsByGroup: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
-      applyWorkflowAccess(zql.group_workflow, userID)
+      applyWorkflowAccess(zql.group_workflow, userID, true)
         .where('group_id', groupId)
         .related('steps', q =>
           q
             .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+            .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
             .orderBy('order_index', 'asc')
         )
         .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -602,12 +627,12 @@ export const networkQueries = {
   ),
 
   workflowById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyWorkflowAccess(zql.group_workflow, userID)
+    applyWorkflowAccess(zql.group_workflow, userID, true)
       .where('id', id)
       .related('steps', q =>
         q
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
           .orderBy('order_index', 'asc')
       )
       .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -623,11 +648,11 @@ export const networkQueries = {
   ),
 
   allWorkflows: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyWorkflowAccess(zql.group_workflow, userID)
+    applyWorkflowAccess(zql.group_workflow, userID, true)
       .related('steps', q =>
         q
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
           .orderBy('order_index', 'asc')
       )
       .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -665,7 +690,7 @@ export const networkQueries = {
             .related('steps', sq =>
               sq
                 .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-                .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+                .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
                 .orderBy('order_index', 'asc')
             )
         )

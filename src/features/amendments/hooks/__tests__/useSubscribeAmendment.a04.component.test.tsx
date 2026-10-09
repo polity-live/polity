@@ -21,8 +21,8 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: state.user }),
 }));
 
-vi.mock('@/zero/amendments/useAmendmentState', () => ({
-  useAmendmentState: () => ({
+vi.mock('@/zero/amendments/useAmendmentActionState', () => ({
+  useAmendmentSubscriptionState: () => ({
     subscriberCount: state.subscriberCount,
     subscribers: state.subscribers,
     isLoading: state.isLoading,

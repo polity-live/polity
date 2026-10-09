@@ -5,7 +5,7 @@ import { discussionSecurityScenarios, DISCUSSION_SECURITY_COUNT } from './discus
 
 type Actor = 'owner' | 'outsider' | 'anonymous';
 export const SECURITY_SCENARIO_COUNT =
-  220 + PROJECT_CHAT_SECURITY_COUNT + DISCUSSION_SECURITY_COUNT;
+  234 + PROJECT_CHAT_SECURITY_COUNT + DISCUSSION_SECURITY_COUNT;
 export interface RelatedExpectation {
   rootID: string;
   relations: Record<string, string[]>;
@@ -45,7 +45,8 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     vote = id(35),
     voter = id(36),
     electionRole = id(37),
-    roleHolder = id(38);
+    roleHolder = id(38),
+    privateAgendaItem = id(39);
   try {
     await sql`insert into public."group" (id,name,owner_id,visibility) values (${group},'Security benchmark',${OUTSIDER_ID},'private')`;
     await check('groups.byId', 'private-outsider', { id: group }, 'owner', []);
@@ -102,6 +103,7 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     await sql`insert into public.action_right (id,role_id,event_id,resource,action) values (${id(23)},${eventRole},${event},'events','view')`;
     await sql`insert into public.event_participant (id,event_id,user_id,status) values (${participant},${event},${OWNER_ID},'active')`;
     await sql`insert into public.event_participant_role (id,event_participant_id,role_id) values (${id(24)},${participant},${eventRole})`;
+    await sql`insert into public.agenda_item (id,event_id,creator_id,title,type) values (${privateAgendaItem},${event},${OUTSIDER_ID},'Private event agenda','discussion')`;
     for (const status of ['active', 'invited', 'declined']) {
       await sql`update public.event_participant set status=${status} where id=${participant}`;
       await check(
@@ -111,14 +113,31 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
         'owner',
         status === 'declined' ? [] : [event]
       );
+      const allowed = status !== 'declined';
+      await check(
+        'events.byIdFull',
+        `agenda-participant-${status}`,
+        { id: event },
+        'owner',
+        allowed ? [event] : [],
+        allowed ? { rootID: event, relations: { agenda_items: [privateAgendaItem] } } : undefined
+      );
     }
     await check('events.byId', 'anonymous-private-event', { id: event }, 'anonymous', []);
+    await check('events.byIdFull', 'agenda-private-anonymous', { id: event }, 'anonymous', []);
+    await check('events.byIdFull', 'agenda-private-creator', { id: event }, 'outsider', [event], {
+      rootID: event,
+      relations: { agenda_items: [privateAgendaItem] },
+    });
     await sql`update public.event set visibility='public',group_id=${group} where id=${event}`;
     for (const name of ['events.byIdFull', 'events.forParticipation']) {
       for (const actor of ['owner', 'anonymous', 'outsider'] as const) {
         await check(name, `private-event-group-${actor}`, { id: event }, actor, [event], {
           rootID: event,
-          relations: { group: actor === 'outsider' ? [group] : [] },
+          relations: {
+            group: actor === 'outsider' ? [group] : [],
+            ...(name === 'events.byIdFull' ? { agenda_items: [privateAgendaItem] } : {}),
+          },
         });
       }
     }
@@ -423,6 +442,7 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     await sql`delete from public."group" where id=${publicGroup}`;
     await sql`insert into public.app_tutorial_run (id,user_id,status,current_checkpoint_id,fixture_version) values (${tutorial},${OWNER_ID},'active','benchmark',1)`;
     await sql`update public."group" set visibility='public',tutorial_run_id=${tutorial} where id=${group}`;
+    await sql`update public.event set tutorial_run_id=${tutorial} where id=${event}`;
     for (const status of ['active', 'paused', 'archived']) {
       await sql`update public.app_tutorial_run set status=${status} where id=${tutorial}`;
       await check(
@@ -434,6 +454,17 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
       );
       await check('groups.byId', `tutorial-${status}-other`, { id: group }, 'outsider', []);
       await check('groups.byId', `tutorial-${status}-anonymous`, { id: group }, 'anonymous', []);
+      for (const actor of ['owner', 'outsider', 'anonymous'] as const) {
+        const allowed = actor === 'owner' && status !== 'archived';
+        await check(
+          'events.byIdFull',
+          `agenda-tutorial-${status}-${actor}`,
+          { id: event },
+          actor,
+          allowed ? [event] : [],
+          allowed ? { rootID: event, relations: { agenda_items: [privateAgendaItem] } } : undefined
+        );
+      }
     }
   } finally {
     await sql`delete from public.role_holder_history where id=${roleHolder}`;
@@ -441,6 +472,7 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     await sql`delete from public.election where id=${election}`;
     await sql`delete from public.role where id=${electionRole}`;
     await sql`delete from public.agenda_item where id=${agendaItem}`;
+    await sql`delete from public.agenda_item where id=${privateAgendaItem}`;
     await sql`delete from public.event where id=${electionEvent}`;
     // Event/amendment roles do not cascade when their scoped resource is deleted.
     // Preflight and live measurement use the same IDs on this isolated stack.

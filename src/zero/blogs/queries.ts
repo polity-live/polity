@@ -11,8 +11,8 @@ function applyBlogAccess<T>(q: T, userID: string | undefined, planPerBlog = fals
   return applyBlogQueryAccess(q, userID, planPerBlog);
 }
 
-function applyBlogManagerAccess<T>(q: T, userID: string | undefined): T {
-  return applyBlogManagerQueryAccess(q, userID);
+function applyBlogManagerAccess<T>(q: T, userID: string | undefined, planPerBlog = false): T {
+  return applyBlogManagerQueryAccess(q, userID, planPerBlog);
 }
 
 function applyBlogSubscriberPrivateAccess<T>(q: T, userID: string | undefined): T {
@@ -25,7 +25,7 @@ function applyBlogSubscriberPrivateAccess<T>(q: T, userID: string | undefined): 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('subscriber_id', userID),
-      exists('blog', (blog: any) => applyBlogManagerAccess(blog, userID))
+      exists('blog', (blog: any) => applyBlogManagerAccess(blog, userID, true), { flip: false })
     )
   ) as T;
 }
@@ -40,7 +40,7 @@ function applyBlogUserPrivateAccess<T>(q: T, userID: string | undefined): T {
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('blog', (blog: any) => applyBlogManagerAccess(blog, userID))
+      exists('blog', (blog: any) => applyBlogManagerAccess(blog, userID, true), { flip: false })
     )
   ) as T;
 }
@@ -55,10 +55,20 @@ function applyBlogCommentVotePrivateAccess<T>(q: T, userID: string | undefined):
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('comment', (comment: any) =>
-        comment.whereExists('thread', (thread: any) =>
-          thread.whereExists('blog', (blog: any) => applyBlogManagerAccess(blog, userID))
-        )
+      exists(
+        'comment',
+        (comment: any) =>
+          comment.whereExists(
+            'thread',
+            (thread: any) =>
+              thread.whereExists(
+                'blog',
+                (blog: any) => applyBlogManagerAccess(blog, userID, true),
+                { flip: false }
+              ),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -104,7 +114,7 @@ export const blogQueries = {
     }),
     ({ args: { userId, query, limit, start, dir }, ctx: { userID } }) => {
       const direction = dir === 'forward' ? 'desc' : 'asc';
-      let q: any = applyBlogAccess(zql.blog, userID)
+      let q: any = applyBlogAccess(zql.blog, userID, true)
         .whereExists('bloggers', (blogger: any) => blogger.where('user_id', userId))
         .related('bloggers', (blogger: any) => blogger.related('user'))
         .related('blog_hashtags', (hashtag: any) => hashtag.related('hashtag'));
@@ -123,7 +133,7 @@ export const blogQueries = {
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.blog_blogger
       .where('user_id', userID)
-      .whereExists('blog', blog => applyBlogAccess(blog, userID))
+      .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
       .related('blog')
       .related('role', role => role.related('blog_action_rights'))
       .orderBy('created_at', 'desc')
@@ -133,17 +143,20 @@ export const blogQueries = {
   byGroup: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
-      applyBlogAccess(zql.blog.where('group_id', group_id), userID).orderBy('created_at', 'desc')
+      applyBlogAccess(zql.blog.where('group_id', group_id), userID, true).orderBy(
+        'created_at',
+        'desc'
+      )
   ),
 
   // Single blog by ID
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyBlogAccess(zql.blog.where('id', id), userID).one()
+    applyBlogAccess(zql.blog.where('id', id), userID, true).one()
   ),
 
   // Blog with bloggers + user relations
   byIdWithBloggers: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyBlogAccess(zql.blog.where('id', id), userID)
+    applyBlogAccess(zql.blog.where('id', id), userID, true)
       .related('bloggers', q => q.related('user'))
       .one()
   ),
@@ -152,7 +165,7 @@ export const blogQueries = {
   byIdWithManagement: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
-      applyBlogManagerAccess(zql.blog.where('id', id), userID)
+      applyBlogManagerAccess(zql.blog.where('id', id), userID, true)
         .related('bloggers', q => q.related('user').related('role'))
         .related('roles', q => q.where('scope', 'blog').related('action_rights'))
         .one()
@@ -160,7 +173,7 @@ export const blogQueries = {
 
   // Blog with full detail relations (for BlogDetail)
   byIdWithDetails: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyBlogAccess(zql.blog.where('id', id), userID)
+    applyBlogAccess(zql.blog.where('id', id), userID, true)
       .related('bloggers', q => q.related('user'))
       .related('blog_hashtags', q => q.related('hashtag'))
       .related('subscribers', q => applyBlogSubscriberPrivateAccess(q, userID))
@@ -170,14 +183,14 @@ export const blogQueries = {
 
   // Blog with hashtags
   byIdWithHashtags: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyBlogAccess(zql.blog.where('id', id), userID)
+    applyBlogAccess(zql.blog.where('id', id), userID, true)
       .related('blog_hashtags', q => q.related('hashtag'))
       .one()
   ),
 
   // Blog for editor (with bloggers, roles, action_rights)
   byIdForEditor: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyBlogManagerAccess(zql.blog.where('id', id), userID)
+    applyBlogManagerAccess(zql.blog.where('id', id), userID, true)
       .related('bloggers', q =>
         q.related('user').related('role', q2 => q2.related('action_rights'))
       )
@@ -239,7 +252,7 @@ export const blogQueries = {
   bloggerPageById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     zql.blog_blogger
       .where('id', id)
-      .whereExists('blog', blog => applyBlogAccess(blog, userID))
+      .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
       .related('user')
       .related('role')
       .one()
@@ -260,13 +273,16 @@ export const blogQueries = {
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       const term = query.trim();
-      if (term) q = q.whereExists('blog', (blog: any) => blog.where('title', 'ILIKE', `%${term}%`));
+      if (term)
+        q = q.whereExists('blog', (blog: any) => blog.where('title', 'ILIKE', `%${term}%`), {
+          flip: false,
+        });
       const direction = dir === 'backward' ? 'asc' : 'desc';
       q = q.orderBy('created_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
       return q
         .related('blog', (blog: any) =>
-          applyBlogAccess(blog, userID).related('blog_hashtags', (link: any) =>
+          applyBlogAccess(blog, userID, true).related('blog_hashtags', (link: any) =>
             link.related('hashtag')
           )
         )
@@ -280,7 +296,7 @@ export const blogQueries = {
   entryById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     zql.blog_blogger
       .where('id', id)
-      .whereExists('blog', blog => applyBlogAccess(blog, userID))
+      .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
       .one()
   ),
 
@@ -290,7 +306,7 @@ export const blogQueries = {
     ({ args: { blog_id }, ctx: { userID } }) =>
       zql.document_version
         .where('blog_id', blog_id)
-        .whereExists('blog', blog => applyBlogAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
         .related('author')
   ),
 
@@ -299,7 +315,7 @@ export const blogQueries = {
     z.object({ blog_id: z.string() }),
     ({ args: { blog_id }, ctx: { userID } }) =>
       applyBlogSubscriberPrivateAccess(zql.subscriber.where('blog_id', blog_id), userID)
-        .whereExists('blog', blog => applyBlogAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
         .related('subscriber_user')
         .related('blog')
   ),
@@ -310,7 +326,7 @@ export const blogQueries = {
     ({ args: { blog_id }, ctx: { userID } }) =>
       zql.thread
         .where('blog_id', blog_id)
-        .whereExists('blog', blog => applyBlogAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
         .related('comments', q =>
           q
             .related('user')
@@ -333,9 +349,9 @@ export const blogQueries = {
       zql.blog_blogger
         .where('user_id', user_id)
         .where('user_id', userID)
-        .whereExists('blog', blog => applyBlogAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogAccess(blog, userID, true), { flip: false })
         .related('blog', q =>
-          applyBlogAccess(q, userID).related('blog_hashtags', q => q.related('hashtag'))
+          applyBlogAccess(q, userID, true).related('blog_hashtags', q => q.related('hashtag'))
         )
         .related('user')
         .related('role', role => role.related('blog_action_rights'))

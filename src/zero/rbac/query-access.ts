@@ -704,24 +704,41 @@ export function applyBlogQueryAccess<T>(
   ) as T;
 }
 
-export function applyBlogManagerQueryAccess<T>(q: T, userID: string | undefined | null): T {
+export function applyBlogManagerQueryAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  planPerBlog = false
+): T {
   const query = q as any;
   if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
+  const plan = planPerBlog ? { flip: false } : undefined;
 
   return query.where(({ or, exists }: any) =>
     or(
-      exists('bloggers', (blogger: any) =>
-        whereAnyOf(blogger.where('user_id', userID), 'status', ['owner', 'admin'])
+      exists(
+        'bloggers',
+        (blogger: any) =>
+          whereAnyOf(blogger.where('user_id', userID), 'status', ['owner', 'admin']),
+        plan
       ),
-      exists('roles', (role: any) =>
-        role
-          .where('scope', 'blog')
-          .whereExists('bloggers', (blogger: any) =>
-            whereAnyOf(blogger.where('user_id', userID), 'status', ACTIVE_BLOGGER_STATUSES)
-          )
-          .whereExists('blog_action_rights', (right: any) =>
-            whereAnyOf(right, 'resource', ['blogs', 'blogBloggers']).where('action', 'manage')
-          )
+      exists(
+        'roles',
+        (role: any) =>
+          role
+            .where('scope', 'blog')
+            .whereExists(
+              'bloggers',
+              (blogger: any) =>
+                whereAnyOf(blogger.where('user_id', userID), 'status', ACTIVE_BLOGGER_STATUSES),
+              plan
+            )
+            .whereExists(
+              'blog_action_rights',
+              (right: any) =>
+                whereAnyOf(right, 'resource', ['blogs', 'blogBloggers']).where('action', 'manage'),
+              plan
+            ),
+        plan
       )
     )
   ) as T;

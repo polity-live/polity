@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile, stat, rename, link, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, stat, link, copyFile } from 'node:fs/promises';
+import { writeAtomicReport } from './atomic-report';
 import { constants } from 'node:fs';
 import path from 'node:path';
 import { loadCases } from './catalog';
@@ -61,8 +62,8 @@ let interrupted = false;
 
 async function save(final = false, extra: Record<string, unknown> = {}) {
   const target = path.join(output, final ? 'report.json' : 'progress.json');
-  await writeFile(
-    `${target}.tmp`,
+  await writeAtomicReport(
+    target,
     JSON.stringify(
       {
         format: REPORT_FORMAT,
@@ -88,7 +89,6 @@ async function save(final = false, extra: Record<string, unknown> = {}) {
       2
     )
   );
-  await rename(`${target}.tmp`, target);
 }
 
 async function worker(label: string, workerLayer: string, selected?: string[]) {

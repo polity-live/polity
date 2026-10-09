@@ -303,16 +303,16 @@ export const searchQueries = {
   searchableBlogs: defineQuery(searchArgsSchema, ({ args: { limit, query }, ctx: { userID } }) => {
     const normalizedQuery = query.trim();
     const blogsQuery = normalizedQuery
-      ? applyBlogQueryAccess(zql.blog, userID).where(({ or, cmp }) =>
+      ? applyBlogQueryAccess(zql.blog, userID, true).where(({ or, cmp }) =>
           or(
             cmp('title', 'ILIKE', `%${normalizedQuery}%`),
             cmp('description', 'ILIKE', `%${normalizedQuery}%`)
           )
         )
-      : applyBlogQueryAccess(zql.blog, userID);
+      : applyBlogQueryAccess(zql.blog, userID, true);
 
     return blogsQuery
-      .related('group', group => applyGroupQueryAccess(group, userID))
+      .related('group', group => applyGroupQueryAccess(group, userID, true))
       .related('blog_hashtags', q => q.related('hashtag'))
       .related('bloggers', q =>
         q

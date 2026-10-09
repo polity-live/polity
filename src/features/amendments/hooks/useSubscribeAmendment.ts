@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAmendmentSubscriptionState } from '@/zero/amendments/useAmendmentActionState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
@@ -26,12 +26,12 @@ export function useSubscribeAmendment(
   const createdSubscriptionIdRef = useRef<string | null>(null);
   const { subscribe: subscribeAction, unsubscribe: unsubscribeAction } = useAmendmentActions();
 
-  // Use facade state for amendment data and subscribers
+  // Subscribe only to the scalar summary and protected subscriber rows.
   const {
     subscriberCount: persistedSubscriberCount,
     subscribers: subscriptionData,
     isLoading: queriedSubscriptionLoading,
-  } = useAmendmentState({
+  } = useAmendmentSubscriptionState({
     amendmentId: projectedState ? undefined : targetAmendmentId,
     userId: projectedState ? undefined : authUser?.id,
   });

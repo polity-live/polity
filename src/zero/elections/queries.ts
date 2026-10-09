@@ -10,6 +10,7 @@ import {
   applyEventQueryAccess,
   applyGroupQueryAccess,
   applyRoleQueryAccess,
+  isAuthenticatedUserId,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -26,7 +27,9 @@ export const electionQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
-      let q: any = applyElectionQueryAccess(zql.election, userID, true);
+      // Anonymous access has no membership branches to drive a reverse join.
+      // Start with the ordered election page while retaining every scope check.
+      let q: any = applyElectionQueryAccess(zql.election, userID, isAuthenticatedUserId(userID));
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
@@ -86,7 +89,7 @@ export const electionQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
-      let q: any = applyElectionQueryAccess(zql.election, userID, true);
+      let q: any = applyElectionQueryAccess(zql.election, userID, isAuthenticatedUserId(userID));
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
@@ -139,7 +142,11 @@ export const electionQueries = {
   byAgendaItem: defineQuery(
     z.object({ agenda_item_id: z.string() }),
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
-      applyElectionQueryAccess(zql.election.where('agenda_item_id', agenda_item_id), userID, true)
+      applyElectionQueryAccess(
+        zql.election.where('agenda_item_id', agenda_item_id),
+        userID,
+        isAuthenticatedUserId(userID)
+      )
         .related('role', q =>
           applyRoleQueryAccess(q, userID, true).related('group', group =>
             applyGroupDiscoveryQueryAccess(group, userID)
@@ -185,7 +192,7 @@ export const electionQueries = {
 
   // Single election by ID with full details
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election.where('id', id), userID, true)
+    applyElectionQueryAccess(zql.election.where('id', id), userID, isAuthenticatedUserId(userID))
       .related('agenda_item')
       .related('role', q =>
         applyRoleQueryAccess(q, userID, true).related('group', group =>
@@ -317,7 +324,7 @@ export const electionQueries = {
 
   // Elections with full details (for decision terminal/listing)
   electionsWithDetails: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID, true)
+    applyElectionQueryAccess(zql.election, userID, isAuthenticatedUserId(userID))
       .related('candidates', q => q.related('user'))
       .related('agenda_item', q =>
         q.related('event', eventQuery =>
@@ -347,10 +354,10 @@ export const electionQueries = {
 
   // Elections for search (role+group, candidates, agenda_item+event)
   electionsForSearch: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID, true)
+    applyElectionQueryAccess(zql.election, userID, isAuthenticatedUserId(userID))
       .related('role', role =>
-        applyRoleQueryAccess(role, userID).related('group', group =>
-          applyGroupQueryAccess(group, userID)
+        applyRoleQueryAccess(role, userID, true).related('group', group =>
+          applyGroupQueryAccess(group, userID, true)
         )
       )
       .related('candidates')
@@ -363,12 +370,14 @@ export const electionQueries = {
 
   // Pending elections
   pendingElections: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election.where('status', 'pending'), userID, true).related(
-      'role',
-      q =>
-        applyRoleQueryAccess(q, userID, true).related('group', group =>
-          applyGroupDiscoveryQueryAccess(group, userID)
-        )
+    applyElectionQueryAccess(
+      zql.election.where('status', 'pending'),
+      userID,
+      isAuthenticatedUserId(userID)
+    ).related('role', q =>
+      applyRoleQueryAccess(q, userID, true).related('group', group =>
+        applyGroupDiscoveryQueryAccess(group, userID)
+      )
     )
   ),
 

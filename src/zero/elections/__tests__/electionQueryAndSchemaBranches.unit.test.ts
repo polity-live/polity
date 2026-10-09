@@ -19,6 +19,7 @@ describe('election query and schema branches', () => {
       applyEventQueryAccess: (query: unknown) => query,
       applyGroupQueryAccess: (query: unknown) => query,
       applyRoleQueryAccess: (query: unknown) => query,
+      isAuthenticatedUserId: (userID: string | undefined) => Boolean(userID && userID !== 'anon'),
     }));
     const { electionQueries } = await import('../queries');
     const empty = {

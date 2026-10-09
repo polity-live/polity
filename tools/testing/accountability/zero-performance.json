@@ -1,6 +1,18 @@
 {
   "version": 1,
   "sourceReferences": {
+    "src/zero/amendments/useAmendmentActionState.ts": [
+      {
+        "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+        "project": "component",
+        "caseId": "uses protected subscribers and preserves count fallback while their result is pending"
+      },
+      {
+        "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+        "project": "component",
+        "caseId": "removes status and counts when the protected queries revoke their results"
+      }
+    ],
     "src/zero/preloads/startup.ts": [
       {
         "file": "src/zero/preloads/__tests__/startup.unit.test.ts",

@@ -248,10 +248,15 @@ function applyChangeRequestVotePrivateAccess<T>(q: T, userID: string | undefined
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('change_request', (changeRequest: any) =>
-        changeRequest.whereExists('amendment', (amendment: any) =>
-          applyAmendmentManagerAccess(amendment, userID)
-        )
+      exists(
+        'change_request',
+        (changeRequest: any) =>
+          changeRequest.whereExists(
+            'amendment',
+            (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -951,8 +956,11 @@ const amendmentQueriesBase = {
       let q: any = applyChangeRequestVisibilityAccess(
         zql.change_request
           .where('amendment_id', amendmentId)
-          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
-        userID
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+            flip: false,
+          }),
+        userID,
+        true
       );
       if (branchId) q = q.where('process_branch_id', branchId);
       if (status) q = q.where('status', status);
@@ -971,7 +979,7 @@ const amendmentQueriesBase = {
   changeRequestById: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
-      applyChangeRequestVisibilityAccess(zql.change_request.where('id', id), userID)
+      applyChangeRequestVisibilityAccess(zql.change_request.where('id', id), userID, true)
         .related('user')
         .related('votes', vote => applyChangeRequestVotePrivateAccess(vote, userID).related('user'))
         .one()
@@ -984,8 +992,11 @@ const amendmentQueriesBase = {
       applyChangeRequestVisibilityAccess(
         zql.change_request
           .where('amendment_id', amendment_id)
-          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
-        userID
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+            flip: false,
+          }),
+        userID,
+        true
       )
         .related('votes', q => applyChangeRequestVotePrivateAccess(q, userID).related('user'))
         .orderBy('created_at', 'desc')

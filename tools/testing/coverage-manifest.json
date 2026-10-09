@@ -117310,6 +117310,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+      "domain": "zero:amendments",
+      "owner": "polity/zero:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/amendments/__tests__/useAmendmentActions.component.test.tsx",
       "domain": "zero:amendments",
       "owner": "polity/zero:amendments",
@@ -117976,6 +117986,40 @@
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
         "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/amendments/useAmendmentActionState.ts",
+      "domain": "zero:amendments",
+      "owner": "polity/zero:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "uses protected subscribers and preserves count fallback while their result is pending"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "removes status and counts when the protected queries revoke their results"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
+        "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
       ]
     },
     {
@@ -131694,6 +131738,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/atomic-report.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/batches.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -131745,6 +131799,16 @@
     },
     {
       "path": "tools/e2e/zero-performance/api-timing.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/atomic-report.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",

@@ -1,5 +1,6 @@
 import { required } from './required';
-import { mkdir, readFile, writeFile, appendFile, stat, rename } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, appendFile, stat } from 'node:fs/promises';
+import { writeAtomicReport } from './atomic-report';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -411,8 +412,8 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
   }
   await mkdir(output, { recursive: true });
   const target = path.join(output, final ? 'report.json' : 'progress.json');
-  await writeFile(
-    `${target}.tmp`,
+  await writeAtomicReport(
+    target,
     JSON.stringify(
       {
         format: REPORT_FORMAT,
@@ -441,7 +442,6 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
       2
     )
   );
-  await rename(`${target}.tmp`, target);
 }
 
 try {

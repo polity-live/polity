@@ -187,26 +187,36 @@ export const voteQueries = {
         .related('amendment')
         .related('choices', q => q.orderBy('order_index', 'asc'))
         .related('offline_tallies', q =>
-          q.whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID)).related('choice')
+          q
+            .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), { flip: false })
+            .related('choice')
         )
         .related('voters', q => applyVoteVoterOrManagerQueryAccess(q, userID).related('user'))
         .related('indicative_participations', q =>
           q
-            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+              flip: false,
+            })
             .related('voter')
             .related('decisions', q2 => q2.related('choice'))
         )
         .related('indicative_decisions', q =>
-          q.whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID)).related('choice')
+          q
+            .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), { flip: false })
+            .related('choice')
         )
         .related('final_participations', q =>
           q
-            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+              flip: false,
+            })
             .related('voter')
             .related('decisions', q2 => q2.related('choice'))
         )
         .related('final_decisions', q =>
-          q.whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID)).related('choice')
+          q
+            .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), { flip: false })
+            .related('choice')
         )
   ),
 

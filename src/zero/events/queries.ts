@@ -434,7 +434,11 @@ export const eventQueries = {
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       )
       .related('agenda_items', agendaItemQuery =>
-        applyAgendaItemQueryAccess(agendaItemQuery, userID)
+        // The parent passed applyEventAccess, and this relationship enforces
+        // agenda_item.event_id = event.id. That implies the agenda access
+        // predicate's event branch, including for anonymous public readers.
+        // Election/vote visibility remains independently enforced below.
+        agendaItemQuery
           .related('votes', vote => applyVoteQueryAccessFromAuthorizedAgendaItem(vote, userID))
           .related('election', election =>
             applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
