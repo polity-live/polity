@@ -57,7 +57,11 @@ function applyEventAccess<T>(q: T, userID: string | undefined): T {
   return applyEventQueryAccess(q, userID);
 }
 
-function applyEventParticipantEventAccess<T>(q: T, userID: string | undefined): T {
+function applyEventParticipantEventAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerEvent = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -67,12 +71,20 @@ function applyEventParticipantEventAccess<T>(q: T, userID: string | undefined): 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
-      exists('participants', (participant: any) => participant.where('user_id', userID))
+      exists(
+        'participants',
+        (participant: any) => participant.where('user_id', userID),
+        planPerEvent ? { flip: false } : undefined
+      )
     )
   ) as T;
 }
 
-function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | undefined): T {
+function applyEventDelegateSelfOrParticipantAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerEvent = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -82,7 +94,11 @@ function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | und
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('event', (event: any) => applyEventParticipantEventAccess(event, userID))
+      exists(
+        'event',
+        (event: any) => applyEventParticipantEventAccess(event, userID, planPerEvent),
+        planPerEvent ? { flip: false } : undefined
+      )
     )
   ) as T;
 }
@@ -914,11 +930,11 @@ export const eventQueries = {
 
   /** Event with delegates→user and delegate_allocations */
   delegatesFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventParticipantEventAccess(zql.event, userID)
+    applyEventParticipantEventAccess(zql.event, userID, true)
       .where('id', id)
       .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('delegates', q =>
-        applyEventDelegateSelfOrParticipantAccess(q, userID)
+        applyEventDelegateSelfOrParticipantAccess(q, userID, true)
           .related('user')
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       )
@@ -951,7 +967,7 @@ export const eventQueries = {
         .where(({ and, or }) => (isAuthenticatedUserId(userID) ? and() : or()))
         .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('delegates', q =>
-          applyEventDelegateSelfOrParticipantAccess(q, userID).related('group', group =>
+          applyEventDelegateSelfOrParticipantAccess(q, userID, true).related('group', group =>
             applyGroupDiscoveryQueryAccess(group, userID)
           )
         )

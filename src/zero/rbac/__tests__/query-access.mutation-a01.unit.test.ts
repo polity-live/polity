@@ -303,8 +303,8 @@ const expectedDigests = {
   'agenda anonymous': '5cbe59a4499ea8f10f8dad3e00ca5bac4ea2d465ca722e470455f9a46d16d4cf',
   'agenda viewer': '0069dad9634d723c03485e65d485e9811cc87985d6deb837b33645f663a8cfa4',
   'election anonymous': '06c777eec7fa7b88217bfb5780b2643f1d13c102254204ad70580d366f3e492f',
-  // Nested blog joins follow the correlated election plan; all access predicates remain intact.
-  'election viewer': '13ebad46ac516421b69ef620b6d7c931cdf591130d5d8d552c7b67ffe27fa079',
+  // Nested group/blog joins follow the correlated election plan; access predicates remain intact.
+  'election viewer': 'cdf19d284af3e198e99a802800d99fc34c45c6f504cb57992be99b1e762e5f97',
   'dataset anonymous': 'acf5072c677034a2c8923170e248ab962a76d2935b462bdbde1ea8df9bc66e28',
   'dataset viewer': 'bb6cfdc7a326bffac89738a068a938b7f8825b5681331a4961aea4c2d413ebd4',
   'election manager anonymous': DENIED,

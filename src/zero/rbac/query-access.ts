@@ -825,9 +825,11 @@ export function applyElectionQueryAccess<T>(
         (role: any) =>
           role.where(({ or: roleOr, exists: roleExists }: any) =>
             roleOr(
-              roleExists('group', (group: any) => applyGroupQueryAccess(group, userID), {
-                flip: planAutomatically ? undefined : false,
-              }),
+              roleExists(
+                'group',
+                (group: any) => applyGroupQueryAccess(group, userID, !planAutomatically),
+                { flip: planAutomatically ? undefined : false }
+              ),
               roleExists('event', (event: any) => applyEventQueryAccess(event, userID), {
                 flip: planAutomatically ? undefined : false,
               }),
