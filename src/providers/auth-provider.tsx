@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -103,9 +104,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authUserRecord, setAuthUserRecord] = useState<User | null>(null);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [authStateLoading, setAuthStateLoading] = useState(false);
+  const [authEventVersion, setAuthEventVersion] = useState(0);
   const supabase = useMemo(() => createClient(), []);
+  const authGeneration = useRef(0);
+  const userValidations = useRef(new Map<string, ReturnType<typeof supabase.auth.getUser>>());
+  const validateUser = useCallback(
+    (accessToken?: string) => {
+      if (!accessToken) return supabase.auth.getUser();
+      const running = userValidations.current.get(accessToken);
+      if (running) return running;
+      const pending = supabase.auth.getUser(accessToken).finally(() => {
+        if (userValidations.current.get(accessToken) === pending)
+          userValidations.current.delete(accessToken);
+      });
+      userValidations.current.set(accessToken, pending);
+      return pending;
+    },
+    [supabase]
+  );
 
   const refreshAuthState = useCallback(async () => {
+    const generation = authGeneration.current;
     if (!session?.user) {
       setAuthUserRecord(null);
       setHasPassword(null);
@@ -119,7 +138,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const [
         { data: authUserData, error: authUserError },
         { data: passwordData, error: passwordError },
-      ] = await Promise.all([supabase.auth.getUser(), supabase.rpc('current_user_has_password')]);
+      ] = await Promise.all([
+        validateUser(session.access_token),
+        supabase.rpc('current_user_has_password'),
+      ]);
+      if (generation !== authGeneration.current) return;
 
       if (authUserError) {
         if (isInvalidAuthSessionError(authUserError)) {
@@ -143,23 +166,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setHasPassword(typeof passwordData === 'boolean' ? passwordData : null);
     } catch (error) {
+      if (generation !== authGeneration.current) return;
       console.error('Failed to fetch auth state:', error);
       setAuthUserRecord(session.user);
       setHasPassword(null);
     } finally {
-      setAuthStateLoading(false);
+      if (generation === authGeneration.current) setAuthStateLoading(false);
     }
-  }, [session?.access_token, session?.user, supabase]);
+  }, [session?.access_token, session?.user, supabase, validateUser]);
 
   useEffect(() => {
+    let cancelled = false;
+    const initialGeneration = authGeneration.current;
     const getSession = async () => {
+      const startedGeneration = initialGeneration;
       const {
         data: { session: storedSession },
       } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (startedGeneration !== authGeneration.current) {
+        setLoading(false);
+        return;
+      }
       let nextSession = storedSession;
 
-      if (storedSession) {
+      if (
+        storedSession &&
+        Number.isFinite(storedSession.expires_at) &&
+        (storedSession.expires_at as number) * 1000 > Date.now() + 60_000
+      ) {
+        // A fresh stored JWT still needs server validation, but rotating its
+        // refresh token again needlessly delays every application boot.
+        const { data, error } = await validateUser(storedSession.access_token);
+        if (cancelled) return;
+        if (startedGeneration !== authGeneration.current) {
+          setLoading(false);
+          return;
+        }
+        if ((error && isInvalidAuthSessionError(error)) || (!error && !data.user)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          nextSession = null;
+        } else if (error) {
+          console.error('Failed to validate stored auth session:', error);
+        } else if (data.user?.id !== storedSession.user.id) {
+          await supabase.auth.signOut({ scope: 'local' });
+          nextSession = null;
+        } else {
+          nextSession = { ...storedSession, user: data.user };
+        }
+      } else if (storedSession) {
         const { data, error } = await supabase.auth.refreshSession();
+        if (cancelled) return;
+        if (startedGeneration !== authGeneration.current) {
+          setLoading(false);
+          return;
+        }
         if (error && isInvalidAuthSessionError(error)) {
           await supabase.auth.signOut({ scope: 'local' });
           nextSession = null;
@@ -170,28 +231,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      setSession(nextSession);
-      setAuthUserRecord(nextSession?.user ?? null);
-      setLoading(false);
+      if (!cancelled) {
+        // A concurrent sign-out/account change must win over this older result.
+        if (startedGeneration === authGeneration.current) {
+          setSession(nextSession);
+          setAuthUserRecord(nextSession?.user ?? null);
+        }
+        setLoading(false);
+      }
     };
 
-    getSession();
+    void getSession().catch(error => {
+      console.error('Failed to initialize auth session:', error);
+      if (!cancelled) {
+        if (initialGeneration === authGeneration.current) {
+          setSession(null);
+          setAuthUserRecord(null);
+        }
+        setLoading(false);
+      }
+    });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' && authGeneration.current !== initialGeneration) return;
+      if (event !== 'INITIAL_SESSION') {
+        authGeneration.current++;
+        setAuthEventVersion(version => version + 1);
+      }
       setSession(session);
       setAuthUserRecord(session?.user ?? null);
       // INITIAL_SESSION can arrive before the stored token has been refreshed.
       // Only getSession may release the initial loading gate.
     });
 
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+    return () => {
+      cancelled = true;
+      authGeneration.current++;
+      subscription.unsubscribe();
+    };
+  }, [supabase, validateUser]);
 
+  const automaticRefresh = useRef(refreshAuthState);
+  automaticRefresh.current = refreshAuthState;
   useEffect(() => {
-    void refreshAuthState();
-  }, [refreshAuthState]);
+    // Replacing the stored user object with the freshly validated object is
+    // not a new auth event. Actual events (including USER_UPDATED with the
+    // same JWT) and explicit refreshes still call getUser again.
+    void automaticRefresh.current();
+  }, [session?.access_token, session?.user?.id, authEventVersion]);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut({ scope: 'global' });

@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { applyBlogManagerQueryAccess, applyBlogQueryAccess } from '../rbac/query-access';
@@ -74,7 +75,7 @@ export const blogQueries = {
     }),
     ({ args: { groupId, query, limit, start, dir }, ctx: { userID } }) => {
       const direction = dir === 'forward' ? 'desc' : 'asc';
-      let q: any = applyBlogAccess(zql.blog.where('group_id', groupId), userID).related(
+      let q: any = applyBlogQueryAccess(zql.blog.where('group_id', groupId), userID, true).related(
         'blog_hashtags',
         (hashtag: any) => hashtag.related('hashtag')
       );
@@ -213,9 +214,9 @@ export const blogQueries = {
         .where('blog_id', blogId)
         .whereExists('blog', (blog: any) => applyBlogAccess(blog, userID));
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId) q = q.where('role_id', roleId);
-      if ((roleIds?.length ?? 0) > 0) q = q.where('role_id', 'IN', roleIds);
+      if ((roleIds?.length ?? 0) > 0) q = whereAnyOf(q, 'role_id', roleIds);
       const term = query.trim();
       if (term) {
         q = q.whereExists('user', (user: any) =>
@@ -257,7 +258,7 @@ export const blogQueries = {
     ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
       let q: any = zql.blog_blogger.where('user_id', userId).where('user_id', userID);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       const term = query.trim();
       if (term) q = q.whereExists('blog', (blog: any) => blog.where('title', 'ILIKE', `%${term}%`));
       const direction = dir === 'backward' ? 'asc' : 'desc';
@@ -343,8 +344,9 @@ export const blogQueries = {
   byGroupWithHashtags: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
-      applyBlogAccess(zql.blog.where('group_id', group_id), userID).related('blog_hashtags', q =>
-        q.related('hashtag')
+      applyBlogQueryAccess(zql.blog.where('group_id', group_id), userID, true).related(
+        'blog_hashtags',
+        q => q.related('hashtag')
       )
   ),
 };

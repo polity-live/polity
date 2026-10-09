@@ -45,6 +45,7 @@ describe('useSearchData branch matrix', () => {
     const { result } = renderHook(() => useSearchData());
 
     expect(useSearchStateMock).toHaveBeenCalledWith({
+      enabled: true,
       userId: 'user-1',
       query: '',
       limits: {
@@ -59,6 +60,16 @@ describe('useSearchData branch matrix', () => {
     });
     expect(result.current.currentUserId).toBe('user-1');
     expect(result.current.pageInfo).toBeUndefined();
+  });
+  it('forwards on-demand activation without changing query arguments or limits', () => {
+    const { rerender } = renderHook(({ enabled }) => useSearchData('', undefined, enabled), {
+      initialProps: { enabled: false },
+    });
+    expect(useSearchStateMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enabled: false })
+    );
+    rerender({ enabled: true });
+    expect(useSearchStateMock).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: true }));
   });
 
   it('passes every explicit limit including zero and filters bookable events', () => {

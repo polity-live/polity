@@ -253,8 +253,8 @@ describe('Zero query contracts', () => {
 
     expect(stepRunCalls).toEqual(
       expect.arrayContaining([
-        ['related', 'source_group', []],
-        ['related', 'target_group', []],
+        ['related', 'source_group', expect.arrayContaining([['where', expect.any(Function)]])],
+        ['related', 'target_group', expect.arrayContaining([['where', expect.any(Function)]])],
         ['related', 'workflow_step', []],
       ])
     );

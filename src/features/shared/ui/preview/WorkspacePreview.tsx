@@ -1,6 +1,6 @@
 import { createContext, useContext, useRef, type ReactNode } from 'react';
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { Eye } from 'lucide-react';
 import { queries } from '@/zero/queries';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

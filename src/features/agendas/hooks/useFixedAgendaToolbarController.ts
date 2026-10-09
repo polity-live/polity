@@ -1,18 +1,13 @@
 import { useNavigationStore } from '@/features/navigation/state/navigation.store';
-import { useNavigation } from '@/features/navigation/state/useNavigation';
+import { useSecondaryNavigationVisible } from '@/features/navigation/state/navigation-layout-context';
 import { useScreenStore } from '@/features/shared/global-state/screen.store';
 import { getFixedToolbarLayoutClasses } from '@/features/shared/hooks/useFixedToolbarController';
 import { cn } from '@/features/shared/utils/utils';
 
 export function useFixedAgendaToolbarController(className?: string) {
-  const { navigationView, navigationType } = useNavigationStore();
+  const { navigationView } = useNavigationStore();
   const { isMobileScreen } = useScreenStore();
-  const { secondaryNavItems } = useNavigation();
-
-  const isSecondaryNavVisible =
-    secondaryNavItems &&
-    secondaryNavItems.length > 0 &&
-    ['secondary', 'combined'].includes(navigationType);
+  const isSecondaryNavVisible = useSecondaryNavigationVisible();
 
   const layoutClasses = getFixedToolbarLayoutClasses({
     isMobileScreen,

@@ -1,7 +1,7 @@
 import type { StudioCommandInput } from '@/zero/communication-studio/commands';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@/zero/observed-query';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useStudioClient } from '@/zero/communication-studio/useStudioClient';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';

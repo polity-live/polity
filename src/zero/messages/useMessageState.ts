@@ -1,6 +1,7 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useMemo } from 'react';
 import { queries } from '../queries';
+import { conversationArgs, conversationsArgs, messagesWindowArgs } from './query-args';
 
 interface MessageStateOptions {
   conversationId?: string;
@@ -31,15 +32,12 @@ export function useMessageState(options: MessageStateOptions = {}) {
 
   const [messages, messagesResult] = useQuery(
     conversationId
-      ? queries.messages.messagesWindow({
-          conversation_id: conversationId,
-          limit: messageLimit ?? 80,
-        })
+      ? queries.messages.messagesWindow(messagesWindowArgs(conversationId, messageLimit))
       : undefined
   );
 
   const [conversation, conversationResult] = useQuery(
-    conversationId ? queries.messages.conversationById({ id: conversationId }) : undefined
+    conversationId ? queries.messages.conversationById(conversationArgs(conversationId)) : undefined
   );
 
   const [unread, unreadResult] = useQuery(
@@ -47,7 +45,9 @@ export function useMessageState(options: MessageStateOptions = {}) {
   );
 
   const [conversationsWithRelations, conversationsWithRelationsResult] = useQuery(
-    includeRelations ? queries.messages.conversationsWithRelations({ limit }) : undefined
+    includeRelations
+      ? queries.messages.conversationsWithRelations(conversationsArgs(limit))
+      : undefined
   );
 
   const [conversationsForUnreadRows, conversationsForUnreadResult] = useQuery(

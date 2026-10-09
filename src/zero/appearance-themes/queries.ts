@@ -1,3 +1,5 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -18,15 +20,17 @@ export const appearanceThemeQueries = {
             exists('current_revision', (revision: any) => revision.where('status', 'published')),
             exists('group', (group: any) =>
               group.whereExists('memberships', (membership: any) =>
-                membership
-                  .where('user_id', userID)
-                  .where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+                whereAnyOf(
+                  membership.where('user_id', userID),
+                  'status',
+                  ACTIVE_MEMBERSHIP_STATUSES
+                )
               )
             )
           )
         )
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('current_revision')
       .orderBy('name', 'asc')
   ),
@@ -47,10 +51,10 @@ export const appearanceThemeQueries = {
       .whereExists('current_revision', revision => revision.where('status', 'published'))
       .whereExists('group', group =>
         group.whereExists('memberships', membership =>
-          membership.where('user_id', userID).where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+          whereAnyOf(membership.where('user_id', userID), 'status', ACTIVE_MEMBERSHIP_STATUSES)
         )
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('current_revision')
       .orderBy('name', 'asc')
   ),
@@ -69,15 +73,17 @@ export const appearanceThemeQueries = {
               cmp('kind', 'group'),
               exists('group', (group: any) =>
                 group.whereExists('memberships', (membership: any) =>
-                  membership
-                    .where('user_id', userID)
-                    .where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_MEMBERSHIP_STATUSES
+                  )
                 )
               )
             )
           )
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('current_revision')
         .one()
   ),
@@ -91,7 +97,7 @@ export const appearanceThemeQueries = {
         .whereExists('group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage', ['groups', 'groupThemes'])
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('current_revision')
         .related('revisions', revision => revision.orderBy('version', 'desc'))
         .orderBy('updated_at', 'desc')

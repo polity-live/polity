@@ -112,6 +112,7 @@ import {
   useEventParticipantsByParticipatedEventIds,
   useEventParticipantsQuery,
   useEventParticipationData,
+  useEventForParticipation,
   useEventRolesData,
   useEventsByGroup,
   useEventsForCalendar,
@@ -263,7 +264,16 @@ beforeEach(() => {
   setResponse('rolesWithHolders', roles);
   setResponse('agendaWithElections', [{ id: 'agenda-1', election: elections }]);
   setResponse('agendaItemsFull', [
-    { id: 'agenda-2', event: { id: 'event-1' }, order_index: 2, election: [], votes: [] },
+    {
+      id: 'agenda-2',
+      event: { id: 'event-1' },
+      order_index: 2,
+      election: [],
+      votes: [
+        { id: 'vote-1', agenda_item_id: 'agenda-2' },
+        { id: 'vote-2', agenda_item_id: 'agenda-2' },
+      ],
+    },
     {
       id: 'agenda-1',
       event: { id: 'event-1' },
@@ -324,6 +334,20 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('useEventState complete query contracts', () => {
+  it('loads only participation data and disables it for projected cards', () => {
+    const { result, rerender } = renderHook(
+      ({ eventId }: { eventId?: string }) => useEventForParticipation(eventId),
+      { initialProps: { eventId: 'event-1' as string | undefined } }
+    );
+    expect(result.current.event?.id).toBe('event-1');
+    expect(mocks.events.forParticipation).toHaveBeenCalledWith({ id: 'event-1' });
+    expect(mocks.events.byIdFull).not.toHaveBeenCalled();
+    expect(mocks.events.userParticipation).not.toHaveBeenCalled();
+    rerender({ eventId: undefined });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+    expect(result.current.event).toBeNull();
+  });
+
   it('normalizes every event data facade with rich relation data', () => {
     const { result } = renderHook(() => useAllEventHooks());
 
@@ -447,7 +471,7 @@ describe('useEventState complete query contracts', () => {
     expect(data.composition.scheduledElections).toEqual([]);
   });
 
-  it('falls back from grouped votes to item votes and then an empty list', () => {
+  it('uses the authorized nested vote projection without a dependent query', () => {
     setResponse('agendaItemsFull', [
       { id: 'agenda-fallback', event: { id: 'event-1' }, votes: [{ id: 'stored' }] },
       { id: 'agenda-empty', event: { id: 'event-1' } },
@@ -457,6 +481,7 @@ describe('useEventState complete query contracts', () => {
     const state = renderHook(() => useAgendaItemsByEvent('event-1')).result.current;
     expect(state.agendaItems[0]?.votes).toEqual([{ id: 'stored' }]);
     expect(state.agendaItems[1]?.votes).toEqual([]);
+    expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -475,8 +500,11 @@ describe('useEventState complete query contracts', () => {
     ).toBe(true);
   });
 
-  it('reports dependent agenda loading only when vote loading is relevant', () => {
+  it('does not wait on a duplicate vote query and follows authoritative agenda loading', () => {
     setResponse('votesByAgendaItems', [], 'unknown');
+    expect(renderHook(() => useAgendaItemsByEvent('event-1')).result.current.isLoading).toBe(false);
+
+    setResponse('agendaItemsFull', [], 'unknown');
     expect(renderHook(() => useAgendaItemsByEvent('event-1')).result.current.isLoading).toBe(true);
 
     setResponse('agendaItemsFull', []);

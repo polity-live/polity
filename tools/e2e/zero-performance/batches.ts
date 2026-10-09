@@ -1,0 +1,31 @@
+import type { Measurement } from './metrics';
+
+export const QUERY_BATCH_SIZE = 20;
+export const PROFILE_SUFFIXES = [
+  'empty/owner',
+  'minimal/owner',
+  'minimal/outsider',
+  'minimal/anonymous',
+];
+
+/** Fresh worker processes bound client-side resource retention; the server stack stays identical. */
+export function queryBatches(keys: readonly string[], size = QUERY_BATCH_SIZE): string[][] {
+  if (!Number.isSafeInteger(size) || size < 1 || new Set(keys).size !== keys.length)
+    throw new Error('Invalid query batch catalog');
+  return Array.from({ length: Math.ceil(keys.length / size) }, (_, index) =>
+    keys.slice(index * size, (index + 1) * size)
+  );
+}
+
+export function batchCoverageFailures(expected: readonly string[], measurements: Measurement[]) {
+  const actual = measurements.map(row => row.key);
+  const expectedSet = new Set(expected);
+  const actualSet = new Set(actual);
+  return [
+    ...expected.filter(key => !actualSet.has(key)).map(key => `Missing worker measurement: ${key}`),
+    ...actual
+      .filter(key => !expectedSet.has(key))
+      .map(key => `Unexpected worker measurement: ${key}`),
+    ...(actualSet.size !== actual.length ? ['Duplicate worker measurements'] : []),
+  ];
+}

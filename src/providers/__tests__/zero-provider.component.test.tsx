@@ -83,6 +83,17 @@ describe('ZeroAppProvider identity', () => {
     expect(mocks.zeroProps?.auth).toBe('access-token');
   });
 
+  it('keeps query initialization stable across token refresh and provider rerenders', () => {
+    mocks.session = { access_token: 'old-token', user: { id: 'user-1' } };
+    const { rerender } = render(<ZeroAppProvider>content</ZeroAppProvider>);
+    const init = mocks.zeroProps?.init;
+    expect(init).toBeTypeOf('function');
+    mocks.session = { ...mocks.session, access_token: 'fresh-token' };
+    rerender(<ZeroAppProvider>changed content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.init).toBe(init);
+    expect(mocks.zeroProps?.auth).toBe('fresh-token');
+  });
+
   it('opens sync only after the initial session refresh has completed', () => {
     mocks.loading = true;
     const { rerender, container } = render(<ZeroAppProvider>content</ZeroAppProvider>);

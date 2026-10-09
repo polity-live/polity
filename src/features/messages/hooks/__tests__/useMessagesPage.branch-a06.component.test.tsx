@@ -272,6 +272,7 @@ describe('useMessagesPage branch contract', () => {
       to: '/messages',
       search: { keep: 'yes' },
       replace: true,
+      state: expect.any(Function),
     });
 
     act(() => result.current.setUserSearchDialogOpen(true));
@@ -315,6 +316,14 @@ describe('useMessagesPage branch contract', () => {
     expect(mocks.setSelectedConversationId).toHaveBeenCalledWith(target.id);
     expect(mocks.setSearchQuery).toHaveBeenCalledWith('');
     expect(mocks.navigate).toHaveBeenCalled();
+    const navigation = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(navigation.state({ __TSR_index: 7 })).toMatchObject({
+      __TSR_index: 7,
+      polityMessageSelection: {
+        viewerID: 'current-user',
+        conversationID: target.id,
+      },
+    });
 
     cleanup();
     vi.clearAllMocks();

@@ -1,9 +1,11 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
   applyAmendmentQueryAccess,
-  applyElectionQueryAccess,
+  applyElectionQueryAccessFromAuthorizedAgendaItem,
   applyEventQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
@@ -34,7 +36,11 @@ export const agendaQueries = {
         .orderBy('order_index', 'asc')
         .related('event')
         .related('creator')
-        .related('election', q => q.related('role', pq => pq.related('group')))
+        .related('election', q =>
+          q.related('role', pq =>
+            pq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
+        )
         .related('amendment')
         .related('votes', q => applyVoteQueryAccess(q, userID))
   ),
@@ -43,10 +49,11 @@ export const agendaQueries = {
   byEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
+      whereAnyOf(applyAgendaItemQueryAccess(zql.agenda_item, userID), 'event_id', event_ids)
         .related('event', event => applyEventQueryAccess(event, userID))
-        .related('election', election => applyElectionQueryAccess(election, userID))
+        .related('election', election =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+        )
         .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
         .related('votes', q => applyVoteQueryAccess(q, userID))
   ),
@@ -54,19 +61,22 @@ export const agendaQueries = {
   timelineByEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
+      whereAnyOf(applyAgendaItemQueryAccess(zql.agenda_item, userID), 'event_id', event_ids)
         .related('event', event => applyEventQueryAccess(event, userID))
-        .related('election', election => applyElectionQueryAccess(election, userID))
+        .related('election', election =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+        )
         .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
   ),
 
   timingByEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
-        .related('event', event => applyEventQueryAccess(event, userID))
+      whereAnyOf(
+        applyAgendaItemQueryAccess(zql.agenda_item, userID),
+        'event_id',
+        event_ids
+      ).related('event', event => applyEventQueryAccess(event, userID))
   ),
 
   // Single agenda item by ID

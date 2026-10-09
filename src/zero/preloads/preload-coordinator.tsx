@@ -240,9 +240,14 @@ export class PreloadCoordinator {
     const running: RunningTask = { generation, kind, releases: [], task };
     this.running = running;
     this.failed.delete(task.key);
-    void this.preloadRoute(task.route.href);
+    let routeReady: Promise<unknown>;
+    try {
+      routeReady = Promise.resolve(this.preloadRoute(task.route.href));
+    } catch (error) {
+      routeReady = Promise.reject(error);
+    }
 
-    void this.runEntries(running, task.entries)
+    void Promise.all([routeReady, this.runEntries(running, task.entries)])
       .then(async () => {
         if (!this.isCurrent(running)) return;
         if (running.task.resolveAfterComplete) {
@@ -285,6 +290,18 @@ export class PreloadCoordinator {
 
   private async runEntries(running: RunningTask, entries: readonly ZeroPreloadEntry[]) {
     if (entries.length === 0) return;
+    if (running.kind === 'background') {
+      for (const entry of entries) {
+        if (!this.isCurrent(running)) return;
+        const handle = retainZeroPreloadHandle(this.zero, {
+          ...entry,
+          ttl: entry.ttl ?? PRELOAD_CACHE_TTL,
+        });
+        running.releases.push(handle.release);
+        await handle.complete;
+      }
+      return;
+    }
     const handles = entries.map(entry =>
       retainZeroPreloadHandle(this.zero, { ...entry, ttl: entry.ttl ?? PRELOAD_CACHE_TTL })
     );
@@ -405,6 +422,7 @@ export function PrioritizedPreloadProvider({ children }: { children: ReactNode }
       new PreloadCoordinator(zero, href =>
         router.preloadRoute({ to: href } as never).catch(error => {
           console.warn(`Route preload failed for ${href}`, error);
+          throw error;
         })
       ),
     [router, zero]

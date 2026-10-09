@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@/zero/observed-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { ProjectContextNavigation, type ActivateProjectContext } from './ProjectContextNavigation';

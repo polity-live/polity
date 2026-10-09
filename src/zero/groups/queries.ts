@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -65,26 +66,37 @@ export const groupQueries = {
       } else {
         q = q.where(({ or, exists }: any) =>
           or(
-            exists('group', (group: any) =>
-              group.where(({ or, cmp, exists }: any) =>
-                or(
-                  cmp('owner_id', userID),
-                  exists('memberships', (membership: any) =>
-                    membership
-                      .where('user_id', userID)
-                      .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            exists(
+              'group',
+              (group: any) =>
+                group.where(({ or, cmp, exists }: any) =>
+                  or(
+                    cmp('owner_id', userID),
+                    exists(
+                      'memberships',
+                      (membership: any) =>
+                        whereAnyOf(
+                          membership.where('user_id', userID),
+                          'status',
+                          WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES
+                        ),
+                      { flip: false }
+                    )
                   )
-                )
-              )
+                ),
+              { flip: false }
             ),
-            exists('group', (group: any) =>
-              applyGroupManagerQueryAccess(group, userID, 'manage', [
-                'groups',
-                'groupMemberships',
-                'groupRoles',
-                'groupAccessRoles',
-                'groupRelationships',
-              ])
+            exists(
+              'group',
+              (group: any) =>
+                applyGroupManagerQueryAccess(group, userID, 'manage', [
+                  'groups',
+                  'groupMemberships',
+                  'groupRoles',
+                  'groupAccessRoles',
+                  'groupRelationships',
+                ]),
+              { flip: false }
             )
           )
         );
@@ -144,11 +156,11 @@ export const groupQueries = {
         .where('group_id', groupId)
         .whereExists('group', group => applyGroupAccess(group, userID));
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId)
         q = q.whereExists('membership_roles', (role: any) => role.where('role_id', roleId));
       if ((roleIds?.length ?? 0) > 0)
-        q = q.whereExists('membership_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+        q = q.whereExists('membership_roles', (role: any) => whereAnyOf(role, 'role_id', roleIds));
       const term = query.trim();
       if (term) {
         q = q.whereExists('user', (user: any) =>
@@ -191,9 +203,9 @@ export const groupQueries = {
         zql.group_guest_access,
         userID
       ).where('group_id', groupId);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((roleIds?.length ?? 0) > 0) {
-        q = q.whereExists('guest_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+        q = q.whereExists('guest_roles', (role: any) => whereAnyOf(role, 'role_id', roleIds));
       }
       const term = query.trim();
       if (term) {
@@ -235,17 +247,17 @@ export const groupQueries = {
     ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
       let q = requireRequestedViewer(zql.group_membership, userId, userID);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       const term = query.trim();
       if (term)
         q = q.whereExists('group', (group: any) => group.where('name', 'ILIKE', `%${term}%`));
       return applyCreatedCursor(q, start, dir)
         .related('group', group =>
-          group
+          applyGroupDiscoveryAccess(group, userID)
             .related('owner')
             .related('group_hashtags', link => link.related('hashtag'))
-            .related('events')
-            .related('amendments')
+            .related('events', event => applyEventQueryAccess(event, userID))
+            .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
         )
         .related('membership_roles', role => role.related('role'))
         .limit(limit);
@@ -291,9 +303,11 @@ export const groupQueries = {
   ),
 
   currentUserActiveMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.group_membership
-      .where('user_id', userID)
-      .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+    whereAnyOf(
+      zql.group_membership.where('user_id', userID),
+      'status',
+      WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES
+    )
       .whereExists('group', group => applyGroupDiscoveryAccess(group, userID))
       .related('group', group => applyGroupDiscoveryAccess(group, userID))
       .related('membership_roles', q => q.related('role', role => role.related('action_rights')))
@@ -303,7 +317,7 @@ export const groupQueries = {
   currentUserMembershipsWithRights: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership
       .where('user_id', userID)
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -313,13 +327,16 @@ export const groupQueries = {
       applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
         .whereExists('group', group => applyGroupAccess(group, userID))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('user')
-        .related('source_group')
-        .related('part_group')
-        .related('base_group')
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('origins', originQuery =>
-          originQuery.related('source_group').related('part_group').related('base_group')
+          originQuery
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         )
         .related('membership_roles', q => q.related('role'))
   ),
@@ -335,7 +352,7 @@ export const groupQueries = {
             'groupMemberships',
           ])
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('connected_user')
         .related('created_by')
         .orderBy('created_at', 'asc')
@@ -344,15 +361,14 @@ export const groupQueries = {
   offlineMembersByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
     ({ args: { groupIds }, ctx: { userID } }) =>
-      zql.group_offline_member
-        .where('group_id', 'IN', groupIds)
+      whereAnyOf(zql.group_offline_member, 'group_id', groupIds)
         .whereExists('group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage_members', [
             'groups',
             'groupMemberships',
           ])
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('connected_user')
         .related('created_by')
         .orderBy('created_at', 'asc')
@@ -369,10 +385,13 @@ export const groupQueries = {
             'groupMemberships',
           ])
         )
-        .related('group')
-        .related('source_group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_offline_member', q =>
-          q.related('group').related('connected_user').related('created_by')
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('connected_user')
+            .related('created_by')
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
         .orderBy('created_at', 'asc')
@@ -381,18 +400,20 @@ export const groupQueries = {
   offlineMembershipsWithRolesAndRightsByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
     ({ args: { groupIds }, ctx: { userID } }) =>
-      zql.group_offline_membership
-        .where('group_id', 'IN', groupIds)
+      whereAnyOf(zql.group_offline_membership, 'group_id', groupIds)
         .whereExists('group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage_members', [
             'groups',
             'groupMemberships',
           ])
         )
-        .related('group')
-        .related('source_group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_offline_member', q =>
-          q.related('group').related('connected_user').related('created_by')
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('connected_user')
+            .related('created_by')
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
         .orderBy('created_at', 'asc')
@@ -406,7 +427,7 @@ export const groupQueries = {
       .related('owner')
       .related('group_hashtags', q => q.related('hashtag'))
       .related('blogs', q =>
-        applyBlogQueryAccess(q, userID).related('blog_hashtags', hashtags =>
+        applyBlogQueryAccess(q, userID, true).related('blog_hashtags', hashtags =>
           hashtags.related('hashtag')
         )
       )
@@ -441,11 +462,14 @@ export const groupQueries = {
         .related('memberships', membership =>
           membership
             .where('user_id', userID ?? '__anon__')
-            .related('source_group')
-            .related('part_group')
-            .related('base_group')
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('origins', origin =>
-              origin.related('source_group').related('part_group').related('base_group')
+              origin
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             )
             .related('membership_roles', link =>
               link.related('role', role => role.related('action_rights'))
@@ -463,11 +487,14 @@ export const groupQueries = {
             .related('memberships', membership =>
               membership
                 .where('user_id', userID ?? '__anon__')
-                .related('source_group')
-                .related('part_group')
-                .related('base_group')
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('origins', origin =>
-                  origin.related('source_group').related('part_group').related('base_group')
+                  origin
+                    .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 )
                 .related('membership_roles', link =>
                   link.related('role', role => role.related('action_rights'))
@@ -514,27 +541,31 @@ export const groupQueries = {
       .related('connections_as_group_a', q =>
         q
           .related('group_b', tq =>
-            tq
+            applyGroupDiscoveryAccess(tq, userID)
               .related('memberships', mq =>
                 applyGroupMembershipSelfOrManagerQueryAccess(mq, userID)
               )
               .related('events', event => applyEventQueryAccess(event, userID))
               .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
           )
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
       .related('connections_as_group_b', q =>
         q
           .related('group_a', sq =>
-            sq
+            applyGroupDiscoveryAccess(sq, userID)
               .related('memberships', mq =>
                 applyGroupMembershipSelfOrManagerQueryAccess(mq, userID)
               )
               .related('events', event => applyEventQueryAccess(event, userID))
               .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
           )
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
       .related('events', q => applyEventQueryAccess(q, userID))
@@ -551,14 +582,16 @@ export const groupQueries = {
           .related('created_by')
       )
       .related('memberships', q =>
-        q
-          .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+        whereAnyOf(q, 'status', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
           .related('user')
-          .related('source_group')
-          .related('part_group')
-          .related('base_group')
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('origins', originQuery =>
-            originQuery.related('source_group').related('part_group').related('base_group')
+            originQuery
+              .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           )
           .related('membership_roles', mq => mq.related('role'))
       )
@@ -589,12 +622,15 @@ export const groupQueries = {
         .where('user_id', userId)
         .where('user_id', userID)
         .where('group_id', groupId)
-        .related('group')
-        .related('source_group')
-        .related('part_group')
-        .related('base_group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('origins', originQuery =>
-          originQuery.related('source_group').related('part_group').related('base_group')
+          originQuery
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
@@ -606,13 +642,16 @@ export const groupQueries = {
       applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
         .whereExists('group', group => applyGroupAccess(group, userID))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('user')
-        .related('source_group')
-        .related('part_group')
-        .related('base_group')
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('origins', originQuery =>
-          originQuery.related('source_group').related('part_group').related('base_group')
+          originQuery
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
@@ -636,7 +675,7 @@ export const groupQueries = {
         )
         .whereExists('group', group => applyGroupAccess(group, userID))
         .related('subscriber_user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   /** All groups (no relations, no filter) */
@@ -655,14 +694,18 @@ export const groupQueries = {
       .related('owner')
       .related('connections_as_group_a', q =>
         q
-          .related('group_b')
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
       .related('connections_as_group_b', q =>
         q
-          .related('group_a')
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
       .related('conversations', q =>
@@ -684,11 +727,14 @@ export const groupQueries = {
       .related('memberships', q =>
         applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
           .related('user')
-          .related('source_group')
-          .related('part_group')
-          .related('base_group')
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('origins', originQuery =>
-            originQuery.related('source_group').related('part_group').related('base_group')
+            originQuery
+              .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           )
           .related('membership_roles', mq => mq.related('role'))
       )
@@ -716,13 +762,16 @@ export const groupQueries = {
       applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
         .whereExists('group', group => applyGroupAccess(group, userID))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('user')
-        .related('source_group')
-        .related('part_group')
-        .related('base_group')
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('origins', originQuery =>
-          originQuery.related('source_group').related('part_group').related('base_group')
+          originQuery
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
@@ -731,16 +780,22 @@ export const groupQueries = {
   membershipsWithRolesAndRightsByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
     ({ args: { groupIds }, ctx: { userID } }) =>
-      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
-        .where('group_id', 'IN', groupIds)
+      whereAnyOf(
+        applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID),
+        'group_id',
+        groupIds
+      )
         .whereExists('group', group => applyGroupAccess(group, userID))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('user')
-        .related('source_group')
-        .related('part_group')
-        .related('base_group')
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('origins', originQuery =>
-          originQuery.related('source_group').related('part_group').related('base_group')
+          originQuery
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
@@ -796,7 +851,7 @@ export const groupQueries = {
         .whereExists('group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage', ['groups', 'amendments'])
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('process_run')
         .related('process_branch')
         .related('process_step_run')
@@ -815,11 +870,10 @@ export const groupQueries = {
   amendmentEventStepRunsByEventIds: defineQuery(
     z.object({ eventIds: z.array(z.string()) }),
     ({ args: { eventIds }, ctx: { userID } }) =>
-      zql.amendment_process_step_run
-        .where('event_id', 'IN', eventIds)
+      whereAnyOf(zql.amendment_process_step_run, 'event_id', eventIds)
         .whereExists('event', event => applyEventManagerQueryAccess(event, userID))
         .related('event')
-        .related('target_group')
+        .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('process_run', q =>
           q.related('amendment', aq =>
             aq
@@ -858,7 +912,7 @@ export const groupQueries = {
           applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
         )
         .where('scope', 'group')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('action_rights')
         .related('group_membership_roles', q =>
           q.related('group_membership', mq =>
@@ -888,7 +942,7 @@ export const groupQueries = {
         .whereExists('group', group => applyGroupAccess(group, userID))
         .related('creator')
         .related('assignments', q => q.where('user_id', userID ?? '__anon__').related('user'))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')
   ),
 
@@ -910,8 +964,8 @@ export const groupQueries = {
         .whereExists('receiver_group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage', ['groupPayments', 'payments'])
         )
-        .related('receiver_group')
-        .related('payer_group')
+        .related('receiver_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('payer_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('receiver_user')
         .related('payer_user')
   ),
@@ -925,8 +979,8 @@ export const groupQueries = {
         .whereExists('payer_group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage', ['groupPayments', 'payments'])
         )
-        .related('receiver_group')
-        .related('payer_group')
+        .related('receiver_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('payer_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('receiver_user')
         .related('payer_user')
   ),
@@ -946,9 +1000,11 @@ export const groupQueries = {
   assignableActiveMembersByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
     ({ args: { groupIds }, ctx: { userID } }) =>
-      zql.group_membership
-        .where('group_id', 'IN', groupIds)
-        .where('status', 'IN', ['active', 'admin', 'member'])
+      whereAnyOf(whereAnyOf(zql.group_membership, 'group_id', groupIds), 'status', [
+        'active',
+        'admin',
+        'member',
+      ])
         .whereExists('group', group => applyGroupAccess(group, userID))
         .related('user')
   ),
@@ -958,7 +1014,11 @@ export const groupQueries = {
     if (!userID || userID === 'anon') return zql.user.where('visibility', 'public').limit(20);
     return zql.user
       .where(({ or, cmp }: any) =>
-        or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
+        or(
+          cmp('visibility', '=', 'public'),
+          cmp('visibility', '=', 'authenticated'),
+          cmp('id', userID)
+        )
       )
       .limit(20);
   }),
@@ -978,7 +1038,7 @@ export const groupQueries = {
         .where('user_id', userId)
         .where('user_id', userID)
         .related('group', q =>
-          q
+          applyGroupDiscoveryAccess(q, userID)
             .related('group_hashtags', q => q.related('hashtag'))
             .related('events', q => applyEventQueryAccess(q, userID))
             .related('amendments', q => applyAmendmentQueryAccess(q, userID))
@@ -995,14 +1055,18 @@ export const groupQueries = {
     applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
       .related('connections_as_group_a', q =>
         q
-          .related('group_b')
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
       .related('connections_as_group_b', q =>
         q
-          .related('group_a')
-          .related('grants', rq => rq.related('initiator_group'))
+          .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('grants', rq =>
+            rq.related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
           .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
   ),

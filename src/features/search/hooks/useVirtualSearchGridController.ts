@@ -12,6 +12,8 @@ import {
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroGrid } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
+import { SEARCH_GRID_PAGE_SIZE } from '@/zero/preloads/search-context';
+import { observeRouteReadiness } from '@/zero/observed-query';
 import { useSearchCardState } from '../SearchCardStateProvider';
 
 import type {
@@ -163,8 +165,8 @@ export function useVirtualSearchGridController({
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => rowHeight + SEARCH_GRID_GAP, [rowHeight]),
     overscan: 2,
-    minPageSize: 18,
-    maxPageSize: 48,
+    minPageSize: SEARCH_GRID_PAGE_SIZE,
+    maxPageSize: SEARCH_GRID_PAGE_SIZE,
     useFlushSync: false,
     lanes,
     getPageQuery,
@@ -255,6 +257,7 @@ export function useVirtualSearchGridController({
     [baseCells, interactiveIds]
   );
 
+  observeRouteReadiness('search.searchDocumentPage', complete);
   return {
     compact,
     rowHeight,

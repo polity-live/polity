@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { richTextToPlainText } from '@/features/shared/logic/richText';

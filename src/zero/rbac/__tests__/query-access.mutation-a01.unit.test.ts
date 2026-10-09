@@ -70,7 +70,15 @@ function createQueryAst(): QueryAst {
         const predicate = (args[0] as (helpers: ReturnType<typeof predicateHelpers>) => unknown)(
           predicateHelpers()
         );
-        calls.push({ method: 'where', predicate: normalize(predicate) });
+        const canonical = canonicalPredicate(predicate) as { operator?: string; args?: AstValue[] };
+        if (canonical.operator === 'cmp' && canonical.args?.[1] === 'IN')
+          calls.push({ method: 'where', args: normalize(canonical.args) });
+        else if (canonical.operator === 'cmp' && canonical.args?.[1] === '=')
+          calls.push({
+            method: 'where',
+            args: normalize([canonical.args[0], 'IN', [canonical.args[2]]]),
+          });
+        else calls.push({ method: 'where', predicate: normalize(canonical) });
       } else {
         calls.push({ method: 'where', args: normalize(args) });
       }
@@ -90,6 +98,24 @@ function createQueryAst(): QueryAst {
     },
   };
   return query;
+}
+
+function canonicalPredicate(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalPredicate);
+  if (!value || typeof value !== 'object') return value;
+  const node = Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, canonicalPredicate(item)])
+  );
+  const values = node.values as { operator: string; args: unknown[] }[] | undefined;
+  if (
+    node.operator === 'or' &&
+    values?.length &&
+    values.every(
+      term => term.operator === 'cmp' && term.args[1] === '=' && term.args[0] === values[0].args[0]
+    )
+  )
+    return { operator: 'cmp', args: [values[0].args[0], 'IN', values.map(term => term.args[2])] };
+  return node;
 }
 
 function predicateHelpers() {

@@ -53502,6 +53502,25 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/navigation/state/navigation-layout-context.ts",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "shares actual secondary navigation visibility with toolbars without another navigation query"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/state/__tests__/use-unread-counts.component.test.tsx",
+        "src/features/navigation/state/__tests__/useNavigation.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/navigation/state/navigation.store.tsx",
       "domain": "features:navigation",
       "owner": "polity/features:navigation",
@@ -99707,6 +99726,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/e2e/zero-performance/project-chat-security.ts",
         "tools/testing/accountability/project-chat.json"
       ]
     },
@@ -101608,6 +101628,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/e2e/zero-performance/project-chat-security.ts",
         "tools/testing/accountability/project-chat.json"
       ]
     },
@@ -109306,6 +109327,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/after-commit.ts",
       "domain": "server:after-commit.ts",
       "owner": "polity/server:after-commit.ts",
@@ -115497,6 +115528,22 @@
       ]
     },
     {
+      "path": "src/server/zero-query-diagnostics.ts",
+      "domain": "server:zero-query-diagnostics.ts",
+      "owner": "polity/server:zero-query-diagnostics.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps interleaved request phases correlated and is inert outside the benchmark"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-query-diagnostics.unit.test.ts"]
+    },
+    {
       "path": "src/styles.css",
       "domain": "src:styles.css",
       "owner": "polity/src:styles.css",
@@ -115737,6 +115784,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/__tests__/observed-query.component.test.tsx",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/__tests__/offlineRosterHelpers.contract.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
@@ -115758,6 +115815,16 @@
     },
     {
       "path": "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/__tests__/query-definitions.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
       "kind": "test-infrastructure",
@@ -119974,6 +120041,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/__tests__/observed-query.component.test.tsx",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/observe.unit.test.ts",
         "src/zero/communication-studio/__tests__/projections.unit.test.ts",
@@ -122854,6 +122922,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/messages/__tests__/query-args.component.test.tsx",
+      "domain": "zero:messages",
+      "owner": "polity/zero:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
       "domain": "zero:messages",
       "owner": "polity/zero:messages",
@@ -122923,8 +123001,8 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts"
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
+        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts"
       ]
     },
     {
@@ -122964,6 +123042,33 @@
       ]
     },
     {
+      "path": "src/zero/messages/query-args.ts",
+      "domain": "zero:messages",
+      "owner": "polity/zero:messages",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/messages/__tests__/query-args.component.test.tsx",
+          "project": "component",
+          "caseId": "uses identical query requests for the initial visible page and its background preload"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
+        "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
+        "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+        "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
+        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
+        "src/zero/messages/__tests__/useMessageState.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/zero/messages/schema.ts",
       "domain": "zero:messages",
       "owner": "polity/zero:messages",
@@ -122996,7 +123101,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts"
+        "src/zero/messages/__tests__/query-args.component.test.tsx"
       ]
     },
     {
@@ -123169,6 +123274,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
@@ -123202,6 +123308,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
@@ -124617,6 +124724,22 @@
       ]
     },
     {
+      "path": "src/zero/observed-query.ts",
+      "domain": "zero:observed-query.ts",
+      "owner": "polity/zero:observed-query.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/observed-query.component.test.tsx",
+          "project": "component",
+          "caseId": "forwards the public hook arguments and reports real partial/complete results without changing them"
+        }
+      ],
+      "suggestedTestRefs": ["src/zero/__tests__/observed-query.component.test.tsx"]
+    },
+    {
       "path": "src/zero/offline-roster-helpers.ts",
       "domain": "zero:offline-roster-helpers.ts",
       "owner": "polity/zero:offline-roster-helpers.ts",
@@ -125611,6 +125734,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
       "domain": "zero:preloads",
       "owner": "polity/zero:preloads",
@@ -125642,6 +125775,16 @@
     },
     {
       "path": "src/zero/preloads/__tests__/search-context.contract.unit.test.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/preloads/__tests__/startup.unit.test.ts",
       "domain": "zero:preloads",
       "owner": "polity/zero:preloads",
       "kind": "test-infrastructure",
@@ -125691,9 +125834,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125833,9 +125976,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125869,9 +126012,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125905,9 +126048,38 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/preloads/query-lifecycle.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "observes completion and delayed release for abandoned in-flight work without inventing materialization"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preloads/__tests__/entity-families.component.test.tsx",
+        "src/zero/preloads/__tests__/event-agenda.unit.test.ts",
+        "src/zero/preloads/__tests__/global-routes.contract.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent-component.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-coordinator-component.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+        "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125941,9 +126113,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125977,9 +126149,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126049,9 +126221,38 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/preloads/startup.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/preloads/__tests__/startup.unit.test.ts",
+          "project": "unit",
+          "caseId": "registers the exact initial search before child effects and keeps background routes out"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preloads/__tests__/entity-families.component.test.tsx",
+        "src/zero/preloads/__tests__/event-agenda.unit.test.ts",
+        "src/zero/preloads/__tests__/global-routes.contract.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent-component.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-coordinator-component.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+        "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126085,9 +126286,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126490,6 +126691,22 @@
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
       ]
+    },
+    {
+      "path": "src/zero/query-definitions.ts",
+      "domain": "zero:query-definitions.ts",
+      "owner": "polity/zero:query-definitions.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/query-definitions.unit.test.ts",
+          "project": "unit",
+          "caseId": "reuses only equal validated arguments in the same context and leaves original definitions intact"
+        }
+      ],
+      "suggestedTestRefs": ["src/zero/__tests__/query-definitions.unit.test.ts"]
     },
     {
       "path": "src/zero/rbac/README.md",
@@ -127376,6 +127593,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+      "domain": "zero:shared",
+      "owner": "polity/zero:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
       "domain": "zero:shared",
       "owner": "polity/zero:shared",
@@ -127432,6 +127659,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx",
@@ -127503,9 +127731,9 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
-        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
-        "src/zero/shared/__tests__/useSearchState.component.test.tsx"
+        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127535,6 +127763,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -127577,6 +127806,31 @@
       ]
     },
     {
+      "path": "src/zero/shared/query-conditions.ts",
+      "domain": "zero:shared",
+      "owner": "polity/zero:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves set membership for one/multiple values, duplicates and unrelated values"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/shared/__tests__/ballotVisibility.unit.test.ts",
+        "src/zero/shared/__tests__/helpers.unit.test.ts",
+        "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
+        "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+        "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
+        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
+        "src/zero/shared/__tests__/useSearchState.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/zero/shared/search-query-helpers.ts",
       "domain": "zero:shared",
       "owner": "polity/zero:shared",
@@ -127602,6 +127856,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -127633,6 +127888,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -131408,6 +131664,326 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/README.md",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/batches.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/browser-navigation.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/analyze.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/api-timing.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/batches.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/browser-navigation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/cases.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/catalog-generation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/catalog.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/check.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/cleanup.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/collect.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/discussion-security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/fixture-check.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/gate.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/isolation.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/journey-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/journeys.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/linux-runtime.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/measure.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/oracle.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/plan-artifacts.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/project-chat-security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/required.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/run.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/email/__tests__/deploy-auth-templates.unit.test.ts",
       "domain": "tools:email",
       "owner": "polity/tools:email",
@@ -132950,6 +133526,16 @@
     },
     {
       "path": "tools/testing/accountability/workspace-ux.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/zero-performance.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

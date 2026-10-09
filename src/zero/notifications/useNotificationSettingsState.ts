@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '../queries';
 
 /** Loads only the current viewer's notification settings. */

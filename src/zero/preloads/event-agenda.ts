@@ -170,11 +170,6 @@ export function extractCurrentUserParticipantEventIds(participationRows: unknown
 export function createEventAgendaBasePreloadEntries(eventId: string): ZeroPreloadEntry[] {
   return [
     createPreloadEntry(
-      'queries.events.agendaWithElections',
-      { eventId },
-      queries.events.agendaWithElections({ eventId })
-    ),
-    createPreloadEntry(
       'queries.events.agendaItemsFull',
       { eventId },
       queries.events.agendaItemsFull({ eventId })
@@ -183,11 +178,6 @@ export function createEventAgendaBasePreloadEntries(eventId: string): ZeroPreloa
       'queries.agendas.byEvent',
       { event_id: eventId },
       queries.agendas.byEvent({ event_id: eventId })
-    ),
-    createPreloadEntry(
-      'queries.events.withAgendaAndParticipants',
-      { id: eventId },
-      queries.events.withAgendaAndParticipants({ id: eventId })
     ),
   ];
 }
@@ -223,16 +213,6 @@ export function createEventAgendaDependentPreloadEntries(
         'queries.amendments.agendaItemForwardingContext',
         { agenda_item_id: agendaItemId },
         queries.amendments.agendaItemForwardingContext({ agenda_item_id: agendaItemId })
-      )
-    );
-  }
-
-  if (dependencies.agendaItemIds.length > 0) {
-    entries.push(
-      createPreloadEntry(
-        'queries.votes.byAgendaItems',
-        { agenda_item_ids: dependencies.agendaItemIds },
-        queries.votes.byAgendaItems({ agenda_item_ids: dependencies.agendaItemIds })
       )
     );
   }

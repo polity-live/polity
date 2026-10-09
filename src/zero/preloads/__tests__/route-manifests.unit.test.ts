@@ -15,6 +15,20 @@ import {
 } from '../route-manifests';
 
 describe('prioritized preload route manifests', () => {
+  it('matches the focused event participation view without preloading its full tree on the overview', () => {
+    const tasks = createEventPreloadTasks('event-1');
+    const overview = tasks.find(task => task.key.endsWith(':overview'))!;
+    const keys = overview.entries.map(entry => entry.key).join('|');
+    expect(keys).toContain('queries.events.forParticipation');
+    expect(keys).not.toContain('queries.events.byIdFull');
+    expect(
+      tasks
+        .find(task => task.key.endsWith(':participants'))
+        ?.entries.map(entry => entry.key)
+        .join('|')
+    ).toContain('queries.events.byIdFull');
+  });
+
   it('preloads only the bounded first notification page', () => {
     const entries = createNotificationsPreloadTask().entries;
 
@@ -51,7 +65,7 @@ describe('prioritized preload route manifests', () => {
     expect(searchKeys).not.toContain('queries.common.viewerSubscriptions');
     expect(searchKeys).not.toContain('queries.amendments.viewerCollaborations');
     expect(searchKeys).not.toContain('queries.events.viewerDelegations');
-    expect(searchKeys).toContain('"limit":19');
+    expect(searchKeys).toContain('"limit":49');
     expect(createPrimaryIdleTasks('user-1')).toHaveLength(7);
     expect(
       createBlogPreloadTasks('blog-1', '/blog/blog-1')[0]

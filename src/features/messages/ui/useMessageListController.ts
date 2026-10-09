@@ -5,6 +5,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 import { queries } from '@/zero/queries';
+import { observeRouteReadiness } from '@/zero/observed-query';
 import { getOtherParticipant } from '../logic/messageUtils';
 import type { Conversation, Message } from '../types/message.types';
 import type { MessageTimelineItem } from './MessageList';
@@ -117,6 +118,15 @@ export function useMessageListController({
     permalinkID: initialAnchorRef.current.messageId ?? undefined,
   });
   useStickToBottom(virtualList, { enabled: active });
+  useEffect(() => {
+    // The public virtualizer snapshot describes the real rendered message page.
+    // A preload of messagesWindow does not establish this page's readiness.
+    if (active)
+      observeRouteReadiness('messages.messagePage', virtualList.complete, {
+        args: { conversationId: conversation.id },
+        ids: virtualList.items.flatMap(item => (item.row ? [item.row.id] : [])),
+      });
+  }, [active, conversation.id, virtualList.complete, virtualList.items]);
 
   const otherUser =
     conversation.type === 'project_ai'

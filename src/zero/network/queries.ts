@@ -1,6 +1,7 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
-import { applyGroupQueryAccess } from '../rbac/query-access';
+import { applyGroupQueryAccess, applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
@@ -82,17 +83,27 @@ export const networkQueries = {
             cmp('to_group_id', '=', groupId)
           )
         )
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
-        .related('grants', grants => grants.related('initiator_group').orderBy('right_key', 'asc'))
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('grants', grants =>
+          grants
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .orderBy('right_key', 'asc')
+        )
         .related('membership_rule', membershipRule =>
           membershipRule
-            .related('required_source_role')
-            .related('origins', origin => origin.related('eligible_origin_group'))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', origin =>
+              origin.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .orderBy('updated_at', 'desc')
   ),
@@ -127,15 +138,19 @@ export const networkQueries = {
       if (relationshipType === 'child') q = q.where('child_group_id', groupId);
       if ((rights?.length ?? 0) > 0) {
         q = q.whereExists('grants', (grant: any) =>
-          grant.where('status', 'active').where('right_key', 'IN', rights)
+          whereAnyOf(grant.where('status', 'active'), 'right_key', rights)
         );
       }
       const term = query.trim();
       if (term) {
         q = q.where(({ or, exists }: any) =>
           or(
-            exists('group_a', (group: any) => group.where('name', 'ILIKE', `%${term}%`)),
-            exists('group_b', (group: any) => group.where('name', 'ILIKE', `%${term}%`))
+            exists('group_a', (group: any) =>
+              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            ),
+            exists('group_b', (group: any) =>
+              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            )
           )
         );
       }
@@ -143,15 +158,17 @@ export const networkQueries = {
       q = q.orderBy('updated_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
       return q
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
+        .related('group_a', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
         .related('grants', (grant: any) => grant.orderBy('right_key', 'asc'))
         .related('membership_rule', (membershipRuleQuery: any) =>
-          membershipRuleQuery.related('required_source_role')
+          membershipRuleQuery.related('required_source_role', (role: any) =>
+            role.whereExists('group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+          )
         )
         .limit(limit);
     }
@@ -168,26 +185,32 @@ export const networkQueries = {
             cmp('to_group_id', '=', groupId)
           )
         )
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule', membershipRuleQuery =>
           membershipRuleQuery
-            .related('member_source_group')
-            .related('member_target_group')
-            .related('required_source_role')
-            .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+            .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', originQuery =>
+              originQuery.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .orderBy('updated_at', 'desc')
   ),
@@ -204,52 +227,64 @@ export const networkQueries = {
             and(cmp('from_group_id', '=', groupBId), cmp('to_group_id', '=', groupAId))
           )
         )
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule', membershipRuleQuery =>
           membershipRuleQuery
-            .related('member_source_group')
-            .related('member_target_group')
-            .related('required_source_role')
-            .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+            .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', originQuery =>
+              originQuery.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .orderBy('updated_at', 'desc')
   ),
 
   allGroupConnections: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyGroupConnectionAccess(zql.group_connection, userID)
-      .related('group_a')
-      .related('group_b')
-      .related('parent_group')
-      .related('child_group')
-      .related('from_group')
-      .related('to_group')
+      .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('created_by')
       .related('grants', grantsQuery =>
         grantsQuery
-          .related('holder_group')
-          .related('scope_group')
-          .related('initiator_group')
+          .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .orderBy('right_key', 'asc')
       )
       .related('membership_rule', membershipRuleQuery =>
         membershipRuleQuery
-          .related('member_source_group')
-          .related('member_target_group')
-          .related('required_source_role')
-          .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+          .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('required_source_role', role =>
+            role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
+          .related('origins', originQuery =>
+            originQuery.related('eligible_origin_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
+          )
       )
       .orderBy('updated_at', 'desc')
   ),
@@ -259,26 +294,32 @@ export const networkQueries = {
     ({ args: { id }, ctx: { userID } }) =>
       applyGroupConnectionAccess(zql.group_connection, userID)
         .where('id', id)
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule', membershipRuleQuery =>
           membershipRuleQuery
-            .related('member_source_group')
-            .related('member_target_group')
-            .related('required_source_role')
-            .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+            .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', originQuery =>
+              originQuery.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .one()
   ),
@@ -297,10 +338,10 @@ export const networkQueries = {
             exists('descendant_group', (group: any) => applyGroupQueryAccess(group, userID))
           )
         )
-        .related('ancestor_group')
-        .related('descendant_group')
-        .related('direct_child_group')
-        .related('base_group')
+        .related('ancestor_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('descendant_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('direct_child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('connection')
         .orderBy('depth', 'asc')
   ),
@@ -319,8 +360,8 @@ export const networkQueries = {
             exists('scope_group', (group: any) => applyGroupQueryAccess(group, userID))
           )
         )
-        .related('holder_group')
-        .related('scope_group')
+        .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('source_connection')
         .related('source_grant')
         .orderBy('right_key', 'asc')
@@ -341,8 +382,8 @@ export const networkQueries = {
           )
         )
         .related('user')
-        .related('hierarchy_group')
-        .related('source_group')
+        .related('hierarchy_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_membership')
         .orderBy('created_at', 'asc')
   ),
@@ -362,8 +403,8 @@ export const networkQueries = {
           )
         )
         .related('user')
-        .related('sibling_group')
-        .related('source_group')
+        .related('sibling_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_membership')
         .orderBy('created_at', 'asc')
   ),
@@ -375,21 +416,27 @@ export const networkQueries = {
         .where(({ cmp, or }) =>
           or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
         )
-        .related('group_a')
-        .related('group_b')
-        .related('initiator_group')
-        .related('active_connection')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('active_connection', connection => applyGroupConnectionAccess(connection, userID))
         .related('grant_requests', q =>
           q
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule_requests', q =>
           q
-            .related('required_source_role')
-            .related('origins', oq => oq.related('eligible_origin_group'))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', oq =>
+              oq.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
             .orderBy('updated_at', 'desc')
         )
         .orderBy('updated_at', 'desc')
@@ -421,8 +468,12 @@ export const networkQueries = {
       if (term) {
         q = q.where(({ or, exists }: any) =>
           or(
-            exists('group_a', (group: any) => group.where('name', 'ILIKE', `%${term}%`)),
-            exists('group_b', (group: any) => group.where('name', 'ILIKE', `%${term}%`))
+            exists('group_a', (group: any) =>
+              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            ),
+            exists('group_b', (group: any) =>
+              applyGroupDiscoveryQueryAccess(group, userID).where('name', 'ILIKE', `%${term}%`)
+            )
           )
         );
       }
@@ -430,13 +481,21 @@ export const networkQueries = {
       q = q.orderBy('updated_at', order).orderBy('id', order);
       if (start) q = q.start(start, { inclusive: false });
       return q
-        .related('group_a')
-        .related('group_b')
-        .related('initiator_group')
-        .related('active_connection')
+        .related('group_a', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('initiator_group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('active_connection', (connection: any) =>
+          applyGroupConnectionAccess(connection, userID)
+        )
         .related('grant_requests', (grant: any) => grant.orderBy('right_key', 'asc'))
         .related('membership_rule_requests', (membership: any) =>
-          membership.related('required_source_role').orderBy('updated_at', 'desc')
+          membership
+            .related('required_source_role', (role: any) =>
+              role.whereExists('group', (group: any) =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
+            .orderBy('updated_at', 'desc')
         )
         .limit(limit);
     }
@@ -452,21 +511,27 @@ export const networkQueries = {
             and(cmp('group_a_id', '=', groupBId), cmp('group_b_id', '=', groupAId))
           )
         )
-        .related('group_a')
-        .related('group_b')
-        .related('initiator_group')
-        .related('active_connection')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('active_connection', connection => applyGroupConnectionAccess(connection, userID))
         .related('grant_requests', q =>
           q
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule_requests', q =>
           q
-            .related('required_source_role')
-            .related('origins', oq => oq.related('eligible_origin_group'))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', oq =>
+              oq.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
             .orderBy('updated_at', 'desc')
         )
         .orderBy('updated_at', 'desc')
@@ -477,21 +542,27 @@ export const networkQueries = {
     ({ args: { id }, ctx: { userID } }) =>
       applyGroupConnectionRequestAccess(zql.group_connection_request, userID)
         .where('id', id)
-        .related('group_a')
-        .related('group_b')
-        .related('initiator_group')
-        .related('active_connection')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('active_connection', connection => applyGroupConnectionAccess(connection, userID))
         .related('grant_requests', q =>
           q
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule_requests', q =>
           q
-            .related('required_source_role')
-            .related('origins', oq => oq.related('eligible_origin_group'))
+            .related('required_source_role', role =>
+              role.whereExists('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
+            .related('origins', oq =>
+              oq.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
             .orderBy('updated_at', 'desc')
         )
         .one()
@@ -505,13 +576,19 @@ export const networkQueries = {
       applyWorkflowAccess(zql.group_workflow, userID)
         .where('group_id', groupId)
         .related('steps', q =>
-          q.related('group').related('target_workflow').orderBy('order_index', 'asc')
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+            .orderBy('order_index', 'asc')
         )
-        .related('start_group')
+        .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('approvals', q =>
-          q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('requested_by_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .orderBy('created_at', 'asc')
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('created_by')
         .orderBy('created_at', 'desc')
   ),
@@ -520,13 +597,19 @@ export const networkQueries = {
     applyWorkflowAccess(zql.group_workflow, userID)
       .where('id', id)
       .related('steps', q =>
-        q.related('group').related('target_workflow').orderBy('order_index', 'asc')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+          .orderBy('order_index', 'asc')
       )
-      .related('start_group')
+      .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('approvals', q =>
-        q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('requested_by_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .orderBy('created_at', 'asc')
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('created_by')
       .one()
   ),
@@ -534,13 +617,19 @@ export const networkQueries = {
   allWorkflows: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyWorkflowAccess(zql.group_workflow, userID)
       .related('steps', q =>
-        q.related('group').related('target_workflow').orderBy('order_index', 'asc')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+          .orderBy('order_index', 'asc')
       )
-      .related('start_group')
+      .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('approvals', q =>
-        q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('requested_by_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .orderBy('created_at', 'asc')
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('created_by')
       .orderBy('created_at', 'desc')
   ),
@@ -550,18 +639,26 @@ export const networkQueries = {
     ({ args: { groupId }, ctx: { userID } }) =>
       applyWorkflowApprovalAccess(zql.group_workflow_approval, userID)
         .where('group_id', groupId)
-        .related('group')
-        .related('requested_by_group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('requested_by_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('workflow', q =>
           q
-            .related('group')
-            .related('start_group')
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('created_by')
             .related('approvals', aq =>
-              aq.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+              aq
+                .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('requested_by_group', group =>
+                  applyGroupDiscoveryQueryAccess(group, userID)
+                )
+                .orderBy('created_at', 'asc')
             )
             .related('steps', sq =>
-              sq.related('group').related('target_workflow').orderBy('order_index', 'asc')
+              sq
+                .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
+                .orderBy('order_index', 'asc')
             )
         )
         .orderBy('updated_at', 'desc')

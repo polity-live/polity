@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -11,10 +12,6 @@ import {
   applyVoteQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
-
-// Old clients invoke fullProfile with only {id}. Freeze their compatibility
-// cutoff for this server process so repeated transformations remain identical.
-const LEGACY_FULL_PROFILE_NOW = Date.now();
 
 function applyUserAccess<T>(q: T, userID: string | undefined): T {
   return applyUserQueryAccess(q, userID);
@@ -75,8 +72,8 @@ export const userQueries = {
     ({ args: { id, now }, ctx: { userID } }) =>
       applyUserAccess(zql.user.where('id', id), userID)
         .related('statements', q =>
-          applyStatementQueryAccess(q, userID, now ?? LEGACY_FULL_PROFILE_NOW)
-            .related('group', group => applyGroupQueryAccess(group, userID))
+          applyStatementQueryAccess(q, userID, now ?? Date.now())
+            .related('group', group => applyGroupQueryAccess(group, userID, true))
             .related('statement_hashtags', q2 => q2.related('hashtag'))
             .related('support_votes', q2 => q2.where('user_id', userID ?? '__anon__'))
             .related('surveys', q2 =>
@@ -87,9 +84,11 @@ export const userQueries = {
         )
         .related('group_memberships', q =>
           applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
-            .whereExists('group', group => applyGroupQueryAccess(group, userID))
+            .whereExists('group', group => applyGroupQueryAccess(group, userID, true), {
+              flip: false,
+            })
             .related('group', q =>
-              applyGroupQueryAccess(q, userID)
+              applyGroupQueryAccess(q, userID, true)
                 .related('events', event => applyEventQueryAccess(event, userID))
                 .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
                 .related('group_hashtags', q => q.related('hashtag'))
@@ -102,9 +101,11 @@ export const userQueries = {
         )
         .related('blogger_relations', q =>
           q
-            .whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+            .whereExists('blog', blog => applyBlogQueryAccess(blog, userID, true), { flip: false })
             .related('blog', q =>
-              applyBlogQueryAccess(q, userID).related('blog_hashtags', q => q.related('hashtag'))
+              applyBlogQueryAccess(q, userID, true).related('blog_hashtags', q =>
+                q.related('hashtag')
+              )
             )
             .related('role', q =>
               (id === userID ? q : q.where('id', '__private__')).related('action_rights')
@@ -114,10 +115,12 @@ export const userQueries = {
         .related('amendment_collaborations', q =>
           q
             .where('user_id', userID ?? '__anon__')
-            .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+            .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID), {
+              flip: false,
+            })
             .related('amendment', q =>
               applyAmendmentQueryAccess(q, userID)
-                .related('group', group => applyGroupQueryAccess(group, userID))
+                .related('group', group => applyGroupQueryAccess(group, userID, true))
                 .related('amendment_hashtags', q => q.related('hashtag'))
                 .related('collaborators', q => q.where('user_id', userID ?? '__anon__'))
                 .related('change_requests', q => q.where('user_id', userID ?? '__anon__'))
@@ -132,7 +135,7 @@ export const userQueries = {
   allUsers: defineQuery(z.object({}), ({ ctx: { userID } }) => applyUserAccess(zql.user, userID)),
 
   byIds: defineQuery(z.object({ ids: z.array(z.string()) }), ({ args: { ids }, ctx: { userID } }) =>
-    applyUserAccess(zql.user.where('id', 'IN', ids), userID)
+    applyUserAccess(whereAnyOf(zql.user, 'id', ids), userID)
   ),
 
   withGroupMemberships: defineQuery(
@@ -140,8 +143,10 @@ export const userQueries = {
     ({ args: { id }, ctx: { userID } }) =>
       applyUserAccess(zql.user.where('id', id), userID).related('group_memberships', q =>
         applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
-          .whereExists('group', group => applyGroupQueryAccess(group, userID))
-          .related('group', group => applyGroupQueryAccess(group, userID))
+          .whereExists('group', group => applyGroupQueryAccess(group, userID, true), {
+            flip: false,
+          })
+          .related('group', group => applyGroupQueryAccess(group, userID, true))
           .related('membership_roles', mq =>
             (id === userID ? mq : mq.where('id', '__private__')).related('role')
           )
@@ -152,14 +157,18 @@ export const userQueries = {
     applyUserAccess(zql.user, userID)
       .related('user_hashtags', q => q.related('hashtag'))
       .related('group_memberships', q =>
-        applyGroupMembershipSelfOrManagerQueryAccess(q, userID).whereExists('group', group =>
-          applyGroupQueryAccess(group, userID)
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID).whereExists(
+          'group',
+          group => applyGroupQueryAccess(group, userID, true),
+          { flip: false }
         )
       )
       .related('amendment_collaborations', q =>
         q
           .where('user_id', userID ?? '__anon__')
-          .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+          .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID), {
+            flip: false,
+          })
       )
   ),
 };

@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -25,12 +26,12 @@ export const voteQueries = {
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
       let q: any = applyVoteQueryAccess(zql.vote, userID);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
         q = q.whereExists(
           'agenda_item',
           (item: any) =>
-            item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds), {
+            item.whereExists('event', (event: any) => whereAnyOf(event, 'group_id', groupIds), {
               flip: false,
             }),
           { flip: false }
@@ -57,8 +58,7 @@ export const voteQueries = {
   decisionManagerProjection: defineQuery(
     z.object({ ids: z.array(z.string()).max(100) }),
     ({ args: { ids }, ctx: { userID } }) =>
-      applyVoteManagerQueryAccess(zql.vote, userID)
-        .where('id', 'IN', ids)
+      whereAnyOf(applyVoteManagerQueryAccess(zql.vote, userID), 'id', ids)
         .related('offline_tallies', (tally: any) => tally.related('choice'))
         .related('voters')
         .related('indicative_decisions', (decision: any) => decision.related('choice'))
@@ -68,7 +68,7 @@ export const voteQueries = {
   viewerDecisionState: defineQuery(
     z.object({ ids: z.array(z.string()).max(100) }),
     ({ args: { ids }, ctx: { userID } }) =>
-      zql.voter.where('user_id', userID ?? '__anon__').where('vote_id', 'IN', ids)
+      whereAnyOf(zql.voter.where('user_id', userID ?? '__anon__'), 'vote_id', ids)
   ),
 
   decisionPage: defineQuery(
@@ -84,10 +84,10 @@ export const voteQueries = {
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
       let q: any = applyVoteQueryAccess(zql.vote, userID);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
         q = q.whereExists('agenda_item', (item: any) =>
-          item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds))
+          item.whereExists('event', (event: any) => whereAnyOf(event, 'group_id', groupIds))
         );
       }
       if (query.trim()) q = q.where('title', 'ILIKE', `%${query.trim()}%`);
@@ -151,8 +151,7 @@ export const voteQueries = {
   byAgendaItems: defineQuery(
     z.object({ agenda_item_ids: z.array(z.string()) }),
     ({ args: { agenda_item_ids }, ctx: { userID } }) =>
-      applyVoteQueryAccess(zql.vote, userID)
-        .where('agenda_item_id', 'IN', agenda_item_ids)
+      whereAnyOf(applyVoteQueryAccess(zql.vote, userID), 'agenda_item_id', agenda_item_ids)
         .related('amendment')
         .related('choices', q => q.orderBy('order_index', 'asc'))
         .related('offline_tallies', q =>

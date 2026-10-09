@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useAgendaTimingState } from '@/zero/agendas/useAgendaState';
 import { useAuth } from '@/providers/auth-provider';
 import type {

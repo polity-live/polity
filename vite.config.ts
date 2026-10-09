@@ -11,6 +11,14 @@ Object.assign(process.env, loadEnv(process.env.NODE_ENV || 'development', proces
 export default defineConfig({
   cacheDir: process.env.POLITY_VITE_CACHE_DIR,
   nitro: {
+    ...(process.env.POLITY_NITRO_BUILD_DIR
+      ? {
+          buildDir: process.env.POLITY_NITRO_BUILD_DIR,
+          typescript: {
+            generatedTypesDir: `${process.env.POLITY_NITRO_BUILD_DIR}/types`,
+          },
+        }
+      : {}),
     inlineDynamicImports: true,
     traceDeps: ['web-push*'],
   },
@@ -79,6 +87,21 @@ export default defineConfig({
   },
   build: {
     cssCodeSplit: false,
+    rolldownOptions: {
+      output: {
+        // Group the side-effect-free icon definitions shared by navigation.
+        // Application routes and stateful runtime packages retain automatic splitting.
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            {
+              name: 'ui-icons',
+              test: /node_modules[\\/]lucide-react[\\/]/,
+            },
+          ],
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: [

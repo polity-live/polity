@@ -107,7 +107,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     reorderAgendaItems,
     initializeChangeRequestVoting,
   } = useAgendaActions();
-  const agendaNav = useAgendaNavigation(eventId);
+  const agendaNav = useAgendaNavigation(eventId, {
+    event,
+    agendaItems,
+    isLoading: isLoading || eventLoading,
+  });
 
   // Track current agenda item changes for toast notifications
   const previousAgendaItemIdRef = useRef<string | null>(null);

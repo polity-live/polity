@@ -1,5 +1,5 @@
 import { useHistoryScrollState, useZeroVirtualizer } from '@rocicorp/zero-virtual/react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

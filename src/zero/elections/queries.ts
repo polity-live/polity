@@ -1,3 +1,5 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -24,14 +26,14 @@ export const electionQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
-      let q: any = applyElectionQueryAccess(zql.election, userID);
+      let q: any = applyElectionQueryAccess(zql.election, userID, true);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
         q = q.whereExists(
           'agenda_item',
           (item: any) =>
-            item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds), {
+            item.whereExists('event', (event: any) => whereAnyOf(event, 'group_id', groupIds), {
               flip: false,
             }),
           { flip: false }
@@ -52,7 +54,7 @@ export const electionQueries = {
             )
           )
         )
-        .related('role')
+        .related('role', (role: any) => applyRoleQueryAccess(role, userID, true))
         .limit(limit);
     }
   ),
@@ -60,8 +62,7 @@ export const electionQueries = {
   decisionManagerProjection: defineQuery(
     z.object({ ids: z.array(z.string()).max(100) }),
     ({ args: { ids }, ctx: { userID } }) =>
-      applyElectionManagerQueryAccess(zql.election, userID)
-        .where('id', 'IN', ids)
+      whereAnyOf(applyElectionManagerQueryAccess(zql.election, userID), 'id', ids)
         .related('offline_tallies', (tally: any) => tally.related('candidate'))
         .related('electors')
         .related('indicative_selections', (selection: any) => selection.related('candidate'))
@@ -71,7 +72,7 @@ export const electionQueries = {
   viewerDecisionState: defineQuery(
     z.object({ ids: z.array(z.string()).max(100) }),
     ({ args: { ids }, ctx: { userID } }) =>
-      zql.elector.where('user_id', userID ?? '__anon__').where('election_id', 'IN', ids)
+      whereAnyOf(zql.elector.where('user_id', userID ?? '__anon__'), 'election_id', ids)
   ),
 
   decisionPage: defineQuery(
@@ -85,12 +86,12 @@ export const electionQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
-      let q: any = applyElectionQueryAccess(zql.election, userID);
+      let q: any = applyElectionQueryAccess(zql.election, userID, true);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if ((groupIds?.length ?? 0) > 0) {
         q = q.whereExists('agenda_item', (item: any) =>
-          item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds))
+          item.whereExists('event', (event: any) => whereAnyOf(event, 'group_id', groupIds))
         );
       }
       if (query.trim()) q = q.where('title', 'ILIKE', `%${query.trim()}%`);
@@ -106,7 +107,7 @@ export const electionQueries = {
             )
           )
         )
-        .related('role')
+        .related('role', (role: any) => applyRoleQueryAccess(role, userID, true))
         .related('offline_tallies', (tally: any) =>
           tally
             .whereExists('election', (election: any) =>
@@ -138,9 +139,12 @@ export const electionQueries = {
   byAgendaItem: defineQuery(
     z.object({ agenda_item_id: z.string() }),
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
-      applyElectionQueryAccess(zql.election, userID)
-        .where('agenda_item_id', agenda_item_id)
-        .related('role', q => q.related('group'))
+      applyElectionQueryAccess(zql.election.where('agenda_item_id', agenda_item_id), userID, true)
+        .related('role', q =>
+          applyRoleQueryAccess(q, userID, true).related('group', group =>
+            applyGroupDiscoveryQueryAccess(group, userID)
+          )
+        )
         .related('candidates', q => q.orderBy('order_index', 'asc').related('user'))
         .related('offline_tallies', q =>
           q
@@ -181,10 +185,13 @@ export const electionQueries = {
 
   // Single election by ID with full details
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID)
-      .where('id', id)
+    applyElectionQueryAccess(zql.election.where('id', id), userID, true)
       .related('agenda_item')
-      .related('role', q => q.related('group'))
+      .related('role', q =>
+        applyRoleQueryAccess(q, userID, true).related('group', group =>
+          applyGroupDiscoveryQueryAccess(group, userID)
+        )
+      )
       .related('candidates', q => q.orderBy('order_index', 'asc').related('user'))
       .related('offline_tallies', q =>
         q
@@ -304,7 +311,7 @@ export const electionQueries = {
 
   // Elections with full details (for decision terminal/listing)
   electionsWithDetails: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID)
+    applyElectionQueryAccess(zql.election, userID, true)
       .related('candidates', q => q.related('user'))
       .related('agenda_item', q =>
         q.related('event', eventQuery =>
@@ -313,7 +320,7 @@ export const electionQueries = {
           )
         )
       )
-      .related('role')
+      .related('role', role => applyRoleQueryAccess(role, userID, true))
       .related('offline_tallies', q =>
         q
           .whereExists('election', election => applyElectionManagerQueryAccess(election, userID))
@@ -334,7 +341,7 @@ export const electionQueries = {
 
   // Elections for search (role+group, candidates, agenda_item+event)
   electionsForSearch: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID)
+    applyElectionQueryAccess(zql.election, userID, true)
       .related('role', role =>
         applyRoleQueryAccess(role, userID).related('group', group =>
           applyGroupQueryAccess(group, userID)
@@ -350,9 +357,12 @@ export const electionQueries = {
 
   // Pending elections
   pendingElections: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election, userID)
-      .where('status', 'pending')
-      .related('role', q => q.related('group'))
+    applyElectionQueryAccess(zql.election.where('status', 'pending'), userID, true)
+      .related('role', q =>
+        applyRoleQueryAccess(q, userID, true).related('group', group =>
+          applyGroupDiscoveryQueryAccess(group, userID)
+        )
+      )
   ),
 
   // User's elector record for an election

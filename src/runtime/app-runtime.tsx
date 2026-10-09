@@ -2,7 +2,8 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 
-const ConnectedAppRuntime = lazy(() => import('./connected-app-runtime'));
+export const loadConnectedAppRuntime = () => import('./connected-app-runtime');
+const ConnectedAppRuntime = lazy(loadConnectedAppRuntime);
 
 export function shouldUsePublicRuntime(pathname: string, hasSession: boolean) {
   return pathname === '/' && !hasSession;

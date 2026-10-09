@@ -1,3 +1,4 @@
+import { canonicalWhereArgs } from '../../__tests__/test-utils/zeroHarness';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type QueryCall = readonly [string, ...unknown[]];
@@ -33,7 +34,7 @@ vi.mock('../../schema', () => {
       table,
       calls: [],
       where: (...args: unknown[]) => {
-        query.calls.push(['where', ...args]);
+        query.calls.push(['where', ...canonicalWhereArgs(args)]);
         return query;
       },
       whereExists: (relation: string, fn: (q: FakeQuery) => unknown) => {
@@ -104,7 +105,7 @@ function predicateCalls(predicate: unknown): QueryCall[] {
   const makeQuery = (table: string): PredicateQuery => {
     const query: PredicateQuery = {
       where: (...args: unknown[]) => {
-        calls.push(['where', table, ...args]);
+        calls.push(['where', table, ...canonicalWhereArgs(args)]);
         if (typeof args[0] === 'function') args[0](helpers);
         return query;
       },

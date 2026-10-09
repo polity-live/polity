@@ -11,6 +11,7 @@ describe('election query and schema branches', () => {
     }));
     vi.doMock('../../schema', () => ({ zql: harness.zql }));
     vi.doMock('../../rbac/query-access', () => ({
+      applyGroupDiscoveryQueryAccess: (query: unknown) => query,
       applyAgendaItemQueryAccess: (query: unknown) => query,
       applyElectionElectorOrManagerQueryAccess: (query: unknown) => query,
       applyElectionManagerQueryAccess: (query: unknown) => query,

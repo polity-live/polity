@@ -2,7 +2,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useEntityRouteAccess } from '../useEntityRouteAccess';
+import { useEntityRouteAccess, type RouteOwnerEvidence } from '../useEntityRouteAccess';
 import {
   clearCreateRecoveryDraft,
   saveCreateRecoveryDraft,
@@ -60,6 +60,129 @@ describe('useEntityRouteAccess create recovery', () => {
       canAccessPrivate: false,
     });
   });
+
+  it('displays an authoritatively synced owned resource while server validation remains pending', async () => {
+    auth.session = { access_token: 'token', user: { id: 'owner' } };
+    let resolve!: (value: {
+      exists: boolean;
+      visibilities: string[];
+      canAccessPrivate: boolean;
+    }) => void;
+    vi.mocked(entityRouteAccessFn).mockReturnValue(
+      new Promise(done => {
+        resolve = done;
+      })
+    );
+    const { result } = renderHook(() =>
+      useEntityRouteAccess(
+        { entityType: 'group', entityId: 'group-1' },
+        {
+          entityType: 'group',
+          entityId: 'group-1',
+          ownerId: 'owner',
+          visibility: 'private',
+          complete: true,
+        }
+      )
+    );
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toEqual({
+      exists: true,
+      visibilities: ['private'],
+      canAccessPrivate: true,
+    });
+    expect(entityRouteAccessFn).toHaveBeenCalledTimes(1);
+    await act(async () =>
+      resolve({ exists: true, visibilities: ['private'], canAccessPrivate: false })
+    );
+    expect(result.current.data?.canAccessPrivate).toBe(false);
+  });
+
+  it('keeps a server-approved view mounted when its first row arrives, but withdraws it on evidence loss', async () => {
+    auth.session = { access_token: 'token', user: { id: 'member' } };
+    vi.mocked(entityRouteAccessFn)
+      .mockResolvedValueOnce({ exists: true, visibilities: ['private'], canAccessPrivate: true })
+      .mockImplementation(() => new Promise(() => {}));
+    const owner: RouteOwnerEvidence = {
+      entityType: 'group',
+      entityId: 'group-1',
+      ownerId: undefined,
+      visibility: undefined,
+      complete: false,
+    };
+    const seen: boolean[] = [];
+    const { result, rerender } = renderHook(
+      ({ evidence }) => {
+        const access = useEntityRouteAccess({ entityType: 'group', entityId: 'group-1' }, evidence);
+        seen.push(access.isLoading);
+        return access;
+      },
+      { initialProps: { evidence: owner } }
+    );
+    await waitFor(() => expect(result.current.data?.canAccessPrivate).toBe(true));
+    seen.length = 0;
+    rerender({ evidence: { ...owner, ownerId: 'other', visibility: 'private', complete: true } });
+    expect(seen.every(loading => !loading)).toBe(true);
+    expect(entityRouteAccessFn).toHaveBeenCalledTimes(2);
+    expect(result.current.data?.canAccessPrivate).toBe(true);
+    rerender({ evidence: owner });
+    expect(result.current.data).toBeNull();
+    expect(result.current.isLoading).toBe(true);
+    expect(entityRouteAccessFn).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    'incomplete',
+    'ownership',
+    'deletion',
+    'entity',
+    'type',
+    'parent',
+    'account',
+    'sign-out',
+  ] as const)(
+    'requires current authoritative ownership and withdraws the fast path on %s changes',
+    async change => {
+      auth.session = { access_token: 'token', user: { id: 'owner' } };
+      vi.mocked(entityRouteAccessFn).mockReturnValue(
+        new Promise(() => {
+          // Keep revalidation pending while verifying each live ownership transition.
+        })
+      );
+      const initial = {
+        input: { entityType: 'group' as const, entityId: 'group-1' },
+        owner: {
+          entityType: 'group' as RouteOwnerEvidence['entityType'],
+          entityId: 'group-1',
+          ownerId: 'owner' as string | null,
+          visibility: 'private',
+          complete: true,
+        },
+      };
+      const { result, rerender } = renderHook(
+        ({ input, owner }) => useEntityRouteAccess(input, owner),
+        { initialProps: initial }
+      );
+      expect(result.current.data?.canAccessPrivate).toBe(true);
+      const next = { input: { ...initial.input }, owner: { ...initial.owner } };
+      if (change === 'incomplete') next.owner.complete = false;
+      if (change === 'ownership') next.owner.ownerId = 'other';
+      if (change === 'deletion') {
+        next.owner.ownerId = null;
+        next.owner.complete = false;
+      }
+      if (change === 'entity') next.owner.entityId = 'group-2';
+      if (change === 'type') next.owner.entityType = 'event';
+      if (change === 'parent')
+        Object.assign(next.input, { parentType: 'group', parentId: 'parent' });
+      if (change === 'account')
+        auth.session = { access_token: 'other-token', user: { id: 'other' } };
+      if (change === 'sign-out') auth.session = null;
+      rerender(next);
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.data).toBeNull();
+    }
+  );
 
   it('sends the current Supabase access token as a Bearer header', async () => {
     auth.session = { access_token: 'access-token-1', user: { id: 'user-1' } };

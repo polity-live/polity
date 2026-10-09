@@ -16,7 +16,7 @@
  */
 
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '../queries';
 import {
@@ -353,7 +353,10 @@ export function usePermissions(context: PermissionContext) {
     bloggerRelations,
     ownedGroupIds,
     userId,
-    context,
+    context.groupId,
+    context.eventId,
+    context.blogId,
+    context.amendment,
     isLoading,
   ]);
 }

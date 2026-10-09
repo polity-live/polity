@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useAuth } from '@/providers/auth-provider';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';

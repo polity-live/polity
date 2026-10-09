@@ -15,6 +15,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  zero-query-performance:
+    name: Zero Query Performance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+      - name: Install Chromium with bounded Ubuntu mirror access
+        run: |
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
+          pnpm exec playwright install --with-deps chromium
+      - name: Measure simple control query on Ubuntu
+        id: zero-control
+        continue-on-error: true
+        run: pnpm zero:analyze --query users.current --case default --output output/zero-performance/ubuntu-control
+      - name: Measure every Zero query and navigation with strict budgets
+        env:
+          ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm test:zero:performance
+      - name: Upload all measurements, plans, comparisons and service diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-query-performance-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 21
+          path: |
+            output/zero-performance/**/report.json
+            output/zero-performance/**/results.csv
+            output/zero-performance/**/journeys.csv
+            output/zero-performance/**/measurements.ndjson
+            output/zero-performance/**/plans/*.json
+            output/zero-performance/**/progress.json
+            output/zero-performance/**/fixtures.json
+            output/zero-performance/**/comparison.json
+            output/zero-performance/**/navigation.cpuprofile
+            output/zero-performance/**/screenshots/*.png
+            output/zero-performance/**/startup.json
+            output/zero-performance/**/failure.json
+            output/zero-performance/**/gate-failure.json
+            output/zero-performance/**/*.log
+      - name: Stop any remaining owned benchmark stacks
+        if: always()
+        run: node tools/e2e/zero-performance/cleanup.mjs
+      - name: Verify simple control query outcome
+        if: always()
+        env:
+          CONTROL_OUTCOME: ${{ steps.zero-control.outcome }}
+        run: test "$CONTROL_OUTCOME" = success
+
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest

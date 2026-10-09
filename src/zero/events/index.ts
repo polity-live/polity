@@ -11,6 +11,7 @@ export {
   useEventStreamData,
   useEventParticipantsQuery,
   useEventOfflineParticipants,
+  useEventForParticipation,
   useEventParticipationData,
   useEventRolesData,
   useEventAgenda,

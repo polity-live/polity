@@ -30,7 +30,7 @@ vi.mock('@/zero/events/useEventActions', () => ({
   }),
 }));
 vi.mock('@/zero/events/useEventState', () => ({
-  useEventById: (id: unknown) => {
+  useEventForParticipation: (id: unknown) => {
     mocks.byIdArgs.push(id);
     return { event: mocks.event, isLoading: mocks.eventLoading };
   },

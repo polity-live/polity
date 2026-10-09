@@ -1,10 +1,11 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
   applyAmendmentQueryAccess,
   applyBlogQueryAccess,
-  applyElectionQueryAccess,
+  applyElectionQueryAccessFromAuthorizedAgendaItem,
   applyEventManagerQueryAccess,
   applyEventParticipantOrManagerQueryAccess,
   applyEventQueryAccess,
@@ -168,7 +169,7 @@ export const searchQueries = {
 
       const normalizedTypes = types.map(type => type.trim()).filter(Boolean);
       if (normalizedTypes.length > 0) {
-        q = q.where('entity_type', 'IN', normalizedTypes);
+        q = whereAnyOf(q, 'entity_type', normalizedTypes);
       }
 
       const normalizedTopics = topics.map(normalizeSearchQuery).filter(Boolean);
@@ -388,7 +389,9 @@ export const searchQueries = {
       )
       .related('agenda_items', q =>
         applyAgendaItemQueryAccess(q, userID)
-          .related('election', election => applyElectionQueryAccess(election, userID))
+          .related('election', election =>
+            applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+          )
           .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
       )
       .orderBy('created_at', 'desc')
@@ -471,10 +474,12 @@ export const searchQueries = {
     ({ args: { group_ids, limit, query }, ctx: { userID } }) => {
       const normalizedQuery = query.trim();
       const todosQuery = normalizedQuery
-        ? applyTodoQueryAccess(zql.todo, userID)
-            .where('group_id', 'IN', group_ids)
-            .where('title', 'ILIKE', `%${normalizedQuery}%`)
-        : applyTodoQueryAccess(zql.todo, userID).where('group_id', 'IN', group_ids);
+        ? whereAnyOf(applyTodoQueryAccess(zql.todo, userID), 'group_id', group_ids).where(
+            'title',
+            'ILIKE',
+            `%${normalizedQuery}%`
+          )
+        : whereAnyOf(applyTodoQueryAccess(zql.todo, userID), 'group_id', group_ids);
 
       return todosQuery
         .related('group', group => applyGroupQueryAccess(group, userID))

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@rocicorp/zero/react', () => ({
   useQuery: mocks.useQuery,
 }));
+vi.mock('../../observed-query', () => ({ useQuery: mocks.useQuery }));
 
 vi.mock('../../queries', () => {
   const query = (name: string, args: unknown) => ({ key: `${name}:${JSON.stringify(args)}` });

@@ -41,6 +41,7 @@ vi.mock('@rocicorp/zero', () => ({
   defineQuery: (_schema: unknown, fn: (...args: any[]) => unknown) => ({ fn }),
 }));
 vi.mock('../../rbac/query-access', () => ({
+  applyGroupDiscoveryQueryAccess: (query: unknown) => query,
   applyGroupManagerQueryAccess: (query: unknown) => query,
   applyTodoQueryAccess: h.apply,
   denyAllRows: (query: any) => query.where('id', '__unauthorized__'),

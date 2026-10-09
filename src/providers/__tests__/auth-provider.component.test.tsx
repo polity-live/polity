@@ -108,6 +108,112 @@ afterEach(() => {
 });
 
 describe('AuthProvider', () => {
+  it('validates a fresh stored token before opening the loading gate without rotating it', async () => {
+    const stored = { ...session('fresh-token'), expires_at: Date.now() / 1000 + 3600 };
+    let complete: (value: unknown) => void = () => {
+      throw new Error('Validation not started');
+    };
+    mocks.getSession.mockResolvedValue({ data: { session: stored } });
+    mocks.getUser.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          complete = resolve;
+        })
+    );
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledWith('fresh-token'));
+    act(() => mocks.authChange?.('INITIAL_SESSION', stored));
+    expect(mocks.context.loading).toBe(true);
+    expect(mocks.getUser).toHaveBeenCalledOnce();
+    expect(mocks.refreshSession).not.toHaveBeenCalled();
+    await act(async () => complete({ data: { user: { ...stored.user } }, error: null }));
+    expect(mocks.context.loading).toBe(false);
+    expect(mocks.context.session.access_token).toBe('fresh-token');
+    expect(mocks.getUser).toHaveBeenCalledOnce();
+    mocks.getUser.mockResolvedValue({ data: { user: stored.user }, error: null });
+    act(() => mocks.authChange?.('USER_UPDATED', { ...stored, user: { ...stored.user } }));
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(2));
+    const before = mocks.getUser.mock.calls.length;
+    fireEvent.click(screen.getByText('refresh'));
+    await waitFor(() => expect(mocks.getUser.mock.calls.length).toBe(before + 1));
+  });
+  it('refreshes a nearly expired session before releasing the loading gate', async () => {
+    const stored = { ...session('expiring-token'), expires_at: Date.now() / 1000 + 30 };
+    await renderProvider(stored);
+    expect(mocks.refreshSession).toHaveBeenCalledOnce();
+  });
+  it.each([null, user({ id: 'different-account' })])(
+    'denies a fresh session with missing or mismatched validated identity',
+    async validated => {
+      mocks.getUser.mockResolvedValue({ data: { user: validated }, error: null });
+      await renderProvider({ ...session('fresh-token'), expires_at: Date.now() / 1000 + 3600 });
+      expect(mocks.context.session).toBeNull();
+      expect(mocks.context.user).toBeNull();
+      expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(mocks.refreshSession).not.toHaveBeenCalled();
+    }
+  );
+  it('does not restore a signed-out account when an older startup and metadata validation finishes', async () => {
+    const stored = { ...session('fresh-token'), expires_at: Date.now() / 1000 + 3600 };
+    let complete: (value: unknown) => void = () => {
+      throw new Error('Validation not started');
+    };
+    mocks.getSession.mockResolvedValue({ data: { session: stored } });
+    mocks.getUser.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          complete = resolve;
+        })
+    );
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce());
+    act(() => mocks.authChange?.('INITIAL_SESSION', stored));
+    act(() => mocks.authChange?.('SIGNED_OUT', null));
+    act(() => mocks.authChange?.('INITIAL_SESSION', stored));
+    await act(async () => complete({ data: { user: stored.user }, error: null }));
+    expect(mocks.context.loading).toBe(false);
+    expect(mocks.context.session).toBeNull();
+    expect(mocks.context.user).toBeNull();
+  });
+  it.each([null, { status: 401 }])(
+    'keeps a newer signed-in identity while an older validation resolves: %j',
+    async error => {
+      const stored = { ...session('old-token'), expires_at: Date.now() / 1000 + 3600 };
+      const next = session('new-token', user({ id: 'new-account' }));
+      let complete: (value: unknown) => void = () => {
+        throw new Error('Validation not started');
+      };
+      mocks.getSession.mockResolvedValue({ data: { session: stored } });
+      mocks.getUser.mockImplementation((accessToken: string) =>
+        accessToken === 'old-token'
+          ? new Promise(resolve => {
+              complete = resolve;
+            })
+          : Promise.resolve({ data: { user: next.user }, error: null })
+      );
+      render(
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      );
+      await waitFor(() => expect(mocks.getUser).toHaveBeenCalledWith('old-token'));
+      act(() => mocks.authChange?.('INITIAL_SESSION', stored));
+      act(() => mocks.authChange?.('SIGNED_IN', next));
+      await act(async () => complete({ data: { user: error ? null : stored.user }, error }));
+      expect(mocks.context.loading).toBe(false);
+      expect(mocks.context.session.user.id).toBe('new-account');
+      expect(mocks.context.user.id).toBe('new-account');
+      expect(mocks.signOut).not.toHaveBeenCalled();
+    }
+  );
   it('waits for stored-session refresh even when INITIAL_SESSION arrives first', async () => {
     const stored = session('stored-token');
     const refreshed = session('refreshed-token');

@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useSearch } from '@tanstack/react-router';
 
 import { useAuth } from '@/providers/auth-provider';

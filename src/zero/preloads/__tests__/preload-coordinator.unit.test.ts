@@ -67,7 +67,7 @@ describe('PreloadCoordinator', () => {
     coordinator.dispose();
   });
 
-  it('cancels a background preload synchronously when another route becomes foreground', async () => {
+  it('preempts background scheduling immediately and releases its in-flight handle after completion', async () => {
     const fake = fakeZero();
     const coordinator = new PreloadCoordinator(fake.zero, vi.fn());
     coordinator.setIdleTasks('entity', [preloadTask('background')], 2);
@@ -75,8 +75,11 @@ describe('PreloadCoordinator', () => {
 
     coordinator.activate(preloadTask('foreground'));
 
-    expect(fake.cleanups.get('background')).toHaveBeenCalledTimes(1);
     expect(fake.preload.mock.calls.at(-1)?.[0]).toEqual({ key: 'foreground' });
+    expect(fake.cleanups.get('background')).not.toHaveBeenCalled();
+    fake.pending.get('background')?.resolve();
+    await flush();
+    expect(fake.cleanups.get('background')).toHaveBeenCalledTimes(1);
     coordinator.dispose();
   });
 
@@ -89,8 +92,10 @@ describe('PreloadCoordinator', () => {
     coordinator.scheduleIntent(preloadTask('intent'));
     await vi.advanceTimersByTimeAsync(50);
 
-    expect(fake.cleanups.get('idle')).toHaveBeenCalledTimes(1);
     expect(fake.preload.mock.calls.at(-1)?.[0]).toEqual({ key: 'intent' });
+    fake.pending.get('idle')?.resolve();
+    await flush();
+    expect(fake.cleanups.get('idle')).toHaveBeenCalledTimes(1);
     coordinator.dispose();
   });
 
@@ -198,6 +203,8 @@ describe('PreloadCoordinator', () => {
     expect(coordinator.getState('immediate')).toBe('preloading');
     coordinator.cancelIntent('unknown');
     coordinator.pauseSpeculation();
+    fake.pending.get('immediate')?.resolve();
+    await flush();
     expect(fake.cleanups.get('immediate')).toHaveBeenCalledOnce();
     coordinator.dispose();
     coordinator.activate(preloadTask('after-dispose'));
@@ -210,12 +217,42 @@ describe('PreloadCoordinator', () => {
     const coordinator = new PreloadCoordinator(fake.zero, vi.fn());
     coordinator.activate(preloadTask('foreground'));
     coordinator.deactivate('foreground');
+    fake.pending.get('foreground')?.resolve();
+    await flush();
     expect(fake.cleanups.get('foreground')).toHaveBeenCalledOnce();
 
     coordinator.setIdleTasks('scope', [preloadTask('scope:background')], 2);
     await vi.advanceTimersByTimeAsync(250);
     coordinator.clearIdleTasks('scope');
+    fake.pending.get('scope:background')?.resolve();
+    await flush();
     expect(fake.cleanups.get('scope:background')).toHaveBeenCalledOnce();
+    coordinator.dispose();
+  });
+
+  it('starts background entries one at a time and waits for route code before marking ready', async () => {
+    const fake = fakeZero();
+    const code = deferred();
+    const coordinator = new PreloadCoordinator(fake.zero, () => code.promise);
+    const task = {
+      ...preloadTask('ordered'),
+      entries: [
+        { key: 'first', query: { key: 'first' } },
+        { key: 'second', query: { key: 'second' } },
+      ],
+    };
+    coordinator.setIdleTasks('primary', [task], 3);
+    await vi.advanceTimersByTimeAsync(250);
+    expect(fake.preload).toHaveBeenCalledTimes(1);
+    fake.pending.get('first')?.resolve();
+    await flush();
+    expect(fake.preload).toHaveBeenCalledTimes(2);
+    fake.pending.get('second')?.resolve();
+    await flush();
+    expect(coordinator.getState('ordered')).toBe('preloading');
+    code.resolve();
+    await flush();
+    expect(coordinator.getState('ordered')).toBe('ready');
     coordinator.dispose();
   });
 
@@ -373,6 +410,8 @@ describe('PreloadCoordinator', () => {
     await vi.advanceTimersByTimeAsync(250);
     coordinator.scheduleIntent(preloadTask('dispose-timer'), 50);
     coordinator.dispose();
+    for (const completion of fake.pending.values()) completion.resolve();
+    await flush();
     expect(vi.getTimerCount()).toBe(0);
   });
 
