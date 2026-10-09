@@ -123,6 +123,8 @@ export function queryObservationFailures(query: QueryObservation, absoluteBudget
     failures.push('Missing authoritative query identity/result');
   if (query.server !== null && !valid(query.server))
     failures.push('Invalid server hydration metric');
+  else if (absoluteBudgets && query.server !== null && query.server > BUDGETS.serverMs)
+    failures.push(`Server materialization exceeds ${BUDGETS.serverMs} ms`);
   if (query.kind === 'materialized') {
     const retainedLocal =
       Boolean(query.views?.length) &&

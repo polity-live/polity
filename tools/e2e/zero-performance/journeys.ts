@@ -565,6 +565,46 @@ export async function measureJourneys(
     } catch (error) {
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
     }
+    // Retained-query export runs after navigation and synchronization acceptance.
+    if (process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1') {
+      try {
+        const retainedAt = performance.now();
+        const retainedQueries = await withDeadline(
+          page.evaluate(async () => {
+            const zero = (globalThis as any).__zero;
+            return (await zero.inspector.clientGroup.queries()).map((query: any) => ({
+              name: query.name,
+              id: query.id,
+              clientID: query.clientID,
+              args: query.args,
+              deleted: query.deleted,
+              client: query.hydrateClient,
+              server: query.hydrateServer,
+              total: query.hydrateTotal,
+              ttl: query.ttl,
+              inactive: query.inactivatedAt,
+            }));
+          }),
+          'Retained query diagnostics'
+        );
+        await writeFile(
+          path.join(
+            required(process.env.ZERO_PERFORMANCE_OUTPUT),
+            'navigation-retained-queries.json'
+          ),
+          JSON.stringify({
+            inspectionMs: performance.now() - retainedAt,
+            queries: retainedQueries,
+          })
+        );
+      } catch (error) {
+        records
+          .at(-1)
+          ?.failures.push(
+            `Retained query diagnostics: ${error instanceof Error ? error.message : String(error)}`
+          );
+      }
+    }
     return records;
   } finally {
     await onUpdate(records);

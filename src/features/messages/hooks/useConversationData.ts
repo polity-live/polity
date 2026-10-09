@@ -19,6 +19,12 @@ export function useConversationData(
   return {
     conversations: filteredConversations,
     isLoading,
+    allConversationsLoaded: Boolean(
+      userId &&
+      !isLoading &&
+      conversationsWithRelations &&
+      conversationsWithRelations.length < cursor.first
+    ),
     pageInfo: undefined,
   };
 }

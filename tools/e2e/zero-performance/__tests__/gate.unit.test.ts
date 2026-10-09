@@ -812,6 +812,11 @@ describe('Zero performance gate', () => {
       ]),
     };
     expect(queryObservationFailures(query)).toEqual([]);
+    expect(queryObservationFailures({ ...query, server: 100 })).toEqual([]);
+    expect(queryObservationFailures({ ...query, server: 100.1 })).toContain(
+      'Server materialization exceeds 100 ms'
+    );
+    expect(queryObservationFailures({ ...query, server: 100.1 }, false)).toEqual([]);
     expect(queryObservationFailures({ ...query, preloads: [] })).toContain(
       'Missing preload observations'
     );

@@ -42,7 +42,7 @@ export function useMessagesPage() {
     t('features.messages.fallbacks.someone');
 
   // Data hooks
-  const { conversations, isLoading } = useConversationData(user?.id);
+  const { conversations, isLoading, allConversationsLoaded } = useConversationData(user?.id);
   const mutations = useMessageMutations();
   const {
     searchQuery,
@@ -400,6 +400,7 @@ export function useMessagesPage() {
 
     // Conversation data
     filteredConversations,
+    allConversationsLoaded,
     conversationOnlineStatus,
     selectedConversationId,
     setSelectedConversationId,

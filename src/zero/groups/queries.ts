@@ -903,10 +903,15 @@ export const groupQueries = {
     ({ args: { groupId }, ctx: { userID } }) =>
       applyAmendmentQueryAccess(zql.amendment, userID)
         .where('group_id', groupId)
-        .whereExists('group', group => applyGroupAccess(group, userID))
+        .whereExists('group', group => applyGroupQueryAccess(group, userID, true), {
+          flip: false,
+        })
         .where('document_id', 'IS', null)
         .related('documents', q =>
-          applyDocumentQueryAccess(q, userID).related('collaborators', cq =>
+          applyDocumentQueryAccess(q, userID, {
+            collaboratorFlip: false,
+            amendmentFlip: false,
+          }).related('collaborators', cq =>
             cq.where('user_id', userID ?? '__anon__').related('user')
           )
         )

@@ -825,22 +825,28 @@ export const eventQueries = {
           .related('candidates', c => c.related('user'))
           .related('indicative_selections', s =>
             s
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
           .related('final_selections', s =>
             s
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
           .related('offline_tallies', oq =>
             oq
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
@@ -854,17 +860,23 @@ export const eventQueries = {
           .related('choices')
           .related('indicative_decisions', d =>
             d
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('final_decisions', d =>
             d
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('offline_tallies', oq =>
             oq
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('voters', v => applyVoteVoterOrManagerQueryAccess(v, userID).related('user'))
@@ -872,7 +884,7 @@ export const eventQueries = {
       .related('amendment', q =>
         applyAmendmentQueryAccess(q, userID)
           .related('change_requests', changeRequest =>
-            applyChangeRequestVisibilityAccess(changeRequest, userID)
+            applyChangeRequestVisibilityAccess(changeRequest, userID, true)
           )
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('document')
@@ -882,7 +894,7 @@ export const eventQueries = {
                 .related('document')
                 .related('document_version')
                 .related('change_requests', changeRequest =>
-                  applyChangeRequestVisibilityAccess(changeRequest, userID)
+                  applyChangeRequestVisibilityAccess(changeRequest, userID, true)
                 )
                 .related('step_runs', sq =>
                   sq

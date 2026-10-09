@@ -252,11 +252,17 @@ export const electionQueries = {
     ({ args: { election_id }, ctx: { userID } }) =>
       zql.elector
         .where('election_id', election_id)
-        .whereExists('election', election => applyElectionQueryAccess(election, userID))
+        .whereExists('election', election => applyElectionQueryAccess(election, userID), {
+          flip: false,
+        })
         .where(({ or, cmp, exists }: any) =>
           or(
             cmp('user_id', userID),
-            exists('election', (election: any) => applyElectionManagerQueryAccess(election, userID))
+            exists(
+              'election',
+              (election: any) => applyElectionManagerQueryAccess(election, userID),
+              { flip: false }
+            )
           )
         )
         .related('user')
@@ -357,12 +363,13 @@ export const electionQueries = {
 
   // Pending elections
   pendingElections: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyElectionQueryAccess(zql.election.where('status', 'pending'), userID, true)
-      .related('role', q =>
+    applyElectionQueryAccess(zql.election.where('status', 'pending'), userID, true).related(
+      'role',
+      q =>
         applyRoleQueryAccess(q, userID, true).related('group', group =>
           applyGroupDiscoveryQueryAccess(group, userID)
         )
-      )
+    )
   ),
 
   // User's elector record for an election
