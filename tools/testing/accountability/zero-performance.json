@@ -85,6 +85,27 @@
   "actionReferences": {},
   "actionDeclarations": {},
   "sourceReferenceAdditions": {
+    "src/zero/events/queries.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
+      }
+    ],
+    "src/zero/events/useEventState.ts": [
+      {
+        "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+        "project": "component",
+        "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+      }
+    ],
+    "src/zero/preloads/route-manifests.ts": [
+      {
+        "file": "src/zero/preloads/__tests__/route-manifests.unit.test.ts",
+        "project": "unit",
+        "caseId": "preloads the agenda metadata and full agenda separately while retaining other full event consumers"
+      }
+    ],
     "src/features/agendas/hooks/useEventAgendaItem.ts": [
       {
         "file": "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",

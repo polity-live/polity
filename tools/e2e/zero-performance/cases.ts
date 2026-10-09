@@ -853,6 +853,15 @@ export default {
     table: 'event_participant',
     anchor: '10000000-0000-4000-8000-000000000001',
   },
+  'events.forAgenda': {
+    revision: 1,
+    reason:
+      'Authorized event metadata and attendance for the separately queried agenda; full detail remains independently measured.',
+    args: { id: '10000000-0000-4000-8000-000000000001' },
+    noArgs: false,
+    table: 'event',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
   'events.byIdFull': {
     revision: 2,
     reason:

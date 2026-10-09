@@ -15,6 +15,22 @@ import {
 } from '../route-manifests';
 
 describe('prioritized preload route manifests', () => {
+  it('preloads the agenda metadata and full agenda separately while retaining other full event consumers', () => {
+    const tasks = createEventPreloadTasks('event-1');
+    const agendaKeys = tasks
+      .find(task => task.key.endsWith(':agenda'))!
+      .entries.map(entry => entry.key);
+    expect(agendaKeys).toContain('queries.events.forAgenda:{"id":"event-1"}');
+    expect(agendaKeys).toContain('queries.events.agendaItemsFull:{"eventId":"event-1"}');
+    expect(agendaKeys).toContain('queries.agendas.timingByEventIds:{"event_ids":["event-1"]}');
+    expect(agendaKeys.join('|')).not.toContain('queries.events.byIdFull');
+    expect(
+      tasks
+        .find(task => task.key.endsWith(':participants'))!
+        .entries.map(entry => entry.key)
+        .join('|')
+    ).toContain('queries.events.byIdFull');
+  });
   it('matches the focused event participation view without preloading its full tree on the overview', () => {
     const tasks = createEventPreloadTasks('event-1');
     const overview = tasks.find(task => task.key.endsWith(':overview'))!;

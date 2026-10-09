@@ -438,7 +438,11 @@ export function createEventPreloadTasks(eventId: string, viewerId?: string): Pre
         : []),
     ]),
     task(`event:${eventId}:agenda`, `${base}/agenda`, [
-      ...common,
+      createPreloadEntry(
+        'queries.events.forAgenda',
+        { id: eventId },
+        queries.events.forAgenda({ id: eventId })
+      ),
       ...createEventAgendaBasePreloadEntries(eventId),
     ]),
     task(`event:${eventId}:network`, `${base}/network`, [

@@ -43,9 +43,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => mocks.navigate }));
-vi.mock('@/features/events/hooks/useEventData', () => ({
-  useEventData: () => ({ event: mocks.event, isLoading: false }),
-}));
 vi.mock('../../hooks/useAgendaItems', () => ({
   useAgendaItems: () => ({ agendaItems: mocks.agendaItems, isLoading: false }),
 }));
@@ -134,6 +131,7 @@ vi.mock('../../hooks/useAgendaItemCRVoting', () => ({
     },
 }));
 vi.mock('@/zero/events', () => ({
+  useEventAgendaShell: () => ({ event: mocks.event, isLoading: false }),
   useEventById: () => ({ event: null }),
   useEventParticipantsByParticipatedEventIds: () => ({ participants: mocks.activeParticipants }),
 }));

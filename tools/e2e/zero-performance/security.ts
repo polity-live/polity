@@ -5,7 +5,7 @@ import { discussionSecurityScenarios, DISCUSSION_SECURITY_COUNT } from './discus
 
 type Actor = 'owner' | 'outsider' | 'anonymous';
 export const SECURITY_SCENARIO_COUNT =
-  234 + PROJECT_CHAT_SECURITY_COUNT + DISCUSSION_SECURITY_COUNT;
+  251 + PROJECT_CHAT_SECURITY_COUNT + DISCUSSION_SECURITY_COUNT;
 export interface RelatedExpectation {
   rootID: string;
   relations: Record<string, string[]>;
@@ -115,6 +115,13 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
       );
       const allowed = status !== 'declined';
       await check(
+        'events.forAgenda',
+        `agenda-participant-${status}`,
+        { id: event },
+        'owner',
+        allowed ? [event] : []
+      );
+      await check(
         'events.byIdFull',
         `agenda-participant-${status}`,
         { id: event },
@@ -125,12 +132,14 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     }
     await check('events.byId', 'anonymous-private-event', { id: event }, 'anonymous', []);
     await check('events.byIdFull', 'agenda-private-anonymous', { id: event }, 'anonymous', []);
+    await check('events.forAgenda', 'agenda-private-anonymous', { id: event }, 'anonymous', []);
+    await check('events.forAgenda', 'agenda-private-creator', { id: event }, 'outsider', [event]);
     await check('events.byIdFull', 'agenda-private-creator', { id: event }, 'outsider', [event], {
       rootID: event,
       relations: { agenda_items: [privateAgendaItem] },
     });
     await sql`update public.event set visibility='public',group_id=${group} where id=${event}`;
-    for (const name of ['events.byIdFull', 'events.forParticipation']) {
+    for (const name of ['events.byIdFull', 'events.forParticipation', 'events.forAgenda']) {
       for (const actor of ['owner', 'anonymous', 'outsider'] as const) {
         await check(name, `private-event-group-${actor}`, { id: event }, actor, [event], {
           rootID: event,
@@ -456,6 +465,13 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
       await check('groups.byId', `tutorial-${status}-anonymous`, { id: group }, 'anonymous', []);
       for (const actor of ['owner', 'outsider', 'anonymous'] as const) {
         const allowed = actor === 'owner' && status !== 'archived';
+        await check(
+          'events.forAgenda',
+          `agenda-tutorial-${status}-${actor}`,
+          { id: event },
+          actor,
+          allowed ? [event] : []
+        );
         await check(
           'events.byIdFull',
           `agenda-tutorial-${status}-${actor}`,

@@ -257,6 +257,30 @@ describe('Zero performance gate', () => {
     expect(owner.where.conditions[0].left.name).toBe('id');
     expect(owner.where.conditions[1].conditions[0].left.name).toBe('creator_id');
   });
+  it('preserves every authorized event metadata projection while querying the agenda separately', () => {
+    const cases = loadCases();
+    const fullCase = cases.find(
+      entry => entry.name === 'events.byIdFull' && entry.variant === 'default'
+    )!;
+    const agendaCase = cases.find(
+      entry => entry.name === 'events.forAgenda' && entry.variant === 'default'
+    )!;
+    expect(agendaCase.args).toEqual(fullCase.args);
+    for (const userID of ['owner', 'outsider', 'anon']) {
+      const ctx = { userID, email: '' };
+      const full = structuredClone(queryAST(buildQuery(fullCase, ctx)));
+      const detail = queryAST(buildQuery(agendaCase, ctx));
+      if (!full.related) throw new Error('Expected full event detail relations');
+      expect(
+        full.related.filter((relation: any) => relation.subquery.alias === 'agenda_items')
+      ).toHaveLength(1);
+      full.related = full.related.filter(
+        (relation: any) => relation.subquery.alias !== 'agenda_items'
+      );
+      expect(detail).toEqual(full);
+    }
+  });
+
   it('counts every business permission scenario, including nested elections and votes', async () => {
     const cases: string[] = [];
     const sql = async () => [];
@@ -267,6 +291,9 @@ describe('Zero performance gate', () => {
     expect(new Set(cases).size).toBe(cases.length);
     expect(cases).toContain('events.byIdFull/vote-voter-revoked-owner/owner');
     expect(cases).toContain('events.forCancel/election-elector-revoked-owner/owner');
+    expect(cases).toContain('events.forAgenda/agenda-participant-declined/owner');
+    expect(cases).toContain('events.forAgenda/private-event-group-anonymous/anonymous');
+    expect(cases).toContain('events.forAgenda/agenda-tutorial-archived-owner/owner');
   });
   it('requires the public election to be present in every nested private-role security case', async () => {
     const cases = await securityCaseManifest();

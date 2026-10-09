@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useEventData } from '@/features/events/hooks/useEventData';
 import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
@@ -64,7 +63,11 @@ import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
-import { useEventById, useEventParticipantsByParticipatedEventIds } from '@/zero/events';
+import {
+  useEventAgendaShell,
+  useEventById,
+  useEventParticipantsByParticipatedEventIds,
+} from '@/zero/events';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   getOrderedBranches,
@@ -97,7 +100,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { user } = useAuth();
   const { currentUser } = useUserState();
   const navigate = useNavigate();
-  const { event, isLoading: eventLoading } = useEventData(eventId);
+  const { event, isLoading: eventLoading } = useEventAgendaShell(eventId);
   const { agendaItems, isLoading } = useAgendaItems(eventId);
   const { can } = usePermissions({ eventId });
   const {

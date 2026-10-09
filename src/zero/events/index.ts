@@ -5,6 +5,7 @@ export { useEventActions } from './useEventActions';
 export { useMeetingsByCreator, getInstanceBookingCount, isBookedByUser } from './useMeetingState';
 export { useMeetingActions } from './useMeetingActions';
 export {
+  useEventAgendaShell,
   useEventById,
   useEventForCancel,
   useEventWithVoting,
