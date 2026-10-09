@@ -61,6 +61,8 @@ Collection runs sequential workers of at most twenty query variants against the 
 
 Failure artifacts remain in the output directory for diagnosis. Optimize based on the separated measurements; do not remove authorization predicates or relax budgets to make CI green.
 
+When a baseline needs its own frozen dependency install, the runner locates the already installed Corepack in either the Windows Node directory or Linux's sibling `lib/node_modules` directory. It invokes that entrypoint with the same Node executable and the snapshot's pinned package manager; it does not select a newer package manager from the shell or substitute dependency versions. Missing or unreadable Corepack remains an initialization failure.
+
 Run existing database integrity contracts with `node tools/e2e/zero-performance/run.mjs --layer integrity --output output/zero-performance/integrity-new`. This diagnostic command creates its own Supabase project, overrides all supported database URL aliases with the verified private database, runs the complete Vitest database-integration project, saves `integrity.json` and `integrity.log`, and stops only its own stack. It creates no performance acceptance report and cannot satisfy the performance gate. Ordinary database test commands may default to the development database; use the isolated command for this optimization workflow.
 
 Join traces are saved individually in plans/ with a SHA-256 digest, byte count and trace count in each measurement. The gate verifies every referenced export, one at a time. Missing or altered exports fail. This preserves the complete diagnostics without holding hundreds of megabytes of join traces in the runner heap.

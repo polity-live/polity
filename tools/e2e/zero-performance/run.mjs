@@ -15,6 +15,7 @@ import {
   applicationStorageBuckets,
   verifyBuildAssets,
   pipeRuntimeLogLines,
+  corepackPNPMEntryPoint,
 } from './isolation.mjs';
 import {
   verifyLinuxImage,
@@ -195,10 +196,7 @@ async function copySource() {
   );
   if (rootLock !== copiedLock || unpinned.length || args.includes('--frozen-dependencies')) {
     const dependenciesAt = Date.now();
-    const corepack = path.join(
-      path.dirname(process.execPath),
-      'node_modules/corepack/dist/pnpm.js'
-    );
+    const corepack = corepackPNPMEntryPoint(process.execPath);
     await command(
       [corepack, 'install', '--frozen-lockfile', '--ignore-scripts'],
       'dependencies-install'

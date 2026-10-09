@@ -1,5 +1,33 @@
 import path from 'node:path';
+import { statSync } from 'node:fs';
 import { createInterface } from 'node:readline';
+
+/** Locate the installed Corepack without relying on shell shims or downloading another version. */
+export function corepackPNPMEntryPoint(
+  nodeExecutable,
+  platform = process.platform,
+  isFile = candidate => {
+    try {
+      return statSync(candidate).isFile();
+    } catch (error) {
+      if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return false;
+      throw error;
+    }
+  }
+) {
+  const paths = platform === 'win32' ? path.win32 : path.posix;
+  const directory = paths.dirname(nodeExecutable);
+  const candidates = [
+    paths.join(directory, 'node_modules/corepack/dist/pnpm.js'),
+    paths.resolve(directory, '../lib/node_modules/corepack/dist/pnpm.js'),
+  ];
+  const found = candidates.find(isFile);
+  if (!found)
+    throw new Error(
+      'Installed Corepack pnpm entrypoint is missing; enable the pinned package manager before measurement'
+    );
+  return found;
+}
 
 /** Prevent stdout/stderr chunks from interleaving inside structured log records. */
 export function pipeRuntimeLogLines(source, destination) {

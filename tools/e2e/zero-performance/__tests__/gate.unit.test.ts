@@ -25,6 +25,7 @@ import {
   applicationStorageBuckets,
   verifyBuildAssets,
   pipeRuntimeLogLines,
+  corepackPNPMEntryPoint,
 } from '../isolation.mjs';
 import {
   reportFailures,
@@ -120,6 +121,39 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
 }
 
 describe('Zero performance gate', () => {
+  it('locates the installed Corepack in Windows and Linux Node layouts', () => {
+    for (const [executable, platform, expected] of [
+      [
+        'C:\\Program Files\\nodejs\\node.exe',
+        'win32',
+        'C:\\Program Files\\nodejs\\node_modules\\corepack\\dist\\pnpm.js',
+      ],
+      ['/usr/local/bin/node', 'linux', '/usr/local/lib/node_modules/corepack/dist/pnpm.js'],
+      ['/tools/node/node', 'linux', '/tools/node/node_modules/corepack/dist/pnpm.js'],
+      [
+        '/opt/hostedtoolcache/node/24.21.0/x64/bin/node',
+        'linux',
+        '/opt/hostedtoolcache/node/24.21.0/x64/lib/node_modules/corepack/dist/pnpm.js',
+      ],
+    ] as const) {
+      expect(
+        corepackPNPMEntryPoint(executable, platform, candidate => candidate === expected)
+      ).toBe(expected);
+    }
+  });
+
+  it('fails before measuring when the installed Corepack is missing or unreadable', () => {
+    expect(() => corepackPNPMEntryPoint('/usr/local/bin/node', 'linux', () => false)).toThrow(
+      'Installed Corepack pnpm entrypoint is missing'
+    );
+    const inaccessible = Object.assign(new Error('access denied'), { code: 'EACCES' });
+    expect(() =>
+      corepackPNPMEntryPoint('/usr/local/bin/node', 'linux', () => {
+        throw inaccessible;
+      })
+    ).toThrow(inaccessible);
+  });
+
   it('keeps a large warning intact when stdout and stderr arrive in interleaved chunks', () => {
     const stdout = new PassThrough();
     const stderr = new PassThrough();

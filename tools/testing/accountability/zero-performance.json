@@ -85,6 +85,13 @@
   "actionReferences": {},
   "actionDeclarations": {},
   "sourceReferenceAdditions": {
+    "tools/e2e/zero-performance/isolation.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "locates the installed Corepack in Windows and Linux Node layouts"
+      }
+    ],
     "src/zero/events/queries.ts": [
       {
         "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
