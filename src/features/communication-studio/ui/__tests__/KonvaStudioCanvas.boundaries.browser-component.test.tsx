@@ -629,7 +629,10 @@ it('ends a space-pan gesture on key release and preserves its resulting view', a
 });
 
 it('ignores touch pointer input during a native pinch and clears selection after an outside touch release', async () => {
-  const { host, select, changes } = await mount();
+  const dragMove = vi.fn();
+  const { host, select, changes, document } = await mount({
+    canvasProps: { onNodeDragMove: dragMove },
+  });
   const surface = [...host.querySelectorAll('canvas')].at(-1)!;
   const bounds = surface.getBoundingClientRect();
   const fingers = [100, 200].map(
@@ -665,6 +668,16 @@ it('ignores touch pointer input during a native pinch and clears selection after
   pointer('pointerdown');
   pointer('pointermove');
   pointer('pointerup');
+  // Konva can deliver a queued drag move after the native gesture cancels dragging.
+  // It must remain suppressed until the pinch ends, even for a direct node event.
+  const stage = Konva.stages.find(
+    stage => stage.container().isConnected && host.contains(stage.container())
+  )!;
+  const shape = document.nodes.find(node => node.type === 'shape')!;
+  stage.findOne<Konva.Group>(`#${shape.id}`)!.fire('dragmove', {
+    evt: new MouseEvent('mousemove', { clientX: bounds.left + 10, clientY: bounds.top + 10 }),
+  });
+  expect(dragMove).not.toHaveBeenCalled();
   expect(select).not.toHaveBeenCalled();
   expect(changes).not.toHaveBeenCalled();
   fireEvent(

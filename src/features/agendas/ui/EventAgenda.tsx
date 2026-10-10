@@ -95,6 +95,13 @@ interface EventAgendaProps {
 
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 import { EventAgendaView } from './EventAgendaView';
+// Format local hours/minutes through one fixed-zone formatter. Reading the date's
+// local fields preserves DST and system timezone changes across remounts.
+const agendaTimeFormatter = new Intl.DateTimeFormat('de-DE', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+});
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
@@ -154,9 +161,18 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       closeExpiredFinalVotesForEvent({ event_id: eventId });
     };
 
-    closeExpiredVotes();
+    // This server-only maintenance pass must not compete with the first paint.
+    // The five-second polling deadline remains anchored to the page mount.
+    let maintenanceFrame: number | undefined;
+    const paintFrame = window.requestAnimationFrame(() => {
+      maintenanceFrame = window.requestAnimationFrame(closeExpiredVotes);
+    });
     const intervalId = window.setInterval(closeExpiredVotes, 5000);
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.cancelAnimationFrame(paintFrame);
+      if (maintenanceFrame !== undefined) window.cancelAnimationFrame(maintenanceFrame);
+      window.clearInterval(intervalId);
+    };
   }, [closeExpiredFinalVotesForEvent, eventId]);
   const allowsOfflineElectionTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
   const confirmedOfflineParticipantCount =
@@ -1638,7 +1654,6 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     [filteredAgendaItems]
   );
 
-  let timeFormatter: Intl.DateTimeFormat | undefined;
   const formatTime = (value?: number | Date | null) => {
     if (!value) {
       return '--:--';
@@ -1648,14 +1663,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (!Number.isFinite(date.getTime())) {
       return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     }
-    if (!timeFormatter) {
-      timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
-      // Share ICU setup during this render, then honor future system timezone changes.
-      queueMicrotask(() => {
-        timeFormatter = undefined;
-      });
-    }
-    return timeFormatter.format(date);
+    return agendaTimeFormatter.format(Date.UTC(2000, 0, 1, date.getHours(), date.getMinutes()));
   };
 
   return (

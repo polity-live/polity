@@ -222,8 +222,13 @@ function props() {
 }
 
 describe('EventAgenda controller contract', () => {
-  it('preserves displayed times while sharing formatter setup only within the current task', async () => {
-    const dates = [new Date('2026-01-01T12:30:00Z'), new Date('2026-07-01T15:45:00Z')];
+  it('preserves local displayed times across tasks, DST and timezone changes without rebuilding ICU', async () => {
+    const dates = [
+      new Date('2026-01-01T12:30:00Z'),
+      new Date('2026-07-01T15:45:00Z'),
+      new Date(8.64e15),
+      new Date(-8.64e15),
+    ];
     const options = { hour: '2-digit', minute: '2-digit' } as const;
     const expected = dates.map(date => date.toLocaleTimeString('de-DE', options));
     const invalid = new Date(NaN);
@@ -237,13 +242,19 @@ describe('EventAgenda controller contract', () => {
       expect(formatTime(invalid)).toBe(invalidText);
       expect(formatTime(null)).toBe('--:--');
       expect(formatTime(0)).toBe('--:--');
-      expect(formatter).toHaveBeenCalledTimes(1);
+      expect(formatter).not.toHaveBeenCalled();
 
       await Promise.resolve();
       expect(formatTime(dates[1])).toBe(expected[1]);
-      expect(formatter).toHaveBeenCalledTimes(2);
+      expect(formatter).not.toHaveBeenCalled();
+      for (const timezone of ['America/New_York', 'Europe/Berlin', 'Asia/Kathmandu']) {
+        vi.stubEnv('TZ', timezone);
+        const localExpected = dates.map(date => date.toLocaleTimeString('de-DE', options));
+        expect(dates.map(date => formatTime(date))).toEqual(localExpected);
+      }
     } finally {
       formatter.mockRestore();
+      vi.unstubAllEnvs();
     }
   });
 
@@ -292,11 +303,26 @@ describe('EventAgenda controller contract', () => {
     expect(props().scheduledButUnconfirmedAgendaItems).toEqual([]);
     expect(props().formatTime(null)).toBe('--:--');
     expect(props().formatTime(new Date('2026-01-01T12:30:00Z'))).toMatch(/\d{2}:\d{2}/);
+    expect(mocks.closeExpiredFinalVotesForEvent).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersToNextFrame());
+    expect(mocks.closeExpiredFinalVotesForEvent).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersToNextFrame());
     expect(mocks.closeExpiredFinalVotesForEvent).toHaveBeenCalledWith({ event_id: 'event-1' });
 
     act(() => vi.advanceTimersByTime(5_000));
     expect(mocks.closeExpiredFinalVotesForEvent).toHaveBeenCalledTimes(2);
   });
+
+  it.each([0, 1])(
+    'cancels deferred maintenance and polling when unmounted after %s frames',
+    frames => {
+      const view = render(<EventAgenda eventId="event-1" />);
+      if (frames) act(() => vi.advanceTimersToNextFrame());
+      view.unmount();
+      act(() => vi.advanceTimersByTime(5_000));
+      expect(mocks.closeExpiredFinalVotesForEvent).not.toHaveBeenCalled();
+    }
+  );
 
   it('applies search, type and forwarding-status filters through the view setters', () => {
     mocks.agendaItems = [
