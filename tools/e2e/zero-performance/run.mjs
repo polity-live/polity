@@ -21,6 +21,7 @@ import {
   verifyLinuxImage,
   linuxEnvironment,
   stopOwnedRuntime,
+  stopOwnedSupabase,
   dependencyVersions,
 } from './linux-runtime.mjs';
 
@@ -285,9 +286,26 @@ async function stop() {
     }
   }
   if (stackStarted) {
+    try {
+      stopOwnedSupabase(`polity-zero-performance-${runID}`);
+    } catch (error) {
+      runtimeCleanupError = error;
+    }
+    const supabaseArgs = [
+      executable('supabase/dist/supabase.js'),
+      '--workdir',
+      sandbox,
+      'stop',
+      '--no-backup',
+    ];
+    const cleanupLock = path.join(root, 'output/zero-performance', '.supabase-prune.lock');
+    assertOutputDirectory(root, cleanupLock);
+    // Service shutdown overlaps; Docker's daemon-wide prune operation must be exclusive.
     const result = spawnSync(
-      process.execPath,
-      [executable('supabase/dist/supabase.js'), '--workdir', sandbox, 'stop', '--no-backup'],
+      process.platform === 'linux' ? 'flock' : process.execPath,
+      process.platform === 'linux'
+        ? ['--exclusive', '--wait', '30', cleanupLock, process.execPath, ...supabaseArgs]
+        : supabaseArgs,
       { cwd: sandbox, env: environment, encoding: 'utf8', windowsHide: true, timeout: 120_000 }
     );
     await writeFile(

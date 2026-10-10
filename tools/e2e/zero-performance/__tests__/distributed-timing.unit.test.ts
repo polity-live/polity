@@ -27,7 +27,7 @@ describe('active Zero CI budget', () => {
         await new Promise(resolve => setTimeout(resolve, 18_000));
         stopped++;
       });
-      const pending = stopOwnedSessions([{ stop }, { stop }]);
+      const pending = stopOwnedSessions([{ stop }, { stop }], true);
       expect(stop).toHaveBeenCalledTimes(2);
       await vi.advanceTimersByTimeAsync(18_000);
       expect(await pending).toEqual([]);
@@ -52,6 +52,22 @@ describe('active Zero CI budget', () => {
         },
       ])
     ).toEqual(['Error: head failed', 'Error: base failed']);
+  });
+  it('uses serial session cleanup on hosts without the Linux prune lock', async () => {
+    vi.useFakeTimers();
+    try {
+      const stop = vi.fn(async () => {
+        await new Promise(resolve => setTimeout(resolve, 18_000));
+      });
+      const pending = stopOwnedSessions([{ stop }, { stop }], false);
+      expect(stop).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(18_000);
+      expect(stop).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(18_000);
+      expect(await pending).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('accepts all exact boundaries and rejects any phase overrunning its allowance', () => {
     expect(activeTiming(180_000, 900_000, 120_000)).toMatchObject({

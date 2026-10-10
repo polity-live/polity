@@ -112,8 +112,18 @@ export function measurementDeadlineMs(priorSetupMs: number) {
   return Math.max(1, ACTIVE_BUDGET_MS.runner - 45_000 - priorSetupMs);
 }
 
-export async function stopOwnedSessions(sessions: Iterable<{ stop(): Promise<void> }>) {
-  const results = await Promise.allSettled([...sessions].map(async session => session.stop()));
+export async function stopOwnedSessions(
+  sessions: Iterable<{ stop(): Promise<void> }>,
+  parallel = process.platform === 'linux'
+) {
+  const owned = [...sessions];
+  const results = parallel
+    ? await Promise.allSettled(owned.map(async session => session.stop()))
+    : await (async () => {
+        const settled: PromiseSettledResult<void>[] = [];
+        for (const session of owned) settled.push(...(await Promise.allSettled([session.stop()])));
+        return settled;
+      })();
   return results.flatMap(result => (result.status === 'rejected' ? [String(result.reason)] : []));
 }
 

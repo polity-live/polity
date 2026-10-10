@@ -66,6 +66,62 @@ export function verifyLinuxImage(image, installedZero) {
   return { image, platform: 'linux', ...actual };
 }
 
+/**
+ * Stop only running Supabase services with the exact benchmark name and project label.
+ * @param {(command: string, args: string[], options: import('node:child_process').SpawnSyncOptionsWithStringEncoding) => Pick<import('node:child_process').SpawnSyncReturns<string>, 'status' | 'stdout'>} [execute]
+ */
+export function stopOwnedSupabase(projectID, execute = spawnSync) {
+  if (!/^polity-zero-performance-[a-f0-9]{8}$/.test(projectID))
+    throw new Error('Invalid isolated Supabase identity');
+  /** @type {import('node:child_process').SpawnSyncOptionsWithStringEncoding} */
+  const options = { encoding: 'utf8', windowsHide: true, timeout: 30_000 };
+  const listed = execute(
+    'docker',
+    [
+      'ps',
+      '--filter',
+      `label=com.supabase.cli.project=${projectID}`,
+      '--format',
+      '{{json .Names}}',
+    ],
+    options
+  );
+  if (listed.status !== 0) throw new Error('Cannot inspect isolated Supabase services');
+  const containers = listed.stdout.trim()
+    ? listed.stdout
+        .trim()
+        .split(/\r?\n/)
+        .map(line => JSON.parse(line))
+    : [];
+  if (!containers.length) return;
+  if (
+    containers.some(
+      name =>
+        typeof name !== 'string' ||
+        !/^supabase_[\w-]+$/.test(name) ||
+        !name.endsWith(`_${projectID}`)
+    )
+  )
+    throw new Error('Supabase container identity mismatch');
+  const inspected = execute(
+    'docker',
+    ['inspect', '--format', '{{json .Config.Labels}}', ...containers],
+    options
+  );
+  if (inspected.status !== 0) throw new Error('Cannot verify isolated Supabase ownership');
+  const labels = inspected.stdout
+    .trim()
+    .split(/\r?\n/)
+    .map(line => JSON.parse(line));
+  if (
+    labels.length !== containers.length ||
+    labels.some(label => label?.['com.supabase.cli.project'] !== projectID)
+  )
+    throw new Error('Supabase ownership label mismatch');
+  if (execute('docker', ['stop', '--time', '10', ...containers], options).status !== 0)
+    throw new Error('Isolated Supabase service shutdown failed');
+}
+
 /** Resolve the full required dependency closure; platform optional binaries differ. */
 export function dependencyVersions(root) {
   const visited = new Set();

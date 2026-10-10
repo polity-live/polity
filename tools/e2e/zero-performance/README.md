@@ -28,6 +28,8 @@ Before upload, original diagnostics are staged with their relative paths and byt
 
 Security workers poll the existing replica/WAL barrier every 100 ms before each selected measurement, with the existing 120-second readiness timeout. Both workers still replay the full fixture/state sequence; this shortens idle polling delay without changing the required replication condition or timed query activation.
 
+Linux cleanup stops only Supabase containers whose names and project labels match the owned benchmark stack. Both stacks' services can shut down together; the subsequent Supabase CLI cleanup holds a shared `flock` because Docker serializes prune operations at daemon scope. Hosts without the Linux lock use serial session cleanup. Failures in either service shutdown or final cleanup remain failures.
+
 Acceptance requires three complete native Ubuntu CI runs with full coverage and ≤20 active minutes each. This target is not established by dividing historical serial durations. Existing analyzer, correlation and browser failures remain visible and keep the functional gate red until repaired. Historical v9 reports remain diagnostic material.
 
 After all three GitHub runs finish, audit their completed job durations, including the gate's own final artifact upload:

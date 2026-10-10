@@ -37,7 +37,7 @@ import {
   MEASUREMENT_PROTOCOL,
   measuredServerWarnings,
 } from '../report';
-import { stopOwnedRuntime, dependencyVersions } from '../linux-runtime.mjs';
+import { stopOwnedRuntime, stopOwnedSupabase, dependencyVersions } from '../linux-runtime.mjs';
 import { browserTargets, browserTarget } from '../linux-browser.mjs';
 import {
   applyElectionQueryAccess,
@@ -661,6 +661,55 @@ describe('Zero performance gate', () => {
       expect(operations).toEqual([]);
     }
   );
+  it('stops a Supabase batch only after verifying every name and ownership label', () => {
+    const project = 'polity-zero-performance-1234abcd';
+    let names = [`supabase_db_${project}`, `supabase_kong_${project}`];
+    let labels = [project, project];
+    const operations: string[][] = [];
+    const execute = (_command: string, args: string[]) => {
+      operations.push(args);
+      return {
+        status: 0,
+        stdout:
+          args[0] === 'ps'
+            ? names.map(name => JSON.stringify(name)).join('\n')
+            : args[0] === 'inspect'
+              ? labels
+                  .map(label => JSON.stringify({ 'com.supabase.cli.project': label }))
+                  .join('\n')
+              : '',
+      };
+    };
+    labels[1] = 'development';
+    expect(() => stopOwnedSupabase(project, execute)).toThrow('ownership label mismatch');
+    expect(operations.some(args => args[0] === 'stop')).toBe(false);
+    operations.length = 0;
+    labels = [project, project];
+    names[1] = 'supabase_db_development';
+    expect(() => stopOwnedSupabase(project, execute)).toThrow('container identity mismatch');
+    expect(operations.some(args => args[0] === 'stop')).toBe(false);
+    operations.length = 0;
+    names = [`supabase_db_${project}`, `supabase_kong_${project}`];
+    stopOwnedSupabase(project, execute);
+    expect(operations.at(-1)).toEqual(['stop', '--time', '10', ...names]);
+    operations.length = 0;
+    expect(() => stopOwnedSupabase('polity', execute)).toThrow('isolated Supabase identity');
+    expect(operations).toEqual([]);
+  });
+  it('retains Supabase stop errors and permits an already stopped owned project', () => {
+    const project = 'polity-zero-performance-1234abcd';
+    const execute = (_command: string, args: string[]) => ({
+      status: args[0] === 'stop' ? 1 : 0,
+      stdout:
+        args[0] === 'ps'
+          ? JSON.stringify(`supabase_db_${project}`)
+          : args[0] === 'inspect'
+            ? JSON.stringify({ 'com.supabase.cli.project': project })
+            : '',
+    });
+    expect(() => stopOwnedSupabase(project, execute)).toThrow('service shutdown failed');
+    expect(() => stopOwnedSupabase(project, () => ({ status: 0, stdout: '' }))).not.toThrow();
+  });
   it('keeps a group access predicate on every registered nested group projection', () => {
     const missing: string[] = [];
     for (const entry of loadCases()) {
