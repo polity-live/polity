@@ -4,6 +4,10 @@ import { z } from 'zod';
 import { zql } from '../schema';
 import { memoizeQueryDefinitions } from '../query-definitions';
 import { queryAST } from '../../../tools/e2e/zero-performance/oracle';
+import { agendaQueries } from '../agendas/queries';
+import { electionQueries } from '../elections/queries';
+import { networkQueries } from '../network/queries';
+import { queries as appQueries } from '../queries';
 
 function registry() {
   const build = vi.fn(({ args, ctx }: { args: { id: string }; ctx: { userID: string } }) =>
@@ -18,6 +22,36 @@ function registry() {
 }
 
 describe('Deterministic app query builders', () => {
+  it.each(['owner', 'outsider', 'anon'])(
+    'preserves complete access trees for cached agenda, election and network builders as %s',
+    userID => {
+      const ctx = { userID, email: '' };
+      const originals = defineQueries({
+        agendas: agendaQueries,
+        elections: electionQueries,
+        network: networkQueries,
+      });
+      const cases = [
+        [
+          originals.agendas.changeRequestTimeline,
+          appQueries.agendas.changeRequestTimeline,
+          { agenda_item_id: 'item' },
+        ],
+        [
+          originals.elections.byAgendaItem,
+          appQueries.elections.byAgendaItem,
+          { agenda_item_id: 'item' },
+        ],
+        [originals.network.wikiNetwork, appQueries.network.wikiNetwork, { groupId: 'group' }],
+      ] as const;
+      for (const [original, cached, args] of cases) {
+        const input = { args, ctx } as never;
+        const expected = queryAST(original.fn(input));
+        expect(queryAST(cached.fn(input))).toEqual(expected);
+        expect(queryAST(cached.fn(input))).toEqual(expected);
+      }
+    }
+  );
   it('reuses only equal validated arguments in the same context and leaves original definitions intact', () => {
     const { build, definition, queries } = registry();
     const ctx = { userID: 'owner', email: 'owner@test.local' };
