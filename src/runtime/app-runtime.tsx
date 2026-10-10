@@ -1,9 +1,25 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 
-export const loadConnectedAppRuntime = () => import('./connected-app-runtime');
+let loadedConnectedRuntime: typeof import('./connected-app-runtime')['default'] | undefined;
+export const loadConnectedAppRuntime = async () => {
+  const module = await import('./connected-app-runtime');
+  loadedConnectedRuntime = module.default;
+  return module;
+};
 const ConnectedAppRuntime = lazy(loadConnectedAppRuntime);
+
+function ReadyConnectedRuntime({ children }: { children: ReactNode }) {
+  // Choose once per mount: a later prefetch must not replace a lazy component
+  // with another type and remount the authenticated Zero client.
+  const [Runtime] = useState(() => loadedConnectedRuntime ?? ConnectedAppRuntime);
+  return (
+    <Suspense fallback={<div className="bg-background min-h-screen" aria-busy="true" />}>
+      <Runtime>{children}</Runtime>
+    </Suspense>
+  );
+}
 
 export function shouldUsePublicRuntime(pathname: string, hasSession: boolean) {
   return pathname === '/' && !hasSession;
@@ -26,9 +42,8 @@ export function AppRuntime({ children }: { children: ReactNode }) {
 
   if (loading) return <div className="bg-background min-h-screen" aria-busy="true" />;
 
-  return (
-    <Suspense fallback={<div className="bg-background min-h-screen" aria-busy="true" />}>
-      <ConnectedAppRuntime>{children}</ConnectedAppRuntime>
-    </Suspense>
-  );
+  // React.lazy first suspends even if a separate import already loaded the code.
+  // Reuse that component directly so auth completion does not create another
+  // fallback transition before the Zero provider can mount.
+  return <ReadyConnectedRuntime>{children}</ReadyConnectedRuntime>;
 }

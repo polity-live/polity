@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AppRuntime } from '../app-runtime';
@@ -21,7 +22,13 @@ vi.mock('@/providers/auth-provider', () => ({
 vi.mock('../connected-app-runtime', () => ({
   default: ({ children }: React.PropsWithChildren) => {
     mocks.connected();
-    return <div>Connected:{children}</div>;
+    const [value, setValue] = useState(0);
+    return (
+      <div>
+        Connected:{children}
+        <button onClick={() => setValue(previous => previous + 1)}>Runtime state {value}</button>
+      </div>
+    );
   },
 }));
 
@@ -53,9 +60,25 @@ describe('AppRuntime', () => {
     const { container, rerender } = render(<AppRuntime>Private</AppRuntime>);
     expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
     expect(mocks.connected).not.toHaveBeenCalled();
+    await act(async () => {
+      // Let the prefetched module resolve while authentication is still pending.
+    });
     mocks.loading = false;
     mocks.session = { user: { id: 'viewer' } };
     rerender(<AppRuntime>Private</AppRuntime>);
+    expect(screen.getByText(/Connected:/)).toBeTruthy();
+  });
+
+  it('preserves the connected client subtree through later auth metadata renders', async () => {
+    mocks.pathname = '/messages';
+    const { rerender } = render(<AppRuntime>Private</AppRuntime>);
     await waitFor(() => expect(screen.getByText(/Connected:/)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Runtime state 0' }));
+    await act(async () => {
+      // A later import and authentication update must retain the mounted client.
+    });
+    mocks.session = { user: { id: 'viewer', updated_at: 'later' } };
+    rerender(<AppRuntime>Private</AppRuntime>);
+    expect(screen.getByRole('button', { name: 'Runtime state 1' })).toBeTruthy();
   });
 });
