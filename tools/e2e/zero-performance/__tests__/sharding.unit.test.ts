@@ -33,6 +33,23 @@ const manifest = () =>
   );
 
 describe('distributed Zero workload planning', () => {
+  it('preserves the manifest checksum through JSON transport with optional fields', () => {
+    for (const hasBase of [true, false]) {
+      const result = createManifest(
+        {
+          protocol: 'zero-performance/v10',
+          runID: 'transport',
+          headSHA: 'a'.repeat(40),
+          baseSHA: hasBase ? 'b'.repeat(40) : undefined,
+          harnessDigest: 'c'.repeat(64),
+          bootstrap: hasBase ? undefined : 'Baseline predates benchmark',
+          workloads: { head: workload(), base: hasBase ? workload() : undefined },
+        },
+        {}
+      );
+      expect(() => validateManifest(JSON.parse(JSON.stringify(result)))).not.toThrow();
+    }
+  });
   it('covers every query variant, keeps all variants of a query together, and covers security once', () => {
     const result = manifest();
     expect(result.shards).toHaveLength(20);
