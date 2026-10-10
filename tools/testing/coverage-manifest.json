@@ -129448,6 +129448,16 @@
       "suggestedTestRefs": ["e2e/virtualization-routes.e2e.spec.ts"]
     },
     {
+      "path": "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
+      "domain": "zero:votes",
+      "owner": "polity/zero:votes",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
       "domain": "zero:votes",
       "owner": "polity/zero:votes",
@@ -129572,13 +129582,13 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
         "src/zero/votes/__tests__/vote-workflow.unit.test.ts",
         "src/zero/votes/__tests__/voteQueryBranches.unit.test.ts",
-        "src/zero/votes/__tests__/voteServerMutators.internalBranches.unit.test.ts",
-        "src/zero/votes/__tests__/voteServerMutators.process-engine.unit.test.ts"
+        "src/zero/votes/__tests__/voteServerMutators.internalBranches.unit.test.ts"
       ]
     },
     {
@@ -129648,9 +129658,9 @@
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
         "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
-        "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
-        "src/zero/votes/__tests__/useVoteState.component.test.tsx"
+        "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx"
       ]
     },
     {
@@ -129783,6 +129793,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
@@ -129817,6 +129828,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
@@ -129851,6 +129863,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",

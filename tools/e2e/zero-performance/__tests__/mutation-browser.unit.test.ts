@@ -1,4 +1,8 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import { browserMutationRouteURL, measureBrowserMutationPhases } from '../mutation-browser';
 
 function deferred() {
@@ -10,6 +14,38 @@ function deferred() {
 }
 
 describe('browser mutation phase measurements', () => {
+  it('distinguishes a real rendered message from controlled composer textarea text', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      const composer = (value: string) =>
+        createElement('textarea', { value, onChange: () => undefined });
+      flushSync(() => root.render(composer('')));
+      flushSync(() => root.render(composer('Unsent regression message')));
+      expect(container.querySelector('textarea')?.textContent).toBe('Unsent regression message');
+      expect(container.querySelectorAll('[id^="message-"]')).toHaveLength(0);
+      flushSync(() =>
+        root.render(
+          createElement(
+            'div',
+            null,
+            composer('Unsent regression message'),
+            createElement('div', { id: 'message-regression' }, 'Unsent regression message')
+          )
+        )
+      );
+      expect(container.querySelector('[id^="message-"]')?.textContent).toBe(
+        'Unsent regression message'
+      );
+    } finally {
+      flushSync(() => root.unmount());
+      // React's scheduler still drains queued callbacks after synchronous commits.
+      await new Promise<void>(resolve => setImmediate(resolve));
+      container.remove();
+    }
+  });
+
   it('keeps mandatory reload verification outside the completed mutation duration', async () => {
     let time = 0;
     const recorded: [string, number][] = [];

@@ -200,12 +200,13 @@ export async function measureMutationBrowserActions(
     await page.locator('[data-action-id="messages.conversation.select"]').click();
     stage = 'conversation composer preparation';
     await page.locator('[data-action-id="messages.composer.text.change"]').fill(content);
-    await expect(page.getByText(content, { exact: true })).toHaveCount(0);
+    const renderedMessage = page.locator('[id^="message-"]').getByText(content, { exact: true });
+    await expect(renderedMessage).toHaveCount(0);
     row.uiEvidence = 'Exact new message content visible in the conversation';
     await phasesFor(row, {
       perform: () => page.locator('[data-action-id="messages.composer.send"]').click(),
       visibleReaction: async () => {
-        await expect(page.getByText(content, { exact: true }).first()).toBeVisible();
+        await expect(renderedMessage.first()).toBeVisible();
       },
       committedState: () =>
         poll(async () => {
@@ -214,7 +215,7 @@ export async function measureMutationBrowserActions(
           return result.length === 1;
         }),
       finalVisibleState: async () => {
-        await expect(page.getByText(content, { exact: true }).first()).toBeVisible();
+        await expect(renderedMessage.first()).toBeVisible();
       },
       reloadState: async () => {
         await page.reload();
@@ -226,7 +227,7 @@ export async function measureMutationBrowserActions(
           1
         );
         await page.locator('[data-action-id="messages.conversation.select"]').click();
-        await expect(page.getByText(content, { exact: true }).first()).toBeVisible();
+        await expect(renderedMessage.first()).toBeVisible();
       },
     });
   });

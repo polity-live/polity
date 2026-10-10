@@ -8,6 +8,7 @@ import {
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
+  isAuthenticatedUserId,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -179,8 +180,17 @@ export const voteQueries = {
         .related('voters', q => applyVoteVoterOrManagerQueryAccess(q, userID).related('user'))
         .related('indicative_participations', q =>
           q
-            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
-              flip: false,
+            .where(({ cmp, or, exists }) => {
+              const voterAccess = exists(
+                'voter',
+                voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+                {
+                  flip: false,
+                }
+              );
+              return isAuthenticatedUserId(userID)
+                ? or(cmp('user_id', userID), voterAccess)
+                : voterAccess;
             })
             .related('voter')
             .related('decisions', q2 => q2.related('choice'))
@@ -221,8 +231,17 @@ export const voteQueries = {
         .related('voters', q => applyVoteVoterOrManagerQueryAccess(q, userID).related('user'))
         .related('indicative_participations', q =>
           q
-            .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
-              flip: false,
+            .where(({ cmp, or, exists }) => {
+              const voterAccess = exists(
+                'voter',
+                voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+                {
+                  flip: false,
+                }
+              );
+              return isAuthenticatedUserId(userID)
+                ? or(cmp('user_id', userID), voterAccess)
+                : voterAccess;
             })
             .related('voter')
             .related('decisions', q2 => q2.related('choice'))
@@ -262,8 +281,15 @@ export const voteQueries = {
       .related('voters', q => applyVoteVoterOrManagerQueryAccess(q, userID).related('user'))
       .related('indicative_participations', q =>
         q
-          .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
-            flip: false,
+          .where(({ cmp, or, exists }) => {
+            const voterAccess = exists(
+              'voter',
+              voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+              { flip: false }
+            );
+            return isAuthenticatedUserId(userID)
+              ? or(cmp('user_id', userID), voterAccess)
+              : voterAccess;
           })
           .related('voter')
           .related('decisions', q2 => q2.related('choice'))
