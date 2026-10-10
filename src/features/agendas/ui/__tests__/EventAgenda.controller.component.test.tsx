@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   documentPreviewModel: null as Record<string, unknown> | null,
   election: null as Record<string, unknown> | null,
   electionCandidates: [] as Record<string, unknown>[],
+  electionState: vi.fn(),
   forwardingContext: null as Record<string, any> | null,
   gatedToastError: vi.fn(),
   gatedToastMessage: vi.fn(),
@@ -92,10 +93,13 @@ vi.mock('@/zero/elections/useElectionActions', () => ({
   useElectionActions: () => ({ upsertOfflineTally: mocks.upsertElectionOfflineTally }),
 }));
 vi.mock('@/zero/elections/useElectionState', () => ({
-  useElectionState: () => ({
-    candidates: mocks.electionCandidates,
-    election: mocks.election,
-  }),
+  useElectionState: (options: Record<string, unknown>) => {
+    mocks.electionState(options);
+    return {
+      candidates: mocks.electionCandidates,
+      election: mocks.election,
+    };
+  },
 }));
 vi.mock('@/zero/votes/useVoteActions', () => ({
   useVoteActions: () => ({
@@ -189,6 +193,7 @@ beforeEach(() => {
     mocks.addSpeaker,
     mocks.agendaNavStartFirstPendingItem,
     mocks.closeExpiredFinalVotesForEvent,
+    mocks.electionState,
     mocks.initializeChangeRequestVoting,
     mocks.gatedToastError,
     mocks.gatedToastMessage,
@@ -221,6 +226,33 @@ function props() {
 }
 
 describe('EventAgenda controller contract', () => {
+  it('tracks visible election appearance and removal before activating its detail queries', () => {
+    const agendaItem = {
+      id: 'agenda-1',
+      title: 'Discussion',
+      order_index: 1,
+      status: 'planned',
+      type: 'discussion',
+      election: [] as Record<string, unknown>[],
+    };
+    mocks.agendaNavStartableItem = { id: agendaItem.id };
+    mocks.agendaItems = [agendaItem];
+    const rendered = render(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: undefined });
+    expect(props().toolbarElection).toBeNull();
+
+    const election = { id: 'election-1', title: 'Election', candidates: [] };
+    mocks.agendaItems = [{ ...agendaItem, type: 'election', election: [election] }];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: agendaItem.id });
+    expect(props().toolbarElection).toEqual(election);
+
+    mocks.agendaItems = [agendaItem];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: undefined });
+    expect(props().toolbarElection).toBeNull();
+  });
+
   it('publishes safe defaults while the event is unavailable', () => {
     mocks.event = null;
     render(<EventAgenda eventId="event-1" />);

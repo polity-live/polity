@@ -564,7 +564,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     streamVariantVote,
   ]);
   const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
-    agendaItemId: streamAgendaItem?.id,
+    // The live authorized agenda projection also observes election creation,
+    // deletion and visibility changes. Fetch details only for a visible election.
+    agendaItemId: streamElection ? streamAgendaItem?.id : undefined,
   });
   const toolbarElection = useMemo(() => {
     if (!actionBarElection) {
