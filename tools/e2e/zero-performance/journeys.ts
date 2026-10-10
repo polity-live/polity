@@ -578,7 +578,12 @@ export async function measureJourneys(
         queries: [],
         failures: warnings,
       });
-    await measureMutationBrowserActions(page, seed, conversation, onMutationUpdate);
+    await measureMutationBrowserActions(page, seed, conversation, onMutationUpdate, () =>
+      inspect(page, clientSamples)
+    );
+    // Cleanup can mount the missing-entity view on the last action's page.
+    // Capture that lifetime too, before leaving for the subscribed group.
+    await inspect(page, clientSamples);
     // A real subscribed result must lose private data after membership revocation.
     const subscribedGroup = required(routes[1]);
     await navigate(page, subscribedGroup.path, subscribedGroup.search ?? {}, subscribedGroup);

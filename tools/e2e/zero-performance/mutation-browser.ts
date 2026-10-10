@@ -96,7 +96,8 @@ export async function measureMutationBrowserActions(
   page: Page,
   seed: SeedData,
   conversation: { conversationId: string },
-  onUpdate: (rows: MutationBrowserResult[]) => Promise<void>
+  onUpdate: (rows: MutationBrowserResult[]) => Promise<void>,
+  inspectCurrentQueries: () => Promise<unknown> = async () => undefined
 ): Promise<MutationBrowserResult[]> {
   const sql = db();
   // Assert isolation before any database write or UI navigation.
@@ -139,6 +140,13 @@ export async function measureMutationBrowserActions(
       // Fixed phase labels explain failures without exporting UI text or arguments.
       row.failures.push(`action_failed:${name}:${stage}`);
     } finally {
+      try {
+        // Preserve real local readings before fixture cleanup or the next
+        // document navigation releases this action's subscribed views.
+        await inspectCurrentQueries();
+      } catch {
+        row.failures.push('query_inspection_failed');
+      }
       try {
         await f.restore();
         await f.verifyRestored();
