@@ -447,9 +447,6 @@ function applyEventRoleRightAccess<T>(
 
   if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
 
-  // Full agenda projections repeat this manager predicate for each protected
-  // ballot relation. Keep its literal sets compact instead of multiplying
-  // status, resource and action disjunctions in every nested plan.
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
@@ -464,17 +461,22 @@ function applyEventRoleRightAccess<T>(
                 participantRole.whereExists(
                   'event_participant',
                   (participant: any) =>
-                    participant
-                      .where('user_id', userID)
-                      .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES),
-                  { flip: false }
+                    whereAnyOf(
+                      participant.where('user_id', userID),
+                      'status',
+                      ACTIVE_EVENT_PARTICIPANT_STATUSES
+                    ),
+                  // This foreign key targets event_participant's primary key.
+                  // Resolve the viewer's active endpoint once for repeated
+                  // manager branches in the agenda projection.
+                  { flip: true }
                 ),
               { flip: false }
             )
             .whereExists(
               'event_action_rights',
               (right: any) =>
-                right.where('resource', 'IN', resources).where('action', 'IN', actions),
+                whereAnyOf(whereAnyOf(right, 'resource', resources), 'action', actions),
               { flip: false }
             ),
         { flip: false }

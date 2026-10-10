@@ -5,7 +5,7 @@ import {
   CollectionToggle,
 } from '@/features/shared/ui/collections/CollectionScope';
 
-import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
@@ -678,7 +678,7 @@ export function EventAgendaView({
     return null;
   };
 
-  const renderAgendaItemsList = (items: EventAgendaItemRow[], revealStartIndex = 0) => (
+  const renderAgendaItemsList = (items: EventAgendaItemRow[]) => (
     <div className="space-y-4">
       {items.map((item, index) => {
         const displayedTitle = isTutorialElectionAgendaItem(item)
@@ -693,7 +693,6 @@ export function EventAgendaView({
               tutorialRunId: event?.tutorial_run_id,
               language: language === 'en' ? 'en' : 'de',
             });
-        const revealIndex = Math.min(revealStartIndex + index, 11);
         const runtimeStatus = getAgendaRuntimeStatus({
           id: item.id,
           status: item.status,
@@ -785,16 +784,7 @@ export function EventAgendaView({
               endTime={formatTime(displayTimes.displayEndTime)}
               duration={item.duration || 30}
             >
-              <div
-                className="civic-load-card-reveal"
-                data-agenda-item-id={item.id}
-                data-slot="agenda-item-reveal"
-                style={
-                  {
-                    '--civic-load-index': revealIndex,
-                  } as CSSProperties
-                }
-              >
+              <div data-agenda-item-id={item.id} data-slot="agenda-item-reveal">
                 <div
                   className={cn(
                     'relative min-w-0',
@@ -1604,10 +1594,7 @@ export function EventAgendaView({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-                    {renderAgendaItemsList(
-                      scheduledButUnconfirmedAgendaItems,
-                      confirmedAgendaItems.length
-                    )}
+                    {renderAgendaItemsList(scheduledButUnconfirmedAgendaItems)}
                   </CardContent>
                 </Card>
               ) : null}

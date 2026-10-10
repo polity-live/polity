@@ -127299,6 +127299,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+      "domain": "zero:rbac",
+      "owner": "polity/zero:rbac",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
       "domain": "zero:rbac",
       "owner": "polity/zero:rbac",
@@ -127399,9 +127409,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127436,8 +127446,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -127471,9 +127481,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127544,8 +127554,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -127597,9 +127607,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127634,8 +127644,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -127669,9 +127679,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127775,9 +127785,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127821,9 +127831,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127857,9 +127867,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
