@@ -143,13 +143,13 @@ export async function runShard(manifest: Manifest, id: string, directory: string
     abort.abort();
     for (const session of Object.values(sessions)) session?.child.kill('SIGINT');
   };
-  // Leave two minutes inside the fifteen-minute job for cleanup and artifacts.
+  // Native artifacts take 10–35 seconds; leave one minute for final cleanup and upload.
   const timer = setTimeout(
     () => {
       result.failures.push('Runner measurement deadline exceeded');
       signal();
     },
-    Math.max(1, ACTIVE_BUDGET_MS.runner - 120_000 - priorSetupMs)
+    Math.max(1, ACTIVE_BUDGET_MS.runner - 60_000 - priorSetupMs)
   );
   process.once('SIGINT', signal);
   process.once('SIGTERM', signal);
@@ -328,6 +328,7 @@ export async function runShard(manifest: Manifest, id: string, directory: string
   } catch (error) {
     result.failures.push(String(error));
   } finally {
+    clearTimeout(timer);
     const cleanupAt = performance.now();
     for (const session of Object.values(sessions))
       try {
@@ -336,7 +337,6 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         result.failures.push(String(error));
       }
     result.cleanupMs = performance.now() - cleanupAt;
-    clearTimeout(timer);
     process.removeListener('SIGINT', signal);
     process.removeListener('SIGTERM', signal);
     result.elapsedMs = priorSetupMs + performance.now() - started;

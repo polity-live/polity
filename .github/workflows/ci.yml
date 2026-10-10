@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      zero_baseline_ref:
+        description: Optional benchmark-enabled baseline commit for native acceptance runs
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -32,7 +37,7 @@ jobs:
       - name: Inventory both revisions and assign every case
         id: prepare
         env:
-          ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'origin/master' }}
+          ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || inputs.zero_baseline_ref || 'origin/master' }}
         run: >-
           pnpm exec tsx tools/e2e/zero-performance/distributed.ts prepare
           --job-start-file "$RUNNER_TEMP/zero-job-start"

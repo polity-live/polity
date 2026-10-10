@@ -56,6 +56,10 @@ describe('active Zero CI budget', () => {
     const prepare = workflow.jobs['zero-performance-prepare'],
       runners = workflow.jobs['zero-performance-shards'],
       gate = workflow.jobs['zero-query-performance'];
+    expect(workflow.on.workflow_dispatch.inputs.zero_baseline_ref.required).toBe(false);
+    expect(
+      prepare.steps.find((step: any) => step.id === 'prepare').env.ZERO_PERFORMANCE_BASE_REF
+    ).toContain('inputs.zero_baseline_ref');
     expect(prepare['runs-on']).toBe('ubuntu-24.04');
     expect(runners['runs-on']).toBe('ubuntu-24.04');
     expect(runners.strategy['max-parallel']).toBe(20);

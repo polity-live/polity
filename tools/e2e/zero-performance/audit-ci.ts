@@ -70,14 +70,20 @@ for (const execution of runIDs) {
   );
   const coverageComplete =
     gate.coverage?.failures.length === 0 &&
-    gate.sections.head.catalogExpected === gate.sections.head.catalogMeasured &&
-    gate.sections.head.securityExpected === gate.sections.head.securityMeasured &&
-    gate.sections.head.browserScenarios === 20;
+    (gate.bootstrap || Boolean(gate.sections.base)) &&
+    Object.values(gate.sections).every(
+      (section: any) =>
+        section.catalogExpected === section.catalogMeasured &&
+        section.securityExpected === section.securityMeasured &&
+        section.browserScenarios === 20
+    );
   runs.push({
     runID: id,
     attempt: run.run_attempt,
     url: run.html_url,
-    headSHA: run.head_sha,
+    headSHA: gate.headSHA,
+    baseSHA: gate.baseSHA,
+    bootstrap: gate.bootstrap,
     coverageComplete,
     activeBudgetPassed: !timing.failed,
     functionalPassed: gate.passed && gateJobs[0].conclusion === 'success',
@@ -89,6 +95,8 @@ if (new Set(runs.map(run => `${run.runID}:${run.attempt}`)).size !== 3)
   throw new Error('Duplicate resolved CI executions');
 if (new Set(runs.map(run => run.headSHA)).size !== 1)
   throw new Error('Acceptance runs must test the same revision');
+if (new Set(runs.map(run => JSON.stringify([run.baseSHA, run.bootstrap]))).size !== 1)
+  throw new Error('Acceptance runs must use the same baseline/bootstrap');
 const result = {
   protocol: 'zero-performance/v10',
   runs,
