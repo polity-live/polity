@@ -73,6 +73,27 @@ describe('Zero E2E readiness', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('keeps the captured WAL barrier when polling security fixtures every 100 ms', async () => {
+    const clock = fakeClock();
+    const database = {
+      currentWalLsn: vi.fn().mockResolvedValue('0/1234'),
+      replicationStatus: vi
+        .fn()
+        .mockResolvedValueOnce({ activeSlots: 0, caughtUp: true })
+        .mockResolvedValueOnce({ activeSlots: 1, caughtUp: false })
+        .mockResolvedValue({ activeSlots: 1, caughtUp: true }),
+    };
+    await waitForZeroReady({
+      database,
+      fetcher: vi.fn().mockResolvedValue(statz(1)),
+      ...clock,
+      pollIntervalMs: 100,
+    });
+    expect(clock.now()).toBe(200);
+    expect(database.currentWalLsn).toHaveBeenCalledTimes(1);
+    expect(database.replicationStatus.mock.calls).toEqual([['0/1234'], ['0/1234'], ['0/1234']]);
+  });
+
   it('authenticates the statz probe when Zero has an admin password', async () => {
     const fetcher = vi.fn().mockResolvedValue(statz(1));
     await waitForZeroReady({

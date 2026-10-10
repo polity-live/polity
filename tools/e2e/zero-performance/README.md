@@ -24,6 +24,8 @@ Manual workflow dispatch accepts an optional `zero_baseline_ref` commit or ref. 
 
 Before upload, original diagnostics are staged with their relative paths and bytes preserved. App copies, dependency junctions and build caches are pruned before traversal, so artifact discovery does not scan the copied application or include its PWA screenshots. Staging and upload are both included in the artifact time breakdown. The isolated listener block uses 15620–15819, below the default automatic client-port ranges, to prevent outbound sockets from racing with later revision stacks.
 
+Security workers poll the existing replica/WAL barrier every 100 ms before each selected measurement, with the existing 120-second readiness timeout. Both workers still replay the full fixture/state sequence; this shortens idle polling delay without changing the required replication condition or timed query activation.
+
 Acceptance requires three complete native Ubuntu CI runs with full coverage and ≤20 active minutes each. This target is not established by dividing historical serial durations. Existing analyzer, correlation and browser failures remain visible and keep the functional gate red until repaired. Historical v9 reports remain diagnostic material.
 
 After all three GitHub runs finish, audit their completed job durations, including the gate's own final artifact upload:

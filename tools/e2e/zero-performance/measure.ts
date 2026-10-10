@@ -521,7 +521,9 @@ try {
         return;
       const entry = all.find(c => c.name === name && c.variant === 'default');
       if (!entry) throw new Error(`Security query not registered: ${name}`);
-      await waitForZeroReady();
+      // Poll the same WAL/replica condition more often before timed activation.
+      // Replaying every state and waiting for confirmed replication remain mandatory.
+      await waitForZeroReady({ pollIntervalMs: 100 });
       await measure(
         { ...entry, args, variant: `security-${variant}` },
         'security',
