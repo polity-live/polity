@@ -75,6 +75,25 @@ function probe() {
 }
 
 describe('navigation paint measurement', () => {
+  it('requires visible destination content inside the selected main region', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<header><h1>Target</h1></header><main><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    const main = document.querySelector('main');
+    const walk = vi.spyOn(document, 'createTreeWalker');
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    const textWalks = walk.mock.calls.filter(
+      ([, whatToShow]) => whatToShow === NodeFilter.SHOW_TEXT
+    );
+    expect(textWalks.length).toBeGreaterThan(0);
+    expect(textWalks.every(([root]) => root === main)).toBe(true);
+    document.querySelector('main h1')!.textContent = 'Target';
+    await Promise.resolve();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
   it('starts cold navigation only at the public connected event and keeps normal navigation immediate', () => {
     const callbacks: ((state: { name: string }) => void)[] = [];
     vi.stubGlobal('__zero', {

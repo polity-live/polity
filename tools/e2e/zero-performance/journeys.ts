@@ -174,6 +174,7 @@ export async function measureJourneys(
       {
         path: '/search',
         text: seed.groupName,
+        contentSelector: 'main',
         // Name one fixture explicitly, rather than relying on tied creation-time ordering.
         search: { q: seed.groupName, types: 'group' },
         queryArgs: { query: seed.groupName, types: ['group'] },
@@ -182,24 +183,28 @@ export async function measureJourneys(
       {
         path: `/group/${seed.groupId}`,
         text: seed.groupName,
+        contentSelector: 'main',
         queryNames: ['groups.wikiOverview'],
         id: seed.groupId,
       },
       {
         path: `/event/${seed.eventId}`,
         text: seed.eventTitle,
+        contentSelector: 'main',
         queryNames: ['events.wikiData'],
         id: seed.eventId,
       },
       {
         path: `/event/${seed.eventId}/agenda/`,
         text: seed.agendaItemTitle,
+        contentSelector: 'main',
         queryNames: ['events.agendaItemsFull'],
         id: seed.agendaItemId,
       },
       {
         path: `/amendment/${seed.amendmentId}`,
         text: seed.amendmentTitle,
+        contentSelector: 'main',
         queryNames: ['amendments.byIdWiki'],
         id: seed.amendmentId,
       },
@@ -854,6 +859,7 @@ export async function measureJourneys(
         await profileColdBoot(browser, await context.storageState(), {
           path: '/search',
           text: seed.eventTitle,
+          contentSelector: 'main',
           search: { q: seed.eventTitle, types: 'event' },
           queryArgs: { query: seed.eventTitle, types: ['event'] },
           queryNames: ['search.searchDocumentPage'],

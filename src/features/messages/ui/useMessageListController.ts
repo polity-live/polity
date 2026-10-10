@@ -27,6 +27,8 @@ interface MessageStart {
   id: string;
 }
 
+const MESSAGE_PAGE_SIZE = 50;
+
 export type VirtualMessageRow =
   | {
       type: 'message';
@@ -61,6 +63,7 @@ function isNearBottom(element: HTMLElement, threshold = 96) {
 export function useMessageListController({
   conversation,
   messages,
+  hasMoreOlderMessages,
   onAtEndChange,
   currentUserId,
   onAcceptConversation,
@@ -79,9 +82,16 @@ export function useMessageListController({
   const displayMessages = messages ?? conversation.messages;
 
   if (initialAnchorRef.current.conversationId !== conversation.id) {
+    // A complete short thread fits in one page. Starting around its last row
+    // would create two cursor views and a single-row lookup before displaying
+    // the same messages. Longer or incomplete threads still need that anchor.
+    const fitsFirstPage =
+      messages !== undefined &&
+      hasMoreOlderMessages === false &&
+      messages.length < MESSAGE_PAGE_SIZE;
     initialAnchorRef.current = {
       conversationId: conversation.id,
-      messageId: displayMessages.at(-1)?.id ?? null,
+      messageId: fitsFirstPage ? null : (displayMessages.at(-1)?.id ?? null),
     };
   }
 
@@ -94,6 +104,7 @@ export function useMessageListController({
     getScrollElement: useCallback(() => (active ? scrollRef.current : null), [active]),
     estimateSize: useCallback(() => 92, []),
     overscan: 10,
+    minPageSize: MESSAGE_PAGE_SIZE,
     getRowKey: message => message.id,
     toStartRow: message => ({ created_at: Number(message.created_at), id: message.id }),
     getPageQuery: useCallback(

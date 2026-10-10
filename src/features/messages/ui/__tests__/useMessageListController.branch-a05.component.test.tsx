@@ -183,6 +183,41 @@ describe('useMessageListController branch coverage', () => {
     expect(mocks.stick).toHaveBeenLastCalledWith(mocks.virtual, { enabled: true });
   });
 
+  it('keeps a complete short thread in one page while retaining anchors for incomplete and long threads', () => {
+    const rows = [message('one'), message('two')];
+    const { rerender } = renderHook(values => useMessageListController(values), {
+      initialProps: controllerProps({ messages: rows, hasMoreOlderMessages: false }),
+    });
+    expect(mocks.listOptions.minPageSize).toBe(50);
+    expect(mocks.listOptions.permalinkID).toBeUndefined();
+    expect(mocks.stick).toHaveBeenLastCalledWith(mocks.virtual, { enabled: true });
+
+    // Receiving another message must not turn the mounted page into a cursor jump.
+    rerender(
+      controllerProps({ messages: [...rows, message('three')], hasMoreOlderMessages: false })
+    );
+    expect(mocks.listOptions.permalinkID).toBeUndefined();
+
+    rerender(
+      controllerProps({
+        conversation: conversation({ id: 'incomplete' }),
+        messages: rows,
+        hasMoreOlderMessages: true,
+      })
+    );
+    expect(mocks.listOptions.permalinkID).toBe('two');
+
+    const fullPage = Array.from({ length: 50 }, (_, index) => message(`row-${index}`));
+    rerender(
+      controllerProps({
+        conversation: conversation({ id: 'long' }),
+        messages: fullPage,
+        hasMoreOlderMessages: false,
+      })
+    );
+    expect(mocks.listOptions.permalinkID).toBe('row-49');
+  });
+
   it('uses the project assistant identity and places review events around the correct messages', () => {
     const first = { ...message('first'), created_at: 100 };
     const last = { ...message('last'), created_at: 200 };
