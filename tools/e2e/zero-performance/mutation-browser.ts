@@ -307,6 +307,9 @@ export async function measureMutationBrowserActions(
     await expect(applicant).toHaveCount(1);
     const approval = applicant.locator('[data-action-id="groups.requests.approve.membership"]');
     await expect(approval).toBeVisible();
+    // The row's conflict preflight disables approval during route preparation.
+    // Measure the real approval click once that required check has completed.
+    await expect(approval).toBeEnabled();
     row.uiEvidence = 'Applicant pending approval control disappears after membership activation';
     await phasesFor(row, {
       perform: () => approval.click(),
