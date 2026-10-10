@@ -76,6 +76,7 @@ export function safeEnvironment(source) {
     'CI',
     'DOCKER_HOST',
     'DOCKER_CONTEXT',
+    'PLAYWRIGHT_BROWSERS_PATH',
   ]);
   return Object.fromEntries(Object.entries(source).filter(([key]) => allowed.has(key)));
 }
