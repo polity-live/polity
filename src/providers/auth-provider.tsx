@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
   useRef,
@@ -175,7 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.access_token, session?.user, supabase, validateUser]);
 
-  useEffect(() => {
+  // Start session I/O at commit, before the first paint. Validation still
+  // finishes before loading is cleared and the authenticated Zero client mounts.
+  useLayoutEffect(() => {
     let cancelled = false;
     const initialGeneration = authGeneration.current;
     const getSession = async () => {

@@ -110,11 +110,19 @@ export default defineConfig({
     cssCodeSplit: false,
     rolldownOptions: {
       output: {
-        // Group the side-effect-free icon definitions shared by navigation.
-        // Application routes and stateful runtime packages retain automatic splitting.
+        // Keep the initial React/router runtime together instead of fetching
+        // many small shared modules. Application routes retain lazy splitting.
         codeSplitting: {
           includeDependenciesRecursively: false,
           groups: [
+            {
+              name: 'react-runtime',
+              test: /node_modules[\\/](?:react|react-dom|scheduler)[\\/]/,
+            },
+            {
+              name: 'router-runtime',
+              test: /node_modules[\\/]@tanstack[\\/](?:react-router|router-core|history)[\\/]/,
+            },
             {
               name: 'ui-icons',
               test: /node_modules[\\/]lucide-react[\\/]/,

@@ -575,7 +575,9 @@ export async function measureJourneys(
         const retainedQueries = await withDeadline(
           page.evaluate(async () => {
             const zero = (globalThis as any).__zero;
-            return (await zero.inspector.clientGroup.queries()).map((query: any) => ({
+            // The measured browser owns this client. Include all its active and
+            // TTL-retained queries without an unrelated aggregate RPC.
+            return (await zero.inspector.client.queries()).map((query: any) => ({
               name: query.name,
               id: query.id,
               clientID: query.clientID,
@@ -596,6 +598,7 @@ export async function measureJourneys(
             'navigation-retained-queries.json'
           ),
           JSON.stringify({
+            scope: 'client',
             inspectionMs: performance.now() - retainedAt,
             queries: retainedQueries,
           })

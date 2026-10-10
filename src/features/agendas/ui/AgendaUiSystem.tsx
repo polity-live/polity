@@ -209,10 +209,10 @@ export function AgendaContextTabs({
           {speakersLabel}
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="details" className="mt-0">
+      <TabsContent value="details" className="mt-0 data-[state=active]:animate-none">
         {details}
       </TabsContent>
-      <TabsContent value="speakers" className="mt-0">
+      <TabsContent value="speakers" className="mt-0 data-[state=active]:animate-none">
         {speakers}
       </TabsContent>
     </Tabs>
