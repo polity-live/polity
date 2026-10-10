@@ -45,8 +45,10 @@ describe('browser mutation acceptance', () => {
   it('keeps inclusive existing browser boundaries and distinguishes SQL observation from SDK ACK', () => {
     const input = rows();
     input[0].uiMs = 1_000;
+    input[0].finalVisibleMs = 1_000;
     expect(mutationBrowserFailures(input)).toEqual([]);
     input[0].uiMs = 1_001;
+    input[0].finalVisibleMs = 1_001;
     expect(mutationBrowserFailures(input)).toContain('Browser mutation save uiMs exceeds 1000 ms');
     expect(mutationBrowserFailures(input, false)).toEqual([]);
     input[0].uiEvidence = '';
@@ -68,5 +70,17 @@ describe('browser mutation acceptance', () => {
         'save: Missing or invalid independent reload proof'
       );
     }
+  });
+  it('rejects an impossible final-visible timestamp even when absolute budgets are disabled', () => {
+    const input = rows();
+    input[0].finalVisibleMs = 149;
+    expect(mutationBrowserFailures(input, false)).toContain(
+      'save: Final visible state precedes UI or committed-state proof'
+    );
+    input[0].serverConfirmedMs = 40;
+    input[0].finalVisibleMs = 49;
+    expect(mutationBrowserFailures(input, false)).toContain(
+      'save: Final visible state precedes UI or committed-state proof'
+    );
   });
 });

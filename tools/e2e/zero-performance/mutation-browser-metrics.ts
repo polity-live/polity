@@ -43,6 +43,13 @@ export function mutationBrowserFailures(
       else if (absolute && value > 1_000)
         failures.push(`Browser mutation ${row.action} ${field} exceeds 1000 ms`);
     }
+    if (
+      typeof row.uiMs === 'number' &&
+      typeof row.serverConfirmedMs === 'number' &&
+      typeof row.finalVisibleMs === 'number' &&
+      row.finalVisibleMs < Math.max(row.uiMs, row.serverConfirmedMs)
+    )
+      failures.push(`${row.action}: Final visible state precedes UI or committed-state proof`);
     failures.push(...row.failures.map(failure => `${row.action}: ${failure}`));
   }
   const rejection = rows.find(row => row.action === 'vote')?.rejection;
