@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   offlineTally: vi.fn(),
   voteCast: vi.fn(),
   namedResults: vi.fn(),
+  candidacy: vi.fn(),
   activeHeader: vi.fn(),
   contextCard: vi.fn(),
   speakerList: vi.fn(),
@@ -52,7 +53,10 @@ vi.mock('../OfflineTallyDialog', () => ({
   },
 }));
 vi.mock('@/features/elections/ui/CandidacyPasswordDialog', () => ({
-  CandidacyPasswordDialog: () => null,
+  CandidacyPasswordDialog: (props: any) => {
+    mocks.candidacy(props);
+    return null;
+  },
 }));
 vi.mock('@/features/vote-cast/ui/VoteCastDialog', () => ({
   VoteCastDialog: (props: any) => {
@@ -187,7 +191,7 @@ function makeProps(overrides: Record<string, unknown> = {}) {
     setVoteDialogOpen: vi.fn(),
     editDialogOpen: false,
     setEditDialogOpen: vi.fn(),
-    candidacyDialogProps: {},
+    candidacyDialogProps: { open: false },
     voteCasting: {
       phase: 'indicative',
       isLoading: false,
@@ -315,22 +319,37 @@ describe('EventAgendaView actions', () => {
   it('defers hidden dialogs until first opening and keeps them mounted on closing', () => {
     mocks.liveFocus.mockClear();
     mocks.editDialog.mockClear();
+    for (const dialog of [mocks.offlineTally, mocks.voteCast, mocks.namedResults, mocks.candidacy])
+      dialog.mockClear();
     const props = makeProps({ streamAgendaItem: { id: 'item', status: 'pending' } });
     const view = render(<EventAgendaView {...props} />);
     expect(mocks.liveFocus).not.toHaveBeenCalled();
     expect(mocks.editDialog).not.toHaveBeenCalled();
+    for (const dialog of [mocks.offlineTally, mocks.voteCast, mocks.namedResults, mocks.candidacy])
+      expect(dialog).not.toHaveBeenCalled();
     view.rerender(
       <EventAgendaView
         {...props}
         liveFocusOpen
-        actionBarHook={{ ...props.actionBarHook, editDialogOpen: true }}
+        offlineTallyDialogOpen
+        namedResultsTarget="vote"
+        actionBarHook={{
+          ...props.actionBarHook,
+          editDialogOpen: true,
+          voteDialogOpen: true,
+          candidacyDialogProps: { ...props.actionBarHook.candidacyDialogProps, open: true },
+        }}
       />
     );
     expect(mocks.liveFocus.mock.calls.at(-1)?.[0].open).toBe(true);
     expect(mocks.editDialog.mock.calls.at(-1)?.[0].open).toBe(true);
+    for (const dialog of [mocks.offlineTally, mocks.voteCast, mocks.namedResults, mocks.candidacy])
+      expect(dialog.mock.calls.at(-1)?.[0].open).toBe(true);
     view.rerender(<EventAgendaView {...props} />);
     expect(mocks.liveFocus.mock.calls.at(-1)?.[0].open).toBe(false);
     expect(mocks.editDialog.mock.calls.at(-1)?.[0].open).toBe(false);
+    for (const dialog of [mocks.offlineTally, mocks.voteCast, mocks.namedResults, mocks.candidacy])
+      expect(dialog.mock.calls.at(-1)?.[0].open).toBe(false);
   });
   it('navigates from missing and empty states through stable links', () => {
     const { rerender } = render(<EventAgendaView {...makeProps({ event: null })} />);
@@ -617,6 +636,8 @@ describe('EventAgendaView actions', () => {
         {...makeProps({
           user: null,
           streamOpen: true,
+          offlineTallyDialogOpen: true,
+          actionBarHook: { ...makeProps().actionBarHook, voteDialogOpen: true },
           streamAgendaItem,
           streamElection,
           streamVote,
@@ -1028,6 +1049,7 @@ describe('EventAgendaView actions', () => {
     const props = makeProps({
       liveFocusOpen: true,
       actionBarHook: { ...makeProps().actionBarHook, editDialogOpen: true },
+      offlineTallyDialogOpen: true,
     });
     const streamAgendaItem = {
       id: 'fallback-stream',

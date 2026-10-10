@@ -1046,38 +1046,43 @@ export function EventAgendaView({
         {/* Spacer for fixed toolbar */}
         <div className="h-10" />
 
-        <OfflineTallyDialog
-          data-action-scope="presentation"
-          open={offlineTallyDialogOpen}
-          onOpenChange={handleOfflineTallyDialogOpenChange}
-          title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
-          description={translateText('features.events.agenda.offlineTallyDescription', {
-            item:
-              toolbarOfflineTallyEntity?.title ?? translateText('features.events.agenda.thisItem'),
-          })}
-          phase={toolbarOfflineTallyPhase ?? 'indicative'}
-          choices={toolbarOfflineTallyEntity?.choices ?? []}
-          tallies={toolbarOfflineTallyEntity?.tallies ?? []}
-          maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
-          maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
-          maxPerEntryLimitLabel={
-            toolbarOfflineTallyEntity?.kind === 'election'
-              ? translateText('features.events.agenda.candidate')
-              : undefined
-          }
-          participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
-          votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
-          isSubmitting={isOfflineTallySubmitting}
-          passwordError={offlineTallyPasswordError}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-          submitError={offlineTallySubmitError}
-          onSubmit={handleSubmitOfflineTally}
-        />
+        <DeferredAgendaDialog open={offlineTallyDialogOpen}>
+          <OfflineTallyDialog
+            data-action-scope="presentation"
+            open={offlineTallyDialogOpen}
+            onOpenChange={handleOfflineTallyDialogOpenChange}
+            title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
+            description={translateText('features.events.agenda.offlineTallyDescription', {
+              item:
+                toolbarOfflineTallyEntity?.title ??
+                translateText('features.events.agenda.thisItem'),
+            })}
+            phase={toolbarOfflineTallyPhase ?? 'indicative'}
+            choices={toolbarOfflineTallyEntity?.choices ?? []}
+            tallies={toolbarOfflineTallyEntity?.tallies ?? []}
+            maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
+            maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
+            maxPerEntryLimitLabel={
+              toolbarOfflineTallyEntity?.kind === 'election'
+                ? translateText('features.events.agenda.candidate')
+                : undefined
+            }
+            participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
+            votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
+            isSubmitting={isOfflineTallySubmitting}
+            passwordError={offlineTallyPasswordError}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+            submitError={offlineTallySubmitError}
+            onSubmit={handleSubmitOfflineTally}
+          />
+        </DeferredAgendaDialog>
 
-        <CandidacyPasswordDialog
-          {...actionBarHook.candidacyDialogProps}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-        />
+        <DeferredAgendaDialog open={actionBarHook.candidacyDialogProps.open}>
+          <CandidacyPasswordDialog
+            {...actionBarHook.candidacyDialogProps}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+          />
+        </DeferredAgendaDialog>
 
         <DeferredAgendaDialog open={liveFocusOpen}>
           <EventLiveFocusDialog
@@ -1610,104 +1615,108 @@ export function EventAgendaView({
           )}
         </CollectionScope>
 
-        <VoteCastDialog
-          open={actionBarHook.voteDialogOpen}
-          onOpenChange={actionBarHook.setVoteDialogOpen}
-          phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
-          title={
-            isCRToolbarActive ? selectedCRTitle : (displayedStreamAgendaItem?.title ?? undefined)
-          }
-          forwardingPreview={streamForwardingPreview}
-          documentPreviewContent={voteDialogDocumentPreviewContent}
-          candidates={
-            isCRToolbarActive
-              ? undefined
-              : streamElection
-                ? (streamElection.candidates as CandidatesByElectionRow[]).map(
-                    (candidate: any) => ({
-                      id: candidate.id,
-                      name: candidate.user
-                        ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
-                          candidate.user.email ||
-                          translateText('features.events.agenda.candidate')
-                        : candidate.name || translateText('features.events.agenda.candidate'),
-                      avatar: candidate.user?.avatar ?? undefined,
-                    })
-                  )
-                : undefined
-          }
-          maxVotes={streamElection?.max_votes ?? 1}
-          electionMode={
-            streamElection?.election_mode
-              ? normalizeElectionMode(streamElection.election_mode)
-              : null
-          }
-          seatCount={streamElection?.seat_count ?? null}
-          choices={
-            isCRToolbarActive
-              ? selectedCRChoices
-              : streamVote
-                ? (streamVote.choices as ChoicesByVoteRow[]).map((choice: any) => ({
-                    id: choice.id,
-                    label:
-                      choice.label ||
-                      translateText('features.events.agenda.defaultChoiceLabels.choice'),
-                    semanticKey: choice.semantic_key ?? null,
-                  }))
-                : undefined
-          }
-          tutorialAnchor={
-            event?.tutorial_run_id
-              ? streamElection
-                ? 'agenda-election-vote'
-                : 'agenda-amendment-vote'
-              : undefined
-          }
-          requirePassword={!event?.tutorial_run_id}
-          passwordError={passwordError}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-          isPasswordVerifying={isPasswordVerifying}
-          onPasswordSubmit={async password => {
-            setPasswordError(null);
-            setIsPasswordVerifying(true);
-            try {
-              await verifyVotingPassword(password);
-            } catch (err) {
-              const message =
-                err instanceof Error
-                  ? err.message
-                  : translateText('generated.inline.0010_verification_failed_e10d7e51');
-              setPasswordError(message);
-              throw err;
-            } finally {
-              setIsPasswordVerifying(false);
+        <DeferredAgendaDialog open={actionBarHook.voteDialogOpen}>
+          <VoteCastDialog
+            open={actionBarHook.voteDialogOpen}
+            onOpenChange={actionBarHook.setVoteDialogOpen}
+            phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
+            title={
+              isCRToolbarActive ? selectedCRTitle : (displayedStreamAgendaItem?.title ?? undefined)
             }
-          }}
-          onCastVote={
-            isCRToolbarActive
-              ? handleCastCRVoteFromDialog
-              : actionBarHook.voteCasting.castAmendmentVote
-          }
-          onCastElectionVote={
-            isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
-          }
-          isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
-        />
+            forwardingPreview={streamForwardingPreview}
+            documentPreviewContent={voteDialogDocumentPreviewContent}
+            candidates={
+              isCRToolbarActive
+                ? undefined
+                : streamElection
+                  ? (streamElection.candidates as CandidatesByElectionRow[]).map(
+                      (candidate: any) => ({
+                        id: candidate.id,
+                        name: candidate.user
+                          ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
+                            candidate.user.email ||
+                            translateText('features.events.agenda.candidate')
+                          : candidate.name || translateText('features.events.agenda.candidate'),
+                        avatar: candidate.user?.avatar ?? undefined,
+                      })
+                    )
+                  : undefined
+            }
+            maxVotes={streamElection?.max_votes ?? 1}
+            electionMode={
+              streamElection?.election_mode
+                ? normalizeElectionMode(streamElection.election_mode)
+                : null
+            }
+            seatCount={streamElection?.seat_count ?? null}
+            choices={
+              isCRToolbarActive
+                ? selectedCRChoices
+                : streamVote
+                  ? (streamVote.choices as ChoicesByVoteRow[]).map((choice: any) => ({
+                      id: choice.id,
+                      label:
+                        choice.label ||
+                        translateText('features.events.agenda.defaultChoiceLabels.choice'),
+                      semanticKey: choice.semantic_key ?? null,
+                    }))
+                  : undefined
+            }
+            tutorialAnchor={
+              event?.tutorial_run_id
+                ? streamElection
+                  ? 'agenda-election-vote'
+                  : 'agenda-amendment-vote'
+                : undefined
+            }
+            requirePassword={!event?.tutorial_run_id}
+            passwordError={passwordError}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+            isPasswordVerifying={isPasswordVerifying}
+            onPasswordSubmit={async password => {
+              setPasswordError(null);
+              setIsPasswordVerifying(true);
+              try {
+                await verifyVotingPassword(password);
+              } catch (err) {
+                const message =
+                  err instanceof Error
+                    ? err.message
+                    : translateText('generated.inline.0010_verification_failed_e10d7e51');
+                setPasswordError(message);
+                throw err;
+              } finally {
+                setIsPasswordVerifying(false);
+              }
+            }}
+            onCastVote={
+              isCRToolbarActive
+                ? handleCastCRVoteFromDialog
+                : actionBarHook.voteCasting.castAmendmentVote
+            }
+            onCastElectionVote={
+              isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
+            }
+            isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
+          />
+        </DeferredAgendaDialog>
 
-        <NamedBallotResultsDialog
-          open={namedResultsTarget !== null}
-          onOpenChange={open => {
-            if (!open) setNamedResultsTarget?.(null);
-          }}
-          title={
-            streamIsTutorialElection && namedResultsTarget === 'election'
-              ? tutorialElectionCopy.electionTitle
-              : (namedResultsDialogConfig?.title ??
-                t('features.events.agenda.namedResults.title', 'Named results'))
-          }
-          description={namedResultsDialogConfig?.description ?? ''}
-          model={namedResultsDialogConfig?.model ?? null}
-        />
+        <DeferredAgendaDialog open={namedResultsTarget !== null}>
+          <NamedBallotResultsDialog
+            open={namedResultsTarget !== null}
+            onOpenChange={open => {
+              if (!open) setNamedResultsTarget?.(null);
+            }}
+            title={
+              streamIsTutorialElection && namedResultsTarget === 'election'
+                ? tutorialElectionCopy.electionTitle
+                : (namedResultsDialogConfig?.title ??
+                  t('features.events.agenda.namedResults.title', 'Named results'))
+            }
+            description={namedResultsDialogConfig?.description ?? ''}
+            model={namedResultsDialogConfig?.model ?? null}
+          />
+        </DeferredAgendaDialog>
 
         {streamAgendaItem ? (
           <DeferredAgendaDialog open={actionBarHook.editDialogOpen}>
