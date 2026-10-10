@@ -17,7 +17,7 @@ import { agendaItemTextMatchesSearch } from '../logic/agendaItemTextSearch';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
-import { useElectionState } from '@/zero/elections/useElectionState';
+import { normalizeElectionRow, useElectionCandidates } from '@/zero/elections/useElectionState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -563,11 +563,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     streamForwardingContext.currentStepRun,
     streamVariantVote,
   ]);
-  const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
-    // The live authorized agenda projection also observes election creation,
-    // deletion and visibility changes. Fetch details only for a visible election.
-    agendaItemId: streamElection ? streamAgendaItem?.id : undefined,
-  });
+  // The authorized agenda already projects election metadata and electors.
+  // Candidates retain their separate projection with manager-filtered selections.
+  const actionBarElection = useMemo(() => normalizeElectionRow(streamElection), [streamElection]);
+  const { candidates: actionBarCandidates } = useElectionCandidates(streamElection?.id);
   const toolbarElection = useMemo(() => {
     if (!actionBarElection) {
       return streamElection;

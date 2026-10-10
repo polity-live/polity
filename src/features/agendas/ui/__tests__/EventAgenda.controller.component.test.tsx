@@ -21,7 +21,6 @@ const mocks = vi.hoisted(() => ({
   currentUser: { id: 'user-1', gender: 'female' } as Record<string, unknown> | null,
   delegateParticipants: [] as Record<string, unknown>[],
   documentPreviewModel: null as Record<string, unknown> | null,
-  election: null as Record<string, unknown> | null,
   electionCandidates: [] as Record<string, unknown>[],
   electionState: vi.fn(),
   forwardingContext: null as Record<string, any> | null,
@@ -93,12 +92,10 @@ vi.mock('@/zero/elections/useElectionActions', () => ({
   useElectionActions: () => ({ upsertOfflineTally: mocks.upsertElectionOfflineTally }),
 }));
 vi.mock('@/zero/elections/useElectionState', () => ({
-  useElectionState: (options: Record<string, unknown>) => {
-    mocks.electionState(options);
-    return {
-      candidates: mocks.electionCandidates,
-      election: mocks.election,
-    };
+  normalizeElectionRow: (election: unknown) => election ?? null,
+  useElectionCandidates: (electionId?: string) => {
+    mocks.electionState(electionId);
+    return { candidates: mocks.electionCandidates };
   },
 }));
 vi.mock('@/zero/votes/useVoteActions', () => ({
@@ -181,7 +178,6 @@ beforeEach(() => {
   mocks.currentUser = { id: 'user-1', gender: 'female' };
   mocks.delegateParticipants = [];
   mocks.documentPreviewModel = null;
-  mocks.election = null;
   mocks.electionCandidates = [];
   mocks.forwardingContext = null;
   mocks.isDelegateAssembly = false;
@@ -238,18 +234,18 @@ describe('EventAgenda controller contract', () => {
     mocks.agendaNavStartableItem = { id: agendaItem.id };
     mocks.agendaItems = [agendaItem];
     const rendered = render(<EventAgenda eventId="event-1" />);
-    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: undefined });
+    expect(mocks.electionState).toHaveBeenLastCalledWith(undefined);
     expect(props().toolbarElection).toBeNull();
 
     const election = { id: 'election-1', title: 'Election', candidates: [] };
     mocks.agendaItems = [{ ...agendaItem, type: 'election', election: [election] }];
     rendered.rerender(<EventAgenda eventId="event-1" />);
-    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: agendaItem.id });
+    expect(mocks.electionState).toHaveBeenLastCalledWith(election.id);
     expect(props().toolbarElection).toEqual(election);
 
     mocks.agendaItems = [agendaItem];
     rendered.rerender(<EventAgenda eventId="event-1" />);
-    expect(mocks.electionState).toHaveBeenLastCalledWith({ agendaItemId: undefined });
+    expect(mocks.electionState).toHaveBeenLastCalledWith(undefined);
     expect(props().toolbarElection).toBeNull();
   });
 
@@ -329,12 +325,6 @@ describe('EventAgenda controller contract', () => {
       },
     ];
     mocks.activeParticipants = [{ id: 'inactive-1', status: null, user_id: 'other-user' }];
-    mocks.election = {
-      id: 'action-election',
-      title: null,
-      status: 'indicative',
-      candidates: null,
-    };
     mocks.event = {
       ...mocks.event,
       current_agenda_item_id: 'agenda-delegate-election',
@@ -771,7 +761,6 @@ describe('EventAgenda controller contract', () => {
       ],
       offline_tallies: [{ phase: 'final', candidate_id: 'candidate-1', count: 1 }],
     };
-    mocks.election = { ...election, title: null, candidates: [] };
     mocks.electionCandidates = candidates;
     mocks.event = {
       ...mocks.event,

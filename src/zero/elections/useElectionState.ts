@@ -43,6 +43,17 @@ export function normalizeElectionRow<
 }
 
 /**
+ * Candidate detail projection for a visible election already supplied by an
+ * authorized parent view. The registered query retains its own access checks.
+ */
+export function useElectionCandidates(electionId?: string) {
+  const [candidates, result] = useQuery(
+    electionId ? queries.elections.candidatesByElection({ election_id: electionId }) : undefined
+  );
+  return { candidates: candidates ?? [], isLoading: Boolean(electionId) && result.type === 'unknown' };
+}
+
+/**
  * Reactive state hook for election data.
  * Returns query-derived state — no mutations.
  */
