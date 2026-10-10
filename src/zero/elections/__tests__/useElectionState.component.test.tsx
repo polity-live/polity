@@ -95,9 +95,9 @@ describe('useElectionCandidates', () => {
     hook.rerender({ id: undefined });
     expect(hook.result.current).toEqual({ candidates: [], isLoading: false });
     expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
-    expect(mocks.useQuery.mock.calls.filter(([query]) => query).map(([query]) => query.key)).toEqual([
-      key('candidates', { election_id: 'election-1' }),
-    ]);
+    expect(
+      mocks.useQuery.mock.calls.filter(([query]) => query).map(([query]) => query.key)
+    ).toEqual([key('candidates', { election_id: 'election-1' })]);
   });
 
   it('keeps missing authoritative candidate data loading', () => {

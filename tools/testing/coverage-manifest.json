@@ -40,6 +40,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".gitattributes",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "asset",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
       "domain": "platform",
       "owner": "polity/platform",
@@ -16870,6 +16880,11 @@
       "verification": "instrument",
       "coverageStatus": "referenced",
       "testRefs": [
+        {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes missing projection data and preserves the persisted count fallback"
+        },
         {
           "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
           "project": "component",
@@ -134873,112 +134888,12 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "work/check-all-query-planning.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/check-event-election-planning.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/check-group-wiki-planning.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/check-oracle-cursors.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/check-run-boundary-fixtures.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/compare-current-planning.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/compare-isolated-planning.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "work/event-election-selection.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
       "verification": "static-contract",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/inspect-navigation-profile.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/list-unscoped-plans.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/move-retained-diagnostics.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": []
     },
@@ -135003,42 +134918,12 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "work/scope-agenda-detail-plans.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "work/scoped-query-selection.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
       "verification": "static-contract",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/summarize-performance-progress.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "work/validate-browser-views.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": []
     }

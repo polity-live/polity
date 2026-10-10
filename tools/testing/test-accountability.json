@@ -220,6 +220,11 @@
     ],
     "src/features/blogs/hooks/useSubscribeBlog.ts": [
       {
+        "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+        "project": "component",
+        "caseId": "normalizes missing projection data and preserves the persisted count fallback"
+      },
+      {
         "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
         "project": "component",
         "caseId": "optimistically subscribes, reconciles persisted rows, and unsubscribes exact duplicates"

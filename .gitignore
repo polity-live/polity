@@ -185,3 +185,18 @@ test-output.txt
 # Generated Vitest attachments
 .vitest-attachments/
 **/__screenshots__/
+
+# Local Zero performance investigation scripts (keep working copies).
+/work/check-all-query-planning.mjs
+/work/check-event-election-planning.mjs
+/work/check-group-wiki-planning.mjs
+/work/check-oracle-cursors.mjs
+/work/check-run-boundary-fixtures.mjs
+/work/compare-current-planning.mjs
+/work/compare-isolated-planning.mjs
+/work/inspect-navigation-profile.mjs
+/work/list-unscoped-plans.mjs
+/work/move-retained-diagnostics.mjs
+/work/scope-agenda-detail-plans.mjs
+/work/summarize-performance-progress.mjs
+/work/validate-browser-views.mjs

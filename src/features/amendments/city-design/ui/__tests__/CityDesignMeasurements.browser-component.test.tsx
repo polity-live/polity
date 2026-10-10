@@ -132,10 +132,14 @@ it('selects multiple real surfaces, measures without dirtying the document and c
   await page.viewport(1200, 850);
   const { container } = render(<Harness />);
   const canvas = container.querySelector('canvas')!;
-  await waitFor(() => {
-    expect(canvas.dataset.engine).toContain('three.js');
-    expect(canvas.width).toBe(canvas.clientWidth);
-  });
+  // The first scene imports Three.js and OrbitControls before creating its renderer.
+  await waitFor(
+    () => {
+      expect(canvas.dataset.engine).toContain('three.js');
+      expect(canvas.width).toBe(canvas.clientWidth);
+    },
+    { timeout: 10_000 }
+  );
   const click = async (point: CityDesignLocalPoint, control = false) => {
     const anchor = projectLocalPointToCanvasAnchor(point, pose, {
       width: canvas.clientWidth,

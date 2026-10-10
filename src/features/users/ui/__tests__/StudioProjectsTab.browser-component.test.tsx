@@ -19,7 +19,8 @@ const io = vi.hoisted(() => ({
   listeners: new Set<() => void>(),
   query: vi.fn(),
 }));
-vi.mock('@rocicorp/zero/react', () => ({
+vi.mock('@rocicorp/zero/react', async importOriginal => ({
+  ...(await importOriginal<typeof import('@rocicorp/zero/react')>()),
   useQuery: (query: unknown) => {
     io.query(query);
     useSyncExternalStore(

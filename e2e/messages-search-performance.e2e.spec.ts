@@ -67,10 +67,9 @@ test.describe('messages to search transition', () => {
     await expect(page.getByTestId('search-results-scroll')).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.locator('[data-search-document-id]').first()).toBeVisible();
-    await expect(
-      page.locator('[data-search-document-id] [data-timeline-card-header]').first()
-    ).toBeVisible();
+    const initialCard = page.locator('[data-search-document-id][data-index="0"]');
+    await expect(initialCard).toBeVisible();
+    await expect(initialCard.locator('[data-timeline-card-header]')).toBeVisible();
     await expect(page.locator('[data-search-card-loading]')).toHaveCount(0);
     await page.getByRole('link', { name: 'Messages' }).click();
     await expect(page).toHaveURL(/\/messages(?:\?|$)/);
@@ -93,10 +92,11 @@ test.describe('messages to search transition', () => {
         })
         .toBeGreaterThan(0);
 
-      const initialCard = page.locator('[data-search-document-id][data-index="0"]');
       await expect(initialCard).toHaveCount(1);
       await expect(initialCard.locator('[data-timeline-card-header]')).toBeVisible();
-      await expect(initialCard.getByRole('link').filter({ visible: true }).first()).toBeVisible();
+      await expect
+        .poll(() => initialCard.getByRole('link').filter({ visible: true }).count())
+        .toBeGreaterThan(0);
 
       await expect(page.locator('[data-search-card-mode="preview"]')).toHaveCount(0);
       await expect(page.locator('[data-search-card-loading]')).toHaveCount(0);

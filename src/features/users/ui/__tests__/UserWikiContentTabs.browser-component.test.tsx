@@ -8,7 +8,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('@rocicorp/zero/react', () => ({ useQuery: () => [[], { type: 'complete' }] }));
+vi.mock('@rocicorp/zero/react', async importOriginal => ({
+  ...(await importOriginal<typeof import('@rocicorp/zero/react')>()),
+  useQuery: () => [[], { type: 'complete' }],
+}));
 vi.mock('@/zero/queries', () => ({ queries: { studio: { byOwner: (args: unknown) => args } } }));
 vi.mock('@/features/shared/ui/collections/CollectionToolbar', () => ({
   CollectionToolbar: () => <span>Collection controls</span>,

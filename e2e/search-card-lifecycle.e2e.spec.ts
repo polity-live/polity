@@ -76,11 +76,20 @@ test.describe('final search cards', () => {
     await expect(groupLink).toHaveCount(0);
     await query.fill('');
     const scroll = page.getByTestId('search-results-scroll');
-    await expect(page.locator('[data-search-document-id]').first()).toBeVisible();
+    const initialCard = page.locator('[data-search-document-id][data-index="0"]');
+    await expect(initialCard).toBeVisible();
     await scroll.evaluate(element => {
       element.scrollTop = 500;
     });
-    await expect(page.locator('[data-search-document-id]').first()).toBeVisible();
+    await expect
+      .poll(async () => {
+        const cards = page.locator('[data-search-document-id]');
+        for (const card of await cards.all()) {
+          if (await card.isVisible()) return true;
+        }
+        return false;
+      })
+      .toBe(true);
     await expect(page.locator('[data-search-card-mode="preview"]')).toHaveCount(0);
   });
 });

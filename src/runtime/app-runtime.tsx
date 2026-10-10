@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 
-let loadedConnectedRuntime: typeof import('./connected-app-runtime')['default'] | undefined;
+let loadedConnectedRuntime: (typeof import('./connected-app-runtime'))['default'] | undefined;
 export const loadConnectedAppRuntime = async () => {
   const module = await import('./connected-app-runtime');
   loadedConnectedRuntime = module.default;

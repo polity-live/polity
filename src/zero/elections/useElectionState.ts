@@ -50,7 +50,10 @@ export function useElectionCandidates(electionId?: string) {
   const [candidates, result] = useQuery(
     electionId ? queries.elections.candidatesByElection({ election_id: electionId }) : undefined
   );
-  return { candidates: candidates ?? [], isLoading: Boolean(electionId) && result.type === 'unknown' };
+  return {
+    candidates: candidates ?? [],
+    isLoading: Boolean(electionId) && result.type === 'unknown',
+  };
 }
 
 /**
