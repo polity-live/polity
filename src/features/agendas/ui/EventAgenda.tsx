@@ -1638,16 +1638,24 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     [filteredAgendaItems]
   );
 
+  let timeFormatter: Intl.DateTimeFormat | undefined;
   const formatTime = (value?: number | Date | null) => {
     if (!value) {
       return '--:--';
     }
 
     const date = value instanceof Date ? value : new Date(value);
-    return date.toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (!Number.isFinite(date.getTime())) {
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+    if (!timeFormatter) {
+      timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+      // Share ICU setup during this render, then honor future system timezone changes.
+      queueMicrotask(() => {
+        timeFormatter = undefined;
+      });
+    }
+    return timeFormatter.format(date);
   };
 
   return (

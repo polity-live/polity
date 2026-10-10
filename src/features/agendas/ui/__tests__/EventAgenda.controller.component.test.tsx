@@ -222,6 +222,31 @@ function props() {
 }
 
 describe('EventAgenda controller contract', () => {
+  it('preserves displayed times while sharing formatter setup only within the current task', async () => {
+    const dates = [new Date('2026-01-01T12:30:00Z'), new Date('2026-07-01T15:45:00Z')];
+    const options = { hour: '2-digit', minute: '2-digit' } as const;
+    const expected = dates.map(date => date.toLocaleTimeString('de-DE', options));
+    const invalid = new Date(NaN);
+    const invalidText = invalid.toLocaleTimeString('de-DE', options);
+    render(<EventAgenda eventId="event-1" />);
+    const formatter = vi.spyOn(Intl, 'DateTimeFormat');
+    try {
+      const formatTime = props().formatTime;
+      expect(dates.map(date => formatTime(date))).toEqual(expected);
+      expect(formatTime(dates[0].getTime())).toBe(expected[0]);
+      expect(formatTime(invalid)).toBe(invalidText);
+      expect(formatTime(null)).toBe('--:--');
+      expect(formatTime(0)).toBe('--:--');
+      expect(formatter).toHaveBeenCalledTimes(1);
+
+      await Promise.resolve();
+      expect(formatTime(dates[1])).toBe(expected[1]);
+      expect(formatter).toHaveBeenCalledTimes(2);
+    } finally {
+      formatter.mockRestore();
+    }
+  });
+
   it('tracks visible election appearance and removal before activating its detail queries', () => {
     const agendaItem = {
       id: 'agenda-1',
