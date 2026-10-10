@@ -590,6 +590,21 @@ export async function measureJourneys(
       'Browser evaluate'
     );
     if (!hadGroup) throw new Error('Revocation has no positive subscribed result');
+    // Prepare the debugger while the page is responsive; sampling begins only
+    // after the timed revocation. Attaching to an already blocked renderer can
+    // itself fail before a useful CPU profile can be collected.
+    const inspectorProfiler =
+      process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1' ||
+      process.env.ZERO_PERFORMANCE_INSPECTOR_PROFILE === '1'
+        ? await withDeadline(context.newCDPSession(page), 'Inspector CPU session')
+        : undefined;
+    if (inspectorProfiler) {
+      await withDeadline(inspectorProfiler.send('Profiler.enable'), 'Inspector CPU enable');
+      await withDeadline(
+        inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
+        'Inspector CPU interval'
+      );
+    }
     const revokedAt = Date.now();
     await db().begin(async sql => {
       await sql`update public."group" set visibility='private', owner_id=${OUTSIDER.userID} where id=${seed.groupId}`;
@@ -633,17 +648,8 @@ export async function measureJourneys(
       ],
     };
     records.push(revocation);
-    const inspectorProfiler =
-      process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1'
-        ? await withDeadline(context.newCDPSession(page), 'Browser newCDPSession')
-        : undefined;
     if (inspectorProfiler) {
-      await withDeadline(inspectorProfiler.send('Profiler.enable'), 'Browser send');
-      await withDeadline(
-        inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
-        'Browser send'
-      );
-      await withDeadline(inspectorProfiler.send('Profiler.start'), 'Browser send');
+      await withDeadline(inspectorProfiler.send('Profiler.start'), 'Inspector CPU start');
     }
     const revocationInspectionAt = performance.now();
     try {

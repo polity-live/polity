@@ -422,6 +422,7 @@ ${storageBuckets}
     ZERO_PERFORMANCE_LAYER: option('--layer') ?? 'all',
     ZERO_PERFORMANCE_COLLECT_ALL: args.includes('--collect-all') ? '1' : '',
     ZERO_PERFORMANCE_CPU_PROFILE: args.includes('--profile-navigation') ? '1' : '',
+    ZERO_PERFORMANCE_INSPECTOR_PROFILE: args.includes('--profile-inspector') ? '1' : '',
     ...(selectionFile
       ? { ZERO_PERFORMANCE_SELECTION: path.join(sandbox, '.zero-performance-selection.json') }
       : {}),
