@@ -4,8 +4,8 @@ import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
 import type { NavigationTarget } from './browser-navigation';
 
-export const REPORT_FORMAT = 9;
-export const MEASUREMENT_PROTOCOL = 'zero-performance/v9';
+export const REPORT_FORMAT = 10;
+export const MEASUREMENT_PROTOCOL = 'zero-performance/v10';
 
 /** Include a record crossing the phase boundary without cutting its JSON. */
 export function measuredServerWarnings(log: Buffer, offset: number) {
@@ -127,9 +127,19 @@ export interface Report {
     authoritativeMs?: number;
     queries: QueryObservation[];
     cachedDisplayMs?: number;
+    boot?: {
+      documentStart: number;
+      connectedAt: number;
+      clientID: string;
+      visibleMs: number;
+      authoritativeMs: number;
+    };
     failures: string[];
     target?: NavigationTarget;
-    processing?: { navigationStart: number };
+    processing?: {
+      navigationStart: number;
+      connections?: { clientID: string; state: string; at: number }[];
+    };
   }[];
 }
 
@@ -148,6 +158,41 @@ function routeQuery(route: string) {
     }[entity[1]],
     args: { id: entity[2] },
   };
+}
+
+/** Keep the complete document boot diagnostic and independently verify its boundary. */
+export function bootMeasurementFailures(journey: NonNullable<Report['journeys']>[number]) {
+  const boot = journey.boot;
+  if (!boot)
+    return journey.route === '/search' && journey.visit === 'first'
+      ? ['Missing initial document boot measurement']
+      : [];
+  const valid = (value: unknown): value is number =>
+    typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  if (
+    journey.visit !== 'first' ||
+    !boot.clientID ||
+    ![
+      boot.documentStart,
+      boot.connectedAt,
+      boot.visibleMs,
+      boot.authoritativeMs,
+      journey.visibleMs,
+      journey.authoritativeMs,
+    ].every(valid) ||
+    boot.documentStart !== 0 ||
+    boot.connectedAt !== journey.processing?.navigationStart ||
+    !journey.processing?.connections?.some(
+      event =>
+        event.clientID === boot.clientID &&
+        event.state === 'connected' &&
+        event.at === boot.connectedAt
+    ) ||
+    Math.abs(boot.visibleMs - (boot.connectedAt + journey.visibleMs)) > 0.001 ||
+      Math.abs(boot.authoritativeMs - (boot.connectedAt + Number(journey.authoritativeMs))) > 0.001
+  )
+    return ['Invalid initial document boot measurement/boundary'];
+  return [];
 }
 
 /** A visible virtualized route must have a real committed result view, not only a preload. */
@@ -320,6 +365,7 @@ export async function reportFailures(report: Report, absoluteBudgets = true): Pr
     }
     if (!Number.isFinite(journey.visibleMs) || journey.visibleMs < 0 || !journey.queries.length)
       failures.push(`Missing navigation metrics ${journey.route}/${journey.visit}`);
+    failures.push(...bootMeasurementFailures(journey));
     if (absoluteBudgets && journey.visibleMs > BUDGETS.totalMs)
       failures.push(
         `Visible content exceeds ${BUDGETS.totalMs} ms: ${journey.route}/${journey.visit}`

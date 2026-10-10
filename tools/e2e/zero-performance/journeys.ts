@@ -40,6 +40,13 @@ export interface JourneyResult {
   visibleMs: number;
   authoritativeMs?: number;
   cachedDisplayMs?: number;
+  boot?: {
+    documentStart: number;
+    connectedAt: number;
+    clientID: string;
+    visibleMs: number;
+    authoritativeMs: number;
+  };
   queries: QueryObservation[];
   inspectionMs?: number;
   preloadEvents?: PreloadLifecycleEvent[];
@@ -241,7 +248,7 @@ export async function measureJourneys(
         try {
           if (page.url() === 'about:blank') {
             await page.addInitScript(
-              `globalThis.__name = (value) => value; (${installNavigationProbe.toString()})(); globalThis.__beginBenchmarkNavigation(${JSON.stringify(route)}, 0);`
+              `globalThis.__name = (value) => value; (${installNavigationProbe.toString()})(); globalThis.__beginBenchmarkNavigation(${JSON.stringify(route)}, 0, true);`
             );
             await page.goto(
               `${process.env.VITE_APP_URL}${route.path}${route.search ? '?' + new URLSearchParams(route.search).toString() : ''}`,
@@ -276,6 +283,15 @@ export async function measureJourneys(
             page.evaluate(() => (globalThis as any).__benchmarkPaint.authoritative),
             'Browser evaluate'
           );
+          record.boot = await page.evaluate(() => {
+            const state = (globalThis as any).__benchmarkPaint;
+            if (!state.cold) return undefined;
+            return {
+              ...state.cold,
+              visibleMs: state.start + state.displayed - state.cold.documentStart,
+              authoritativeMs: state.start + state.authoritative - state.cold.documentStart,
+            };
+          });
           record.processing = await withDeadline(
             page.evaluate(() => {
               const state = (globalThis as any).__benchmarkPaint;

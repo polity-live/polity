@@ -75,6 +75,46 @@ function probe() {
 }
 
 describe('navigation paint measurement', () => {
+  it('starts cold navigation only at the public connected event and keeps normal navigation immediate', () => {
+    const callbacks: ((state: { name: string }) => void)[] = [];
+    vi.stubGlobal('__zero', {
+      clientID: 'cold-client',
+      connection: {
+        state: {
+          current: { name: 'connecting' },
+          subscribe: (callback: (typeof callbacks)[number]) => callbacks.push(callback),
+        },
+      },
+    });
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    const target = { path: '/target', text: 'Target', queryNames: ['users.current'] };
+    scope.__beginBenchmarkNavigation(target, 0, true);
+    scope.__zeroPerformanceView({ phase: 'render' });
+    frame();
+    scope.__zeroPerformanceReady('users.current', true, performance.now());
+    expect(scope.__benchmarkPaint.start).toBeNull();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    expect(scope.__benchmarkPaint.authoritative).toBeNull();
+    callbacks[0]({ name: 'connected' });
+    const connectedAt = scope.__zeroPerformanceConnectionEvents[1].at;
+    expect(scope.__benchmarkPaint.start).toBe(connectedAt);
+    expect(scope.__benchmarkPaint.cold).toEqual({
+      documentStart: 0,
+      connectedAt,
+      clientID: 'cold-client',
+    });
+    frame();
+    scope.__zeroPerformanceReady('users.current', true, performance.now());
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+    expect(scope.__benchmarkPaint.authoritative).toBeGreaterThanOrEqual(0);
+    callbacks[0]({ name: 'connected' });
+    expect(scope.__benchmarkPaint.start).toBe(connectedAt);
+    scope.__beginBenchmarkNavigation(target, 123);
+    expect(scope.__benchmarkPaint.start).toBe(123);
+    expect(scope.__benchmarkPaint.cold).toBeUndefined();
+  });
   it('requires a matching authoritative view for group revocation, including after release', () => {
     const { scope } = probe();
     const state = () => scope.__zeroPerformanceGroupAccess('private', 100);

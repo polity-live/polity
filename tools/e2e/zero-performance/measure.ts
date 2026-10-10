@@ -550,6 +550,8 @@ try {
       visit: journey.visit,
       visibleMs: journey.visibleMs,
       cachedDisplayMs: journey.cachedDisplayMs,
+      bootVisibleMs: journey.boot?.visibleMs,
+      bootAuthoritativeMs: journey.boot?.authoritativeMs,
       queries: journey.queries.length,
       failures: journey.failures.join('; '),
     }));
@@ -564,13 +566,15 @@ try {
     await writeFile(
       path.join(output, 'journeys.csv'),
       [
-        'route,visit,visibleMs,cachedDisplayMs,queries,failures',
+        'route,visit,visibleMs,cachedDisplayMs,bootVisibleMs,bootAuthoritativeMs,queries,failures',
         ...rows.map(row =>
           [
             row.route,
             row.visit,
             row.visibleMs,
             row.cachedDisplayMs ?? '',
+            row.bootVisibleMs ?? '',
+            row.bootAuthoritativeMs ?? '',
             row.queries,
             row.failures,
           ]

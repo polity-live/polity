@@ -44,12 +44,22 @@ export function installNavigationProbe() {
     const zero = scope.__zero;
     if (!zero?.connection?.state || observedConnections.has(zero)) return;
     observedConnections.add(zero);
-    const record = (state: { name: string }) =>
+    const record = (state: { name: string }) => {
+      const at = performance.now();
       scope.__zeroPerformanceConnectionEvents.push({
         clientID: zero.clientID,
         state: state.name,
-        at: performance.now(),
+        at,
       });
+      const navigation = scope.__benchmarkPaint;
+      // Only initial document boot waits for connection readiness. In-app
+      // navigation always starts at the user's action, including reconnects.
+      if (state.name === 'connected' && navigation?.cold && navigation.start === null) {
+        navigation.start = at;
+        navigation.cold.connectedAt = at;
+        navigation.cold.clientID = zero.clientID;
+      }
+    };
     record(zero.connection.state.current);
     zero.connection.state.subscribe(record);
   };
@@ -122,6 +132,7 @@ export function installNavigationProbe() {
       complete &&
       state &&
       state.authoritative === null &&
+      state.start !== null &&
       location.pathname.replace(/\/$/, '') === state.target.path.replace(/\/$/, '') &&
       state.target.queryNames?.includes(name) &&
       Object.entries(state.target.queryArgs ?? {}).every(
@@ -147,17 +158,23 @@ export function installNavigationProbe() {
       state &&
       event.phase === 'commit' &&
       state.authoritative === null &&
+      state.start !== null &&
       location.pathname.replace(/\/$/, '') === state.target.path.replace(/\/$/, '') &&
       matchesView(event, state.target)
     ) {
       state.authoritative = event.at - state.start;
     }
   };
-  scope.__beginBenchmarkNavigation = (target: NavigationTarget, start = performance.now()) => {
+  scope.__beginBenchmarkNavigation = (
+    target: NavigationTarget,
+    start = performance.now(),
+    cold = false
+  ) => {
     const previous = scope.__benchmarkPaint;
     previous?.observer?.disconnect();
     const state = {
-      start,
+      start: cold ? null : start,
+      cold: cold ? { documentStart: start, connectedAt: null, clientID: null } : undefined,
       displayed: null as number | null,
       authoritative: null as number | null,
       target,
@@ -205,6 +222,7 @@ export function installNavigationProbe() {
         if (
           scope.__benchmarkPaint === state &&
           state.displayed === null &&
+          state.start !== null &&
           location.pathname.replace(/\/$/, '') === target.path.replace(/\/$/, '') &&
           state.candidates.some(
             ({ node, element }) =>

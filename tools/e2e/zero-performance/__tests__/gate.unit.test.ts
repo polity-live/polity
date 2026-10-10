@@ -58,6 +58,7 @@ import {
   serverWarningFailures,
   securityCoverageFailures,
   navigationMaterializationFailures,
+  bootMeasurementFailures,
   isAbsoluteBudgetFailure,
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
@@ -237,8 +238,8 @@ describe('Zero performance gate', () => {
   });
   it('keeps five fresh materializations and collects one analysis without warmups', () => {
     expect(REPETITIONS).toEqual({ materialize: 5, warmup: 0, analyze: 1 });
-    expect(REPORT_FORMAT).toBe(9);
-    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v9');
+    expect(REPORT_FORMAT).toBe(10);
+    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v10');
   });
   it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
     const item = measurement();
@@ -1147,6 +1148,41 @@ describe('Zero performance gate', () => {
     const baselineFailures = await reportFailures(report, false);
     expect(baselineFailures.some(failure => failure.includes('exceeds'))).toBe(false);
     expect(baselineFailures).toContain('Incorrect independent access results');
+  });
+  it('requires cold boot diagnostics with a real connection boundary, without budgeting whole boot', () => {
+    const journey = {
+      route: '/search',
+      visit: 'first',
+      visibleMs: 900,
+      authoritativeMs: 850,
+      queries: [],
+      failures: [],
+      processing: {
+        navigationStart: 600,
+        connections: [{ clientID: 'client', state: 'connected', at: 600 }],
+      },
+      boot: {
+        documentStart: 0,
+        connectedAt: 600,
+        clientID: 'client',
+        visibleMs: 1500,
+        authoritativeMs: 1450,
+      },
+    };
+    expect(bootMeasurementFailures(journey)).toEqual([]);
+    expect(bootMeasurementFailures({ ...journey, boot: undefined })).toContain(
+      'Missing initial document boot measurement'
+    );
+    for (const changed of [
+      { ...journey, processing: { navigationStart: 601 } },
+      { ...journey, processing: { ...journey.processing, connections: [] } },
+      { ...journey, boot: { ...journey.boot, clientID: 'other' } },
+      { ...journey, boot: { ...journey.boot, visibleMs: 1499 } },
+      { ...journey, boot: { ...journey.boot, authoritativeMs: NaN } },
+    ])
+      expect(bootMeasurementFailures(changed)).toContain(
+        'Invalid initial document boot measurement/boundary'
+      );
   });
   it('rejects independent nested-result mismatches', () => {
     const check = {

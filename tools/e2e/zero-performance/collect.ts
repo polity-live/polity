@@ -287,7 +287,7 @@ try {
     await writeFile(
       path.join(output, 'journeys.csv'),
       [
-        'route,visit,visibleMs,cachedDisplayMs,authoritativeMs,failures',
+        'route,visit,visibleMs,cachedDisplayMs,authoritativeMs,bootVisibleMs,bootAuthoritativeMs,failures',
         ...journeys.map(row =>
           [
             row.route,
@@ -295,6 +295,8 @@ try {
             row.visibleMs,
             row.cachedDisplayMs,
             row.authoritativeMs,
+            row.boot?.visibleMs,
+            row.boot?.authoritativeMs,
             row.failures.join('; '),
           ]
             .map(value => JSON.stringify(value))
