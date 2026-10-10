@@ -36,6 +36,7 @@ export async function harnessDigest() {
     'distributed-io.ts',
     'distributed-timing.ts',
     'shard-weights.json',
+    'stage-artifacts.mjs',
   ];
   for (const file of files.sort())
     hash.update(file).update(await readFile(path.join(harnessRoot, file)));

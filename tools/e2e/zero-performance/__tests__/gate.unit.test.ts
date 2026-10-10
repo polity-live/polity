@@ -589,18 +589,18 @@ describe('Zero performance gate', () => {
     expect(checkBudgets(measurement())).toEqual([]);
   });
   it('routes Ubuntu browser loopback traffic only into its own isolated services', () => {
-    const targets = browserTargets('polity-zero-performance-1234abcd', 55620);
-    expect(browserTarget('http://127.0.0.1:55620/search?q=group', targets)).toEqual({
+    const targets = browserTargets('polity-zero-performance-1234abcd', 15620);
+    expect(browserTarget('http://127.0.0.1:15620/search?q=group', targets)).toEqual({
       hostname: 'polity-zero-performance-app-1234abcd',
-      port: 55620,
+      port: 15620,
       path: '/search?q=group',
     });
-    expect(browserTarget('ws://localhost:55621/sync', targets)).toEqual({
+    expect(browserTarget('ws://localhost:15621/sync', targets)).toEqual({
       hostname: 'polity-zero-performance-runtime-1234abcd',
-      port: 55621,
+      port: 15621,
       path: '/sync',
     });
-    expect(browserTarget('http://127.0.0.1:55624/auth/v1/user', targets)).toEqual({
+    expect(browserTarget('http://127.0.0.1:15624/auth/v1/user', targets)).toEqual({
       hostname: 'supabase_kong_polity-zero-performance-1234abcd',
       port: 8000,
       path: '/auth/v1/user',
@@ -608,15 +608,15 @@ describe('Zero performance gate', () => {
     for (const address of [
       'https://www.polity.live',
       'http://127.0.0.1:54321',
-      'http://another-stack:55620',
-      'http://actor:secret@127.0.0.1:55620',
+      'http://another-stack:15620',
+      'http://actor:secret@127.0.0.1:15620',
     ])
       expect(() => browserTarget(address, targets)).toThrow('outside the isolated stack');
-    expect(() => browserTargets('development', 55620)).toThrow('Invalid isolated browser');
+    expect(() => browserTargets('development', 15620)).toThrow('Invalid isolated browser');
     expect(() => browserTargets('polity-zero-performance-1234abcd', 3000)).toThrow(
       'Invalid isolated browser'
     );
-    for (const start of [55621, 55819, 55820])
+    for (const start of [15621, 15819, 15820])
       expect(() => browserTargets('polity-zero-performance-1234abcd', start)).toThrow(
         'Invalid isolated browser'
       );
@@ -682,12 +682,12 @@ describe('Zero performance gate', () => {
         : new Response(
             '<script src="/assets/missing.js"></script><link rel="stylesheet" href="/assets/app.css">'
           );
-    await expect(verifyBuildAssets('http://127.0.0.1:55620', request)).rejects.toThrow(
+    await expect(verifyBuildAssets('http://127.0.0.1:15620', request)).rejects.toThrow(
       'missing asset'
     );
     await expect(
       verifyBuildAssets(
-        'http://127.0.0.1:55620',
+        'http://127.0.0.1:15620',
         async () =>
           new Response(
             '<script src="/assets/entry.js"></script><link rel="stylesheet" href="/assets/app.css">'
@@ -699,7 +699,7 @@ describe('Zero performance gate', () => {
     for (const link of ['', '<link rel="stylesheet">', '<link rel="stylesheet" href="">']) {
       await expect(
         verifyBuildAssets(
-          'http://127.0.0.1:55620',
+          'http://127.0.0.1:15620',
           async () => new Response(`<script src="/assets/entry.js"></script>${link}`)
         )
       ).rejects.toThrow('valid application stylesheet');
@@ -1055,7 +1055,9 @@ describe('Zero performance gate', () => {
     );
   });
   it('separates internal Zero ports from Supabase and excludes inherited production credentials', () => {
-    const ports = isolatedPorts(55620);
+    const ports = isolatedPorts(15620);
+    expect(Math.max(...Object.values(ports))).toBeLessThan(32768);
+    expect(() => isolatedPorts(55620)).toThrow('Invalid isolated port block');
     expect(new Set(Object.values(ports)).size).toBe(7);
     expect(ports.api).toBeGreaterThan(ports.zeroReplication);
     expect(
@@ -1085,10 +1087,10 @@ describe('Zero performance gate', () => {
     ).toThrow();
   });
   it('overrides every database alias for isolated integrity tests and rejects development targets', () => {
-    const database = 'postgresql://postgres:benchmark@127.0.0.1:55625/postgres';
+    const database = 'postgresql://postgres:benchmark@127.0.0.1:15625/postgres';
     const source = {
       ZERO_UPSTREAM_DB: database,
-      SUPABASE_URL: 'http://127.0.0.1:55624',
+      SUPABASE_URL: 'http://127.0.0.1:15624',
       DATABASE_URL: 'development',
       SUPABASE_DB_URL: 'development',
       STUDIO_DATABASE_URL: 'development',
@@ -1108,10 +1110,10 @@ describe('Zero performance gate', () => {
     ])
       expect(isolated[name]).toBe(database);
     for (const target of [
-      database.replace('55625', '54322'),
+      database.replace('15625', '54322'),
       database.replace('127.0.0.1', 'production.example'),
       database.replace('/postgres', '/development'),
-      database.replace('55625', '55626'),
+      database.replace('15625', '15626'),
     ])
       expect(() => isolatedIntegrityEnvironment(source, target)).toThrow();
     expect(() =>

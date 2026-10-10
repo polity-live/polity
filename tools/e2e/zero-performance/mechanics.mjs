@@ -13,6 +13,7 @@ export const mechanics = [
   'required.ts',
   'isolation.mjs',
   'linux-runtime.mjs',
+  'linux-browser.mjs',
   'api-timing.mjs',
   'fixture-check.ts',
   'sharding.ts',

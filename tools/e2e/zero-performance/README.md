@@ -22,6 +22,8 @@ The active budget is preparation ≤3 minutes, longest measurement job ≤15 min
 
 Manual workflow dispatch accepts an optional `zero_baseline_ref` commit or ref. Use a pinned benchmark-enabled commit to validate the full fresh head/base path even before the default branch contains the benchmark. PR and push runs continue to use their actual base commit automatically; manual runs otherwise use `origin/master`.
 
+Before upload, original diagnostics are staged with their relative paths and bytes preserved. App copies, dependency junctions and build caches are pruned before traversal, so artifact discovery does not scan the copied application or include its PWA screenshots. Staging and upload are both included in the artifact time breakdown. The isolated listener block uses 15620–15819, below the default automatic client-port ranges, to prevent outbound sockets from racing with later revision stacks.
+
 Acceptance requires three complete native Ubuntu CI runs with full coverage and ≤20 active minutes each. This target is not established by dividing historical serial durations. Existing analyzer, correlation and browser failures remain visible and keep the functional gate red until repaired. Historical v9 reports remain diagnostic material.
 
 After all three GitHub runs finish, audit their completed job durations, including the gate's own final artifact upload:
@@ -36,7 +38,7 @@ This read-only audit downloads each gate artifact, checks v10 and source provena
 
 `pnpm test:zero:performance` measures the complete registered query catalog and real browser navigation against its own local Supabase/Zero stack. It fails immediately on missing coverage, missing metrics, wrong results, slow-query warnings, or exceeded budgets. There is no grandfathered slow-query allowlist.
 
-Requirements: the pinned Node/pnpm dependencies, Docker, Supabase's images, and Chromium (`pnpm exec playwright install chromium`). The command chooses unused ports in 55620–55819, generates a unique Supabase project ID, copies the working tree into `output/zero-performance/`, builds it in production mode, and always stops its own stack. It never resets or reuses the normal development project. Startup, build, connection establishment and replication readiness are recorded separately from query execution.
+Requirements: the pinned Node/pnpm dependencies, Docker, Supabase's images, and Chromium (`pnpm exec playwright install chromium`). The command chooses unused ports in 15620–15819, generates a unique Supabase project ID, copies the working tree into `output/zero-performance/`, builds it in production mode, and always stops its own stack. It never resets or reuses the normal development project. Startup, build, connection establishment and replication readiness are recorded separately from query execution.
 
 Commands:
 

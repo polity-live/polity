@@ -15,7 +15,7 @@ export function assertOutputDirectory(root, directory) {
     throw new Error('Benchmark output must be a new child of output/zero-performance');
 }
 export function isolatedPorts(start) {
-  if (!Number.isInteger(start) || start < 55620 || start >= 55820)
+  if (!Number.isInteger(start) || start < 15620 || start >= 15820)
     throw new Error('Invalid isolated port block');
   return {
     app: start,

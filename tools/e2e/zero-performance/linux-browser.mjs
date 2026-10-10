@@ -9,9 +9,9 @@ export function browserTargets(project, start) {
   if (
     !match ||
     !Number.isInteger(start) ||
-    start < 55620 ||
-    start > 55810 ||
-    (start - 55620) % 10 !== 0
+    start < 15620 ||
+    start > 15810 ||
+    (start - 15620) % 10 !== 0
   )
     throw new Error('Invalid isolated browser identity');
   return new Map([

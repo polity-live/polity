@@ -101,6 +101,12 @@ jobs:
       - name: Stop any remaining owned benchmark stacks
         if: always()
         run: node tools/e2e/zero-performance/cleanup.mjs
+      - name: Stage benchmark artifacts
+        if: always()
+        run: >-
+          node tools/e2e/zero-performance/stage-artifacts.mjs
+          --source "output/zero-performance/ci/${{ matrix.shard }}"
+          --output "output/zero-performance/ci-staged/${{ matrix.shard }}"
       - name: Upload all measurements, plans, comparisons and service diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -109,22 +115,7 @@ jobs:
           if-no-files-found: error
           retention-days: 21
           compression-level: 9
-          path: |
-            output/zero-performance/ci/${{ matrix.shard }}/runner.json
-            output/zero-performance/ci/${{ matrix.shard }}/comparison.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/report.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/results.csv
-            output/zero-performance/ci/${{ matrix.shard }}/**/journeys.csv
-            output/zero-performance/ci/${{ matrix.shard }}/**/measurements.ndjson
-            output/zero-performance/ci/${{ matrix.shard }}/**/plans/*.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/progress.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/fixtures.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/preflight.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/startup.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/integrity.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/failure.json
-            output/zero-performance/ci/${{ matrix.shard }}/**/screenshots/*.png
-            output/zero-performance/ci/${{ matrix.shard }}/**/*.log
+          path: output/zero-performance/ci-staged/${{ matrix.shard }}/
 
   zero-query-performance:
     name: Zero Query Performance

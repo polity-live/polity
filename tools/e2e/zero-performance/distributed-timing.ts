@@ -40,7 +40,7 @@ export function nativeTiming(jobs: JobTiming[], mergeMs: number, shardIDs: strin
     artifactByRunnerMs: runners.map(job => ({
       shard: job.name,
       artifactMs: job.steps
-        .filter(step => /Upload/.test(step.name))
+        .filter(step => /Upload|Stage benchmark artifacts/.test(step.name))
         .reduce(
           (sum, step) => sum + Date.parse(step.completed_at) - Date.parse(step.started_at),
           0

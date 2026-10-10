@@ -128,7 +128,7 @@ async function ports() {
   );
   const locks = path.join(root, 'output/zero-performance/.ports');
   await mkdir(locks, { recursive: true });
-  for (let start = 55620; start < 55820; start += 10) {
+  for (let start = 15620; start < 15820; start += 10) {
     if (Array.from({ length: 8 }, (_, i) => start + i).some(port => allocated.has(port))) continue;
     const lock = path.join(locks, `${start}.lock`);
     let handle;
