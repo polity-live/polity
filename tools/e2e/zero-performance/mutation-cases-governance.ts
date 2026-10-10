@@ -33,6 +33,23 @@ const object = (value: unknown) =>
 const rows = (value: unknown): Record<string, unknown>[] =>
   Array.isArray(value) ? value : value ? [value as Record<string, unknown>] : [];
 
+/** Reviewed SQL timestamptz columns store parsed epoch values as Dates, while Zero exposes numbers. */
+export function governanceSQLExpected(table: string, fields: Record<string, unknown> | null) {
+  if (!fields) return null;
+  const columns: Record<string, readonly string[]> = {
+    agenda_item: ['start_time', 'end_time', 'activated_at', 'completed_at'],
+    speaker_list: ['start_time', 'end_time'],
+    vote: ['closing_end_time'],
+    election: ['closing_end_time'],
+  };
+  return Object.fromEntries(
+    Object.entries(fields).map(([field, value]) => [
+      field,
+      columns[table]?.includes(field) && typeof value === 'number' ? new Date(value) : value,
+    ])
+  );
+}
+
 async function passwordFixture(ctx: MutationCaseContext, present: boolean) {
   const { sql } = ctx;
   const original = await sql`select * from voting_password where user_id = ${ctx.ownerID}`;
@@ -331,7 +348,8 @@ function agendaCases(): MutationCase[] {
             after: (data: unknown) => predicate(data, false),
           },
           verify: async () => {
-            if (actor === 'owner') await f.expect(table, id, expected);
+            if (actor === 'owner')
+              await f.expect(table, id, governanceSQLExpected(table, expected));
             else assert.deepEqual(await f.rows(table, id), baseline);
             assert.equal((await f.rows('event', event.id)).length, 1);
           },
@@ -676,7 +694,8 @@ function scopeManagementCases(): MutationCase[] {
             },
           },
           verify: async () => {
-            if (actor === 'owner') await f.expect(d.table, id, expected);
+            if (actor === 'owner')
+              await f.expect(d.table, id, governanceSQLExpected(d.table, expected));
             else assert.deepEqual(await f.rows(d.table, id), baseline);
           },
           restore: async () => {

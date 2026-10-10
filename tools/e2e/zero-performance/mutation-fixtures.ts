@@ -91,7 +91,7 @@ export class MutationFixtures {
       assert.deepEqual(
         actual instanceof Date ? actual.toISOString() : actual,
         value instanceof Date ? value.toISOString() : value,
-        `${table}.${key}`
+        `Database field proof: ${table}.${key}`
       );
     }
   }

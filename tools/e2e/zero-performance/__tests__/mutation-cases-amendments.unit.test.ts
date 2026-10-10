@@ -21,7 +21,14 @@ describe('reviewed amendment catalog', () => {
         ? { identifier: first }
         : Promise.resolve(
             Array.isArray(first) && first.join('').includes('extract(epoch from')
-              ? [{ value: (records[0].created_at as Date).getTime() }]
+              ? [
+                  {
+                    microseconds: (
+                      BigInt((records[0].created_at as Date).getTime()) * 1000n -
+                      946684800000000n
+                    ).toString(),
+                  },
+                ]
               : records
           )) as unknown as Sql;
     const ctx = {
@@ -40,11 +47,11 @@ describe('reviewed amendment catalog', () => {
     await expect(verifyRevokedAmendmentWriter(ctx, inspector(new Map()))).resolves.toBeUndefined();
     records = [];
     await expect(verifyRevokedAmendmentWriter(ctx, inspector(vote))).rejects.toThrow(
-      'phantom cached row'
+      'Rollback row proof:change_request_vote'
     );
     records = [{ ...row, vote: 'reject', created_at: new Date(1000) }];
     await expect(verifyRevokedAmendmentWriter(ctx, inspector(vote))).rejects.toThrow(
-      'changed cached application field'
+      'Rollback field proof:change_request_vote'
     );
     await expect(verifyRevokedAmendmentWriter(ctx, {})).rejects.toThrow(
       'Missing public writer inspector'
@@ -52,7 +59,7 @@ describe('reviewed amendment catalog', () => {
   });
   it('compares PostgreSQL microseconds exactly rather than truncated JS Date milliseconds', async () => {
     const cached = { id: 'vote', created_at: 1000.125 };
-    let exact = 1000.125;
+    let exact = 1000125n;
     const queries: string[] = [];
     const sql = ((first: unknown) => {
       if (typeof first === 'string') return { identifier: first };
@@ -60,7 +67,7 @@ describe('reviewed amendment catalog', () => {
       queries.push(query);
       return Promise.resolve(
         query.includes('extract(epoch from')
-          ? [{ value: exact }]
+          ? [{ microseconds: (exact - 946684800000000n).toString() }]
           : [{ id: 'vote', created_at: new Date(1000) }]
       );
     }) as unknown as Sql;
@@ -80,16 +87,30 @@ describe('reviewed amendment catalog', () => {
       queries.some(
         query =>
           query.includes('extract(epoch from') &&
-          query.includes('* 1000)::double precision as value')
+          query.replace(/\s/g, '').includes('*1000000') &&
+          query.includes('::bigint::text as microseconds')
       )
     ).toBe(true);
-    exact = 1000.126;
+    exact = 1000126n;
     await expect(verifyRevokedAmendmentWriter(ctx, writer)).rejects.toThrow(
-      'changed cached application field'
+      'Rollback field proof:change_request_vote'
     );
-    exact = 1000;
+    exact = 1000000n;
     await expect(verifyRevokedAmendmentWriter(ctx, writer)).rejects.toThrow(
-      'changed cached application field'
+      'Rollback field proof:change_request_vote'
+    );
+    exact = 1791684800000006n;
+    const pgMicroseconds = exact - 946684800000000n;
+    const binary = Number(pgMicroseconds) / 1000 + 946684800000;
+    const text = Number(exact / 1000n) + Number(exact % 1000n) / 1000;
+    expect(binary).not.toBe(text);
+    for (const decoded of [binary, text]) {
+      cached.created_at = decoded;
+      await expect(verifyRevokedAmendmentWriter(ctx, writer)).resolves.toBeUndefined();
+    }
+    cached.created_at = text + 0.001;
+    await expect(verifyRevokedAmendmentWriter(ctx, writer)).rejects.toThrow(
+      'Rollback field proof:change_request_vote'
     );
   });
   it('matches actual CR FK parents and distinguishes the UUID-only polymorphic source', () => {

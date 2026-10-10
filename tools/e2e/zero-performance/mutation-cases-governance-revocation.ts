@@ -5,6 +5,7 @@ import type { DelegatedGovernanceContext } from './mutation-governance-fixtures'
 import { schema } from '../../../src/zero/schema';
 import { zeroPostgresJS } from '@rocicorp/zero/server/adapters/postgresjs';
 import { can } from '../../../src/zero/rbac/can';
+import { replicatedTimestampValues } from './mutation-timestamp';
 import { queries } from '../../../src/zero/queries';
 import {
   groupAdminFixture,
@@ -215,15 +216,14 @@ export async function verifyRevokedGovernanceWriter(ctx: MutationCaseContext, wr
     for (const [field, column] of Object.entries(definition.columns)) {
       if (!(field in row)) continue;
       const columnName = column.serverName ?? field;
-      let expected = records[0][columnName];
+      const expected = records[0][columnName];
       if (expected instanceof Date) {
-        // PostgreSQL's JS Date decoder loses microseconds. Zero preserves them as
-        // fractional milliseconds; derive the exact numeric expectation in SQL.
-        const timestamp =
-          await ctx.sql`select (extract(epoch from ${ctx.sql(columnName)}) * 1000)::double precision as value from ${ctx.sql(table)} where id = ${String(row.id)}`;
-        assert.equal(timestamp.length, 1, `Rollback row proof: ${tableName}`);
-        expected = timestamp[0].value;
-        assert.equal(typeof expected, 'number', `Rollback field proof: ${tableName}.${field}`);
+        const values = await replicatedTimestampValues(ctx.sql, table, columnName, String(row.id));
+        assert.ok(
+          typeof row[field] === 'number' && values.includes(row[field]),
+          `Rollback field proof: ${tableName}.${field}`
+        );
+        continue;
       }
       assert.deepEqual(row[field], expected, `Rollback field proof: ${tableName}.${field}`);
     }

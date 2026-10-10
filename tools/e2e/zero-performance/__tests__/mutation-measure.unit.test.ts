@@ -192,6 +192,17 @@ afterEach(() => {
 });
 
 describe('mutation measurement engine lifecycle', () => {
+  it('reports only schema labels from database assertion failures', async () => {
+    harness.verify.mockRejectedValueOnce(
+      new Error('Database field proof: vote.closing_type\nSECRET SQL row and credentials')
+    );
+    const { rows, run } = fixture();
+    await run();
+    expect(rows[0].failures).toContain(
+      'Mutation sample 1: independent database verification failed (Database field proof: vote.closing_type)'
+    );
+    expect(JSON.stringify(rows)).not.toContain('SECRET');
+  });
   it('reports only schema labels from rollback assertion failures', async () => {
     harness.mode = 'client-result-error';
     const { entry, rows, run } = fixture();

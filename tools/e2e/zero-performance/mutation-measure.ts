@@ -95,6 +95,12 @@ function rollbackProofLabel(error: unknown): string {
     : '';
 }
 
+function databaseProofLabel(error: unknown): string {
+  if (!(error instanceof Error)) return '';
+  const firstLine = error.message.split('\n')[0];
+  return /^Database field proof: [a-z_]+\.[a-z_]+$/.test(firstLine) ? ` (${firstLine})` : '';
+}
+
 /** Writers and observers share this process's monotone clock, never server wall clocks. */
 export async function measureMutations(
   cases: MutationCase[],
@@ -444,6 +450,7 @@ export async function measureMutations(
           row.failures.push(
             `Mutation sample ${repeat + 1}: ${stage} failed` +
               fixtureFailureCode(error) +
+              (stage === 'independent database verification' ? databaseProofLabel(error) : '') +
               (stage === 'optimistic rollback verification' ? rollbackProofLabel(error) : '') +
               (stage === 'fixture replication' && fixtureReadiness
                 ? ` (${JSON.stringify(fixtureReadiness)})`

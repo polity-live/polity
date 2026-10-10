@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
 import { schema } from '../../../src/zero/schema';
+import { replicatedTimestampValues } from './mutation-timestamp';
 import type { MutationCase, MutationCaseContext } from './mutation-case-types';
 import { MutationFixtures, mutationFixtureID } from './mutation-fixtures';
 import { reviewedRowMutationCases, type MutationRowPlan } from './mutation-cases-core';
@@ -163,27 +164,23 @@ export async function verifyRevokedAmendmentWriter(ctx: MutationCaseContext, wri
     assert.equal(typeof row.id, 'string', 'Cached application row has no identity');
     const records =
       await ctx.sql`select * from ${ctx.sql(definition.serverName ?? tableName)} where id = ${String(row.id)}`;
-    assert.equal(records.length, 1, 'Rejected mutation left a phantom cached row');
+    assert.equal(records.length, 1, `Rollback row proof:${definition.serverName ?? tableName}`);
     for (const [field, column] of Object.entries(definition.columns)) {
       if (!(field in row)) continue;
       const columnName = column.serverName ?? field;
-      let expected = records[0][columnName];
+      const expected = records[0][columnName];
+      const label = `Rollback field proof:${definition.serverName ?? tableName}.${columnName}`;
       if (expected instanceof Date) {
-        // JS Date discards PostgreSQL microseconds; Zero retains fractional milliseconds.
-        const timestamp =
-          await ctx.sql`select (extract(epoch from ${ctx.sql(columnName)}) * 1000)::double precision as value from ${ctx.sql(definition.serverName ?? tableName)} where id = ${String(row.id)}`;
-        assert.equal(timestamp.length, 1, 'Missing exact SQL timestamp row');
-        assert.ok(
-          typeof timestamp[0].value === 'number' && Number.isFinite(timestamp[0].value),
-          'Invalid exact SQL timestamp'
+        // Compare only the exact values produced by Zero's binary and streamed text codecs.
+        const timestamps = await replicatedTimestampValues(
+          ctx.sql,
+          definition.serverName ?? tableName,
+          columnName,
+          String(row.id)
         );
-        expected = timestamp[0].value;
-      }
-      assert.deepEqual(
-        row[field],
-        expected,
-        'Rejected mutation left a changed cached application field'
-      );
+        assert.equal(typeof row[field], 'number', label);
+        assert.ok(timestamps.includes(row[field] as number), label);
+      } else assert.deepEqual(row[field], expected, label);
     }
   }
 }

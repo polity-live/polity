@@ -132360,6 +132360,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -133058,6 +133068,22 @@
           "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
           "project": "unit",
           "caseId": "requires a replicated response for the writing client, not an HTTP ACK"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-timestamp.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves the documented one-ULP binary versus text decoder difference for modern dates"
         }
       ],
       "suggestedTestRefs": []

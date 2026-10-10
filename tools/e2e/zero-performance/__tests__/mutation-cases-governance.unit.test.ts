@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { governanceMutationCases } from '../mutation-cases-governance';
+import { governanceMutationCases, governanceSQLExpected } from '../mutation-cases-governance';
 import { verifyRevokedGovernanceWriter } from '../mutation-cases-governance-revocation';
 import { groupSharedMutators } from '../../../../src/zero/groups/shared-mutators';
 import { eventSharedMutators } from '../../../../src/zero/events/shared-mutators';
@@ -21,6 +21,34 @@ import {
 } from '../../../../src/zero/agendas/schema';
 
 describe('reviewed governance mutation catalog', () => {
+  it('keeps observed epoch zero distinct from the SQL timestamptz business expectation', () => {
+    const observed = { closing_end_time: 0, closing_duration_seconds: 0, title: 'Reviewed vote' };
+    expect(governanceSQLExpected('vote', observed)).toEqual({
+      ...observed,
+      closing_end_time: new Date(0),
+    });
+    expect(observed.closing_end_time).toBe(0);
+    expect(
+      governanceSQLExpected('agenda_item', {
+        start_time: 0,
+        end_time: 0,
+        activated_at: 0,
+        completed_at: 0,
+        duration: 5,
+      })
+    ).toEqual({
+      start_time: new Date(0),
+      end_time: new Date(0),
+      activated_at: new Date(0),
+      completed_at: new Date(0),
+      duration: 5,
+    });
+    expect(governanceSQLExpected('speaker_list', { start_time: 0, end_time: 0, time: 30 })).toEqual(
+      { start_time: new Date(0), end_time: new Date(0), time: 30 }
+    );
+    expect(governanceSQLExpected('vote', null)).toBeNull();
+    expect(governanceSQLExpected('vote_choice', { order_index: 0 })).toEqual({ order_index: 0 });
+  });
   it('proves retained revoked writer rows with exact SQL microseconds and rejects phantom or changed fields', async () => {
     const exact = 1_900_000_000_000.123;
     let records: Record<string, unknown>[] = [
@@ -31,7 +59,9 @@ describe('reviewed governance mutation catalog', () => {
       if (typeof input === 'string') return input;
       const statement = input.join('?');
       calls.push(statement);
-      return Promise.resolve(statement.includes('extract(epoch') ? [{ value: exact }] : records);
+      return Promise.resolve(
+        statement.includes('extract(epoch') ? [{ microseconds: '953315200000123' }] : records
+      );
     }) as unknown as MutationCaseContext['sql'];
     const ctx = { sql } as MutationCaseContext;
     const writer = (row: unknown) => ({
@@ -45,7 +75,7 @@ describe('reviewed governance mutation catalog', () => {
     ).resolves.toBeUndefined();
     expect(
       calls.some(
-        statement => statement.includes('extract(epoch') && statement.includes('double precision')
+        statement => statement.includes('extract(epoch') && statement.includes('bigint::text')
       )
     ).toBe(true);
     await expect(

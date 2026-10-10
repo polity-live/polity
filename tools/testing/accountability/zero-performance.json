@@ -239,6 +239,13 @@
   "actionReferences": {},
   "actionDeclarations": {},
   "sourceReferenceAdditions": {
+    "tools/e2e/zero-performance/mutation-timestamp.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the documented one-ULP binary versus text decoder difference for modern dates"
+      }
+    ],
     "tools/e2e/zero-performance/mutation-request-completion.ts": [
       {
         "file": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
