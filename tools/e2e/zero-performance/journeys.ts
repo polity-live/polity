@@ -633,13 +633,25 @@ export async function measureJourneys(
       process.env.ZERO_PERFORMANCE_INSPECTOR_PROFILE === '1'
         ? await withDeadline(context.newCDPSession(page), 'Inspector CPU session')
         : undefined;
+    const debugScripts = new Map<string, string>();
     if (inspectorProfiler) {
+      inspectorProfiler.on('Debugger.scriptParsed', event => {
+        if (!event.url) return;
+        try {
+          debugScripts.set(event.scriptId, new URL(event.url).pathname);
+        } catch {
+          // Anonymous serialized browser callbacks have no source URL.
+        }
+      });
       await withDeadline(inspectorProfiler.send('Profiler.enable'), 'Inspector CPU enable');
       await withDeadline(inspectorProfiler.send('Debugger.enable'), 'Inspector debugger enable');
       await withDeadline(
         inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
         'Inspector CPU interval'
       );
+      // Diagnostic runs need a profile even when revocation itself blocks the
+      // renderer before readiness. These samples never replace acceptance data.
+      await withDeadline(inspectorProfiler.send('Profiler.start'), 'Inspector CPU start');
     }
     const revokedAt = Date.now();
     await db().begin(async sql => {
@@ -660,7 +672,7 @@ export async function measureJourneys(
         page.evaluate(id => (globalThis as any).__zeroPerformanceGroupAccess(id), seed.groupId),
         'Revocation authoritative view'
       ).catch(async error => {
-        if (inspectorProfiler) await captureBlockedRenderer(inspectorProfiler);
+        if (inspectorProfiler) await captureBlockedRenderer(inspectorProfiler, debugScripts);
         throw error;
       });
       if (rootAccess.observed && rootAccess.complete && !rootAccess.present) break;
@@ -740,9 +752,6 @@ export async function measureJourneys(
       socket.on('framesent', recordFrame);
       socket.on('framereceived', recordFrame);
     }
-    if (inspectorProfiler) {
-      await withDeadline(inspectorProfiler.send('Profiler.start'), 'Inspector CPU start');
-    }
     const revocationInspectionAt = performance.now();
     try {
       revocation.queries = await inspect(page, clientSamples);
@@ -751,7 +760,7 @@ export async function measureJourneys(
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
       if (inspectorProfiler) {
         try {
-          await captureBlockedRenderer(inspectorProfiler);
+          await captureBlockedRenderer(inspectorProfiler, debugScripts);
         } catch {
           revocation.failures.push('Blocked renderer stack diagnosis failed');
         }
@@ -841,12 +850,12 @@ export async function measureJourneys(
 }
 
 /** Interrupt a failed diagnostic renderer briefly to retain its stack, without locals or arguments. */
-async function captureBlockedRenderer(session: CDPSession) {
+async function captureBlockedRenderer(session: CDPSession, scripts: Map<string, string>) {
   const paused = new Promise<{
     callFrames: {
       functionName: string;
       url: string;
-      location: { lineNumber: number; columnNumber?: number };
+      location: { scriptId: string; lineNumber: number; columnNumber?: number };
     }[];
   }>(resolve => session.once('Debugger.paused', resolve));
   try {
@@ -858,12 +867,45 @@ async function captureBlockedRenderer(session: CDPSession) {
         scope: 'after-failed-acceptance',
         frames: event.callFrames.map(frame => ({
           name: frame.functionName,
-          path: frame.url ? new URL(frame.url).pathname : '',
+          path: scripts.get(frame.location.scriptId),
           line: frame.location.lineNumber + 1,
           column:
             frame.location.columnNumber === undefined ? undefined : frame.location.columnNumber + 1,
         })),
       })
+    );
+    const observations = await withDeadline(
+      session.send('Runtime.evaluate', {
+        expression: `JSON.stringify((() => {
+          const events = globalThis.__zeroPerformanceViewEvents ?? [];
+          const counts = {};
+          for (const event of events.slice(-10000)) {
+            const key = event.name + ':' + event.phase;
+            counts[key] = (counts[key] ?? 0) + 1;
+          }
+          return {total: events.length, recent: counts};
+        })())`,
+        returnByValue: true,
+      }),
+      'Renderer observation counters',
+      5_000
+    );
+    if (typeof observations.result.value !== 'string')
+      throw new Error('Missing renderer observation counters');
+    await writeFile(
+      path.join(
+        required(process.env.ZERO_PERFORMANCE_OUTPUT),
+        'blocked-renderer-observations.json'
+      ),
+      observations.result.value
+    );
+    const { profile } = await withDeadline(
+      session.send('Profiler.stop'),
+      'Paused renderer CPU export'
+    );
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'blocked-renderer.cpuprofile'),
+      JSON.stringify(profile)
     );
   } finally {
     await withDeadline(session.send('Debugger.resume'), 'Renderer diagnostic resume', 5_000);
