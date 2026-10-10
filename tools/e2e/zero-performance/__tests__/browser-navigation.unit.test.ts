@@ -1,6 +1,47 @@
 /* @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { installNavigationProbe } from '../browser-navigation';
+import { installNavigationProbe, inspectorFrameSummary } from '../browser-navigation';
+
+describe('inspector wire diagnostics', () => {
+  it('ignores authentication, application data and unrelated frames', () => {
+    expect(
+      inspectorFrameSummary('["inspect",{"op":"authenticate","value":"secret"}]')
+    ).toBeUndefined();
+    expect(
+      inspectorFrameSummary('["inspect",{"op":"authenticated","value":true}]')
+    ).toBeUndefined();
+    expect(inspectorFrameSummary('["pokePart",{"token":"secret"}]')).toBeUndefined();
+  });
+  it('retains actual metric values and sizes without query arguments or AST values', () => {
+    const payload = JSON.stringify([
+      'inspect',
+      {
+        op: 'queries',
+        value: [
+          {
+            name: 'groups.byId',
+            args: [{ id: 'private-resource' }],
+            ast: { table: 'group', literal: 'secret' },
+            rowCount: 0,
+            got: true,
+            deleted: false,
+            metrics: { 'query-hydration-server-ms': 2.5, 'query-update-server': [1000, 1.3, 2] },
+          },
+        ],
+      },
+    ]);
+    const summary = inspectorFrameSummary(payload);
+    expect(summary).toMatchObject({
+      direction: 'received',
+      bytes: payload.length,
+      queries: [{ name: 'groups.byId', rows: 0, serverMs: 2.5, updateHistogram: [1000, 1.3, 2] }],
+    });
+    expect(JSON.stringify(summary)).not.toMatch(/secret|private-resource|literal/);
+    expect(
+      inspectorFrameSummary('["inspect",{"op":"queries","clientID":"private-client"}]')
+    ).toEqual({ operation: 'queries', direction: 'sent' });
+  });
+});
 
 afterEach(() => {
   const scope = globalThis as any;

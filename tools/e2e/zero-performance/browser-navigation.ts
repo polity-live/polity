@@ -9,6 +9,30 @@ export interface NavigationTarget {
   queryArgs?: Record<string, unknown>;
 }
 
+/** Diagnostic metadata only; never retain socket arguments, AST values or credentials. */
+export function inspectorFrameSummary(payload: string) {
+  if (!/^\[\s*"inspect"\s*,/.test(payload)) return undefined;
+  const message = JSON.parse(payload);
+  const body = message[1];
+  if (body?.op !== 'queries') return undefined;
+  if (!Array.isArray(body.value))
+    return { operation: 'queries' as const, direction: 'sent' as const };
+  return {
+    operation: 'queries' as const,
+    direction: 'received' as const,
+    bytes: Buffer.byteLength(payload),
+    queries: body.value.map((row: any) => ({
+      name: row.name,
+      astBytes: row.ast === undefined ? undefined : Buffer.byteLength(JSON.stringify(row.ast)),
+      rows: row.rowCount,
+      got: row.got,
+      deleted: row.deleted,
+      serverMs: row.metrics?.['query-hydration-server-ms'],
+      updateHistogram: row.metrics?.['query-update-server'],
+    })),
+  };
+}
+
 /** Installed before application code; all timings use the browser's monotonic clock. */
 export function installNavigationProbe() {
   const scope = globalThis as any;

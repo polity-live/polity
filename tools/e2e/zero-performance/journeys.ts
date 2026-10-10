@@ -1,5 +1,11 @@
 import { required, withDeadline } from './required';
-import { chromium, type Page, type Browser, type BrowserContext } from '@playwright/test';
+import {
+  chromium,
+  type Page,
+  type Browser,
+  type BrowserContext,
+  type WebSocket,
+} from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createServerClient } from '@supabase/ssr';
@@ -8,7 +14,11 @@ import { seedMessageFlow } from '../../../e2e/fixtures/domains/communications';
 import { db } from '../../../e2e/fixtures/db';
 import { OWNER, OUTSIDER, OWNER_ID } from './catalog';
 import { BUDGETS } from './metrics';
-import { installNavigationProbe, type NavigationTarget } from './browser-navigation';
+import {
+  installNavigationProbe,
+  inspectorFrameSummary,
+  type NavigationTarget,
+} from './browser-navigation';
 import {
   preloadRuns,
   viewRuns,
@@ -122,6 +132,8 @@ export async function measureJourneys(
       }
     );
     const page = await context.newPage();
+    const sockets = new Set<WebSocket>();
+    page.on('websocket', socket => sockets.add(socket));
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     page.on('console', message => {
@@ -649,6 +661,35 @@ export async function measureJourneys(
       ],
     };
     records.push(revocation);
+    // Observe public Playwright socket events only after all timed samples.
+    // This distinguishes a missing server response from renderer processing;
+    // store metadata, never wire payloads or authentication frames.
+    const wireFrames: unknown[] = [];
+    let wireWrites = Promise.resolve();
+    const recordFrame = (event: { payload: string | Buffer }) => {
+      let summary: ReturnType<typeof inspectorFrameSummary>;
+      try {
+        summary = inspectorFrameSummary(event.payload.toString());
+      } catch {
+        revocation.failures.push('Invalid inspector diagnostic frame');
+        return;
+      }
+      if (!summary) return;
+      wireFrames.push(summary);
+      wireWrites = wireWrites.then(() =>
+        writeFile(
+          path.join(
+            required(process.env.ZERO_PERFORMANCE_OUTPUT),
+            'revocation-inspector-wire.json'
+          ),
+          JSON.stringify({ scope: 'post-acceptance-diagnostic', frames: wireFrames })
+        )
+      );
+    };
+    for (const socket of sockets) {
+      socket.on('framesent', recordFrame);
+      socket.on('framereceived', recordFrame);
+    }
     if (inspectorProfiler) {
       await withDeadline(inspectorProfiler.send('Profiler.start'), 'Inspector CPU start');
     }
@@ -659,6 +700,11 @@ export async function measureJourneys(
     } catch (error) {
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
     } finally {
+      for (const socket of sockets) {
+        socket.off('framesent', recordFrame);
+        socket.off('framereceived', recordFrame);
+      }
+      await wireWrites;
       if (inspectorProfiler) {
         try {
           const { profile } = await withDeadline(
