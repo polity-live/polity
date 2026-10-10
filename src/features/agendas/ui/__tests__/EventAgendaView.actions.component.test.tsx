@@ -312,6 +312,26 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 }
 
 describe('EventAgendaView actions', () => {
+  it('defers hidden dialogs until first opening and keeps them mounted on closing', () => {
+    mocks.liveFocus.mockClear();
+    mocks.editDialog.mockClear();
+    const props = makeProps({ streamAgendaItem: { id: 'item', status: 'pending' } });
+    const view = render(<EventAgendaView {...props} />);
+    expect(mocks.liveFocus).not.toHaveBeenCalled();
+    expect(mocks.editDialog).not.toHaveBeenCalled();
+    view.rerender(
+      <EventAgendaView
+        {...props}
+        liveFocusOpen
+        actionBarHook={{ ...props.actionBarHook, editDialogOpen: true }}
+      />
+    );
+    expect(mocks.liveFocus.mock.calls.at(-1)?.[0].open).toBe(true);
+    expect(mocks.editDialog.mock.calls.at(-1)?.[0].open).toBe(true);
+    view.rerender(<EventAgendaView {...props} />);
+    expect(mocks.liveFocus.mock.calls.at(-1)?.[0].open).toBe(false);
+    expect(mocks.editDialog.mock.calls.at(-1)?.[0].open).toBe(false);
+  });
   it('navigates from missing and empty states through stable links', () => {
     const { rerender } = render(<EventAgendaView {...makeProps({ event: null })} />);
     expect(screen.getByRole('link').getAttribute('data-action-id')).toBe(
@@ -670,7 +690,7 @@ describe('EventAgendaView actions', () => {
   });
 
   it('exposes every managed CR and regular voting toolbar phase', () => {
-    const props = makeProps();
+    const props = makeProps({ liveFocusOpen: true });
     const toolbarAgendaItem = {
       id: 'toolbar-item',
       title: 'Toolbar item',
@@ -1005,7 +1025,10 @@ describe('EventAgendaView actions', () => {
   });
 
   it('covers empty stream, permission, tally, and next-item fallback chains', () => {
-    const props = makeProps();
+    const props = makeProps({
+      liveFocusOpen: true,
+      actionBarHook: { ...makeProps().actionBarHook, editDialogOpen: true },
+    });
     const streamAgendaItem = {
       id: 'fallback-stream',
       title: undefined,

@@ -5,7 +5,7 @@ import {
   CollectionToggle,
 } from '@/features/shared/ui/collections/CollectionScope';
 
-import { useId, type CSSProperties } from 'react';
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
@@ -85,6 +85,15 @@ import {
 import { getAppTutorialElectionCopy } from '@/features/app-tutorial/amendment-fixture';
 import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
+/** Avoid hidden dialog subscriptions at page mount; preserve state after first use. */
+function DeferredAgendaDialog({ open, children }: { open: boolean; children: ReactNode }) {
+  const [hasOpened, setHasOpened] = useState(open);
+  useEffect(() => {
+    if (open) setHasOpened(true);
+  }, [open]);
+  return open || hasOpened ? children : null;
+}
+
 export interface EventAgendaViewProps {
   virtualizeChangeRequests?: boolean;
   eventId: any;
@@ -1070,81 +1079,83 @@ export function EventAgendaView({
           noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         />
 
-        <EventLiveFocusDialog
-          open={liveFocusOpen}
-          onOpenChange={setLiveFocusOpen}
-          t={t}
-          streamUrl={event?.stream_url}
-          currentAgendaItem={streamAgendaItem}
-          currentAgendaItemTopNumber={streamAgendaItemTopNumber}
-          streamRuntimeStatus={streamRuntimeStatus}
-          streamIsLive={streamIsLive}
-          eventStartTimestamp={eventStartTimestamp}
-          speakerList={streamSpeakerListData}
-          showSpeakerGender={Boolean(event?.gender_quota_enabled)}
-          userId={user?.id}
-          isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
-          speakerLoading={actionBarHook.speakerLoading}
-          onJoinSpeakerList={
-            actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
-          }
-          onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
-          onMarkSpeakerCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
-          canManageAgenda={canManageAgenda}
-          navigationLoading={agendaNav.isLoading}
-          onStartVote={liveFocusStartVoteClick}
-          onStartFinalVote={liveFocusStartFinalVoteClick}
-          onCloseFinalVote={liveFocusCloseFinalVoteClick}
-          onJumpToNextVoteStep={
-            canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
-              ? handleJumpToNextStartableSequenceItem
-              : undefined
-          }
-          onEditItem={canManageAgenda ? actionBarHook.handleEditClick : undefined}
-          startVoteLabel={startVoteTooltip}
-          startFinalVoteLabel={startFinalVoteTooltip}
-          closeFinalVoteLabel={closeVoteTooltip}
-          onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
-          completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
-          onNextItem={agendaNav.moveToNextItem}
-          nextItemDisabled={liveFocusNextItemDisabled}
-          votingPhase={liveFocusVotingPhase}
-          isVotingActionAvailable={liveFocusIsVotingActionAvailable}
-          canVote={actionBarHook.hasVotingRight}
-          hasUserVoted={liveFocusHasUserVoted}
-          voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
-          disableVoteButton={voteButtonDisabled}
-          disabledVoteTooltip={disabledVoteTooltip}
-          onVoteClick={liveFocusVoteClick}
-          showOfflineTallyButton={showOfflineTallyButton}
-          onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
-          offlineTallyMode={toolbarOfflineTallyMode}
-          offlineTallyLabel={getOfflineTallyTooltip({
-            phase: toolbarOfflineTallyPhase,
-            mode: toolbarOfflineTallyMode,
-          })}
-          canBeCandidate={actionBarHook.hasCandidateRight}
-          isUserCandidate={actionBarHook.isUserCandidate}
-          candidateLoading={actionBarHook.candidateLoading}
-          onBecomeCandidate={actionBarHook.handleBecomeCandidate}
-          onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-          attendanceMode={attendanceMode}
-          confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
-          eligibleFinalVoterCount={eligibleFinalVoterCount}
-          streamElection={streamElection}
-          streamVote={streamVote}
-          streamDelegateTargetEvent={streamDelegateTargetEvent}
-          indicativeSelections={indicativeSelections}
-          finalSelections={finalSelections}
-          userHasElectionVoted={userHasElectionVoted}
-          userSelectedCandidateIds={userSelectedCandidateIds}
-          indicativeDecisions={indicativeDecisions}
-          finalDecisions={finalDecisions}
-          userHasVoteVoted={userHasVoteVoted}
-          userSelectedChoiceIds={userSelectedChoiceIds}
-          streamForwardingPreview={streamForwardingPreview}
-          votingWorkspace={renderVotingWorkspace('fullscreen')}
-        />
+        <DeferredAgendaDialog open={liveFocusOpen}>
+          <EventLiveFocusDialog
+            open={liveFocusOpen}
+            onOpenChange={setLiveFocusOpen}
+            t={t}
+            streamUrl={event?.stream_url}
+            currentAgendaItem={streamAgendaItem}
+            currentAgendaItemTopNumber={streamAgendaItemTopNumber}
+            streamRuntimeStatus={streamRuntimeStatus}
+            streamIsLive={streamIsLive}
+            eventStartTimestamp={eventStartTimestamp}
+            speakerList={streamSpeakerListData}
+            showSpeakerGender={Boolean(event?.gender_quota_enabled)}
+            userId={user?.id}
+            isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
+            speakerLoading={actionBarHook.speakerLoading}
+            onJoinSpeakerList={
+              actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
+            }
+            onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
+            onMarkSpeakerCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
+            canManageAgenda={canManageAgenda}
+            navigationLoading={agendaNav.isLoading}
+            onStartVote={liveFocusStartVoteClick}
+            onStartFinalVote={liveFocusStartFinalVoteClick}
+            onCloseFinalVote={liveFocusCloseFinalVoteClick}
+            onJumpToNextVoteStep={
+              canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
+                ? handleJumpToNextStartableSequenceItem
+                : undefined
+            }
+            onEditItem={canManageAgenda ? actionBarHook.handleEditClick : undefined}
+            startVoteLabel={startVoteTooltip}
+            startFinalVoteLabel={startFinalVoteTooltip}
+            closeFinalVoteLabel={closeVoteTooltip}
+            onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
+            completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
+            onNextItem={agendaNav.moveToNextItem}
+            nextItemDisabled={liveFocusNextItemDisabled}
+            votingPhase={liveFocusVotingPhase}
+            isVotingActionAvailable={liveFocusIsVotingActionAvailable}
+            canVote={actionBarHook.hasVotingRight}
+            hasUserVoted={liveFocusHasUserVoted}
+            voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
+            disableVoteButton={voteButtonDisabled}
+            disabledVoteTooltip={disabledVoteTooltip}
+            onVoteClick={liveFocusVoteClick}
+            showOfflineTallyButton={showOfflineTallyButton}
+            onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
+            offlineTallyMode={toolbarOfflineTallyMode}
+            offlineTallyLabel={getOfflineTallyTooltip({
+              phase: toolbarOfflineTallyPhase,
+              mode: toolbarOfflineTallyMode,
+            })}
+            canBeCandidate={actionBarHook.hasCandidateRight}
+            isUserCandidate={actionBarHook.isUserCandidate}
+            candidateLoading={actionBarHook.candidateLoading}
+            onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+            onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+            attendanceMode={attendanceMode}
+            confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
+            eligibleFinalVoterCount={eligibleFinalVoterCount}
+            streamElection={streamElection}
+            streamVote={streamVote}
+            streamDelegateTargetEvent={streamDelegateTargetEvent}
+            indicativeSelections={indicativeSelections}
+            finalSelections={finalSelections}
+            userHasElectionVoted={userHasElectionVoted}
+            userSelectedCandidateIds={userSelectedCandidateIds}
+            indicativeDecisions={indicativeDecisions}
+            finalDecisions={finalDecisions}
+            userHasVoteVoted={userHasVoteVoted}
+            userSelectedChoiceIds={userSelectedChoiceIds}
+            streamForwardingPreview={streamForwardingPreview}
+            votingWorkspace={renderVotingWorkspace('fullscreen')}
+          />
+        </DeferredAgendaDialog>
 
         {/* Stream Section */}
         <Collapsible open={streamOpen} onOpenChange={setStreamOpen}>
@@ -1699,21 +1710,23 @@ export function EventAgendaView({
         />
 
         {streamAgendaItem ? (
-          <EditElectionVoteDialog
-            open={actionBarHook.editDialogOpen}
-            onOpenChange={actionBarHook.setEditDialogOpen}
-            agendaItemId={streamAgendaItem.id}
-            agendaItemTitle={displayedStreamAgendaItem?.title ?? null}
-            agendaItemDescription={displayedStreamAgendaItem?.description ?? null}
-            agendaItemDuration={streamAgendaItem.duration ?? null}
-            election={displayedStreamElection ?? undefined}
-            vote={streamVote ?? undefined}
-            choices={(streamVote?.choices ?? []).map((choice: any) => ({
-              id: choice.id,
-              label: choice.label,
-              order_index: choice.order_index,
-            }))}
-          />
+          <DeferredAgendaDialog open={actionBarHook.editDialogOpen}>
+            <EditElectionVoteDialog
+              open={actionBarHook.editDialogOpen}
+              onOpenChange={actionBarHook.setEditDialogOpen}
+              agendaItemId={streamAgendaItem.id}
+              agendaItemTitle={displayedStreamAgendaItem?.title ?? null}
+              agendaItemDescription={displayedStreamAgendaItem?.description ?? null}
+              agendaItemDuration={streamAgendaItem.duration ?? null}
+              election={displayedStreamElection ?? undefined}
+              vote={streamVote ?? undefined}
+              choices={(streamVote?.choices ?? []).map((choice: any) => ({
+                id: choice.id,
+                label: choice.label,
+                order_index: choice.order_index,
+              }))}
+            />
+          </DeferredAgendaDialog>
         ) : null}
       </AgendaPageShell>
     </div>
