@@ -36,14 +36,16 @@ export function queryDiagnostic(
   details: Record<string, unknown> = {}
 ) {
   if (process.env.ZERO_PERFORMANCE_DIAGNOSTICS !== '1') return;
+  const observedAt = performance.now();
   console.info(
     JSON.stringify({
       benchmark: 'query-api',
       requestID: requests.getStore()?.id,
       clientCorrelationID: requests.getStore()?.clientCorrelationID,
       phase,
-      at: Date.now(),
-      elapsed: performance.now() - started,
+      // Keep phases on one server clock even when the host adjusts wall time.
+      at: performance.timeOrigin + observedAt,
+      elapsed: observedAt - started,
       ...details,
     })
   );
