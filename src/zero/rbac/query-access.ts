@@ -1090,6 +1090,8 @@ export function applyElectionManagerQueryAccess<T>(q: T, userID: string | undefi
 
   if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
 
+  // Both links target primary keys. Keep the complete manager predicate, but
+  // resolve those endpoints before repeated ballot/elector projections.
   return query.whereExists(
     'agenda_item',
     (agendaItem: any) =>
@@ -1102,9 +1104,9 @@ export function applyElectionManagerQueryAccess<T>(q: T, userID: string | undefi
             ['manage', 'manage_votes'],
             ['events', 'elections']
           ),
-        { flip: false }
+        { flip: true }
       ),
-    { flip: false }
+    { flip: true }
   ) as T;
 }
 
@@ -1120,7 +1122,7 @@ export function applyElectionElectorOrManagerQueryAccess<T>(
     or(
       cmp('user_id', userID),
       exists('election', (election: any) => applyElectionManagerQueryAccess(election, userID), {
-        flip: false,
+        flip: true,
       })
     )
   ) as T;
@@ -1283,6 +1285,8 @@ export function applyVoteManagerQueryAccess<T>(q: T, userID: string | undefined 
 
   if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
 
+  // The agenda and event relationships target indexed primary keys.
+  // The independent amendment access branch remains unchanged.
   return query.where(({ or, exists }: any) =>
     or(
       exists(
@@ -1291,9 +1295,9 @@ export function applyVoteManagerQueryAccess<T>(q: T, userID: string | undefined 
           agendaItem.whereExists(
             'event',
             (event: any) => applyEventManagerQueryAccess(event, userID, 'manage_votes'),
-            { flip: false }
+            { flip: true }
           ),
-        { flip: false }
+        { flip: true }
       ),
       exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), {
         flip: false,
@@ -1311,7 +1315,7 @@ export function applyVoteVoterOrManagerQueryAccess<T>(q: T, userID: string | und
     or(
       cmp('user_id', userID),
       exists('vote', (vote: any) => applyVoteManagerQueryAccess(vote, userID), {
-        flip: false,
+        flip: true,
       })
     )
   ) as T;
