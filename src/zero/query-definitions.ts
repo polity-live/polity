@@ -36,8 +36,9 @@ export function memoizeQueryDefinitions<T extends Record<string, AnyQueryDefinit
             }
             const query = definition.fn(input);
             if (cache.size >= MAX_ARGUMENTS_PER_CONTEXT) {
-              const oldest = cache.keys().next().value;
-              if (oldest !== undefined) cache.delete(oldest);
+              // At the capacity limit the map necessarily has an oldest key.
+              const oldest = cache.keys().next().value as string;
+              cache.delete(oldest);
             }
             cache.set(key, query);
             return query;

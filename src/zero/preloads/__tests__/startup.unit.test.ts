@@ -24,6 +24,27 @@ function browser(href: string) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('initial authenticated query registration', () => {
+  it.each(['/', '/messages', '/user/viewer'])(
+    'registers unique initial demand at %s',
+    async pathname => {
+      const events = browser(`https://app.example.test${pathname}`);
+      const state = client('viewer');
+      initializeAppQueries(state.zero as unknown as Zero);
+      const keys = events.filter(event => event.phase === 'preload-start').map(event => event.key);
+      expect(new Set(keys).size).toBe(keys.length);
+      expect(keys).toContain(preloadKey('queries.users.current', {}));
+      if (pathname === '/messages') {
+        expect(keys).toContain(
+          preloadKey('queries.messages.conversationsWithRelations', { limit: 20 })
+        );
+        expect(keys.some(key => key.startsWith('queries.messages.conversationById:'))).toBe(false);
+      }
+      if (pathname === '/') expect(keys).toHaveLength(4);
+      state.resolve();
+      await state.complete;
+      expect(state.cleanup).toHaveBeenCalledTimes(keys.length);
+    }
+  );
   it('does not register signed-out or server-side demand', () => {
     browser('https://app.example.test/search?q=budget');
     for (const userID of [undefined, 'anon']) {

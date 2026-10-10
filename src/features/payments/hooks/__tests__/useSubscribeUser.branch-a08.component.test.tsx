@@ -56,6 +56,16 @@ vi.mock('@/zero/queries', () => ({
 import { useSubscribeUser } from '../useSubscribeUser';
 
 describe('useSubscribeUser', () => {
+  it('recognizes a projected subscriber through its related user identity', () => {
+    const projected = {
+      subscriptions: [{ id: 'nested', subscriber_id: '', subscriber_user: { id: 'viewer' } }],
+      subscriberCount: 1,
+      isLoading: false,
+    };
+    const { result } = renderHook(() => useSubscribeUser('target', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    expect(result.current.subscriberCount).toBe(1);
+  });
   beforeEach(() => {
     state.authUser = { id: 'viewer' };
     state.targetUser = { id: 'target', subscriber_count: 7 };

@@ -414,6 +414,12 @@ jobs:
         with:
           name: coverage-browser-${{ github.run_attempt }}
           path: coverage-browser
+      - name: Verify provider execution evidence independently
+        run: >-
+          pnpm exec vitest run --config vitest.coverage.config.ts
+          --project component src/providers/__tests__/zero-provider.component.test.tsx
+          --maxWorkers=2 --coverage.include=src/providers/zero-provider.tsx
+          --coverage.reportsDirectory=coverage-provider
       - name: Download database coverage
         uses: actions/download-artifact@v8
         with:
@@ -425,6 +431,7 @@ jobs:
           coverage/coverage-final.json
           coverage-browser/coverage-final.json
           coverage-database/coverage-final.json
+          coverage-provider/coverage-final.json
       - name: Enforce repository and changed-code coverage
         run: |
           node tools/testing/check-coverage-ratchet.mjs

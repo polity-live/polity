@@ -47,6 +47,17 @@ afterEach(() => {
 });
 
 describe('SearchCardStateProvider', () => {
+  it.each([
+    [['blog'], ['subscriptions']],
+    [['amendment'], ['collaborations', 'subscriptions']],
+  ])('activates only required viewer domains for %j', (contentTypes, expected) => {
+    render(
+      <SearchCardStateProvider contentTypes={contentTypes}>
+        <span>filtered cards</span>
+      </SearchCardStateProvider>
+    );
+    expect([...mocks.activeQueries].sort()).toEqual(expected);
+  });
   beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       callback(0);

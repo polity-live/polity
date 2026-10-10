@@ -22,6 +22,24 @@ function conversation(id: string, overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe('useConversationSelection exhaustive branches', () => {
+  it('persists assistant deep-link selection for the current viewer', () => {
+    window.history.replaceState({ __TSR_index: 3 }, '', '/messages?ariaKai=true');
+    const hook = renderHook(() =>
+      useConversationSelection([conversation('assistant', { assistant: true })], {
+        openAriaKai: true,
+        restoreOnNavigation: true,
+        viewerID: 'owner',
+      })
+    );
+    expect(hook.result.current.selectedConversationId).toBe('assistant');
+    expect(window.history.state).toMatchObject({
+      __TSR_index: 3,
+      polityMessageSelection: { viewerID: 'owner', conversationID: 'assistant' },
+    });
+    expect(window.location.search).toBe('');
+    hook.unmount();
+    window.history.replaceState({}, '', '/');
+  });
   it('opens an authorized local deep link on the first render without exposing an absent conversation', () => {
     window.history.replaceState(
       { polityMessageSelection: { viewerID: 'owner', conversationID: 'previous' } },

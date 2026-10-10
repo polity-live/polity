@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   appErrorBody: vi.fn(),
@@ -89,6 +89,11 @@ beforeEach(() => {
   mocks.appErrorBody.mockImplementation((_error, fallbackCode) => ({ code: fallbackCode }));
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
+
 describe('R02 currency route accountability', () => {
   it('serves live and fallback currency catalogues through GET only', async () => {
     const routeHandlers = handlers(CurrenciesRoute);
@@ -164,6 +169,48 @@ describe('R02 Zero mutation route accountability', () => {
 });
 
 describe('R02 Zero query route accountability', () => {
+  it('reports query identities and structural counts without logging predicate values', async () => {
+    vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
+    const logged = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const result = {
+      kind: 'QueryResponse',
+      queries: [
+        {
+          id: 'query-one',
+          name: 'groups.by-id',
+          ast: { table: 'group', where: { type: 'simple', value: 'private-predicate' } },
+        },
+        { id: 'query-two', name: 'groups.unavailable', error: 'forbidden' },
+      ],
+    };
+    mocks.handleQuery.mockResolvedValueOnce(result);
+    const response = await handlers(QueryRoute).POST({ request: request('/api/query') });
+    await expect(response.json()).resolves.toEqual(result);
+    const diagnostic = logged.mock.calls
+      .map(([value]) => JSON.parse(value as string))
+      .find(event => event.phase === 'query-identities');
+    expect(diagnostic.queries).toEqual([
+      {
+        id: 'query-one',
+        name: 'groups.by-id',
+        structure: { bytes: expect.any(Number), queries: 1, conditions: 1, maxQueryDepth: 1 },
+      },
+      { id: 'query-two', name: 'groups.unavailable' },
+    ]);
+    expect(JSON.stringify(logged.mock.calls)).not.toContain('private-predicate');
+  });
+
+  it('preserves a query error response while diagnostics are enabled', async () => {
+    vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
+    const logged = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const result = { kind: 'Error', message: 'query unavailable' };
+    mocks.handleQuery.mockResolvedValueOnce(result);
+    const response = await handlers(QueryRoute).POST({ request: request('/api/query') });
+    await expect(response.json()).resolves.toEqual(result);
+    expect(
+      logged.mock.calls.some(([value]) => JSON.parse(value as string).phase === 'query-identities')
+    ).toBe(false);
+  });
   it('authenticates and transforms Zero queries through POST only', async () => {
     const routeHandlers = handlers(QueryRoute);
     expect(Object.keys(routeHandlers)).toEqual(['POST']);

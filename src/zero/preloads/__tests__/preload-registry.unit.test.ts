@@ -110,6 +110,48 @@ describe('Zero preload registry', () => {
     second.release();
   });
 
+  it('allows a retry after the SDK rejects preload creation synchronously', async () => {
+    const { zero, cleanup } = createFakeZero();
+    zero.preload.mockImplementationOnce(() => {
+      throw new Error('connection closed');
+    });
+    expect(() => retainZeroPreloadHandle(zero, entry())).toThrow('connection closed');
+    const retried = retainZeroPreloadHandle(zero, entry());
+    await retried.complete;
+    retried.release();
+    expect(zero.preload).toHaveBeenCalledTimes(2);
+    expect(cleanup).toHaveBeenCalledOnce();
+  });
+
+  it('bounds abandoned work when completion never arrives and permits fresh demand', () => {
+    vi.useFakeTimers();
+    try {
+      const cleanup = vi.fn();
+      const preload = vi.fn(() => ({
+        cleanup,
+        complete: new Promise<void>(() => {
+          // Simulate a disconnected SDK that never settles its preload.
+        }),
+      }));
+      const zero = { preload };
+      const abandoned = retainZeroPreloadHandle(zero, entry());
+      abandoned.release();
+      vi.advanceTimersByTime(9_999);
+      expect(cleanup).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(cleanup).toHaveBeenCalledOnce();
+      const fresh = retainZeroPreloadHandle(zero, entry());
+      expect(preload).toHaveBeenCalledTimes(2);
+      abandoned.release();
+      expect(cleanup).toHaveBeenCalledOnce();
+      fresh.release();
+      vi.advanceTimersByTime(10_000);
+      expect(cleanup).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('uses explicit TTL values and logs rejected preloads without leaking cleanup', async () => {
     const cleanup = vi.fn();
     const failure = Promise.reject(new Error('offline'));

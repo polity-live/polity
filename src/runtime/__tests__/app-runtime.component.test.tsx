@@ -81,4 +81,23 @@ describe('AppRuntime', () => {
     rerender(<AppRuntime>Private</AppRuntime>);
     expect(screen.getByRole('button', { name: 'Runtime state 1' })).toBeTruthy();
   });
+  it('retains the authentication loading shell if optional runtime prefetch fails', async () => {
+    mocks.pathname = '/messages';
+    mocks.loading = true;
+    vi.doMock('../connected-app-runtime', () => {
+      throw new Error('runtime chunk unavailable');
+    });
+    vi.resetModules();
+    try {
+      const { AppRuntime: FreshRuntime } = await import('../app-runtime');
+      const { container } = render(<FreshRuntime>Private</FreshRuntime>);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
+      expect(mocks.connected).not.toHaveBeenCalled();
+    } finally {
+      vi.doUnmock('../connected-app-runtime');
+    }
+  });
 });

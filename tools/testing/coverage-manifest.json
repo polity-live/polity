@@ -2704,6 +2704,11 @@
             "coveredStatements": 118,
             "totalStatements": 118
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the fallback query disabled when an authorized projection has no event"
         }
       ],
       "suggestedTestRefs": [
@@ -4594,6 +4599,16 @@
             "coveredStatements": 12,
             "totalStatements": 12
           }
+        },
+        {
+          "file": "src/features/agendas/ui/__tests__/AgendaUiSystem.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves page and dialog-body content with caller layout classes"
+        },
+        {
+          "file": "src/features/agendas/ui/__tests__/AgendaUiSystem.component.test.tsx",
+          "project": "component",
+          "caseId": "switches between details and speaker list without rendering both as active"
         }
       ],
       "suggestedTestRefs": [
@@ -10213,6 +10228,11 @@
             "coveredStatements": 82,
             "totalStatements": 82
           }
+        },
+        {
+          "file": "src/features/amendments/hooks/__tests__/useSubscribeAmendment.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes nested subscribers in a projection with an absent aggregate count"
         }
       ],
       "suggestedTestRefs": [
@@ -16894,6 +16914,16 @@
           "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
           "project": "component",
           "caseId": "rolls back failed subscription mutations and guards missing users, targets, and duplicate rows"
+        },
+        {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "uses projected subscriber rows when both aggregate counts are absent"
+        },
+        {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes projected nested subscriber identities and prevents duplicate writes"
         }
       ],
       "suggestedTestRefs": [
@@ -39517,6 +39547,11 @@
             "coveredStatements": 41,
             "totalStatements": 41
           }
+        },
+        {
+          "file": "src/features/events/hooks/__tests__/useCancelEvent.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "disables cancellation detail demand when the action is hidden"
         }
       ],
       "suggestedTestRefs": [
@@ -39949,6 +39984,11 @@
             "coveredStatements": 82,
             "totalStatements": 82
           }
+        },
+        {
+          "file": "src/features/events/hooks/__tests__/useSubscribeEvent.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes nested projected subscribers when an aggregate is missing"
         }
       ],
       "suggestedTestRefs": [
@@ -43895,6 +43935,11 @@
             "coveredStatements": 86,
             "totalStatements": 86
           }
+        },
+        {
+          "file": "src/features/groups/hooks/__tests__/useSubscribeGroup.component.test.tsx",
+          "project": "component",
+          "caseId": "uses projected subscriber rows when both aggregate counts are absent"
         }
       ],
       "suggestedTestRefs": [
@@ -49483,6 +49528,11 @@
             "coveredStatements": 24,
             "totalStatements": 24
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "persists assistant deep-link selection for the current viewer"
         }
       ],
       "suggestedTestRefs": [
@@ -49638,6 +49688,16 @@
             "coveredStatements": 183,
             "totalStatements": 183
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves history when clearing a signed-out compose intent without a selection"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "persists the current selection when clearing a compose intent without an explicit target"
         }
       ],
       "suggestedTestRefs": [
@@ -59371,6 +59431,11 @@
             "coveredStatements": 79,
             "totalStatements": 79
           }
+        },
+        {
+          "file": "src/features/payments/hooks/__tests__/useSubscribeUser.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes a projected subscriber through its related user identity"
         }
       ],
       "suggestedTestRefs": [
@@ -88656,6 +88721,11 @@
             "coveredStatements": 35,
             "totalStatements": 35
           }
+        },
+        {
+          "file": "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "renders nothing without any content"
         }
       ],
       "suggestedTestRefs": [
@@ -102904,6 +102974,11 @@
           "file": "src/layout/__tests__/app-shell.component.test.tsx",
           "project": "component",
           "caseId": "contains mobile navigation margins on the City Design canvas route"
+        },
+        {
+          "file": "src/layout/__tests__/app-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the public frame available when authenticated frame prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -102928,6 +103003,11 @@
           "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
           "project": "component",
           "caseId": "contains mobile navigation margins on the City Design canvas route"
+        },
+        {
+          "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "registers search demand on the search route"
         }
       ],
       "suggestedTestRefs": ["src/layout/__tests__/authenticated-shell.component.test.tsx"]
@@ -103901,6 +103981,41 @@
             "coveredStatements": 1,
             "totalStatements": 95
           }
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a fresh stored session through a temporary validation failure"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "clears a revoked fresh token without attempting token rotation"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "opens the signed-out loading gate when stored-session initialization rejects"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores session storage completion after unmount"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a newer account when a nearly expired startup session refresh resolves"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores a stored session that arrives after a newer sign-in"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the server-side provider without opening browser session I/O"
         }
       ],
       "suggestedTestRefs": ["src/providers/__tests__/auth-provider.component.test.tsx"]
@@ -104003,6 +104118,11 @@
             "coveredStatements": 1,
             "totalStatements": 1
           }
+        },
+        {
+          "file": "src/__tests__/router.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates the router when optional frame code prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -107897,6 +108017,16 @@
           "evidence": {
             "relation": "direct"
           }
+        },
+        {
+          "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports query identities and structural counts without logging predicate values"
+        },
+        {
+          "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves a query error response while diagnostics are enabled"
         }
       ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
@@ -108837,6 +108967,11 @@
             "coveredStatements": 9,
             "totalStatements": 9
           }
+        },
+        {
+          "file": "src/runtime/__tests__/app-runtime.component.test.tsx",
+          "project": "component",
+          "caseId": "retains the authentication loading shell if optional runtime prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -118019,6 +118154,11 @@
           "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
           "project": "component",
           "caseId": "removes status and counts when the protected queries revoke their results"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "falls back to the aggregate then zero when a complete subscriber result is absent"
         }
       ],
       "suggestedTestRefs": [
@@ -122301,6 +122441,26 @@
           "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
           "project": "component",
           "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "sorts projected choices without mutating votes and keeps unrelated agenda items out"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes an agenda shell whose optional roles are absent"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "disables optional collection queries when their sections are hidden"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes absent query data and disables every optional query"
         }
       ],
       "suggestedTestRefs": [
@@ -124921,6 +125081,11 @@
           "file": "src/zero/__tests__/observed-query.component.test.tsx",
           "project": "component",
           "caseId": "forwards the public hook arguments and reports real partial/complete results without changing them"
+        },
+        {
+          "file": "src/zero/__tests__/observed-query.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the mounted hook valid after its benchmark sink is removed"
         }
       ],
       "suggestedTestRefs": ["src/zero/__tests__/observed-query.component.test.tsx"]
@@ -126186,6 +126351,16 @@
             "coveredStatements": 271,
             "totalStatements": 271
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports a synchronous route preload failure and releases its query after settlement"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not start later background entries after foreground demand preempts the task"
         }
       ],
       "suggestedTestRefs": [
@@ -126222,6 +126397,16 @@
             "coveredStatements": 53,
             "totalStatements": 53
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows a retry after the SDK rejects preload creation synchronously"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds abandoned work when completion never arrives and permits fresh demand"
         }
       ],
       "suggestedTestRefs": [
@@ -126251,6 +126436,11 @@
           "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
           "project": "unit",
           "caseId": "observes completion and delayed release for abandoned in-flight work without inventing materialization"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports missing client identity as an empty string"
         }
       ],
       "suggestedTestRefs": [
@@ -126895,6 +127085,11 @@
           "file": "src/zero/__tests__/query-definitions.unit.test.ts",
           "project": "unit",
           "caseId": "reuses only equal validated arguments in the same context and leaves original definitions intact"
+        },
+        {
+          "file": "src/zero/__tests__/query-definitions.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds retained argument variants and rebuilds evicted entries"
         }
       ],
       "suggestedTestRefs": ["src/zero/__tests__/query-definitions.unit.test.ts"]
@@ -133970,6 +134165,16 @@
     },
     {
       "path": "tools/testing/accountability/zero-performance.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/zero-static-coverage.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

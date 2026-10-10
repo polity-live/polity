@@ -22,6 +22,17 @@ function registry() {
 }
 
 describe('Deterministic app query builders', () => {
+  it.each([undefined, null, 'anonymous'])(
+    'does not retain builders without an object context: %j',
+    ctx => {
+      const build = vi.fn(() => zql.event.where('id', 'public-event'));
+      const { event } = memoizeQueryDefinitions({ event: defineQuery(build) });
+      const input = { args: undefined, ctx } as never;
+      const first = event.fn(input);
+      expect(queryAST(event.fn(input))).toEqual(queryAST(first));
+      expect(build).toHaveBeenCalledTimes(2);
+    }
+  );
   it.each(['owner', 'outsider', 'anon'])(
     'preserves complete access trees for cached agenda, election and network builders as %s',
     userID => {

@@ -331,11 +331,6 @@ const InfoTabsContent: React.FC<InfoTabsProps> = ({
     });
   };
 
-  // Don't render if there's no content
-  if (!about && !contact && !eventDetails && !activity) {
-    return null;
-  }
-
   return (
     <Tabs
       value={selectedTab}

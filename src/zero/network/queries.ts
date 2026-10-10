@@ -61,20 +61,12 @@ function applyGroupConnectionRequestAccess<T>(q: T, userID: string | undefined |
   ) as T;
 }
 
-function applyWorkflowAccess<T>(
-  q: T,
-  userID: string | undefined | null,
-  planPerWorkflow = false
-): T {
-  const plan = planPerWorkflow ? { flip: false } : undefined;
+function applyWorkflowAccess<T>(q: T, userID: string | undefined | null): T {
+  const plan = { flip: false };
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID, planPerWorkflow), plan),
-      exists(
-        'start_group',
-        (group: any) => applyGroupQueryAccess(group, userID, planPerWorkflow),
-        plan
-      )
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, true), plan),
+      exists('start_group', (group: any) => applyGroupQueryAccess(group, userID, true), plan)
     )
   ) as T;
 }
@@ -88,7 +80,7 @@ function applyWorkflowApprovalAccess<T>(q: T, userID: string | undefined | null)
       exists('requested_by_group', (group: any) => applyGroupQueryAccess(group, userID, true), {
         flip: false,
       }),
-      exists('workflow', (workflow: any) => applyWorkflowAccess(workflow, userID, true), {
+      exists('workflow', (workflow: any) => applyWorkflowAccess(workflow, userID), {
         flip: false,
       })
     )
@@ -656,12 +648,12 @@ export const networkQueries = {
   workflowsByGroup: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
-      applyWorkflowAccess(zql.group_workflow, userID, true)
+      applyWorkflowAccess(zql.group_workflow, userID)
         .where('group_id', groupId)
         .related('steps', q =>
           q
             .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
+            .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
             .orderBy('order_index', 'asc')
         )
         .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -677,12 +669,12 @@ export const networkQueries = {
   ),
 
   workflowById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyWorkflowAccess(zql.group_workflow, userID, true)
+    applyWorkflowAccess(zql.group_workflow, userID)
       .where('id', id)
       .related('steps', q =>
         q
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
           .orderBy('order_index', 'asc')
       )
       .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -698,11 +690,11 @@ export const networkQueries = {
   ),
 
   allWorkflows: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyWorkflowAccess(zql.group_workflow, userID, true)
+    applyWorkflowAccess(zql.group_workflow, userID)
       .related('steps', q =>
         q
           .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
+          .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
           .orderBy('order_index', 'asc')
       )
       .related('start_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -740,7 +732,7 @@ export const networkQueries = {
             .related('steps', sq =>
               sq
                 .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-                .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID, true))
+                .related('target_workflow', workflow => applyWorkflowAccess(workflow, userID))
                 .orderBy('order_index', 'asc')
             )
         )

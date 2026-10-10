@@ -19,6 +19,14 @@ afterEach(() => {
 });
 
 describe('router bootstrap', () => {
+  it('creates the router when optional frame code prefetch fails', async () => {
+    vi.stubGlobal('window', { location: { pathname: '/search' } });
+    mocks.connectedCode.mockRejectedValueOnce(new Error('connected chunk unavailable'));
+    mocks.authenticatedCode.mockRejectedValueOnce(new Error('shell chunk unavailable'));
+    expect(getRouter()).toEqual({ id: 'router' });
+    await Promise.resolve();
+    expect(mocks.createRouter).toHaveBeenCalledOnce();
+  });
   it('starts only code loading for nonpublic browser routes, without mounting providers', () => {
     vi.stubGlobal('window', { location: { pathname: '/' } });
     getRouter();

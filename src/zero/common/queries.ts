@@ -56,28 +56,23 @@ function applyLinkQueryAccess<T>(q: T, userID: string | undefined | null): T {
   ) as T;
 }
 
-function applyTimelineEventAccess<T>(
-  q: T,
-  userID: string | undefined | null,
-  now: number,
-  planPerEvent = false
-): T {
+function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null, now: number): T {
   const query = q as any;
-  const plan = planPerEvent ? { flip: false } : undefined;
+  const plan = { flip: false };
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       isAuthenticatedUserId(userID) ? cmp('actor_id', userID) : cmp('actor_id', '__anon__'),
       isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
       exists('user', (user: any) => applyUserQueryAccess(user, userID), plan),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID, planPerEvent), plan),
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, true), plan),
       exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), plan),
       exists('event', (event: any) => applyEventQueryAccess(event, userID), plan),
-      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID, planPerEvent), plan),
-      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID, planPerEvent), plan),
+      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID, true), plan),
+      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID, true), plan),
       exists(
         'statement',
-        (statement: any) => applyStatementQueryAccess(statement, userID, now, planPerEvent),
+        (statement: any) => applyStatementQueryAccess(statement, userID, now, true),
         plan
       ),
       exists('election', (election: any) => applyElectionQueryAccess(election, userID), plan)
@@ -253,7 +248,7 @@ export const commonQueries = {
   timelineByEntity: defineQuery(
     z.object({ entity_type: z.string(), entity_id: z.string(), now: z.number() }),
     ({ args: { entity_type, entity_id, now }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID, now, true)
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
         .where('entity_type', entity_type)
         .where('entity_id', entity_id)
         .orderBy('created_at', 'desc')
@@ -271,7 +266,7 @@ export const commonQueries = {
     ({ args: { entityIds, contentTypes, now, limit, start, dir }, ctx: { userID } }) => {
       // Page in timeline order, checking access through each candidate's indexed
       // entity relationships instead of enumerating every access join direction.
-      let q = applyTimelineEventAccess(zql.timeline_event, userID, now, true);
+      let q = applyTimelineEventAccess(zql.timeline_event, userID, now);
       if (entityIds.length > 0) q = whereAnyOf(q, 'entity_id', entityIds);
       if (contentTypes.length > 0) q = whereAnyOf(q, 'content_type', contentTypes);
       const direction = dir === 'backward' ? 'asc' : 'desc';
@@ -303,7 +298,7 @@ export const commonQueries = {
   timelineFeedById: defineQuery(
     z.object({ id: z.string(), now: z.number() }),
     ({ args: { id, now }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID, now, true)
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
         .where('id', id)
         .related('actor')
         .related('user')
@@ -326,13 +321,9 @@ export const commonQueries = {
         .where(({ or, cmp, exists }: any) =>
           or(
             isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-            exists(
-              'timeline_event',
-              (event: any) => applyTimelineEventAccess(event, userID, now, true),
-              {
-                flip: false,
-              }
-            )
+            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID, now), {
+              flip: false,
+            })
           )
         )
         .orderBy('created_at', 'desc')
@@ -417,11 +408,7 @@ export const commonQueries = {
   timelineEventsByEntityIds: defineQuery(
     z.object({ entity_ids: z.array(z.string()), now: z.number() }),
     ({ args: { entity_ids, now }, ctx: { userID } }) =>
-      whereAnyOf(
-        applyTimelineEventAccess(zql.timeline_event, userID, now, true),
-        'entity_id',
-        entity_ids
-      )
+      whereAnyOf(applyTimelineEventAccess(zql.timeline_event, userID, now), 'entity_id', entity_ids)
         .related('actor')
         .related('user', q =>
           q
@@ -481,7 +468,7 @@ export const commonQueries = {
     z.object({ content_types: z.array(z.string()), limit: z.number(), now: z.number() }),
     ({ args: { content_types, limit, now }, ctx: { userID } }) =>
       whereAnyOf(
-        applyTimelineEventAccess(zql.timeline_event, userID, now, true),
+        applyTimelineEventAccess(zql.timeline_event, userID, now),
         'content_type',
         content_types
       )

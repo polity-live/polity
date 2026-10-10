@@ -102,6 +102,14 @@ beforeEach(() => {
 });
 
 describe('useAgendaNavigation', () => {
+  it('keeps the fallback query disabled when an authorized projection has no event', () => {
+    const { result } = renderHook(() =>
+      useAgendaNavigation('event-1', { event: null, agendaItems: [], isLoading: false })
+    );
+    expect(mocks.queriedEvent).toHaveBeenCalledWith(undefined);
+    expect(result.current.currentAgendaItem).toBeNull();
+    expect(result.current.totalItems).toBe(0);
+  });
   it('reuses the visible authorized agenda and withdraws controls when its evidence is loading', () => {
     const item = agendaItem({ status: 'active' });
     const projection = {

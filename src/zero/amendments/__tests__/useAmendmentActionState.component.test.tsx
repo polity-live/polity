@@ -39,6 +39,14 @@ beforeEach(() => {
 });
 
 describe('focused amendment action state', () => {
+  it('falls back to the aggregate then zero when a complete subscriber result is absent', () => {
+    state.results.set('byId', { subscriber_count: 8 });
+    const hook = renderHook(() => useAmendmentSubscriptionState({ amendmentId: 'amendment' }));
+    expect(hook.result.current).toMatchObject({ subscriberCount: 8, isLoading: false });
+    state.results.clear();
+    hook.rerender();
+    expect(hook.result.current).toMatchObject({ subscriberCount: 0, isLoading: false });
+  });
   it('uses protected subscribers and preserves count fallback while their result is pending', () => {
     state.results.set('byId', { subscriber_count: 8 });
     state.results.set('subscribers', [{ id: 'subscription', subscriber_id: 'user' }]);

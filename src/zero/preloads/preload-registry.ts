@@ -149,8 +149,8 @@ function releaseOnce(registry: Map<string, PreloadRecord>, key: string) {
 }
 
 function releaseZeroPreload(registry: Map<string, PreloadRecord>, key: string) {
-  const record = registry.get(key);
-  if (!record) return;
+  // releaseOnce belongs to a retained record and can consume its reference only once.
+  const record = registry.get(key) as PreloadRecord;
 
   record.count -= 1;
 
@@ -163,7 +163,7 @@ function releaseZeroPreload(registry: Map<string, PreloadRecord>, key: string) {
     // Keep an in-flight subscription observable and reusable after route preemption.
     // Bound abandoned handles if the connection never delivers a completion.
     record.abandoned = setTimeout(() => {
-      if (record.count !== 0 || registry.get(key) !== record) return;
+      // Rejoining or settling clears this timer before the record can be reused.
       registry.delete(key);
       record.cleanup();
     }, 10_000);

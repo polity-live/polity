@@ -11,6 +11,26 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe('Optional application query observation', () => {
+  it('keeps the mounted hook valid after its benchmark sink is removed', async () => {
+    const sink = vi.fn();
+    vi.stubGlobal('__zeroPerformanceView', sink);
+    vi.resetModules();
+    const { useQuery } = await import('../observed-query');
+    const request = { query: { queryName: 'groups.byId' }, args: { id: 'visible' } } as any;
+    const rows = [[{ id: 'visible' }], { type: 'complete' }] as const;
+    query.mockReturnValue(rows);
+    const hook = renderHook(() => useQuery(request));
+    expect(sink).toHaveBeenCalled();
+    vi.stubGlobal('__zeroPerformanceView', undefined);
+    const previousCalls = sink.mock.calls.length;
+    hook.rerender();
+    expect(hook.result.current).toBe(rows);
+    expect(sink.mock.calls.length).toBeGreaterThanOrEqual(previousCalls);
+    const callsAfterRemoval = sink.mock.calls.length;
+    hook.rerender();
+    expect(sink).toHaveBeenCalledTimes(callsAfterRemoval);
+    hook.unmount();
+  });
   it('uses the real public SDK to share overlapping consumers and rematerialize after release or retry', async () => {
     const { useQuery, ZeroProvider } =
       await vi.importActual<typeof import('@rocicorp/zero/react')>('@rocicorp/zero/react');
@@ -136,5 +156,13 @@ describe('Optional application query observation', () => {
       ['search.searchDocumentPage', false],
       ['search.searchDocumentPage', true],
     ]);
+    const details = { args: { query: 'budget' }, ids: ['visible'] };
+    observeRouteReadiness('search.searchDocumentPage', true, details);
+    expect(ready).toHaveBeenLastCalledWith(
+      'search.searchDocumentPage',
+      true,
+      expect.any(Number),
+      details
+    );
   });
 });

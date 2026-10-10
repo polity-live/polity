@@ -215,11 +215,7 @@ function applyAmendmentCollaboratorRosterAccess<T>(
   ) as T;
 }
 
-function applyAmendmentUserPrivateAccess<T>(
-  q: T,
-  userID: string | undefined,
-  planPerEntry = false
-): T {
+function applyAmendmentUserPrivateAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -231,8 +227,8 @@ function applyAmendmentUserPrivateAccess<T>(
       cmp('user_id', userID),
       exists(
         'amendment',
-        (amendment: any) => applyAmendmentManagerAccess(amendment, userID, planPerEntry),
-        planPerEntry ? { flip: false } : undefined
+        (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+        { flip: false }
       )
     )
   ) as T;
@@ -354,9 +350,7 @@ const amendmentQueriesBase = {
           .related('role', role => role.related('action_rights'))
       )
       .related('amendment_hashtags', q => q.related('hashtag'))
-      .related('support_votes', q =>
-        applyAmendmentUserPrivateAccess(q, userID, true).related('user')
-      )
+      .related('support_votes', q => applyAmendmentUserPrivateAccess(q, userID).related('user'))
       .related('vote_entries', q => q.related('choices'))
       .related('change_requests', q =>
         applyChangeRequestVisibilityAccess(q, userID, true)

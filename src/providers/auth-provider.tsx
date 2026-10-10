@@ -120,8 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const running = userValidations.current.get(accessToken);
       if (running) return running;
       const pending = supabase.auth.getUser(accessToken).finally(() => {
-        if (userValidations.current.get(accessToken) === pending)
-          userValidations.current.delete(accessToken);
+        // A token's promise stays registered until this completion removes it.
+        userValidations.current.delete(accessToken);
       });
       userValidations.current.set(accessToken, pending);
       return pending;

@@ -97,12 +97,13 @@ function UnauthenticatedShell({
   }, [navigate, pathname, t]);
   const isSecondaryNavVisible =
     Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
+  const secondaryNavCount = secondaryNavItems?.length ?? 0;
   const pageFrame = getUnauthenticatedPageFrame(pathname);
 
   return (
     <I18nSyncProvider>
       <SecondaryNavigationVisibleContext.Provider
-        value={isSecondaryNavVisible && (secondaryNavItems?.length ?? 0) > 0}
+        value={isSecondaryNavVisible && secondaryNavCount > 0}
       >
         <div
           className={`bg-background min-h-screen ${isCityDesignCanvasPath(pathname) ? 'flow-root' : ''}`}

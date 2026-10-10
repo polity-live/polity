@@ -124,6 +124,12 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('AuthenticatedShell', () => {
+  it('registers search demand on the search route', () => {
+    mocks.pathname = '/search';
+    render(<AuthenticatedShell>Search content</AuthenticatedShell>);
+    expect(screen.getByText('Search content')).toBeTruthy();
+    expect(mocks.preloadScope.mock.calls.every(([inside]) => inside === true)).toBe(true);
+  });
   it('registers shell background and visible route demand inside the priority coordinator', () => {
     render(<AuthenticatedShell>Content</AuthenticatedShell>);
     expect(mocks.preloadScope.mock.calls.length).toBeGreaterThanOrEqual(3);

@@ -38,6 +38,46 @@ async function flush() {
 }
 
 describe('PreloadCoordinator', () => {
+  it('reports a synchronous route preload failure and releases its query after settlement', async () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fake = fakeZero();
+    const coordinator = new PreloadCoordinator(fake.zero, () => {
+      throw new Error('route rejected');
+    });
+    coordinator.activate(preloadTask('rejected-route'));
+    await flush();
+    expect(coordinator.getState('rejected-route')).toBe('failed');
+    expect(warning).toHaveBeenCalled();
+    fake.pending.get('rejected-route')?.resolve();
+    await flush();
+    expect(fake.cleanups.get('rejected-route')).toHaveBeenCalledOnce();
+    coordinator.dispose();
+  });
+
+  it('does not start later background entries after foreground demand preempts the task', async () => {
+    const fake = fakeZero();
+    const coordinator = new PreloadCoordinator(fake.zero, vi.fn());
+    const task = {
+      ...preloadTask('background-first'),
+      entries: [
+        ...preloadTask('background-first').entries,
+        ...preloadTask('background-second').entries,
+      ],
+    };
+    coordinator.setIdleTasks('multi-entry', [task], 1);
+    await vi.advanceTimersByTimeAsync(250);
+    coordinator.activate(preloadTask('foreground'));
+    fake.pending.get('background-first')?.resolve();
+    await flush();
+    expect(fake.preload.mock.calls.map(([query]) => (query as { key: string }).key)).toEqual([
+      'background-first',
+      'foreground',
+    ]);
+    expect(fake.cleanups.get('background-first')).toHaveBeenCalledOnce();
+    fake.pending.get('foreground')?.resolve();
+    await flush();
+    coordinator.dispose();
+  });
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => {
     vi.useRealTimers();

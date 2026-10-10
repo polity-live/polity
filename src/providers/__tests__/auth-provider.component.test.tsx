@@ -105,6 +105,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('AuthProvider', () => {
@@ -145,6 +146,188 @@ describe('AuthProvider', () => {
     const stored = { ...session('expiring-token'), expires_at: Date.now() / 1000 + 30 };
     await renderProvider(stored);
     expect(mocks.refreshSession).toHaveBeenCalledOnce();
+  });
+  it('keeps a fresh stored session through a temporary validation failure', async () => {
+    const stored = { ...session('fresh-token'), expires_at: Date.now() / 1000 + 3600 };
+    const error = new Error('validation temporarily unavailable');
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error });
+    await renderProvider(stored);
+    expect(mocks.context.session).toBe(stored);
+    expect(mocks.context.user.id).toBe(stored.user.id);
+    expect(mocks.signOut).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith('Failed to validate stored auth session:', error);
+  });
+  it('clears a revoked fresh token without attempting token rotation', async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: { status: 401 } });
+    await renderProvider({ ...session('revoked-token'), expires_at: Date.now() / 1000 + 3600 });
+    expect(mocks.context.session).toBeNull();
+    expect(mocks.context.user).toBeNull();
+    expect(mocks.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' });
+    expect(mocks.refreshSession).not.toHaveBeenCalled();
+  });
+  it('opens the signed-out loading gate when stored-session initialization rejects', async () => {
+    const error = new Error('storage unavailable');
+    mocks.getSession.mockRejectedValueOnce(error);
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(mocks.context.loading).toBe(false));
+    expect(mocks.context.session).toBeNull();
+    expect(mocks.context.user).toBeNull();
+    expect(console.error).toHaveBeenCalledWith('Failed to initialize auth session:', error);
+  });
+  it.each(['unmount', 'newer-sign-in'])(
+    'ignores a rejected initialization after %s',
+    async outcome => {
+      let fail!: (error: Error) => void;
+      mocks.getSession.mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            fail = reject;
+          })
+      );
+      const rendered = render(
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      );
+      const newer = session('newer-token', user({ id: 'newer-account' }));
+      if (outcome === 'unmount') rendered.unmount();
+      else {
+        mocks.getUser.mockResolvedValue({ data: { user: newer.user }, error: null });
+        act(() => mocks.authChange?.('SIGNED_IN', newer));
+      }
+      await act(async () => fail(new Error('late storage failure')));
+      if (outcome === 'newer-sign-in') {
+        expect(mocks.context.loading).toBe(false);
+        expect(mocks.context.session).toBe(newer);
+        expect(mocks.context.user.id).toBe('newer-account');
+      }
+      expect(mocks.signOut).not.toHaveBeenCalled();
+    }
+  );
+  it('ignores session storage completion after unmount', async () => {
+    let finish!: (value: unknown) => void;
+    mocks.getSession.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    const rendered = render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    rendered.unmount();
+    await act(async () => finish({ data: { session: session('stored-token') } }));
+    expect(mocks.refreshSession).not.toHaveBeenCalled();
+    expect(mocks.getUser).not.toHaveBeenCalled();
+    expect(mocks.unsubscribe).toHaveBeenCalledOnce();
+  });
+  it('keeps a newer account when a nearly expired startup session refresh resolves', async () => {
+    const stored = session('stored-token');
+    let finish!: (value: unknown) => void;
+    mocks.getSession.mockResolvedValueOnce({ data: { session: stored } });
+    mocks.refreshSession.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(mocks.refreshSession).toHaveBeenCalledOnce());
+    const newer = session('newer-token', user({ id: 'newer-account' }));
+    mocks.getUser.mockResolvedValue({ data: { user: newer.user }, error: null });
+    act(() => mocks.authChange?.('SIGNED_IN', newer));
+    await act(async () => finish({ data: { session: stored }, error: null }));
+    expect(mocks.context.loading).toBe(false);
+    expect(mocks.context.session).toBe(newer);
+    expect(mocks.context.user.id).toBe('newer-account');
+  });
+  it.each(['resolve', 'reject'])(
+    'does not restore stale metadata when an old request settles by %s',
+    async outcome => {
+      await renderProvider(session('stored-token'));
+      await waitFor(() => expect(mocks.context.authStateLoading).toBe(false));
+      let finish!: (value: unknown) => void;
+      let fail!: (error: Error) => void;
+      mocks.getUser.mockImplementationOnce(
+        () =>
+          new Promise((resolve, reject) => {
+            finish = resolve;
+            fail = reject;
+          })
+      );
+      let pending!: Promise<void>;
+      act(() => {
+        pending = mocks.context.refreshAuthState();
+      });
+      act(() => mocks.authChange?.('SIGNED_OUT', null));
+      await act(async () => {
+        if (outcome === 'resolve') finish({ data: { user: user() }, error: null });
+        else fail(new Error('late metadata failure'));
+        await pending;
+      });
+      expect(mocks.context.user).toBeNull();
+      expect(mocks.context.session).toBeNull();
+      expect(mocks.context.authStateLoading).toBe(false);
+    }
+  );
+  it('ignores a stored session that arrives after a newer sign-in', async () => {
+    let finish!: (value: unknown) => void;
+    mocks.getSession.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    const newer = session('newer-token', user({ id: 'newer-account' }));
+    mocks.getUser.mockResolvedValue({ data: { user: newer.user }, error: null });
+    act(() => mocks.authChange?.('SIGNED_IN', newer));
+    await act(async () => finish({ data: { session: session('older-token') } }));
+    expect(mocks.context.loading).toBe(false);
+    expect(mocks.context.session).toBe(newer);
+    expect(mocks.context.user.id).toBe('newer-account');
+    expect(mocks.refreshSession).not.toHaveBeenCalled();
+  });
+  it.each(['validation', 'refresh'])('ignores %s completion after unmount', async phase => {
+    const stored = {
+      ...session('stored-token'),
+      expires_at: phase === 'validation' ? Date.now() / 1000 + 3600 : 0,
+    };
+    let finish!: (value: any) => void;
+    mocks.getSession.mockResolvedValueOnce({ data: { session: stored } });
+    const pending = new Promise(resolve => {
+      finish = resolve;
+    });
+    if (phase === 'validation') mocks.getUser.mockReturnValueOnce(pending);
+    else mocks.refreshSession.mockReturnValueOnce(pending);
+    const rendered = render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() =>
+      expect(phase === 'validation' ? mocks.getUser : mocks.refreshSession).toHaveBeenCalledOnce()
+    );
+    rendered.unmount();
+    await act(async () =>
+      finish({ data: { user: stored.user, session: stored }, error: { status: 401 } })
+    );
+    expect(mocks.signOut).not.toHaveBeenCalled();
+    expect(mocks.unsubscribe).toHaveBeenCalledOnce();
   });
   it.each([null, user({ id: 'different-account' })])(
     'denies a fresh session with missing or mismatched validated identity',
@@ -245,6 +428,53 @@ describe('AuthProvider', () => {
     );
     expect(renderHook(() => useOptionalAuth()).result.current).toBeNull();
   });
+
+  it('renders the server-side provider without opening browser session I/O', async () => {
+    vi.stubGlobal('window', undefined);
+    vi.resetModules();
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { AuthProvider: ServerAuthProvider } = await import('../auth-provider');
+    expect(renderToString(createElement(ServerAuthProvider, null, 'server shell'))).toBe(
+      'server shell'
+    );
+    expect(mocks.getSession).not.toHaveBeenCalled();
+    expect(mocks.getUser).not.toHaveBeenCalled();
+  });
+
+  it.each(['unmount', 'newer-sign-in'])(
+    'ignores revoked-token cleanup completion after %s',
+    async outcome => {
+      const stored = { ...session('revoked-token'), expires_at: Date.now() / 1000 + 3600 };
+      let finish!: () => void;
+      mocks.getSession.mockResolvedValueOnce({ data: { session: stored } });
+      mocks.getUser.mockResolvedValueOnce({ data: { user: null }, error: { status: 401 } });
+      mocks.signOut.mockImplementationOnce(
+        () =>
+          new Promise<void>(resolve => {
+            finish = resolve;
+          })
+      );
+      const rendered = render(
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      );
+      await waitFor(() => expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' }));
+      const newer = session('newer-token', user({ id: 'newer-account' }));
+      if (outcome === 'unmount') rendered.unmount();
+      else {
+        mocks.getUser.mockResolvedValue({ data: { user: newer.user }, error: null });
+        act(() => mocks.authChange?.('SIGNED_IN', newer));
+      }
+      await act(async () => finish());
+      if (outcome === 'newer-sign-in') {
+        expect(mocks.context.loading).toBe(false);
+        expect(mocks.context.session).toBe(newer);
+        expect(mocks.context.user.id).toBe('newer-account');
+      }
+    }
+  );
 
   it('loads an empty session, signs out, handles auth events, and unsubscribes', async () => {
     const rendered = await renderProvider(null);

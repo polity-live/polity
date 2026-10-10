@@ -441,6 +441,8 @@ describe('useEventState complete query contracts', () => {
     const defaults = renderHook(() => ({
       state: useEventState(),
       byId: useEventById(),
+      cancel: useEventForCancel(undefined),
+      withAgenda: useEventWithAgendaAndParticipants(undefined),
       participants: useEventParticipantsQuery(),
       offline: useEventOfflineParticipants(),
       agenda: useEventAgenda(),
@@ -457,6 +459,8 @@ describe('useEventState complete query contracts', () => {
 
     expect(defaults.state.eventsByGroup).toEqual([]);
     expect(defaults.byId.event).toBeNull();
+    expect(defaults.cancel.event).toBeNull();
+    expect(defaults.withAgenda.event).toBeNull();
     expect(defaults.offline.isLoading).toBe(false);
     expect(defaults.participations.isLoading).toBe(false);
     expect(defaults.participated.isLoading).toBe(false);
@@ -530,6 +534,65 @@ describe('useEventState complete query contracts', () => {
     expect(state.agendaItems[0]?.votes).toEqual([{ id: 'stored' }]);
     expect(state.agendaItems[1]?.votes).toEqual([]);
     expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
+  });
+
+  it('sorts projected choices without mutating votes and keeps unrelated agenda items out', () => {
+    const choices = [
+      { id: 'later', order_index: 2 },
+      { id: 'first' },
+      { id: 'middle', order_index: 1 },
+      { id: 'null-order', order_index: null },
+    ];
+    setResponse('agendaItemsFull', [
+      {
+        id: 'later-item',
+        event: { id: 'event-1' },
+        order_index: 2,
+        votes: [{ id: 'vote', choices }],
+      },
+      { id: 'first-item', event: { id: 'event-1' }, order_index: null, votes: [] },
+      { id: 'missing-order', event: { id: 'event-1' }, votes: [{ id: 'empty', choices: [] }] },
+      { id: 'unrelated', event: { id: 'event-2' }, votes: [] },
+      { id: 'missing-event', votes: [] },
+    ]);
+    const state = renderHook(() => useAgendaItemsByEvent('event-1')).result.current;
+    expect(state.agendaItems.map(item => item.id)).toEqual([
+      'first-item',
+      'missing-order',
+      'later-item',
+    ]);
+    expect(state.agendaItems[2]?.votes[0]?.choices?.map(choice => choice.id)).toEqual([
+      'first',
+      'null-order',
+      'middle',
+      'later',
+    ]);
+    expect(choices.map(choice => choice.id)).toEqual(['later', 'first', 'middle', 'null-order']);
+    expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
+  });
+
+  it('normalizes an agenda shell whose optional roles are absent', () => {
+    setResponse('forAgenda', [{ id: 'event-1', participants: [] }]);
+    const { event } = renderHook(() => useEventAgendaShell('event-1')).result.current;
+    expect(event?.roles).toEqual([]);
+    expect(event?.participants).toEqual([]);
+  });
+
+  it('disables optional collection queries when their sections are hidden', () => {
+    const data = renderHook(() => ({
+      events: useAllEvents(false),
+      amendments: useAllAmendments(false),
+      roles: useRolesWithGroups(false),
+      groupCalendar: useGroupEventsForCalendar(),
+    })).result.current;
+    expect(data.events.events).toEqual([]);
+    expect(data.amendments.amendments).toEqual([]);
+    expect(data.roles.roles).toEqual([]);
+    expect(data.groupCalendar.events).toEqual([]);
+    expect(mocks.events.all).not.toHaveBeenCalled();
+    expect(mocks.events.allAmendments).not.toHaveBeenCalled();
+    expect(mocks.events.rolesWithGroups).not.toHaveBeenCalled();
+    expect(mocks.events.byGroupForCalendar).not.toHaveBeenCalled();
   });
 
   it.each([

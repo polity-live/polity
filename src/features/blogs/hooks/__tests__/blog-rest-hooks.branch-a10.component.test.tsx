@@ -7,7 +7,7 @@ import type { ProjectedSubscriptionState } from '@/features/search/types/project
 const mocks = vi.hoisted(() => ({
   blog: undefined as Record<string, unknown> | undefined,
   subscribers: undefined as Record<string, unknown>[] | undefined,
-  subscriberCount: 0,
+  subscriberCount: 0 as number | undefined,
   user: undefined as { id: string } | undefined,
   updateBlog: vi.fn(),
   subscribeToBlog: vi.fn(),
@@ -78,6 +78,32 @@ afterEach(() => {
 });
 
 describe('remaining blog hooks A10', () => {
+  it('uses projected subscriber rows when both aggregate counts are absent', () => {
+    mocks.user = { id: 'user-1' };
+    mocks.subscriberCount = undefined;
+    const projected = {
+      subscriptions: [{ id: 'nested', subscriber_id: '', subscriber_user: { id: 'user-1' } }],
+      subscriberCount: undefined,
+      isLoading: false,
+    } as unknown as ProjectedSubscriptionState;
+    const { result } = renderHook(() => useSubscribeBlog('blog-1', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    expect(result.current.subscriberCount).toBe(1);
+  });
+  it('recognizes projected nested subscriber identities and prevents duplicate writes', async () => {
+    mocks.user = { id: 'user-1' };
+    const projected: ProjectedSubscriptionState = {
+      subscriptions: [{ id: 'nested', subscriber_id: '', subscriber_user: { id: 'user-1' } }],
+      subscriberCount: 1,
+      isLoading: false,
+    };
+    const { result } = renderHook(() => useSubscribeBlog('blog-1', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    await act(() => result.current.subscribe());
+    expect(mocks.subscribeToBlog).not.toHaveBeenCalled();
+    await act(() => result.current.unsubscribe());
+    expect(mocks.unsubscribeFromBlog).toHaveBeenCalledWith('nested');
+  });
   it('loads and saves editor content, including empty and failed saves', async () => {
     const { result, rerender } = renderHook(() => useBlogEditorController({ blogId: 'blog-1' }));
     expect(result.current).toMatchObject({ content: '', isLoaded: false });
