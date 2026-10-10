@@ -180,6 +180,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".github/ci-tests.json",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/copilot-instructions.md",
       "domain": "platform",
       "owner": "polity/platform",
@@ -134330,6 +134340,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/__tests__/ci-test-selection.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/compare-coverage-reports.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -135097,6 +135117,16 @@
     },
     {
       "path": "tools/testing/check-ui-action-accountability.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/ci-test-selection.mjs",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",
