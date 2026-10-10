@@ -9,9 +9,9 @@ export function isLocalTestDatabase(
   const port = Number(address.port);
   return (
     address.hostname === '127.0.0.1' &&
-    port >= 55625 &&
-    port <= 55815 &&
-    (port - 55625) % 10 === 0 &&
+    port >= 15625 &&
+    port <= 15815 &&
+    (port - 15625) % 10 === 0 &&
     value === environment.ZERO_UPSTREAM_DB &&
     environment.SUPABASE_URL === `http://127.0.0.1:${port - 1}` &&
     ['DATABASE_URL', 'SUPABASE_DB_URL', 'STUDIO_DATABASE_URL', 'STUDIO_TEST_DATABASE_URL'].every(
