@@ -629,6 +629,8 @@
   "messages.messagesWindow/default": 9778,
   "messages.unreadCount/default": 10532,
   "messages.unreadSummary/default": 17554,
+  "mutation/ai.createSkill/anonymous-denied/anonymous": 6411,
+  "mutation/ai.createSkill/authorized/owner": 7153,
   "network.allGroupConnections/default": 12320,
   "network.allWorkflows/default": 9610,
   "network.effectiveRightsByGroup/default": 19913,

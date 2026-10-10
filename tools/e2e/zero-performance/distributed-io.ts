@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mechanics } from './mechanics.mjs';
+import { mechanics, applicationMechanics } from './mechanics.mjs';
 
 export const harnessRoot = path.resolve('tools/e2e/zero-performance');
 export const option = (name: string) => {
@@ -40,6 +40,7 @@ export async function harnessDigest() {
   ];
   for (const file of files.sort())
     hash.update(file).update(await readFile(path.join(harnessRoot, file)));
+  for (const file of applicationMechanics) hash.update(file).update(await readFile(file));
   return hash.digest('hex');
 }
 export function command(args: string[], env = process.env, signal?: AbortSignal) {

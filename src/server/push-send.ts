@@ -2,6 +2,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { createServerFn } from '@tanstack/react-start';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { mutationBenchmarkDelivery } from './zero-mutation-delivery';
 import { z } from 'zod';
 import { localizeNotificationCopy } from '@/features/notifications/logic/localizeNotificationCopy';
 
@@ -123,7 +124,9 @@ export async function sendPushNotificationToUser(
             },
           };
 
-          await webpush.sendNotification(pushSubscription, payload);
+          await mutationBenchmarkDelivery('web-push', () =>
+            webpush.sendNotification(pushSubscription, payload)
+          );
 
           return { success: true, subscriptionId: subscription.id };
         } catch (error: unknown) {

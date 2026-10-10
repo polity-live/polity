@@ -1,4 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
+import { compareMutations, mutationFailures } from './mutation-metrics';
+import { externalMutationDeliveryFailures, mutationReportFailures } from './mutation-report';
 import { checkBudgets, compare, comparisonEligible, confirmedRegressions } from './metrics';
 import {
   correlateQueryAPI,
@@ -12,6 +14,7 @@ import {
   coverageFailures,
   executionFailures,
   PROFILE_KEYS,
+  isMutationKey,
   type Execution,
   type Manifest,
   type Revision,
@@ -20,7 +23,9 @@ import {
 
 export function shardMeasurementKeys(shard: Shard, revision: Revision, selected = shard[revision]) {
   return shard.layer === 'queries'
-    ? selected.flatMap(key => PROFILE_KEYS.map(profile => `${key}/${profile}`))
+    ? selected.flatMap(key =>
+        isMutationKey(key) ? [key] : PROFILE_KEYS.map(profile => `${key}/${profile}`)
+      )
     : shard.layer === 'security'
       ? selected
       : [];
@@ -43,11 +48,42 @@ export function partialReportFailures(
   )
     failures.push('Invalid shard report protocol/layer');
   failures.push(
-    ...coverageFailures(
-      shardMeasurementKeys(shard, revision, selected),
-      report.measurements.map(item => item.key)
+    ...coverageFailures(shardMeasurementKeys(shard, revision, selected), [
+      ...report.measurements.map(item => item.key),
+      ...(report.mutations ?? []).map(item => item.key),
+    ])
+  );
+  const expectedMutations =
+    manifest.workloads[revision]?.mutations.filter(
+      entry => shard.layer === 'queries' && selected.includes(entry.key)
+    ) ?? [];
+  if (!isDeepStrictEqual(report.expectedMutations, expectedMutations))
+    failures.push('Changed shard mutation expectations');
+  failures.push(
+    ...externalMutationDeliveryFailures(
+      expectedMutations,
+      report.externalDelivery,
+      report.mutationDiagnostics
     )
   );
+  if (!Array.isArray(report.mutations) || !Array.isArray(report.mutationDiagnostics))
+    failures.push('Missing mutation measurements or raw diagnostics');
+  else {
+    failures.push(
+      ...mutationReportFailures(
+        expectedMutations,
+        report.mutations,
+        report.mutationDiagnostics,
+        absolute
+      )
+    );
+    for (const row of report.mutations)
+      failures.push(
+        ...executionFailures(row.execution, manifest, shard, revision, phase, runnerID).map(
+          failure => `${row.key}: ${failure}`
+        )
+      );
+  }
   failures.push(
     ...report.infrastructure.filter(failure => absolute || !isAbsoluteBudgetFailure(failure)),
     ...serverWarningFailures(report, absolute)
@@ -107,8 +143,14 @@ export function partialReportFailures(
     const preflight = report.fixturePreflight;
     if (
       !preflight ||
-      coverageFailures(selected, preflight.expected).length ||
-      coverageFailures(selected, preflight.completed).length ||
+      coverageFailures(
+        selected.filter(key => !isMutationKey(key)),
+        preflight.expected
+      ).length ||
+      coverageFailures(
+        selected.filter(key => !isMutationKey(key)),
+        preflight.completed
+      ).length ||
       preflight.failures.length
     )
       failures.push('Missing, incomplete or failed fixture preflight');
@@ -117,10 +159,15 @@ export function partialReportFailures(
 }
 export function comparisons(base?: Report, head?: Report) {
   return base && head
-    ? compare(
-        base.measurements.filter(comparisonEligible),
-        head.measurements.filter(comparisonEligible)
-      )
+    ? [
+        ...compare(
+          base.measurements.filter(comparisonEligible),
+          head.measurements.filter(comparisonEligible)
+        ),
+        ...compareMutations(base.mutations ?? [], head.mutations ?? []).flatMap(
+          change => change.changes
+        ),
+      ]
     : [];
 }
 export function freshGroupFailures(reports: Report[]) {
@@ -140,12 +187,24 @@ export function freshGroupFailures(reports: Report[]) {
         groups.add(sample.clientGroupID);
         if (sample.clientCorrelationID) correlations.add(sample.clientCorrelationID);
       }
+  for (const report of reports)
+    for (const row of report.mutations ?? [])
+      for (const sample of row.samples)
+        for (const group of [sample.clientGroupID, sample.observerGroupID].filter(
+          (value): value is string => !!value
+        )) {
+          if (groups.has(group))
+            failures.push(`${row.key}: Reused client group across measurements`);
+          groups.add(group);
+        }
   return [...new Set(failures)];
 }
 export function confirmationSelection(shard: Shard, first: ReturnType<typeof compare>) {
   const keys = new Set(
     first.map(change =>
-      shard.layer === 'queries' ? change.key.split('/').slice(0, 2).join('/') : change.key
+      shard.layer === 'queries' && !isMutationKey(change.key)
+        ? change.key.split('/').slice(0, 2).join('/')
+        : change.key
     )
   );
   return [...keys].sort();
@@ -161,22 +220,26 @@ export function confirmationFailures(
   if (
     !base ||
     !head ||
-    coverageFailures(
-      expected,
-      base.measurements.map(item => item.key)
-    ).length ||
-    coverageFailures(
-      expected,
-      head.measurements.map(item => item.key)
-    ).length
+    coverageFailures(expected, [
+      ...base.measurements.map(item => item.key),
+      ...(base.mutations ?? []).map(item => item.key),
+    ]).length ||
+    coverageFailures(expected, [
+      ...head.measurements.map(item => item.key),
+      ...(head.mutations ?? []).map(item => item.key),
+    ]).length
   )
     return ['Missing or incomplete regression confirmation'];
   // A non-comparable second sample is an error, not evidence that a regression disappeared.
   if (
-    expected.some(
-      key =>
-        !base.measurements.some(item => item.key === key && comparisonEligible(item)) ||
-        !head.measurements.some(item => item.key === key && comparisonEligible(item))
+    expected.some(key =>
+      isMutationKey(key)
+        ? !base.mutations?.some(
+            item => item.key === key && !mutationFailures(item, false).length
+          ) ||
+          !head.mutations?.some(item => item.key === key && !mutationFailures(item, false).length)
+        : !base.measurements.some(item => item.key === key && comparisonEligible(item)) ||
+          !head.measurements.some(item => item.key === key && comparisonEligible(item))
     )
   )
     return ['Invalid regression confirmation telemetry/results'];

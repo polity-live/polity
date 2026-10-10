@@ -13,6 +13,14 @@ import {
 } from './report';
 import { assertOutputDirectory } from './isolation.mjs';
 import { readPerformanceReport } from './plan-artifacts';
+import {
+  comparisons,
+  confirmationFailures,
+  confirmationSelection,
+  freshGroupFailures,
+} from './distributed-report';
+import { isMutationKey } from './sharding';
+import { mutationReportFailures } from './mutation-report';
 
 const root = process.cwd();
 const argv = process.argv.slice(2);
@@ -70,11 +78,13 @@ async function valid(record: (typeof runs)[number]) {
   const report = record.report;
   const absoluteBudgets = !record.label.startsWith('base');
   if (record.selection && report) {
-    const expected = record.selection.flatMap(key =>
-      ['empty/owner', 'minimal/owner', 'minimal/outsider', 'minimal/anonymous'].map(
-        suffix => `${key}/${suffix}`
-      )
-    );
+    const expected = record.selection
+      .filter(key => !isMutationKey(key))
+      .flatMap(key =>
+        ['empty/owner', 'minimal/owner', 'minimal/outsider', 'minimal/anonymous'].map(
+          suffix => `${key}/${suffix}`
+        )
+      );
     return (
       (record.code === 0 || (!absoluteBudgets && record.code === 1)) &&
       report.format === REPORT_FORMAT &&
@@ -92,7 +102,19 @@ async function valid(record: (typeof runs)[number]) {
           !checkBudgets(item).filter(
             failure => absoluteBudgets || !isAbsoluteBudgetFailure(failure)
           ).length
-      )
+      ) &&
+      Array.isArray(report.mutations) &&
+      Array.isArray(report.mutationDiagnostics) &&
+      !mutationReportFailures(
+        report.expectedMutations ?? [],
+        report.mutations,
+        report.mutationDiagnostics,
+        absoluteBudgets
+      ).length &&
+      record.selection
+        .filter(isMutationKey)
+        .every(key => report.mutations?.some(row => row.key === key)) &&
+      report.mutations.length === record.selection.filter(isMutationKey).length
     );
   }
   return (
@@ -128,13 +150,13 @@ try {
     else {
       const base = await run('base', resolved.stdout.trim());
       if (head.report && base.report) {
-        const comparable = (report: Report) => report.measurements.filter(comparisonEligible);
-        firstComparison = compare(comparable(base.report), comparable(head.report));
+        firstComparison = comparisons(base.report, head.report);
         if (firstComparison.length) {
           // Repeat implicated cases on this runner; the complete first reports remain mandatory.
-          const selection = [
-            ...new Set(firstComparison.map(item => item.key.split('/').slice(0, 2).join('/'))),
-          ];
+          const selection = confirmationSelection(
+            { id: 'local', layer: 'queries', head: [], base: [] },
+            firstComparison
+          );
           const baseConfirmation = await run(
             'base-confirmation',
             resolved.stdout.trim(),
@@ -142,16 +164,30 @@ try {
           );
           const headConfirmation = await run('head-confirmation', undefined, selection);
           if (baseConfirmation.report && headConfirmation.report)
-            secondComparison = compare(
-              comparable(baseConfirmation.report),
-              comparable(headConfirmation.report)
-            );
+            secondComparison = comparisons(baseConfirmation.report, headConfirmation.report);
+          const expected = selection.flatMap(key =>
+            isMutationKey(key)
+              ? [key]
+              : ['empty/owner', 'minimal/owner', 'minimal/outsider', 'minimal/anonymous'].map(
+                  profile => `${key}/${profile}`
+                )
+          );
+          const confirmationErrors = confirmationFailures(
+            firstComparison,
+            secondComparison,
+            expected,
+            baseConfirmation.report,
+            headConfirmation.report
+          );
+          if (confirmationErrors.length) throw new Error(confirmationErrors.join('; '));
         }
       }
     }
   } else
     bootstrap = 'No baseline reference supplied; absolute budgets and full coverage were checked.';
   const confirmed = confirmedRegressions(firstComparison, secondComparison);
+  const freshnessErrors = freshGroupFailures(runs.flatMap(run => (run.report ? [run.report] : [])));
+  if (freshnessErrors.length) throw new Error(freshnessErrors.join('; '));
   await writeFile(
     path.join(directory, 'comparison.json'),
     JSON.stringify(

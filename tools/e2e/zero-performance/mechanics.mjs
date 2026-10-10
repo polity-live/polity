@@ -19,5 +19,20 @@ export const mechanics = [
   'sharding.ts',
   'execution.ts',
   'inventory.ts',
+  'mutation-runtime.ts',
+  'mutation-case-types.ts',
+  'mutation-metrics.ts',
+  'mutation-report.ts',
+  'mutation-measure.ts',
+  'mutation-snapshot.ts',
+  'delivery-endpoint.mjs',
+  'mutation-browser-metrics.ts',
   'mechanics.mjs',
+];
+
+// Only benchmark adapters are overlaid in application source. Business logic,
+// schema, migrations and workload definitions continue to belong to each revision.
+export const applicationMechanics = [
+  'src/server/zero-mutation-diagnostics.ts',
+  'src/server/zero-mutation-delivery.ts',
 ];

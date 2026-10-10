@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+vi.mock('../mutation-runtime', () => ({
+  mutationInventory: async () => ({ expectations: [], cases: [] }),
+}));
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -238,8 +241,8 @@ describe('Zero performance gate', () => {
   });
   it('keeps five fresh materializations and collects one analysis without warmups', () => {
     expect(REPETITIONS).toEqual({ materialize: 5, warmup: 0, analyze: 1 });
-    expect(REPORT_FORMAT).toBe(11);
-    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v11');
+    expect(REPORT_FORMAT).toBe(12);
+    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v12');
   });
   it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
     const item = measurement();
@@ -931,6 +934,9 @@ describe('Zero performance gate', () => {
     const item = measurement();
     const failures = await reportFailures({
       format: REPORT_FORMAT,
+      expectedMutations: [],
+      mutations: [],
+      mutationDiagnostics: [],
       protocol: MEASUREMENT_PROTOCOL,
       filtered: false,
       layer: 'all',
@@ -947,6 +953,9 @@ describe('Zero performance gate', () => {
   it('validates raw server warnings independently of prepared failure lists', async () => {
     const report = {
       format: REPORT_FORMAT,
+      expectedMutations: [],
+      mutations: [],
+      mutationDiagnostics: [],
       protocol: MEASUREMENT_PROTOCOL,
       filtered: false,
       layer: 'all',
@@ -1248,6 +1257,9 @@ describe('Zero performance gate', () => {
     };
     const report = {
       format: REPORT_FORMAT,
+      expectedMutations: [],
+      mutations: [],
+      mutationDiagnostics: [],
       protocol: MEASUREMENT_PROTOCOL,
       filtered: false,
       layer: 'all',
@@ -1554,6 +1566,9 @@ describe('Zero performance gate', () => {
   it('requires the new protocol rather than accepting legacy analyzer-budget reports', async () => {
     const report = {
       format: REPORT_FORMAT,
+      expectedMutations: [],
+      mutations: [],
+      mutationDiagnostics: [],
       protocol: MEASUREMENT_PROTOCOL,
       filtered: false,
       layer: 'all',
@@ -1565,7 +1580,13 @@ describe('Zero performance gate', () => {
     expect(await reportFailures(report)).not.toContain('A complete all-layer report is required');
     for (const legacy of [
       { format: 8, protocol: 'zero-performance/v8' },
-      { format: REPORT_FORMAT, protocol: 'zero-performance/v8' },
+      {
+        format: REPORT_FORMAT,
+        expectedMutations: [],
+        mutations: [],
+        mutationDiagnostics: [],
+        protocol: 'zero-performance/v8',
+      },
       { format: 8, protocol: MEASUREMENT_PROTOCOL },
     ]) {
       expect(await reportFailures({ ...report, ...legacy })).toContain(

@@ -17,6 +17,7 @@ const records = new Set([
   'comparison.json',
   'report.json',
   'results.csv',
+  'mutations.csv',
   'journeys.csv',
   'progress.json',
   'fixtures.json',

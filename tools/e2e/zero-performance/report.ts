@@ -4,8 +4,8 @@ import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
 import type { NavigationTarget } from './browser-navigation';
 
-export const REPORT_FORMAT = 11;
-export const MEASUREMENT_PROTOCOL = 'zero-performance/v11';
+export const REPORT_FORMAT = 12;
+export const MEASUREMENT_PROTOCOL = 'zero-performance/v12';
 
 /** Include a record crossing the phase boundary without cutting its JSON. */
 export function measuredServerWarnings(log: Buffer, offset: number) {
@@ -104,12 +104,18 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
     }
 }
 export function isAbsoluteBudgetFailure(failure: string) {
-  return /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server materialization exceeds \d+ ms|\d+ slow-query warnings|\d+ server slow-query warnings)$/.test(
+  return /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server materialization exceeds \d+ ms|Mutation client apply exceeds 50 ms|Mutation server confirmation exceeds 1000 ms|Mutation observer exceeds 1000 ms after confirmation|\d+ slow-query warnings|\d+ server slow-query warnings)$/.test(
     failure
   );
 }
 
 export interface Report {
+  expectedMutations?: import('./mutation-metrics').MutationExpectation[];
+  mutations?: import('./mutation-metrics').MutationMeasurement[];
+  mutationDiagnostics?: import('./mutation-report').MutationAPIRecord[];
+  mutationBootstrap?: string;
+  browserMutations?: import('./mutation-browser').MutationBrowserResult[];
+  externalDelivery?: ReturnType<typeof import('./mutation-report').externalMutationDelivery>;
   execution?: import('./sharding').Execution;
   fixturePreflight?: { expected: string[]; completed: string[]; failures: unknown[] };
   format: number;
@@ -245,6 +251,58 @@ export function serverWarningFailures(report: Report, absoluteBudgets = true): s
 
 export async function reportFailures(report: Report, absoluteBudgets = true): Promise<string[]> {
   const failures: string[] = serverWarningFailures(report, absoluteBudgets);
+  if (absoluteBudgets || !report.mutationBootstrap) {
+    const { mutationBrowserFailures } = await import('./mutation-browser-metrics');
+    failures.push(...mutationBrowserFailures(report.browserMutations, absoluteBudgets));
+  }
+  const { mutationReportFailures, externalMutationDeliveryFailures } =
+    await import('./mutation-report');
+  if (Array.isArray(report.expectedMutations))
+    failures.push(
+      ...externalMutationDeliveryFailures(
+        report.expectedMutations,
+        report.externalDelivery,
+        report.mutationDiagnostics
+      )
+    );
+  if (
+    !Array.isArray(report.expectedMutations) ||
+    !Array.isArray(report.mutations) ||
+    !Array.isArray(report.mutationDiagnostics)
+  )
+    failures.push('Missing mutation coverage or raw diagnostics');
+  else {
+    failures.push(
+      ...mutationReportFailures(
+        report.expectedMutations,
+        report.mutations,
+        report.mutationDiagnostics,
+        absoluteBudgets
+      )
+    );
+    if (absoluteBudgets) {
+      const { mutationInventory } = await import('./mutation-runtime');
+      let current: Awaited<ReturnType<typeof mutationInventory>>;
+      try {
+        current = await mutationInventory();
+      } catch {
+        failures.push('Current mutation registry/catalog validation failed');
+        return failures;
+      }
+      if (JSON.stringify(current.expectations) !== JSON.stringify(report.expectedMutations))
+        failures.push('Declared mutation coverage does not match the complete current registry');
+      if (current.expectations.length) {
+        const names = [...new Set(current.expectations.map(entry => entry.name))].sort();
+        if (
+          !report.mutationDiagnostics.some(record => record.phase === 'registry') ||
+          report.mutationDiagnostics
+            .filter(record => record.phase === 'registry')
+            .some(record => JSON.stringify(record.names) !== JSON.stringify(names))
+        )
+          failures.push('Client and composed server mutation registries differ');
+      }
+    }
+  }
   if (
     report.format !== REPORT_FORMAT ||
     report.protocol !== MEASUREMENT_PROTOCOL ||

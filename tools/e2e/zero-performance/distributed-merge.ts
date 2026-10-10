@@ -32,6 +32,7 @@ import {
 } from './distributed-io';
 import type { ShardResult } from './distributed-runner';
 import { resultsCSV } from './results';
+import { mutationResultsCSV, externalMutationDelivery } from './mutation-report';
 
 async function ciJobs() {
   if (!process.env.GITHUB_ACTIONS) return undefined;
@@ -107,6 +108,10 @@ export async function mergeShards(
         PROFILE_KEYS.map(profile => `${key}/${profile}`)
       ),
       expectedSecurityCases: workload.security,
+      expectedMutations: workload.mutations,
+      mutationBootstrap: workload.mutationBootstrap,
+      mutations: [],
+      mutationDiagnostics: [],
       infrastructure: [],
       measurements: [],
       serverWarnings: [],
@@ -227,10 +232,16 @@ export async function mergeShards(
         const full = aggregate[revision];
         if (!full) throw new Error('Missing revision aggregate');
         full.measurements.push(...report.measurements);
+        full.mutations?.push(...(report.mutations ?? []));
+        full.mutationDiagnostics?.push(...(report.mutationDiagnostics ?? []));
+        full.externalDelivery = externalMutationDelivery(full.mutationDiagnostics ?? []);
         full.apiDiagnostics?.push(...(report.apiDiagnostics ?? []));
         full.serverWarnings?.push(...(report.serverWarnings ?? []));
         full.infrastructure.push(...report.infrastructure);
-        if (shard.layer === 'journeys') full.journeys = report.journeys;
+        if (shard.layer === 'journeys') {
+          full.journeys = report.journeys;
+          full.browserMutations = report.browserMutations;
+        }
         await copyPlans(report, source, revision);
       } catch (error) {
         failures.push(`${shard.id}/${revision}: ${String(error)}`);
@@ -292,12 +303,23 @@ export async function mergeShards(
     });
     const { writeFile } = await import('node:fs/promises');
     await writeFile(path.join(root, revision, 'results.csv'), resultsCSV(report.measurements));
+    await writeFile(
+      path.join(root, revision, 'mutations.csv'),
+      mutationResultsCSV(report.mutations ?? [])
+    );
     sections[revision] = {
       catalogExpected: report.expectedKeys.length,
       catalogMeasured: report.measurements.filter(item => item.profile !== 'security').length,
+      mutationsExpected: report.expectedMutations?.length,
+      mutationsMeasured: report.mutations?.length,
+      mutationsFailures: report.mutations
+        ?.filter(row => row.failures.length)
+        .map(row => ({ key: row.key, failures: row.failures })),
+      mutationBootstrap: report.mutationBootstrap,
       securityExpected: report.expectedSecurityCases?.length,
       securityMeasured: report.measurements.filter(item => item.profile === 'security').length,
       browserScenarios: report.journeys?.length,
+      browserMutationActions: report.browserMutations?.length ?? 0,
       failures: revisionFailures,
     };
   }
@@ -363,8 +385,12 @@ export async function mergeShards(
                 [
                   ...report.expectedKeys,
                   ...(report.expectedSecurityCases ?? []).map(entry => entry.key),
+                  ...(report.expectedMutations ?? []).map(entry => entry.key),
                 ],
-                report.measurements.map(entry => entry.key)
+                [
+                  ...report.measurements.map(entry => entry.key),
+                  ...(report.mutations ?? []).map(entry => entry.key),
+                ]
               ).map(failure => `${revision}: ${failure}`)
             : [];
         }),

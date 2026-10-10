@@ -33,6 +33,7 @@ import type { PreloadLifecycleEvent } from '../../../src/zero/preloads/query-lif
 import type { QueryViewObservation } from '../../../src/zero/observed-query';
 import { preloadKey } from '../../../src/zero/preloads/preload-registry';
 import { ALPHA_WARNING_SESSION_KEY } from '../../../src/features/shared/constants';
+import { measureMutationBrowserActions, type MutationBrowserResult } from './mutation-browser';
 
 export interface JourneyResult {
   route: string;
@@ -73,6 +74,9 @@ export interface JourneyResult {
 export async function measureJourneys(
   onUpdate: (records: JourneyResult[]) => Promise<void> = async () => {
     /* Optional diagnostic sink. */
+  },
+  onMutationUpdate: (records: MutationBrowserResult[]) => Promise<void> = async () => {
+    /* Optional mutation diagnostic sink. */
   }
 ) {
   const seed = await seedCreatePrerequisites('benchmark', OWNER_ID);
@@ -574,6 +578,7 @@ export async function measureJourneys(
         queries: [],
         failures: warnings,
       });
+    await measureMutationBrowserActions(page, seed, conversation, onMutationUpdate);
     // A real subscribed result must lose private data after membership revocation.
     const subscribedGroup = required(routes[1]);
     await navigate(page, subscribedGroup.path, subscribedGroup.search ?? {}, subscribedGroup);

@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { SecurityCaseExpectation } from './security';
+import type { MutationExpectation } from './mutation-metrics';
 
-export const SHARD_FORMAT = 1;
+export const SHARD_FORMAT = 2;
 export const ACTIVE_BUDGET_MS = { prepare: 180_000, runner: 900_000, merge: 120_000 };
 export const PROFILE_KEYS = [
   'empty/owner',
@@ -12,6 +13,8 @@ export const PROFILE_KEYS = [
 export interface Workload {
   queries: string[];
   security: SecurityCaseExpectation[];
+  mutations: MutationExpectation[];
+  mutationBootstrap?: string;
 }
 export type Revision = 'head' | 'base';
 export interface Shard {
@@ -91,6 +94,10 @@ export function balancedGroups(
   }
   return bins.map(bin => bin.members.sort());
 }
+export const isMutationKey = (key: string) => key.startsWith('mutation/');
+export function catalogGroup(key: string) {
+  return isMutationKey(key) ? key.split('/').slice(0, 2).join('/') : key.split('/')[0];
+}
 export function createManifest(
   input: Omit<Manifest, 'format' | 'shards' | 'digest'>,
   weights: Record<string, number>
@@ -101,25 +108,41 @@ export function createManifest(
       ...Object.entries(weights)
         .filter(
           ([key, value]) =>
-            key.split('/').length > 2 === security && Number.isFinite(value) && value > 0
+            !isMutationKey(key) &&
+            key.split('/').length > 2 === security &&
+            Number.isFinite(value) &&
+            value > 0
         )
         .map(([, value]) => value)
     );
   const variantFallback = unknownWeight(false),
     securityFallback = unknownWeight(true);
+  const mutationFallback = Math.max(
+    variantFallback,
+    ...Object.entries(weights)
+      .filter(([key, value]) => isMutationKey(key) && Number.isFinite(value) && value > 0)
+      .map(([, value]) => value)
+  );
   const weight = (key: string) =>
     Number.isFinite(weights[key]) && weights[key] > 0
       ? weights[key]
-      : key.split('/').length > 2
-        ? securityFallback
-        : variantFallback;
+      : isMutationKey(key)
+        ? mutationFallback
+        : key.split('/').length > 2
+          ? securityFallback
+          : variantFallback;
   const queries = [
-    ...new Set([...input.workloads.head.queries, ...(input.workloads.base?.queries ?? [])]),
+    ...new Set([
+      ...input.workloads.head.queries,
+      ...(input.workloads.base?.queries ?? []),
+      ...input.workloads.head.mutations.map(entry => entry.key),
+      ...(input.workloads.base?.mutations.map(entry => entry.key) ?? []),
+    ]),
   ];
-  const names = [...new Set(queries.map(key => key.split('/')[0]))];
+  const names = [...new Set(queries.map(catalogGroup))];
   const queryBins = balancedGroups(
     names.map(name => {
-      const members = queries.filter(key => key.split('/')[0] === name);
+      const members = queries.filter(key => catalogGroup(key) === name);
       return { key: name, members, weight: members.reduce((total, key) => total + weight(key), 0) };
     }),
     16
@@ -140,12 +163,14 @@ export function createManifest(
     layer,
     head: members.filter(key =>
       layer === 'queries'
-        ? input.workloads.head.queries.includes(key)
+        ? input.workloads.head.queries.includes(key) ||
+          input.workloads.head.mutations.some(entry => entry.key === key)
         : input.workloads.head.security.some(entry => entry.key === key)
     ),
     base: members.filter(key =>
       layer === 'queries'
-        ? input.workloads.base?.queries.includes(key)
+        ? input.workloads.base?.queries.includes(key) ||
+          input.workloads.base?.mutations.some(entry => entry.key === key)
         : input.workloads.base?.security.some(entry => entry.key === key)
     ),
   });
@@ -174,7 +199,7 @@ export function validateManifest(manifest: Manifest) {
   const { digest: checksum, ...unsigned } = manifest;
   if (
     manifest.format !== SHARD_FORMAT ||
-    manifest.protocol !== 'zero-performance/v11' ||
+    manifest.protocol !== 'zero-performance/v12' ||
     typeof manifest.runID !== 'string' ||
     !manifest.runID.trim() ||
     checksum !== digest(unsigned) ||
@@ -205,7 +230,7 @@ export function validateManifest(manifest: Manifest) {
       )
         throw new Error('Invalid shard identity');
       for (const key of [...shard.head, ...shard.base]) {
-        const group = layer === 'queries' ? key.split('/')[0] : key;
+        const group = layer === 'queries' ? catalogGroup(key) : key;
         if (assignments.has(group) && assignments.get(group) !== shard.id)
           throw new Error('Split query grouping or baseline/head runner assignment');
         assignments.set(group, shard.id);
@@ -220,9 +245,29 @@ export function validateManifest(manifest: Manifest) {
   for (const revision of ['head', 'base'] as const) {
     const workload = manifest.workloads[revision];
     if (!workload) continue;
+    if (
+      !Array.isArray(workload.mutations) ||
+      new Set(workload.mutations.map(entry => entry.key)).size !== workload.mutations.length ||
+      workload.mutations.some(
+        entry =>
+          !isMutationKey(entry.key) ||
+          entry.key !== `mutation/${entry.name}/${entry.variant}/${entry.actor}` ||
+          !/^[a-f0-9]{64}$/.test(entry.oracleDigest)
+      )
+    )
+      throw new Error('Invalid mutation workload inventory');
+    if (
+      revision === 'base' &&
+      !workload.mutations.length &&
+      manifest.workloads.head.mutations.length &&
+      !workload.mutationBootstrap?.trim()
+    )
+      throw new Error('Missing explicit mutation baseline bootstrap');
     for (const layer of ['queries', 'security'] as const) {
       const expected =
-        layer === 'queries' ? workload.queries : workload.security.map(entry => entry.key);
+        layer === 'queries'
+          ? [...workload.queries, ...workload.mutations.map(entry => entry.key)]
+          : workload.security.map(entry => entry.key);
       if (new Set(expected).size !== expected.length || (revision === 'head' && !expected.length))
         throw new Error('Invalid workload inventory');
       const failures = coverageFailures(

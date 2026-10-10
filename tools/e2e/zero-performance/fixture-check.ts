@@ -26,7 +26,10 @@ if (
   selected &&
   (!selected.length ||
     new Set(selected).size !== selected.length ||
-    selected.some(key => !all.some(entry => `${entry.name}/${entry.variant}` === key)))
+    selected.some(
+      key =>
+        !key.startsWith('mutation/') && !all.some(entry => `${entry.name}/${entry.variant}` === key)
+    ))
 )
   throw new Error('Invalid fixture preflight selection');
 const entries = all.filter(

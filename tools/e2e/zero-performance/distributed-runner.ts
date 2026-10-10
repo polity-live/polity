@@ -205,7 +205,13 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         '--execution-file',
         executionFile,
       ];
-      if (revision === 'base') args.push('--source-ref', sourceSHA);
+      if (revision === 'base')
+        args.push(
+          '--source-ref',
+          sourceSHA,
+          '--dependency-root',
+          path.join(root, 'head', 'project')
+        );
       if (selectionFile)
         args.push(
           shard.layer === 'security' ? '--security-selection-file' : '--selection-file',
@@ -290,6 +296,8 @@ export async function runShard(manifest: Manifest, id: string, directory: string
           '--collect-all',
           '--output',
           path.join(root, 'control'),
+          '--dependency-root',
+          path.join(root, 'integrity', 'project'),
           ...common,
         ],
         process.env,

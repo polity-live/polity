@@ -3,10 +3,10 @@ import { createWriteStream } from 'node:fs';
 import { cp, mkdir, readFile, writeFile, symlink, access, open, unlink } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createECDH } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYAML } from 'yaml';
-import { mechanics } from './mechanics.mjs';
+import { mechanics, applicationMechanics } from './mechanics.mjs';
 import {
   assertOutputDirectory,
   isolatedPorts,
@@ -132,7 +132,7 @@ async function ports() {
   const locks = path.join(root, 'output/zero-performance/.ports');
   await mkdir(locks, { recursive: true });
   for (let start = 15620; start < 15820; start += 10) {
-    if (Array.from({ length: 8 }, (_, i) => start + i).some(port => allocated.has(port))) continue;
+    if (Array.from({ length: 9 }, (_, i) => start + i).some(port => allocated.has(port))) continue;
     const lock = path.join(locks, `${start}.lock`);
     let handle;
     try {
@@ -163,7 +163,7 @@ async function ports() {
     await handle.writeFile(JSON.stringify({ runID, pid: process.pid }));
     await handle.close();
     if (
-      (await Promise.all(Array.from({ length: 8 }, (_, i) => portFree(start + i)))).every(Boolean)
+      (await Promise.all(Array.from({ length: 9 }, (_, i) => portFree(start + i)))).every(Boolean)
     ) {
       reservation = lock;
       return start;
@@ -213,10 +213,51 @@ async function copySource() {
         path.join(path.resolve(harnessRoot), file),
         path.join(sandbox, 'tools/e2e/zero-performance', file)
       );
+    for (const file of applicationMechanics) {
+      const target = path.join(sandbox, file);
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(path.resolve(harnessRoot, '../../..', file), target);
+    }
   }
   const rootLock = await readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8');
   const copiedLock = await readFile(path.join(sandbox, 'pnpm-lock.yaml'), 'utf8');
   const locked = parseYAML(copiedLock).packages;
+  const dependencyRoot = option('--dependency-root');
+  if (dependencyRoot) {
+    const dependencyValidationAt = performance.now();
+    const candidate = path.resolve(dependencyRoot);
+    assertOutputDirectory(root, path.dirname(candidate));
+    if (path.basename(candidate) !== 'project') throw new Error('Invalid private dependency cache');
+    const cachedLock = await readFile(path.join(candidate, 'pnpm-lock.yaml'), 'utf8');
+    const dependencyFields = [
+      'dependencies',
+      'devDependencies',
+      'optionalDependencies',
+      'pnpm',
+      'packageManager',
+      'engines',
+    ];
+    const definition = async location => {
+      const manifest = JSON.parse(await readFile(path.join(location, 'package.json'), 'utf8'));
+      return JSON.stringify(dependencyFields.map(field => [field, manifest[field]]));
+    };
+    if (
+      cachedLock === copiedLock &&
+      (await definition(candidate)) === (await definition(sandbox)) &&
+      !dependencyVersions(path.join(candidate, 'node_modules/@rocicorp/zero')).some(
+        dependency => !locked[dependency]
+      )
+    ) {
+      await symlink(
+        path.join(candidate, 'node_modules'),
+        path.join(sandbox, 'node_modules'),
+        process.platform === 'win32' ? 'junction' : 'dir'
+      );
+      startup.dependenciesMs = performance.now() - dependencyValidationAt;
+      startup.dependenciesReused = true;
+      return;
+    }
+  }
   const unpinned = dependencyVersions(path.join(root, 'node_modules/@rocicorp/zero')).filter(
     dependency => !locked[dependency]
   );
@@ -446,6 +487,8 @@ ${storageBuckets}
     );
     if (status.status !== 0) throw new Error('Cannot read isolated stack configuration');
     const configuration = JSON.parse(status.stdout);
+    const vapid = createECDH('prime256v1');
+    vapid.generateKeys();
     startup.supabaseMs = Date.now() - stackAt;
     if (
       configuration.API_URL !== supabaseURL ||
@@ -472,6 +515,10 @@ ${storageBuckets}
       ZERO_UPSTREAM_DB: configuration.DB_URL,
       ZERO_CVR_DB: configuration.DB_URL,
       ZERO_CHANGE_DB: configuration.DB_URL,
+      DATABASE_URL: configuration.DB_URL,
+      SUPABASE_DB_URL: configuration.DB_URL,
+      STUDIO_DATABASE_URL: configuration.DB_URL,
+      STUDIO_TEST_DATABASE_URL: configuration.DB_URL,
       ZERO_QUERY_URL: `${appURL}/api/query`,
       // Documented forwarding allowlist, restricted to the diagnostic UUID.
       // Production configuration and the pinned Zero package remain unchanged.
@@ -484,6 +531,11 @@ ${storageBuckets}
       ZERO_LOG_FORMAT: 'json',
       ZERO_QUERY_HYDRATION_STATS: 'true',
       ZERO_PERFORMANCE_DIAGNOSTICS: '1',
+      PUSH_DELIVERY_ENABLED: 'true',
+      VAPID_PUBLIC_KEY: vapid.getPublicKey().toString('base64url'),
+      VAPID_PRIVATE_KEY: vapid.getPrivateKey().toString('base64url'),
+      VAPID_EMAIL: 'mailto:benchmark@example.invalid',
+      ZERO_PERFORMANCE_DELIVERY_URL: `http://${args.includes('--linux-app') ? 'host.docker.internal' : '127.0.0.1'}:${start + 8}/deliver`,
       PORT: String(start),
       HOST: '127.0.0.1',
       ZERO_PERFORMANCE_OUTPUT: artifactRoot,
@@ -492,6 +544,7 @@ ${storageBuckets}
         ? { ZERO_PERFORMANCE_EXECUTION: path.resolve(option('--execution-file')) }
         : {}),
       ZERO_PERFORMANCE_QUERY: filter ?? '',
+      ZERO_PERFORMANCE_MUTATION: option('--mutation') ?? '',
       ZERO_PERFORMANCE_CASE: selectedCase ?? '',
       ZERO_PERFORMANCE_LAYER: option('--layer') ?? 'all',
       ZERO_PERFORMANCE_COLLECT_ALL: args.includes('--collect-all') ? '1' : '',
@@ -562,7 +615,20 @@ ${storageBuckets}
     } else if (option('--layer') === 'fixtures') {
       await command(['--import', 'tsx', 'tools/e2e/zero-performance/fixture-check.ts'], 'fixtures');
     } else {
-      if (!filter && !selectedCase && !['journeys', 'security'].includes(option('--layer')))
+      const delivery = run(
+        process.execPath,
+        ['tools/e2e/zero-performance/delivery-endpoint.mjs', String(start + 8)],
+        { label: 'delivery' }
+      );
+      delivery.done.catch(() => {
+        if (!stopping) process.exitCode = 1;
+      });
+      await waitHTTP(`http://127.0.0.1:${start + 8}/ready`, delivery.child);
+      if (
+        !filter &&
+        !selectedCase &&
+        !['journeys', 'security', 'mutations'].includes(option('--layer'))
+      )
         await command(
           ['--import', 'tsx', 'tools/e2e/zero-performance/fixture-check.ts'],
           'fixtures'
@@ -617,6 +683,8 @@ ${storageBuckets}
           `polity.zero-performance.project=polity-zero-performance-${runID}`,
           '--network',
           `supabase_network_polity-zero-performance-${runID}`,
+          '--add-host',
+          'host.docker.internal:host-gateway',
           '--publish',
           `127.0.0.1:${start}:${start}`,
           '--mount',
@@ -643,7 +711,7 @@ ${storageBuckets}
         }
         for (const [key, value] of Object.entries(appEnvironment))
           if (
-            /^(VITE_|SUPABASE_|ZERO_)/.test(key) ||
+            /^(VITE_|SUPABASE_|ZERO_|VAPID_|PUSH_DELIVERY_)/.test(key) ||
             ['NODE_ENV', 'PORT', 'HOST', 'E2E_DATABASE_URL'].includes(key)
           )
             dockerArgs.push('--env', `${key}=${value}`);

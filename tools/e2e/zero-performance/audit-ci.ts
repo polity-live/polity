@@ -57,7 +57,7 @@ for (const execution of runIDs) {
   );
   const gate = JSON.parse(await readFile(path.join(artifact, 'gate.json'), 'utf8'));
   if (
-    gate.protocol !== 'zero-performance/v11' ||
+    gate.protocol !== 'zero-performance/v12' ||
     gate.runID !== `${id}-${run.run_attempt}` ||
     (run.event !== 'pull_request' && gate.headSHA !== run.head_sha) ||
     !gate.timing.nativeCI
@@ -74,8 +74,12 @@ for (const execution of runIDs) {
     Object.values(gate.sections).every(
       (section: any) =>
         section.catalogExpected === section.catalogMeasured &&
+        section.mutationsExpected === section.mutationsMeasured &&
         section.securityExpected === section.securityMeasured &&
-        section.browserScenarios === 20
+        section.browserScenarios === 20 &&
+        (section.mutationBootstrap
+          ? section.browserMutationActions === 0
+          : section.browserMutationActions === 4)
     );
   runs.push({
     runID: id,
@@ -98,7 +102,7 @@ if (new Set(runs.map(run => run.headSHA)).size !== 1)
 if (new Set(runs.map(run => JSON.stringify([run.baseSHA, run.bootstrap]))).size !== 1)
   throw new Error('Acceptance runs must use the same baseline/bootstrap');
 const result = {
-  protocol: 'zero-performance/v11',
+  protocol: 'zero-performance/v12',
   runs,
   threeNativeRunsWithinBudget: runs.every(run => run.coverageComplete && run.activeBudgetPassed),
   fullyGreen: runs.every(run => run.functionalPassed),

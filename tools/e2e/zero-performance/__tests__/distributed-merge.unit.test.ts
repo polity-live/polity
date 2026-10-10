@@ -71,6 +71,7 @@ async function partial(
             ...identity,
             phase: 'query-identities',
             at: 110,
+            mutations: [],
             queries: [{ id: 'query', name: 'users.current', structure }],
           },
           { ...identity, phase: 'response', at: 120, elapsed: 20 }
@@ -121,8 +122,11 @@ async function partial(
   );
   correlateQueryAPI(measurements, apiDiagnostics);
   return {
-    format: 11,
-    protocol: 'zero-performance/v11',
+    format: 12,
+    expectedMutations: [],
+    mutations: [],
+    mutationDiagnostics: [],
+    protocol: 'zero-performance/v12',
     execution,
     layer: shard.layer,
     filtered: true,
@@ -146,13 +150,14 @@ async function fixture() {
   roots.push(root);
   const manifest = createManifest(
     {
-      protocol: 'zero-performance/v11',
+      protocol: 'zero-performance/v12',
       headSHA: 'a'.repeat(40),
       harnessDigest: 'c'.repeat(64),
       runID: 'run',
       bootstrap: 'Fixture bootstrap',
       workloads: {
         head: {
+          mutations: [],
           queries: ['users.current/default'],
           security: [{ key: 'users.current/security-allow/security/owner', expectedIDs: [] }],
         },

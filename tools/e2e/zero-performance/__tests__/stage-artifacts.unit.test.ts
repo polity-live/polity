@@ -34,6 +34,8 @@ describe('original CI artifact staging', () => {
       'runner.json',
       'comparison.json',
       'head/initial/report.json',
+      'head/initial/mutations.csv',
+      'head/initial/delivery.log',
       'head/initial/plans/query.json',
       'head/initial/workers/001/measurements.ndjson',
       'base/failure.json',

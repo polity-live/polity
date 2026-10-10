@@ -108,6 +108,7 @@
     "zero:stats": "cross-env ZERO_UPSTREAM_DB=postgresql://postgres:postgres@127.0.0.1:54322/postgres node tools/zero/stats.mjs",
     "zero:analyze": "node tools/e2e/zero-performance/analyze.mjs",
     "test:zero:performance": "node --import tsx tools/e2e/zero-performance/gate.ts",
+    "test:zero:mutations": "node tools/e2e/zero-performance/run.mjs --layer mutations --collect-all",
     "deploy": "node tools/deploy/deploy.mjs",
     "deploy:dry": "node tools/deploy/deploy.mjs --dry-run",
     "studio:worker": "node --import tsx tools/studio/launch.ts worker",

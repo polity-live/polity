@@ -19609,7 +19609,8 @@
         "src/features/charts/__tests__/dataset-workflow.component-flow.test.tsx",
         "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
         "src/features/network/types/__tests__/network.types.unit.test.ts",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts"
+        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
+        "tools/e2e/zero-performance/mutation-case-types.ts"
       ]
     },
     {
@@ -35217,7 +35218,8 @@
         "src/features/decision-terminal/ui/__tests__/MobileDecisionCard.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
         "src/features/network/types/__tests__/network.types.unit.test.ts",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts"
+        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
+        "tools/e2e/zero-performance/mutation-case-types.ts"
       ]
     },
     {
@@ -109444,6 +109446,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/__tests__/zero-mutation-delivery.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/__tests__/zero-mutation-diagnostics.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
       "domain": "server:__tests__",
       "owner": "polity/server:__tests__",
@@ -115643,6 +115665,38 @@
         "src/server/__tests__/zero-mutate.contract.unit.test.ts",
         "src/server/__tests__/zero-mutate.unit.test.ts"
       ]
+    },
+    {
+      "path": "src/server/zero-mutation-delivery.ts",
+      "domain": "server:zero-mutation-delivery.ts",
+      "owner": "polity/server:zero-mutation-delivery.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-mutation-delivery.unit.test.ts",
+          "project": "unit",
+          "caseId": "sends only the provider identity to the owned local endpoint"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-mutation-delivery.unit.test.ts"]
+    },
+    {
+      "path": "src/server/zero-mutation-diagnostics.ts",
+      "domain": "server:zero-mutation-diagnostics.ts",
+      "owner": "polity/server:zero-mutation-diagnostics.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-mutation-diagnostics.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not confirm a request before slow after-commit work finishes"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-mutation-diagnostics.unit.test.ts"]
     },
     {
       "path": "src/server/zero-query-diagnostics.ts",
@@ -132140,6 +132194,156 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-browser-metrics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-browser.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-amendments.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-core.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-measure.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-runtime.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-scheduling-weights.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132287,6 +132491,22 @@
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/delivery-endpoint.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts only an inert provider marker and rejects secrets unknown routes and oversized payloads"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -132499,6 +132719,278 @@
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-browser-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-browser-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires all actions and a real denied server operation"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-browser.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-browser.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires a visible response and observes committed SQL independently of UI completion"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-case-types.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads the exact public mutation registry and fails closed on missing duplicate or unknown cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-amendments.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-amendments.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers the exact runtime registry; public orchestrators have substantive success cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-content.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every owned domain mutation, including nested canvas command, with success and anonymous rejection"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-core.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-core.unit.test.ts",
+          "project": "unit",
+          "caseId": "authorized skill creation accepts the real empty-list baseline and only its own created row"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-governance.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every registered governance entry point with authorized behavior or an explicit immutable/server-only rejection"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-catalog.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads the exact public mutation registry and fails closed on missing duplicate or unknown cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
+          "project": "unit",
+          "caseId": "seals prepared rollback state but proves fixture-owned scoped rows absent after restoration"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-governance-fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "builds SQL-only owned group and event rights scoped to fresh fixture identities"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-measure.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-measure.unit.test.ts",
+          "project": "unit",
+          "caseId": "stops after an unsettled server deadline and never guesses a client rejection or proves restoration"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires both relative and absolute user-time increases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "attributes another named mutation in the same client batch only to its own phases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-runtime.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-runtime.unit.test.ts",
+          "project": "unit",
+          "caseId": "bootstraps only absent revision catalogs and propagates genuine filesystem failures"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-scheduling-weights.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-scheduling-weights.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves query/security weights and uses full elapsed duration instead of fast user latency"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-snapshot.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires a replicated response for the writing client, not an HTTP ACK"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-update-weights.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+          "project": "unit",
+          "caseId": "writes only an explicit scheduling review output and retains source weight files"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {

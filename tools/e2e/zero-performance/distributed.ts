@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { loadCases } from './catalog';
 import { securityCaseManifest } from './security';
+import { mutationInventory } from './mutation-runtime';
 import { createManifest, validateManifest, type Manifest, type Workload } from './sharding';
 import {
   command,
@@ -26,6 +27,7 @@ if (action === 'prepare') {
   const head: Workload = {
     queries: loadCases().map(entry => `${entry.name}/${entry.variant}`),
     security: await securityCaseManifest(),
+    mutations: (await mutationInventory()).expectations,
   };
   let baseSHA: string | undefined, base: Workload | undefined, bootstrap: string | undefined;
   if (!baseline || /^0+$/.test(baseline))
@@ -61,7 +63,7 @@ if (action === 'prepare') {
   );
   const manifest = createManifest(
     {
-      protocol: 'zero-performance/v11',
+      protocol: 'zero-performance/v12',
       runID: `${process.env.GITHUB_RUN_ID ?? randomUUID()}-${process.env.GITHUB_RUN_ATTEMPT ?? '1'}`,
       headSHA,
       baseSHA,
@@ -92,6 +94,7 @@ if (action === 'prepare') {
       matrix,
       queries: head.queries.length * 4,
       security: head.security.length,
+      mutations: head.mutations.length,
       bootstrap,
       elapsedMs,
     })

@@ -32,6 +32,7 @@ import { writeJoinPlanArtifact } from './plan-artifacts';
 import { measurementSummary, resultsCSV } from './results';
 import { executionMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
+import type { MutationBrowserResult } from './mutation-browser';
 
 (globalThis as any).TESTING ??= false;
 
@@ -72,6 +73,7 @@ const selection: string[] | undefined = process.env.ZERO_PERFORMANCE_SELECTION
 let expectedKeys: string[] = [];
 let expectedSecurityCases: SecurityCaseExpectation[] = [];
 const diagnostics: Record<string, unknown> = {};
+let browserMutations: MutationBrowserResult[] = [];
 
 function benchmarkActor(name: 'owner' | 'outsider') {
   return {
@@ -432,6 +434,10 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
         layer: process.env.ZERO_PERFORMANCE_LAYER ?? 'all',
         expectedKeys,
         expectedSecurityCases,
+        expectedMutations: [],
+        mutations: [],
+        mutationDiagnostics: [],
+        browserMutations,
         filtered: Boolean(
           process.env.ZERO_PERFORMANCE_QUERY || process.env.ZERO_PERFORMANCE_CASE || selection
         ),
@@ -536,7 +542,13 @@ try {
     });
   }
   if (['all', 'journeys'].includes(layer) && !process.env.ZERO_PERFORMANCE_QUERY && !selection) {
-    journeys = await measureJourneys(records => save({ journeys: records }));
+    journeys = await measureJourneys(
+      records => save({ journeys: records }),
+      async rows => {
+        browserMutations = rows;
+        await save({ browserMutations });
+      }
+    );
   }
   const warningLog = measuredServerWarnings(
     await readFile(path.join(logOutput, 'zero.log')),

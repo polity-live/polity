@@ -22,10 +22,12 @@ function fixture() {
       harnessDigest: 'c'.repeat(64),
       workloads: {
         head: {
+          mutations: [],
           queries: ['q/default'],
           security: [{ key: 'q/security-private/security/owner', expectedIDs: [] }],
         },
         base: {
+          mutations: [],
           queries: ['q/default'],
           security: [{ key: 'q/security-private/security/owner', expectedIDs: [] }],
         },
@@ -77,6 +79,7 @@ function report(
           ...identity,
           phase: 'query-identities',
           at: 110,
+          mutations: [],
           queries: [{ id: 'query', name: 'q', structure }],
         },
         { ...identity, phase: 'response', at: 120, elapsed: 20 }
@@ -112,6 +115,9 @@ function report(
   correlateQueryAPI(measurements, records);
   return {
     format: REPORT_FORMAT,
+    expectedMutations: [],
+    mutations: [],
+    mutationDiagnostics: [],
     protocol: MEASUREMENT_PROTOCOL,
     layer: shard.layer,
     filtered: true,
