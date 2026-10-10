@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { activeTiming, nativeTiming, type JobTiming } from '../distributed-timing';
+import { measurementDeadlineMs, stopOwnedSessions } from '../distributed-runner';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 
@@ -12,6 +13,46 @@ const job = (name: string, start: number, end: number): JobTiming => ({
 });
 
 describe('active Zero CI budget', () => {
+  it('keeps the fifteen-minute budget while leaving confirmation time before cleanup', () => {
+    const setupMs = 30_000;
+    expect(measurementDeadlineMs(setupMs) + setupMs + 45_000).toBe(900_000);
+    expect(measurementDeadlineMs(900_000)).toBe(1);
+    expect(827_383 + 21_844).toBeLessThan(measurementDeadlineMs(0));
+  });
+  it('stops both independent stacks concurrently and waits for both exits', async () => {
+    vi.useFakeTimers();
+    try {
+      let stopped = 0;
+      const stop = vi.fn(async () => {
+        await new Promise(resolve => setTimeout(resolve, 18_000));
+        stopped++;
+      });
+      const pending = stopOwnedSessions([{ stop }, { stop }]);
+      expect(stop).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(18_000);
+      expect(await pending).toEqual([]);
+      expect(stopped).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('retains every cleanup failure even when another stack exits successfully', async () => {
+    expect(
+      await stopOwnedSessions([
+        {
+          stop: async () => {
+            throw new Error('head failed');
+          },
+        },
+        { stop: async () => undefined },
+        {
+          stop: async () => {
+            throw new Error('base failed');
+          },
+        },
+      ])
+    ).toEqual(['Error: head failed', 'Error: base failed']);
+  });
   it('accepts all exact boundaries and rejects any phase overrunning its allowance', () => {
     expect(activeTiming(180_000, 900_000, 120_000)).toMatchObject({
       activeMs: 1_200_000,

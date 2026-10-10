@@ -108,6 +108,15 @@ class Session {
   }
 }
 
+export function measurementDeadlineMs(priorSetupMs: number) {
+  return Math.max(1, ACTIVE_BUDGET_MS.runner - 45_000 - priorSetupMs);
+}
+
+export async function stopOwnedSessions(sessions: Iterable<{ stop(): Promise<void> }>) {
+  const results = await Promise.allSettled([...sessions].map(async session => session.stop()));
+  return results.flatMap(result => (result.status === 'rejected' ? [String(result.reason)] : []));
+}
+
 export async function runShard(manifest: Manifest, id: string, directory: string) {
   if (
     git('rev-parse', 'HEAD') !== manifest.headSHA ||
@@ -146,14 +155,11 @@ export async function runShard(manifest: Manifest, id: string, directory: string
     abort.abort();
     for (const session of Object.values(sessions)) session?.child.kill('SIGINT');
   };
-  // Native artifacts take 10–35 seconds; leave one minute for final cleanup and upload.
-  const timer = setTimeout(
-    () => {
-      result.failures.push('Runner measurement deadline exceeded');
-      signal();
-    },
-    Math.max(1, ACTIVE_BUDGET_MS.runner - 60_000 - priorSetupMs)
-  );
+  // Owned stacks stop concurrently; reserve 45 seconds for cleanup, staging and upload.
+  const timer = setTimeout(() => {
+    result.failures.push('Runner measurement deadline exceeded');
+    signal();
+  }, measurementDeadlineMs(priorSetupMs));
   process.once('SIGINT', signal);
   process.once('SIGTERM', signal);
   const measure = async (revision: Revision, phase: Execution['phase'], selected: string[]) => {
@@ -333,12 +339,7 @@ export async function runShard(manifest: Manifest, id: string, directory: string
   } finally {
     clearTimeout(timer);
     const cleanupAt = performance.now();
-    for (const session of Object.values(sessions))
-      try {
-        await session?.stop();
-      } catch (error) {
-        result.failures.push(String(error));
-      }
+    result.failures.push(...(await stopOwnedSessions(Object.values(sessions))));
     result.cleanupMs = performance.now() - cleanupAt;
     process.removeListener('SIGINT', signal);
     process.removeListener('SIGTERM', signal);
