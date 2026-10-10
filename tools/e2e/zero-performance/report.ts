@@ -182,14 +182,11 @@ export function bootMeasurementFailures(journey: NonNullable<Report['journeys']>
     ].every(valid) ||
     boot.documentStart !== 0 ||
     boot.connectedAt !== journey.processing?.navigationStart ||
-    !journey.processing?.connections?.some(
-      event =>
-        event.clientID === boot.clientID &&
-        event.state === 'connected' &&
-        event.at === boot.connectedAt
-    ) ||
+    journey.processing?.connections?.find(
+      event => event.clientID === boot.clientID && event.state === 'connected'
+    )?.at !== boot.connectedAt ||
     Math.abs(boot.visibleMs - (boot.connectedAt + journey.visibleMs)) > 0.001 ||
-      Math.abs(boot.authoritativeMs - (boot.connectedAt + Number(journey.authoritativeMs))) > 0.001
+    Math.abs(boot.authoritativeMs - (boot.connectedAt + Number(journey.authoritativeMs))) > 0.001
   )
     return ['Invalid initial document boot measurement/boundary'];
   return [];

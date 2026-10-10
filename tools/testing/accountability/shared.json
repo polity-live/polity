@@ -4859,13 +4859,13 @@
     "src/features/shared/ui/wiki/InfoTabs.tsx#a-18f201b77b": {
       "actionId": "shared.info-tabs.navigate.a"
     },
-    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-756c65f6eb": {
+    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-c09483fc82": {
       "actionId": "shared.info-tabs.select.components-info-tabs-about"
     },
-    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-18afd384d8": {
+    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-6c0dd78736": {
       "actionId": "shared.info-tabs.select.components-info-tabs-contact"
     },
-    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-e84b39bd12": {
+    "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-61a223d1c2": {
       "actionId": "shared.info-tabs.select.tabs-trigger"
     }
   }

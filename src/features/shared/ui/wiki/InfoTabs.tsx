@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx';
+import { Tabs, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx';
 import { ScrollableTabsList } from '@/features/shared/ui/navigation/ScrollableTabs';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
@@ -81,7 +81,38 @@ interface ContactCardItem {
   accentClass: string;
 }
 
-export const InfoTabs: React.FC<InfoTabsProps> = ({
+/** These panels have no exit animation, so hiding them needs no style inspection. */
+function InfoTabPanel({
+  value,
+  selected,
+  prefix,
+  animate,
+  children,
+}: React.PropsWithChildren<{
+  value: string;
+  selected: string;
+  prefix: string;
+  animate: boolean;
+}>) {
+  const active = value === selected;
+  return (
+    <div
+      role="tabpanel"
+      id={`${prefix}-panel-${value}`}
+      aria-labelledby={`${prefix}-tab-${value}`}
+      tabIndex={0}
+      hidden={!active}
+      data-state={active ? 'active' : 'inactive'}
+      data-orientation="horizontal"
+      className="ring-offset-background focus-visible:ring-ring data-[state=active]:animate-civic-fade-up mt-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      style={{ animationDuration: animate ? undefined : '0s' }}
+    >
+      {active ? children : null}
+    </div>
+  );
+}
+
+const InfoTabsContent: React.FC<InfoTabsProps> = ({
   about,
   contact,
   eventDetails,
@@ -156,6 +187,14 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({
     eventDetails || locationItems.length > 0 || locationCoordinates || locationShape
   );
   const defaultTab = about ? 'about' : hasLocationTab ? 'location' : 'contact';
+  const [selectedTab, setSelectedTab] = React.useState(defaultTab);
+  const [hasSwitchedTab, setHasSwitchedTab] = React.useState(false);
+  const tabPrefix = React.useId();
+  const triggerIdentity = (value: string) => ({
+    id: `${tabPrefix}-tab-${value}`,
+    'aria-controls': `${tabPrefix}-panel-${value}`,
+  });
+  const panelState = { selected: selectedTab, prefix: tabPrefix, animate: hasSwitchedTab };
 
   if (locationItems.length === 0) {
     const fallbackLocation = contact?.location || formatLocation(contact);
@@ -298,35 +337,46 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({
   }
 
   return (
-    <Tabs defaultValue={defaultTab} className={className}>
+    <Tabs
+      value={selectedTab}
+      onValueChange={value => {
+        setSelectedTab(value);
+        setHasSwitchedTab(true);
+      }}
+      className={className}
+    >
       <ScrollableTabsList>
-        <TabsTrigger value="about">{t('components.infoTabs.about')}</TabsTrigger>
+        <TabsTrigger value="about" {...triggerIdentity('about')}>
+          {t('components.infoTabs.about')}
+        </TabsTrigger>
         {hasLocationTab && (
-          <TabsTrigger value="location">
+          <TabsTrigger value="location" {...triggerIdentity('location')}>
             {eventDetails
               ? t('components.infoTabs.locationAndDate')
               : t('components.infoTabs.labels.location')}
           </TabsTrigger>
         )}
-        <TabsTrigger value="contact">{t('components.infoTabs.contact')}</TabsTrigger>
+        <TabsTrigger value="contact" {...triggerIdentity('contact')}>
+          {t('components.infoTabs.contact')}
+        </TabsTrigger>
         {activity ? (
-          <TabsTrigger value="activity">
+          <TabsTrigger value="activity" {...triggerIdentity('activity')}>
             <Activity className="mr-2 h-4 w-4" />
             {t('components.activityLog.title')}
           </TabsTrigger>
         ) : null}
       </ScrollableTabsList>
 
-      <TabsContent value="about" className="mt-4">
+      <InfoTabPanel value="about" {...panelState}>
         <Card>
           <CardContent className="pt-6">
             <RichTextPreview content={about} emptyText={t('components.infoTabs.noInformation')} />
           </CardContent>
         </Card>
-      </TabsContent>
+      </InfoTabPanel>
 
       {hasLocationTab && (
-        <TabsContent value="location" className="mt-4">
+        <InfoTabPanel value="location" {...panelState}>
           <Card>
             <CardContent className="space-y-4 pt-6">
               {locationCoordinates ? (
@@ -393,10 +443,10 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({
                 )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </InfoTabPanel>
       )}
 
-      <TabsContent value="contact" className="mt-4">
+      <InfoTabPanel value="contact" {...panelState}>
         <Card>
           <CardContent className="space-y-6 pt-6">
             {primaryContactItems.length > 0 && (
@@ -424,14 +474,19 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({
             )}
           </CardContent>
         </Card>
-      </TabsContent>
+      </InfoTabPanel>
       {activity ? (
-        <TabsContent value="activity" className="mt-4">
+        <InfoTabPanel value="activity" {...panelState}>
           <Card>
             <CardContent className="pt-6">{activity}</CardContent>
           </Card>
-        </TabsContent>
+        </InfoTabPanel>
       ) : null}
     </Tabs>
   );
+};
+
+export const InfoTabs: React.FC<InfoTabsProps> = props => {
+  if (!props.about && !props.contact && !props.eventDetails && !props.activity) return null;
+  return <InfoTabsContent {...props} />;
 };

@@ -1176,6 +1176,16 @@ describe('Zero performance gate', () => {
     for (const changed of [
       { ...journey, processing: { navigationStart: 601 } },
       { ...journey, processing: { ...journey.processing, connections: [] } },
+      {
+        ...journey,
+        processing: {
+          ...journey.processing,
+          connections: [
+            { clientID: 'client', state: 'connected', at: 500 },
+            ...journey.processing.connections,
+          ],
+        },
+      },
       { ...journey, boot: { ...journey.boot, clientID: 'other' } },
       { ...journey, boot: { ...journey.boot, visibleMs: 1499 } },
       { ...journey, boot: { ...journey.boot, authoritativeMs: NaN } },

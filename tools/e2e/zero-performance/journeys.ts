@@ -296,6 +296,7 @@ export async function measureJourneys(
             page.evaluate(() => {
               const state = (globalThis as any).__benchmarkPaint;
               const end = state.start + Math.max(state.displayed, state.authoritative);
+              const diagnosticStart = state.cold?.documentStart ?? state.start;
               return {
                 browserTimeOrigin: performance.timeOrigin,
                 connections: (globalThis as any).__zeroPerformanceConnectionEvents ?? [],
@@ -306,7 +307,7 @@ export async function measureJourneys(
                   .filter(
                     entry =>
                       ['fetch', 'xmlhttprequest'].includes(entry.initiatorType) &&
-                      entry.startTime >= state.start &&
+                      entry.startTime >= diagnosticStart &&
                       entry.startTime <= end
                   )
                   .map(entry => ({
@@ -316,7 +317,7 @@ export async function measureJourneys(
                     initiator: entry.initiatorType,
                   })),
                 longTasks: ((globalThis as any).__benchmarkLongTasks ?? []).filter(
-                  (task: any) => task.start >= state.start && task.start <= end
+                  (task: any) => task.start >= diagnosticStart && task.start <= end
                 ),
                 assets: (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
                   .filter(entry => {
@@ -324,7 +325,7 @@ export async function measureJourneys(
                     return (
                       address.origin === location.origin &&
                       address.pathname.startsWith('/assets/') &&
-                      entry.startTime >= state.start &&
+                      entry.startTime >= diagnosticStart &&
                       entry.startTime <= end
                     );
                   })
