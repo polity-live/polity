@@ -364,7 +364,8 @@ export async function reportFailures(report: Report, absoluteBudgets = true): Pr
           !(
             /^(Visible content exceeds \d+ ms|Authoritative content exceeds \d+ ms|Cached display exceeds \d+ ms|Subscribed data update exceeds budget)$/.test(
               failure
-            ) || /^Query .+: (Client|Total|Preload) exceeds \d+ ms$/.test(failure)
+            ) ||
+            /^Query .+: (Client|Total|Preload|Server materialization) exceeds \d+ ms$/.test(failure)
           )
       )
     );

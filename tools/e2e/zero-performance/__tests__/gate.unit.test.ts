@@ -1100,7 +1100,7 @@ describe('Zero performance gate', () => {
           visibleMs: 1001,
           cachedDisplayMs: 51,
           queries: [query],
-          failures: [],
+          failures: [] as string[],
         },
       ],
     };
@@ -1115,6 +1115,13 @@ describe('Zero performance gate', () => {
     expect((await reportFailures(report, false)).some(failure => failure.includes('exceeds'))).toBe(
       false
     );
+    query.server = 101;
+    const serverFailure = 'Query groups.byId: Server materialization exceeds 100 ms';
+    report.journeys[0].failures.push(serverFailure, 'Incorrect independent access results');
+    expect(await reportFailures(report)).toContain(serverFailure);
+    const baselineFailures = await reportFailures(report, false);
+    expect(baselineFailures.some(failure => failure.includes('exceeds'))).toBe(false);
+    expect(baselineFailures).toContain('Incorrect independent access results');
   });
   it('rejects independent nested-result mismatches', () => {
     const check = {

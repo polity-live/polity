@@ -29,3 +29,21 @@ export function batchCoverageFailures(expected: readonly string[], measurements:
     ...(actualSet.size !== actual.length ? ['Duplicate worker measurements'] : []),
   ];
 }
+
+/** A failed browser budget is a recorded outcome, not an unexplained process crash. */
+export function unexplainedWorkerExit(
+  code: number,
+  report: {
+    infrastructure?: readonly string[];
+    measurements: readonly Pick<Measurement, 'failures'>[];
+    journeys?: readonly { failures: readonly string[] }[];
+  }
+) {
+  if (code === 0) return false;
+  if (code !== 1) return true;
+  return !(
+    report.infrastructure?.length ||
+    report.measurements.some(row => row.failures.length) ||
+    report.journeys?.some(row => row.failures.length)
+  );
+}

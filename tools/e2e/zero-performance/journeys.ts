@@ -573,23 +573,30 @@ export async function measureJourneys(
       try {
         const retainedAt = performance.now();
         const retainedQueries = await withDeadline(
-          page.evaluate(async () => {
-            const zero = (globalThis as any).__zero;
-            // The measured browser owns this client. Include all its active and
-            // TTL-retained queries without an unrelated aggregate RPC.
-            return (await zero.inspector.client.queries()).map((query: any) => ({
-              name: query.name,
-              id: query.id,
-              clientID: query.clientID,
-              args: query.args,
-              deleted: query.deleted,
-              client: query.hydrateClient,
-              server: query.hydrateServer,
-              total: query.hydrateTotal,
-              ttl: query.ttl,
-              inactive: query.inactivatedAt,
-            }));
-          }),
+          page.evaluate(
+            async ({ adminPassword, userID }) => {
+              const zero = (globalThis as any).__zero;
+              if (!zero || zero.userID !== userID)
+                throw new Error('Browser is not authenticated as the benchmark actor');
+              if (!(await zero.inspector.authenticate(adminPassword)))
+                throw new Error('Browser inspector authentication rejected');
+              // The measured browser owns this client. Include all its active and
+              // TTL-retained queries without an unrelated aggregate RPC.
+              return (await zero.inspector.client.queries()).map((query: any) => ({
+                name: query.name,
+                id: query.id,
+                clientID: query.clientID,
+                args: query.args,
+                deleted: query.deleted,
+                client: query.hydrateClient,
+                server: query.hydrateServer,
+                total: query.hydrateTotal,
+                ttl: query.ttl,
+                inactive: query.inactivatedAt,
+              }));
+            },
+            { adminPassword: required(process.env.ZERO_ADMIN_PASSWORD), userID: OWNER_ID }
+          ),
           'Retained query diagnostics'
         );
         await writeFile(
@@ -655,11 +662,11 @@ async function inspectOnce(
         if (!zero) throw new Error('Missing Zero instance during navigation');
         if (zero.userID !== password.userID)
           throw new Error('Browser is not authenticated as the benchmark actor');
-        if ((globalThis as any).__benchmarkInspectorZero !== zero) {
-          if (!(await zero.inspector.authenticate(password.adminPassword)))
-            throw new Error('Browser inspector authentication rejected');
-          (globalThis as any).__benchmarkInspectorZero = zero;
-        }
+        // Authentication belongs to the server worker's client group, rather
+        // than the lifetime of this browser's Zero object. Reauthenticate each
+        // diagnostic snapshot, outside the timed navigation.
+        if (!(await zero.inspector.authenticate(password.adminPassword)))
+          throw new Error('Browser inspector authentication rejected');
         // Wait only for currently observed activations, up to their unchanged one-second deadline.
         // Reading these app events does not issue inspector/analyzer requests.
         const cutoff = performance.now();

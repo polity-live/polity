@@ -14,7 +14,12 @@ import {
   measuredServerWarnings,
   type Report,
 } from './report';
-import { PROFILE_SUFFIXES, queryBatches, batchCoverageFailures } from './batches';
+import {
+  PROFILE_SUFFIXES,
+  queryBatches,
+  batchCoverageFailures,
+  unexplainedWorkerExit,
+} from './batches';
 import { required } from './required';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { closeDb } from '../../../e2e/fixtures/db';
@@ -219,12 +224,7 @@ async function worker(label: string, workerLayer: string, selected?: string[]) {
   }
   infrastructure.push(...batchCoverageFailures(expected, report.measurements));
   measurements.push(...report.measurements);
-  if (
-    code !== 0 &&
-    !report.infrastructure?.length &&
-    !report.measurements.some(row => row.failures.length)
-  )
-    infrastructure.push(`${label}: Worker exited ${code}`);
+  if (unexplainedWorkerExit(code, report)) infrastructure.push(`${label}: Worker exited ${code}`);
   await save();
   if (interrupted) throw new Error('Measurement collection interrupted');
   if (
