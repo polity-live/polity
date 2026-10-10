@@ -7,6 +7,11 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
+      tests:
+        description: "Test flags: all, performance, or comma-separated flags (see TESTING.md)"
+        required: false
+        default: all
+        type: string
       zero_baseline_ref:
         description: Optional benchmark-enabled baseline commit for native acceptance runs
         required: false
@@ -21,8 +26,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test-selection:
+    name: Select CI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      enabled: ${{ steps.flags.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.21.0
+      - id: flags
+        name: Resolve test flags (default all)
+        env:
+          CI_TEST_SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.tests || '' }}
+        run: node tools/testing/ci-test-selection.mjs
+
   zero-performance-prepare:
     name: Zero preparation
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     outputs:
@@ -56,7 +80,8 @@ jobs:
 
   zero-performance-shards:
     name: Zero measurements / ${{ matrix.shard }}
-    needs: zero-performance-prepare
+    needs: [test-selection, zero-performance-prepare]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
@@ -119,8 +144,8 @@ jobs:
 
   zero-query-performance:
     name: Zero Query Performance
-    if: always()
-    needs: [zero-performance-prepare, zero-performance-shards]
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
+    needs: [test-selection, zero-performance-prepare, zero-performance-shards]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
@@ -168,6 +193,8 @@ jobs:
 
   static-analysis:
     name: Static Analysis
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').static == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -215,6 +242,8 @@ jobs:
 
   unit-tests:
     name: Unit Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').unit == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -245,6 +274,8 @@ jobs:
 
   component-tests:
     name: Component Integration Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').component == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -255,6 +286,8 @@ jobs:
 
   component-flow-shards:
     name: Component Flow / ${{ matrix.shard }} of 4
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').flow == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -281,8 +314,8 @@ jobs:
 
   component-flow-gate:
     name: Component Flow Tests
-    if: always()
-    needs: component-flow-shards
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').flow == true
+    needs: [test-selection, component-flow-shards]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -310,6 +343,8 @@ jobs:
 
   browser-component-tests:
     name: Browser Component Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').browser == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -332,6 +367,8 @@ jobs:
 
   coverage-shards:
     name: Coverage Shard ${{ matrix.shard }} of 4
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -366,8 +403,8 @@ jobs:
 
   coverage-ratchet:
     name: Coverage Ratchet
-    if: always()
-    needs: [coverage-shards, browser-component-tests, database-tests]
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
+    needs: [test-selection, coverage-shards, browser-component-tests, database-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -449,6 +486,8 @@ jobs:
 
   security-tests:
     name: Security Contracts
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').security == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -458,6 +497,8 @@ jobs:
 
   service-integration-shards:
     name: Service Integration / ${{ matrix.shard }} of 2
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').service == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -484,8 +525,8 @@ jobs:
 
   service-integration-gate:
     name: Service Integration Tests
-    if: always()
-    needs: service-integration-shards
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').service == true
+    needs: [test-selection, service-integration-shards]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -513,6 +554,8 @@ jobs:
 
   database-tests:
     name: Database Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').database == true
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -582,6 +625,8 @@ jobs:
 
   build:
     name: Build
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').build == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -592,6 +637,8 @@ jobs:
 
   e2e-tests:
     name: E2E / ${{ matrix.name }}
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').e2e == true
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -724,8 +771,8 @@ jobs:
 
   e2e-gate:
     name: E2E Gate
-    if: always()
-    needs: e2e-tests
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').e2e == true
+    needs: [test-selection, e2e-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -767,7 +814,8 @@ jobs:
 
   dependency-review:
     name: Dependency Review
-    if: github.event_name == 'pull_request'
+    needs: [test-selection]
+    if: github.event_name == 'pull_request' && fromJSON(needs.test-selection.outputs.enabled || '{}').dependencies == true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

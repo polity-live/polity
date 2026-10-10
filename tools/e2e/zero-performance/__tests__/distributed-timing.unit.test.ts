@@ -122,7 +122,10 @@ describe('active Zero CI budget', () => {
     expect(runners.strategy['max-parallel']).toBe(20);
     expect(runners.strategy['fail-fast']).toBe(false);
     expect(gate.name).toBe('Zero Query Performance');
-    expect(gate.if).toBe('always()');
+    expect(gate.if).toContain('always()');
+    expect(gate.if).toContain(
+      "fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true"
+    );
     expect([
       prepare['timeout-minutes'],
       runners['timeout-minutes'],

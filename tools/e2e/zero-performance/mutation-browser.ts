@@ -435,9 +435,17 @@ export async function measureMutationBrowserActions(
         }),
       finalVisibleState: async () => {
         stage = 'vote success overlay closure';
-        await expect(page.locator('[data-slot="vote-submission-overlay"]')).toHaveCount(0);
+        // Locator waits observe the DOM each frame. Assertion retry backoff can
+        // add hundreds of milliseconds after the overlay has already gone.
+        await page.locator('[data-slot="vote-submission-overlay"]').waitFor({
+          state: 'detached',
+          timeout: 30_000,
+        });
         stage = 'vote current indication proof';
-        await expect(page.getByText('Your indication', { exact: true }).first()).toBeVisible();
+        await page.getByText('Your indication', { exact: true }).first().waitFor({
+          state: 'visible',
+          timeout: 30_000,
+        });
       },
       reloadState: async () => {
         await page.reload();
