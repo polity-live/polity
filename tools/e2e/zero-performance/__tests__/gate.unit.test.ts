@@ -25,13 +25,40 @@ import {
   applicationStorageBuckets,
   verifyBuildAssets,
   pipeRuntimeLogLines,
+  corepackPNPMEntryPoint,
+  shouldCopyBenchmarkSource,
 } from '../isolation.mjs';
+
+describe('benchmark source isolation', () => {
+  it('excludes dependency, output and Git roots even when Git returns a bare symlink name', () => {
+    for (const file of [
+      'node_modules',
+      'node_modules/a.js',
+      'node_modules\\a.js',
+      'output',
+      'output/report.json',
+      '.git',
+      '.git/config',
+      '.env',
+      '.env.local',
+    ])
+      expect(shouldCopyBenchmarkSource(file)).toBe(false);
+    for (const file of [
+      'src/zero/queries.ts',
+      '.github/workflows/ci.yml',
+      'pnpm-lock.yaml',
+      'node_modules-policy.md',
+    ])
+      expect(shouldCopyBenchmarkSource(file)).toBe(true);
+  });
+});
 import {
   reportFailures,
   correlateQueryAPI,
   serverWarningFailures,
   securityCoverageFailures,
   navigationMaterializationFailures,
+  bootMeasurementFailures,
   isAbsoluteBudgetFailure,
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
@@ -120,6 +147,39 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
 }
 
 describe('Zero performance gate', () => {
+  it('locates the installed Corepack in Windows and Linux Node layouts', () => {
+    for (const [executable, platform, expected] of [
+      [
+        'C:\\Program Files\\nodejs\\node.exe',
+        'win32',
+        'C:\\Program Files\\nodejs\\node_modules\\corepack\\dist\\pnpm.js',
+      ],
+      ['/usr/local/bin/node', 'linux', '/usr/local/lib/node_modules/corepack/dist/pnpm.js'],
+      ['/tools/node/node', 'linux', '/tools/node/node_modules/corepack/dist/pnpm.js'],
+      [
+        '/opt/hostedtoolcache/node/24.21.0/x64/bin/node',
+        'linux',
+        '/opt/hostedtoolcache/node/24.21.0/x64/lib/node_modules/corepack/dist/pnpm.js',
+      ],
+    ] as const) {
+      expect(
+        corepackPNPMEntryPoint(executable, platform, candidate => candidate === expected)
+      ).toBe(expected);
+    }
+  });
+
+  it('fails before measuring when the installed Corepack is missing or unreadable', () => {
+    expect(() => corepackPNPMEntryPoint('/usr/local/bin/node', 'linux', () => false)).toThrow(
+      'Installed Corepack pnpm entrypoint is missing'
+    );
+    const inaccessible = Object.assign(new Error('access denied'), { code: 'EACCES' });
+    expect(() =>
+      corepackPNPMEntryPoint('/usr/local/bin/node', 'linux', () => {
+        throw inaccessible;
+      })
+    ).toThrow(inaccessible);
+  });
+
   it('keeps a large warning intact when stdout and stderr arrive in interleaved chunks', () => {
     const stdout = new PassThrough();
     const stderr = new PassThrough();
@@ -178,8 +238,8 @@ describe('Zero performance gate', () => {
   });
   it('keeps five fresh materializations and collects one analysis without warmups', () => {
     expect(REPETITIONS).toEqual({ materialize: 5, warmup: 0, analyze: 1 });
-    expect(REPORT_FORMAT).toBe(10);
-    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v10');
+    expect(REPORT_FORMAT).toBe(11);
+    expect(MEASUREMENT_PROTOCOL).toBe('zero-performance/v11');
   });
   it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
     const item = measurement();
@@ -257,6 +317,30 @@ describe('Zero performance gate', () => {
     expect(owner.where.conditions[0].left.name).toBe('id');
     expect(owner.where.conditions[1].conditions[0].left.name).toBe('creator_id');
   });
+  it('preserves every authorized event metadata projection while querying the agenda separately', () => {
+    const cases = loadCases();
+    const fullCase = cases.find(
+      entry => entry.name === 'events.byIdFull' && entry.variant === 'default'
+    )!;
+    const agendaCase = cases.find(
+      entry => entry.name === 'events.forAgenda' && entry.variant === 'default'
+    )!;
+    expect(agendaCase.args).toEqual(fullCase.args);
+    for (const userID of ['owner', 'outsider', 'anon']) {
+      const ctx = { userID, email: '' };
+      const full = structuredClone(queryAST(buildQuery(fullCase, ctx)));
+      const detail = queryAST(buildQuery(agendaCase, ctx));
+      if (!full.related) throw new Error('Expected full event detail relations');
+      expect(
+        full.related.filter((relation: any) => relation.subquery.alias === 'agenda_items')
+      ).toHaveLength(1);
+      full.related = full.related.filter(
+        (relation: any) => relation.subquery.alias !== 'agenda_items'
+      );
+      expect(detail).toEqual(full);
+    }
+  });
+
   it('counts every business permission scenario, including nested elections and votes', async () => {
     const cases: string[] = [];
     const sql = async () => [];
@@ -267,6 +351,9 @@ describe('Zero performance gate', () => {
     expect(new Set(cases).size).toBe(cases.length);
     expect(cases).toContain('events.byIdFull/vote-voter-revoked-owner/owner');
     expect(cases).toContain('events.forCancel/election-elector-revoked-owner/owner');
+    expect(cases).toContain('events.forAgenda/agenda-participant-declined/owner');
+    expect(cases).toContain('events.forAgenda/private-event-group-anonymous/anonymous');
+    expect(cases).toContain('events.forAgenda/agenda-tutorial-archived-owner/owner');
   });
   it('requires the public election to be present in every nested private-role security case', async () => {
     const cases = await securityCaseManifest();
@@ -374,21 +461,28 @@ describe('Zero performance gate', () => {
           ({ subquery }) => subquery.table === 'agenda_item'
         );
         const agenda = agendaRelation?.subquery;
-        expect(event.where).toEqual(
-          queryAST(
-            applyEventQueryAccess(zql.event.where('id', (entry.args as { id: string }).id), userID)
-          ).where
-        );
-        expect(agendaRelation?.correlation).toEqual({
-          parentField: ['id'],
-          childField: ['event_id'],
-        });
-        expect(agenda).toBeDefined();
-        if (name === 'events.byIdFull') expect(agenda?.where).toBeUndefined();
-        else
+        if (name === 'events.byIdFull') {
+          // Only this projection removes the event check already proved by its
+          // authorized parent and direct FK. Other agenda projections still
+          // require their independent scope predicates.
+          expect(event.where).toEqual(
+            queryAST(
+              applyEventQueryAccess(
+                zql.event.where('id', (entry.args as { id: string }).id),
+                userID
+              )
+            ).where
+          );
+          expect(agendaRelation?.correlation).toEqual({
+            parentField: ['id'],
+            childField: ['event_id'],
+          });
+          expect(agenda?.where).toBeUndefined();
+        } else {
           expect(agenda?.where).toEqual(
             queryAST(applyAgendaItemQueryAccess(zql.agenda_item, userID)).where
           );
+        }
         const election = agenda?.related?.find(
           ({ subquery }) => subquery.table === 'election'
         )?.subquery;
@@ -1047,6 +1141,96 @@ describe('Zero performance gate', () => {
       'Client exceeds 50 ms'
     );
   });
+  it('proves shared consumers with an uninterrupted measured subscription, preserving native provenance', () => {
+    const owner = { activationID: 'owner', activatedAt: 0, authoritativeAt: 10, releasedAt: null };
+    const query: QueryObservation = {
+      id: 'query',
+      clientID: 'client',
+      name: 'users.current',
+      args: [{}],
+      kind: 'materialized',
+      got: true,
+      client: 7,
+      server: 2,
+      total: 20,
+      ttl: '10m',
+      inactive: null,
+      preloads: [],
+      views: [owner],
+    };
+    const samples = new Map();
+    retainViewClientSamples(query, 20, samples);
+    const consumer = {
+      activationID: 'consumer',
+      activatedAt: 30,
+      authoritativeAt: 31,
+      releasedAt: 35,
+    };
+    const later = { ...query, views: [owner, consumer] };
+    const measured = retainViewClientSamples(later, 40, samples);
+    expect(measured.views![1]).toEqual({ ...consumer, sharedWithActivationID: 'owner' });
+    expect(measured.views![1]).not.toHaveProperty('clientMs');
+    expect(measured.views![0].clientMeasuredAt).toBe(20);
+    expect(queryObservationFailures(measured)).toEqual([]);
+    for (const badOwner of [
+      { ...owner, releasedAt: 29 },
+      { ...owner, releasedAt: 34 },
+      { ...owner, authoritativeAt: 32 },
+      { ...owner, interrupted: true },
+    ]) {
+      const changed = { ...later, views: [badOwner, consumer] };
+      expect(queryObservationFailures(retainViewClientSamples(changed, 40, samples))).toContain(
+        'Missing materialization metrics'
+      );
+      expect(
+        queryObservationFailures({
+          ...measured,
+          views: [{ ...measured.views![0], ...badOwner }, measured.views![1]],
+        })
+      ).toContain('Missing materialization metrics');
+    }
+    for (const changed of [
+      { ...later, client: null, id: 'another-query' },
+      { ...later, client: null, clientID: 'another-client' },
+      { ...later, client: null, name: 'users.byId' },
+      { ...later, client: null, args: [{ id: 'another-user' }] },
+      { ...later, views: [owner, { ...consumer, interrupted: true }] },
+      { ...later, views: [consumer] },
+    ])
+      expect(queryObservationFailures(retainViewClientSamples(changed, 40, samples))).toContain(
+        'Missing materialization metrics'
+      );
+    expect(
+      queryObservationFailures({
+        ...measured,
+        views: [
+          measured.views![0],
+          { ...measured.views![1], sharedWithActivationID: 'nonexistent' },
+        ],
+      })
+    ).toContain('Missing materialization metrics');
+    retainViewClientSamples({ ...query, client: 51 }, 41, samples);
+    expect(queryObservationFailures(retainViewClientSamples(later, 42, samples))).toContain(
+      'Client exceeds 50 ms'
+    );
+  });
+  it('rejects sharing after a superseded error render even if the subscription stays mounted', () => {
+    const event = {
+      activationID: 'view',
+      activatedAt: 0,
+      name: 'users.current',
+      args: {},
+      clientID: 'client',
+      readAt: 0,
+      ids: [],
+    };
+    const runs = viewRuns([
+      { ...event, at: 10, type: 'complete', phase: 'commit' },
+      { ...event, at: 11, type: 'error', phase: 'render' },
+      { ...event, at: 12, type: 'complete', phase: 'commit' },
+    ]);
+    expect(runs[0].interrupted).toBe(true);
+  });
   it('revalidates browser budgets even if its recorded failures are empty', async () => {
     const query: QueryObservation = {
       id: 'hash',
@@ -1077,7 +1261,7 @@ describe('Zero performance gate', () => {
           visibleMs: 1001,
           cachedDisplayMs: 51,
           queries: [query],
-          failures: [],
+          failures: [] as string[],
         },
       ],
     };
@@ -1092,6 +1276,58 @@ describe('Zero performance gate', () => {
     expect((await reportFailures(report, false)).some(failure => failure.includes('exceeds'))).toBe(
       false
     );
+    query.server = 101;
+    const serverFailure = 'Query groups.byId: Server materialization exceeds 100 ms';
+    report.journeys[0].failures.push(serverFailure, 'Incorrect independent access results');
+    expect(await reportFailures(report)).toContain(serverFailure);
+    const baselineFailures = await reportFailures(report, false);
+    expect(baselineFailures.some(failure => failure.includes('exceeds'))).toBe(false);
+    expect(baselineFailures).toContain('Incorrect independent access results');
+  });
+  it('requires cold boot diagnostics with a real connection boundary, without budgeting whole boot', () => {
+    const journey = {
+      route: '/search',
+      visit: 'first',
+      visibleMs: 900,
+      authoritativeMs: 850,
+      queries: [],
+      failures: [],
+      processing: {
+        navigationStart: 600,
+        connections: [{ clientID: 'client', state: 'connected', at: 600 }],
+      },
+      boot: {
+        documentStart: 0,
+        connectedAt: 600,
+        clientID: 'client',
+        visibleMs: 1500,
+        authoritativeMs: 1450,
+      },
+    };
+    expect(bootMeasurementFailures(journey)).toEqual([]);
+    expect(bootMeasurementFailures({ ...journey, boot: undefined })).toContain(
+      'Missing initial document boot measurement'
+    );
+    for (const changed of [
+      { ...journey, processing: { navigationStart: 601 } },
+      { ...journey, processing: { ...journey.processing, connections: [] } },
+      {
+        ...journey,
+        processing: {
+          ...journey.processing,
+          connections: [
+            { clientID: 'client', state: 'connected', at: 500 },
+            ...journey.processing.connections,
+          ],
+        },
+      },
+      { ...journey, boot: { ...journey.boot, clientID: 'other' } },
+      { ...journey, boot: { ...journey.boot, visibleMs: 1499 } },
+      { ...journey, boot: { ...journey.boot, authoritativeMs: NaN } },
+    ])
+      expect(bootMeasurementFailures(changed)).toContain(
+        'Invalid initial document boot measurement/boundary'
+      );
   });
   it('rejects independent nested-result mismatches', () => {
     const check = {
@@ -1116,8 +1352,9 @@ describe('Zero performance gate', () => {
         SUPABASE_URL: 'https://production',
         VITE_APP_URL: 'https://production',
         HOME: 'runtime',
+        PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright',
       })
-    ).toEqual({ PATH: 'tools', HOME: 'runtime' });
+    ).toEqual({ PATH: 'tools', HOME: 'runtime', PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright' });
     expect(() => assertOutputDirectory(process.cwd(), process.cwd())).toThrow();
     expect(() =>
       assertOutputDirectory(process.cwd(), 'output/zero-performance/../outside')

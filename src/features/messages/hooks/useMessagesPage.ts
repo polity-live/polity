@@ -57,6 +57,7 @@ export function useMessagesPage() {
       openAriaKai: shouldOpenAriaKai,
       restoreOnNavigation: true,
       viewerID: user?.id,
+      initialConversationID: searchParams.conversationId,
     });
   const { messages: selectedMessages, isLoading: isSelectedMessagesLoading } = useMessageState({
     conversationId: selectedConversationId ?? undefined,

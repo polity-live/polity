@@ -2653,6 +2653,11 @@
             "coveredStatements": 10,
             "totalStatements": 10
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
         }
       ],
       "suggestedTestRefs": [
@@ -2797,6 +2802,11 @@
             "coveredStatements": 81,
             "totalStatements": 81
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
+          "project": "component",
+          "caseId": "uses stable protected timing demand and clears the estimate after revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -20603,7 +20613,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "opens automation-targeted menus and returns focus on Escape"
+          "caseId": "opens the automation-targeted %s menu and returns focus on Escape"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -28103,7 +28113,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "opens automation-targeted menus and returns focus on Escape"
+          "caseId": "opens the automation-targeted %s menu and returns focus on Escape"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
@@ -80818,6 +80828,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/ui-platejs/__tests__/docx-roundtrip.browser-component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/ui-platejs/__tests__/editor-shortcuts.unit.test.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -116397,6 +116417,38 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/agendas/agenda-times.ts",
+      "domain": "zero:agendas",
+      "owner": "polity/zero:agendas",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates ordered event times and respects actual completion boundaries"
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
+        "src/zero/agendas/__tests__/changeRequestVoteOrdering.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/useAgendaActions.lsf-a03.component.test.tsx",
+        "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+        "src/zero/agendas/__tests__/voteStepKind.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/zero/agendas/change-request-vote-ordering.ts",
       "domain": "zero:agendas",
       "owner": "polity/zero:agendas",
@@ -117941,8 +117993,19 @@
       "owner": "polity/zero:amendments",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "uses protected subscribers and preserves count fallback while their result is pending"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "removes status and counts when the protected queries revoke their results"
+        }
+      ],
       "suggestedTestRefs": [
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
@@ -118077,6 +118140,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+      "domain": "zero:appearance-themes",
+      "owner": "polity/zero:appearance-themes",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
       "domain": "zero:appearance-themes",
       "owner": "polity/zero:appearance-themes",
@@ -118158,6 +118231,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "tools/testing/performance/city-design/index.html"
@@ -118182,6 +118256,11 @@
             "coveredStatements": 2,
             "totalStatements": 18
           }
+        },
+        {
+          "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+          "project": "unit",
+          "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
         }
       ],
       "suggestedTestRefs": [
@@ -118192,11 +118271,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts"
       ]
     },
     {
@@ -118225,14 +118304,14 @@
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.streamUrl.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
-        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
-        "src/zero/users/__tests__/contact-email-schema.unit.test.ts"
+        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts"
       ]
     },
     {
@@ -118301,9 +118380,9 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
-        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
-        "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts"
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts"
       ]
     },
     {
@@ -121981,6 +122060,11 @@
             "coveredStatements": 363,
             "totalStatements": 363
           }
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
         }
       ],
       "suggestedTestRefs": [
@@ -122197,6 +122281,11 @@
             "coveredStatements": 192,
             "totalStatements": 192
           }
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
         }
       ],
       "suggestedTestRefs": [
@@ -123475,6 +123564,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+      "domain": "zero:network",
+      "owner": "polity/zero:network",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
       "domain": "zero:network",
       "owner": "polity/zero:network",
@@ -123610,14 +123709,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123647,13 +123746,13 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts"
       ]
     },
     {
@@ -123682,14 +123781,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123721,9 +123820,9 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
-        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts"
+        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts"
       ]
     },
     {
@@ -123752,14 +123851,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123788,14 +123887,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123817,6 +123916,11 @@
             "coveredStatements": 136,
             "totalStatements": 136
           }
+        },
+        {
+          "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires validated group foreign keys for every equivalent PK lookup"
         }
       ],
       "suggestedTestRefs": [
@@ -123870,14 +123974,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123912,8 +124016,8 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts"
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+        "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts"
       ]
     },
     {
@@ -124050,14 +124154,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124086,14 +124190,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124122,14 +124226,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124158,14 +124262,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124194,14 +124298,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -126204,6 +126308,11 @@
             "coveredStatements": 96,
             "totalStatements": 96
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/route-manifests.unit.test.ts",
+          "project": "unit",
+          "caseId": "preloads the agenda metadata and full agenda separately while retaining other full event consumers"
         }
       ],
       "suggestedTestRefs": [
@@ -131801,6 +131910,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132057,7 +132176,13 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds an unassigned parent FK to the actual constrained child identity"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -132087,7 +132212,13 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "locates the installed Corepack in Windows and Linux Node layouts"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {

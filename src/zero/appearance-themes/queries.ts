@@ -9,21 +9,24 @@ const ACTIVE_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 export const appearanceThemeQueries = {
   catalog: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.appearance_theme
+    // The small literal candidate set avoids a JSON list subquery. Each
+    // protected kind retains its separate creator or group-membership gate.
+    whereAnyOf(zql.appearance_theme, 'kind', ['builtin', 'personal', 'group'])
       .where(({ and, cmp, exists, or }: any) =>
-        or(
-          cmp('kind', 'builtin'),
-          and(cmp('kind', 'personal'), cmp('created_by_id', userID)),
-          and(
-            cmp('kind', 'group'),
-            cmp('current_revision_id', 'IS NOT', null),
-            exists('current_revision', (revision: any) => revision.where('status', 'published')),
-            exists('group', (group: any) =>
-              group.whereExists('memberships', (membership: any) =>
-                whereAnyOf(
-                  membership.where('user_id', userID),
-                  'status',
-                  ACTIVE_MEMBERSHIP_STATUSES
+        and(
+          or(cmp('kind', '!=', 'personal'), cmp('created_by_id', userID)),
+          or(
+            cmp('kind', '!=', 'group'),
+            and(
+              cmp('current_revision_id', 'IS NOT', null),
+              exists('current_revision', (revision: any) => revision.where('status', 'published')),
+              exists('group', (group: any) =>
+                group.whereExists('memberships', (membership: any) =>
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_MEMBERSHIP_STATUSES
+                  )
                 )
               )
             )

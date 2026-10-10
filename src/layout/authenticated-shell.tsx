@@ -73,9 +73,14 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
   );
 }
 
+const EMPTY_SEARCH = {};
+
 function AuthenticatedShellContent({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: state => state.location.pathname });
-  const search = useSearch({ strict: false });
+  const search = useSearch({
+    strict: false,
+    select: search => (pathname === '/search' ? search : EMPTY_SEARCH),
+  });
   const { currentUser, isLoading: userLoading } = useUserState();
   usePreferenceSync();
   useAppearanceThemeSync();

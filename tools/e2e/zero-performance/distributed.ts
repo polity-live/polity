@@ -61,7 +61,7 @@ if (action === 'prepare') {
   );
   const manifest = createManifest(
     {
-      protocol: 'zero-performance/v10',
+      protocol: 'zero-performance/v11',
       runID: `${process.env.GITHUB_RUN_ID ?? randomUUID()}-${process.env.GITHUB_RUN_ATTEMPT ?? '1'}`,
       headSHA,
       baseSHA,

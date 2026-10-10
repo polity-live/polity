@@ -41,7 +41,7 @@ subscribe('http.server.request.start', ({ request }) => {
       requestID: timing.requestID,
       clientCorrelationID: timing.clientCorrelationID,
       phase: 'arrival',
-      at: Date.now(),
+      at: performance.timeOrigin + timing.started,
     })
   );
 });
@@ -49,14 +49,15 @@ subscribe('http.server.response.finish', ({ request, response }) => {
   const timing = incoming.get(request);
   if (!timing) return;
   incoming.delete(request);
+  const finished = performance.now();
   console.info(
     JSON.stringify({
       benchmark: 'query-http',
       requestID: timing.requestID,
       clientCorrelationID: timing.clientCorrelationID,
       phase: 'response',
-      at: Date.now(),
-      elapsed: performance.now() - timing.started,
+      at: performance.timeOrigin + finished,
+      elapsed: finished - timing.started,
       status: response.statusCode,
     })
   );

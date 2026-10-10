@@ -335,11 +335,21 @@ describe('process-engine pure business rules', () => {
   });
 });
 
-test.prop([
-  fc.record({ id: fc.string(), order_index: fc.integer() }),
-  fc.record({ id: fc.string(), order_index: fc.integer() }),
-])('step ordering is antisymmetric', (left, right) => {
+test.prop(
+  [
+    fc.record({ id: fc.string(), order_index: fc.integer() }),
+    fc.record({ id: fc.string(), order_index: fc.integer() }),
+  ],
+  {
+    examples: [
+      [
+        { id: '', order_index: 15 },
+        { id: '', order_index: 15 },
+      ],
+    ],
+  }
+)('step ordering is antisymmetric', (left, right) => {
   const forward = Math.sign(compareStepRunsByProcessOrder(left, right));
   const backward = Math.sign(compareStepRunsByProcessOrder(right, left));
-  expect(forward).toBe(-backward);
+  expect(forward + backward).toBe(0);
 });

@@ -1,6 +1,30 @@
 {
   "version": 1,
   "sourceReferences": {
+    "src/zero/agendas/agenda-times.ts": [
+      {
+        "file": "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates ordered event times and respects actual completion boundaries"
+      },
+      {
+        "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+      }
+    ],
+    "src/zero/amendments/useAmendmentActionState.ts": [
+      {
+        "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+        "project": "component",
+        "caseId": "uses protected subscribers and preserves count fallback while their result is pending"
+      },
+      {
+        "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+        "project": "component",
+        "caseId": "removes status and counts when the protected queries revoke their results"
+      }
+    ],
     "src/zero/preloads/startup.ts": [
       {
         "file": "src/zero/preloads/__tests__/startup.unit.test.ts",
@@ -59,5 +83,70 @@
     ]
   },
   "actionReferences": {},
-  "actionDeclarations": {}
+  "actionDeclarations": {},
+  "sourceReferenceAdditions": {
+    "tools/e2e/zero-performance/isolation.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "locates the installed Corepack in Windows and Linux Node layouts"
+      }
+    ],
+    "src/zero/events/queries.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
+      }
+    ],
+    "src/zero/events/useEventState.ts": [
+      {
+        "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+        "project": "component",
+        "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+      }
+    ],
+    "src/zero/preloads/route-manifests.ts": [
+      {
+        "file": "src/zero/preloads/__tests__/route-manifests.unit.test.ts",
+        "project": "unit",
+        "caseId": "preloads the agenda metadata and full agenda separately while retaining other full event consumers"
+      }
+    ],
+    "src/features/agendas/hooks/useEventAgendaItem.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
+        "project": "component",
+        "caseId": "uses stable protected timing demand and clears the estimate after revocation"
+      }
+    ],
+    "src/zero/network/queries.ts": [
+      {
+        "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires validated group foreign keys for every equivalent PK lookup"
+      }
+    ],
+    "src/features/agendas/hooks/useAgendaItems.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+        "project": "component",
+        "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+      }
+    ],
+    "src/zero/appearance-themes/queries.ts": [
+      {
+        "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+        "project": "unit",
+        "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
+      }
+    ],
+    "tools/e2e/zero-performance/fixtures.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+        "project": "unit",
+        "caseId": "binds an unassigned parent FK to the actual constrained child identity"
+      }
+    ]
+  }
 }

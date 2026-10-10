@@ -1,9 +1,15 @@
 /* @vitest-environment jsdom */
 
 import { renderHook } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useCreatableGroupIds, usePermissionEvaluator, usePermissions } from '../usePermissions';
+import {
+  PermissionsDataProvider,
+  useCreatableGroupIds,
+  usePermissionEvaluator,
+  usePermissions,
+} from '../usePermissions';
 
 const mocks = vi.hoisted(() => ({
   authUser: undefined as { id: string } | undefined,
@@ -87,6 +93,41 @@ beforeEach(() => {
 });
 
 describe('usePermissions', () => {
+  it('shares one live viewer snapshot across consumers and propagates revoked access', () => {
+    mocks.authUser = { id: 'user-one' };
+    completeData();
+    mocks.data.memberships = [{ id: 'membership', group_id: 'group-one', status: 'active' }];
+    mocks.checkPermission.mockImplementation(data => data.memberships.length > 0);
+    const { result, rerender } = renderHook(
+      () => ({
+        first: usePermissions({ groupId: 'group-one' }),
+        second: usePermissions({ groupId: 'group-one' }),
+        evaluator: usePermissionEvaluator(),
+        creatable: useCreatableGroupIds('groups'),
+      }),
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(PermissionsDataProvider, { children }),
+      }
+    );
+    expect(mocks.useQuery.mock.calls.filter(([query]) => query !== undefined)).toHaveLength(5);
+    expect(result.current.first.memberships).toBe(result.current.second.memberships);
+    expect(result.current.first.canView('groups')).toBe(true);
+    expect(result.current.evaluator.can({ groupId: 'group-one' }, 'view', 'groups')).toBe(true);
+    expect(result.current.creatable.creatableGroupIds.has('group-one')).toBe(true);
+    mocks.data.memberships = [];
+    rerender();
+    expect(result.current.first.canView('groups')).toBe(false);
+    expect(result.current.second.canView('groups')).toBe(false);
+    expect(result.current.evaluator.can({ groupId: 'group-one' }, 'view', 'groups')).toBe(false);
+    expect(result.current.creatable.creatableGroupIds.size).toBe(0);
+    mocks.authUser = undefined;
+    rerender();
+    expect(result.current.first.userId).toBeUndefined();
+    expect(result.current.first.memberships).toBeUndefined();
+    expect(result.current.first.canView('groups')).toBe(false);
+  });
+
   it('keeps equal scopes stable and reevaluates changed scopes and revoked memberships', () => {
     mocks.authUser = { id: 'user-one' };
     completeData();

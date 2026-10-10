@@ -174,7 +174,7 @@ export function validateManifest(manifest: Manifest) {
   const { digest: checksum, ...unsigned } = manifest;
   if (
     manifest.format !== SHARD_FORMAT ||
-    manifest.protocol !== 'zero-performance/v10' ||
+    manifest.protocol !== 'zero-performance/v11' ||
     typeof manifest.runID !== 'string' ||
     !manifest.runID.trim() ||
     checksum !== digest(unsigned) ||

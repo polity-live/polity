@@ -366,6 +366,10 @@ function withTooltip<T extends React.ElementType>(Component: T) {
   };
 }
 
+const subscribeHydrationState = () => () => undefined;
+const clientHydrationState = () => true;
+const serverHydrationState = () => false;
+
 export function ToolbarTooltipContainer<T extends React.ElementType>({
   Component,
   componentProps,
@@ -376,11 +380,13 @@ export function ToolbarTooltipContainer<T extends React.ElementType>({
   tooltipProps,
   tooltipTriggerProps,
 }: Omit<ToolbarTooltipWrapperViewProps<T>, 'mounted'>) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Preserve the SSR/hydration shape, but mount client-navigation controls only
+  // once. An effect-based flag rebuilt every button's tooltip hierarchy.
+  const mounted = React.useSyncExternalStore(
+    subscribeHydrationState,
+    clientHydrationState,
+    serverHydrationState
+  );
 
   return (
     <ToolbarTooltipWrapperView

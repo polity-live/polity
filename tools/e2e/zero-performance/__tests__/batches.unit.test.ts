@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { queryBatches, batchCoverageFailures } from '../batches';
+import { queryBatches, batchCoverageFailures, unexplainedWorkerExit } from '../batches';
 import type { Measurement } from '../metrics';
 
 describe('bounded sequential query collection', () => {
@@ -20,5 +20,30 @@ describe('bounded sequential query collection', () => {
       'Unexpected worker measurement: extra',
       'Duplicate worker measurements',
     ]);
+  });
+  it('retains recorded browser failures without disguising abnormal worker exits', () => {
+    const report = {
+      infrastructure: [],
+      measurements: [],
+      journeys: [{ failures: ['Cached display exceeds 50 ms'] }],
+    };
+    expect(unexplainedWorkerExit(1, report)).toBe(false);
+    expect(unexplainedWorkerExit(1, { ...report, journeys: [] })).toBe(true);
+    expect(unexplainedWorkerExit(2, report)).toBe(true);
+    expect(unexplainedWorkerExit(0, { ...report, journeys: [] })).toBe(false);
+    expect(
+      unexplainedWorkerExit(1, {
+        ...report,
+        journeys: [],
+        infrastructure: ['Missing query metrics'],
+      })
+    ).toBe(false);
+    expect(
+      unexplainedWorkerExit(1, {
+        ...report,
+        journeys: [],
+        measurements: [{ failures: ['Incorrect independent results'] }],
+      })
+    ).toBe(false);
   });
 });

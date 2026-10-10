@@ -121,8 +121,8 @@ async function partial(
   );
   correlateQueryAPI(measurements, apiDiagnostics);
   return {
-    format: 10,
-    protocol: 'zero-performance/v10',
+    format: 11,
+    protocol: 'zero-performance/v11',
     execution,
     layer: shard.layer,
     filtered: true,
@@ -146,7 +146,7 @@ async function fixture() {
   roots.push(root);
   const manifest = createManifest(
     {
-      protocol: 'zero-performance/v10',
+      protocol: 'zero-performance/v11',
       headSHA: 'a'.repeat(40),
       harnessDigest: 'c'.repeat(64),
       runID: 'run',

@@ -28,12 +28,15 @@ import { getPrimaryRouteFromPathname } from '@/features/navigation/nav-items/nav
 export function useNavigation() {
   // Get router instance and pathname for TanStack Router
   const navigate = useNavigate();
-  const location = useLocation();
-  const pathname = location.pathname;
-  const currentBranchId =
-    typeof (location.search as Record<string, unknown> | undefined)?.branch === 'string'
-      ? ((location.search as Record<string, unknown>).branch as string)
-      : null;
+  // Compose intents and unrelated URL filters do not change navigation items.
+  // Keep the amendment branch subscribed so its targets still update immediately.
+  const [pathname, currentBranchId] = useLocation({
+    select: location => {
+      const branch = (location.search as Record<string, unknown> | undefined)?.branch;
+      return [location.pathname, typeof branch === 'string' ? branch : null] as const;
+    },
+    structuralSharing: true,
+  });
   const currentPrimaryRoute = getPrimaryRouteFromPathname(pathname);
   const { t } = useTranslation();
 

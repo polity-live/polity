@@ -32,6 +32,9 @@ describe('Query request diagnostics', () => {
   });
   it('correlates HTTP arrival, handler and response without logging request credentials', async () => {
     vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
+    // Reproduce the host clock rollback that invalidated a real API correlation.
+    let wallTime = Date.now();
+    vi.spyOn(Date, 'now').mockImplementation(() => (wallTime -= 10));
     const log = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     await import('../../../tools/e2e/zero-performance/api-timing.mjs');
     const server = createServer(async (incoming, response) => {
@@ -74,6 +77,11 @@ describe('Query request diagnostics', () => {
         new Set(['20000000-0000-4000-8000-000000000001'])
       );
       expect(events.at(-1).elapsed).toBeGreaterThanOrEqual(0);
+      const phaseTimes = events.map(event => event.at);
+      expect(phaseTimes.every(at => Number.isFinite(at) && at >= performance.timeOrigin)).toBe(
+        true
+      );
+      expect(phaseTimes).toEqual([...phaseTimes].sort((left, right) => left - right));
       expect(JSON.stringify(events)).not.toMatch(
         /credential-not-for-logs|private-query-arguments|authorization/
       );

@@ -21,8 +21,8 @@ const mocks = vi.hoisted(() => ({
   currentUser: { id: 'user-1', gender: 'female' } as Record<string, unknown> | null,
   delegateParticipants: [] as Record<string, unknown>[],
   documentPreviewModel: null as Record<string, unknown> | null,
-  election: null as Record<string, unknown> | null,
   electionCandidates: [] as Record<string, unknown>[],
+  electionState: vi.fn(),
   forwardingContext: null as Record<string, any> | null,
   gatedToastError: vi.fn(),
   gatedToastMessage: vi.fn(),
@@ -43,9 +43,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => mocks.navigate }));
-vi.mock('@/features/events/hooks/useEventData', () => ({
-  useEventData: () => ({ event: mocks.event, isLoading: false }),
-}));
 vi.mock('../../hooks/useAgendaItems', () => ({
   useAgendaItems: () => ({ agendaItems: mocks.agendaItems, isLoading: false }),
 }));
@@ -95,10 +92,11 @@ vi.mock('@/zero/elections/useElectionActions', () => ({
   useElectionActions: () => ({ upsertOfflineTally: mocks.upsertElectionOfflineTally }),
 }));
 vi.mock('@/zero/elections/useElectionState', () => ({
-  useElectionState: () => ({
-    candidates: mocks.electionCandidates,
-    election: mocks.election,
-  }),
+  normalizeElectionRow: (election: unknown) => election ?? null,
+  useElectionCandidates: (electionId?: string) => {
+    mocks.electionState(electionId);
+    return { candidates: mocks.electionCandidates };
+  },
 }));
 vi.mock('@/zero/votes/useVoteActions', () => ({
   useVoteActions: () => ({
@@ -134,6 +132,7 @@ vi.mock('../../hooks/useAgendaItemCRVoting', () => ({
     },
 }));
 vi.mock('@/zero/events', () => ({
+  useEventAgendaShell: () => ({ event: mocks.event, isLoading: false }),
   useEventById: () => ({ event: null }),
   useEventParticipantsByParticipatedEventIds: () => ({ participants: mocks.activeParticipants }),
 }));
@@ -179,7 +178,6 @@ beforeEach(() => {
   mocks.currentUser = { id: 'user-1', gender: 'female' };
   mocks.delegateParticipants = [];
   mocks.documentPreviewModel = null;
-  mocks.election = null;
   mocks.electionCandidates = [];
   mocks.forwardingContext = null;
   mocks.isDelegateAssembly = false;
@@ -191,6 +189,7 @@ beforeEach(() => {
     mocks.addSpeaker,
     mocks.agendaNavStartFirstPendingItem,
     mocks.closeExpiredFinalVotesForEvent,
+    mocks.electionState,
     mocks.initializeChangeRequestVoting,
     mocks.gatedToastError,
     mocks.gatedToastMessage,
@@ -223,6 +222,58 @@ function props() {
 }
 
 describe('EventAgenda controller contract', () => {
+  it('preserves displayed times while sharing formatter setup only within the current task', async () => {
+    const dates = [new Date('2026-01-01T12:30:00Z'), new Date('2026-07-01T15:45:00Z')];
+    const options = { hour: '2-digit', minute: '2-digit' } as const;
+    const expected = dates.map(date => date.toLocaleTimeString('de-DE', options));
+    const invalid = new Date(NaN);
+    const invalidText = invalid.toLocaleTimeString('de-DE', options);
+    render(<EventAgenda eventId="event-1" />);
+    const formatter = vi.spyOn(Intl, 'DateTimeFormat');
+    try {
+      const formatTime = props().formatTime;
+      expect(dates.map(date => formatTime(date))).toEqual(expected);
+      expect(formatTime(dates[0].getTime())).toBe(expected[0]);
+      expect(formatTime(invalid)).toBe(invalidText);
+      expect(formatTime(null)).toBe('--:--');
+      expect(formatTime(0)).toBe('--:--');
+      expect(formatter).toHaveBeenCalledTimes(1);
+
+      await Promise.resolve();
+      expect(formatTime(dates[1])).toBe(expected[1]);
+      expect(formatter).toHaveBeenCalledTimes(2);
+    } finally {
+      formatter.mockRestore();
+    }
+  });
+
+  it('tracks visible election appearance and removal before activating its detail queries', () => {
+    const agendaItem = {
+      id: 'agenda-1',
+      title: 'Discussion',
+      order_index: 1,
+      status: 'planned',
+      type: 'discussion',
+      election: [] as Record<string, unknown>[],
+    };
+    mocks.agendaNavStartableItem = { id: agendaItem.id };
+    mocks.agendaItems = [agendaItem];
+    const rendered = render(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith(undefined);
+    expect(props().toolbarElection).toBeNull();
+
+    const election = { id: 'election-1', title: 'Election', candidates: [] };
+    mocks.agendaItems = [{ ...agendaItem, type: 'election', election: [election] }];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith(election.id);
+    expect(props().toolbarElection).toEqual(election);
+
+    mocks.agendaItems = [agendaItem];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.electionState).toHaveBeenLastCalledWith(undefined);
+    expect(props().toolbarElection).toBeNull();
+  });
+
   it('publishes safe defaults while the event is unavailable', () => {
     mocks.event = null;
     render(<EventAgenda eventId="event-1" />);
@@ -299,12 +350,6 @@ describe('EventAgenda controller contract', () => {
       },
     ];
     mocks.activeParticipants = [{ id: 'inactive-1', status: null, user_id: 'other-user' }];
-    mocks.election = {
-      id: 'action-election',
-      title: null,
-      status: 'indicative',
-      candidates: null,
-    };
     mocks.event = {
       ...mocks.event,
       current_agenda_item_id: 'agenda-delegate-election',
@@ -741,7 +786,6 @@ describe('EventAgenda controller contract', () => {
       ],
       offline_tallies: [{ phase: 'final', candidate_id: 'candidate-1', count: 1 }],
     };
-    mocks.election = { ...election, title: null, candidates: [] };
     mocks.electionCandidates = candidates;
     mocks.event = {
       ...mocks.event,

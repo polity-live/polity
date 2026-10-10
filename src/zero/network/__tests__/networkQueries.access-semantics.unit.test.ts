@@ -193,7 +193,17 @@ describe('network query access semantics with real Zero predicates', () => {
     const inspect = (node: any): void => {
       if (!node || typeof node !== 'object') return;
       if (node.type === 'correlatedSubquery') {
-        expect(node.flip).toBe(false);
+        if (node.flip) {
+          // Indexed endpoint selection starts from a single group primary key.
+          // Every permission traversal still uses bounded correlated planning.
+          expect(node.related.subquery.table).toBe('group');
+          expect(node.related.subquery.where).toEqual({
+            type: 'simple',
+            left: { type: 'column', name: 'id' },
+            op: '=',
+            right: { type: 'literal', value: args.groupId },
+          });
+        } else expect(node.flip).toBe(false);
         checks++;
       }
       for (const child of Object.values(node)) inspect(child);

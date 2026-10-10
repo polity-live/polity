@@ -1,5 +1,6 @@
 import { required } from './required';
 import { mkdir, readFile, writeFile, appendFile, stat } from 'node:fs/promises';
+import { writeAtomicReport } from './atomic-report';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -29,7 +30,6 @@ import {
 } from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
 import { measurementSummary, resultsCSV } from './results';
-import { replaceReportFile } from './atomic-report';
 import { executionMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
 
@@ -419,8 +419,8 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
   }
   await mkdir(output, { recursive: true });
   const target = path.join(output, final ? 'report.json' : 'progress.json');
-  await writeFile(
-    `${target}.tmp`,
+  await writeAtomicReport(
+    target,
     JSON.stringify(
       {
         format: REPORT_FORMAT,
@@ -450,7 +450,6 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
       2
     )
   );
-  await replaceReportFile(`${target}.tmp`, target);
 }
 
 try {
@@ -563,6 +562,8 @@ try {
       visit: journey.visit,
       visibleMs: journey.visibleMs,
       cachedDisplayMs: journey.cachedDisplayMs,
+      bootVisibleMs: journey.boot?.visibleMs,
+      bootAuthoritativeMs: journey.boot?.authoritativeMs,
       queries: journey.queries.length,
       failures: journey.failures.join('; '),
     }));
@@ -577,13 +578,15 @@ try {
     await writeFile(
       path.join(output, 'journeys.csv'),
       [
-        'route,visit,visibleMs,cachedDisplayMs,queries,failures',
+        'route,visit,visibleMs,cachedDisplayMs,bootVisibleMs,bootAuthoritativeMs,queries,failures',
         ...rows.map(row =>
           [
             row.route,
             row.visit,
             row.visibleMs,
             row.cachedDisplayMs ?? '',
+            row.bootVisibleMs ?? '',
+            row.bootAuthoritativeMs ?? '',
             row.queries,
             row.failures,
           ]

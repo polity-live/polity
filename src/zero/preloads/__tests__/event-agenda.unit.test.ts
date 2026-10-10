@@ -144,7 +144,7 @@ describe('event agenda preloads', () => {
 
     expect(keys).toEqual([
       'queries.events.agendaItemsFull:{"eventId":"event-1"}',
-      'queries.agendas.byEvent:{"event_id":"event-1"}',
+      'queries.agendas.timingByEventIds:{"event_ids":["event-1"]}',
     ]);
   });
 

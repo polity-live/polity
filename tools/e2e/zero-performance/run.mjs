@@ -16,6 +16,8 @@ import {
   applicationStorageBuckets,
   verifyBuildAssets,
   pipeRuntimeLogLines,
+  corepackPNPMEntryPoint,
+  shouldCopyBenchmarkSource,
 } from './isolation.mjs';
 import {
   verifyLinuxImage,
@@ -193,13 +195,7 @@ async function copySource() {
     });
     if (result.status !== 0) throw new Error('Cannot inventory working tree');
     for (const file of new Set(result.stdout.split('\0').filter(Boolean))) {
-      if (
-        file.startsWith('.env') ||
-        file.startsWith('output/') ||
-        file.startsWith('node_modules/') ||
-        file.startsWith('.git/')
-      )
-        continue;
+      if (!shouldCopyBenchmarkSource(file)) continue;
       const target = path.join(sandbox, file);
       await mkdir(path.dirname(target), { recursive: true });
       try {
@@ -226,10 +222,7 @@ async function copySource() {
   );
   if (rootLock !== copiedLock || unpinned.length || args.includes('--frozen-dependencies')) {
     const dependenciesAt = Date.now();
-    const corepack = path.join(
-      path.dirname(process.execPath),
-      'node_modules/corepack/dist/pnpm.js'
-    );
+    const corepack = corepackPNPMEntryPoint(process.execPath);
     await command(
       [corepack, 'install', '--frozen-lockfile', '--ignore-scripts'],
       'dependencies-install'
@@ -503,6 +496,7 @@ ${storageBuckets}
       ZERO_PERFORMANCE_LAYER: option('--layer') ?? 'all',
       ZERO_PERFORMANCE_COLLECT_ALL: args.includes('--collect-all') ? '1' : '',
       ZERO_PERFORMANCE_CPU_PROFILE: args.includes('--profile-navigation') ? '1' : '',
+      ZERO_PERFORMANCE_INSPECTOR_PROFILE: args.includes('--profile-inspector') ? '1' : '',
       ...(selectionFile
         ? { ZERO_PERFORMANCE_SELECTION: path.join(sandbox, '.zero-performance-selection.json') }
         : {}),

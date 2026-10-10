@@ -372,6 +372,7 @@ it('searches nested rich text and selects its matching node', async () => {
       />
     </div>
   );
+  await waitFor(() => expect(stage().width()).toBe(700));
   await act(async () => {
     await ref.current!.execute({ type: 'search', query: 'needle' });
   });
@@ -895,6 +896,7 @@ it('resizes root nodes without a parent transform and stops toolbar pointer even
     </div>
   );
   const toolbar = await screen.findByRole('toolbar', { name: 'Selection actions' });
+  await waitFor(() => expect(stage().width()).toBe(1000));
   expect(toolbar.style.left).not.toBe('');
   await userEvent.click(screen.getByRole('button', { name: 'Context action' }));
   expect(clicked).toHaveBeenCalledTimes(1);
@@ -902,6 +904,13 @@ it('resizes root nodes without a parent transform and stops toolbar pointer even
   const transformer = stage().findOne<Konva.Transformer>('Transformer')!;
   await waitFor(() => expect(transformer.nodes()).toHaveLength(1));
   const anchor = transformer.findOne('.middle-right')!;
+  await waitFor(() => expect(anchor.isVisible()).toBe(true));
+  await waitFor(() => {
+    const position = anchor
+      .getAbsoluteTransform()
+      .point({ x: anchor.width() / 2, y: anchor.height() / 2 });
+    expect(stage().getIntersection(position)).toBe(anchor);
+  });
   const point = canvasPoint(anchor, { x: anchor.width() / 2, y: anchor.height() / 2 });
   await userEvent.dragAndDrop(point.surface, point.surface, {
     sourcePosition: { x: point.x, y: point.y },
@@ -1575,6 +1584,12 @@ it('opens media cropping on native double-click and pans its source inside the f
   );
   const group = stage().findOne<Konva.Group>(`#${media.id}`)!;
   await waitFor(() => expect(group.findOne('Image')).toBeTruthy());
+  await waitFor(() => {
+    expect(stage().width()).toBe(700);
+    expect(stage().getIntersection(group.getAbsoluteTransform().point({ x: 80, y: 50 }))).toBe(
+      group.findOne('Image')
+    );
+  });
   const point = canvasPoint(group, { x: 80, y: 50 });
   await userEvent.dblClick(point.surface, { position: { x: point.x, y: point.y } } as never);
   await screen.findByRole('toolbar', { name: 'Crop' });

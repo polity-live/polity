@@ -22,7 +22,7 @@ const workload = (): Workload => ({
 const manifest = () =>
   createManifest(
     {
-      protocol: 'zero-performance/v10',
+      protocol: 'zero-performance/v11',
       runID: 'run-1',
       headSHA: 'a'.repeat(40),
       baseSHA: 'b'.repeat(40),
@@ -37,7 +37,7 @@ describe('distributed Zero workload planning', () => {
     for (const hasBase of [true, false]) {
       const result = createManifest(
         {
-          protocol: 'zero-performance/v10',
+          protocol: 'zero-performance/v11',
           runID: 'transport',
           headSHA: 'a'.repeat(40),
           baseSHA: hasBase ? 'b'.repeat(40) : undefined,
@@ -88,7 +88,7 @@ describe('distributed Zero workload planning', () => {
     head.queries.push('q0/backward');
     const result = createManifest(
       {
-        protocol: 'zero-performance/v10',
+        protocol: 'zero-performance/v11',
         runID: 'run',
         headSHA: 'a'.repeat(40),
         harnessDigest: 'c'.repeat(64),
@@ -110,7 +110,7 @@ describe('distributed Zero workload planning', () => {
     base.queries.push('q0/backward');
     const result = createManifest(
       {
-        protocol: 'zero-performance/v10',
+        protocol: 'zero-performance/v11',
         runID: 'run',
         headSHA: 'a'.repeat(40),
         baseSHA: 'b'.repeat(40),
@@ -127,7 +127,7 @@ describe('distributed Zero workload planning', () => {
     head.queries.push('q0/backward');
     const result = createManifest(
       {
-        protocol: 'zero-performance/v10',
+        protocol: 'zero-performance/v11',
         runID: 'run',
         headSHA: 'a'.repeat(40),
         harnessDigest: 'c'.repeat(64),

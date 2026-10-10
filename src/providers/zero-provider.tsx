@@ -6,6 +6,7 @@ import { useAuth } from './auth-provider';
 import { ZeroReadyContext } from './zero-ready-context';
 import { resolveZeroAPIURL } from '@/lib/zero-api-url';
 import { initializeAppQueries } from '@/zero/preloads/startup';
+import { PermissionsDataProvider } from '@/zero/rbac/usePermissions';
 
 function getRequiredEnvVar(value: string | undefined, name: string) {
   if (!value) {
@@ -50,7 +51,7 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
         schema={schema}
         mutators={mutators}
       >
-        {children}
+        <PermissionsDataProvider>{children}</PermissionsDataProvider>
       </ZeroProvider>
     </ZeroReadyContext.Provider>
   );

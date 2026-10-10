@@ -103,6 +103,64 @@ function applyEventDelegateSelfOrParticipantAccess<T>(
   ) as T;
 }
 
+function buildEventDetailBase(id: string, userID: string | undefined) {
+  return applyEventAccess(zql.event.where('id', id), userID)
+    .related('creator')
+    .related('group', groupQuery =>
+      applyGroupDiscoveryQueryAccess(groupQuery, userID).related('memberships', membershipQuery =>
+        applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID)
+          .related('user')
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('origins', originQuery =>
+            originQuery
+              .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
+      )
+    )
+    .related('participants', participantQuery =>
+      applyEventParticipantOrManagerQueryAccess(participantQuery, userID)
+        .related('user')
+        .related('participant_roles', roleLinkQuery =>
+          roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
+        )
+    )
+    .related('offline_participants', offlineParticipantQuery =>
+      offlineParticipantQuery
+        .whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
+        )
+        .related('connected_user')
+        .related('group_offline_member', q =>
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('connected_user')
+        )
+    )
+    .related('assembly_scopes', scopeQuery =>
+      scopeQuery
+        .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('required_role')
+    )
+    .related('delegate_election_assignments', assignmentQuery =>
+      assignmentQuery
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('allocation')
+        .related('linked_event')
+    )
+    .related('delegates', delegateQuery =>
+      applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID, true)
+        .related('user')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+    );
+}
+
 export const eventQueries = {
   activities: defineQuery(
     z.object({
@@ -381,62 +439,18 @@ export const eventQueries = {
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→votes+election, roles */
+  /** Event metadata and permitted attendance for the separate full agenda projection. */
+  forAgenda: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    buildEventDetailBase(id, userID).related('roles', roleQuery =>
+      roleQuery.whereExists(
+        'event',
+        event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+        { flip: false }
+      )
+    )
+  ),
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventAccess(zql.event.where('id', id), userID)
-      .related('creator')
-      .related('group', groupQuery =>
-        applyGroupDiscoveryQueryAccess(groupQuery, userID).related('memberships', membershipQuery =>
-          applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID)
-            .related('user')
-            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            .related('origins', originQuery =>
-              originQuery
-                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-                .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-                .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-            )
-        )
-      )
-      .related('participants', participantQuery =>
-        applyEventParticipantOrManagerQueryAccess(participantQuery, userID)
-          .related('user')
-          .related('participant_roles', roleLinkQuery =>
-            roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
-          )
-      )
-      .related('offline_participants', offlineParticipantQuery =>
-        offlineParticipantQuery
-          .whereExists(
-            'event',
-            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
-            { flip: false }
-          )
-          .related('connected_user')
-          .related('group_offline_member', q =>
-            q
-              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-              .related('connected_user')
-          )
-      )
-      .related('assembly_scopes', scopeQuery =>
-        scopeQuery
-          .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('required_role')
-      )
-      .related('delegate_election_assignments', assignmentQuery =>
-        assignmentQuery
-          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
-          .related('allocation')
-          .related('linked_event')
-      )
-      .related('delegates', delegateQuery =>
-        applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID, true)
-          .related('user')
-          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
-      )
+    buildEventDetailBase(id, userID)
       .related('agenda_items', agendaItemQuery =>
         // The parent passed applyEventAccess, and this relationship enforces
         // agenda_item.event_id = event.id. That implies the agenda access

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
     'byGroup',
     'participantsByUser',
     'byIdFull',
+    'forAgenda',
     'forCancel',
     'withVoting',
     'streamEvent',
@@ -103,6 +104,7 @@ import {
   useElectionWithVotes,
   useEventAccessRoles,
   useEventAgenda,
+  useEventAgendaShell,
   useEventAssemblyScopes,
   useEventById,
   useEventDelegates,
@@ -334,6 +336,52 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('useEventState complete query contracts', () => {
+  it('loads permitted agenda metadata without the duplicate agenda tree and clears revoked data', () => {
+    const row = {
+      id: 'event-1',
+      current_agenda_item_id: 'agenda-1',
+      roles: [role('role-1')],
+      group: { id: 'group-1', memberships: [{ id: 'membership-1' }] },
+      assembly_scopes: [{ id: 'scope-1' }],
+      delegate_election_assignments: [{ id: 'assignment-1' }],
+      delegates: [{ id: 'delegate-1' }],
+      offline_participants: [{ id: 'offline-1' }],
+      participants: [participant('participant-1', 'active')],
+    };
+    setResponse('forAgenda', [row]);
+    const { result, rerender } = renderHook(
+      ({ eventId }: { eventId?: string }) => useEventAgendaShell(eventId),
+      { initialProps: { eventId: 'event-1' as string | undefined } }
+    );
+    expect(mocks.events.forAgenda).toHaveBeenCalledWith({ id: 'event-1' });
+    expect(mocks.events.byIdFull).not.toHaveBeenCalled();
+    expect(result.current.event).toMatchObject({
+      id: row.id,
+      current_agenda_item_id: row.current_agenda_item_id,
+      roles: [{ id: 'role-1', title: row.roles[0].name }],
+      participants: [{ id: 'participant-1', status: 'active', roles: [], role: null }],
+    });
+    for (const field of [
+      'group',
+      'assembly_scopes',
+      'delegate_election_assignments',
+      'delegates',
+      'offline_participants',
+    ] as const)
+      expect(result.current.event?.[field]).toBe(row[field]);
+    expect(result.current.event).not.toHaveProperty('agenda_items');
+    expect(result.current.isLoading).toBe(false);
+    setResponse('forAgenda', [], 'unknown');
+    rerender({ eventId: 'event-1' });
+    expect(result.current.isLoading).toBe(true);
+    setResponse('forAgenda', [], 'complete');
+    rerender({ eventId: 'event-1' });
+    expect(result.current.event).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+    rerender({ eventId: undefined });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+  });
+
   it('loads only participation data and disables it for projected cards', () => {
     const { result, rerender } = renderHook(
       ({ eventId }: { eventId?: string }) => useEventForParticipation(eventId),

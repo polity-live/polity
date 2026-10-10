@@ -1,54 +1,81 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { replaceReportFile } from '../atomic-report';
+import { mkdtemp, readFile, readdir, rename, rmdir, unlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { writeAtomicReport } from '../atomic-report';
 
-const filesystem = vi.hoisted(() => ({ rename: vi.fn(), delay: vi.fn() }));
-vi.mock('node:fs/promises', () => ({ rename: filesystem.rename }));
-vi.mock('node:timers/promises', () => ({ setTimeout: filesystem.delay }));
-
-beforeEach(() => {
-  filesystem.rename.mockReset().mockResolvedValue(undefined);
-  filesystem.delay.mockReset().mockResolvedValue(undefined);
+const directories: string[] = [];
+async function target() {
+  const directory = await mkdtemp(path.join(tmpdir(), 'polity-zero-performance-report-'));
+  directories.push(directory);
+  return path.join(directory, 'report.json');
+}
+afterEach(async () => {
+  for (const directory of directories.splice(0)) {
+    for (const name of await readdir(directory)) await unlink(path.join(directory, name));
+    await rmdir(directory);
+  }
 });
 
-describe('atomic benchmark report replacement', () => {
-  it('replaces a complete temporary file without waiting on success', async () => {
-    await replaceReportFile('progress.json.tmp', 'progress.json');
-    expect(filesystem.rename).toHaveBeenCalledExactlyOnceWith('progress.json.tmp', 'progress.json');
-    expect(filesystem.delay).not.toHaveBeenCalled();
-  });
-
+describe('atomic performance report persistence', () => {
   it.each(['EPERM', 'EACCES', 'EBUSY'])(
-    'retries a temporary %s using the same complete file',
+    'recovers a transient %s without changing measurements',
     async code => {
-      const failure = Object.assign(new Error('temporarily busy'), { code });
-      filesystem.rename.mockRejectedValueOnce(failure).mockRejectedValueOnce(failure);
-      await replaceReportFile('progress.json.tmp', 'progress.json');
-      expect(filesystem.rename).toHaveBeenCalledTimes(3);
-      expect(
-        filesystem.rename.mock.calls.every(
-          call => call[0] === 'progress.json.tmp' && call[1] === 'progress.json'
-        )
-      ).toBe(true);
-      expect(filesystem.delay.mock.calls).toEqual([[25], [50]]);
+      const destination = await target();
+      const record = { samples: [{ serverMs: 123, totalMs: 1101 }], failures: ['Budget exceeded'] };
+      let calls = 0;
+      const replace = vi.fn(async (...[source, output]: Parameters<typeof rename>) => {
+        if (++calls <= 2) throw Object.assign(new Error('Temporarily locked'), { code });
+        await rename(source, output);
+      });
+      const sleep = vi.fn(async (_milliseconds: number) => undefined);
+      await writeAtomicReport(destination, JSON.stringify(record), { rename: replace, sleep });
+      expect(JSON.parse(await readFile(destination, 'utf8'))).toEqual(record);
+      expect(replace).toHaveBeenCalledTimes(3);
+      expect(sleep.mock.calls.map(([milliseconds]) => milliseconds)).toEqual([25, 50]);
+      expect(await readdir(path.dirname(destination))).toEqual(['report.json']);
     }
   );
 
-  it('still rejects a persistent file lock after bounded retries', async () => {
-    const failure = Object.assign(new Error('persistently busy'), { code: 'EPERM' });
-    filesystem.rename.mockRejectedValue(failure);
-    await expect(replaceReportFile('report.json.tmp', 'report.json')).rejects.toBe(failure);
-    expect(filesystem.rename).toHaveBeenCalledTimes(8);
-    expect(filesystem.delay.mock.calls).toEqual([[25], [50], [100], [200], [400], [400], [400]]);
+  it('fails bounded retries, retains the prior report, and removes only its own temporary file', async () => {
+    const destination = await target();
+    await writeFile(destination, '{"previous":true}');
+    const error = Object.assign(new Error('Persistent lock'), { code: 'EPERM' });
+    const replace = vi.fn(async () => {
+      throw error;
+    });
+    const sleep = vi.fn(async (_milliseconds: number) => undefined);
+    await expect(
+      writeAtomicReport(destination, '{"new":true}', { rename: replace, sleep })
+    ).rejects.toBe(error);
+    expect(replace).toHaveBeenCalledTimes(5);
+    expect(sleep.mock.calls.map(([milliseconds]) => milliseconds)).toEqual([25, 50, 100, 200]);
+    expect(await readFile(destination, 'utf8')).toBe('{"previous":true}');
+    expect(await readdir(path.dirname(destination))).toEqual(['report.json']);
   });
 
-  it.each(['ENOENT', 'ENOSPC', undefined])(
-    'immediately preserves a non-transient %s error',
-    async code => {
-      const failure = Object.assign(new Error('cannot replace'), { code });
-      filesystem.rename.mockRejectedValue(failure);
-      await expect(replaceReportFile('report.json.tmp', 'report.json')).rejects.toBe(failure);
-      expect(filesystem.rename).toHaveBeenCalledTimes(1);
-      expect(filesystem.delay).not.toHaveBeenCalled();
-    }
-  );
+  it('does not retry other filesystem errors or hide the failure', async () => {
+    const destination = await target();
+    const error = Object.assign(new Error('Disk full'), { code: 'ENOSPC' });
+    const replace = vi.fn(async () => {
+      throw error;
+    });
+    const sleep = vi.fn(async (_milliseconds: number) => undefined);
+    await expect(writeAtomicReport(destination, '{}', { rename: replace, sleep })).rejects.toBe(
+      error
+    );
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+    expect(await readdir(path.dirname(destination))).toEqual([]);
+  });
+
+  it('keeps concurrent saves as complete JSON snapshots with no shared temporary filename', async () => {
+    const destination = await target();
+    const records = [1, 2, 3].map(value => ({ value, samples: Array(100).fill(value) }));
+    await Promise.all(
+      records.map(record => writeAtomicReport(destination, JSON.stringify(record)))
+    );
+    expect(records).toContainEqual(JSON.parse(await readFile(destination, 'utf8')));
+    expect(await readdir(path.dirname(destination))).toEqual(['report.json']);
+  });
 });

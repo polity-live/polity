@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useEventData } from '@/features/events/hooks/useEventData';
 import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
@@ -18,7 +17,7 @@ import { agendaItemTextMatchesSearch } from '../logic/agendaItemTextSearch';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
-import { useElectionState } from '@/zero/elections/useElectionState';
+import { normalizeElectionRow, useElectionCandidates } from '@/zero/elections/useElectionState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -64,7 +63,11 @@ import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
-import { useEventById, useEventParticipantsByParticipatedEventIds } from '@/zero/events';
+import {
+  useEventAgendaShell,
+  useEventById,
+  useEventParticipantsByParticipatedEventIds,
+} from '@/zero/events';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   getOrderedBranches,
@@ -97,7 +100,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { user } = useAuth();
   const { currentUser } = useUserState();
   const navigate = useNavigate();
-  const { event, isLoading: eventLoading } = useEventData(eventId);
+  const { event, isLoading: eventLoading } = useEventAgendaShell(eventId);
   const { agendaItems, isLoading } = useAgendaItems(eventId);
   const { can } = usePermissions({ eventId });
   const {
@@ -560,9 +563,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     streamForwardingContext.currentStepRun,
     streamVariantVote,
   ]);
-  const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
-    agendaItemId: streamAgendaItem?.id,
-  });
+  // The authorized agenda already projects election metadata and electors.
+  // Candidates retain their separate projection with manager-filtered selections.
+  const actionBarElection = useMemo(() => normalizeElectionRow(streamElection), [streamElection]);
+  const { candidates: actionBarCandidates } = useElectionCandidates(streamElection?.id);
   const toolbarElection = useMemo(() => {
     if (!actionBarElection) {
       return streamElection;
@@ -1634,16 +1638,24 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     [filteredAgendaItems]
   );
 
+  let timeFormatter: Intl.DateTimeFormat | undefined;
   const formatTime = (value?: number | Date | null) => {
     if (!value) {
       return '--:--';
     }
 
     const date = value instanceof Date ? value : new Date(value);
-    return date.toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (!Number.isFinite(date.getTime())) {
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+    if (!timeFormatter) {
+      timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+      // Share ICU setup during this render, then honor future system timezone changes.
+      queueMicrotask(() => {
+        timeFormatter = undefined;
+      });
+    }
+    return timeFormatter.format(date);
   };
 
   return (

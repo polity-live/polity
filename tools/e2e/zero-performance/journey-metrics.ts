@@ -21,6 +21,9 @@ export interface QueryObservation {
     releasedAt: number | null;
     clientMs?: number;
     clientMeasuredAt?: number;
+    /** A logical consumer can join an already subscribed, continuously complete SDK view. */
+    sharedWithActivationID?: string;
+    interrupted?: boolean;
   }[];
   preloads: {
     activationID: string;
@@ -43,16 +46,22 @@ export function hasUnmeasuredActiveViews(queries: QueryObservation[]) {
   );
 }
 
-/** Retain real Inspector readings while each completed view is still subscribed. */
+/** Retain real Inspector readings; a shared consumer references their original provenance. */
 export function retainViewClientSamples(
   query: QueryObservation,
   measuredAt: number,
   samples: ViewClientSamples
 ): QueryObservation {
-  return {
+  const measured = {
     ...query,
     views: query.views?.map(view => {
-      const key = `${query.clientID}/${view.activationID}`;
+      const key = JSON.stringify([
+        query.clientID,
+        query.id,
+        query.name,
+        query.args,
+        view.activationID,
+      ]);
       if (
         view.releasedAt === null &&
         view.authoritativeAt !== null &&
@@ -69,6 +78,48 @@ export function retainViewClientSamples(
       return { ...view, ...samples.get(key) };
     }),
   };
+  return {
+    ...measured,
+    views: measured.views?.map(view => {
+      if (view.clientMs !== undefined || view.releasedAt === null) return view;
+      const owner = measured.views?.find(candidate => sharesMeasuredView(view, candidate));
+      return owner ? { ...view, sharedWithActivationID: owner.activationID } : view;
+    }),
+  };
+}
+
+type ViewRun = NonNullable<QueryObservation['views']>[number];
+const validLocalSample = (view: ViewRun) =>
+  typeof view.clientMs === 'number' &&
+  Number.isFinite(view.clientMs) &&
+  view.clientMs >= 0 &&
+  typeof view.clientMeasuredAt === 'number' &&
+  Number.isFinite(view.clientMeasuredAt) &&
+  typeof view.authoritativeAt === 'number' &&
+  Number.isFinite(view.authoritativeAt) &&
+  view.clientMeasuredAt >= view.authoritativeAt &&
+  (view.releasedAt === null || view.clientMeasuredAt <= view.releasedAt);
+
+/** Only an uninterrupted, complete subscription covering the entire consumer lifetime proves sharing.
+ * TTL retention, a later remount, retries and another query/client do not provide this proof.
+ * Named queries with identical normalized arguments/context have the same registered result format.
+ */
+function sharesMeasuredView(consumer: ViewRun, owner: ViewRun) {
+  return (
+    consumer.activationID !== owner.activationID &&
+    !consumer.interrupted &&
+    !owner.interrupted &&
+    !owner.sharedWithActivationID &&
+    validLocalSample(owner) &&
+    consumer.releasedAt !== null &&
+    consumer.authoritativeAt !== null &&
+    owner.authoritativeAt !== null &&
+    owner.authoritativeAt <= consumer.activatedAt &&
+    owner.activatedAt <= consumer.activatedAt &&
+    consumer.authoritativeAt >= consumer.activatedAt &&
+    consumer.authoritativeAt <= consumer.releasedAt &&
+    (owner.releasedAt === null || owner.releasedAt >= consumer.releasedAt)
+  );
 }
 
 export function viewRuns(events: QueryViewObservation[]): NonNullable<QueryObservation['views']> {
@@ -93,7 +144,21 @@ export function viewRuns(events: QueryViewObservation[]): NonNullable<QueryObser
       runs.set(event.activationID, run);
     }
     if (event.type === 'complete' && run.authoritativeAt === null) run.authoritativeAt = event.at;
+    if (run.authoritativeAt !== null && !['complete', 'released'].includes(event.type))
+      run.interrupted = true;
     if (event.phase === 'release') run.releasedAt = event.at;
+  }
+  // Error/unknown renders can be superseded before React commits; they still invalidate sharing.
+  for (const event of events) {
+    const run = runs.get(event.activationID);
+    if (
+      run &&
+      run.authoritativeAt !== null &&
+      event.at >= run.authoritativeAt &&
+      event.phase !== 'release' &&
+      event.type !== 'complete'
+    )
+      run.interrupted = true;
   }
   return [...runs.values()];
 }
@@ -138,13 +203,16 @@ export function queryObservationFailures(query: QueryObservation, absoluteBudget
   if (query.kind === 'materialized') {
     const retainedLocal =
       Boolean(query.views?.length) &&
-      query.views?.every(
-        view =>
-          valid(view.clientMs) &&
-          valid(view.clientMeasuredAt) &&
-          valid(view.authoritativeAt) &&
-          view.clientMeasuredAt >= view.authoritativeAt &&
-          (view.releasedAt === null || view.clientMeasuredAt <= view.releasedAt)
+      query.views?.every(view =>
+        view.sharedWithActivationID
+          ? view.clientMs === undefined &&
+            view.clientMeasuredAt === undefined &&
+            query.views?.some(
+              owner =>
+                owner.activationID === view.sharedWithActivationID &&
+                sharesMeasuredView(view, owner)
+            )
+          : validLocalSample(view)
       );
     if (
       (query.views?.length ? !retainedLocal : !valid(query.client)) ||

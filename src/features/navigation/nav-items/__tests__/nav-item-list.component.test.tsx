@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useLocation: () => mocks.location,
+  useLocation: ({ select }: any = {}) => (select ? select(mocks.location) : mocks.location),
 }));
 
 vi.mock('../NavItemListView', () => ({

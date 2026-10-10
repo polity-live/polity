@@ -16,6 +16,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 /** A single event row from the byGroup query (flat, no relations) */
 export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>;
 type EventByIdFullRow = QueryRowType<typeof queries.events.byIdFull>;
+type EventForAgendaRow = QueryRowType<typeof queries.events.forAgenda>;
 type EventAgendaWithElectionsRow = QueryRowType<typeof queries.events.agendaWithElections>;
 type EventAgendaItemsFullRow = QueryRowType<typeof queries.events.agendaItemsFull>;
 type EventAgendaItemDetailRow = QueryRowType<typeof queries.events.agendaItemDetail>;
@@ -288,6 +289,20 @@ export function useEventState(options: EventStateOptions = {}) {
 // (Migrated from hooks.ts — each wraps a single formal query)
 
 // ── Event Data ──────────────────────────────────────────────────────
+
+export function useEventAgendaShell(eventId?: string) {
+  const [rows, result] = useQuery(eventId ? queries.events.forAgenda({ id: eventId }) : undefined);
+  const event = useMemo(() => {
+    const current = rows?.[0] as EventForAgendaRow | undefined;
+    if (!current) return null;
+    return {
+      ...current,
+      roles: (current.roles ?? []).map(mapRoleForDisplay),
+      participants: normalizeParticipants(current.participants),
+    };
+  }, [rows]);
+  return { event, isLoading: result.type === 'unknown' };
+}
 
 export function useEventById(eventId?: string) {
   const [eventsData, eventsResult] = useQuery(

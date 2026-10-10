@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile, stat, link, copyFile } from 'node:fs/promises';
+import { writeAtomicReport } from './atomic-report';
 import { constants } from 'node:fs';
 import path from 'node:path';
 import { loadCases } from './catalog';
@@ -13,13 +14,17 @@ import {
   measuredServerWarnings,
   type Report,
 } from './report';
-import { PROFILE_SUFFIXES, queryBatches, batchCoverageFailures } from './batches';
+import {
+  PROFILE_SUFFIXES,
+  queryBatches,
+  batchCoverageFailures,
+  unexplainedWorkerExit,
+} from './batches';
 import { required } from './required';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { closeDb } from '../../../e2e/fixtures/db';
 import { isJoinPlanArtifact } from './plan-artifacts';
 import { resultsCSV } from './results';
-import { replaceReportFile } from './atomic-report';
 import { executionMetadata } from './execution';
 import { selectKeys } from './sharding';
 
@@ -78,8 +83,8 @@ let interrupted = false;
 
 async function save(final = false, extra: Record<string, unknown> = {}) {
   const target = path.join(output, final ? 'report.json' : 'progress.json');
-  await writeFile(
-    `${target}.tmp`,
+  await writeAtomicReport(
+    target,
     JSON.stringify(
       {
         format: REPORT_FORMAT,
@@ -107,7 +112,6 @@ async function save(final = false, extra: Record<string, unknown> = {}) {
       2
     )
   );
-  await replaceReportFile(`${target}.tmp`, target);
 }
 
 async function worker(label: string, workerLayer: string, selected?: string[]) {
@@ -238,12 +242,7 @@ async function worker(label: string, workerLayer: string, selected?: string[]) {
   }
   infrastructure.push(...batchCoverageFailures(expected, report.measurements));
   measurements.push(...report.measurements);
-  if (
-    code !== 0 &&
-    !report.infrastructure?.length &&
-    !report.measurements.some(row => row.failures.length)
-  )
-    infrastructure.push(`${label}: Worker exited ${code}`);
+  if (unexplainedWorkerExit(code, report)) infrastructure.push(`${label}: Worker exited ${code}`);
   await save();
   if (interrupted) throw new Error('Measurement collection interrupted');
   if (
@@ -307,7 +306,7 @@ try {
     await writeFile(
       path.join(output, 'journeys.csv'),
       [
-        'route,visit,visibleMs,cachedDisplayMs,authoritativeMs,failures',
+        'route,visit,visibleMs,cachedDisplayMs,authoritativeMs,bootVisibleMs,bootAuthoritativeMs,failures',
         ...journeys.map(row =>
           [
             row.route,
@@ -315,6 +314,8 @@ try {
             row.visibleMs,
             row.cachedDisplayMs,
             row.authoritativeMs,
+            row.boot?.visibleMs,
+            row.boot?.authoritativeMs,
             row.failures.join('; '),
           ]
             .map(value => JSON.stringify(value))

@@ -45,7 +45,7 @@ vi.mock('../../queries', () => {
   };
 });
 
-import { normalizeElectionRow, useElectionState } from '../useElectionState';
+import { normalizeElectionRow, useElectionCandidates, useElectionState } from '../useElectionState';
 
 function key(name: string, args: unknown) {
   return `${name}:${JSON.stringify(args)}`;
@@ -72,6 +72,41 @@ beforeEach(() => {
   mocks.resolveMode.mockReturnValue('single');
   mocks.resolveSeats.mockReset();
   mocks.resolveSeats.mockReturnValue(1);
+});
+
+describe('useElectionCandidates', () => {
+  it('preserves the registered candidate projection and releases it when its parent disappears', () => {
+    const candidates = [
+      { id: 'candidate-1', user: { id: 'user-1' }, final_selections: [{ id: 'selection-1' }] },
+    ];
+    setResult('candidates', { election_id: 'election-1' }, candidates);
+    const hook = renderHook(({ id }: { id?: string }) => useElectionCandidates(id), {
+      initialProps: { id: undefined as string | undefined },
+    });
+    expect(hook.result.current).toEqual({ candidates: [], isLoading: false });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+
+    hook.rerender({ id: 'election-1' });
+    expect(hook.result.current.candidates).toBe(candidates);
+    expect(mocks.useQuery).toHaveBeenLastCalledWith({
+      key: key('candidates', { election_id: 'election-1' }),
+    });
+
+    hook.rerender({ id: undefined });
+    expect(hook.result.current).toEqual({ candidates: [], isLoading: false });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+    expect(mocks.useQuery.mock.calls.filter(([query]) => query).map(([query]) => query.key)).toEqual([
+      key('candidates', { election_id: 'election-1' }),
+    ]);
+  });
+
+  it('keeps missing authoritative candidate data loading', () => {
+    setResult('candidates', { election_id: 'election-1' }, undefined, 'unknown');
+    expect(renderHook(() => useElectionCandidates('election-1')).result.current).toEqual({
+      candidates: [],
+      isLoading: true,
+    });
+  });
 });
 
 describe('normalizeElectionRow', () => {

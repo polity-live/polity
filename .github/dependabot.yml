@@ -12,16 +12,91 @@ updates:
     commit-message:
       prefix: "deps"
     groups:
-      zero:
+      editor-ai:
+        update-types: ["minor", "patch"]
+        patterns:
+          - "platejs"
+          - "@platejs/*"
+          - "ai"
+          - "@ai-sdk/*"
+          - "zod"
+      react-ui:
+        update-types: ["minor", "patch"]
+        exclude-patterns: ["react-email"]
+        patterns:
+          - "react"
+          - "react-*"
+          - "@types/react"
+          - "@types/react-dom"
+          - "@radix-ui/*"
+          - "@tanstack/*"
+          - "@xyflow/*"
+          - "@ariakit/*"
+          - "konva"
+          - "motion"
+          - "lucide-react"
+          - "i18next"
+          - "immer"
+          - "html2canvas-pro"
+          - "tailwind-merge"
+      services:
+        update-types: ["minor", "patch"]
         patterns:
           - "@rocicorp/zero"
           - "@rocicorp/zero-virtual"
+          - "@supabase/*"
+          - "supabase"
+          - "stripe"
+          - "resend"
+          - "fast-xml-parser"
+      toolchain:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+      runtime-libraries:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
     ignore:
-      # zero-virtual is pre-1.0; minor releases may contain breaking API changes.
+      # CLI 2.116+ violates the existing local function-grant baseline; migrate separately.
+      - dependency-name: "supabase"
+        versions: [">=2.116.0"]
+      # Major migrations require an explicit compatibility/security review.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Tabs 1.1.22 dispatches duplicate filter changes during focus/mousedown.
+      - dependency-name: "@radix-ui/react-tabs"
+        versions: ["1.1.22"]
+      # Preserve the existing, tested prerelease integrations.
+      - dependency-name: "nitro"
+        versions: ["*"]
+      - dependency-name: "react-filerobot-image-editor"
+        versions: ["*"]
+      # For 0.x packages, a minor release can contain breaking changes.
+      - dependency-name: "@ariakit/react"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@radix-ui/react-form"
+        update-types: ["version-update:semver-minor"]
       - dependency-name: "@rocicorp/zero-virtual"
-        update-types:
-          - "version-update:semver-minor"
-          - "version-update:semver-major"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@supabase/ssr"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@fast-check/vitest"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "three"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@types/three"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "prettier-plugin-tailwindcss"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@tailwindcss/typography"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "class-variance-authority"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "fflate"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "polygon-clipping"
+        update-types: ["version-update:semver-minor"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

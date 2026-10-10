@@ -6,6 +6,7 @@ interface ConversationSelectionOptions {
   openAriaKai?: boolean;
   restoreOnNavigation?: boolean;
   viewerID?: string;
+  initialConversationID?: string;
 }
 
 export function useConversationSelection(
@@ -13,6 +14,13 @@ export function useConversationSelection(
   options?: ConversationSelectionOptions
 ) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(() => {
+    // The directory is already permission-filtered. Resolve a locally present
+    // deep link on the first render instead of mounting the empty thread first.
+    if (
+      options?.initialConversationID &&
+      conversations.some(conversation => conversation.id === options.initialConversationID)
+    )
+      return options.initialConversationID;
     if (!options?.restoreOnNavigation || !options.viewerID || typeof window === 'undefined')
       return null;
     const previous = window.history.state?.polityMessageSelection;
