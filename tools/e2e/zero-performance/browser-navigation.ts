@@ -37,6 +37,7 @@ export function inspectorFrameSummary(payload: string) {
 export function installNavigationProbe() {
   const scope = globalThis as any;
   const activeViews = new Map<string, any>();
+  const groupAccessViews = new Map<string, any>();
   const observedConnections = new WeakSet<object>();
   scope.__zeroPerformanceConnectionEvents = [];
   const observeConnection = () => {
@@ -53,9 +54,12 @@ export function installNavigationProbe() {
     zero.connection.state.subscribe(record);
   };
   scope.__zeroPerformanceActiveViews = () => [...activeViews.values()];
-  scope.__zeroPerformanceGroupAccess = (id: string) => {
-    const views = [...activeViews.values()].filter(
-      view => view.name === 'groups.wikiOverview' && view.args?.id === id
+  scope.__zeroPerformanceGroupAccess = (id: string, since: number) => {
+    // Route guards can remove the wiki view before it commits an empty result.
+    // Retain the actual guard's last committed result across its redirect. A
+    // release alone is never evidence of denial, nor is a pre-mutation result.
+    const views = [...groupAccessViews.values()].filter(
+      view => view.args?.id === id && view.at >= since
     );
     return {
       observed: views.length > 0,
@@ -131,6 +135,11 @@ export function installNavigationProbe() {
     observeConnection();
     event.clientID = scope.__zero?.clientID;
     scope.__zeroPerformanceViewEvents.push(event);
+    if (
+      event.phase === 'commit' &&
+      (event.name === 'groups.byIdBasic' || event.name === 'groups.wikiOverview')
+    )
+      groupAccessViews.set(event.activationID, event);
     if (event.phase === 'commit') activeViews.set(event.activationID, event);
     if (event.phase === 'release') activeViews.delete(event.activationID);
     const state = scope.__benchmarkPaint;

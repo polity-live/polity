@@ -77,16 +77,16 @@ function probe() {
 describe('navigation paint measurement', () => {
   it('requires a matching authoritative view for group revocation, including after release', () => {
     const { scope } = probe();
-    const state = () => scope.__zeroPerformanceGroupAccess('private');
+    const state = () => scope.__zeroPerformanceGroupAccess('private', 100);
     expect(state()).toEqual({ observed: false, complete: false, present: false });
     const event = {
       activationID: 'group-view',
       phase: 'commit',
-      name: 'groups.wikiOverview',
+      name: 'groups.byIdBasic',
       args: { id: 'other' },
       type: 'complete',
       ids: [],
-      at: performance.now(),
+      at: 101,
     };
     scope.__zeroPerformanceView(event);
     expect(state().observed).toBe(false);
@@ -94,10 +94,17 @@ describe('navigation paint measurement', () => {
     expect(state()).toEqual({ observed: true, complete: false, present: false });
     scope.__zeroPerformanceView({ ...event, args: { id: 'private' }, ids: ['private'] });
     expect(state()).toEqual({ observed: true, complete: true, present: true });
+    scope.__zeroPerformanceView({ ...event, phase: 'release' });
+    expect(state()).toEqual({ observed: true, complete: true, present: true });
     scope.__zeroPerformanceView({ ...event, args: { id: 'private' } });
     expect(state()).toEqual({ observed: true, complete: true, present: false });
     scope.__zeroPerformanceView({ ...event, phase: 'release' });
-    expect(state()).toEqual({ observed: false, complete: false, present: false });
+    expect(state()).toEqual({ observed: true, complete: true, present: false });
+    expect(scope.__zeroPerformanceGroupAccess('private', 102)).toEqual({
+      observed: false,
+      complete: false,
+      present: false,
+    });
   });
   it('accepts a visible matching node even when an earlier duplicate remains hidden', () => {
     history.replaceState(null, '', '/target');

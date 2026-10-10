@@ -653,6 +653,10 @@ export async function measureJourneys(
       // renderer before readiness. These samples never replace acceptance data.
       await withDeadline(inspectorProfiler.send('Profiler.start'), 'Inspector CPU start');
     }
+    const revokedBrowserAt = await withDeadline(
+      page.evaluate(() => performance.now()),
+      'Revocation observation boundary'
+    );
     const revokedAt = Date.now();
     await db().begin(async sql => {
       await sql`update public."group" set visibility='private', owner_id=${OUTSIDER.userID} where id=${seed.groupId}`;
@@ -669,7 +673,10 @@ export async function measureJourneys(
     let rootAccess = { observed: false, complete: false, present: true };
     while (Date.now() - revokedAt < BUDGETS.totalMs) {
       rootAccess = await withDeadline(
-        page.evaluate(id => (globalThis as any).__zeroPerformanceGroupAccess(id), seed.groupId),
+        page.evaluate(
+          ({ id, since }) => (globalThis as any).__zeroPerformanceGroupAccess(id, since),
+          { id: seed.groupId, since: revokedBrowserAt }
+        ),
         'Revocation authoritative view'
       ).catch(async error => {
         if (inspectorProfiler) await captureBlockedRenderer(inspectorProfiler, debugScripts);
