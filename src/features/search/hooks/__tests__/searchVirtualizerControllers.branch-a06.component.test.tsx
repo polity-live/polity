@@ -12,8 +12,6 @@ const mocks = vi.hoisted(() => ({
   useQuery: vi.fn(),
   pageQuery: vi.fn(),
   byIdQuery: vi.fn(),
-  useSearchCardState: vi.fn(),
-  useProgressiveSearchCards: vi.fn(),
 }));
 
 vi.mock('@rocicorp/zero-virtual/react', () => ({
@@ -31,12 +29,6 @@ vi.mock('@/zero/queries', () => ({
       searchDocumentById: mocks.byIdQuery,
     },
   },
-}));
-vi.mock('../../SearchCardStateProvider', () => ({
-  useSearchCardState: mocks.useSearchCardState,
-}));
-vi.mock('../useProgressiveSearchCards', () => ({
-  useProgressiveSearchCards: mocks.useProgressiveSearchCards,
 }));
 
 import { useSpatialSearchController } from '../useSpatialSearchController';
@@ -112,13 +104,9 @@ describe('search virtualizer controller branch matrix', () => {
     mocks.useQuery.mockReset();
     mocks.pageQuery.mockReset();
     mocks.byIdQuery.mockReset();
-    mocks.useSearchCardState.mockReset();
-    mocks.useProgressiveSearchCards.mockReset();
     mocks.pageQuery.mockImplementation(input => ({ kind: 'page', input }));
     mocks.byIdQuery.mockImplementation(input => ({ kind: 'single', input }));
     mocks.useQuery.mockReturnValue([[first, second]]);
-    mocks.useSearchCardState.mockReturnValue({ isReady: true });
-    mocks.useProgressiveSearchCards.mockReturnValue(new Set(['first']));
     mocks.useZeroVirtualizer.mockReturnValue({
       items: [
         { key: 'first', index: 0, row: first },
@@ -245,7 +233,7 @@ describe('search virtualizer controller branch matrix', () => {
     expect(result.current.activeDocumentId).toBeNull();
   });
 
-  it('observes grid size, builds both TTL query forms and maps preview and interactive cells', () => {
+  it('observes grid size, builds both TTL query forms and maps loaded and pending cells', () => {
     const onTotalChange = vi.fn();
     render(<GridProbe onTotalChange={onTotalChange} />);
     expect(resizeCallback).toBeDefined();
@@ -269,12 +257,9 @@ describe('search virtualizer controller branch matrix', () => {
     expect(options.getRowKey(first)).toBe('first');
     expect(options.toStartRow(first).id).toBe('first');
     expect(options.getScrollElement()).toBe(screen.getByTestId('scroll-parent'));
-    expect(latestGridController?.cells.map(cell => cell.mode)).toEqual(['interactive', 'preview']);
+    expect(latestGridController?.cells.map(cell => cell.document)).toEqual([first, undefined]);
     expect(latestGridController?.cells[0]?.left).toBe(0);
     expect(onTotalChange).toHaveBeenCalledWith(null);
-    expect(mocks.useProgressiveSearchCards).toHaveBeenLastCalledWith(
-      expect.objectContaining({ stateReady: true, documentIds: ['first'] })
-    );
   });
 
   it('flags a changed head while scrolled away, clears it near the top and jumps to index zero', () => {

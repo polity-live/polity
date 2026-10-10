@@ -16,6 +16,7 @@ vi.mock('../../rbac/query-access', () => {
     applyEventQueryAccess: identity,
     applyGroupManagerQueryAccess: identity,
     applyGroupQueryAccess: identity,
+    applyGroupDiscoveryQueryAccess: identity,
     applyVoteManagerQueryAccess: identity,
     applyVoteQueryAccess: identity,
     applyVoteVoterOrManagerQueryAccess: identity,

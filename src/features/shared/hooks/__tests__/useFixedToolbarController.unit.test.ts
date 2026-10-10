@@ -14,8 +14,10 @@ vi.mock('@/features/navigation/state/navigation.store.tsx', () => ({
   }),
 }));
 
-vi.mock('@/features/navigation/state/useNavigation.tsx', () => ({
-  useNavigation: () => ({ secondaryNavItems: mocks.secondaryNavItems }),
+vi.mock('@/features/navigation/state/navigation-layout-context', () => ({
+  useSecondaryNavigationVisible: () =>
+    Boolean(mocks.secondaryNavItems?.length) &&
+    ['secondary', 'combined'].includes(mocks.navigationType),
 }));
 
 vi.mock('@/features/shared/hooks/useIsMobileScreen', () => ({

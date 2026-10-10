@@ -54,7 +54,7 @@ export function SearchPage() {
     );
 
   return (
-    <SearchCardStateProvider>
+    <SearchCardStateProvider contentTypes={sp.permalinkId ? undefined : sp.contentTypes}>
       <SearchPageView
         searchQuery={sp.searchQuery}
         onSearchQueryChange={sp.setSearchQuery}

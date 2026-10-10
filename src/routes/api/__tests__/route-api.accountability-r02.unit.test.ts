@@ -168,15 +168,19 @@ describe('R02 Zero query route accountability', () => {
     const routeHandlers = handlers(QueryRoute);
     expect(Object.keys(routeHandlers)).toEqual(['POST']);
     const queryRequest = request('/api/query');
-    mocks.handleQuery.mockImplementationOnce(async (transform, schema, receivedRequest) => {
-      expect(schema).toBe(mocks.schema);
-      expect(receivedRequest).toBe(queryRequest);
-      return { query: transform('groups.by-id', { id: 'group-1' }) };
-    });
+    mocks.handleQuery.mockImplementationOnce(
+      async ({ handler, schema, request: receivedRequest, userID }) => {
+        expect(schema).toBe(mocks.schema);
+        expect(receivedRequest).toBe(queryRequest);
+        expect(userID).toBe('user-1');
+        return { query: handler('groups.by-id', { id: 'group-1' }) };
+      }
+    );
 
     const response = await routeHandlers.POST({ request: queryRequest });
 
     expect(mocks.getAuth).toHaveBeenCalledWith(queryRequest);
+    expect(mocks.getAuth).toHaveBeenCalledOnce();
     expect(mocks.mustGetQuery).toHaveBeenCalledWith(mocks.queries, 'groups.by-id');
     expect(mocks.queryFn).toHaveBeenCalledWith({
       args: { id: 'group-1' },
@@ -190,10 +194,60 @@ describe('R02 Zero query route accountability', () => {
     mocks.mustGetQuery.mockImplementationOnce(() => {
       throw failure;
     });
-    mocks.handleQuery.mockImplementationOnce(async transform => transform('missing-query', {}));
+    mocks.handleQuery.mockImplementationOnce(async ({ handler }) => handler('missing-query', {}));
 
     await expect(handlers(QueryRoute).POST({ request: request('/api/query') })).rejects.toBe(
       failure
     );
+  });
+
+  it('binds the response to the validated identity rather than a claimed request identity', async () => {
+    const queryRequest = new Request('http://localhost/api/query?userID=other-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'other-user' },
+      body: JSON.stringify({ userID: 'other-user' }),
+    });
+    mocks.handleQuery.mockResolvedValueOnce({
+      kind: 'QueryResponse',
+      userID: 'user-1',
+      queries: [],
+    });
+
+    await handlers(QueryRoute).POST({ request: queryRequest });
+
+    expect(mocks.getAuth).toHaveBeenCalledExactlyOnceWith(queryRequest);
+    expect(mocks.handleQuery).toHaveBeenCalledExactlyOnceWith({
+      handler: expect.any(Function),
+      schema: mocks.schema,
+      request: queryRequest,
+      userID: 'user-1',
+    });
+  });
+
+  it('reports anonymous authentication as null while preserving anonymous access rules', async () => {
+    mocks.getAuth.mockResolvedValueOnce({ userID: 'anon', email: '' });
+    mocks.handleQuery.mockImplementationOnce(async ({ handler, userID }) => {
+      expect(userID).toBeNull();
+      return { query: handler('groups.by-id', { id: 'public-group' }) };
+    });
+
+    await handlers(QueryRoute).POST({ request: request('/api/query') });
+
+    expect(mocks.getAuth).toHaveBeenCalledOnce();
+    expect(mocks.queryFn).toHaveBeenCalledWith({
+      args: { id: 'public-group' },
+      ctx: { userID: 'anon', email: '' },
+    });
+  });
+
+  it('does not execute transformations when authentication fails', async () => {
+    const failure = new Error('authentication unavailable');
+    mocks.getAuth.mockRejectedValueOnce(failure);
+
+    await expect(handlers(QueryRoute).POST({ request: request('/api/query') })).rejects.toBe(
+      failure
+    );
+    expect(mocks.handleQuery).not.toHaveBeenCalled();
+    expect(mocks.queryFn).not.toHaveBeenCalled();
   });
 });

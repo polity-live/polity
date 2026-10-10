@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { parseDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import {
   resolveElectionMode,

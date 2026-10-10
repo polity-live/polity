@@ -42,7 +42,7 @@ describe('Zero preload registry', () => {
     });
   });
 
-  it('deduplicates active preloads by key until all retainers release', () => {
+  it('deduplicates active preloads by key until all retainers release', async () => {
     const { zero, cleanup } = createFakeZero();
 
     const releaseFirst = retainZeroPreload(zero, entry());
@@ -54,10 +54,11 @@ describe('Zero preload registry', () => {
     expect(cleanup).not.toHaveBeenCalled();
 
     releaseSecond();
+    await Promise.resolve();
     expect(cleanup).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the same key separate for different Zero clients', () => {
+  it('keeps the same key separate for different Zero clients', async () => {
     const first = createFakeZero();
     const second = createFakeZero();
 
@@ -69,9 +70,33 @@ describe('Zero preload registry', () => {
 
     releaseFirst();
     releaseSecond();
+    await Promise.resolve();
 
     expect(first.cleanup).toHaveBeenCalledTimes(1);
     expect(second.cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses released in-flight work and makes each release idempotent', async () => {
+    let done!: () => void;
+    const cleanup = vi.fn();
+    const preload = vi.fn(() => ({
+      cleanup,
+      complete: new Promise<void>(resolve => {
+        done = resolve;
+      }),
+    }));
+    const zero = { preload };
+    const first = retainZeroPreloadHandle(zero, entry());
+    first.release();
+    expect(cleanup).not.toHaveBeenCalled();
+    const second = retainZeroPreloadHandle(zero, entry());
+    first.release();
+    expect(preload).toHaveBeenCalledOnce();
+    done();
+    await second.complete;
+    expect(cleanup).not.toHaveBeenCalled();
+    second.release();
+    expect(cleanup).toHaveBeenCalledOnce();
   });
 
   it('shares the completion promise with every retainer', () => {

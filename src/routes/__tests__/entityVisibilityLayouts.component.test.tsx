@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   access: vi.fn(),
+  ownerEvidence: vi.fn(),
+  query: vi.fn(),
   authUser: null as null | { id: string },
   guard: vi.fn(),
   params: { id: 'entity-1', entryId: 'entry-1' },
@@ -33,8 +35,12 @@ vi.mock('@/features/auth/EntityVisibilityGuard', () => ({
   },
 }));
 vi.mock('@/features/auth/hooks/useEntityRouteAccess', () => ({
-  useEntityRouteAccess: (input: unknown) => mocks.access(input),
+  useEntityRouteAccess: (input: unknown, owner: unknown) => {
+    mocks.ownerEvidence(owner);
+    return mocks.access(input);
+  },
 }));
+vi.mock('@/zero/observed-query', () => ({ useQuery: (query: unknown) => mocks.query(query) }));
 vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: mocks.authUser }),
 }));
@@ -77,11 +83,32 @@ beforeEach(() => {
   mocks.zeroReady = true;
   mocks.pathname = '/group/entity-1';
   mocks.access.mockReturnValue({ data: undefined, isLoading: false, error: null });
+  mocks.query.mockReturnValue([undefined, { type: 'unknown' }]);
 });
 
 afterEach(() => cleanup());
 
 describe('entity visibility route layouts', () => {
+  it.each([
+    [GroupRoute, 'group', 'owner_id', true],
+    [EventRoute, 'event', 'creator_id', false],
+    [AmendmentRoute, 'amendment', 'created_by_id', false],
+  ] as const)(
+    'passes authoritative ownership evidence through the %s layout',
+    (route, entityType, ownerField, array) => {
+      const row = { id: 'entity-1', visibility: 'private', [ownerField]: 'owner' };
+      mocks.query.mockReturnValue([array ? [row] : row, { type: 'complete' }]);
+      const Component = (route as unknown as TestRoute).component;
+      render(<Component />);
+      expect(mocks.ownerEvidence).toHaveBeenLastCalledWith({
+        entityType,
+        entityId: 'entity-1',
+        ownerId: 'owner',
+        visibility: 'private',
+        complete: true,
+      });
+    }
+  );
   it.each(entityRoutes)(
     'passes safe defaults through the %s route',
     (route, entityType, preload, entityId, parentType) => {

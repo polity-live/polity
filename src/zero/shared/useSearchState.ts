@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '../queries';
 import { useAgendaState } from '../agendas/useAgendaState';
 import { useElectionState } from '../elections/useElectionState';
@@ -104,13 +104,15 @@ export interface SearchLimits {
 }
 
 export interface SearchOptions {
+  enabled?: boolean;
   userId?: string;
   query?: string;
   limits?: SearchLimits;
 }
 
 export function useSearchState(options: SearchOptions = {}) {
-  const { userId, query = '', limits = {} } = options;
+  const { enabled = true, query = '', limits = {} } = options;
+  const userId = enabled ? options.userId : undefined;
   const now = useMemo(() => Date.now(), []);
   const usersLimit = limits.users ?? 20;
   const groupsLimit = limits.groups ?? 20;
@@ -121,16 +123,26 @@ export function useSearchState(options: SearchOptions = {}) {
   const todosLimit = limits.todos ?? 20;
 
   // ── Basic entity queries ────────────────────────────────────────────
-  const [users] = useQuery(queries.search.searchableUsers({ limit: usersLimit, query }));
-  const [groups] = useQuery(queries.search.searchableGroups({ limit: groupsLimit, query }));
+  const [users] = useQuery(
+    enabled ? queries.search.searchableUsers({ limit: usersLimit, query }) : undefined
+  );
+  const [groups] = useQuery(
+    enabled ? queries.search.searchableGroups({ limit: groupsLimit, query }) : undefined
+  );
   const [statements] = useQuery(
-    queries.search.searchableStatements({ limit: statementsLimit, query, now })
+    enabled
+      ? queries.search.searchableStatements({ limit: statementsLimit, query, now })
+      : undefined
   );
-  const [blogs] = useQuery(queries.search.searchableBlogs({ limit: blogsLimit, query }));
+  const [blogs] = useQuery(
+    enabled ? queries.search.searchableBlogs({ limit: blogsLimit, query }) : undefined
+  );
   const [amendments] = useQuery(
-    queries.search.searchableAmendments({ limit: amendmentsLimit, query })
+    enabled ? queries.search.searchableAmendments({ limit: amendmentsLimit, query }) : undefined
   );
-  const [events] = useQuery(queries.search.searchableEvents({ limit: eventsLimit, query }));
+  const [events] = useQuery(
+    enabled ? queries.search.searchableEvents({ limit: eventsLimit, query }) : undefined
+  );
 
   // ── User-specific queries ───────────────────────────────────────────
   const [groupMemberships] = useQuery(
@@ -161,7 +173,9 @@ export function useSearchState(options: SearchOptions = {}) {
     [todoAssignments]
   );
 
-  const [publicTodos] = useQuery(queries.search.searchableTodos({ limit: todosLimit, query }));
+  const [publicTodos] = useQuery(
+    enabled ? queries.search.searchableTodos({ limit: todosLimit, query }) : undefined
+  );
   const [createdTodos] = useQuery(
     userId
       ? queries.search.searchableTodosByCreator({ user_id: userId, limit: todosLimit, query })
@@ -179,9 +193,9 @@ export function useSearchState(options: SearchOptions = {}) {
 
   // ── Timeline events (via common facade) ─────────────────────────────
   const { timelineByContentTypes: timelineEvents, allHashtags } = useCommonState({
-    timelineContentTypes: ['vote', 'election', 'video', 'image'],
+    timelineContentTypes: enabled ? ['vote', 'election', 'video', 'image'] : undefined,
     timelineContentLimit: 50,
-    loadAllHashtags: true,
+    loadAllHashtags: enabled,
   });
 
   // ── Event-derived queries ───────────────────────────────────────────
@@ -192,7 +206,7 @@ export function useSearchState(options: SearchOptions = {}) {
   });
 
   const { electionsForSearch: elections } = useElectionState({
-    includeElectionsForSearch: true,
+    includeElectionsForSearch: enabled,
   });
 
   // TODO: Removed with voting session migration

@@ -66,6 +66,7 @@ export function useSubscribeBlog(
 
   // Subscribe to a blog
   const subscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetBlogId) {
       return;
     }
@@ -115,6 +116,7 @@ export function useSubscribeBlog(
 
   // Unsubscribe from a blog
   const unsubscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetBlogId) {
       return;
     }
@@ -162,7 +164,7 @@ export function useSubscribeBlog(
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    if (isLoading) return;
+    if (projectedState?.isLoading || isLoading) return;
     if (isSubscribed) {
       await unsubscribe();
     } else {
@@ -171,9 +173,20 @@ export function useSubscribeBlog(
   };
 
   return {
-    isSubscribed,
-    subscriberCount,
-    isLoading,
+    isSubscribed:
+      projectedState && optimisticTargetRef.current === null
+        ? Boolean(
+            authUser?.id &&
+            subscriptionData.subscribers.some(
+              sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+            )
+          )
+        : isSubscribed,
+    subscriberCount:
+      projectedState && optimisticTargetRef.current === null
+        ? (resolvedPersistedSubscriberCount ?? subscriptionData.subscribers.length)
+        : subscriberCount,
+    isLoading: Boolean(projectedState?.isLoading) || isLoading,
     subscribe,
     unsubscribe,
     toggleSubscribe,

@@ -12655,7 +12655,7 @@
       {
         "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
         "project": "component",
-        "caseId": "renders an immediately navigable, fixed-cell preview without loading the dynamic card"
+        "caseId": "renders the final card immediately from indexed content"
       },
       {
         "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",

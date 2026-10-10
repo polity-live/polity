@@ -63,6 +63,7 @@ async function loadQueries() {
   }));
   vi.doMock('../../schema', () => ({ zql: harness.zql }));
   vi.doMock('../../rbac/query-access', () => ({
+    applyGroupDiscoveryQueryAccess: (query: unknown) => query,
     applyAgendaItemQueryAccess: identity,
     applyAmendmentQueryAccess: identity,
     applyBlogQueryAccess: identity,

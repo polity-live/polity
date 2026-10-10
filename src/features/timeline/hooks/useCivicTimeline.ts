@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { useUserBasicState } from '@/zero/users/useUserBasicState';
 import { useUserHashtagsState } from '@/zero/common/useUserHashtagsState';

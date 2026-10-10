@@ -93,7 +93,7 @@ describe('useSubscribeUser', () => {
     const projected = {
       subscriptions: [] as { id: string; subscriber_id: string }[],
       subscriberCount: 3,
-      isLoading: true,
+      isLoading: false,
     };
     const { result, rerender } = renderHook(() => useSubscribeUser('target', projected));
     expect(result.current.subscriberCount).toBe(3);
@@ -147,7 +147,7 @@ describe('useSubscribeUser', () => {
     expect(result.current).toMatchObject({
       isSubscribed: false,
       subscriberCount: 1,
-      isLoading: false,
+      isLoading: true,
     });
     expect(error).toHaveBeenCalled();
     error.mockRestore();

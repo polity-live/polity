@@ -87,6 +87,31 @@ beforeEach(() => {
 });
 
 describe('usePermissions', () => {
+  it('keeps equal scopes stable and reevaluates changed scopes and revoked memberships', () => {
+    mocks.authUser = { id: 'user-one' };
+    completeData();
+    mocks.data.memberships = [{ id: 'membership', group_id: 'group-one', status: 'active' }];
+    mocks.checkPermission.mockImplementation((data, scope) =>
+      data.memberships.some((membership: any) => membership.group.id === scope.groupId)
+    );
+    const { result, rerender } = renderHook(({ groupId }) => usePermissions({ groupId }), {
+      initialProps: { groupId: 'group-one' },
+    });
+    const initial = result.current;
+    expect(initial.canView('groups')).toBe(true);
+    rerender({ groupId: 'group-one' });
+    expect(result.current).toBe(initial);
+    rerender({ groupId: 'group-two' });
+    expect(result.current).not.toBe(initial);
+    expect(result.current.canView('groups')).toBe(false);
+    rerender({ groupId: 'group-one' });
+    const restored = result.current;
+    expect(restored.canView('groups')).toBe(true);
+    mocks.data.memberships = [{ id: 'membership', group_id: 'group-one', status: 'revoked' }];
+    rerender({ groupId: 'group-one' });
+    expect(result.current).not.toBe(restored);
+    expect(result.current.canView('groups')).toBe(false);
+  });
   it('returns safe anonymous defaults without invoking the permission engine', () => {
     const { result } = renderHook(() => usePermissions({ amendment: { id: 'amendment-one' } }));
 

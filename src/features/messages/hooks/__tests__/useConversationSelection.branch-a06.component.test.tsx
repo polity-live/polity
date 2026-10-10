@@ -22,6 +22,25 @@ function conversation(id: string, overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe('useConversationSelection exhaustive branches', () => {
+  it('restores navigation selection for the same viewer while preserving router history state', () => {
+    window.history.replaceState({ __TSR_index: 7 }, '', '/messages');
+    const options = { restoreOnNavigation: true, viewerID: 'owner' };
+    const first = renderHook(() => useConversationSelection([conversation('selected')], options));
+    act(() => first.result.current.setSelectedConversationId('selected'));
+    expect(window.history.state.__TSR_index).toBe(7);
+    first.unmount();
+    const restored = renderHook(() =>
+      useConversationSelection([conversation('selected')], options)
+    );
+    expect(restored.result.current.selectedConversation?.id).toBe('selected');
+    restored.unmount();
+    const other = renderHook(() =>
+      useConversationSelection([conversation('selected')], { ...options, viewerID: 'outsider' })
+    );
+    expect(other.result.current.selectedConversationId).toBeNull();
+    other.unmount();
+    window.history.replaceState({}, '', '/');
+  });
   it('does not auto-select without an actionable assistant intent', () => {
     const { result, rerender } = renderHook(
       ({ conversations, options }) => useConversationSelection(conversations, options),
@@ -51,7 +70,7 @@ describe('useConversationSelection exhaustive branches', () => {
       { initialProps: { rows: conversations } }
     );
     expect(result.current.selectedConversationId).toBe('new');
-    expect(replaceState).toHaveBeenCalledWith({}, '', window.location.pathname);
+    expect(replaceState).toHaveBeenCalledWith(expect.any(Object), '', window.location.pathname);
 
     rerender({ rows: [conversation('later', { assistant: true, last_message_at: 20 })] });
     expect(result.current.selectedConversationId).toBe('new');

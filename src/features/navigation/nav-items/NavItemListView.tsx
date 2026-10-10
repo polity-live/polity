@@ -95,6 +95,57 @@ function tutorialAnchor(item: any, isPrimary: boolean): string {
   return `secondary-${aliases[item.id] ?? item.id}`;
 }
 
+const NavigationIconItem = React.memo(function NavigationIconItem({
+  item,
+  active,
+  isPrimary,
+  tooltipEnabled,
+  tooltipLabel,
+  shortcut,
+}: {
+  item: any;
+  active: boolean;
+  isPrimary: boolean;
+  tooltipEnabled: boolean;
+  tooltipLabel: string;
+  shortcut?: KeyboardShortcutDefinition;
+}) {
+  return (
+    <NavigationItemTooltip
+      enabled={tooltipEnabled}
+      label={tooltipLabel}
+      shortcut={shortcut}
+      side="right"
+    >
+      <Link
+        to={item.href || '#'}
+        preload="intent"
+        aria-label={item.label}
+        data-navigation-item-id={item.id}
+        data-slot="button"
+        data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+        className={cn(
+          buttonVariants({ variant: 'ghost', size: 'icon' }),
+          getMotionPreset('colors'),
+          getMotionPreset('press'),
+          getMotionPreset('iconNudge'),
+          'relative h-12 w-12 flex-shrink-0',
+          active && 'bg-accent text-accent-foreground'
+        )}
+        onClick={e => {
+          if (item.onClick) {
+            e.preventDefault();
+            item.onClick();
+          }
+        }}
+        data-action-id="navigation.item.icon.open"
+      >
+        <NavigationItemIcon item={item} className={cn('h-5 w-5', active && 'text-primary')} />
+      </Link>
+    </NavigationItemTooltip>
+  );
+});
+
 export function NavItemListView({
   navigationItems,
   isMobile,
@@ -262,45 +313,15 @@ export function NavItemListView({
       >
         <div className={listClasses}>
           {navigationItems.map((item: any) => (
-            <NavigationItemTooltip
+            <NavigationIconItem
               key={item.id}
-              enabled={shouldShowNavigationTooltip(item, true)}
-              label={getItemTooltipLabel(item)}
+              item={item}
+              active={isItemActive(item, currentRoute, isPrimary)}
+              isPrimary={isPrimary}
+              tooltipEnabled={shouldShowNavigationTooltip(item, true)}
+              tooltipLabel={getItemTooltipLabel(item)}
               shortcut={getItemShortcut(item)}
-              side="right"
-            >
-              <Link
-                to={item.href || '#'}
-                preload="intent"
-                aria-label={item.label}
-                data-navigation-item-id={item.id}
-                data-slot="button"
-                data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
-                className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  getMotionPreset('colors'),
-                  getMotionPreset('press'),
-                  getMotionPreset('iconNudge'),
-                  'relative h-12 w-12 flex-shrink-0',
-                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-                )}
-                onClick={e => {
-                  if (item.onClick) {
-                    e.preventDefault();
-                    item.onClick();
-                  }
-                }}
-                data-action-id="navigation.item.icon.open"
-              >
-                <NavigationItemIcon
-                  item={item}
-                  className={cn(
-                    'h-5 w-5',
-                    isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                  )}
-                />
-              </Link>
-            </NavigationItemTooltip>
+            />
           ))}
         </div>
       </div>

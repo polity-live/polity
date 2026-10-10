@@ -14,6 +14,7 @@ describe('agenda query and schema branches', () => {
       applyAgendaItemQueryAccess: (query: unknown) => query,
       applyAmendmentQueryAccess: (query: unknown) => query,
       applyElectionQueryAccess: (query: unknown) => query,
+      applyElectionQueryAccessFromAuthorizedAgendaItem: (query: unknown) => query,
       applyEventQueryAccess: (query: unknown) => query,
       applyVoteManagerQueryAccess: (query: unknown) => query,
       applyVoteQueryAccess: (query: unknown) => query,

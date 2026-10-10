@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   t: vi.fn((key: string) => `t:${key}`),
   parseActiveMentionQuery: vi.fn(),
+  attachmentCatalog: vi.fn(),
   getSuggestionAnchorPosition: vi.fn(() => ({ left: 1, top: 2, width: 3 })),
   replaceTextRange: vi.fn(
     (value: string, start: number, end: number, replacement: string) =>
@@ -40,7 +41,10 @@ vi.mock('../../logic/assistantComposer', async importOriginal => {
   };
 });
 vi.mock('../../hooks/useMessageAttachments', () => ({
-  useMessageAttachments: () => mocks.attachments,
+  useMessageAttachments: (...args: unknown[]) => {
+    mocks.attachmentCatalog(...args);
+    return mocks.attachments;
+  },
 }));
 
 import { useMessageInputController } from '../useMessageInputController';
@@ -92,6 +96,21 @@ afterEach(() => {
 });
 
 describe('useMessageInputController branch contract', () => {
+  it('activates the attachment catalog only while an entity mention is being entered', () => {
+    const { result } = renderController();
+    expect(mocks.attachmentCatalog).toHaveBeenLastCalledWith('conversation-1', false);
+    mocks.parseActiveMentionQuery.mockReturnValue({
+      raw: '@group@',
+      entityType: 'group',
+      searchText: '',
+      start: 0,
+    });
+    act(() => result.current?.setMessageText('@group@'));
+    expect(mocks.attachmentCatalog).toHaveBeenLastCalledWith('conversation-1', true);
+    mocks.parseActiveMentionQuery.mockReturnValue(null);
+    act(() => result.current?.setMessageText('ordinary message'));
+    expect(mocks.attachmentCatalog).toHaveBeenLastCalledWith('conversation-1', false);
+  });
   it('covers absent mentions, empty suggestions, fallback names, and pending-request visibility', () => {
     const accepted = renderController();
     expect(accepted.result.current).toEqual(

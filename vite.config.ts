@@ -11,10 +11,39 @@ Object.assign(process.env, loadEnv(process.env.NODE_ENV || 'development', proces
 export default defineConfig({
   cacheDir: process.env.POLITY_VITE_CACHE_DIR,
   nitro: {
+    ...(process.env.POLITY_NITRO_BUILD_DIR
+      ? {
+          buildDir: process.env.POLITY_NITRO_BUILD_DIR,
+          typescript: {
+            generatedTypesDir: `${process.env.POLITY_NITRO_BUILD_DIR}/types`,
+          },
+        }
+      : {}),
     inlineDynamicImports: true,
     traceDeps: ['web-push*'],
   },
   plugins: [
+    ...(process.env.ZERO_PERFORMANCE_DIAGNOSTICS === '1'
+      ? [
+          {
+            name: 'benchmark-public-zero-react-observation',
+            enforce: 'pre' as const,
+            resolveId(source: string, importer?: string) {
+              // Observe public hooks called by zero-virtual as well as app code.
+              // The boundary itself continues to import the unchanged public API.
+              if (
+                source !== '@rocicorp/zero/react' ||
+                importer
+                  ?.replaceAll('\\', '/')
+                  .split('?')[0]
+                  .endsWith('/src/zero/observed-query.ts')
+              )
+                return;
+              return fileURLToPath(new URL('./src/zero/observed-query.ts', import.meta.url));
+            },
+          },
+        ]
+      : []),
     tanstackStart({
       router: {
         routesDirectory: 'routes',
@@ -79,6 +108,21 @@ export default defineConfig({
   },
   build: {
     cssCodeSplit: false,
+    rolldownOptions: {
+      output: {
+        // Group the side-effect-free icon definitions shared by navigation.
+        // Application routes and stateful runtime packages retain automatic splitting.
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            {
+              name: 'ui-icons',
+              test: /node_modules[\\/]lucide-react[\\/]/,
+            },
+          ],
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: [

@@ -71,9 +71,15 @@ describe('user query branches A07', () => {
   });
 
   it('builds full profiles for owner/non-owner and authenticated/anonymous callers with legacy/current time', () => {
+    const clock = vi.spyOn(Date, 'now');
+    clock.mockReturnValue(100);
     run('fullProfile', { id: 'u1', now: 99 }, 'u1');
     run('fullProfile', { id: 'u2' }, 'u1');
+    expect(mocks.access).toHaveBeenCalledWith('statement', 'u1', 100);
+    clock.mockReturnValue(200);
     run('fullProfile', { id: 'u2' }, null as never);
+    expect(mocks.access).toHaveBeenCalledWith('statement', null, 200);
+    clock.mockRestore();
     const whereValues = mocks.calls
       .filter(([name]) => name.endsWith('.where'))
       .flatMap(([, args]) => args);

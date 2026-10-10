@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/zero/preloads/startup.ts": [
+      {
+        "file": "src/zero/preloads/__tests__/startup.unit.test.ts",
+        "project": "unit",
+        "caseId": "registers the exact initial search before child effects and keeps background routes out"
+      }
+    ],
+    "src/zero/query-definitions.ts": [
+      {
+        "file": "src/zero/__tests__/query-definitions.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses only equal validated arguments in the same context and leaves original definitions intact"
+      }
+    ],
+    "src/features/navigation/state/navigation-layout-context.ts": [
+      {
+        "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+        "project": "component",
+        "caseId": "shares actual secondary navigation visibility with toolbars without another navigation query"
+      }
+    ],
+    "src/server/zero-query-diagnostics.ts": [
+      {
+        "file": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps interleaved request phases correlated and is inert outside the benchmark"
+      }
+    ],
+    "src/zero/observed-query.ts": [
+      {
+        "file": "src/zero/__tests__/observed-query.component.test.tsx",
+        "project": "component",
+        "caseId": "forwards the public hook arguments and reports real partial/complete results without changing them"
+      }
+    ],
+    "src/zero/messages/query-args.ts": [
+      {
+        "file": "src/zero/messages/__tests__/query-args.component.test.tsx",
+        "project": "component",
+        "caseId": "uses identical query requests for the initial visible page and its background preload"
+      }
+    ],
+    "src/zero/preloads/query-lifecycle.ts": [
+      {
+        "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+        "project": "unit",
+        "caseId": "observes completion and delayed release for abandoned in-flight work without inventing materialization"
+      }
+    ],
+    "src/zero/shared/query-conditions.ts": [
+      {
+        "file": "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves set membership for one/multiple values, duplicates and unrelated values"
+      }
+    ]
+  },
+  "actionReferences": {},
+  "actionDeclarations": {}
+}

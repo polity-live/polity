@@ -1,12 +1,15 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
   applyAmendmentQueryAccess,
-  applyElectionQueryAccess,
+  applyElectionQueryAccessFromAuthorizedAgendaItem,
   applyEventQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
+  applyVoteQueryAccessFromAuthorizedAgendaItem,
   applyVoteVoterOrManagerQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
@@ -34,7 +37,11 @@ export const agendaQueries = {
         .orderBy('order_index', 'asc')
         .related('event')
         .related('creator')
-        .related('election', q => q.related('role', pq => pq.related('group')))
+        .related('election', q =>
+          q.related('role', pq =>
+            pq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
+        )
         .related('amendment')
         .related('votes', q => applyVoteQueryAccess(q, userID))
   ),
@@ -43,30 +50,34 @@ export const agendaQueries = {
   byEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
+      whereAnyOf(applyAgendaItemQueryAccess(zql.agenda_item, userID), 'event_id', event_ids)
         .related('event', event => applyEventQueryAccess(event, userID))
-        .related('election', election => applyElectionQueryAccess(election, userID))
+        .related('election', election =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+        )
         .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
-        .related('votes', q => applyVoteQueryAccess(q, userID))
+        .related('votes', q => applyVoteQueryAccessFromAuthorizedAgendaItem(q, userID))
   ),
 
   timelineByEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
+      whereAnyOf(applyAgendaItemQueryAccess(zql.agenda_item, userID), 'event_id', event_ids)
         .related('event', event => applyEventQueryAccess(event, userID))
-        .related('election', election => applyElectionQueryAccess(election, userID))
+        .related('election', election =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+        )
         .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
   ),
 
   timingByEventIds: defineQuery(
     z.object({ event_ids: z.array(z.string()) }),
     ({ args: { event_ids }, ctx: { userID } }) =>
-      applyAgendaItemQueryAccess(zql.agenda_item, userID)
-        .where('event_id', 'IN', event_ids)
-        .related('event', event => applyEventQueryAccess(event, userID))
+      whereAnyOf(
+        applyAgendaItemQueryAccess(zql.agenda_item, userID),
+        'event_id',
+        event_ids
+      ).related('event', event => applyEventQueryAccess(event, userID))
   ),
 
   // Single agenda item by ID
@@ -89,7 +100,9 @@ export const agendaQueries = {
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
       zql.speaker_list
         .where('agenda_item_id', agenda_item_id)
-        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+          flip: false,
+        })
         .orderBy('order_index', 'asc')
   ),
 
@@ -104,7 +117,9 @@ export const agendaQueries = {
     ({ args: { agendaItemId, query = '', limit, start, dir }, ctx: { userID } }) => {
       let speakers = zql.speaker_list
         .where('agenda_item_id', agendaItemId)
-        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID));
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+          flip: false,
+        });
       for (const term of query.trim().split(/\s+/).filter(Boolean)) {
         speakers = speakers.whereExists('user', user =>
           user.where(({ or, cmp }) =>
@@ -124,7 +139,9 @@ export const agendaQueries = {
   speakerById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     zql.speaker_list
       .where('id', id)
-      .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+      .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+        flip: false,
+      })
       .related('user')
       .one()
   ),
@@ -140,7 +157,11 @@ export const agendaQueries = {
       applyAgendaOrderCursor(
         zql.agenda_item_change_request
           .where('agenda_item_id', agendaItemId)
-          .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID)),
+          .whereExists(
+            'agenda_item',
+            agendaItem => applyAgendaItemQueryAccess(agendaItem, userID),
+            { flip: false }
+          ),
         start,
         dir
       )
@@ -154,7 +175,9 @@ export const agendaQueries = {
     ({ args: { id }, ctx: { userID } }) =>
       zql.agenda_item_change_request
         .where('id', id)
-        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+          flip: false,
+        })
         .related('change_request', q => q.related('user'))
         .related('vote')
         .one()
@@ -166,7 +189,9 @@ export const agendaQueries = {
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
       zql.agenda_item_change_request
         .where('agenda_item_id', agenda_item_id)
-        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID), {
+          flip: false,
+        })
         .orderBy('order_index', 'asc')
         .related('change_request', q => q.related('user'))
         .related('vote', q =>
@@ -175,27 +200,37 @@ export const agendaQueries = {
             .related('voters', vq => applyVoteVoterOrManagerQueryAccess(vq, userID).related('user'))
             .related('indicative_participations', ip =>
               ip
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('decisions', dq => dq.related('choice'))
             )
             .related('indicative_decisions', dq =>
               dq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('offline_tallies', oq =>
               oq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('final_participations', fp =>
               fp
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('decisions', dq => dq.related('choice'))
             )
             .related('final_decisions', dq =>
               dq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
         )

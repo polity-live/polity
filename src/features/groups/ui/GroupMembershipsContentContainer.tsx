@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useTranslation } from 'react-i18next';
 import { GroupMembershipsContentView } from '@/features/groups/ui/GroupMembershipsContentView';
 import {

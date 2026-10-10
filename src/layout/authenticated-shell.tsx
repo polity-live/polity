@@ -1,6 +1,6 @@
 import { CollectionPreferencesProvider } from '@/features/shared/ui/collections/CollectionPreferencesProvider';
 import type { ReactNode } from 'react';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
 import { NavigationCommandDialog } from '@/features/navigation/command-dialog.tsx';
 import { useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
@@ -9,6 +9,7 @@ import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import { AlphaWarningDialog } from '@/features/shared/ui/AlphaWarningDialog.tsx';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { useNavigation } from '@/features/navigation/state/useNavigation.tsx';
+import { SecondaryNavigationVisibleContext } from '@/features/navigation/state/navigation-layout-context';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
 import { useAppearanceThemeSync } from '@/zero/appearance-themes/hooks';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
@@ -18,6 +19,7 @@ import {
   PrioritizedPreloadProvider,
   useGlobalZeroPreloads,
   usePrimaryRouteIdlePreloads,
+  useSearchPreloads,
   useVisiblePreloadRoutes,
 } from '@/zero/preloads';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.ts';
@@ -30,6 +32,7 @@ import {
 import { PageFrame } from './page-frame';
 import { AppTutorialSessionGate } from '@/features/app-tutorial/AppTutorialSessionGate';
 import { WorkspacePreviewProvider } from '@/features/shared/ui/preview/WorkspacePreview';
+import { useUserState } from '@/zero/users/useUserState';
 
 function isEntitySecondarySwipeRoute(pathname: string): boolean {
   return /^\/(?:group|user|amendment|event|blog)\/[^/]+/.test(pathname);
@@ -63,11 +66,25 @@ function findActiveNavigationItemIndex(
 }
 
 export default function AuthenticatedShell({ children }: { children: ReactNode }) {
+  return (
+    <PrioritizedPreloadProvider>
+      <AuthenticatedShellContent>{children}</AuthenticatedShellContent>
+    </PrioritizedPreloadProvider>
+  );
+}
+
+function AuthenticatedShellContent({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: state => state.location.pathname });
+  const search = useSearch({ strict: false });
+  const { currentUser, isLoading: userLoading } = useUserState();
   usePreferenceSync();
   useAppearanceThemeSync();
   useToastSettingsSync();
   useGlobalZeroPreloads();
-  usePrimaryRouteIdlePreloads();
+  // Register visible search demand before EnsureUser releases its child route.
+  // Its exact validated arguments match the visible page and share the preload.
+  useSearchPreloads(search, pathname === '/search');
+  usePrimaryRouteIdlePreloads(Boolean(currentUser) && !userLoading);
 
   const navigate = useNavigate();
   const screenType = useScreenStore(state => state.screenType);
@@ -76,7 +93,6 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
   useVisiblePreloadRoutes(
     (secondaryNavItems ?? []).flatMap(item => (item.href ? [item.href] : []))
   );
-  const pathname = useRouterState({ select: state => state.location.pathname });
   const isFullscreenOnboarding = pathname === '/' || pathname === '/onboarding';
   const pageFrame = getAuthenticatedPageFrame(pathname);
   const isSecondaryNavVisible =
@@ -150,16 +166,20 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
   );
 
   return (
-    <PrioritizedPreloadProvider>
+    <>
       <InternalLinkIntentPreloader />
       <I18nSyncProvider>
         <CollectionPreferencesProvider>
           <WorkspacePreviewProvider>
-            {content}
-            <AppTutorialSessionGate pathname={pathname} />
+            <SecondaryNavigationVisibleContext.Provider
+              value={isSecondaryNavVisible && secondaryItems.length > 0}
+            >
+              {content}
+              <AppTutorialSessionGate pathname={pathname} />
+            </SecondaryNavigationVisibleContext.Provider>
           </WorkspacePreviewProvider>
         </CollectionPreferencesProvider>
       </I18nSyncProvider>
-    </PrioritizedPreloadProvider>
+    </>
   );
 }

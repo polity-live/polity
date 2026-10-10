@@ -5,6 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,6 +16,160 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  zero-performance-prepare:
+    name: Zero preparation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+      - name: Inventory both revisions and assign every case
+        id: prepare
+        env:
+          ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'origin/master' }}
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts prepare
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output output/zero-performance/ci/preparation
+      - name: Upload immutable execution manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            output/zero-performance/ci/preparation/manifest.json
+            output/zero-performance/ci/preparation/prepare.json
+            output/zero-performance/ci/preparation/base-inventory/*.log
+
+  zero-performance-shards:
+    name: Zero measurements / ${{ matrix.shard }}
+    needs: zero-performance-prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.zero-performance-prepare.outputs.matrix) }}
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+      - name: Download immutable execution manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          path: output/zero-performance/ci/preparation
+      - name: Identify pinned Chromium version
+        if: matrix.layer == 'journeys'
+        id: playwright
+        run: echo "version=$(node -p 'require("./node_modules/@playwright/test/package.json").version')" >> "$GITHUB_OUTPUT"
+      - name: Cache pinned Chromium
+        if: matrix.layer == 'journeys'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: zero-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium with bounded Ubuntu mirror access
+        if: matrix.layer == 'journeys'
+        run: |
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
+          pnpm exec playwright install --with-deps chromium
+      - name: Measure assigned cases and confirm regressions on this runner
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts run
+          --manifest output/zero-performance/ci/preparation/manifest.json
+          --shard "${{ matrix.shard }}"
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output "output/zero-performance/ci/${{ matrix.shard }}"
+      - name: Stop any remaining owned benchmark stacks
+        if: always()
+        run: node tools/e2e/zero-performance/cleanup.mjs
+      - name: Upload all measurements, plans, comparisons and service diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-shard-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 21
+          compression-level: 9
+          path: |
+            output/zero-performance/ci/${{ matrix.shard }}/runner.json
+            output/zero-performance/ci/${{ matrix.shard }}/comparison.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/report.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/results.csv
+            output/zero-performance/ci/${{ matrix.shard }}/**/journeys.csv
+            output/zero-performance/ci/${{ matrix.shard }}/**/measurements.ndjson
+            output/zero-performance/ci/${{ matrix.shard }}/**/plans/*.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/progress.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/fixtures.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/preflight.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/startup.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/integrity.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/failure.json
+            output/zero-performance/ci/${{ matrix.shard }}/**/screenshots/*.png
+            output/zero-performance/ci/${{ matrix.shard }}/**/*.log
+
+  zero-query-performance:
+    name: Zero Query Performance
+    if: always()
+    needs: [zero-performance-prepare, zero-performance-shards]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-project
+      - name: Download immutable execution manifest
+        if: always()
+        uses: actions/download-artifact@v8
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          path: output/zero-performance/ci/preparation
+      - name: Download every runner outcome and original diagnostic
+        if: always()
+        uses: actions/download-artifact@v8
+        with:
+          pattern: zero-shard-*-${{ github.run_attempt }}
+          path: output/zero-performance/ci/artifacts
+      - name: Reconcile full coverage, original diagnostics and paired regressions
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts merge
+          --manifest output/zero-performance/ci/preparation/manifest.json
+          --artifacts output/zero-performance/ci/artifacts
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output output/zero-performance/ci/merged
+      - name: Upload full gate and complete reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-query-performance-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 21
+          compression-level: 9
+          path: output/zero-performance/ci/merged/
+      - name: Require successful preparation and every matrix job
+        if: always()
+        env:
+          PREPARE_RESULT: ${{ needs.zero-performance-prepare.result }}
+          SHARDS_RESULT: ${{ needs.zero-performance-shards.result }}
+        run: test "$PREPARE_RESULT" = success && test "$SHARDS_RESULT" = success
+
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest

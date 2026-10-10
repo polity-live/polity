@@ -30,7 +30,7 @@ async function waitForPaint(page: Page, frames = 4) {
 }
 
 test.describe('messages to search transition', () => {
-  test('stays responsive while progressively activating search cards @nightly @performance', async ({
+  test('stays responsive while rendering final search cards @nightly @performance', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -67,6 +67,11 @@ test.describe('messages to search transition', () => {
     await expect(page.getByTestId('search-results-scroll')).toBeVisible({
       timeout: 20_000,
     });
+    await expect(page.locator('[data-search-document-id]').first()).toBeVisible();
+    await expect(
+      page.locator('[data-search-document-id] [data-timeline-card-header]').first()
+    ).toBeVisible();
+    await expect(page.locator('[data-search-card-loading]')).toHaveCount(0);
     await page.getByRole('link', { name: 'Messages' }).click();
     await expect(page).toHaveURL(/\/messages(?:\?|$)/);
 
@@ -90,16 +95,15 @@ test.describe('messages to search transition', () => {
 
       const initialCard = page.locator('[data-search-document-id][data-index="0"]');
       await expect(initialCard).toHaveCount(1);
-      await expect(initialCard).toHaveAttribute('data-search-card-mode', /preview|interactive/);
-      await expect(initialCard.getByRole('link').filter({ visible: true })).toHaveCount(1);
+      await expect(initialCard.locator('[data-timeline-card-header]')).toBeVisible();
+      await expect(initialCard.getByRole('link').filter({ visible: true }).first()).toBeVisible();
 
-      await expect
-        .poll(
-          async () =>
-            page.locator('[data-search-document-id][data-search-card-mode="preview"]').count(),
-          { timeout: 5_000 }
-        )
-        .toBe(0);
+      await expect(page.locator('[data-search-card-mode="preview"]')).toHaveCount(0);
+      await expect(page.locator('[data-search-card-loading]')).toHaveCount(0);
+      await expect(
+        page.locator('[data-search-document-id] [data-action-id$=".subscription.toggle"]:disabled')
+      ).toHaveCount(0);
+      await expect(page.locator('[data-search-document-id] [data-loading="true"]')).toHaveCount(0);
       await waitForPaint(page);
 
       measurements.push(

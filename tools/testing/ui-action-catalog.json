@@ -51920,8 +51920,8 @@
       "actionId": "navigation.item.icon.open",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 272,
-      "column": 14,
+      "line": 120,
+      "column": 6,
       "kind": "navigation",
       "classification": "canonical-action",
       "accessibilityIssues": [],
@@ -51955,7 +51955,7 @@
       "actionId": "navigation.item.labeled.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 358,
+      "line": 379,
       "column": 14,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -52006,7 +52006,7 @@
       "actionId": "navigation.item.labeled.open",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 367,
+      "line": 388,
       "column": 16,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -52036,102 +52036,16 @@
     },
     {
       "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.compact.open",
-      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Button-2011bfa270",
+      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Button-2011bfa270-2",
       "file": "src/features/navigation/nav-items/NavItemListView.tsx",
       "actionId": "navigation.item.overlay.compact.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 133,
+      "line": 184,
       "column": 18,
       "kind": "interaction",
       "classification": "transparent-wrapper",
       "aliasOfLegacyFingerprint": "fefc565783",
-      "accessibilityIssues": [],
-      "scenarios": ["idle", "success", "keyboard", "focus"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [
-        {
-          "file": "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
-          "project": "component",
-          "caseId": "maps every navigation layout to one stable semantic link action",
-          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/navigation/nav-items/__tests__/A01NavigationBranches.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/icon-map.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-helpers.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-item-list.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-items-unauthenticated.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-user-avatar.adapter.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-user-avatar2.adapter.component.test.tsx"
-      ],
-      "accountabilityStatus": "merged-alias",
-      "resolution": {
-        "status": "resolved",
-        "introducedBy": "ui-action-debt-baseline-v1",
-        "source": {
-          "file": "src/features/navigation/nav-items/NavItemListView.tsx",
-          "tag": "Button",
-          "line": 139,
-          "identifierSource": "derived"
-        },
-        "resolution": "alias-of-action",
-        "evidence": {
-          "scannerClassification": "transparent-wrapper",
-          "aliasFingerprint": "3e25a08e6b"
-        }
-      }
-    },
-    {
-      "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.compact.open",
-      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Link-d7a5b44d68",
-      "file": "src/features/navigation/nav-items/NavItemListView.tsx",
-      "actionId": "navigation.item.overlay.compact.open",
-      "identifierSource": "data-action-id",
-      "tag": "Link",
-      "line": 143,
-      "column": 20,
-      "kind": "navigation",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [
-        {
-          "file": "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
-          "project": "component",
-          "caseId": "maps every navigation layout to one stable semantic link action",
-          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/navigation/nav-items/__tests__/A01NavigationBranches.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/icon-map.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-helpers.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-item-list.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
-        "src/features/navigation/nav-items/__tests__/nav-items-unauthenticated.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-user-avatar.adapter.component.test.tsx",
-        "src/features/navigation/nav-items/__tests__/nav-user-avatar2.adapter.component.test.tsx"
-      ],
-      "accountabilityStatus": "accounted"
-    },
-    {
-      "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.grid.open",
-      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Button-2011bfa270-2",
-      "file": "src/features/navigation/nav-items/NavItemListView.tsx",
-      "actionId": "navigation.item.overlay.grid.open",
-      "identifierSource": "data-action-id",
-      "tag": "Button",
-      "line": 190,
-      "column": 16,
-      "kind": "interaction",
-      "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "e773e420a2",
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
@@ -52172,13 +52086,84 @@
       }
     },
     {
+      "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.compact.open",
+      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Link-d7a5b44d68",
+      "file": "src/features/navigation/nav-items/NavItemListView.tsx",
+      "actionId": "navigation.item.overlay.compact.open",
+      "identifierSource": "data-action-id",
+      "tag": "Link",
+      "line": 194,
+      "column": 20,
+      "kind": "navigation",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
+          "project": "component",
+          "caseId": "maps every navigation layout to one stable semantic link action",
+          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/nav-items/__tests__/A01NavigationBranches.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/icon-map.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-helpers.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-item-list.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-items-unauthenticated.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-user-avatar.adapter.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-user-avatar2.adapter.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.grid.open",
+      "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Button-a86c0ae825-2",
+      "file": "src/features/navigation/nav-items/NavItemListView.tsx",
+      "actionId": "navigation.item.overlay.grid.open",
+      "identifierSource": "data-action-id",
+      "tag": "Button",
+      "line": 241,
+      "column": 16,
+      "kind": "interaction",
+      "classification": "transparent-wrapper",
+      "aliasOfLegacyFingerprint": "e773e420a2",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
+          "project": "component",
+          "caseId": "maps every navigation layout to one stable semantic link action",
+          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/nav-items/__tests__/A01NavigationBranches.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/NavItemListView.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/icon-map.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-helpers.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-item-list.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-items-authenticated.unit.test.ts",
+        "src/features/navigation/nav-items/__tests__/nav-items-unauthenticated.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-user-avatar.adapter.component.test.tsx",
+        "src/features/navigation/nav-items/__tests__/nav-user-avatar2.adapter.component.test.tsx"
+      ],
+      "accountabilityStatus": "merged-alias"
+    },
+    {
       "key": "src/features/navigation/nav-items/NavItemListView.tsx#navigation.item.overlay.grid.open",
       "debtKey": "src/features/navigation/nav-items/NavItemListView.tsx#Link-d7a5b44d68-2",
       "file": "src/features/navigation/nav-items/NavItemListView.tsx",
       "actionId": "navigation.item.overlay.grid.open",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 200,
+      "line": 251,
       "column": 18,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -66602,12 +66587,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66647,12 +66632,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66686,12 +66671,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66725,12 +66710,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66764,12 +66749,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66803,50 +66788,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
-      ],
-      "accountabilityStatus": "accounted"
-    },
-    {
-      "key": "src/features/search/ui/SearchResultCard.tsx#search.result.preview.open",
-      "debtKey": "src/features/search/ui/SearchResultCard.tsx#a-79d8377737",
-      "file": "src/features/search/ui/SearchResultCard.tsx",
-      "actionId": "search.result.preview.open",
-      "identifierSource": "data-action-id",
-      "tag": "a",
-      "line": 331,
-      "column": 4,
-      "kind": "navigation",
-      "classification": "canonical-action",
-      "accessibilityIssues": [],
-      "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
-      "roles": ["anonymous", "authenticated"],
-      "testRefs": [
-        {
-          "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
-          "project": "component",
-          "caseId": "renders an immediately navigable, fixed-cell preview without loading the dynamic card",
-          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/search/ui/__tests__/EntitySearchCardsMotion.component.test.tsx",
-        "src/features/search/ui/__tests__/EventSearchCard.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/EventSearchCard.component.test.tsx",
-        "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
-        "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66879,12 +66826,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66917,12 +66864,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66955,12 +66902,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -66971,7 +66918,7 @@
       "actionId": "search.virtual-grid.jump-to-top",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 89,
+      "line": 88,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -66994,12 +66941,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -67011,7 +66958,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/search/ui/VirtualSearchGridView.tsx#PreviewButton-a9f8b268ec",
       "tag": "PreviewButton",
-      "line": 137,
+      "line": 135,
       "column": 26,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -67045,12 +66992,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

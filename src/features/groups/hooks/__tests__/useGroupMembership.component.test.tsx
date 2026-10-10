@@ -232,6 +232,43 @@ describe('useGroupMembership state selection', () => {
     expect(mocks.viewerArg).toHaveBeenCalledWith(undefined);
   });
 
+  it('defers join eligibility, conflict queries and mutations while projected state loads', async () => {
+    const { result, rerender } = renderHook(
+      ({ loading, rows }) =>
+        useGroupMembership(
+          'group-1',
+          projected({
+            isLoading: loading,
+            memberships: rows,
+          })
+        ),
+      { initialProps: { loading: true, rows: [] as ReturnType<typeof membership>[] } }
+    );
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.canRequestJoin).toBe(false);
+    expect(mocks.conflictArg.mock.calls.every(([input]) => input === null)).toBe(true);
+    await act(() => result.current.requestJoin());
+    expect(mocks.zeroMutate).not.toHaveBeenCalled();
+
+    mocks.conflictArg.mockClear();
+    rerender({ loading: true, rows: [membership('invite', 'invited')] });
+    expect(result.current.canAcceptInvitation).toBe(false);
+    expect(mocks.conflictArg.mock.calls.every(([input]) => input === null)).toBe(true);
+    await act(async () => {
+      await result.current.acceptInvitation();
+      await result.current.leaveGroup();
+    });
+    expect(mocks.zeroMutate).not.toHaveBeenCalled();
+    rerender({ loading: false, rows: [membership('invite', 'invited')] });
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.canAcceptInvitation).toBe(true);
+    expect(mocks.conflictArg).toHaveBeenCalledWith(
+      expect.objectContaining({ membership_id: 'invite' })
+    );
+    await act(() => result.current.acceptInvitation());
+    expect(mocks.zeroMutate).toHaveBeenCalledOnce();
+  });
+
   it('normalizes guest statuses and membership booleans', () => {
     const cases = [
       { status: 'requested', expected: 'requested' },

@@ -22,11 +22,13 @@ export function useSearchData(
     blogs: { first: 20 },
     amendments: { first: 20 },
     events: { first: 20 },
-  }
+  },
+  enabled = true
 ) {
   const { user } = useAuth();
 
   const searchState = useSearchState({
+    enabled,
     userId: user?.id,
     query: searchQuery,
     limits: {

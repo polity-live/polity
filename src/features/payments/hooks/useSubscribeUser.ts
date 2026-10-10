@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useAuth } from '@/providers/auth-provider';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
@@ -71,6 +71,7 @@ export function useSubscribeUser(
 
   // Subscribe to a user
   const subscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetUserId || authUser.id === targetUserId) {
       return;
     }
@@ -114,6 +115,7 @@ export function useSubscribeUser(
 
   // Unsubscribe from a user
   const unsubscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetUserId) {
       return;
     }
@@ -155,7 +157,7 @@ export function useSubscribeUser(
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    if (isLoading) return;
+    if (projectedState?.isLoading || isLoading) return;
     if (isSubscribed) {
       await unsubscribe();
     } else {
@@ -164,9 +166,20 @@ export function useSubscribeUser(
   };
 
   return {
-    isSubscribed,
-    subscriberCount,
-    isLoading,
+    isSubscribed:
+      projectedState && optimisticTargetRef.current === null
+        ? Boolean(
+            authUser?.id &&
+            subscriptionRows.some(
+              sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+            )
+          )
+        : isSubscribed,
+    subscriberCount:
+      projectedState && optimisticTargetRef.current === null
+        ? persistedSubscriberCount
+        : subscriberCount,
+    isLoading: Boolean(projectedState?.isLoading) || isLoading,
     subscribe,
     unsubscribe,
     toggleSubscribe,

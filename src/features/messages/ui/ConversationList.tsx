@@ -22,6 +22,7 @@ function toConversationStart(conversation: Conversation): ConversationStart {
 
 interface ConversationListProps {
   isLoading?: boolean;
+  allConversationsLoaded?: boolean;
   conversations: Conversation[];
   conversationOnlineStatus: Readonly<Record<string, boolean>>;
   selectedConversationId: string | null;
@@ -39,6 +40,7 @@ interface ConversationListProps {
 import { ConversationListView } from './ConversationListView';
 export function ConversationList({
   isLoading = false,
+  allConversationsLoaded = false,
   conversations,
   conversationOnlineStatus,
   selectedConversationId,
@@ -63,23 +65,25 @@ export function ConversationList({
   );
   const getPageQuery = useCallback(
     ({ limit, start, dir, settled }: any) => ({
-      query: queries.messages.conversationPage({
-        filter: conversationFilter,
-        query: searchQuery.trim(),
-        limit,
-        start,
-        dir,
-      }) as any,
+      query: isLoading
+        ? undefined
+        : (queries.messages.conversationPage({
+            filter: conversationFilter,
+            query: searchQuery.trim(),
+            limit,
+            start,
+            dir,
+          }) as any),
       options: { ttl: settled ? ('5m' as const) : ('none' as const) },
     }),
-    [conversationFilter, searchQuery]
+    [conversationFilter, isLoading, searchQuery]
   );
   const getSingleQuery = useCallback(
     ({ id, settled }: any) => ({
-      query: queries.messages.conversationById({ id }) as any,
+      query: isLoading ? undefined : (queries.messages.conversationById({ id }) as any),
       options: { ttl: settled ? ('5m' as const) : ('none' as const) },
     }),
-    []
+    [isLoading]
   );
   const virtualList = usePolityZeroList<typeof listContextParams, Conversation, ConversationStart>({
     scrollStateKey: 'messages-conversations',
@@ -91,7 +95,15 @@ export function ConversationList({
     getSingleQuery,
     getRowKey: conversation => conversation.id,
     toStartRow: toConversationStart,
-    permalinkID: isMobileScreen ? undefined : (selectedConversationId ?? undefined),
+    // A complete small directory already fits in the first query window. Avoid
+    // two cursor queries and a single-item lookup that are immediately discarded.
+    permalinkID:
+      isMobileScreen ||
+      isLoading ||
+      (allConversationsLoaded &&
+        conversations.some(conversation => conversation.id === selectedConversationId))
+        ? undefined
+        : (selectedConversationId ?? undefined),
   });
   return (
     <ConversationListView

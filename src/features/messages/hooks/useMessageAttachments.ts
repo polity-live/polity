@@ -24,11 +24,13 @@ function dedupeAttachments(attachments: readonly AiChatAttachment[]): AiChatAtta
   return [...uniqueAttachments.values()];
 }
 
-export function useMessageAttachments(resetKey?: string) {
-  const { data } = useSearchData();
-  const { votesWithDetails } = useVoteState({ includeVotesWithDetails: true });
-  const { uploadFile, isUploading, uploadingFile } = useUploadFile();
+export function useMessageAttachments(resetKey?: string, catalogEnabled = true) {
   const [selectedAttachments, setSelectedAttachments] = useState<AiChatAttachment[]>([]);
+  // Keep selected cards reactive; an idle composer does not need a second full search view.
+  const enabled = catalogEnabled || selectedAttachments.length > 0;
+  const { data } = useSearchData('', undefined, enabled);
+  const { votesWithDetails } = useVoteState({ includeVotesWithDetails: enabled });
+  const { uploadFile, isUploading, uploadingFile } = useUploadFile();
 
   const agendaItemsByEventId = useMemo(
     () =>

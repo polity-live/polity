@@ -1,9 +1,10 @@
 import { useHistoryScrollState, useZeroVirtualizer } from '@rocicorp/zero-virtual/react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { queries } from '@/zero/queries';
+import { searchDocumentPageArgs } from '@/zero/shared/search-query-helpers';
 import {
   GERMANY_CENTER,
   GERMANY_SEARCH_BOUNDS,
@@ -101,12 +102,9 @@ export function useSpatialSearchController({
       const ttl = settled ? ('5m' as const) : ('none' as const);
 
       return {
-        query: queries.search.searchDocumentPage({
-          ...spatialContext,
-          limit,
-          start,
-          dir,
-        }) as any,
+        query: queries.search.searchDocumentPage(
+          searchDocumentPageArgs(spatialContext, { limit, start, dir })
+        ) as any,
         options: { ttl },
       };
     },
@@ -142,12 +140,13 @@ export function useSpatialSearchController({
   });
 
   const [rawMapRows = []] = useQuery(
-    queries.search.searchDocumentPage({
-      ...spatialContext,
-      limit: 200,
-      start: null,
-      dir: 'forward',
-    }) as any
+    queries.search.searchDocumentPage(
+      searchDocumentPageArgs(spatialContext, {
+        limit: 200,
+        start: null,
+        dir: 'forward',
+      })
+    ) as any
   );
   const mapRows = rawMapRows as SearchDocument[];
 

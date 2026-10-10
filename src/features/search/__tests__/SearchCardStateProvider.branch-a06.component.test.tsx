@@ -102,7 +102,7 @@ describe('SearchCardStateProvider remaining branches', () => {
     render(<ProviderHarness />);
     expect(mocks.rafCallbacks).toHaveLength(0);
     expect(mocks.queries.every(query => query === undefined)).toBe(true);
-    expect(latestState?.isReady).toBe(true);
+
     expect(latestState?.getSubscriptionState('user', 'missing', 0)).toMatchObject({
       subscriptions: [],
       isLoading: false,
@@ -141,6 +141,25 @@ describe('SearchCardStateProvider remaining branches', () => {
     });
   });
 
+  it('keeps actions pending through idle activation and a viewer change', () => {
+    installIdleCallbacks();
+    mocks.user = { id: 'viewer' };
+    const rendered = render(<ProviderHarness />);
+    expect(latestState?.getSubscriptionState('group', 'group', 9).isLoading).toBe(true);
+    expect(latestState?.getGroupState({ id: 'group', memberCount: 9 }).isLoading).toBe(true);
+    act(() => mocks.rafCallbacks[0](0));
+    invokeIdle(0);
+    expect(latestState?.getSubscriptionState('group', 'group', 9).isLoading).toBe(false);
+    expect(latestState?.getGroupState({ id: 'group', memberCount: 9 }).isLoading).toBe(true);
+    for (let i = 1; i < 6; i += 1) invokeIdle(i);
+    expect(latestState?.getGroupState({ id: 'group', memberCount: 9 }).isLoading).toBe(false);
+
+    mocks.user = { id: 'next-viewer' };
+    rendered.rerender(<ProviderHarness />);
+    expect(latestState?.getSubscriptionState('group', 'group', 9).isLoading).toBe(true);
+    expect(latestState?.getGroupState({ id: 'group', memberCount: 9 }).isLoading).toBe(true);
+  });
+
   it('uses fallback timers, stops on an unknown result and clears pending timers', () => {
     vi.useFakeTimers();
     installAnimationFrame();
@@ -154,7 +173,7 @@ describe('SearchCardStateProvider remaining branches', () => {
     expect(vi.getTimerCount()).toBe(1);
     act(() => vi.advanceTimersByTime(16));
     expect(mocks.queries).toContain('subscriptions');
-    expect(latestState?.isReady).toBe(false);
+    expect(latestState?.getSubscriptionState('user', 'missing', 0).isLoading).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
 
     rendered.unmount();
@@ -236,7 +255,6 @@ describe('SearchCardStateProvider remaining branches', () => {
     invokeIdle(4);
     invokeIdle(5);
 
-    expect(latestState?.isReady).toBe(true);
     expect(latestState?.getSubscriptionState('group', 'group', 2).subscriptions).toHaveLength(2);
     expect(latestState?.getSubscriptionState('user', 'user', 1).subscriptions).toHaveLength(1);
     expect(

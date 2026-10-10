@@ -70,7 +70,15 @@ function createQueryAst(): QueryAst {
         const predicate = (args[0] as (helpers: ReturnType<typeof predicateHelpers>) => unknown)(
           predicateHelpers()
         );
-        calls.push({ method: 'where', predicate: normalize(predicate) });
+        const canonical = canonicalPredicate(predicate) as { operator?: string; args?: AstValue[] };
+        if (canonical.operator === 'cmp' && canonical.args?.[1] === 'IN')
+          calls.push({ method: 'where', args: normalize(canonical.args) });
+        else if (canonical.operator === 'cmp' && canonical.args?.[1] === '=')
+          calls.push({
+            method: 'where',
+            args: normalize([canonical.args[0], 'IN', [canonical.args[2]]]),
+          });
+        else calls.push({ method: 'where', predicate: normalize(canonical) });
       } else {
         calls.push({ method: 'where', args: normalize(args) });
       }
@@ -90,6 +98,24 @@ function createQueryAst(): QueryAst {
     },
   };
   return query;
+}
+
+function canonicalPredicate(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalPredicate);
+  if (!value || typeof value !== 'object') return value;
+  const node = Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, canonicalPredicate(item)])
+  );
+  const values = node.values as { operator: string; args: unknown[] }[] | undefined;
+  if (
+    node.operator === 'or' &&
+    values?.length &&
+    values.every(
+      term => term.operator === 'cmp' && term.args[1] === '=' && term.args[0] === values[0].args[0]
+    )
+  )
+    return { operator: 'cmp', args: [values[0].args[0], 'IN', values.map(term => term.args[2])] };
+  return node;
 }
 
 function predicateHelpers() {
@@ -277,7 +303,8 @@ const expectedDigests = {
   'agenda anonymous': '5cbe59a4499ea8f10f8dad3e00ca5bac4ea2d465ca722e470455f9a46d16d4cf',
   'agenda viewer': '0069dad9634d723c03485e65d485e9811cc87985d6deb837b33645f663a8cfa4',
   'election anonymous': '06c777eec7fa7b88217bfb5780b2643f1d13c102254204ad70580d366f3e492f',
-  'election viewer': '5649be2e3a47543e31d9efb9f17d132abbe5ea76b3e2f8e631a61e8b9703eb01',
+  // Nested group/blog joins follow the correlated election plan; access predicates remain intact.
+  'election viewer': 'cdf19d284af3e198e99a802800d99fc34c45c6f504cb57992be99b1e762e5f97',
   'dataset anonymous': 'acf5072c677034a2c8923170e248ab962a76d2935b462bdbde1ea8df9bc66e28',
   'dataset viewer': 'bb6cfdc7a326bffac89738a068a938b7f8825b5681331a4961aea4c2d413ebd4',
   'election manager anonymous': DENIED,

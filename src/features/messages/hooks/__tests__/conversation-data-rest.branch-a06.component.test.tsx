@@ -48,7 +48,12 @@ describe('conversation data branch remainder', () => {
     const { result } = renderHook(() => useConversationData());
 
     expect(messageState.options).toEqual({ includeRelations: true, limit: 20 });
-    expect(result.current).toEqual({ conversations: [], isLoading: true, pageInfo: undefined });
+    expect(result.current).toEqual({
+      conversations: [],
+      isLoading: true,
+      allConversationsLoaded: false,
+      pageInfo: undefined,
+    });
   });
 
   it('filters absent and loaded relations with an explicit cursor', () => {
@@ -64,6 +69,10 @@ describe('conversation data branch remainder', () => {
     ];
     const loaded = renderHook(() => useConversationData('current', { first: 3 }));
     expect(loaded.result.current.conversations).toEqual([expect.objectContaining({ id: 'match' })]);
+    expect(loaded.result.current.allConversationsLoaded).toBe(false);
+    loaded.unmount();
+    const complete = renderHook(() => useConversationData('current', { first: 7 }));
+    expect(complete.result.current.allConversationsLoaded).toBe(true);
   });
 
   it('keeps closed dialogs unchanged and searches users without handles', () => {

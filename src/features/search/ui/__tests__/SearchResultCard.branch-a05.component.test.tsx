@@ -69,7 +69,7 @@ beforeEach(() => {
 });
 
 describe('SearchResultCard remaining branches', () => {
-  it('renders complete and empty previews from record, array, tag, stat, and text fallbacks', () => {
+  it('renders complete and empty fallback cards from record, array, tag, stat, and text fallbacks', () => {
     const rich = searchDocument({
       title: '',
       entity_type: '',
@@ -84,15 +84,13 @@ describe('SearchResultCard remaining branches', () => {
         stats: { number: 1, string: '2', ignored: false, ignoredObject: {} },
       },
     });
-    const rendered = render(<SearchResultCard mode="preview" document={rich} />);
-    expect(screen.getByText('Fallback group')).toBeTruthy();
+    const rendered = render(<SearchResultCard document={rich} />);
+    expect(rendered.container.textContent).toContain('Fallback group');
     expect(screen.getByText('Indexed excerpt')).toBeTruthy();
     expect(screen.getByText('#payload')).toBeTruthy();
-    expect(screen.getByText('1')).toBeTruthy();
 
     rendered.rerender(
       <SearchResultCard
-        mode="preview"
         document={searchDocument({
           entity_type: '',
           title: '',
@@ -101,7 +99,7 @@ describe('SearchResultCard remaining branches', () => {
         })}
       />
     );
-    expect(screen.getByRole('link', { name: 'Result' })).toBeTruthy();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/search?result=search-1');
   });
 
   it('normalizes rich content values, dates, metadata, handles, and every numeric stat shape', () => {
@@ -257,7 +255,7 @@ describe('SearchResultCard remaining branches', () => {
     expect(mocks.searchCardState.getAmendmentState).toHaveBeenCalledOnce();
   });
 
-  it('hits both weak-map caches and fallback-card content and tag variants', () => {
+  it('reuses the timeline definition cache and fallback-card content and tag variants', () => {
     const shared = searchDocument({
       entity_id: 'shared',
       entity_type: 'group',

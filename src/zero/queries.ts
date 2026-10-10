@@ -1,5 +1,6 @@
 import { projectChatQueries } from './project-chat/queries';
 import { defineQueries } from '@rocicorp/zero';
+import { memoizeQueryDefinitions } from './query-definitions';
 
 import { userQueries } from './users/queries';
 import { groupQueries } from './groups/queries';
@@ -31,21 +32,21 @@ import { studioQueries } from './communication-studio/queries';
 
 export const queries = defineQueries({
   users: userQueries,
-  groups: groupQueries,
-  events: eventQueries,
-  amendments: amendmentQueries,
+  groups: memoizeQueryDefinitions(groupQueries),
+  events: memoizeQueryDefinitions(eventQueries),
+  amendments: memoizeQueryDefinitions(amendmentQueries),
   documents: documentQueries,
   agendas: agendaQueries,
   todos: todoQueries,
-  messages: messageQueries,
+  messages: memoizeQueryDefinitions(messageQueries),
   projectChat: projectChatQueries,
-  notifications: notificationQueries,
-  blogs: blogQueries,
+  notifications: memoizeQueryDefinitions(notificationQueries),
+  blogs: memoizeQueryDefinitions(blogQueries),
   payments: paymentQueries,
   statements: statementQueries,
   common: commonQueries,
   search: searchQueries,
-  rbac: rbacQueries,
+  rbac: memoizeQueryDefinitions(rbacQueries),
   preferences: preferenceQueries,
   ai: aiQueries,
   calendarSubscriptions: calendarSubscriptionQueries,
