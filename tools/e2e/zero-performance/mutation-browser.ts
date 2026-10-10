@@ -39,6 +39,32 @@ export function browserMutationRouteURL(path: string, appURL: string | undefined
   assert(['http:', 'https:'].includes(origin.protocol), 'Benchmark application URL must use HTTP');
   return new URL(path, origin).href;
 }
+
+export const saveReloadReadinessChecks = [
+  ['save reload app-ready', 'data-app-state', 'ready'],
+  ['save reload auth-ready', 'data-auth-state', 'authenticated'],
+  ['save reload data-hydrated', 'data-data-state', 'hydrated'],
+  ['save reload zero-connected', 'data-zero-connection', 'connected'],
+] as const;
+
+/** Fixed diagnostics preserve the shared readiness checks and their per-check timeout. */
+export async function verifySaveReload(
+  checks: {
+    navigation: () => Promise<void>;
+    readiness: (attribute: string, value: string, timeout: number) => Promise<void>;
+    heading: () => Promise<void>;
+  },
+  setStage: (stage: string) => void
+): Promise<void> {
+  setStage('save reload navigation');
+  await checks.navigation();
+  for (const [label, attribute, value] of saveReloadReadinessChecks) {
+    setStage(label);
+    await checks.readiness(attribute, value, 90_000);
+  }
+  setStage('save reload renamed-heading');
+  await checks.heading();
+}
 /** UI and committed-state observers are independent; neither duration is an SDK ACK. */
 export async function measureBrowserMutationPhases(
   phases: BrowserMutationPhases,
@@ -176,9 +202,24 @@ export async function measureMutationBrowserActions(
         await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
       },
       reloadState: async () => {
-        await page.reload();
-        await waitForAppReady(page);
-        await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
+        await verifySaveReload(
+          {
+            navigation: async () => {
+              await page.reload();
+            },
+            readiness: async (attribute, value, timeout) => {
+              await expect(page.getByTestId('app-readiness')).toHaveAttribute(attribute, value, {
+                timeout,
+              });
+            },
+            heading: async () => {
+              await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
+            },
+          },
+          nextStage => {
+            stage = nextStage;
+          }
+        );
       },
     });
   });

@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { browserMutationRouteURL, measureBrowserMutationPhases } from '../mutation-browser';
+import {
+  browserMutationRouteURL,
+  measureBrowserMutationPhases,
+  verifySaveReload,
+} from '../mutation-browser';
 
 function deferred() {
   let resolve!: () => void;
@@ -14,6 +18,47 @@ function deferred() {
 }
 
 describe('browser mutation phase measurements', () => {
+  it('identifies every failing save reload check with a fixed safe label and preserves readiness deadlines', async () => {
+    const labels = [
+      'save reload navigation',
+      'save reload app-ready',
+      'save reload auth-ready',
+      'save reload data-hydrated',
+      'save reload zero-connected',
+      'save reload renamed-heading',
+    ];
+    const expectedChecks = [
+      ['data-app-state', 'ready', 90_000],
+      ['data-auth-state', 'authenticated', 90_000],
+      ['data-data-state', 'hydrated', 90_000],
+      ['data-zero-connection', 'connected', 90_000],
+    ];
+    for (let failAt = 0; failAt < labels.length; failAt++) {
+      let index = 0;
+      const observedLabels: string[] = [];
+      const actualChecks: unknown[][] = [];
+      const check = async () => {
+        if (index++ === failAt) throw new Error('sensitive fixture detail');
+      };
+      await expect(
+        verifySaveReload(
+          {
+            navigation: check,
+            readiness: async (...args) => {
+              actualChecks.push(args);
+              await check();
+            },
+            heading: check,
+          },
+          label => observedLabels.push(label)
+        )
+      ).rejects.toThrow();
+      expect(observedLabels).toEqual(labels.slice(0, failAt + 1));
+      expect(actualChecks).toEqual(expectedChecks.slice(0, Math.min(failAt, 4)));
+      expect(observedLabels.join(' ')).not.toContain('sensitive fixture detail');
+    }
+  });
+
   it('distinguishes a real rendered message from controlled composer textarea text', async () => {
     const container = document.createElement('div');
     document.body.append(container);
