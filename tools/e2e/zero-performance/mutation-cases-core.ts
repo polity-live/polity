@@ -1209,15 +1209,14 @@ function themeCases(): MutationCase[] {
         outcome:
           actor === 'owner'
             ? 'success'
-            : operation === 'createGroup' || actor === 'anonymous'
+            : operation.startsWith('create')
               ? 'server-error'
               : 'client-error',
         ...(actor !== 'owner'
           ? {
-              error:
-                operation === 'createGroup' || actor === 'anonymous'
-                  ? 'permission_denied'
-                  : 'mutation_server_failed',
+              error: operation.startsWith('create')
+                ? 'permission_denied'
+                : 'mutation_server_failed',
             }
           : {}),
         observer: {
@@ -1227,17 +1226,17 @@ function themeCases(): MutationCase[] {
           operation,
           kind: group ? 'group' : 'personal',
           anonymousContract:
-            'Unauthenticated private-user creation/editing must fail permission_denied; missing API auth gates remain exposed by this normative case',
+            'Creation requires server authentication; editor-restricted unreadable themes reject locally before any write',
           palette: 'literal existing POLITY_THEME builtin palette and fonts',
           oracle: 'theme and draft/published revision fields independently checked',
           authorization:
             operation === 'createPersonal'
-              ? 'personal creator identity; current implementation has no explicit authentication gate'
+              ? 'authenticated personal creator identity'
               : 'creator edit or group owner manage',
-          ...(actor === 'outsider' && operation !== 'createGroup'
+          ...(actor !== 'owner' && !operation.startsWith('create')
             ? {
                 rejection:
-                  'requireEditTheme runs on the client and throws exact Theme not found for an unreadable personal theme; normalized uncoded application failure',
+                  'personalEditor restricts creator identity and groupEditor requires group management; requireEditTheme rejects the unreadable client row with exact Theme not found before any write',
               }
             : {}),
         },

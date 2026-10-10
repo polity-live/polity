@@ -484,18 +484,28 @@ describe('mutation measurement engine lifecycle', () => {
     expect(rows[0].samples[0].restored).toBe(false);
     expect(harness.clients).toHaveLength(2);
   });
-  it('does not let an eager pre-start matching callback satisfy success observation', async () => {
+  it('rechecks a complete no-op state after start and retains server, SQL and restoration proofs', async () => {
     harness.mode = 'prestart-only';
+    await vi.advanceTimersByTimeAsync(7);
     const { rows, run } = fixture();
     const result = run();
-    await vi.advanceTimersByTimeAsync(75001);
+    await vi.advanceTimersByTimeAsync(100);
     await result;
     expect(rows[0].samples).toHaveLength(5);
-    expect(rows[0].samples.every(sample => sample.observedAt === undefined)).toBe(true);
-    expect(rows[0].failures).toHaveLength(5);
-    expect(rows[0].failures.every(message => message.includes('observer replication failed'))).toBe(
-      true
-    );
+    expect(
+      rows[0].samples.every(
+        sample =>
+          typeof sample.observedAt === 'number' &&
+          sample.observedAt >= sample.startedAt &&
+          sample.observedAt > 0 &&
+          sample.confirmedAt !== undefined &&
+          sample.databaseVerified &&
+          sample.rollbackVerified &&
+          sample.restored
+      )
+    ).toBe(true);
+    expect(rows[0].failures).toEqual([]);
+    expect(harness.verify).toHaveBeenCalledTimes(5);
     expect(harness.restore).toHaveBeenCalledTimes(5);
   });
 });

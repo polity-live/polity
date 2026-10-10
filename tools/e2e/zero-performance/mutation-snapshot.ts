@@ -11,6 +11,8 @@ interface SnapshotClient {
  * Values are never logged: they can contain application error details.
  */
 export function watchMutationSnapshot(writer: SnapshotClient) {
+  const diagnostics: { state: 'missing-marker' | 'map-rejected' | 'invalid-response' | 'applied' } =
+    { state: 'missing-marker' };
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let finish!: (value: { mutationID: number; at: number } | undefined) => void;
@@ -24,18 +26,26 @@ export function watchMutationSnapshot(writer: SnapshotClient) {
   const prefix = `m/${writer.clientID}/`;
   const poll = async () => {
     try {
-      const map = await writer.inspector.client.map();
+      let map;
+      try {
+        map = await writer.inspector.client.map();
+      } catch (error) {
+        diagnostics.state = 'map-rejected';
+        throw error;
+      }
       if (stopped) return;
       const ids = [...map.keys()]
         .filter(key => key.startsWith(prefix))
         .map(key => Number(key.slice(prefix.length)));
       if (ids.length) {
+        diagnostics.state = 'invalid-response';
         assert.equal(ids.length, 1, 'Fresh writer has ambiguous replicated mutation responses');
         assert.ok(
           Number.isSafeInteger(ids[0]) && ids[0] > 0,
           'Invalid replicated mutation identity'
         );
         stopped = true;
+        diagnostics.state = 'applied';
         finish({ mutationID: ids[0], at: performance.now() });
         return;
       }
@@ -49,6 +59,7 @@ export function watchMutationSnapshot(writer: SnapshotClient) {
   };
   void poll();
   return {
+    diagnostics,
     promise,
     cancel() {
       stopped = true;

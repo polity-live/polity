@@ -132303,6 +132303,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-error-diagnostics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132324,6 +132334,16 @@
     },
     {
       "path": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-observation.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -132942,6 +132962,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/mutation-error-diagnostics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/mutation-fixtures.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -133003,6 +133033,16 @@
           "caseId": "requires both relative and absolute user-time increases"
         }
       ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-observation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
       "suggestedTestRefs": []
     },
     {

@@ -21,6 +21,8 @@ import type { Execution } from './sharding';
 import { required } from './required';
 import { watchMutationSnapshot, waitForRollback } from './mutation-snapshot';
 import { MutationRequestCompletion } from './mutation-request-completion';
+import { mutationErrorShape, mutationSDKErrorDiagnostic } from './mutation-error-diagnostics';
+import { watchMutationObservation as watch } from './mutation-observation';
 
 interface View {
   addListener: (callback: (data: unknown, type: string) => void) => () => void;
@@ -34,22 +36,6 @@ function deadline<T>(promise: Promise<T>, label: string, ms = 15_000): Promise<T
       timer = setTimeout(() => reject(new Error(`${label} timed out`)), ms);
     }),
   ]).finally(() => clearTimeout(timer));
-}
-function watch(view: View, predicate: (data: unknown) => boolean) {
-  let release = () => {
-    /* Subscription assigned synchronously below. */
-  };
-  const readiness = { events: 0, lastType: 'none', predicateMatched: false };
-  const promise = new Promise<number>((resolve, reject) => {
-    release = view.addListener((data, type) => {
-      readiness.events++;
-      readiness.lastType = type;
-      readiness.predicateMatched = predicate(data);
-      if (type === 'error') reject(new Error('Mutation observation query rejected'));
-      if (type === 'complete' && readiness.predicateMatched) resolve(performance.now());
-    });
-  });
-  return { promise, readiness, cancel: () => release() };
 }
 function errorCode(error: unknown) {
   const parsed = parseAppError(error);
@@ -140,7 +126,9 @@ export async function measureMutations(
       tokens[actor] = await getLocalActorAccessToken(user);
     }
   }
+  const sdkErrors = new WeakMap<Zero, ReturnType<typeof mutationSDKErrorDiagnostic>[]>();
   async function client(actor: 'owner' | 'outsider' | 'anonymous') {
+    const diagnostics: ReturnType<typeof mutationSDKErrorDiagnostic>[] = [];
     const context = actor === 'anonymous' ? { userID: 'anon', email: '' } : identities[actor];
     if (actor !== 'anonymous') await authenticate(actor);
     const zero = new Zero({
@@ -157,7 +145,9 @@ export async function measureMutations(
       storageKey: `mutation-benchmark-${randomUUID()}`,
       logLevel: 'warn',
       logSink: {
-        log(level, _context, ...args) {
+        log(level, context, ...args) {
+          if (level === 'error' && diagnostics.length < 32)
+            diagnostics.push(mutationSDKErrorDiagnostic(context, args));
           if (
             level === 'warn' &&
             args.some(value => typeof value === 'string' && /Slow query/i.test(value))
@@ -166,6 +156,7 @@ export async function measureMutations(
         },
       },
     });
+    sdkErrors.set(zero, diagnostics);
     try {
       if (zero.connection.state.current.name !== 'connected')
         await deadline(
@@ -223,7 +214,13 @@ export async function measureMutations(
         const views: View[] = [];
         const cancellations: (() => void)[] = [];
         let prepared: Awaited<ReturnType<MutationCase['prepare']>> | undefined;
-        let sample: MutationSample | undefined;
+        let sample:
+          | (MutationSample & {
+              sdkErrors?: ReturnType<typeof mutationSDKErrorDiagnostic>[];
+              clientErrorShape?: ReturnType<typeof mutationErrorShape>;
+              serverErrorShape?: ReturnType<typeof mutationErrorShape>;
+            })
+          | undefined;
         let restored = false;
         let settled = true;
         let requestsSettled = true;
@@ -288,10 +285,7 @@ export async function measureMutations(
             writerBaseline = structuredClone(writerCurrent);
             // Attach before invocation so a fast replication cannot be lost.
             if (entry.outcome === 'success') {
-              observation = watch(
-                view,
-                data => Number.isFinite(sample?.startedAt) && preparedObservation.after(data)
-              );
+              observation = watch(view, preparedObservation.after, false);
               cancellations.push(observation.cancel);
             }
           }
@@ -331,6 +325,7 @@ export async function measureMutations(
             rollbackVerified: false,
             restored: false,
             attempts: [],
+            sdkErrors: sdkErrors.get(writer),
           };
           row.samples.push(sample);
           const measured = sample;
@@ -346,10 +341,12 @@ export async function measureMutations(
             const request = (fn as (args: unknown) => never)(prepared.args);
             sample.startedAt = performance.now();
             result = writer.mutate(request);
+            observation?.arm();
           } catch (error) {
             sample.clientAppliedAt = performance.now();
             sample.outcome = 'client-error';
             sample.error = errorCode(error);
+            sample.clientErrorShape = mutationErrorShape(error);
           }
           if (result) {
             settled = false;
@@ -360,12 +357,14 @@ export async function measureMutations(
                 if (value.type === 'error') {
                   measured.outcome = 'client-error';
                   measured.error = errorCode(value.error);
+                  measured.clientErrorShape = mutationErrorShape(value.error);
                 }
               },
               error => {
                 measured.clientAppliedAt = performance.now();
                 measured.outcome = 'client-error';
                 measured.error = errorCode(error);
+                measured.clientErrorShape = mutationErrorShape(error);
               }
             );
             const server = Promise.resolve(result.server).then(
@@ -376,6 +375,7 @@ export async function measureMutations(
                 if (value.type !== 'success') {
                   measured.outcome = 'server-error';
                   measured.error = errorCode(value.error);
+                  measured.serverErrorShape = mutationErrorShape(value.error);
                 }
               },
               error => {
@@ -384,6 +384,7 @@ export async function measureMutations(
                 measured.confirmedAt = performance.now();
                 measured.outcome = 'server-error';
                 measured.error = errorCode(error);
+                measured.serverErrorShape = mutationErrorShape(error);
               }
             );
             // Both promises are registered immediately; retries remain in the original elapsed time.
@@ -428,7 +429,18 @@ export async function measureMutations(
           }
           if (sample.outcome === 'server-error') {
             stage = 'writer snapshot replication';
-            const applied = required(await deadline(snapshot.promise, 'Writer mutation snapshot'));
+            let applied;
+            try {
+              applied = required(await deadline(snapshot.promise, 'Writer mutation snapshot'));
+            } catch (error) {
+              stage =
+                snapshot.diagnostics.state === 'map-rejected'
+                  ? 'writer inspector map read'
+                  : snapshot.diagnostics.state === 'invalid-response'
+                    ? 'writer snapshot invalid response'
+                    : 'writer snapshot missing marker';
+              throw error;
+            }
             sample.snapshotAppliedAt = applied.at;
             sample.snapshotMutationID = applied.mutationID;
           } else snapshot.cancel();

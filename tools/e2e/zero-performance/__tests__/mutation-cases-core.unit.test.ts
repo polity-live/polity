@@ -152,11 +152,24 @@ describe('reviewed core mutation catalog completeness', () => {
           entry =>
             entry.name === `appearanceThemes.${operation}` &&
             entry.actor === 'anonymous' &&
-            entry.error === 'permission_denied'
+            entry.outcome === (operation.startsWith('create') ? 'server-error' : 'client-error') &&
+            entry.error ===
+              (operation.startsWith('create') ? 'permission_denied' : 'mutation_server_failed')
         )
       ).toBe(true);
     }
     for (const operation of ['updateDraft', 'publish', 'delete']) {
+      for (const variant of ['anonymous-denied', 'group-anonymous-denied']) {
+        expect(
+          cases.find(
+            entry => entry.name === `appearanceThemes.${operation}` && entry.variant === variant
+          )
+        ).toMatchObject({
+          actor: 'anonymous',
+          outcome: 'client-error',
+          error: 'mutation_server_failed',
+        });
+      }
       expect(
         cases.some(
           entry =>

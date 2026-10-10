@@ -16,9 +16,11 @@ describe('mutation snapshot and rollback proof', () => {
     });
     await vi.advanceTimersByTimeAsync(20);
     expect(settled).toBe(false);
+    expect(watcher.diagnostics.state).toBe('missing-marker');
     map.set('m/writer/1', { error: 'app', message: 'private fixture content' });
     await vi.advanceTimersByTimeAsync(5);
     expect(await watcher.promise).toEqual({ mutationID: 1, at: expect.any(Number) });
+    expect(watcher.diagnostics.state).toBe('applied');
   });
   it('rejects ambiguous responses in a purported fresh writer', async () => {
     const watcher = watchMutationSnapshot({
@@ -34,6 +36,22 @@ describe('mutation snapshot and rollback proof', () => {
       },
     });
     await expect(watcher.promise).rejects.toThrow('ambiguous');
+    expect(watcher.diagnostics.state).toBe('invalid-response');
+  });
+  it('distinguishes inspector map rejection without exporting its private error', async () => {
+    const watcher = watchMutationSnapshot({
+      clientID: 'writer',
+      inspector: {
+        client: {
+          map: async () => {
+            throw new Error('private map error');
+          },
+        },
+      },
+    });
+    await expect(watcher.promise).rejects.toThrow('private map error');
+    expect(watcher.diagnostics).toEqual({ state: 'map-rejected' });
+    expect(JSON.stringify(watcher.diagnostics)).not.toContain('private');
   });
   it('cancels unresolved polling without leaking a timer', async () => {
     vi.useFakeTimers();

@@ -8,6 +8,7 @@ vi.mock('../../rbac/can', () => ({
 }));
 
 import { appearanceThemeSharedMutators } from '../shared-mutators';
+import { PermissionError } from '../../rbac/errors';
 
 type MutatorInput = Parameters<typeof appearanceThemeSharedMutators.createGroup.fn>[0];
 
@@ -46,6 +47,88 @@ beforeEach(() => {
 });
 
 describe('appearance theme mutator authorization and publication', () => {
+  const personalArgs = {
+    id: '00000000-0000-4000-8000-000000000010',
+    revision_id: '00000000-0000-4000-8000-000000000011',
+    slug: 'personal-copy',
+    name: 'Personal copy',
+    light_palette: POLITY_THEME.light,
+    dark_palette: POLITY_THEME.dark,
+    fonts: POLITY_THEME.fonts,
+  };
+
+  it.each([undefined, null, '', 'anon'])(
+    'rejects anonymous personal creation before either insert (%s)',
+    async userID => {
+      const tx = createTx();
+      await expect(
+        appearanceThemeSharedMutators.createPersonal.fn({
+          tx: tx as never,
+          ctx: { ...createCtx(), userID } as MutatorInput['ctx'],
+          args: personalArgs,
+        })
+      ).rejects.toBeInstanceOf(PermissionError);
+      expect(tx.mutate.appearance_theme.insert).not.toHaveBeenCalled();
+      expect(tx.mutate.appearance_theme_revision.insert).not.toHaveBeenCalled();
+    }
+  );
+
+  it('creates both personal rows for the authenticated owner', async () => {
+    const tx = createTx();
+    const ctx = createCtx();
+    await appearanceThemeSharedMutators.createPersonal.fn({
+      tx: tx as never,
+      ctx,
+      args: personalArgs,
+    });
+    expect(tx.mutate.appearance_theme.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: personalArgs.id, kind: 'personal', created_by_id: ctx.userID })
+    );
+    expect(tx.mutate.appearance_theme_revision.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: personalArgs.revision_id,
+        theme_id: personalArgs.id,
+        created_by_id: ctx.userID,
+      })
+    );
+  });
+
+  it('preserves optimistic personal creation before authoritative server authorization', async () => {
+    const tx = { ...createTx(), location: 'client' as const };
+    await appearanceThemeSharedMutators.createPersonal.fn({
+      tx: tx as never,
+      ctx: { ...createCtx(), userID: 'anon' },
+      args: personalArgs,
+    });
+    expect(tx.mutate.appearance_theme.insert).toHaveBeenCalledOnce();
+    expect(tx.mutate.appearance_theme_revision.insert).toHaveBeenCalledOnce();
+  });
+
+  it.each(['updateDraft', 'publish', 'delete'] as const)(
+    'locally rejects %s of an editor-restricted unreadable theme without any writes',
+    async operation => {
+      for (const userID of ['anon', createCtx().userID]) {
+        const tx = { ...createTx(), location: 'client' as const };
+        tx.run.mockResolvedValue(undefined);
+        const input = {
+          tx: tx as never,
+          ctx: { ...createCtx(), userID },
+          args: {
+            ...personalArgs,
+            theme_id: personalArgs.id,
+            version: 1,
+          },
+        };
+        await expect(appearanceThemeSharedMutators[operation].fn(input)).rejects.toThrow(
+          'Theme not found'
+        );
+        expect(canMock).not.toHaveBeenCalled();
+        for (const table of Object.values(tx.mutate))
+          for (const write of Object.values(table)) expect(write).not.toHaveBeenCalled();
+      }
+    }
+  );
+
   it('requires groupThemes/manage when creating a group theme', async () => {
     const tx = createTx();
     const groupId = '00000000-0000-4000-8000-000000000088';

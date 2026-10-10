@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contentMutationCases } from '../mutation-cases-content';
+import { assertProjectChatUndoTimestamp, contentMutationCases } from '../mutation-cases-content';
 import { statementSharedMutators } from '../../../../src/zero/statements/shared-mutators';
 import { todoSharedMutators } from '../../../../src/zero/todos/shared-mutators';
 import { documentSharedMutators } from '../../../../src/zero/documents/shared-mutators';
@@ -21,8 +21,159 @@ import {
   studioNodeSchema,
 } from '../../../../src/features/communication-studio/logic/document-v3';
 import { mergeStudioV3 } from '../../../../src/features/communication-studio/logic/operations';
+import { createElementSetSnapshot } from '../../../../src/features/communication-studio/logic/element-library';
 
 describe('reviewed content mutation specifications', () => {
+  it('checks persisted undo timestamps with both SQL bigint codecs and rejects missing or corrupt values', () => {
+    for (const value of [1700000000123, '1700000000123'])
+      expect(() => assertProjectChatUndoTimestamp(value)).not.toThrow();
+    for (const value of [
+      null,
+      undefined,
+      0,
+      '0',
+      -1,
+      'NaN',
+      'Infinity',
+      '1.5',
+      1.5,
+      Number.POSITIVE_INFINITY,
+      '9007199254740992',
+    ])
+      expect(() => assertProjectChatUndoTimestamp(value)).toThrow();
+  });
+
+  it('rejects a surface change locally without an accessible membership', async () => {
+    for (const actor of ['anonymous', 'outsider']) {
+      expect(
+        contentMutationCases().find(c => c.name === 'projectChat.setSurface' && c.actor === actor)
+      ).toMatchObject({ outcome: 'client-error', error: 'mutation_server_failed' });
+      let updates = 0;
+      await expect(
+        projectChatSharedMutators.setSurface.fn({
+          tx: {
+            location: 'client',
+            run: async () => undefined,
+            mutate: {
+              conversation_participant: {
+                update: async () => {
+                  updates++;
+                },
+              },
+            },
+          } as never,
+          ctx: { userID: actor === 'anonymous' ? undefined : 'outsider' } as never,
+          args: { conversationId: 'private-chat', surface: 'city_design' },
+        })
+      ).rejects.toThrow('Project access denied');
+      expect(updates).toBe(0);
+    }
+  });
+
+  it('preserves selected element stacking order when extracting a library snapshot', () => {
+    const document = createStudioDocumentV5('Fixture studio');
+    const shape = studioNodeSchema.parse({
+      id: 'abcdefab-1234-4234-8234-123456789abc',
+      type: 'shape',
+      name: 'Fixture rectangle',
+      shape: 'rectangle',
+      parentFrameId: '12345678-1234-4234-8234-123456789abc',
+      transform: { x: 0, y: 0, width: 100, height: 100 },
+      zIndex: 1,
+      style: {},
+    });
+    document.nodes = [shape];
+    expect(createElementSetSnapshot(document, [shape.id])).toEqual({
+      nodes: [{ ...shape, parentFrameId: null }],
+      width: 100,
+      height: 100,
+      assets: [],
+    });
+    expect(shape.parentFrameId).toBe('12345678-1234-4234-8234-123456789abc');
+    expect(shape.zIndex).toBe(1);
+  });
+
+  it('rejects private todo edits locally before writing when the writer cannot read its owner row', async () => {
+    for (const action of ['update', 'toggleComplete', 'archive', 'unarchive'] as const)
+      for (const actor of ['anonymous', 'outsider']) {
+        expect(
+          contentMutationCases().find(c => c.name === `todos.${action}` && c.actor === actor)
+        ).toMatchObject({ outcome: 'client-error', error: 'mutation_server_failed' });
+        let updates = 0;
+        await expect(
+          todoSharedMutators[action].fn({
+            tx: {
+              location: 'client',
+              run: async () => undefined,
+              mutate: {
+                todo: {
+                  update: async () => {
+                    updates++;
+                  },
+                },
+              },
+            } as never,
+            ctx: { userID: actor === 'anonymous' ? undefined : 'outsider' } as never,
+            args: { id: 'private-todo' },
+          })
+        ).rejects.toThrow('Todo not found');
+        expect(updates).toBe(0);
+      }
+    expect(
+      contentMutationCases().find(c => c.name === 'todos.toggleComplete' && c.actor === 'owner')
+        ?.outcome
+    ).toBe('success');
+  });
+
+  it('classifies private parent title lookups as local denials while keeping authorized title updates', async () => {
+    const cases = contentMutationCases().filter(
+      c => c.name === 'documents.updateGroupDocumentTitle'
+    );
+    expect(cases.find(c => c.actor === 'owner')?.outcome).toBe('success');
+    for (const actor of ['anonymous', 'outsider']) {
+      expect(cases.find(c => c.actor === actor)).toMatchObject({
+        outcome: 'client-error',
+        error: 'mutation_server_failed',
+      });
+      let updates = 0;
+      await expect(
+        documentSharedMutators.updateGroupDocumentTitle.fn({
+          tx: {
+            location: 'client',
+            run: async () => undefined,
+            mutate: {
+              amendment: {
+                update: async () => {
+                  updates++;
+                },
+              },
+            },
+          } as never,
+          ctx: { userID: actor === 'anonymous' ? undefined : 'outsider' } as never,
+          args: { document_id: 'private-document', title: 'Rejected title' },
+        })
+      ).rejects.toThrow('missing parent amendment id');
+      expect(updates).toBe(0);
+    }
+    let changed: unknown;
+    await documentSharedMutators.updateGroupDocumentTitle.fn({
+      tx: {
+        location: 'client',
+        run: async () => ({ id: 'document', amendment_id: 'amendment' }),
+        mutate: {
+          amendment: {
+            update: async (value: unknown) => {
+              changed = value;
+            },
+          },
+        },
+      } as never,
+      ctx: { userID: 'owner' } as never,
+      args: { document_id: 'document', title: 'Authorized title' },
+    });
+    expect(changed).toMatchObject({ id: 'amendment', title: 'Authorized title' });
+  });
+
   it('permits evicted Studio rows while rejecting every retained phantom or changed cached field', () => {
     const columns = { id: {}, title: {}, updated_at: {} };
     const persisted = { id: 'project', title: 'Fixture canvas', updated_at: new Date(1000) };

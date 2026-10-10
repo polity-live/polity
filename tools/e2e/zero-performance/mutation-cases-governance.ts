@@ -1057,8 +1057,18 @@ function workflowCases(): MutationCase[] {
       name: `network.${name}`,
       variant: actor === 'owner' ? 'authorized-workflow-transition' : 'permission-denied',
       actor,
-      outcome: actor === 'owner' ? ('success' as const) : ('server-error' as const),
-      ...(actor !== 'owner' ? { error: 'permission_denied' } : {}),
+      outcome:
+        actor === 'owner'
+          ? ('success' as const)
+          : name === 'saveWorkflowDefinition'
+            ? ('client-error' as const)
+            : ('server-error' as const),
+      ...(actor !== 'owner'
+        ? {
+            error:
+              name === 'saveWorkflowDefinition' ? 'mutation_server_failed' : 'permission_denied',
+          }
+        : {}),
       observer: { query: 'network.workflowById' },
       specification: {
         fixture:
@@ -1202,6 +1212,24 @@ function workflowCases(): MutationCase[] {
         const before = (data: unknown) => (isCreate ? !project(data) : project(data)?.id === id);
         return {
           args: args as ReadonlyJSONValue,
+          ...(isSave && (actor === 'owner' || 'delegatedWriterID' in ctx)
+            ? {
+                writerPreloads: [
+                  {
+                    request: queries.network.groupConnectionsByGroup({ groupId: groupID }),
+                    before: (data: unknown) =>
+                      rows(data).some(
+                        row =>
+                          row.id === mutationFixtureID(ctx.id, 'workflow-connection') &&
+                          rows(row.grants).some(
+                            grant =>
+                              grant.right_key === 'amendmentRight' && grant.status === 'active'
+                          )
+                      ),
+                  },
+                ],
+              }
+            : {}),
           observe: {
             request: queries.network.workflowById({ id: workflowID }),
             before,
@@ -1356,7 +1384,7 @@ function connectionCases(): MutationCase[] {
                       status: 'pending',
                     }
                   : name === 'approveGroupConnectionRequest'
-                    ? { status: 'approved', structure_status: 'approved' }
+                    ? null
                     : name === 'rejectGroupConnectionRequest'
                       ? { status: 'rejected', structure_status: 'rejected' }
                       : { status: 'pending' };
@@ -1371,6 +1399,7 @@ function connectionCases(): MutationCase[] {
             after: (data: unknown) => {
               if (actor !== 'owner') return before(data);
               const row = object(data);
+              if (name === 'approveGroupConnectionRequest') return !row;
               if (isDelete) return !row;
               return (
                 row?.id === id &&
@@ -1462,14 +1491,7 @@ function ballotCastingCases(): MutationCase[] {
       ...(internal || actor !== 'owner' || deniedScenario
         ? {
             error:
-              internal ||
-              d.kind === 'submit' ||
-              (actor === 'anonymous' &&
-                [
-                  'castFinalElectionVote',
-                  'castFinalElectionVoteFull',
-                  'castFinalVoteFull',
-                ].includes(d.name))
+              internal || (d.kind === 'submit' && actor !== 'anonymous')
                 ? 'mutation_server_failed'
                 : 'permission_denied',
           }
@@ -1768,9 +1790,18 @@ function groupAccessCases(): MutationCase[] {
           ? ('success' as const)
           : [
                 'acceptGuestInvitation',
+                'acceptInvitation',
+                'syncMembershipRoles',
+                'addOfflineMembershipRole',
+                'addGuestRole',
+                'removeGuestRole',
+                'syncGuestRoles',
+                'inviteGuest',
                 'updateMembership',
                 'syncOfflineMembershipRoles',
                 'addMembershipRole',
+                'removeMembershipRole',
+                'revokeGuestAccess',
                 'removeOfflineMembershipRole',
               ].includes(name)
             ? ('client-error' as const)
@@ -1779,9 +1810,18 @@ function groupAccessCases(): MutationCase[] {
         ? {
             error: [
               'acceptGuestInvitation',
+              'acceptInvitation',
+              'syncMembershipRoles',
+              'addOfflineMembershipRole',
+              'addGuestRole',
+              'removeGuestRole',
+              'syncGuestRoles',
+              'inviteGuest',
               'updateMembership',
               'syncOfflineMembershipRoles',
               'addMembershipRole',
+              'removeMembershipRole',
+              'revokeGuestAccess',
               'removeOfflineMembershipRole',
             ].includes(name)
               ? 'mutation_server_failed'
@@ -1898,7 +1938,9 @@ function groupAccessCases(): MutationCase[] {
                 group_id: groupID,
                 user_id: ctx.ownerID,
                 status: 'invited',
-                role_ids: name === 'requestGuestAccess' && actor === 'anonymous' ? [] : [roleID],
+                ...(name === 'requestGuestAccess' && actor === 'anonymous'
+                  ? {}
+                  : { role_ids: [roleID] }),
               }
             : {
                 id: parentID,
@@ -1948,6 +1990,8 @@ function groupAccessCases(): MutationCase[] {
         return {
           args: args as ReadonlyJSONValue,
           ...(name === 'requestGuestAccess' ||
+          (name === 'inviteGuest' && (actor === 'owner' || 'delegatedWriterID' in ctx)) ||
+          (name === 'joinGroup' && actor === 'owner') ||
           (isRole &&
             (name.startsWith('add') || name.startsWith('sync')) &&
             (actor === 'owner' || 'delegatedWriterID' in ctx))
@@ -2020,7 +2064,10 @@ function groupAccessCases(): MutationCase[] {
                 : { user_id: ctx.ownerID }),
             });
             if (isRole || isCreate) {
-              assert.deepEqual(links.map(row => row.role_id).sort(), isRemoveRole ? [] : [roleID]);
+              assert.deepEqual(
+                Array.from(links, row => row.role_id).sort(),
+                isRemoveRole ? [] : [roleID]
+              );
             }
           },
           restore: async () => {
@@ -2143,18 +2190,28 @@ function rosterCases(): MutationCase[] {
                 rows(data).some(row => row.id === id && row.first_name === 'Reviewed'));
             return {
               args: args as ReadonlyJSONValue,
-              ...(!isGroup
+              ...(isGroup && (operation === 'create' || operation === 'import')
                 ? {
                     writerPreloads: [
                       {
-                        request: queries.events.byId({ id: scopeID }),
+                        request: queries.groups.byId({ id: scopeID }),
                         before: (data: unknown) =>
-                          object(data)?.id === scopeID &&
-                          object(data)?.attendance_mode === 'hybrid',
+                          object(data)?.id === scopeID && object(data)?.group_type === 'base',
                       },
                     ],
                   }
-                : {}),
+                : !isGroup
+                  ? {
+                      writerPreloads: [
+                        {
+                          request: queries.events.byId({ id: scopeID }),
+                          before: (data: unknown) =>
+                            object(data)?.id === scopeID &&
+                            object(data)?.attendance_mode === 'hybrid',
+                        },
+                      ],
+                    }
+                  : {}),
               observe: {
                 request: isGroup
                   ? queries.groups.offlineMembersByGroup({ groupId: scopeID })
@@ -2191,7 +2248,7 @@ function rosterCases(): MutationCase[] {
                 }
                 if (operation === 'import') {
                   assert.equal(records.length, 2);
-                  assert.deepEqual(records.map(row => row.first_name).sort(), [
+                  assert.deepEqual(Array.from(records, row => row.first_name).sort(), [
                     'Reviewed',
                     'Second',
                   ]);
@@ -2256,7 +2313,7 @@ function eventParticipationCases(): MutationCase[] {
         outcome: success
           ? ('success' as const)
           : actor === 'anonymous' &&
-              ['removeParticipantRole', 'syncParticipantRoles'].includes(name)
+              ['addParticipantRole', 'removeParticipantRole', 'syncParticipantRoles'].includes(name)
             ? ('client-error' as const)
             : ('server-error' as const),
         ...(!success
@@ -2264,7 +2321,9 @@ function eventParticipationCases(): MutationCase[] {
               error:
                 name === 'joinEvent' ||
                 (actor === 'anonymous' &&
-                  ['removeParticipantRole', 'syncParticipantRoles'].includes(name))
+                  ['addParticipantRole', 'removeParticipantRole', 'syncParticipantRoles'].includes(
+                    name
+                  ))
                   ? 'mutation_server_failed'
                   : 'permission_denied',
             }
@@ -2316,7 +2375,12 @@ function eventParticipationCases(): MutationCase[] {
                 instance_date: instanceDate === null ? null : new Date(instanceDate),
               });
           }
-          const subjectID = targetUserID === ctx.ownerID && !isCreate ? event.participantID : id;
+          const existingInviteRecipient =
+            name === 'inviteParticipant' && targetUserID === ctx.ownerID;
+          const subjectID =
+            targetUserID === ctx.ownerID && (!isCreate || existingInviteRecipient)
+              ? event.participantID
+              : id;
           if (isRole || name === 'inviteParticipant' || name === 'joinEvent') {
             await f.insert('role', {
               id: roleID,
@@ -2380,12 +2444,25 @@ function eventParticipationCases(): MutationCase[] {
           const before = (data: unknown) =>
             name === 'finalizeDelegates'
               ? object(data)?.delegate_distribution_status !== 'finalized'
-              : isCreate
-                ? !target(data)
-                : target(data)?.id === subjectID;
+              : existingInviteRecipient
+                ? target(data)?.id === event.participantID && target(data)?.status === 'active'
+                : isCreate
+                  ? !target(data)
+                  : target(data)?.id === subjectID;
           const started = Date.now();
           return {
             args: args as ReadonlyJSONValue,
+            ...((isRole || name === 'inviteParticipant' || name === 'joinEvent') &&
+            (actor === 'owner' || 'delegatedWriterID' in ctx)
+              ? {
+                  writerPreloads: [
+                    {
+                      request: queries.events.roles({ eventId: event.id }),
+                      before: (data: unknown) => rows(data).some(row => row.id === roleID),
+                    },
+                  ],
+                }
+              : {}),
             observe: {
               request:
                 name === 'finalizeDelegates'

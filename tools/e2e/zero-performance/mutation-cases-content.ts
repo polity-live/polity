@@ -15,6 +15,17 @@ import { canvasMutationCases, studioApplyConflictCases } from './mutation-cases-
 import { studioCommandSchemas } from '../../../src/zero/communication-studio/commands';
 
 const epoch = new Date('2030-01-01T00:00:00Z');
+export function assertProjectChatUndoTimestamp(value: unknown): void {
+  assert(
+    typeof value === 'number' || (typeof value === 'string' && /^[1-9]\d*$/.test(value)),
+    'Undo timestamp must be a positive database epoch integer'
+  );
+  const timestamp = Number(value);
+  assert(
+    Number.isSafeInteger(timestamp) && timestamp > 0,
+    'Undo timestamp must be finite and positive'
+  );
+}
 type Row = Record<string, unknown>;
 const record = (value: unknown): Row | undefined =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Row) : undefined;
@@ -326,12 +337,14 @@ const todoActions = [
 type TodoAction = (typeof todoActions)[number];
 function todoCase(action: TodoAction, actor: 'owner' | 'outsider' | 'anon'): MutationCase {
   const rejected = actor !== 'owner';
+  const localDenial =
+    rejected && ['update', 'toggleComplete', 'archive', 'unarchive'].includes(action);
   return {
     name: `todos.${action}`,
     variant: rejected ? `${actor}-denied` : 'authorized',
     actor,
-    outcome: rejected ? 'server-error' : 'success',
-    ...(rejected ? { error: 'permission_denied' } : {}),
+    outcome: localDenial ? 'client-error' : rejected ? 'server-error' : 'success',
+    ...(rejected ? { error: localDenial ? 'mutation_server_failed' : 'permission_denied' } : {}),
     observer: { query: 'todos.byIdWithRelations' },
     specification: {
       action,
@@ -997,6 +1010,8 @@ function messageCase(
         sqlTimestamp: '1970-01-01T00:00:00.000Z',
       },
       cleanup: 'conversation and all participants and messages absent',
+      participantAddition:
+        'new outsider membership; owner membership already exists and unique conversation/user pair must remain distinct',
     },
     async prepare(ctx) {
       const f = new MutationFixtures(ctx.sql);
@@ -1096,7 +1111,7 @@ function messageCase(
         addParticipant: {
           id: newPid,
           conversation_id: id,
-          user_id: ctx.ownerID,
+          user_id: ctx.outsiderID,
           joined_at: epoch.getTime(),
           last_read_at: null,
           left_at: null,
@@ -1131,7 +1146,7 @@ function messageCase(
             };
       const newParticipant =
         success && action === 'addParticipant'
-          ? { id: newPid, conversation_id: id, user_id: ctx.ownerID, left_at: 0 }
+          ? { id: newPid, conversation_id: id, user_id: ctx.outsiderID, left_at: 0 }
           : null;
       const expectedMessage =
         removedConversation || (success && action === 'deleteMessage')
@@ -2446,7 +2461,7 @@ function studioCase(action: string, actor: 'owner' | 'outsider' | 'anon'): Mutat
               version: 1,
               width: 100,
               height: 100,
-              snapshot,
+              snapshot: { ...snapshot, nodes: [{ ...snapshotShape, zIndex: 1 }] },
             });
           }
           if (action === 'instantiateElementSet' && success) {
@@ -2501,9 +2516,10 @@ function projectChatCase(
   conflict = false
 ): MutationCase {
   const rejected = actor !== 'owner' || conflict;
+  const localDenial = rejected && action === 'setSurface';
   const error = conflict
     ? 'project_undo_conflict'
-    : actor === 'anon' && !['cancel', 'undo'].includes(action)
+    : actor === 'anon' && !['cancel', 'undo', 'setSurface'].includes(action)
       ? 'permission_denied'
       : 'mutation_server_failed';
   const queryName =
@@ -2516,7 +2532,7 @@ function projectChatCase(
     name: `projectChat.${action}`,
     variant: conflict ? 'concurrent-text-conflict' : rejected ? `${actor}-denied` : 'authorized',
     actor,
-    outcome: rejected ? 'server-error' : 'success',
+    outcome: localDenial ? 'client-error' : rejected ? 'server-error' : 'success',
     ...(rejected ? { error } : {}),
     observer: { query: queryName },
     specification: {
@@ -2753,7 +2769,7 @@ function projectChatCase(
           );
           if (action === 'undo' && success) {
             const [row] = await f.rows('ai_change_set', change);
-            assert.equal(typeof row.undone_at, 'number');
+            assertProjectChatUndoTimestamp(row.undone_at);
           }
         },
         restore: () => f.restore(),
@@ -2769,14 +2785,16 @@ function documentTitleCase(actor: 'owner' | 'outsider' | 'anon'): MutationCase {
     name: 'documents.updateGroupDocumentTitle',
     variant: rejected ? `${actor}-denied` : 'authorized',
     actor,
-    outcome: rejected ? 'server-error' : 'success',
-    ...(rejected ? { error: 'permission_denied' } : {}),
+    outcome: rejected ? 'client-error' : 'success',
+    ...(rejected ? { error: 'mutation_server_failed' } : {}),
     observer: { query: 'documents.byId' },
     specification: {
       fixture: 'owner-authored private amendment and linked document',
       actor,
       expectedParentTitle: rejected ? 'Fixture amendment' : 'Changed amendment',
       documentContent: null,
+      denial:
+        'private parent is absent in unauthorized writer cache; shared title lookup rejects locally before API submission',
       cleanup: 'amendment, document and search projections absent',
     },
     async prepare(ctx) {

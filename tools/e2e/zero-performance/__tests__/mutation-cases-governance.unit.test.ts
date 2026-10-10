@@ -15,12 +15,174 @@ import {
 } from '../mutation-governance-fixtures';
 import { MutationFixtures, mutationFixtureID } from '../mutation-fixtures';
 import type { MutationCaseContext } from '../mutation-case-types';
+import { groupGuestAccessCreateSchema } from '../../../../src/zero/groups/schema';
 import {
   createAgendaItemSchema,
   createSpeakerListSchema,
 } from '../../../../src/zero/agendas/schema';
 
 describe('reviewed governance mutation catalog', () => {
+  it('preloads public group import parents and verifies SQL result subclasses as plain name collections', async () => {
+    const address = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';
+    for (const name of [
+      'ZERO_UPSTREAM_DB',
+      'E2E_DATABASE_URL',
+      'DATABASE_URL',
+      'SUPABASE_DB_URL',
+      'STUDIO_DATABASE_URL',
+      'STUDIO_TEST_DATABASE_URL',
+    ])
+      vi.stubEnv(name, address);
+    vi.stubEnv('SUPABASE_URL', 'http://127.0.0.1:15624');
+    class SQLRows extends Array<Record<string, unknown>> {}
+    let persisted = false;
+    const sql = ((input: string | TemplateStringsArray) => {
+      if (typeof input === 'string') return input;
+      if (!persisted) return Promise.resolve(new SQLRows());
+      if (input.join('').includes('group_offline_membership'))
+        return Promise.resolve(
+          new SQLRows(
+            { group_offline_member_id: 'first', source: 'direct', status: 'active' },
+            { group_offline_member_id: 'second', source: 'direct', status: 'active' }
+          )
+        );
+      return Promise.resolve(
+        new SQLRows({ id: 'first', first_name: 'Reviewed' }, { id: 'second', first_name: 'Second' })
+      );
+    }) as unknown as MutationCaseContext['sql'];
+    try {
+      for (const method of ['insert', 'track', 'trackScope', 'update'] as const)
+        vi.spyOn(MutationFixtures.prototype, method).mockResolvedValue(undefined);
+      for (const actor of ['owner', 'outsider', 'anonymous'] as const) {
+        persisted = false;
+        const entry = governanceMutationCases().find(
+          c =>
+            c.name === 'groups.importOfflineMembers' &&
+            c.actor === actor &&
+            !c.variant.includes('revoked')
+        );
+        if (!entry) throw new Error('Missing reviewed import case');
+        const prepared = await entry.prepare({
+          id: 'prepared-import',
+          ownerID: 'owner',
+          outsiderID: 'outsider',
+          actorID: actor === 'anonymous' ? 'anon' : actor,
+          actor,
+          sql,
+        });
+        expect(prepared.writerPreloads).toHaveLength(1);
+        expect(
+          prepared.writerPreloads?.[0]?.before({
+            id: mutationFixtureID('prepared-import', 'group'),
+            group_type: 'base',
+          })
+        ).toBe(true);
+        if (actor === 'owner') {
+          persisted = true;
+          await expect(prepared.verify()).resolves.toBeUndefined();
+        }
+      }
+      persisted = false;
+      const anonymousGuest = governanceMutationCases().find(
+        c => c.name === 'groups.requestGuestAccess' && c.actor === 'anonymous'
+      );
+      if (!anonymousGuest) throw new Error('Missing reviewed guest request');
+      const preparedGuest = await anonymousGuest.prepare({
+        id: 'prepared-guest',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'anon',
+        actor: 'anonymous',
+        sql,
+      });
+      expect(groupGuestAccessCreateSchema.safeParse(preparedGuest.args).success).toBe(true);
+      expect(preparedGuest.args).not.toHaveProperty('role_ids');
+      expect(anonymousGuest).toMatchObject({ outcome: 'server-error', error: 'permission_denied' });
+      const ownerWorkflow = governanceMutationCases().find(
+        c => c.name === 'network.saveWorkflowDefinition' && c.actor === 'owner'
+      );
+      if (!ownerWorkflow) throw new Error('Missing reviewed workflow save');
+      const preparedWorkflow = await ownerWorkflow.prepare({
+        id: 'prepared-workflow',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'owner',
+        actor: 'owner',
+        sql,
+      });
+      expect(preparedWorkflow.writerPreloads).toHaveLength(1);
+      expect(
+        preparedWorkflow.writerPreloads?.[0]?.before([
+          {
+            id: mutationFixtureID('prepared-workflow', 'workflow-connection'),
+            grants: [{ right_key: 'amendmentRight', status: 'active' }],
+          },
+        ])
+      ).toBe(true);
+      expect(
+        preparedWorkflow.writerPreloads?.[0]?.before([
+          { id: mutationFixtureID('prepared-workflow', 'workflow-connection'), grants: [] },
+        ])
+      ).toBe(false);
+      const approval = governanceMutationCases().find(
+        c => c.name === 'network.approveGroupConnectionRequest' && c.actor === 'owner'
+      );
+      if (!approval) throw new Error('Missing reviewed connection approval');
+      const preparedApproval = await approval.prepare({
+        id: 'prepared-approval',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'owner',
+        actor: 'owner',
+        sql,
+      });
+      expect(preparedApproval.observe?.after(undefined)).toBe(true);
+      expect(
+        preparedApproval.observe?.after({
+          id: mutationFixtureID('prepared-approval', 'connection-request'),
+          status: 'approved',
+        })
+      ).toBe(false);
+      const proof = vi.spyOn(MutationFixtures.prototype, 'expect').mockResolvedValue(undefined);
+      await preparedApproval.verify();
+      expect(proof).toHaveBeenCalledWith(
+        'group_connection_request',
+        mutationFixtureID('prepared-approval', 'connection-request'),
+        null
+      );
+      expect(proof).toHaveBeenCalledWith(
+        'group_connection',
+        mutationFixtureID('prepared-approval', 'connection'),
+        expect.objectContaining({ status: 'active', connection_type: 'hierarchy' })
+      );
+      const invitation = governanceMutationCases().find(
+        c =>
+          c.name === 'events.inviteParticipant' &&
+          c.actor === 'outsider' &&
+          !c.variant.includes('revoked')
+      );
+      if (!invitation) throw new Error('Missing reviewed event invitation');
+      const preparedInvitation = await invitation.prepare({
+        id: 'prepared-invite',
+        ownerID: 'owner',
+        outsiderID: 'owner',
+        actorID: 'writer',
+        actor: 'outsider',
+        sql,
+      });
+      const recipient = {
+        id: mutationFixtureID('prepared-invite', 'event:participant'),
+        user_id: 'owner',
+        instance_date: null,
+        status: 'active',
+      };
+      expect(preparedInvitation.observe?.before([recipient])).toBe(true);
+      expect(preparedInvitation.observe?.before([{ ...recipient, status: 'invited' }])).toBe(false);
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllEnvs();
+    }
+  });
   it('verifies the prepared authorized createVote against SQL timestamp storage through its actual callback', async () => {
     const address = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';
     for (const name of [
@@ -184,11 +346,20 @@ describe('reviewed governance mutation catalog', () => {
     const cases = governanceMutationCases();
     for (const name of [
       'groups.acceptGuestInvitation',
+      'groups.acceptInvitation',
+      'groups.syncMembershipRoles',
+      'groups.addOfflineMembershipRole',
+      'groups.addGuestRole',
+      'groups.removeGuestRole',
+      'groups.syncGuestRoles',
+      'groups.inviteGuest',
       'groups.updateMembership',
       'groups.syncOfflineMembershipRoles',
       'groups.updateOfflineMember',
       'groups.deleteOfflineMember',
       'groups.addMembershipRole',
+      'groups.removeMembershipRole',
+      'groups.revokeGuestAccess',
       'groups.removeOfflineMembershipRole',
       'events.updateOfflineParticipant',
       'events.deleteOfflineParticipant',
@@ -198,13 +369,18 @@ describe('reviewed governance mutation catalog', () => {
           cases.find(c => c.name === name && c.actor === actor && !c.variant.includes('revoked'))
         ).toMatchObject({ outcome: 'client-error', error: 'mutation_server_failed' });
       }
+      if (name === 'groups.acceptInvitation') continue; // Personal ownership is immutable authority.
       expect(
         cases.find(
           c => c.name === name && c.variant === 'delegated-authority-revoked-after-preload'
         )
       ).toMatchObject({ outcome: 'server-error', error: 'permission_denied' });
     }
-    for (const name of ['events.removeParticipantRole', 'events.syncParticipantRoles'])
+    for (const name of [
+      'events.addParticipantRole',
+      'events.removeParticipantRole',
+      'events.syncParticipantRoles',
+    ])
       expect(cases.find(c => c.name === name && c.actor === 'anonymous')).toMatchObject({
         outcome: 'client-error',
         error: 'mutation_server_failed',
@@ -213,11 +389,34 @@ describe('reviewed governance mutation catalog', () => {
       'elections.castFinalElectionVote',
       'elections.castFinalElectionVoteFull',
       'votes.castFinalVoteFull',
+      'votes.replaceIndicativeVote',
+      'elections.replaceIndicativeElectionVote',
+      'votes.submitVote',
+      'elections.submitElectionVote',
     ])
       expect(cases.find(c => c.name === name && c.actor === 'anonymous')).toMatchObject({
         outcome: 'server-error',
-        error: 'mutation_server_failed',
+        error: 'permission_denied',
       });
+  });
+  it('retains hidden workflow traversal as a client rejection while preserving revoked server authorization checks', () => {
+    const cases = governanceMutationCases();
+    for (const actor of ['outsider', 'anonymous'])
+      expect(
+        cases.find(
+          c =>
+            c.name === 'network.saveWorkflowDefinition' &&
+            c.actor === actor &&
+            c.variant === 'permission-denied'
+        )
+      ).toMatchObject({ outcome: 'client-error', error: 'mutation_server_failed' });
+    expect(
+      cases.find(
+        c =>
+          c.name === 'network.saveWorkflowDefinition' &&
+          c.variant === 'delegated-authority-revoked-after-preload'
+      )
+    ).toMatchObject({ outcome: 'server-error', error: 'permission_denied' });
   });
   it('uses the actual public creation schema zero timestamps for agenda and speaker observation', () => {
     const agenda = createAgendaItemSchema.parse({
