@@ -56,12 +56,25 @@ describe('bounded sequential query collection', () => {
     );
   });
   it('recognizes an actual partial browser action report as recorded failure evidence', () => {
-    const report = {
+    const report: Parameters<typeof unexplainedWorkerExit>[1] = {
       infrastructure: [],
       measurements: [],
       journeys: [],
-      browserMutations: [{ action: 'save', failures: ['action_failed:Error:UI preparation'] }],
-    } as Parameters<typeof unexplainedWorkerExit>[1];
+      browserMutations: [
+        {
+          action: 'save',
+          uiMs: null,
+          serverConfirmedMs: null,
+          finalVisibleMs: null,
+          serverOutcome: 'unconfirmed',
+          databaseVerified: false,
+          failures: ['action_failed:Error:UI preparation'],
+          confirmationSource: 'independent-sql',
+          confirmationSemantics: 'committed-state-observation-upper-bound',
+          uiEvidence: '',
+        },
+      ],
+    };
     expect(unexplainedWorkerExit(1, report)).toBe(false);
     expect(unexplainedWorkerExit(2, report)).toBe(true);
   });
