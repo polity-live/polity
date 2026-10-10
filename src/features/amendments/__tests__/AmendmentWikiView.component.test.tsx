@@ -338,6 +338,18 @@ describe('AmendmentWikiView stats', () => {
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
+  it('mounts clone selection only while open and removes it on close', () => {
+    const props = baseProps();
+    const view = render(<AmendmentWikiView {...props} cloneDialogOpen={false} />);
+    expect(screen.queryByTestId('target-selection-dialog')).toBeNull();
+    view.rerender(<AmendmentWikiView {...props} cloneDialogOpen />);
+    expect(screen.getByTestId('target-selection-dialog')).toBeTruthy();
+    view.rerender(<AmendmentWikiView {...props} cloneDialogOpen user={null} />);
+    expect(screen.getByTestId('target-selection-dialog')).toBeTruthy();
+    view.rerender(<AmendmentWikiView {...props} cloneDialogOpen={false} />);
+    expect(screen.queryByTestId('target-selection-dialog')).toBeNull();
+  });
+
   it('dispatches wiki participation and clone actions through stable intents', () => {
     const props = baseProps();
     const { container } = render(<AmendmentWikiView {...props} />);

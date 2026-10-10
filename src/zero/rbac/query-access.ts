@@ -265,7 +265,8 @@ function applyGroupRoleRightAccess<T>(
                         whereAnyOf(whereAnyOf(right, 'resource', resources), 'action', actions),
                       { flip: false }
                     ),
-                { flip: false }
+                // The link already identifies a single role by its indexed PK.
+                { flip: true }
               ),
             { flip: false }
           ),
@@ -292,7 +293,7 @@ function applyGroupRoleRightAccess<T>(
                         whereAnyOf(whereAnyOf(right, 'resource', resources), 'action', actions),
                       { flip: false }
                     ),
-                { flip: false }
+                { flip: true }
               ),
             { flip: false }
           ),

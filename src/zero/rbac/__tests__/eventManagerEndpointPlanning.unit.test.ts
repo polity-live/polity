@@ -6,6 +6,9 @@ import {
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyEventManagerQueryAccess,
+  applyGroupDiscoveryQueryAccess,
+  applyGroupManagerQueryAccess,
+  applyTutorialRunOwnerQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
 } from '../query-access';
@@ -23,6 +26,101 @@ const canonical = (value: any): any =>
             .map(([key, child]) => [key, canonical(child)])
         )
       : value;
+
+function originalGroupRights(q: any, userID: string, discovery: boolean) {
+  const actions = discovery ? ['view', 'manage'] : ['manage'];
+  const membershipStatuses = discovery
+    ? ['invited', 'active', 'member', 'admin']
+    : ['active', 'member', 'admin'];
+  const guestStatuses = discovery ? ['invited', 'active'] : ['active'];
+  const withRole = (link: any) =>
+    link.whereExists(
+      'role',
+      (role: any) =>
+        role
+          .where('scope', 'group')
+          .whereExists(
+            'action_rights',
+            (right: any) =>
+              whereAnyOf(whereAnyOf(right, 'resource', ['groups']), 'action', actions),
+            { flip: false }
+          ),
+      { flip: false }
+    );
+  return q.where(({ or, cmp, exists }: any) =>
+    or(
+      ...(discovery
+        ? [or(cmp('visibility', '=', 'public'), cmp('visibility', '=', 'authenticated'))]
+        : []),
+      cmp('owner_id', userID),
+      exists(
+        'memberships',
+        (membership: any) =>
+          whereAnyOf(membership.where('user_id', userID), 'status', membershipStatuses).whereExists(
+            'membership_roles',
+            withRole,
+            { flip: false }
+          ),
+        { flip: false }
+      ),
+      exists(
+        'guest_accesses',
+        (guest: any) =>
+          whereAnyOf(guest.where('user_id', userID), 'status', guestStatuses).whereExists(
+            'guest_roles',
+            withRole,
+            { flip: false }
+          ),
+        { flip: false }
+      )
+    )
+  );
+}
+
+describe('group role indexed endpoints', () => {
+  it.each([true, false])('preserves original access predicates for discovery=%s', discovery => {
+    for (const userID of ['owner', 'outsider']) {
+      const actual = queryAST(
+        discovery
+          ? applyGroupDiscoveryQueryAccess(zql.group, userID)
+          : applyGroupManagerQueryAccess(zql.group, userID)
+      );
+      const original = originalGroupRights(
+        discovery ? applyTutorialRunOwnerQueryAccess(zql.group, userID) : zql.group,
+        userID,
+        discovery
+      );
+      expect(canonical(actual)).toEqual(canonical(queryAST(original)));
+      const endpoints: any[] = [];
+      const visit = (value: any) => {
+        if (value?.type === 'correlatedSubquery' && value.flip === true) endpoints.push(value);
+        if (Array.isArray(value)) value.forEach(visit);
+        else if (value && typeof value === 'object') Object.values(value).forEach(visit);
+      };
+      visit(actual);
+      expect(endpoints).toHaveLength(2);
+      for (const endpoint of endpoints)
+        expect(endpoint).toMatchObject({
+          op: 'EXISTS',
+          related: {
+            subquery: { table: 'role' },
+            correlation: { parentField: ['role_id'], childField: ['id'] },
+          },
+        });
+    }
+  });
+  it('requires the indexed role key and validated membership and guest foreign keys', () => {
+    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    expect(migration).toContain(
+      'alter table "public"."role" add constraint "role_pkey" PRIMARY KEY using index "role_pkey";'
+    );
+    for (const link of ['group_membership_role', 'group_guest_role']) {
+      expect(migration).toContain(
+        `alter table "public"."${link}" validate constraint "${link}_role_id_fkey";`
+      );
+    }
+  });
+});
 
 function originalBallotEventManager(q: any, userID: string, resources: string[]) {
   return q.where(({ or, cmp, exists }: any) =>
