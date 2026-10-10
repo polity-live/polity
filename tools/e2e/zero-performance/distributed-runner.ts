@@ -85,7 +85,10 @@ class Session {
     }
   }
   async stop() {
-    if (this.exited) return;
+    if (this.exited) {
+      if (this.child.exitCode !== 0) throw new Error('Owned stack exited unsuccessfully');
+      return;
+    }
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.child.kill('SIGINT');
