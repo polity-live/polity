@@ -371,13 +371,13 @@ function todoCase(action: TodoAction, actor: 'owner' | 'outsider' | 'anon'): Mut
         event_id: null,
         amendment_id: null,
         due_date: null,
-        completed_at: null,
         tags: [],
       };
       await fixture.track('todo', id);
       if (!create)
         await fixture.insert('todo', {
           ...baseline,
+          completed_at: null,
           archived_at: action === 'unarchive' ? epoch : null,
           created_at: epoch,
           updated_at: epoch,
@@ -422,6 +422,7 @@ function todoCase(action: TodoAction, actor: 'owner' | 'outsider' | 'anon'): Mut
           ? null
           : {
               ...baseline,
+              ...(!(success && action === 'toggleComplete') ? { completed_at: null } : {}),
               ...(success && action === 'update' ? { title: 'Changed todo' } : {}),
               ...(success && action === 'toggleComplete' ? { status: 'completed' } : {}),
             };
@@ -463,6 +464,15 @@ function todoCase(action: TodoAction, actor: 'owner' | 'outsider' | 'anon'): Mut
         if (expected === null) return true;
         const row = record(data);
         if (!row) return false;
+        if (
+          action === 'toggleComplete' &&
+          !(
+            typeof row.completed_at === 'number' &&
+            Number.isSafeInteger(row.completed_at) &&
+            row.completed_at > 0
+          )
+        )
+          return false;
         if (action === 'archive' && typeof row.archived_at !== 'number') return false;
         if (action === 'unarchive' && row.archived_at !== null) return false;
         if (action === 'assign' || action === 'unassign')
@@ -511,7 +521,12 @@ function todoCase(action: TodoAction, actor: 'owner' | 'outsider' | 'anon'): Mut
             if (success && action === 'archive') assert(row.archived_at instanceof Date);
             else
               assert.deepEqual(row.archived_at, action === 'unarchive' && rejected ? epoch : null);
-            if (success && action === 'toggleComplete') assert(row.completed_at instanceof Date);
+            if (success && action === 'toggleComplete')
+              assert(
+                row.completed_at instanceof Date &&
+                  Number.isFinite(row.completed_at.getTime()) &&
+                  row.completed_at.getTime() > 0
+              );
             await fixture.expect('thread', id, {
               todo_id: id,
               user_id: ctx.ownerID,
