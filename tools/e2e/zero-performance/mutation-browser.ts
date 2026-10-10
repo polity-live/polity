@@ -435,12 +435,13 @@ export async function measureMutationBrowserActions(
         }),
       finalVisibleState: async () => {
         stage = 'vote success overlay closure';
-        // Locator waits observe the DOM each frame. Assertion retry backoff can
-        // add hundreds of milliseconds after the overlay has already gone.
-        await page.locator('[data-slot="vote-submission-overlay"]').waitFor({
-          state: 'detached',
-          timeout: 30_000,
-        });
+        // Selector waits also use retry backoff. Poll the actual DOM each frame
+        // so a completed exit animation cannot add another retry interval.
+        await page.waitForFunction(
+          () => !document.querySelector('[data-slot="vote-submission-overlay"]'),
+          undefined,
+          { polling: 'raf', timeout: 30_000 }
+        );
         stage = 'vote current indication proof';
         await page.getByText('Your indication', { exact: true }).first().waitFor({
           state: 'visible',

@@ -205,6 +205,9 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         '--execution-file',
         executionFile,
       ];
+      // Replay cached routes after their acceptance measurements to attribute
+      // browser render costs on the same native runner.
+      if (shard.layer === 'journeys') args.push('--profile-navigation');
       if (revision === 'base')
         args.push(
           '--source-ref',
