@@ -287,6 +287,7 @@ describe('useMessagesPage branch contract', () => {
       to: '/messages',
       search: { keep: 'yes' },
       replace: true,
+      resetScroll: false,
       state: expect.any(Function),
     });
 

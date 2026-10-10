@@ -7,10 +7,12 @@ import {
 } from './route-manifests';
 import { retainZeroPreloadHandle } from './preload-registry';
 import type { SearchRoutePreloadParams } from './search-context';
+import { recoverReloadConnection } from '../connection-recovery';
 
 /** Register current-page demand before the provider mounts its child query effects. */
 export function initializeAppQueries(zero: Zero) {
   if (!zero.userID || zero.userID === 'anon' || typeof window === 'undefined') return;
+  recoverReloadConnection(zero.connection);
   const address = new URL(window.location.href);
   const pathname = address.pathname.replace(/\/$/, '') || '/';
   const task =

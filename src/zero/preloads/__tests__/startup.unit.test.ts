@@ -10,7 +10,15 @@ function client(userID?: string) {
   let resolve!: () => void;
   const complete = new Promise<void>(done => (resolve = done));
   const cleanup = vi.fn();
-  const zero = { userID, clientID: userID ?? '', preload: vi.fn(() => ({ complete, cleanup })) };
+  const zero = {
+    userID,
+    clientID: userID ?? '',
+    preload: vi.fn(() => ({ complete, cleanup })),
+    connection: {
+      state: { current: { name: 'connected' }, subscribe: vi.fn(() => vi.fn()) },
+      connect: vi.fn(async () => undefined),
+    },
+  };
   return { zero, resolve, cleanup, complete };
 }
 

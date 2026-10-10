@@ -66,6 +66,96 @@ const canonical = (value: any): any =>
       : value;
 
 describe('indexed network endpoint selection', () => {
+  for (const name of ['wikiNetwork', 'groupConnectionsByGroup', 'groupConnectionsByPair']) {
+    it.each([OWNER, OUTSIDER, { userID: 'anon', email: '' }])(
+      `${name} preserves all connection endpoints and access predicates for $userID`,
+      ctx => {
+        const entry = loadCases().find(
+          entry => entry.name === `network.${name}` && entry.variant === 'default'
+        )!;
+        const args = entry.args as { groupId: string; groupAId: string; groupBId: string };
+        const migration = readFileSync(
+          'supabase/migrations/20260922043912_initial_reset.sql',
+          'utf8'
+        );
+        const fields = ['group_a_id', 'group_b_id', 'from_group_id', 'to_group_id'];
+        for (const field of fields) {
+          expect(migration).toContain(`FOREIGN KEY (${field}) REFERENCES public."group"(id)`);
+          expect(migration).toContain(
+            `alter table "public"."group_connection" validate constraint "group_connection_${field}_fkey";`
+          );
+        }
+        let joins = 0;
+        const normalize = (value: any): any => {
+          if (value?.type === 'correlatedSubquery' && value.flip === true) {
+            const { correlation, subquery } = value.related;
+            expect(value.op).toBe('EXISTS');
+            expect(subquery.table).toBe('group');
+            expect(correlation.childField).toEqual(['id']);
+            expect(correlation.parentField).toHaveLength(1);
+            expect(fields).toContain(correlation.parentField[0]);
+            expect(subquery.where).toMatchObject({
+              type: 'simple',
+              op: '=',
+              left: { type: 'column', name: 'id' },
+              right: { type: 'literal' },
+            });
+            joins++;
+            return {
+              ...subquery.where,
+              left: { type: 'column', name: correlation.parentField[0] },
+            };
+          }
+          return Array.isArray(value)
+            ? value.map(normalize)
+            : value && typeof value === 'object'
+              ? Object.fromEntries(
+                  Object.entries(value).map(([key, child]) => [key, normalize(child)])
+                )
+              : value;
+        };
+        const actual = normalize(queryAST(buildQuery(entry, ctx)).where);
+        const permission = zql.group_connection.where(({ or, exists }) =>
+          or(
+            ...['group_a', 'group_b', 'parent_group', 'child_group', 'from_group', 'to_group'].map(
+              relation =>
+                exists(
+                  relation as 'group_a',
+                  group => applyGroupQueryAccess(group, ctx.userID, true),
+                  { flip: false }
+                )
+            )
+          )
+        );
+        const expected =
+          name === 'groupConnectionsByPair'
+            ? permission.where(({ or, and, cmp }) =>
+                or(
+                  and(cmp('group_a_id', '=', args.groupAId), cmp('group_b_id', '=', args.groupBId)),
+                  and(cmp('group_a_id', '=', args.groupBId), cmp('group_b_id', '=', args.groupAId)),
+                  and(
+                    cmp('from_group_id', '=', args.groupAId),
+                    cmp('to_group_id', '=', args.groupBId)
+                  ),
+                  and(
+                    cmp('from_group_id', '=', args.groupBId),
+                    cmp('to_group_id', '=', args.groupAId)
+                  )
+                )
+              )
+            : permission.where(({ or, cmp }) =>
+                or(
+                  cmp('group_a_id', '=', args.groupId),
+                  cmp('group_b_id', '=', args.groupId),
+                  cmp('from_group_id', '=', args.groupId),
+                  cmp('to_group_id', '=', args.groupId)
+                )
+              );
+        expect(joins).toBe(name === 'groupConnectionsByPair' ? 8 : 4);
+        expect(canonical(actual)).toEqual(canonical(queryAST(expected).where));
+      }
+    );
+  }
   it('requires validated group foreign keys for every equivalent PK lookup', () => {
     const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
     for (const [, table, , , firstField, secondField] of selectors) {

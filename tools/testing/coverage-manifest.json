@@ -115926,6 +115926,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/__tests__/connection-recovery.unit.test.ts",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
@@ -120874,6 +120884,30 @@
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
         "src/zero/communication-studio/__tests__/state.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/connection-recovery.ts",
+      "domain": "zero:connection-recovery.ts",
+      "owner": "polity/zero:connection-recovery.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+          "project": "unit",
+          "caseId": "resumes the exact reload race with the existing token and bounds repeated failures"
+        },
+        {
+          "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+          "project": "unit",
+          "caseId": "contains a failed reconnect and releases a disposed subscription"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/zero/__tests__/connection-recovery.unit.test.ts"
       ]
     },
     {

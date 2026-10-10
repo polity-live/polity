@@ -158,6 +158,8 @@ export function useMessagesPage() {
         to: '/messages',
         search: remainingSearch,
         replace: true,
+        // Consuming a compose intent must preserve the thread's scroll anchor.
+        resetScroll: false,
         state: previous => ({
           ...previous,
           ...(user?.id

@@ -1,6 +1,18 @@
 {
   "version": 1,
   "sourceReferences": {
+    "src/zero/connection-recovery.ts": [
+      {
+        "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+        "project": "unit",
+        "caseId": "resumes the exact reload race with the existing token and bounds repeated failures"
+      },
+      {
+        "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+        "project": "unit",
+        "caseId": "contains a failed reconnect and releases a disposed subscription"
+      }
+    ],
     "src/zero/agendas/agenda-times.ts": [
       {
         "file": "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",

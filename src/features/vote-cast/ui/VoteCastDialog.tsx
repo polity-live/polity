@@ -56,7 +56,7 @@ interface VoteCastDialogProps {
   isLoading?: boolean;
 }
 
-const SUBMISSION_SUCCESS_CLOSE_DELAY_MS = 180;
+const SUBMISSION_SUCCESS_CLOSE_DELAY_MS = 80;
 const AMENDMENT_TUTORIAL_ANCHOR = 'agenda-amendment-vote';
 const ELECTION_TUTORIAL_ANCHOR = 'agenda-election-vote';
 

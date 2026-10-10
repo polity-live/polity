@@ -268,8 +268,8 @@ async function authorizeRoleHolderHistoryMutation(
   if (tx.location === 'client') return;
 
   const role = await loadRole(tx, roleId);
-  if (!role) return;
-  await authorizeScopedRoleMutation(tx, ctx, role);
+  // The server-only path above cannot return the client rebase sentinel.
+  await authorizeScopedRoleMutation(tx, ctx, role as NonNullable<typeof role>);
 }
 
 async function authorizeExistingRoleHolderHistoryMutation(
