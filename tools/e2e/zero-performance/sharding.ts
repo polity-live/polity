@@ -96,7 +96,9 @@ export function balancedGroups(
 }
 export const isMutationKey = (key: string) => key.startsWith('mutation/');
 export function catalogGroup(key: string) {
-  return isMutationKey(key) ? key.split('/').slice(0, 2).join('/') : key.split('/')[0];
+  // Each mutation variant restores its own fixtures. Keep its actors and both
+  // revisions together without placing an entire nested command registry on one runner.
+  return isMutationKey(key) ? key.split('/').slice(0, 3).join('/') : key.split('/')[0];
 }
 export function createManifest(
   input: Omit<Manifest, 'format' | 'shards' | 'digest'>,

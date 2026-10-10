@@ -192,6 +192,22 @@ afterEach(() => {
 });
 
 describe('mutation measurement engine lifecycle', () => {
+  it('reports only schema labels from rollback assertion failures', async () => {
+    harness.mode = 'client-result-error';
+    const { entry, rows, run } = fixture();
+    const prepare = entry.prepare;
+    entry.prepare = async context => ({
+      ...(await prepare(context)),
+      verifyRollback: async () => {
+        throw new Error('Rollback field proof: user.created_at\nSECRET row and credentials');
+      },
+    });
+    await run();
+    expect(rows[0].failures).toContain(
+      'Mutation sample 1: optimistic rollback verification failed (Rollback field proof: user.created_at)'
+    );
+    expect(JSON.stringify(rows)).not.toContain('SECRET');
+  });
   it('waits for queued API work before SQL verification without moving the SDK confirmation', async () => {
     let complete!: (value: { requestIDs: string[]; observedAt: number }) => void;
     harness.requestCompletion.mockImplementationOnce(

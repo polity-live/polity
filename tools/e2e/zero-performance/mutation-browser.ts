@@ -58,9 +58,12 @@ export async function measureMutationBrowserActions(
   new MutationFixtures(sql);
   const namespace = `browser-mutation:${randomUUID()}`;
   const rows: MutationBrowserResult[] = [];
+  let stage = 'fixture preparation';
   const ready = async (path: string) => {
+    stage = 'route readiness';
     await page.goto(path);
     await waitForAppReady(page);
+    stage = 'UI preparation';
   };
   const poll = async (predicate: () => Promise<boolean>) => {
     await expect.poll(predicate, { timeout: 30_000, intervals: [25, 50, 100, 200] }).toBe(true);
@@ -69,6 +72,7 @@ export async function measureMutationBrowserActions(
     action: MutationBrowserResult['action'],
     exercise: (f: MutationFixtures, row: MutationBrowserResult) => Promise<void>
   ) {
+    stage = 'fixture preparation';
     const f = new MutationFixtures(sql);
     const row: MutationBrowserResult = {
       action,
@@ -85,7 +89,10 @@ export async function measureMutationBrowserActions(
     try {
       await exercise(f, row);
     } catch (error) {
-      row.failures.push(`action_failed:${error instanceof Error ? error.name : 'unknown'}`);
+      const name =
+        error instanceof Error && /^[A-Za-z]*Error$/.test(error.name) ? error.name : 'Error';
+      // Fixed phase labels explain failures without exporting UI text or arguments.
+      row.failures.push(`action_failed:${name}:${stage}`);
     } finally {
       try {
         await f.restore();
@@ -97,14 +104,16 @@ export async function measureMutationBrowserActions(
       await onUpdate([...rows]);
     }
   }
-  const phasesFor = (row: MutationBrowserResult, phases: BrowserMutationPhases) =>
-    measureBrowserMutationPhases(phases, (phase, elapsed) => {
+  const phasesFor = (row: MutationBrowserResult, phases: BrowserMutationPhases) => {
+    stage = 'write and state observation';
+    return measureBrowserMutationPhases(phases, (phase, elapsed) => {
       row[phase] = elapsed;
       if (phase === 'serverConfirmedMs') {
         row.serverOutcome = 'success';
         row.databaseVerified = true;
       }
     });
+  };
   await run('save', async (f, row) => {
     const name = `Mutation save ${namespace}`;
     await f.track('group', seed.groupId);

@@ -8,7 +8,7 @@ import { messageSharedMutators } from '../../../../src/zero/messages/shared-muta
 import { studioSharedMutators } from '../../../../src/zero/communication-studio/shared-mutators';
 import { projectChatSharedMutators } from '../../../../src/zero/project-chat/shared-mutators';
 import { canvasCommandSchema } from '../../../../src/zero/communication-studio/commands';
-import { canvasActions } from '../mutation-cases-canvas';
+import { canvasActions, assertStudioRevocationCacheRow } from '../mutation-cases-canvas';
 import {
   createMessageSchema,
   createConversationFullSchema,
@@ -23,6 +23,45 @@ import {
 import { mergeStudioV3 } from '../../../../src/features/communication-studio/logic/operations';
 
 describe('reviewed content mutation specifications', () => {
+  it('permits evicted Studio rows while rejecting every retained phantom or changed cached field', () => {
+    const columns = { id: {}, title: {}, updated_at: {} };
+    const persisted = { id: 'project', title: 'Fixture canvas', updated_at: new Date(1000) };
+    expect(() =>
+      assertStudioRevocationCacheRow({ ...persisted, updated_at: 1000 }, [persisted], columns)
+    ).not.toThrow();
+    expect(() =>
+      assertStudioRevocationCacheRow(
+        { ...persisted, updated_at: 1000 },
+        [{ ...persisted, updated_at: '1000' }],
+        columns
+      )
+    ).not.toThrow();
+    expect(() =>
+      assertStudioRevocationCacheRow(
+        { ...persisted, updated_at: 1001 },
+        [{ ...persisted, updated_at: '1000' }],
+        columns
+      )
+    ).toThrow('changed cached field');
+    expect(() => assertStudioRevocationCacheRow({ id: 'operation' }, [], columns)).toThrow(
+      'phantom cached row'
+    );
+    expect(() =>
+      assertStudioRevocationCacheRow(
+        { ...persisted, title: 'Changed canvas', updated_at: 1000 },
+        [persisted],
+        columns
+      )
+    ).toThrow('changed cached field');
+    for (const entry of contentMutationCases().filter(
+      c => c.name === 'studio.canvas.command' && c.variant.endsWith('revoked-collaborator')
+    )) {
+      expect(entry.specification).toMatchObject({
+        revocation:
+          'SQL delete of accepted collaborator; application removal semantics; collaborator row absent',
+      });
+    }
+  });
   it('expects the canonical Studio node order after a successful title patch', () => {
     const frame = createFrameNode('square', {
       id: '12345678-1234-4234-8234-123456789abc',
@@ -216,7 +255,7 @@ describe('reviewed content mutation specifications', () => {
     for (const entry of entries.filter(c => c.variant.includes('revoked'))) {
       expect(entry.specification).toMatchObject({
         permission:
-          'actual personal collaborator revoked; studio read access is redacted; writer settles to null',
+          'actual personal collaborator removed; studio read access is redacted; settled writer has no changed or phantom cached rows',
       });
     }
   });

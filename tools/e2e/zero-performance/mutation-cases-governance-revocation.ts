@@ -190,6 +190,46 @@ const protectedLookupCommands = new Set([
 ]);
 
 /** Reuses reviewed SQL-only fixtures/oracles, never subject implementations or their outputs. */
+export async function verifyRevokedGovernanceWriter(ctx: MutationCaseContext, writer: unknown) {
+  const local = writer as { inspector: { client: { map(): Promise<Map<string, unknown>> } } };
+  assert.equal(typeof local?.inspector?.client?.map, 'function', 'Missing public writer inspector');
+  for (const [key, value] of await local.inspector.client.map()) {
+    if (!key.startsWith('e/')) continue;
+    assert.ok(value && typeof value === 'object', 'Invalid cached application row');
+    const tableName = key.split('/')[1];
+    const definition = (
+      schema.tables as Record<
+        string,
+        {
+          serverName?: string;
+          columns: Record<string, { serverName?: string }>;
+        }
+      >
+    )[tableName];
+    assert.ok(definition, 'Unknown cached application table');
+    const row = value as Record<string, unknown>;
+    assert.equal(typeof row.id, 'string', 'Cached application row has no identity');
+    const table = definition.serverName ?? tableName;
+    const records = await ctx.sql`select * from ${ctx.sql(table)} where id = ${String(row.id)}`;
+    assert.equal(records.length, 1, `Rollback row proof: ${tableName}`);
+    for (const [field, column] of Object.entries(definition.columns)) {
+      if (!(field in row)) continue;
+      const columnName = column.serverName ?? field;
+      let expected = records[0][columnName];
+      if (expected instanceof Date) {
+        // PostgreSQL's JS Date decoder loses microseconds. Zero preserves them as
+        // fractional milliseconds; derive the exact numeric expectation in SQL.
+        const timestamp =
+          await ctx.sql`select (extract(epoch from ${ctx.sql(columnName)}) * 1000)::double precision as value from ${ctx.sql(table)} where id = ${String(row.id)}`;
+        assert.equal(timestamp.length, 1, `Rollback row proof: ${tableName}`);
+        expected = timestamp[0].value;
+        assert.equal(typeof expected, 'number', `Rollback field proof: ${tableName}.${field}`);
+      }
+      assert.deepEqual(row[field], expected, `Rollback field proof: ${tableName}.${field}`);
+    }
+  }
+}
+
 export function governanceRevocationCases(base: MutationCase[]): MutationCase[] {
   const reviewed = new Map<string, MutationCase>();
   for (const entry of base) {
@@ -359,38 +399,9 @@ export function governanceRevocationCases(base: MutationCase[]): MutationCase[] 
                   0
                 );
           },
-          verifyRollback: async writer => {
-            // Manager-only queries may legitimately evict records when rights are revoked.
-            // After the replicated rejection barrier, every remaining cached application row
-            // must match the independently verified unchanged SQL state, with no phantom writes.
-            const local = writer as {
-              inspector: { client: { map(): Promise<Map<string, unknown>> } };
-            };
-            for (const [key, value] of await local.inspector.client.map()) {
-              if (!key.startsWith('e/') || !value || typeof value !== 'object') continue;
-              const tableName = key.split('/')[1];
-              const definition = (
-                schema.tables as Record<
-                  string,
-                  { serverName?: string; columns: Record<string, { serverName?: string }> }
-                >
-              )[tableName];
-              const row = value as Record<string, unknown>;
-              if (!definition || typeof row.id !== 'string') continue;
-              const records =
-                await ctx.sql`select * from ${ctx.sql(definition.serverName ?? tableName)} where id = ${row.id}`;
-              assert.equal(records.length, 1, 'Rejected mutation left a phantom cached row');
-              for (const [field, column] of Object.entries(definition.columns)) {
-                if (!(field in row)) continue;
-                const expected = records[0][column.serverName ?? field];
-                assert.deepEqual(
-                  row[field],
-                  expected instanceof Date ? expected.getTime() : expected,
-                  'Rejected mutation left a changed cached application field'
-                );
-              }
-            }
-          },
+          // Query eviction after revocation is legitimate; retained rows still need
+          // exact independent SQL equality, including fractional timestamp precision.
+          verifyRollback: writer => verifyRevokedGovernanceWriter(ctx, writer),
           restore: prepared.restore,
           verifyRestored: prepared.verifyRestored,
         };

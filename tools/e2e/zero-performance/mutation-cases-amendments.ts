@@ -166,10 +166,22 @@ export async function verifyRevokedAmendmentWriter(ctx: MutationCaseContext, wri
     assert.equal(records.length, 1, 'Rejected mutation left a phantom cached row');
     for (const [field, column] of Object.entries(definition.columns)) {
       if (!(field in row)) continue;
-      const expected = records[0][column.serverName ?? field];
+      const columnName = column.serverName ?? field;
+      let expected = records[0][columnName];
+      if (expected instanceof Date) {
+        // JS Date discards PostgreSQL microseconds; Zero retains fractional milliseconds.
+        const timestamp =
+          await ctx.sql`select (extract(epoch from ${ctx.sql(columnName)}) * 1000)::double precision as value from ${ctx.sql(definition.serverName ?? tableName)} where id = ${String(row.id)}`;
+        assert.equal(timestamp.length, 1, 'Missing exact SQL timestamp row');
+        assert.ok(
+          typeof timestamp[0].value === 'number' && Number.isFinite(timestamp[0].value),
+          'Invalid exact SQL timestamp'
+        );
+        expected = timestamp[0].value;
+      }
       assert.deepEqual(
         row[field],
-        expected instanceof Date ? expected.getTime() : expected,
+        expected,
         'Rejected mutation left a changed cached application field'
       );
     }

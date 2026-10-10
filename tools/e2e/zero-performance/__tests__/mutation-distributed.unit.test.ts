@@ -155,7 +155,7 @@ describe('mutation CI scheduling and confirmation', () => {
       externalFailures(partialReportFailures(partial, plan, shard, 'head', 'initial', 'runner'))
     ).toContain('Mutation external delivery failed');
   });
-  it('covers queries and mutations on the existing sixteen catalog jobs and keeps nested variants together', () => {
+  it('covers queries and mutations on sixteen catalog jobs while distributing independent nested variants', () => {
     const plan = manifest();
     expect(plan.shards).toHaveLength(20);
     expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(16);
@@ -168,10 +168,40 @@ describe('mutation CI scheduling and confirmation', () => {
     const studio = plan.shards.filter(shard =>
       shard.head.some(key => key.includes('studio.canvas.command'))
     );
-    expect(studio).toHaveLength(1);
-    expect(studio[0].head.filter(key => key.includes('studio.canvas.command'))).toHaveLength(2);
-    expect(studio[0].base).toEqual(studio[0].head);
-    expect(shardMeasurementKeys(studio[0], 'head')).toEqual(studio[0].head);
+    expect(studio).toHaveLength(2);
+    for (const shard of studio) {
+      expect(shard.head.filter(key => key.includes('studio.canvas.command'))).toHaveLength(1);
+      expect(shard.base).toEqual(shard.head);
+      expect(shardMeasurementKeys(shard, 'head')).toEqual(shard.head);
+    }
+  });
+  it('keeps every actor and revision of one mutation variant together and rejects split assignments', () => {
+    const head = workload();
+    const owner = head.mutations[0];
+    const outsider = { ...owner, actor: 'outsider', key: owner.key.replace(/owner$/, 'outsider') };
+    head.mutations.push(outsider);
+    const plan = createManifest(
+      {
+        protocol: 'zero-performance/v12',
+        runID: 'mutation-actors',
+        headSHA: 'a'.repeat(40),
+        baseSHA: 'b'.repeat(40),
+        harnessDigest: 'c'.repeat(64),
+        workloads: { head, base: head },
+      },
+      { [owner.key]: 200, [outsider.key]: 200 }
+    );
+    const assigned = plan.shards.find(shard => shard.head.includes(owner.key))!;
+    expect(assigned.head).toContain(outsider.key);
+    expect(assigned.base).toEqual(assigned.head);
+    const other = plan.shards.find(shard => shard.layer === 'queries' && shard !== assigned)!;
+    assigned.head = assigned.head.filter(key => key !== outsider.key);
+    assigned.base = assigned.base.filter(key => key !== outsider.key);
+    other.head.push(outsider.key);
+    other.base.push(outsider.key);
+    const { digest: _checksum, ...unsigned } = plan;
+    plan.digest = digest(unsigned);
+    expect(() => validateManifest(plan)).toThrow('Split query grouping');
   });
   it('reports only the mutation baseline as bootstrap while retaining all base queries', () => {
     const base = workload();

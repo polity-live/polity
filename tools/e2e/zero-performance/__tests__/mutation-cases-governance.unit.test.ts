@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { governanceMutationCases } from '../mutation-cases-governance';
+import { verifyRevokedGovernanceWriter } from '../mutation-cases-governance-revocation';
 import { groupSharedMutators } from '../../../../src/zero/groups/shared-mutators';
 import { eventSharedMutators } from '../../../../src/zero/events/shared-mutators';
 import { agendaSharedMutators } from '../../../../src/zero/agendas/shared-mutators';
@@ -20,6 +21,50 @@ import {
 } from '../../../../src/zero/agendas/schema';
 
 describe('reviewed governance mutation catalog', () => {
+  it('proves retained revoked writer rows with exact SQL microseconds and rejects phantom or changed fields', async () => {
+    const exact = 1_900_000_000_000.123;
+    let records: Record<string, unknown>[] = [
+      { id: 'scope', name: 'Original', created_at: new Date(Math.trunc(exact)) },
+    ];
+    const calls: string[] = [];
+    const sql = ((input: string | TemplateStringsArray) => {
+      if (typeof input === 'string') return input;
+      const statement = input.join('?');
+      calls.push(statement);
+      return Promise.resolve(statement.includes('extract(epoch') ? [{ value: exact }] : records);
+    }) as unknown as MutationCaseContext['sql'];
+    const ctx = { sql } as MutationCaseContext;
+    const writer = (row: unknown) => ({
+      inspector: { client: { map: async () => new Map([['e/group/scope', row]]) } },
+    });
+    await expect(
+      verifyRevokedGovernanceWriter(
+        ctx,
+        writer({ id: 'scope', name: 'Original', created_at: exact })
+      )
+    ).resolves.toBeUndefined();
+    expect(
+      calls.some(
+        statement => statement.includes('extract(epoch') && statement.includes('double precision')
+      )
+    ).toBe(true);
+    await expect(
+      verifyRevokedGovernanceWriter(
+        ctx,
+        writer({ id: 'scope', name: 'Original', created_at: Math.trunc(exact) })
+      )
+    ).rejects.toThrow('Rollback field proof: group.created_at');
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope', name: 'Changed' }))
+    ).rejects.toThrow('Rollback field proof: group.name');
+    records = [];
+    await expect(verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope' }))).rejects.toThrow(
+      'Rollback row proof: group'
+    );
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map: async () => new Map() } } })
+    ).resolves.toBeUndefined();
+  });
   it('labels notification restoration failures without exposing notification identities', async () => {
     const ctx = {
       sql: async () => [{ id: 'private-notification-identity' }],

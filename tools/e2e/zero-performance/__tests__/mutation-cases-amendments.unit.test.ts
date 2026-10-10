@@ -19,7 +19,11 @@ describe('reviewed amendment catalog', () => {
     const sql = ((first: unknown) =>
       typeof first === 'string'
         ? { identifier: first }
-        : Promise.resolve(records)) as unknown as Sql;
+        : Promise.resolve(
+            Array.isArray(first) && first.join('').includes('extract(epoch from')
+              ? [{ value: (records[0].created_at as Date).getTime() }]
+              : records
+          )) as unknown as Sql;
     const ctx = {
       sql,
       id: 'rollback',
@@ -44,6 +48,48 @@ describe('reviewed amendment catalog', () => {
     );
     await expect(verifyRevokedAmendmentWriter(ctx, {})).rejects.toThrow(
       'Missing public writer inspector'
+    );
+  });
+  it('compares PostgreSQL microseconds exactly rather than truncated JS Date milliseconds', async () => {
+    const cached = { id: 'vote', created_at: 1000.125 };
+    let exact = 1000.125;
+    const queries: string[] = [];
+    const sql = ((first: unknown) => {
+      if (typeof first === 'string') return { identifier: first };
+      const query = Array.isArray(first) ? first.join('') : '';
+      queries.push(query);
+      return Promise.resolve(
+        query.includes('extract(epoch from')
+          ? [{ value: exact }]
+          : [{ id: 'vote', created_at: new Date(1000) }]
+      );
+    }) as unknown as Sql;
+    const ctx = {
+      sql,
+      id: 'precision',
+      ownerID: 'owner',
+      outsiderID: 'outsider',
+      actorID: 'outsider',
+      actor: 'outsider',
+    };
+    const writer = {
+      inspector: { client: { map: async () => new Map([['e/change_request_vote/vote', cached]]) } },
+    };
+    await expect(verifyRevokedAmendmentWriter(ctx, writer)).resolves.toBeUndefined();
+    expect(
+      queries.some(
+        query =>
+          query.includes('extract(epoch from') &&
+          query.includes('* 1000)::double precision as value')
+      )
+    ).toBe(true);
+    exact = 1000.126;
+    await expect(verifyRevokedAmendmentWriter(ctx, writer)).rejects.toThrow(
+      'changed cached application field'
+    );
+    exact = 1000;
+    await expect(verifyRevokedAmendmentWriter(ctx, writer)).rejects.toThrow(
+      'changed cached application field'
     );
   });
   it('matches actual CR FK parents and distinguishes the UUID-only polymorphic source', () => {

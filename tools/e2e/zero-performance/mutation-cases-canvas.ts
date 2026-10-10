@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
+import { schema } from '../../../src/zero/schema';
 import { checksum } from '../../../src/server/checksum';
 import { createStudioDocumentV5 } from '../../../src/features/communication-studio/logic/document-v3';
 import type { MutationCase } from './mutation-case-types';
@@ -50,6 +51,28 @@ const fields = (value: unknown, expected: Row) => {
   return !!row && Object.entries(expected).every(([key, val]) => isDeepStrictEqual(row[key], val));
 };
 
+export function assertStudioRevocationCacheRow(
+  row: Row,
+  records: Row[],
+  columns: Record<string, { serverName?: string }>
+) {
+  assert.equal(records.length, 1, 'Revoked studio writer retained a phantom cached row');
+  for (const [field, column] of Object.entries(columns)) {
+    if (!(field in row)) continue;
+    const persisted = records[0][column.serverName ?? field];
+    // Postgres returns int8 Studio timestamps as strings; Zero's public schema exposes numbers.
+    const expected =
+      persisted instanceof Date
+        ? persisted.getTime()
+        : typeof row[field] === 'number' &&
+            typeof persisted === 'string' &&
+            /^-?\d+$/.test(persisted)
+          ? Number(persisted)
+          : persisted;
+    assert.deepEqual(row[field], expected, 'Revoked studio writer retained a changed cached field');
+  }
+}
+
 function canvasCase(action: Action, actor: Actor, mode: Mode = 'normal'): MutationCase {
   const successful =
     (actor === 'owner' && !['generation-conflict', 'revision-conflict'].includes(mode)) ||
@@ -89,6 +112,10 @@ function canvasCase(action: Action, actor: Actor, mode: Mode = 'normal'): Mutati
       vote: 'literal one-person accept majority (or two accepted collaborators), real electorate and integrity checksum',
       cleanup:
         'owned proposals, reader links, votes, comments, library, receipts, history, controls and project absent; scoped role capability and group absent',
+      revocation:
+        mode === 'revoked-collaborator'
+          ? 'SQL delete of accepted collaborator; application removal semantics; collaborator row absent'
+          : 'not applicable',
     },
     async prepare(ctx) {
       const f = new MutationFixtures(ctx.sql);
@@ -175,11 +202,13 @@ function canvasCase(action: Action, actor: Actor, mode: Mode = 'normal'): Mutati
           id: collaborator,
           project_id: project,
           user_id: ctx.outsiderID,
-          status: mode === 'revoked-collaborator' ? 'revoked' : 'active',
+          status: 'active',
           invited_by_id: ctx.ownerID,
           created_at: 0,
           updated_at: 0,
         });
+      if (mode === 'revoked-collaborator')
+        await f.remove('studio_project_collaborator', collaborator);
       await f.track('canvas_receipt', operation);
       await f.track('studio_command_receipt', operation);
       await f.track('canvas_proposal', workspace);
@@ -364,11 +393,11 @@ function canvasCase(action: Action, actor: Actor, mode: Mode = 'normal'): Mutati
           await f.expect(
             'studio_project_collaborator',
             collaborator,
-            acceptedCollaborator
+            acceptedCollaborator && mode !== 'revoked-collaborator'
               ? {
                   project_id: project,
                   user_id: ctx.outsiderID,
-                  status: mode === 'revoked-collaborator' ? 'revoked' : 'active',
+                  status: 'active',
                 }
               : null
           );
@@ -711,7 +740,7 @@ export function studioApplyConflictCases(): MutationCase[] {
               ? 'historical revision accepted; literal compatible title patch applied at revision 2'
               : 'server rejection; no operation; canonical document unchanged',
         permission: revoked
-          ? 'actual personal collaborator revoked; studio read access is redacted; writer settles to null'
+          ? 'actual personal collaborator removed; studio read access is redacted; settled writer has no changed or phantom cached rows'
           : 'project owner',
         cleanup:
           'fresh owned project, operation, collaborator, canonical state, control and history absent',
@@ -757,11 +786,13 @@ export function studioApplyConflictCases(): MutationCase[] {
             id: collaborator,
             project_id: project,
             user_id: ctx.outsiderID,
-            status: mode === 'revoked-collaborator' ? 'revoked' : 'active',
+            status: 'active',
             invited_by_id: ctx.ownerID,
             created_at: 0,
             updated_at: 0,
           });
+        if (mode === 'revoked-collaborator')
+          await f.remove('studio_project_collaborator', collaborator);
         await f.track('studio_operation', operation);
         const before = (value: unknown) =>
           fields(value, { project_id: project, document: current, content_revision: revision });
@@ -798,9 +829,7 @@ export function studioApplyConflictCases(): MutationCase[] {
             ? {
                 requireWriterBefore: true,
                 beforeInvoke: async () => {
-                  await f.update('studio_project_collaborator', collaborator, {
-                    status: 'revoked',
-                  });
+                  await f.remove('studio_project_collaborator', collaborator);
                 },
               }
             : {}),
@@ -815,28 +844,79 @@ export function studioApplyConflictCases(): MutationCase[] {
                       addListener: (listener: (value: unknown, type: string) => void) => () => void;
                       destroy: () => void;
                     };
+                    inspector: { client: { map: () => Promise<Map<string, unknown>> } };
                   };
                   const view = client.materialize(documentRequest, { ttl: 'none' });
+                  let timer: ReturnType<typeof setTimeout> | undefined;
+                  let unsubscribe: (() => void) | undefined;
                   try {
                     await new Promise<void>((resolve, reject) => {
-                      const timer = setTimeout(() => {
-                        unsubscribe();
+                      timer = setTimeout(() => {
+                        unsubscribe?.();
                         reject(
                           new Error('Revoked studio writer did not settle to redacted document')
                         );
                       }, 15_000);
-                      let unsubscribe = () => {
-                        /* Listener is installed immediately below. */
-                      };
                       unsubscribe = view.addListener((value, type) => {
-                        if (type === 'complete' && (value === null || value === undefined)) {
-                          clearTimeout(timer);
+                        if (type === 'error')
+                          reject(new Error('Revoked studio writer query failed'));
+                        if (
+                          (type === 'complete' || type === 'unknown') &&
+                          (value === null || value === undefined)
+                        ) {
+                          if (timer) clearTimeout(timer);
                           resolve();
                         }
                       });
                     });
                   } finally {
+                    if (timer) clearTimeout(timer);
+                    unsubscribe?.();
                     view.destroy();
+                  }
+                  const definitions = schema.tables as Record<
+                    string,
+                    { serverName?: string; columns: Record<string, { serverName?: string }> }
+                  >;
+                  assert.equal(
+                    typeof client.inspector?.client?.map,
+                    'function',
+                    'Missing public writer inspector'
+                  );
+                  for (const [key, value] of await client.inspector.client.map()) {
+                    if (!key.startsWith('e/')) continue;
+                    const definition = definitions[key.split('/')[1]],
+                      row = object(value);
+                    assert(definition && row, 'Invalid cached application row');
+                    const physical = definition.serverName ?? key.split('/')[1];
+                    if (
+                      ![
+                        'studio_project',
+                        'studio_state',
+                        'studio_operation',
+                        'studio_project_collaborator',
+                      ].includes(physical)
+                    )
+                      continue;
+                    const scopeField = physical === 'studio_project' ? 'id' : 'project_id';
+                    const clientScopeField = Object.entries(definition.columns).find(
+                      ([field, column]) => (column.serverName ?? field) === scopeField
+                    )?.[0];
+                    if (!clientScopeField || row[clientScopeField] !== project) continue;
+                    const clientIDField = Object.entries(definition.columns).find(
+                      ([field, column]) => (column.serverName ?? field) === 'id'
+                    )?.[0];
+                    const identityField = physical === 'studio_state' ? 'project_id' : 'id';
+                    const identity =
+                      physical === 'studio_state'
+                        ? project
+                        : clientIDField
+                          ? row[clientIDField]
+                          : undefined;
+                    assert.equal(typeof identity, 'string', 'Cached studio row lacks its identity');
+                    const records =
+                      await ctx.sql`select * from ${ctx.sql(physical)} where ${ctx.sql(identityField)}=${String(identity)}`;
+                    assertStudioRevocationCacheRow(row, Array.from(records), definition.columns);
                   }
                 },
               }
@@ -886,11 +966,7 @@ export function studioApplyConflictCases(): MutationCase[] {
             if (mode === 'stale-revision-compatible')
               expectedHistory.push({ revision: 2, generation, document: changed });
             assert.deepEqual(Array.from(historyRows), expectedHistory);
-            if (revoked)
-              await f.expect('studio_project_collaborator', collaborator, {
-                status: 'revoked',
-                user_id: ctx.outsiderID,
-              });
+            if (revoked) await f.expect('studio_project_collaborator', collaborator, null);
           },
           restore: () => f.restore(),
           async verifyRestored() {
