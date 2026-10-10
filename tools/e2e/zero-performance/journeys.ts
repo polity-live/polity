@@ -668,14 +668,17 @@ async function inspectOnce(
     page.evaluate(
       async password => {
         const zero = (globalThis as any).__zero;
+        (globalThis as any).__benchmarkInspectorStage = 'identity';
         if (!zero) throw new Error('Missing Zero instance during navigation');
         if (zero.userID !== password.userID)
           throw new Error('Browser is not authenticated as the benchmark actor');
         // Authentication belongs to the server worker's client group, rather
         // than the lifetime of this browser's Zero object. Reauthenticate each
         // diagnostic snapshot, outside the timed navigation.
+        (globalThis as any).__benchmarkInspectorStage = 'authenticate';
         if (!(await zero.inspector.authenticate(password.adminPassword)))
           throw new Error('Browser inspector authentication rejected');
+        (globalThis as any).__benchmarkInspectorStage = 'preload-readiness';
         // Wait only for currently observed activations, up to their unchanged one-second deadline.
         // Reading these app events does not issue inspector/analyzer requests.
         const cutoff = performance.now();
@@ -695,7 +698,9 @@ async function inspectOnce(
         ) {
           await new Promise(resolve => setTimeout(resolve, 10));
         }
+        (globalThis as any).__benchmarkInspectorStage = 'queries';
         const queries = await zero.inspector.client.queries();
+        (globalThis as any).__benchmarkInspectorStage = 'captured';
         const captured = new Set(starts.map((event: PreloadLifecycleEvent) => event.activationID));
         return {
           measuredAt: performance.now(),
@@ -727,7 +732,20 @@ async function inspectOnce(
       { adminPassword: required(process.env.ZERO_ADMIN_PASSWORD), userID: OWNER_ID }
     ),
     'Browser query inspection'
-  );
+  ).catch(async error => {
+    const state = await withDeadline(
+      page.evaluate(() => ({
+        stage: (globalThis as any).__benchmarkInspectorStage,
+        connection: (globalThis as any).__zero?.connection?.state?.current?.name,
+        connections: ((globalThis as any).__zeroPerformanceConnectionEvents ?? []).slice(-5),
+      })),
+      'Inspector failure state',
+      1_000
+    ).catch(() => ({ stage: 'unavailable' }));
+    throw new Error(
+      `${error instanceof Error ? error.message : String(error)}; ${JSON.stringify(state)}`
+    );
+  });
   const events = snapshot.events as PreloadLifecycleEvent[];
   const observations: QueryObservation[] = snapshot.queries.map((query: any) => {
     const key = preloadKey(`queries.${query.name}`, query.args?.[0] ?? {});

@@ -332,7 +332,7 @@ describe('EventAgendaView actions', () => {
     const setStatsOpen = vi.fn();
     const setStreamOpen = vi.fn();
     const setShowFilters = vi.fn();
-    render(
+    const { rerender } = render(
       <EventAgendaView
         {...makeProps({ setLiveFocusOpen, setStatsOpen, setStreamOpen, setShowFilters })}
       />
@@ -347,6 +347,19 @@ describe('EventAgendaView actions', () => {
       fireEvent.click(document.querySelector(`[data-action-id="${actionId}"]`)!);
       expect(callback).toHaveBeenCalled();
     }
+    const stream = document.querySelector('[data-action-id="agendas.event-agenda.stream.toggle"]')!;
+    const stats = document.querySelector(
+      '[data-action-id="agendas.event-agenda.statistics.toggle"]'
+    )!;
+    const streamPanel = document.getElementById(stream.getAttribute('aria-controls')!)!;
+    const statsPanel = document.getElementById(stats.getAttribute('aria-controls')!)!;
+    expect(streamPanel.hidden).toBe(true);
+    expect(statsPanel.hidden).toBe(true);
+    rerender(<EventAgendaView {...makeProps({ streamOpen: true, statsOpen: true })} />);
+    expect(streamPanel.hidden).toBe(false);
+    expect(statsPanel.hidden).toBe(false);
+    expect(stream.getAttribute('aria-expanded')).toBe('true');
+    expect(stats.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('selects type and status filters with explicit option identities', () => {

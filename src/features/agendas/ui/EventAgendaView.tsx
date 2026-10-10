@@ -5,7 +5,7 @@ import {
   CollectionToggle,
 } from '@/features/shared/ui/collections/CollectionScope';
 
-import type { CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
@@ -27,11 +27,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/features/shared/ui/ui/collapsible';
+import { Collapsible, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
 import {
   Calendar,
   Vote,
@@ -395,6 +391,8 @@ export function EventAgendaView({
   scheduledButUnconfirmedAgendaItems,
   formatTime,
 }: EventAgendaViewProps) {
+  const streamPanelId = useId();
+  const statsPanelId = useId();
   const agendaStats = computeAgendaStats(agendaItems ?? []);
   const tutorialElectionCopy = getAppTutorialElectionCopy(language);
   const isTutorialElectionAgendaItem = (item: { type?: string | null } | null | undefined) =>
@@ -1209,7 +1207,7 @@ export function EventAgendaView({
                     >
                       <Maximize2 className="h-4 w-4" />
                     </Button>
-                    <CollapsibleTrigger asChild>
+                    <CollapsibleTrigger asChild aria-controls={streamPanelId}>
                       <Button
                         data-action-id="agendas.event-agenda.stream.toggle"
                         variant="ghost"
@@ -1231,83 +1229,87 @@ export function EventAgendaView({
                 }
               />
             </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="border-border/60 border-t p-4 sm:p-5">
-                {!streamAgendaItem ? (
-                  <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
-                    <Info className="h-5 w-5 flex-shrink-0" />
-                    <p className="text-sm">{t('features.events.stream.noActiveItem')}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {streamIsLive ? (
-                      <EventLivestreamPlayer
-                        streamUrl={event.stream_url}
-                        title={t('features.events.stream.liveStream')}
-                        containerClassName={featureThemeClassName(
-                          'agendaEventAgendaContrastBackground'
-                        )}
+            {/* These panels have no height animation. Avoid measuring the whole
+                agenda layout at mount just to populate unused animation sizes. */}
+            <div id={streamPanelId} hidden={!streamOpen}>
+              {streamOpen && (
+                <CardContent className="border-border/60 border-t p-4 sm:p-5">
+                  {!streamAgendaItem ? (
+                    <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
+                      <Info className="h-5 w-5 flex-shrink-0" />
+                      <p className="text-sm">{t('features.events.stream.noActiveItem')}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {streamIsLive ? (
+                        <EventLivestreamPlayer
+                          streamUrl={event.stream_url}
+                          title={t('features.events.stream.liveStream')}
+                          containerClassName={featureThemeClassName(
+                            'agendaEventAgendaContrastBackground'
+                          )}
+                        />
+                      ) : null}
+
+                      <AgendaContextTabs
+                        value={streamContextPane}
+                        onValueChange={setStreamContextPane}
+                        detailsLabel={t('features.events.agenda.details', 'Details')}
+                        speakersLabel={t('features.events.agenda.speakerList', 'Speaker list')}
+                        details={
+                          <div className="space-y-4" data-testid="agenda-overview-context-details">
+                            <AgendaItemContextCard
+                              presentation="embedded"
+                              agendaItem={{
+                                id: streamAgendaItem.id,
+                                title: displayedStreamAgendaItem?.title || '',
+                                description: displayedStreamAgendaItem?.description ?? undefined,
+                                type: streamAgendaItem.type || 'discussion',
+                                status: streamRuntimeStatus ?? 'planned',
+                              }}
+                              amendment={streamAgendaItem.amendment ?? undefined}
+                              amendmentForwardingPreview={streamForwardingPreview}
+                              election={displayedStreamElection ?? undefined}
+                            />
+                            {streamDelegateTargetEvent ? (
+                              <EventSearchCard event={streamDelegateTargetEvent} />
+                            ) : null}
+                          </div>
+                        }
+                        speakers={
+                          <div data-testid="agenda-overview-context-speakers">
+                            <AgendaSpeakerListSection
+                              agendaItemId={streamAgendaItem.id}
+                              speakers={streamSpeakerListData}
+                              isUserInSpeakerList={isUserInSpeakerList}
+                              canManageSpeakers={canManageAgenda}
+                              isAddingSpeaker={addingSpeaker}
+                              isRemovingSpeaker={removingSpeaker}
+                              userId={user?.id}
+                              agendaStartTime={
+                                streamAgendaItem.activated_at ??
+                                streamAgendaItem.start_time ??
+                                undefined
+                              }
+                              showGender={Boolean(event?.gender_quota_enabled)}
+                              onAddToSpeakerList={
+                                canJoinSpeakerList ? handleAddToSpeakerList : undefined
+                              }
+                              onRemoveFromSpeakerList={handleRemoveFromSpeakerList}
+                              onMarkCompleted={
+                                canManageAgenda ? handleMarkSpeakerCompleted : undefined
+                              }
+                            />
+                          </div>
+                        }
                       />
-                    ) : null}
 
-                    <AgendaContextTabs
-                      value={streamContextPane}
-                      onValueChange={setStreamContextPane}
-                      detailsLabel={t('features.events.agenda.details', 'Details')}
-                      speakersLabel={t('features.events.agenda.speakerList', 'Speaker list')}
-                      details={
-                        <div className="space-y-4" data-testid="agenda-overview-context-details">
-                          <AgendaItemContextCard
-                            presentation="embedded"
-                            agendaItem={{
-                              id: streamAgendaItem.id,
-                              title: displayedStreamAgendaItem?.title || '',
-                              description: displayedStreamAgendaItem?.description ?? undefined,
-                              type: streamAgendaItem.type || 'discussion',
-                              status: streamRuntimeStatus ?? 'planned',
-                            }}
-                            amendment={streamAgendaItem.amendment ?? undefined}
-                            amendmentForwardingPreview={streamForwardingPreview}
-                            election={displayedStreamElection ?? undefined}
-                          />
-                          {streamDelegateTargetEvent ? (
-                            <EventSearchCard event={streamDelegateTargetEvent} />
-                          ) : null}
-                        </div>
-                      }
-                      speakers={
-                        <div data-testid="agenda-overview-context-speakers">
-                          <AgendaSpeakerListSection
-                            agendaItemId={streamAgendaItem.id}
-                            speakers={streamSpeakerListData}
-                            isUserInSpeakerList={isUserInSpeakerList}
-                            canManageSpeakers={canManageAgenda}
-                            isAddingSpeaker={addingSpeaker}
-                            isRemovingSpeaker={removingSpeaker}
-                            userId={user?.id}
-                            agendaStartTime={
-                              streamAgendaItem.activated_at ??
-                              streamAgendaItem.start_time ??
-                              undefined
-                            }
-                            showGender={Boolean(event?.gender_quota_enabled)}
-                            onAddToSpeakerList={
-                              canJoinSpeakerList ? handleAddToSpeakerList : undefined
-                            }
-                            onRemoveFromSpeakerList={handleRemoveFromSpeakerList}
-                            onMarkCompleted={
-                              canManageAgenda ? handleMarkSpeakerCompleted : undefined
-                            }
-                          />
-                        </div>
-                      }
-                    />
-
-                    {renderVotingWorkspace('overview')}
-                  </div>
-                )}
-              </CardContent>
-            </CollapsibleContent>
+                      {renderVotingWorkspace('overview')}
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </div>
           </Card>
         </Collapsible>
 
@@ -1315,7 +1317,7 @@ export function EventAgendaView({
         <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
           <Card className="border-border/70 bg-card/70 overflow-hidden rounded-xl shadow-none">
             <CardHeader className="px-4 py-3 sm:px-5">
-              <CollapsibleTrigger asChild>
+              <CollapsibleTrigger asChild aria-controls={statsPanelId}>
                 <Button
                   data-action-id="agendas.event-agenda.statistics.toggle"
                   variant="ghost"
@@ -1332,55 +1334,61 @@ export function EventAgendaView({
                 </Button>
               </CollapsibleTrigger>
             </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="border-border/60 border-t p-4 sm:p-5">
-                <div className="grid grid-cols-3 gap-2 md:gap-4">
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
-                      <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
+            <div id={statsPanelId} hidden={!statsOpen}>
+              {statsOpen && (
+                <CardContent className="border-border/60 border-t p-4 sm:p-5">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4">
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
+                        <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.electionsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {agendaStats.electionsCount === 1
+                            ? t('features.events.agenda.election')
+                            : t('features.events.agenda.elections')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">{agendaStats.electionsCount}</p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {agendaStats.electionsCount === 1
-                          ? t('features.events.agenda.election')
-                          : t('features.events.agenda.elections')}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div
-                      className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}
-                    >
-                      <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div
+                        className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}
+                      >
+                        <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.amendmentsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {agendaStats.amendmentsCount === 1
+                            ? t('features.events.agenda.amendment')
+                            : t('features.events.agenda.amendments')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">{agendaStats.amendmentsCount}</p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {agendaStats.amendmentsCount === 1
-                          ? t('features.events.agenda.amendment')
-                          : t('features.events.agenda.amendments')}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
-                      <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">
-                        {agendaStats.openChangeRequestsCount}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {t('features.events.agenda.openChangeRequests')}
-                      </p>
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
+                        <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.openChangeRequestsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {t('features.events.agenda.openChangeRequests')}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
+                </CardContent>
+              )}
+            </div>
           </Card>
         </Collapsible>
 
