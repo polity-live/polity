@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { isDeepStrictEqual } from 'node:util';
 import { createECDH, randomBytes } from 'node:crypto';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
@@ -10,6 +11,7 @@ import {
   studioNodeSchema,
 } from '../../../src/features/communication-studio/logic/document-v3';
 import { POLITY_THEME } from '../../../src/features/shared/appearance-theme';
+import { canvasMutationCases, studioApplyConflictCases } from './mutation-cases-canvas';
 import { studioCommandSchemas } from '../../../src/zero/communication-studio/commands';
 
 const epoch = new Date('2030-01-01T00:00:00Z');
@@ -21,9 +23,7 @@ function hasFields(value: unknown, fields: Row | null): boolean {
   const row = record(value);
   return (
     !!row &&
-    Object.entries(fields).every(
-      ([key, expected]) => JSON.stringify(row[key]) === JSON.stringify(expected)
-    )
+    Object.entries(fields).every(([key, expected]) => isDeepStrictEqual(row[key], expected))
   );
 }
 type StatementAction =
@@ -58,18 +58,26 @@ const statementActions: StatementAction[] = [
 
 function statementCase(
   action: StatementAction,
-  actor: 'owner' | 'outsider' | 'anon'
+  actor: 'owner' | 'outsider' | 'anon' | 'public-voter'
 ): MutationCase {
-  const rejected = actor !== 'owner';
+  const rejected = actor !== 'owner' && actor !== 'public-voter';
   return {
     name: `statements.${action}`,
-    variant: rejected ? `${actor}-denied` : 'authorized',
-    actor,
+    variant:
+      actor === 'public-voter'
+        ? 'public-third-party-authorized'
+        : rejected
+          ? `${actor}-denied`
+          : 'authorized',
+    actor: actor === 'public-voter' ? 'outsider' : actor,
     outcome: rejected ? 'server-error' : 'success',
     ...(rejected ? { error: 'permission_denied' } : {}),
     observer: { query: 'statements.byIdWithDetails' },
     specification: {
-      fixture: 'private owner statement; isolated survey, option and owner votes',
+      fixture:
+        actor === 'public-voter'
+          ? 'public statement by owner; isolated support vote owned by authenticated third party'
+          : 'private owner statement; isolated survey, option and owner votes',
       action,
       actor,
       expected: rejected ? 'unchanged private owner graph' : action,
@@ -77,13 +85,15 @@ function statementCase(
         title: 'Fixture title',
         text: 'Fixture text',
         media_type: 'text',
-        visibility: 'private',
+        visibility: actor === 'public-voter' ? 'public' : 'private',
       },
       normalization: 'create title and text trimmed; no media; no story expiry; zero counters',
-      sideEffects: 'private statements do not create timeline entries; no hashtags requested',
+      sideEffects:
+        'support vote creates no timeline entry; direct SQL parent fixture; no hashtags requested',
       cleanup: 'owned parent and every dependent ID absent',
     },
     async prepare(ctx) {
+      const voterID = actor === 'public-voter' ? ctx.outsiderID : ctx.ownerID;
       const fixture = new MutationFixtures(ctx.sql);
       const sid = mutationFixtureID(ctx.id, 'statement');
       const survey = mutationFixtureID(ctx.id, 'survey');
@@ -102,12 +112,13 @@ function statementCase(
         media_type: 'text',
         is_story: false,
         expires_at: null,
-        visibility: 'private',
+        visibility: actor === 'public-voter' ? 'public' : 'private',
         upvotes: 0,
         downvotes: 0,
         comment_count: 0,
       };
       await fixture.track('statement', sid);
+      await fixture.trackScope('search_document', 'entity_id', sid);
       if (!create)
         await fixture.insert('statement', { ...baseline, created_at: epoch, updated_at: epoch });
       const needSurvey =
@@ -156,7 +167,7 @@ function statementCase(
         await fixture.insert('statement_support_vote', {
           id: support,
           statement_id: sid,
-          user_id: ctx.ownerID,
+          user_id: voterID,
           vote: 1,
           created_at: epoch,
         });
@@ -220,7 +231,7 @@ function statementCase(
           ? {
               id: support,
               statement_id: sid,
-              user_id: ctx.ownerID,
+              user_id: voterID,
               vote: success && action === 'updateSupportVote' ? -1 : 1,
             }
           : null;
@@ -281,6 +292,7 @@ function statementCase(
         args: argsByAction[action],
         observe: {
           request: queries.statements.byIdWithDetails({ id: sid, now: epoch.getTime() }),
+          ...(actor === 'public-voter' ? { actor: 'writer' as const } : {}),
           before,
           after,
         },
@@ -584,6 +596,12 @@ function documentCase(
         ? 'unchanged document, versions, collaborators, thread, comments and votes'
         : action,
       voteCounters: 'server recomputes exact count from persisted vote rows',
+      threadTimestamp: {
+        createResolvedAtInput: null,
+        parsed: 0,
+        sql: '1970-01-01T00:00:00.000Z',
+        existingFixtureResolvedAt: null,
+      },
       notifications:
         'self collaborator, unparented version and owner comment avoid notification recipients',
       cleanup: 'every explicitly owned document graph row absent',
@@ -788,6 +806,7 @@ function documentCase(
         needThread || (success && action === 'createThread')
           ? {
               ...threadFields,
+              ...(success && action === 'createThread' ? { resolved_at: 0 } : {}),
               ...(success && action === 'updateThread' ? { content: 'Changed thread' } : {}),
               upvotes: (needTV && rejected) || (success && action === 'voteThread') ? 1 : 0,
               downvotes: success && action === 'updateThreadVote' ? 1 : 0,
@@ -899,7 +918,17 @@ function documentCase(
           await f.expect('document', id, expectedDocument);
           await f.expect('document_version', vid, expectedVersion);
           await f.expect('document_collaborator', newCid, newCollaborator);
-          await f.expect('thread', tid, expectedThread);
+          await f.expect(
+            'thread',
+            tid,
+            expectedThread
+              ? {
+                  ...expectedThread,
+                  resolved_at:
+                    expectedThread.resolved_at === 0 ? new Date(0) : expectedThread.resolved_at,
+                }
+              : null
+          );
           await f.expect('comment', comment, expectedComment);
           await f.expect('thread_vote', tv, expectedTV);
           await f.expect('comment_vote', cv, expectedCV);
@@ -961,6 +990,12 @@ function messageCase(
       expected: rejected ? 'all rows unchanged' : action,
       immutableOwnership: 'sender and requester bound to authenticated identity',
       sideEffects: 'persisted message rollups and last_message_at; no notification recipients',
+      normalization: {
+        contextJSON: '[]',
+        nullableTimestampInput: null,
+        nullableTimestampParsed: 0,
+        sqlTimestamp: '1970-01-01T00:00:00.000Z',
+      },
       cleanup: 'conversation and all participants and messages absent',
     },
     async prepare(ctx) {
@@ -1019,7 +1054,7 @@ function messageCase(
         conversation_id: id,
         sender_id: ctx.ownerID,
         content: 'Fixture message',
-        context_json: null,
+        context_json: '[]',
         is_read: false,
         deleted_at: null,
       };
@@ -1045,7 +1080,7 @@ function messageCase(
         id: mid,
         conversation_id: id,
         content: 'Fixture message',
-        context_json: null,
+        context_json: '[]',
         deleted_at: null,
       };
       const argsByAction: Record<MessageAction, ReadonlyJSONValue> = {
@@ -1089,13 +1124,14 @@ function messageCase(
           ? null
           : {
               ...participant,
+              left_at: create && success ? 0 : null,
               last_read_at: new Date(
                 epoch.getTime() + (success && action === 'markRead' ? 1000 : 0)
               ),
             };
       const newParticipant =
         success && action === 'addParticipant'
-          ? { id: newPid, conversation_id: id, user_id: ctx.ownerID, left_at: null }
+          ? { id: newPid, conversation_id: id, user_id: ctx.ownerID, left_at: 0 }
           : null;
       const expectedMessage =
         removedConversation || (success && action === 'deleteMessage')
@@ -1104,6 +1140,9 @@ function messageCase(
               (success && (action === 'sendMessage' || action === 'sendAssistantMessage'))
             ? {
                 ...message,
+                ...(success && ['sendMessage', 'sendAssistantMessage'].includes(action)
+                  ? { deleted_at: 0 }
+                  : {}),
                 ...(assistant ? { sender_id: assistantID } : {}),
                 ...(success && action === 'updateMessage' ? { content: 'Changed message' } : {}),
               }
@@ -1155,9 +1194,33 @@ function messageCase(
         observe: { request: queries.messages.conversationById({ id }), before, after },
         async verify() {
           await f.expect('conversation', id, expectedConversation);
-          await f.expect('conversation_participant', pid, expectedParticipant);
-          await f.expect('conversation_participant', newPid, newParticipant);
-          await f.expect('message', mid, expectedMessage);
+          await f.expect(
+            'conversation_participant',
+            pid,
+            expectedParticipant
+              ? {
+                  ...expectedParticipant,
+                  left_at:
+                    expectedParticipant.left_at === 0 ? new Date(0) : expectedParticipant.left_at,
+                }
+              : null
+          );
+          await f.expect(
+            'conversation_participant',
+            newPid,
+            newParticipant ? { ...newParticipant, left_at: new Date(0) } : null
+          );
+          await f.expect(
+            'message',
+            mid,
+            expectedMessage
+              ? {
+                  ...expectedMessage,
+                  deleted_at:
+                    expectedMessage.deleted_at === 0 ? new Date(0) : expectedMessage.deleted_at,
+                }
+              : null
+          );
           if (success && (action === 'sendMessage' || action === 'sendAssistantMessage')) {
             const [row] = await f.rows('conversation', id);
             assert(row.last_message_at instanceof Date, 'Message updates conversation timestamp');
@@ -1471,21 +1534,29 @@ const blogActions = [
 type BlogAction = (typeof blogActions)[number];
 function blogCase(
   action: BlogAction,
-  actor: 'owner' | 'outsider' | 'anon' | 'revoked'
+  actor: 'owner' | 'outsider' | 'anon' | 'public-voter' | 'revoked'
 ): MutationCase {
-  const rejected = actor !== 'owner';
+  const rejected = actor !== 'owner' && actor !== 'public-voter';
   const management = action === 'createRole' || action === 'assignActionRight';
   return {
     name: `blogs.${action}`,
-    variant: rejected ? `${actor}-denied` : 'authorized',
-    actor: actor === 'revoked' ? 'outsider' : actor,
+    variant:
+      actor === 'public-voter'
+        ? 'public-third-party-authorized'
+        : rejected
+          ? `${actor}-denied`
+          : 'authorized',
+    actor: actor === 'revoked' || actor === 'public-voter' ? 'outsider' : actor,
     outcome: rejected ? 'server-error' : 'success',
     ...(rejected ? { error: 'permission_denied' } : {}),
     observer: { query: management ? 'blogs.byIdWithManagement' : 'blogs.byIdWithDetails' },
     specification: {
       action,
       actor,
-      fixture: 'private personal blog with real owner role and manage rights',
+      fixture:
+        actor === 'public-voter'
+          ? 'public personal blog by owner; authenticated third-party support vote; real owner role and management rights'
+          : 'private personal blog with real owner role and manage rights',
       createBootstrap: {
         roles: ['Owner', 'Writer'],
         rights: [
@@ -1506,6 +1577,7 @@ function blogCase(
         'blog, bloggers, roles, action rights, votes, generated notifications and search projection restored',
     },
     async prepare(ctx) {
+      const voterID = actor === 'public-voter' ? ctx.outsiderID : ctx.ownerID;
       const f = new MutationFixtures(ctx.sql);
       const id = mutationFixtureID(ctx.id, 'blog');
       const ownerEntry = mutationFixtureID(ctx.id, 'blog-owner');
@@ -1523,7 +1595,7 @@ function blogCase(
         date: null,
         image_url: null,
         video_url: null,
-        visibility: 'private',
+        visibility: actor === 'public-voter' ? 'public' : 'private',
         editing_mode: 'edit',
         discussions: null,
         group_id: null,
@@ -1595,7 +1667,7 @@ function blogCase(
         await f.insert('blog_support_vote', {
           id: support,
           blog_id: id,
-          user_id: ctx.ownerID,
+          user_id: voterID,
           vote: 1,
           created_at: epoch,
         });
@@ -1682,7 +1754,7 @@ function blogCase(
           ? {
               id: support,
               blog_id: id,
-              user_id: ctx.ownerID,
+              user_id: voterID,
               vote: success && action === 'updateSupportVote' ? -1 : 1,
             }
           : null;
@@ -1739,6 +1811,7 @@ function blogCase(
           );
         return true;
       };
+      let createdNotificationIDs: string[] = [];
       return {
         args: args[action],
         observe: {
@@ -1801,17 +1874,42 @@ function blogCase(
                 : success && action === 'delete'
                   ? 'blog_deleted'
                   : null;
-          const count = notificationType === 'blog_writer_left' ? 2 : notificationType ? 1 : 0;
+          const count =
+            notificationType === 'blog_writer_left' ||
+            (notificationType === 'blog_vote_cast' && actor === 'public-voter')
+              ? 2
+              : notificationType
+                ? 1
+                : 0;
           assert.deepEqual(
             Array.from(notices),
             Array.from({ length: count }, () => ({
               type: notificationType,
-              sender_id: ctx.ownerID,
+              sender_id: actor === 'public-voter' ? ctx.outsiderID : ctx.ownerID,
             }))
           );
         },
-        restore: () => f.restore(),
-        verifyRestored: () => f.verifyRestored(),
+        async restore() {
+          createdNotificationIDs = (
+            await ctx.sql`select id from notification where related_blog_id=${id}`
+          ).map(row => String(row.id));
+          await f.restore();
+        },
+        async verifyRestored() {
+          await f.verifyRestored();
+          for (const notificationID of createdNotificationIDs)
+            for (const table of [
+              'push_notification_outbox',
+              'push_delivery_outbox',
+              'notification_user_state',
+            ])
+              assert.equal(
+                (
+                  await ctx.sql`select * from ${ctx.sql(table)} where notification_id=${notificationID}`
+                ).length,
+                0
+              );
+        },
       };
     },
   };
@@ -1847,6 +1945,8 @@ function studioCase(action: string, actor: 'owner' | 'outsider' | 'anon'): Mutat
       fixture:
         'private v5 owner project, deterministic frame and rectangle, revision 0 and explicit canvas generation',
       expected: rejected ? 'no receipt and unchanged state' : action,
+      applyNormalization:
+        'successful title patch sorts rectangle (UUID parentFrameId) before frame (null parentFrameId); canonical revision 1 and durable applied receipt',
       observer: 'existing public canonical command receipt, independent owner identity',
       upload: '68-byte static PNG through verified local Supabase storage API only',
       cleanup:
@@ -2192,9 +2292,20 @@ function studioCase(action: string, actor: 'owner' | 'outsider' | 'anon'): Mutat
                     ),
                   }
                 : apply && success
-                  ? { ...document, title: 'Changed studio' }
+                  ? { ...document, title: 'Changed studio', nodes: [shape, frame] }
                   : document;
             assert.deepEqual(state.document, expectedDocument);
+            if (apply && success)
+              await f.expect('studio_operation', operationId, {
+                result: {
+                  operationId,
+                  status: 'applied',
+                  revision: 1,
+                  document: expectedDocument,
+                  conflicts: [],
+                },
+                changes: (args.apply as { changes: ReadonlyJSONValue }).changes,
+              });
             assert.equal(
               state.content_revision,
               (apply || action === 'synchronizeElements') && success ? 1 : 0
@@ -2752,12 +2863,19 @@ export function contentMutationCases(): MutationCase[] {
       ).map(actor => blogCase(action, actor))
     ),
     blogCase('update', 'revoked'),
-    ...studioActions.flatMap(action =>
-      (action === 'create'
-        ? (['owner', 'anon'] as const)
-        : (['owner', 'outsider', 'anon'] as const)
-      ).map(actor => studioCase(action, actor))
+    ...(['createSupportVote', 'updateSupportVote', 'deleteSupportVote'] as const).flatMap(
+      action => [statementCase(action, 'public-voter'), blogCase(action, 'public-voter')]
     ),
+    ...canvasMutationCases(),
+    ...studioApplyConflictCases(),
+    ...studioActions
+      .filter(action => action !== 'canvas.command')
+      .flatMap(action =>
+        (action === 'create'
+          ? (['owner', 'anon'] as const)
+          : (['owner', 'outsider', 'anon'] as const)
+        ).map(actor => studioCase(action, actor))
+      ),
     ...projectChatActions.flatMap(action =>
       (['owner', 'outsider', 'anon'] as const).map(actor => projectChatCase(action, actor))
     ),

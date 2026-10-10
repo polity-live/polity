@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
 import type { MutationCase, MutationCaseContext } from './mutation-case-types';
@@ -19,6 +20,9 @@ export interface MutationRowPlan {
   setup?: (f: MutationFixtures) => Promise<void>;
   rowID?: string;
   existing?: boolean;
+  afterSetup?: (f: MutationFixtures) => Promise<void>;
+  beforeInvoke?: (f: MutationFixtures) => Promise<void>;
+  sqlNumericFields?: readonly string[];
   verifyAdditional?: (f: MutationFixtures, successful: boolean) => Promise<void>;
 }
 type Build = (ctx: MutationCaseContext, id: (label: string) => string) => MutationRowPlan;
@@ -41,7 +45,7 @@ function same(row: Fields | undefined, expected: Fields | null) {
         typeof value === 'string' && /^\d{4}-\d\d-\d\dT/.test(value) && typeof row[key] === 'number'
           ? Date.parse(value)
           : value;
-      return JSON.stringify(row[key]) === JSON.stringify(observerValue);
+      return isDeepStrictEqual(row[key], observerValue);
     })
   );
 }
@@ -50,27 +54,37 @@ export function reviewedRowMutationCases(
   name: string,
   specification: ReadonlyJSONValue,
   build: Build,
-  denied: 'anonymous' | 'outsider' | false = 'outsider'
+  denied: 'anonymous' | 'outsider' | false = 'outsider',
+  revokedBuild?: Build
 ): MutationCase[] {
   return [
     'owner',
     ...(denied === 'outsider' ? ['outsider', 'anonymous'] : denied ? [denied] : []),
+    ...(revokedBuild ? ['revoked'] : []),
   ].map(actor => ({
     name,
     variant: actor === 'owner' ? 'authorized' : `${actor}-denied`,
-    actor,
+    actor: actor === 'revoked' ? 'outsider' : actor,
     outcome: actor === 'owner' ? 'success' : 'server-error',
     ...(actor !== 'owner' ? { error: 'permission_denied' } : {}),
     observer: { query: (specification as { query: string }).query },
-    specification,
+    specification:
+      actor === 'revoked'
+        ? {
+            reviewed: specification,
+            revocation:
+              'Active amendment-scoped collaborator role and exact action right exist before writer preload; SQL changes only collaborator status to revoked before invocation; subject row and side-effect snapshots independently remain unchanged',
+          }
+        : specification,
     async prepare(ctx) {
       const id = (label: string) => mutationFixtureID(ctx.id, `${name}:${label}`);
-      const plan = build(ctx, id);
+      const plan = (actor === 'revoked' && revokedBuild ? revokedBuild : build)(ctx, id);
       const f = new MutationFixtures(ctx.sql);
       if (plan.setup) await plan.setup(f);
       const rowID = plan.rowID ?? id('row');
       if (plan.initial) await f.insert(plan.table, { id: rowID, ...plan.initial });
       else await f.track(plan.table, rowID);
+      await plan.afterSetup?.(f);
       await f.sealScopes();
       const before = plan.existing
         ? Object.fromEntries(Object.keys(plan.expected ?? {}).map(key => [key, undefined]))
@@ -83,6 +97,16 @@ export function reviewedRowMutationCases(
       }
       return {
         args: plan.args as ReadonlyJSONValue,
+        ...(plan.beforeInvoke
+          ? {
+              requireWriterBefore: true,
+              beforeInvoke: async () => {
+                await plan.beforeInvoke?.(f);
+                // The deliberate authority transition is the baseline for subject side effects.
+                await f.sealScopes();
+              },
+            }
+          : {}),
         observe: {
           request: plan.request,
           before: (data: unknown) => same(found(data, rowID), before),
@@ -90,7 +114,28 @@ export function reviewedRowMutationCases(
             same(found(data, rowID), actor === 'owner' ? plan.expected : before),
         },
         verify: async () => {
-          await f.expect(plan.table, rowID, actor === 'owner' ? plan.expected : before);
+          const expected = actor === 'owner' ? plan.expected : before;
+          const numericFields = plan.sqlNumericFields ?? [];
+          await f.expect(
+            plan.table,
+            rowID,
+            expected &&
+              Object.fromEntries(
+                Object.entries(expected).filter(([key]) => !numericFields.includes(key))
+              )
+          );
+          if (expected && numericFields.length) {
+            const [row] = await f.rows(plan.table, rowID);
+            for (const field of numericFields) {
+              assert.ok(
+                typeof row[field] === 'number' ||
+                  (typeof row[field] === 'string' &&
+                    /^-?\d+(?:\.\d+)?$/.test(row[field] as string)),
+                'Invalid SQL numeric representation'
+              );
+              assert.equal(Number(row[field]), expected[field], `${plan.table}.${field}`);
+            }
+          }
           if (plan.verifyAdditional) await plan.verifyAdditional(f, actor === 'owner');
           if (actor !== 'owner') await f.verifyScopesUnchanged();
         },
@@ -506,6 +551,7 @@ export function coreMutationCases(): MutationCase[] {
         };
         return {
           table: 'payment',
+          sqlNumericFields: ['amount'],
           query: 'payments.byUser',
           request: queries.payments.byUser({}),
           setup: async f => {
@@ -641,6 +687,14 @@ export function coreMutationCases(): MutationCase[] {
         const fields = settings ? setting : push;
         return {
           table: settings ? 'notification_setting' : 'push_subscription',
+          setup: async f => {
+            if (settings) {
+              // Authentication bootstraps one settings row per user (UNIQUE user_id).
+              // Track and remove only this owner's original row, then restore it exactly.
+              for (const row of await ctx.sql`select id from notification_setting where user_id = ${ctx.ownerID}`)
+                await f.remove('notification_setting', row.id);
+            }
+          },
           query: settings ? 'notifications.settings' : 'notifications.pushSubscriptions',
           request: settings
             ? queries.notifications.settings({})
@@ -919,12 +973,20 @@ function notificationStateCases(): MutationCase[] {
                       : ['markRead', 'markAllRead', 'delete'].includes(operation)
                         ? { id: notificationID }
                         : { notificationId: notificationID };
-        const visibleBefore = !create && !restore && !globalRestore;
-        const visibleAfter = !dismiss && !globalDelete;
+        const visibleBefore = !create && !globalRestore;
+        const visibleAfter = !globalDelete;
         const expectedView = (data: unknown, after: boolean) => {
           const row = found(data, notificationID);
           if (!(after ? visibleAfter : visibleBefore)) return !row;
           if (!row || row.title !== (after && update ? 'After' : 'Before')) return false;
+          if (after && dismiss) {
+            const state = found(row.viewer_state, stateID);
+            return (
+              !!state &&
+              state.dismissed_at != null &&
+              (operation !== 'purgeNotificationForUser' || state.purged_at != null)
+            );
+          }
           if (after && readOperation && !entity) return row.is_read === true;
           if (after && (readOperation || unread || restore)) {
             const state = found(row.viewer_state, stateID);
@@ -1129,167 +1191,185 @@ function serverOnlyCases(): MutationCase[] {
 function themeCases(): MutationCase[] {
   const operations = ['createPersonal', 'createGroup', 'updateDraft', 'publish', 'delete'];
   return operations.flatMap(operation =>
-    [
-      'owner',
-      ...(operation === 'createGroup'
-        ? ['outsider', 'anonymous']
-        : ['updateDraft', 'publish', 'delete'].includes(operation)
-          ? ['outsider']
-          : []),
-    ].map(actor => ({
-      name: `appearanceThemes.${operation}`,
-      variant: actor === 'owner' ? 'authorized' : 'outsider-denied',
-      actor,
-      outcome:
-        actor === 'owner'
-          ? 'success'
-          : operation === 'createGroup'
-            ? 'server-error'
-            : 'client-error',
-      ...(actor !== 'owner'
-        ? { error: operation === 'createGroup' ? 'permission_denied' : 'mutation_server_failed' }
-        : {}),
-      observer: {
-        query:
-          operation === 'createGroup'
-            ? 'appearanceThemes.groupEditor'
-            : 'appearanceThemes.personalEditor',
-      },
-      specification: {
-        operation,
-        palette: 'literal existing POLITY_THEME builtin palette and fonts',
-        oracle: 'theme and draft/published revision fields independently checked',
-        authorization:
-          operation === 'createPersonal'
-            ? 'personal creator identity; current implementation has no explicit authentication gate'
-            : 'creator edit or group owner manage',
-        ...(actor === 'outsider' && operation !== 'createGroup'
+    (['updateDraft', 'publish', 'delete'].includes(operation)
+      ? [false, true]
+      : [operation === 'createGroup']
+    ).flatMap(group =>
+      [
+        'owner',
+        ...(operation === 'createGroup'
+          ? ['outsider', 'anonymous']
+          : ['updateDraft', 'publish', 'delete'].includes(operation)
+            ? ['outsider', 'anonymous']
+            : ['anonymous']),
+      ].map(actor => ({
+        name: `appearanceThemes.${operation}`,
+        variant: `${group && operation !== 'createGroup' ? 'group-' : ''}${actor === 'owner' ? 'authorized' : `${actor}-denied`}`,
+        actor,
+        outcome:
+          actor === 'owner'
+            ? 'success'
+            : operation === 'createGroup' || actor === 'anonymous'
+              ? 'server-error'
+              : 'client-error',
+        ...(actor !== 'owner'
           ? {
-              rejection:
-                'requireEditTheme runs on the client and throws exact Theme not found for an unreadable personal theme; normalized uncoded application failure',
+              error:
+                operation === 'createGroup' || actor === 'anonymous'
+                  ? 'permission_denied'
+                  : 'mutation_server_failed',
             }
           : {}),
-      },
-      async prepare(ctx) {
-        const f = new MutationFixtures(ctx.sql);
-        const id = (label: string) =>
-          mutationFixtureID(ctx.id, `appearanceThemes.${operation}:${label}`);
-        const group = operation === 'createGroup';
-        const create = operation.startsWith('create');
-        const groupID = group ? await groupAdminFixture(f, ctx, 'core-theme-group') : null;
-        const fields = {
-          slug: `fixture-${id('theme')}`,
-          name: 'Before',
-          description: null,
+        observer: {
+          query: group ? 'appearanceThemes.groupEditor' : 'appearanceThemes.personalEditor',
+        },
+        specification: {
+          operation,
           kind: group ? 'group' : 'personal',
-          group_id: groupID,
-          created_by_id: ctx.ownerID,
-          current_revision_id: null,
-        };
-        const revision = {
-          theme_id: id('theme'),
-          version: 1,
-          status: 'draft',
-          light_palette: POLITY_THEME.light,
-          dark_palette: POLITY_THEME.dark,
-          fonts: POLITY_THEME.fonts,
-          text_styles: [],
-          created_by_id: ctx.ownerID,
-          published_at: null,
-        };
-        if (create) {
-          await f.track('appearance_theme', id('theme'));
-          await f.track('appearance_theme_revision', id('revision'));
-        } else {
-          await f.insert('appearance_theme', { id: id('theme'), ...fields });
-          await f.insert('appearance_theme_revision', { id: id('revision'), ...revision });
-        }
-        const themeInput = {
-          name: operation === 'updateDraft' ? 'After' : 'Before',
-          description: null,
-          light_palette: POLITY_THEME.light,
-          dark_palette: POLITY_THEME.dark,
-          fonts: POLITY_THEME.fonts,
-          text_styles: [],
-        };
-        const args = create
-          ? {
-              id: id('theme'),
-              revision_id: id('revision'),
-              slug: fields.slug,
-              ...themeInput,
-              ...(group ? { group_id: groupID } : {}),
-            }
-          : operation === 'updateDraft'
+          anonymousContract:
+            'Unauthenticated private-user creation/editing must fail permission_denied; missing API auth gates remain exposed by this normative case',
+          palette: 'literal existing POLITY_THEME builtin palette and fonts',
+          oracle: 'theme and draft/published revision fields independently checked',
+          authorization:
+            operation === 'createPersonal'
+              ? 'personal creator identity; current implementation has no explicit authentication gate'
+              : 'creator edit or group owner manage',
+          ...(actor === 'outsider' && operation !== 'createGroup'
+            ? {
+                rejection:
+                  'requireEditTheme runs on the client and throws exact Theme not found for an unreadable personal theme; normalized uncoded application failure',
+              }
+            : {}),
+        },
+        async prepare(ctx) {
+          const f = new MutationFixtures(ctx.sql);
+          const id = (label: string) =>
+            mutationFixtureID(ctx.id, `appearanceThemes.${operation}:${label}`);
+          const create = operation.startsWith('create');
+          const groupID = group ? await groupAdminFixture(f, ctx, 'core-theme-group') : null;
+          const fields = {
+            slug: `fixture-${id('theme')}`,
+            name: 'Before',
+            description: null,
+            kind: group ? 'group' : 'personal',
+            group_id: groupID,
+            created_by_id: ctx.ownerID,
+            current_revision_id: null,
+          };
+          const revision = {
+            theme_id: id('theme'),
+            version: 1,
+            status: 'draft',
+            light_palette: POLITY_THEME.light,
+            dark_palette: POLITY_THEME.dark,
+            fonts: POLITY_THEME.fonts,
+            text_styles: [],
+            created_by_id: ctx.ownerID,
+            published_at: null,
+          };
+          if (create) {
+            await f.track('appearance_theme', id('theme'));
+            await f.track('appearance_theme_revision', id('revision'));
+          } else {
+            await f.insert('appearance_theme', { id: id('theme'), ...fields });
+            await f.insert('appearance_theme_revision', { id: id('revision'), ...revision });
+          }
+          const themeInput = {
+            name: operation === 'updateDraft' ? 'After' : 'Before',
+            description: null,
+            light_palette: POLITY_THEME.light,
+            dark_palette: POLITY_THEME.dark,
+            fonts: POLITY_THEME.fonts,
+            text_styles: [],
+          };
+          const args = create
             ? {
                 id: id('theme'),
-                theme_id: id('theme'),
                 revision_id: id('revision'),
-                version: 1,
+                slug: fields.slug,
                 ...themeInput,
+                ...(group ? { group_id: groupID } : {}),
               }
-            : operation === 'publish'
-              ? { theme_id: id('theme'), revision_id: id('revision') }
-              : { id: id('theme') };
-        const request =
-          typeof groupID === 'string'
-            ? queries.appearanceThemes.groupEditor({ groupId: groupID })
-            : queries.appearanceThemes.personalEditor({});
-        const predicate = (data: unknown, after: boolean) => {
-          const theme = found(data, id('theme'));
-          if ((!after && create) || (after && operation === 'delete')) return !theme;
-          if (!theme || theme.name !== (after && operation === 'updateDraft' ? 'After' : 'Before'))
-            return false;
-          const rev = found(theme.revisions, id('revision'));
-          return (
-            !!rev &&
-            rev.status === (after && operation === 'publish' ? 'published' : 'draft') &&
-            theme.current_revision_id === (after && operation === 'publish' ? id('revision') : null)
-          );
-        };
-        return {
-          args: args as unknown as ReadonlyJSONValue,
-          observe: {
-            request,
-            before: (data: unknown) => predicate(data, false),
-            after: (data: unknown) => predicate(data, actor === 'owner'),
-          },
-          async verify() {
-            if (actor !== 'owner') {
-              await f.expect('appearance_theme', id('theme'), create ? null : fields);
-              await f.expect('appearance_theme_revision', id('revision'), create ? null : revision);
-              return;
-            }
-            if (operation === 'delete') {
-              await f.expect('appearance_theme', id('theme'), null);
-              await f.expect('appearance_theme_revision', id('revision'), null);
-              return;
-            }
-            await f.expect('appearance_theme', id('theme'), {
-              ...fields,
-              name: operation === 'updateDraft' ? 'After' : 'Before',
-              current_revision_id: operation === 'publish' ? id('revision') : null,
-            });
-            const { published_at: _publishedAt, ...revisionFields } = revision;
-            void _publishedAt;
-            await f.expect('appearance_theme_revision', id('revision'), {
-              ...revisionFields,
-              status: operation === 'publish' ? 'published' : 'draft',
-              ...(operation !== 'publish' ? { published_at: null } : {}),
-            });
-            if (operation === 'publish')
-              assert(
-                (await f.rows('appearance_theme_revision', id('revision')))[0].published_at != null
-              );
-          },
-          restore: async () => {
-            // The current revision FK points back to a child; break only the fixture's link before deleting.
-            await ctx.sql`update appearance_theme set current_revision_id = null where id = ${id('theme')}`;
-            await f.restore();
-          },
-          verifyRestored: () => f.verifyRestored(),
-        };
-      },
-    }))
+            : operation === 'updateDraft'
+              ? {
+                  id: id('theme'),
+                  theme_id: id('theme'),
+                  revision_id: id('revision'),
+                  version: 1,
+                  ...themeInput,
+                }
+              : operation === 'publish'
+                ? { theme_id: id('theme'), revision_id: id('revision') }
+                : { id: id('theme') };
+          const request =
+            typeof groupID === 'string'
+              ? queries.appearanceThemes.groupEditor({ groupId: groupID })
+              : queries.appearanceThemes.personalEditor({});
+          const predicate = (data: unknown, after: boolean) => {
+            const theme = found(data, id('theme'));
+            if ((!after && create) || (after && operation === 'delete')) return !theme;
+            if (
+              !theme ||
+              theme.name !== (after && operation === 'updateDraft' ? 'After' : 'Before')
+            )
+              return false;
+            const rev = found(theme.revisions, id('revision'));
+            return (
+              !!rev &&
+              rev.status === (after && operation === 'publish' ? 'published' : 'draft') &&
+              theme.current_revision_id ===
+                (after && operation === 'publish' ? id('revision') : null)
+            );
+          };
+          return {
+            args: args as unknown as ReadonlyJSONValue,
+            observe: {
+              request,
+              before: (data: unknown) => predicate(data, false),
+              after: (data: unknown) => predicate(data, actor === 'owner'),
+            },
+            async verify() {
+              if (actor !== 'owner') {
+                await f.expect('appearance_theme', id('theme'), create ? null : fields);
+                await f.expect(
+                  'appearance_theme_revision',
+                  id('revision'),
+                  create ? null : revision
+                );
+                return;
+              }
+              if (operation === 'delete') {
+                await f.expect('appearance_theme', id('theme'), null);
+                await f.expect('appearance_theme_revision', id('revision'), null);
+                return;
+              }
+              await f.expect('appearance_theme', id('theme'), {
+                ...fields,
+                name: operation === 'updateDraft' ? 'After' : 'Before',
+                current_revision_id: operation === 'publish' ? id('revision') : null,
+              });
+              const { published_at: _publishedAt, ...revisionFields } = revision;
+              void _publishedAt;
+              await f.expect('appearance_theme_revision', id('revision'), {
+                ...revisionFields,
+                status: operation === 'publish' ? 'published' : 'draft',
+                ...(operation !== 'publish' ? { published_at: null } : {}),
+              });
+              if (operation === 'publish')
+                assert(
+                  (await f.rows('appearance_theme_revision', id('revision')))[0].published_at !=
+                    null
+                );
+            },
+            restore: async () => {
+              // The current revision FK points back to a child; break only the fixture's link before deleting.
+              await ctx.sql`update appearance_theme set current_revision_id = null where id = ${id('theme')}`;
+              await f.restore();
+            },
+            verifyRestored: () => f.verifyRestored(),
+          };
+        },
+      }))
+    )
   );
 }

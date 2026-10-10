@@ -31,6 +31,8 @@ function measurement(elapsedMs: number | undefined = 12000): MutationMeasurement
       startedAt: 10,
       clientAppliedAt: 20,
       confirmedAt: 40,
+      serverWorkObservedAt: 50,
+      completionRequestIDs: [`request-${index}`],
       observedAt: 50,
       clientApplyMs: 10,
       serverConfirmedMs: 30,

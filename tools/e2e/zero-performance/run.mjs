@@ -18,6 +18,7 @@ import {
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
   shouldCopyBenchmarkSource,
+  validateBenchmarkArguments,
 } from './isolation.mjs';
 import {
   verifyLinuxImage,
@@ -29,6 +30,7 @@ import {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = process.argv.slice(2);
+validateBenchmarkArguments(args);
 const option = name => {
   const i = args.indexOf(name);
   return i < 0 ? undefined : args[i + 1];

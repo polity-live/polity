@@ -25,6 +25,7 @@ export const mechanics = [
   'mutation-report.ts',
   'mutation-measure.ts',
   'mutation-snapshot.ts',
+  'mutation-request-completion.ts',
   'delivery-endpoint.mjs',
   'mutation-browser-metrics.ts',
   'mechanics.mjs',

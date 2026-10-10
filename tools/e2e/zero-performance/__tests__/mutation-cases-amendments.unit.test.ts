@@ -1,9 +1,254 @@
-import { describe, expect, it } from 'vitest';
-import { amendmentMutationCases } from '../mutation-cases-amendments';
+import type { Sql } from 'postgres';
+import fs from 'node:fs';
+import { MutationFixtures } from '../mutation-fixtures';
+import { describe, expect, it, vi } from 'vitest';
+import { amendmentMutationCases, verifyRevokedAmendmentWriter } from '../mutation-cases-amendments';
 import { amendmentSharedMutators } from '../../../../src/zero/amendments/shared-mutators';
 
 describe('reviewed amendment catalog', () => {
   const cases = amendmentMutationCases();
+  it('accepts legitimate post-revocation eviction but rejects phantom votes and changed retained fields', async () => {
+    const row = {
+      id: 'vote',
+      change_request_id: 'cr',
+      user_id: 'outsider',
+      vote: 'accept',
+      created_at: 1000,
+    };
+    let records: Record<string, unknown>[] = [{ ...row, created_at: new Date(1000) }];
+    const sql = ((first: unknown) =>
+      typeof first === 'string'
+        ? { identifier: first }
+        : Promise.resolve(records)) as unknown as Sql;
+    const ctx = {
+      sql,
+      id: 'rollback',
+      ownerID: 'owner',
+      outsiderID: 'outsider',
+      actorID: 'outsider',
+      actor: 'outsider',
+    };
+    const inspector = (rows: Map<string, unknown>) => ({
+      inspector: { client: { map: async () => rows } },
+    });
+    const vote = new Map<string, unknown>([['e/change_request_vote/vote', row]]);
+    await expect(verifyRevokedAmendmentWriter(ctx, inspector(vote))).resolves.toBeUndefined();
+    await expect(verifyRevokedAmendmentWriter(ctx, inspector(new Map()))).resolves.toBeUndefined();
+    records = [];
+    await expect(verifyRevokedAmendmentWriter(ctx, inspector(vote))).rejects.toThrow(
+      'phantom cached row'
+    );
+    records = [{ ...row, vote: 'reject', created_at: new Date(1000) }];
+    await expect(verifyRevokedAmendmentWriter(ctx, inspector(vote))).rejects.toThrow(
+      'changed cached application field'
+    );
+    await expect(verifyRevokedAmendmentWriter(ctx, {})).rejects.toThrow(
+      'Missing public writer inspector'
+    );
+  });
+  it('matches actual CR FK parents and distinguishes the UUID-only polymorphic source', () => {
+    const sql = fs.readFileSync('supabase/schemas/14_change_request.sql', 'utf8');
+    expect(sql).toMatch(/amendment_id UUID NOT NULL REFERENCES public\.amendment/);
+    expect(sql).toMatch(/user_id UUID NOT NULL REFERENCES public\."user"/);
+    expect(sql).toMatch(/process_branch_id UUID REFERENCES public\.amendment_process_branch/);
+    expect(sql).toMatch(/source_id UUID,/);
+    expect(sql).not.toMatch(/source_id UUID[^,]*REFERENCES/);
+  });
+  it('grants a scoped active role before writer preload and revokes it before subject invocation', async () => {
+    const url = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';
+    for (const name of [
+      'ZERO_UPSTREAM_DB',
+      'E2E_DATABASE_URL',
+      'DATABASE_URL',
+      'SUPABASE_DB_URL',
+      'STUDIO_DATABASE_URL',
+      'STUDIO_TEST_DATABASE_URL',
+    ])
+      vi.stubEnv(name, url);
+    vi.stubEnv('SUPABASE_URL', 'http://127.0.0.1:15624');
+    vi.stubEnv('ZERO_PERFORMANCE_LAYER', 'mutations');
+    const insert = vi.spyOn(MutationFixtures.prototype, 'insert').mockResolvedValue(undefined);
+    const update = vi.spyOn(MutationFixtures.prototype, 'update').mockResolvedValue(undefined);
+    const seal = vi.spyOn(MutationFixtures.prototype, 'sealScopes').mockResolvedValue(undefined);
+    vi.spyOn(MutationFixtures.prototype, 'rows').mockResolvedValue([
+      { id: 'fixture', content: [] },
+    ]);
+    const oracle = vi.spyOn(MutationFixtures.prototype, 'expect').mockResolvedValue(undefined);
+    for (const method of ['track', 'trackScope', 'verifyScopesUnchanged'] as const)
+      vi.spyOn(MutationFixtures.prototype, method).mockResolvedValue(undefined);
+    try {
+      const entry = cases.find(
+        item => item.name === 'amendments.update' && item.variant === 'revoked-denied'
+      );
+      if (!entry) throw new Error('Missing reviewed revocation');
+      const prepared = await entry.prepare({
+        sql: (() => undefined) as unknown as Sql,
+        id: 'revocation-contract',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'outsider',
+        actor: 'outsider',
+      });
+      expect(
+        insert.mock.calls.some(
+          ([table, fields]) =>
+            table === 'amendment_collaborator' &&
+            fields.status === 'active' &&
+            fields.user_id === 'outsider'
+        )
+      ).toBe(true);
+      expect(update).not.toHaveBeenCalled();
+      expect(prepared.requireWriterBefore).toBe(true);
+      expect(typeof prepared.verifyRollback).toBe('function');
+      await prepared.beforeInvoke?.();
+      expect(update).toHaveBeenCalledWith('amendment_collaborator', expect.any(String), {
+        status: 'revoked',
+      });
+      expect(seal).toHaveBeenCalledTimes(2);
+      await prepared.verify();
+      expect(oracle).toHaveBeenCalledWith(
+        'amendment',
+        expect.any(String),
+        expect.objectContaining({ title: 'Before', created_by_id: 'owner' })
+      );
+      const voting = cases.find(
+        item => item.name === 'amendments.voteOnChangeRequest' && item.actor === 'anonymous'
+      );
+      if (!voting) throw new Error('Missing anonymous vote case');
+      await voting.prepare({
+        sql: (() => undefined) as unknown as Sql,
+        id: 'vote-schema-contract',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'anon',
+        actor: 'anonymous',
+      });
+      const request = insert.mock.calls.find(([table]) => table === 'change_request');
+      const amendment = insert.mock.calls.find(
+        ([table, fields]) => table === 'amendment' && fields.id === request?.[1].amendment_id
+      );
+      expect(amendment?.[1].created_by_id).toBe('owner');
+      expect(request?.[1].user_id).toBe('owner');
+      const document = insert.mock.calls.find(
+        ([table, fields]) => table === 'document' && fields.amendment_id === amendment?.[1].id
+      );
+      expect(update).toHaveBeenCalledWith(
+        'amendment',
+        amendment?.[1].id,
+        expect.objectContaining({ document_id: document?.[1].id })
+      );
+      expect(request?.[1].source_id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+      // Actual SQL column is UUID, even though the mutator input schema accepts a string.
+      for (const operation of [
+        'createChangeRequest',
+        'createCityDesignChangeRequests',
+        'createDocumentChangeRequest',
+      ]) {
+        const creator = cases.find(
+          item => item.name === `amendments.${operation}` && item.actor === 'owner'
+        );
+        if (!creator) throw new Error('Missing reviewed CR creation');
+        const creation = await creator.prepare({
+          sql: (() => undefined) as unknown as Sql,
+          id: `source-argument-${operation}`,
+          ownerID: 'owner',
+          outsiderID: 'outsider',
+          actorID: 'owner',
+          actor: 'owner',
+        });
+        const args = creation.args as {
+          source_id?: string | null;
+          requests?: { source_id: string | null }[];
+        };
+        const sourceID = args.requests?.[0].source_id ?? args.source_id;
+        if (operation === 'createDocumentChangeRequest') expect(sourceID).toBeNull();
+        else
+          expect(sourceID).toMatch(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+          );
+      }
+      const replan = cases.find(
+        item => item.name === 'amendments.replanProcessBranchEvents' && item.actor === 'owner'
+      );
+      if (!replan) throw new Error('Missing replan case');
+      const replanned = await replan.prepare({
+        sql: (() => undefined) as unknown as Sql,
+        id: 'replan-query-contract',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'owner',
+        actor: 'owner',
+      });
+      const replanningArgs = replanned.args as { event_updates: { step_run_id: string }[] };
+      const stepID = replanningArgs.event_updates[0].step_run_id;
+      const pendingStep = {
+        id: stepID,
+        event_id: null,
+        status: 'pending_event',
+        decision_status: 'forward_confirmed',
+      };
+      expect(replanned.observe?.after({ branches: [{ step_runs: [pendingStep] }] })).toBe(true);
+      expect(
+        replanned.observe?.after({
+          branches: [
+            { step_runs: [{ ...pendingStep, decision_status: 'previous_decision_outstanding' }] },
+          ],
+        })
+      ).toBe(false);
+      for (const revoked of cases.filter(item => item.variant === 'revoked-denied')) {
+        const preparedRevocation = await revoked.prepare({
+          sql: (() => undefined) as unknown as Sql,
+          id: `rollback-${revoked.name}`,
+          ownerID: 'owner',
+          outsiderID: 'outsider',
+          actorID: 'outsider',
+          actor: 'outsider',
+        });
+        expect(typeof preparedRevocation.verifyRollback).toBe('function');
+        expect(preparedRevocation.requireWriterBefore).toBe(true);
+      }
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllEnvs();
+    }
+  });
+  it('covers revocation of amendment-scoped delegated authority without inventing owner revocation', () => {
+    const revocations = amendmentMutationCases().filter(
+      entry => entry.variant === 'revoked-denied'
+    );
+    expect(revocations.map(entry => entry.name).sort()).toEqual(
+      [
+        'addCollaborator',
+        'createCityDesign',
+        'delete',
+        'deleteCityDesign',
+        'removeCollaborator',
+        'update',
+        'updateCityDesign',
+        'updateCollaborator',
+        'updateProcessBranch',
+        'createChangeRequest',
+        'createDocumentChangeRequest',
+        'createCityDesignChangeRequests',
+        'updateChangeRequest',
+        'deleteChangeRequest',
+        'finalizeInternalChangeRequestVote',
+        'repairInternalChangeRequestResolution',
+        'voteOnChangeRequest',
+        'initializeProcessPath',
+        'resolveProcessVote',
+        'completeProcessTaskWithEvent',
+        'replanProcessBranchEvents',
+      ]
+        .map(name => `amendments.${name}`)
+        .sort()
+    );
+    expect(
+      revocations.every(entry => entry.actor === 'outsider' && entry.error === 'permission_denied')
+    ).toBe(true);
+  });
   it('covers the exact runtime registry; public orchestrators have substantive success cases', () => {
     expect([...new Set(cases.map(item => item.name))].sort()).toEqual(
       Object.keys(amendmentSharedMutators)
@@ -18,6 +263,10 @@ describe('reviewed amendment catalog', () => {
       'updateProcessBranch',
       'createDocumentChangeRequest',
       'repairInternalChangeRequestResolution',
+      'initializeProcessPath',
+      'resolveProcessVote',
+      'completeProcessTaskWithEvent',
+      'replanProcessBranchEvents',
     ])
       expect(
         cases.some(item => item.name === `amendments.${operation}` && item.outcome === 'success')

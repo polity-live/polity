@@ -140,10 +140,26 @@ export function createManifest(
     ]),
   ];
   const names = [...new Set(queries.map(catalogGroup))];
+  const catalogCopies = new Map<string, number>();
+  const securityCopies = new Map<string, number>();
+  for (const workload of [input.workloads.head, input.workloads.base]) {
+    if (!workload) continue;
+    for (const key of [...workload.queries, ...workload.mutations.map(entry => entry.key)])
+      catalogCopies.set(key, (catalogCopies.get(key) ?? 0) + 1);
+    for (const entry of workload.security)
+      securityCopies.set(entry.key, (securityCopies.get(entry.key) ?? 0) + 1);
+  }
   const queryBins = balancedGroups(
     names.map(name => {
       const members = queries.filter(key => catalogGroup(key) === name);
-      return { key: name, members, weight: members.reduce((total, key) => total + weight(key), 0) };
+      return {
+        key: name,
+        members,
+        weight: members.reduce(
+          (total, key) => total + weight(key) * (catalogCopies.get(key) ?? 0),
+          0
+        ),
+      };
     }),
     16
   );
@@ -155,7 +171,11 @@ export function createManifest(
     ),
   ];
   const securityBins = balancedGroups(
-    security.map(key => ({ key, members: [key], weight: weight(key) })),
+    security.map(key => ({
+      key,
+      members: [key],
+      weight: weight(key) * (securityCopies.get(key) ?? 0),
+    })),
     2
   );
   const shard = (id: string, layer: Shard['layer'], members: string[]): Shard => ({

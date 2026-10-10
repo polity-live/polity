@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import {
+  governanceRevocationCases,
+  groupedEventCreationCases,
+} from './mutation-cases-governance-revocation';
 import { pbkdf2Sync } from 'node:crypto';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
@@ -290,10 +294,17 @@ function agendaCases(): MutationCase[] {
               ? null
               : isCreate
                 ? isSpeaker
-                  ? speaker
+                  ? { ...speaker, start_time: 0, end_time: 0 }
                   : isCR
                     ? cr
-                    : { ...agendaData(agendaID, event.id), creator_id: ctx.ownerID }
+                    : {
+                        ...agendaData(agendaID, event.id),
+                        creator_id: ctx.ownerID,
+                        start_time: 0,
+                        end_time: 0,
+                        activated_at: 0,
+                        completed_at: 0,
+                      }
                 : {
                     ...(isReorder ? { order_index: 7 } : changed),
                     ...(isSpeaker || isCR ? { agenda_item_id: agendaID } : { event_id: event.id }),
@@ -958,7 +969,10 @@ function ballotManagementCases(): MutationCase[] {
             : isDelete
               ? null
               : isCreate
-                ? createFields
+                ? {
+                    ...createFields,
+                    ...('closing_end_time' in createFields ? { closing_end_time: 0 } : {}),
+                  }
                 : changed;
         const query =
           d.table === 'election_candidate'
@@ -1427,7 +1441,17 @@ function ballotCastingCases(): MutationCase[] {
           : ('server-error' as const),
       ...(internal || actor !== 'owner' || deniedScenario
         ? {
-            error: internal || d.kind === 'submit' ? 'mutation_server_failed' : 'permission_denied',
+            error:
+              internal ||
+              d.kind === 'submit' ||
+              (actor === 'anonymous' &&
+                [
+                  'castFinalElectionVote',
+                  'castFinalElectionVoteFull',
+                  'castFinalVoteFull',
+                ].includes(d.name))
+                ? 'mutation_server_failed'
+                : 'permission_denied',
           }
         : {}),
       observer: { query: `${d.domain}.byId` },
@@ -1454,6 +1478,8 @@ function ballotCastingCases(): MutationCase[] {
         const decisionID = mutationFixtureID(ctx.id, 'casting-decision');
         const tallyID = mutationFixtureID(ctx.id, 'casting-tally');
         const isElection = d.domain === 'elections';
+        const secretManagerDecision =
+          'governanceSecretDecision' in ctx && ctx.governanceSecretDecision === true;
         const ballotTable = isElection ? 'election' : 'vote';
         const ballotField = isElection ? 'election_id' : 'vote_id';
         const electorTable = isElection ? 'elector' : 'voter';
@@ -1475,7 +1501,10 @@ function ballotCastingCases(): MutationCase[] {
           agenda_item_id: agendaID,
           title: 'Reviewed cast ballot',
           status: d.kind === 'start' ? 'pending' : phase,
-          ballot_visibility: d.scenario === 'secret-indicative-duplicate' ? 'secret' : 'named',
+          ballot_visibility:
+            d.scenario === 'secret-indicative-duplicate' || secretManagerDecision
+              ? 'secret'
+              : 'named',
           visibility: 'public',
           electorate_snapshotted_at: new Date(),
           offline_electorate_size: 10,
@@ -1524,7 +1553,7 @@ function ballotCastingCases(): MutationCase[] {
           id: decisionID,
           [ballotField]: ballotID,
           [optionField]: optionID,
-          [decisionField]: participationID,
+          [decisionField]: secretManagerDecision ? null : participationID,
         };
         if (d.kind.startsWith('decision')) await f.insert(participationTable, participation);
         if (
@@ -1714,14 +1743,40 @@ function groupAccessCases(): MutationCase[] {
       name: `groups.${name}`,
       variant: actor === 'owner' ? 'authorized-access-transition' : 'permission-denied',
       actor,
-      outcome: actor === 'owner' ? ('success' as const) : ('server-error' as const),
-      ...(actor !== 'owner' ? { error: 'permission_denied' } : {}),
+      outcome:
+        actor === 'owner'
+          ? ('success' as const)
+          : [
+                'acceptGuestInvitation',
+                'updateMembership',
+                'syncOfflineMembershipRoles',
+                'addMembershipRole',
+                'removeOfflineMembershipRole',
+              ].includes(name)
+            ? ('client-error' as const)
+            : ('server-error' as const),
+      ...(actor !== 'owner'
+        ? {
+            error: [
+              'acceptGuestInvitation',
+              'updateMembership',
+              'syncOfflineMembershipRoles',
+              'addMembershipRole',
+              'removeOfflineMembershipRole',
+            ].includes(name)
+              ? 'mutation_server_failed'
+              : 'permission_denied',
+          }
+        : {}),
       observer: {
-        query: name.includes('Offline')
-          ? 'groups.offlineMembershipsWithRolesAndRights'
-          : name.includes('Guest')
-            ? 'groups.guestAccessById'
-            : 'groups.membershipById',
+        query:
+          name === 'inviteMember'
+            ? 'groups.byIdFull'
+            : name.includes('Offline')
+              ? 'groups.offlineMembershipsWithRolesAndRights'
+              : name.includes('Guest')
+                ? 'groups.guestAccessById'
+                : 'groups.membershipById',
       },
       specification: {
         fixture:
@@ -1823,7 +1878,7 @@ function groupAccessCases(): MutationCase[] {
                 group_id: groupID,
                 user_id: ctx.ownerID,
                 status: 'invited',
-                role_ids: [roleID],
+                role_ids: name === 'requestGuestAccess' && actor === 'anonymous' ? [] : [roleID],
               }
             : {
                 id: parentID,
@@ -1831,7 +1886,9 @@ function groupAccessCases(): MutationCase[] {
                 user_id: ctx.ownerID,
                 status: name === 'joinGroup' ? 'requested' : 'invited',
                 visibility: 'public',
-                initial_role_id: roleID,
+                ...(name === 'inviteMember' && actor !== 'owner'
+                  ? {}
+                  : { initial_role_id: roleID }),
               }
           : isRole
             ? name.startsWith('sync')
@@ -1848,19 +1905,54 @@ function groupAccessCases(): MutationCase[] {
               : name === 'revokeGuestAccess'
                 ? 'revoked'
                 : 'active';
-        const query = isOffline
-          ? queries.groups.offlineMembershipsWithRolesAndRights({ groupId: groupID })
-          : isGuest
-            ? queries.groups.guestAccessById({ id: parentID })
-            : queries.groups.membershipById({ id: parentID });
+        const query =
+          name === 'inviteMember'
+            ? queries.groups.byIdFull({ id: groupID })
+            : isOffline
+              ? queries.groups.offlineMembershipsWithRolesAndRights({ groupId: groupID })
+              : isGuest
+                ? queries.groups.guestAccessById({ id: parentID })
+                : queries.groups.membershipById({ id: parentID });
         const project = (data: unknown) =>
-          isOffline ? rows(data).find(row => row.id === parentID) : object(data);
+          name === 'inviteMember'
+            ? rows(rows(data).find(row => row.id === groupID)?.memberships).find(
+                row => row.id === parentID
+              )
+            : isOffline
+              ? rows(data).find(row => row.id === parentID)
+              : object(data);
         const before = (data: unknown) =>
           isCreate
             ? !project(data)
             : project(data)?.id === parentID && project(data)?.status === initialStatus;
         return {
           args: args as ReadonlyJSONValue,
+          ...(name === 'requestGuestAccess' ||
+          (isRole &&
+            (name.startsWith('add') || name.startsWith('sync')) &&
+            (actor === 'owner' || 'delegatedWriterID' in ctx))
+            ? {
+                writerPreloads:
+                  actor === 'owner' || 'delegatedWriterID' in ctx
+                    ? [
+                        {
+                          request: queries.groups.byIdFull({ id: groupID }),
+                          before: (data: unknown) =>
+                            rows(data).some(
+                              row =>
+                                row.id === groupID &&
+                                rows(row.roles).some(role => role.id === roleID)
+                            ),
+                        },
+                      ]
+                    : [
+                        {
+                          request: queries.groups.byId({ id: groupID }),
+                          before: (data: unknown) => object(data)?.id === groupID,
+                        },
+                      ],
+              }
+            : {}),
           observe: {
             request: query,
             before,
@@ -1940,8 +2032,20 @@ function rosterCases(): MutationCase[] {
                 : 'authorized-roster-transition'
               : 'permission-denied',
           actor,
-          outcome: actor === 'owner' ? ('success' as const) : ('server-error' as const),
-          ...(actor !== 'owner' ? { error: 'permission_denied' } : {}),
+          outcome:
+            actor === 'owner'
+              ? ('success' as const)
+              : operation === 'update' || operation === 'delete'
+                ? ('client-error' as const)
+                : ('server-error' as const),
+          ...(actor !== 'owner'
+            ? {
+                error:
+                  operation === 'update' || operation === 'delete'
+                    ? 'mutation_server_failed'
+                    : 'permission_denied',
+              }
+            : {}),
           observer: {
             query: isGroup ? 'groups.offlineMembersByGroup' : 'events.offlineParticipants',
           },
@@ -1959,6 +2063,7 @@ function rosterCases(): MutationCase[] {
             const scopeID = isGroup
               ? await groupAdminFixture(f, ctx)
               : (await eventAdminFixture(f, ctx)).id;
+            if (!isGroup) await f.update('event', { id: scopeID, attendance_mode: 'hybrid' });
             const id = mutationFixtureID(ctx.id, 'roster-person');
             const table = isGroup ? 'group_offline_member' : 'event_offline_participant';
             const scopeField = isGroup ? 'group_id' : 'event_id';
@@ -2018,6 +2123,18 @@ function rosterCases(): MutationCase[] {
                 rows(data).some(row => row.id === id && row.first_name === 'Reviewed'));
             return {
               args: args as ReadonlyJSONValue,
+              ...(!isGroup
+                ? {
+                    writerPreloads: [
+                      {
+                        request: queries.events.byId({ id: scopeID }),
+                        before: (data: unknown) =>
+                          object(data)?.id === scopeID &&
+                          object(data)?.attendance_mode === 'hybrid',
+                      },
+                    ],
+                  }
+                : {}),
               observe: {
                 request: isGroup
                   ? queries.groups.offlineMembersByGroup({ groupId: scopeID })
@@ -2116,9 +2233,21 @@ function eventParticipationCases(): MutationCase[] {
         name: `events.${name}`,
         variant: success ? 'authorized-participation-transition' : 'actor-denied',
         actor,
-        outcome: success ? ('success' as const) : ('server-error' as const),
+        outcome: success
+          ? ('success' as const)
+          : actor === 'anonymous' &&
+              ['removeParticipantRole', 'syncParticipantRoles'].includes(name)
+            ? ('client-error' as const)
+            : ('server-error' as const),
         ...(!success
-          ? { error: name === 'joinEvent' ? 'mutation_server_failed' : 'permission_denied' }
+          ? {
+              error:
+                name === 'joinEvent' ||
+                (actor === 'anonymous' &&
+                  ['removeParticipantRole', 'syncParticipantRoles'].includes(name))
+                  ? 'mutation_server_failed'
+                  : 'permission_denied',
+            }
           : {}),
         observer: {
           query: name === 'finalizeDelegates' ? 'events.byId' : 'events.allParticipantsByEvent',
@@ -2584,73 +2713,80 @@ function agendaVoteFlowCases(): MutationCase[] {
 }
 
 function expiredVoteCases(): MutationCase[] {
-  return [true, false].map(expired => ({
-    name: 'votes.closeExpiredFinalVotesForEvent',
-    actor: 'owner',
-    variant: expired ? 'close-expired-final-vote' : 'future-final-vote-unchanged',
-    outcome: 'success',
-    observer: { query: 'votes.byId' },
-    specification: {
-      fixture:
-        'Fresh event/agenda with named final vote and explicit past or future closing deadline',
-      oracle: expired
-        ? 'Closed status/time_elapsed reason and server close timestamp; no remaining open phase'
-        : 'Exact unchanged SQL final-vote baseline',
-      restoration:
-        'Fresh ballot/agenda/event and notification scopes removed with independent SQL proof',
-    },
-    prepare: async (ctx: MutationCaseContext) => {
-      const f = new MutationFixtures(ctx.sql);
-      const event = await eventAdminFixture(f, ctx);
-      const agendaID = mutationFixtureID(ctx.id, 'expired-vote-agenda');
-      const voteID = mutationFixtureID(ctx.id, 'expired-vote');
-      await f.insert('agenda_item', { ...agendaData(agendaID, event.id), creator_id: ctx.ownerID });
-      await f.insert('vote', {
-        id: voteID,
-        agenda_item_id: agendaID,
-        title: 'Reviewed timed vote',
-        status: 'final',
-        purpose: 'change_request',
-        ballot_visibility: 'named',
-        closing_end_time: new Date(Date.now() + (expired ? -60_000 : 3_600_000)),
-      });
-      const baseline = await f.rows('vote', voteID);
-      const started = Date.now();
-      return {
-        args: { event_id: event.id },
-        observe: {
-          request: queries.votes.byId({ id: voteID }),
-          before: (data: unknown) => object(data)?.status === 'final',
-          after: (data: unknown) => object(data)?.status === (expired ? 'closed' : 'final'),
-        },
-        verify: async () => {
-          if (!expired) {
-            assert.deepEqual(await f.rows('vote', voteID), baseline);
-            return;
-          }
-          await f.expect('vote', voteID, {
-            status: 'closed',
-            closed_reason: 'time_elapsed',
-            closed_by_id: null,
-          });
-          const [record] = await f.rows('vote', voteID);
-          assert.ok(new Date(record.closed_at as string).getTime() >= started);
-        },
-        restore: async () => {
-          await cleanupGovernanceNotifications(ctx, [event.id]);
-          await f.restore();
-        },
-        verifyRestored: async () => {
-          await f.verifyRestored();
-          await verifyGovernanceNotificationsRestored(ctx, [event.id]);
-        },
-      };
-    },
-  }));
+  return [true, false].flatMap(expired =>
+    ['owner', 'outsider', 'anonymous'].map(actor => ({
+      name: 'votes.closeExpiredFinalVotesForEvent',
+      actor,
+      variant: expired ? 'close-expired-final-vote' : 'future-final-vote-unchanged',
+      outcome: 'success',
+      observer: { query: 'votes.byId' },
+      specification: {
+        authorization:
+          'Public polling trigger has no actor authority gate; server derives closing from actual final-phase deadline',
+        fixture:
+          'Fresh event/agenda with named final vote and explicit past or future closing deadline',
+        oracle: expired
+          ? 'Closed status/time_elapsed reason and server close timestamp; no remaining open phase'
+          : 'Exact unchanged SQL final-vote baseline',
+        restoration:
+          'Fresh ballot/agenda/event and notification scopes removed with independent SQL proof',
+      },
+      prepare: async (ctx: MutationCaseContext) => {
+        const f = new MutationFixtures(ctx.sql);
+        const event = await eventAdminFixture(f, ctx);
+        const agendaID = mutationFixtureID(ctx.id, 'expired-vote-agenda');
+        const voteID = mutationFixtureID(ctx.id, 'expired-vote');
+        await f.insert('agenda_item', {
+          ...agendaData(agendaID, event.id),
+          creator_id: ctx.ownerID,
+        });
+        await f.insert('vote', {
+          id: voteID,
+          agenda_item_id: agendaID,
+          title: 'Reviewed timed vote',
+          status: 'final',
+          purpose: 'change_request',
+          ballot_visibility: 'named',
+          closing_end_time: new Date(Date.now() + (expired ? -60_000 : 3_600_000)),
+        });
+        const baseline = await f.rows('vote', voteID);
+        const started = Date.now();
+        return {
+          args: { event_id: event.id },
+          observe: {
+            request: queries.votes.byId({ id: voteID }),
+            before: (data: unknown) => object(data)?.status === 'final',
+            after: (data: unknown) => object(data)?.status === (expired ? 'closed' : 'final'),
+          },
+          verify: async () => {
+            if (!expired) {
+              assert.deepEqual(await f.rows('vote', voteID), baseline);
+              return;
+            }
+            await f.expect('vote', voteID, {
+              status: 'closed',
+              closed_reason: 'time_elapsed',
+              closed_by_id: null,
+            });
+            const [record] = await f.rows('vote', voteID);
+            assert.ok(new Date(record.closed_at as string).getTime() >= started);
+          },
+          restore: async () => {
+            await cleanupGovernanceNotifications(ctx, [event.id]);
+            await f.restore();
+          },
+          verifyRestored: async () => {
+            await f.verifyRestored();
+            await verifyGovernanceNotificationsRestored(ctx, [event.id]);
+          },
+        };
+      },
+    }))
+  );
 }
 
 export function governanceMutationCases(): MutationCase[] {
-  return [
+  const base = [
     ...passwordCases(),
     ...agendaCases(),
     ...accreditationCases(),
@@ -2667,4 +2803,5 @@ export function governanceMutationCases(): MutationCase[] {
     ...agendaVoteFlowCases(),
     ...expiredVoteCases(),
   ];
+  return [...base, ...governanceRevocationCases(base), ...groupedEventCreationCases()];
 }

@@ -25,7 +25,8 @@ import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { closeDb } from '../../../e2e/fixtures/db';
 import { isJoinPlanArtifact } from './plan-artifacts';
 import { resultsCSV } from './results';
-import { executionMetadata } from './execution';
+import { executionMetadata, runtimeMetadata } from './execution';
+import { schema } from '../../../src/zero/schema';
 import { selectKeys } from './sharding';
 import { mutationInventory } from './mutation-runtime';
 import { measureMutations } from './mutation-measure';
@@ -120,12 +121,7 @@ const workers: {
 }[] = [];
 let journeys: Report['journeys'];
 let browserMutations: Report['browserMutations'];
-let runtime: unknown = {
-  node: process.version,
-  platform: process.platform,
-  arch: process.arch,
-  zero: JSON.parse(await readFile('node_modules/@rocicorp/zero/package.json', 'utf8')).version,
-};
+let runtime: unknown = await runtimeMetadata(Object.keys(schema.tables).length);
 let readyAt: string;
 let warningOffset = 0;
 let activeChild: ReturnType<typeof spawn> | undefined;

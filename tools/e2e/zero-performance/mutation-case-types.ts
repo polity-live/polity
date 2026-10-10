@@ -15,10 +15,14 @@ export interface MutationPreparedCase {
   args: ReadonlyJSONValue | undefined;
   /** Existing public query; called with observer's own authenticated context. */
   observe?: {
+    /** Separate observer client; writer identity is needed for actor-filtered queries. */
+    actor?: 'owner' | 'writer';
     request: unknown;
     before: (data: unknown) => boolean;
     after: (data: unknown) => boolean;
   };
+  /** Existing independent queries needed by the local mutator's real read guards. */
+  writerPreloads?: { request: unknown; before: (data: unknown) => boolean }[];
   /** Optional real fixture transition after writer preload, e.g. permission revocation. */
   beforeInvoke?: () => Promise<void>;
   /** A denied-after-preload case must begin with an authorized, replicated writer baseline. */

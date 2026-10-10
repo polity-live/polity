@@ -111338,7 +111338,8 @@
         "src/server/eurostat/__tests__/eurostat.unit.test.ts",
         "src/server/eurostat/__tests__/importer.contract.unit.test.ts",
         "src/server/eurostat/__tests__/metadata.contract.unit.test.ts",
-        "src/server/eurostat/__tests__/projection.contract.unit.test.ts"
+        "src/server/eurostat/__tests__/projection.contract.unit.test.ts",
+        "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts"
       ]
     },
     {
@@ -132319,6 +132320,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/mutation-runtime.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132350,6 +132361,16 @@
     },
     {
       "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -132591,7 +132612,13 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+          "project": "unit",
+          "caseId": "matches collector and worker fingerprints and detects changed revision dependencies"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -132648,6 +132675,11 @@
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects mistyped selections and incomplete or duplicate options before starting a stack"
+        },
         {
           "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
           "project": "unit",
@@ -132791,6 +132823,22 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/mutation-cases-canvas.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every actual canvas discriminator with success, authentication, access and generation branches"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/mutation-cases-content.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -132818,6 +132866,22 @@
           "file": "tools/e2e/zero-performance/__tests__/mutation-cases-core.unit.test.ts",
           "project": "unit",
           "caseId": "authorized skill creation accepts the real empty-list baseline and only its own created row"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-governance-revocation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers grouped event creation ownership, delegation, denial and authority revoked after preload"
         }
       ],
       "suggestedTestRefs": []
@@ -132930,6 +132994,22 @@
           "file": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
           "project": "unit",
           "caseId": "attributes another named mutation in the same client batch only to its own phases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-request-completion.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
+          "project": "unit",
+          "caseId": "waits for a late partial response and returns only observed client time"
         }
       ],
       "suggestedTestRefs": []
@@ -133095,7 +133175,13 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+          "project": "unit",
+          "caseId": "weights each revision actually measured, including a mutation-only bootstrap"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {

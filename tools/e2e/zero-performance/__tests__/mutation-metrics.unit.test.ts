@@ -35,6 +35,8 @@ function measurement(): MutationMeasurement {
       startedAt: 10,
       clientAppliedAt: 20,
       confirmedAt: 40,
+      serverWorkObservedAt: 50,
+      completionRequestIDs: [`request-${index}`],
       observedAt: 50,
       snapshotMutationID: 1,
       snapshotAppliedAt: 40,
@@ -123,6 +125,56 @@ function api(row: MutationMeasurement): MutationAPIRecord[] {
   });
 }
 describe('mutation performance budgets', () => {
+  it.each([
+    'missing-time',
+    'non-finite',
+    'early',
+    'missing-ids',
+    'empty',
+    'duplicate',
+    'mismatch',
+    'extra',
+  ] as const)(
+    'rejects %s completed API work proof without weakening SDK timing checks',
+    variant => {
+      const row = measurement(),
+        sample = row.samples[0];
+      if (variant === 'missing-time') delete sample.serverWorkObservedAt;
+      if (variant === 'non-finite') sample.serverWorkObservedAt = Infinity;
+      if (variant === 'early') sample.serverWorkObservedAt = 39;
+      if (variant === 'missing-ids') delete sample.completionRequestIDs;
+      if (variant === 'empty') sample.completionRequestIDs = [];
+      if (variant === 'duplicate') sample.completionRequestIDs = ['request-0', 'request-0'];
+      if (variant === 'mismatch') sample.completionRequestIDs = ['different-request'];
+      if (variant === 'extra') sample.completionRequestIDs = ['request-0', 'different-request'];
+      expect(mutationFailures(row)).toContain(
+        'Missing or invalid completed mutation API request proof'
+      );
+      expect(mutationFailures(row, false)).toContain(
+        'Missing or invalid completed mutation API request proof'
+      );
+    }
+  );
+  it('accepts SDK acknowledgement before observed API completion and observer replication after completion', () => {
+    const row = measurement();
+    row.samples[0].serverWorkObservedAt = 45;
+    expect(mutationFailures(row)).toEqual([]);
+    // Completion observation is cleanup evidence, with no server-duration budget or regression metric.
+    const after = structuredClone(row);
+    after.samples[0].serverWorkObservedAt = 50_000;
+    expect(mutationFailures(after)).toEqual([]);
+    expect(compareMutations([row], [after])).toEqual([]);
+  });
+  it('requires completion of every retry request and accepts a differently ordered exact ID set', () => {
+    const row = measurement(),
+      sample = row.samples[0];
+    sample.attempts.push({ ...sample.attempts[0], requestID: 'retry-request' });
+    expect(mutationFailures(row)).toContain(
+      'Missing or invalid completed mutation API request proof'
+    );
+    sample.completionRequestIDs = ['retry-request', 'request-0'];
+    expect(mutationFailures(row)).toEqual([]);
+  });
   it('passes inclusive boundaries', () => {
     const row = measurement();
     for (const sample of row.samples)
@@ -130,6 +182,7 @@ describe('mutation performance budgets', () => {
         clientAppliedAt: 60,
         clientApplyMs: 50,
         confirmedAt: 1010,
+        serverWorkObservedAt: 2010,
         serverConfirmedMs: 1000,
         observedAt: 2010,
         observerAfterConfirmMs: 1000,
@@ -186,12 +239,20 @@ describe('mutation performance budgets', () => {
       sample.outcome = 'client-error';
       sample.attempts = [];
       delete sample.confirmedAt;
+      delete sample.serverWorkObservedAt;
+      delete sample.completionRequestIDs;
       delete sample.serverConfirmedMs;
       delete sample.snapshotAppliedAt;
       delete sample.snapshotMutationID;
     }
     expect(mutationFailures(row)).toEqual([]);
     row.samples[0].snapshotAppliedAt = 40;
+    expect(mutationFailures(row)).toContain('Client rejection unexpectedly reached server');
+    delete row.samples[0].snapshotAppliedAt;
+    row.samples[0].completionRequestIDs = [];
+    expect(mutationFailures(row)).toContain('Client rejection unexpectedly reached server');
+    delete row.samples[0].completionRequestIDs;
+    row.samples[0].serverWorkObservedAt = 50;
     expect(mutationFailures(row)).toContain('Client rejection unexpectedly reached server');
   });
   it.each(['client-error', 'no-query'] as const)(
@@ -204,6 +265,8 @@ describe('mutation performance budgets', () => {
           sample.outcome = 'client-error';
           sample.attempts = [];
           delete sample.confirmedAt;
+          delete sample.serverWorkObservedAt;
+          delete sample.completionRequestIDs;
           delete sample.serverConfirmedMs;
           delete sample.snapshotAppliedAt;
           delete sample.snapshotMutationID;
@@ -290,6 +353,7 @@ describe('mutation performance budgets', () => {
     for (const sample of after.samples)
       Object.assign(sample, {
         confirmedAt: 141,
+        serverWorkObservedAt: 151,
         serverConfirmedMs: 131,
         observedAt: 151,
         observerTotalMs: 141,
@@ -307,6 +371,24 @@ describe('mutation performance budgets', () => {
   });
 });
 describe('mutation raw API reconciliation', () => {
+  it('does not manufacture measuring-process completion proof from raw server response diagnostics', () => {
+    const row = measurement(),
+      records = api(row);
+    delete row.samples[0].completionRequestIDs;
+    delete row.samples[0].serverWorkObservedAt;
+    correlateMutationAPI([row], records);
+    expect(row.samples[0].attempts).toHaveLength(1);
+    expect(mutationReportFailures([row.expectation], [row], records)).toContain(
+      `${row.key}: Missing or invalid completed mutation API request proof`
+    );
+    row.samples[0].completionRequestIDs = ['request-0'];
+    row.samples[0].serverWorkObservedAt = 45;
+    expect(mutationReportFailures([row.expectation], [row], records)).toEqual([]);
+    row.samples[0].completionRequestIDs = ['unrelated-request'];
+    expect(mutationReportFailures([row.expectation], [row], records)).toContain(
+      `${row.key}: Missing or invalid completed mutation API request proof`
+    );
+  });
   it('fails closed on absent or contradictory external delivery metadata', () => {
     const row = measurement(),
       records = api(row),

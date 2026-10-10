@@ -2,6 +2,53 @@ import path from 'node:path';
 import { statSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
+/** Reject typos before creating stacks or accidentally measuring the full catalog. */
+export function validateBenchmarkArguments(args) {
+  const values = new Set([
+    '--query',
+    '--case',
+    '--source-ref',
+    '--selection-file',
+    '--security-selection-file',
+    '--harness-root',
+    '--output',
+    '--dependency-root',
+    '--layer',
+    '--zero-image',
+    '--execution-file',
+    '--mutation',
+  ]);
+  const flags = new Set([
+    '--session',
+    '--frozen-dependencies',
+    '--linux-browser',
+    '--inventory-only',
+    '--linux-app',
+    '--collect-all',
+    '--profile-navigation',
+    '--profile-inspector',
+  ]);
+  const seen = new Set();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!values.has(arg) && !flags.has(arg)) throw new Error(`Unknown benchmark option: ${arg}`);
+    if (seen.has(arg)) throw new Error(`Duplicate benchmark option: ${arg}`);
+    seen.add(arg);
+    if (values.has(arg)) {
+      const value = args[++i];
+      if (!value || value.startsWith('--'))
+        throw new Error(`Missing benchmark option value: ${arg}`);
+      if (
+        arg === '--layer' &&
+        !['all', 'queries', 'mutations', 'security', 'journeys', 'integrity', 'fixtures'].includes(
+          value
+        )
+      )
+        throw new Error('Unknown benchmark layer');
+    }
+  }
+}
+
 /** Git can inventory a root directory symlink without a trailing slash. */
 export function shouldCopyBenchmarkSource(file) {
   const topLevel = file.replaceAll('\\', '/').split('/')[0];

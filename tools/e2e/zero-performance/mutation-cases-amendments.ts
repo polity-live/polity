@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { queries } from '../../../src/zero/queries';
+import { schema } from '../../../src/zero/schema';
 import type { MutationCase, MutationCaseContext } from './mutation-case-types';
 import { MutationFixtures, mutationFixtureID } from './mutation-fixtures';
 import { reviewedRowMutationCases, type MutationRowPlan } from './mutation-cases-core';
@@ -139,6 +140,178 @@ async function baseFixture(
   await f.trackScope('notification', 'recipient_entity_id', amendmentID);
   await f.trackScope('notification', 'on_behalf_of_entity_id', amendmentID);
 }
+/** Read only public Zero inspector state after the runner's applied-snapshot barrier.
+ * Revocation can remove query rows; any retained application row must equal SQL.
+ */
+export async function verifyRevokedAmendmentWriter(ctx: MutationCaseContext, writer: unknown) {
+  const local = writer as { inspector: { client: { map(): Promise<Map<string, unknown>> } } };
+  assert.equal(typeof local?.inspector?.client?.map, 'function', 'Missing public writer inspector');
+  const tables = schema.tables as Record<
+    string,
+    {
+      serverName?: string;
+      columns: Record<string, { serverName?: string }>;
+    }
+  >;
+  for (const [key, value] of await local.inspector.client.map()) {
+    if (!key.startsWith('e/')) continue;
+    assert.ok(value && typeof value === 'object', 'Invalid cached application row');
+    const tableName = key.split('/')[1];
+    const definition = tables[tableName];
+    const row = value as Record<string, unknown>;
+    assert.ok(definition, 'Unknown cached application table');
+    assert.equal(typeof row.id, 'string', 'Cached application row has no identity');
+    const records =
+      await ctx.sql`select * from ${ctx.sql(definition.serverName ?? tableName)} where id = ${String(row.id)}`;
+    assert.equal(records.length, 1, 'Rejected mutation left a phantom cached row');
+    for (const [field, column] of Object.entries(definition.columns)) {
+      if (!(field in row)) continue;
+      const expected = records[0][column.serverName ?? field];
+      assert.deepEqual(
+        row[field],
+        expected instanceof Date ? expected.getTime() : expected,
+        'Rejected mutation left a changed cached application field'
+      );
+    }
+  }
+}
+
+const delegatedAmendmentOperations = new Set([
+  'update',
+  'delete',
+  'addCollaborator',
+  'updateCollaborator',
+  'removeCollaborator',
+  'createCityDesign',
+  'updateCityDesign',
+  'deleteCityDesign',
+  'updateProcessBranch',
+  'createChangeRequest',
+  'createDocumentChangeRequest',
+  'createCityDesignChangeRequests',
+  'updateChangeRequest',
+  'deleteChangeRequest',
+  'finalizeInternalChangeRequestVote',
+  'repairInternalChangeRequestResolution',
+  'voteOnChangeRequest',
+]);
+function reviewedAmendmentRowCases(
+  name: string,
+  specification: ReadonlyJSONValue,
+  build: Build,
+  denied: 'anonymous' | 'outsider' | false = 'outsider'
+) {
+  const operation = name.slice('amendments.'.length);
+  const cases = reviewedRowMutationCases(
+    name,
+    {
+      reviewed: specification,
+      query: (specification as { query: string }).query,
+      authorityContract: delegatedAmendmentOperations.has(operation)
+        ? 'Delegated active collaborator role can be withdrawn; includes after-preload revocation'
+        : 'Creator identity, own support vote, authenticated creation or public read/poll authority is not a revocable amendment collaborator management grant',
+    },
+    build,
+    denied,
+    delegatedAmendmentOperations.has(operation)
+      ? revokedAmendmentBuild(operation, build)
+      : undefined
+  );
+  return cases.map(entry =>
+    entry.variant !== 'revoked-denied'
+      ? entry
+      : {
+          ...entry,
+          specification: {
+            reviewed: entry.specification,
+            rollback:
+              'After applied rejection snapshot, every retained public inspector application row exactly matches unchanged SQL; legitimately revoked query rows may be evicted; phantom optimistic rows fail',
+          },
+          prepare: async (ctx: MutationCaseContext) => ({
+            ...(await entry.prepare(ctx)),
+            verifyRollback: (writer: unknown) => verifyRevokedAmendmentWriter(ctx, writer),
+          }),
+        }
+  );
+}
+
+/** A delegated role is real authority; revoking its active relationship removes it. */
+function revokedAmendmentBuild(operation: string, build: Build): Build {
+  return (ctx, id) => {
+    const plan = build(ctx, id);
+    const amendmentID = ['update', 'delete'].includes(operation) ? id('row') : id('amendment');
+    const roleID = id('revoked-role');
+    const collaboratorID = id('revoked-collaborator');
+    const action =
+      operation === 'voteOnChangeRequest'
+        ? 'vote'
+        : operation === 'delete'
+          ? 'delete'
+          : operation.includes('Collaborator') ||
+              ['deleteChangeRequest', 'finalizeInternalChangeRequestVote'].includes(operation)
+            ? 'manage'
+            : 'update';
+    return {
+      ...plan,
+      ...(['update', 'delete'].includes(operation) && plan.initial
+        ? { initial: { ...plan.initial, visibility: 'public' } }
+        : {}),
+      setup: async f => {
+        await plan.setup?.(f);
+        // The primary amendment row is inserted after setup for update/delete.
+        if (!['update', 'delete'].includes(operation)) {
+          await insertAuthority(f);
+        }
+      },
+      afterSetup: async f => {
+        if (['update', 'delete'].includes(operation)) await insertAuthority(f);
+      },
+      beforeInvoke: async f => {
+        await f.expect('amendment_collaborator', collaboratorID, {
+          status: 'active',
+          user_id: ctx.outsiderID,
+          role_id: roleID,
+        });
+        await f.expect('action_right', id('revoked-right'), {
+          action,
+          resource: 'amendments',
+          role_id: roleID,
+          amendment_id: amendmentID,
+        });
+        await f.update('amendment_collaborator', collaboratorID, { status: 'revoked' });
+        await f.expect('amendment_collaborator', collaboratorID, { status: 'revoked' });
+      },
+      verifyAdditional: async (f, successful) => {
+        await plan.verifyAdditional?.(f, successful);
+        await f.expect('amendment_collaborator', collaboratorID, { status: 'revoked' });
+      },
+    };
+    async function insertAuthority(f: MutationFixtures) {
+      await f.insert('role', {
+        id: roleID,
+        name: 'Delegated mutation reviewer',
+        scope: 'amendment',
+        amendment_id: amendmentID,
+      });
+      await f.insert('action_right', {
+        id: id('revoked-right'),
+        role_id: roleID,
+        amendment_id: amendmentID,
+        resource: 'amendments',
+        action,
+      });
+      await f.insert('amendment_collaborator', {
+        id: collaboratorID,
+        amendment_id: amendmentID,
+        user_id: ctx.outsiderID,
+        role_id: roleID,
+        status: 'active',
+        visibility: 'public',
+      });
+    }
+  };
+}
+
 export function amendmentMutationCases(): MutationCase[] {
   const cases: MutationCase[] = [];
   const add = (
@@ -149,7 +322,7 @@ export function amendmentMutationCases(): MutationCase[] {
     denied: 'anonymous' | 'outsider' | false = 'outsider'
   ) =>
     cases.push(
-      ...reviewedRowMutationCases(
+      ...reviewedAmendmentRowCases(
         `amendments.${operation}`,
         { query, oracle, fixture: 'fresh amendment authored by owner; scoped SQL snapshots' },
         build,
@@ -511,7 +684,7 @@ const crInput = {
   status: 'open',
   reason: null,
   source_type: 'city_design_object',
-  source_id: 'fixture-tree',
+  source_id: '94e65118-4606-5d77-bc53-3164f2cf2d48',
   source_title: 'Tree',
   change_type: 'update',
   original_text: 'Before',
@@ -551,7 +724,7 @@ function changeRequestCases(): MutationCase[] {
   const cases: MutationCase[] = [];
   for (const operation of ['updateChangeRequest', 'deleteChangeRequest'])
     cases.push(
-      ...reviewedRowMutationCases(
+      ...reviewedAmendmentRowCases(
         `amendments.${operation}`,
         {
           oracle: 'owner edits own request description or deletes own pending submission',
@@ -589,7 +762,7 @@ function changeRequestCases(): MutationCase[] {
     'createCityDesignChangeRequests',
   ])
     cases.push(
-      ...reviewedRowMutationCases(
+      ...reviewedAmendmentRowCases(
         `amendments.${operation}`,
         {
           oracle:
@@ -672,7 +845,7 @@ function changeRequestCases(): MutationCase[] {
     'finalizeExpiredInternalChangeRequestVotes',
   ])
     cases.push(
-      ...reviewedRowMutationCases(
+      ...reviewedAmendmentRowCases(
         `amendments.${operation}`,
         {
           oracle:
@@ -726,7 +899,7 @@ function changeRequestCases(): MutationCase[] {
       )
     );
   cases.push(
-    ...reviewedRowMutationCases(
+    ...reviewedAmendmentRowCases(
       'amendments.voteOnChangeRequest',
       {
         oracle: 'author casts one affirmative vote before future deadline; one persisted own vote',
@@ -774,7 +947,7 @@ function changeRequestCases(): MutationCase[] {
     )
   );
   cases.push(
-    ...reviewedRowMutationCases(
+    ...reviewedAmendmentRowCases(
       'amendments.repairInternalChangeRequestResolution',
       {
         oracle:
@@ -841,12 +1014,12 @@ function workflowCases(): MutationCase[] {
     'completeProcessTaskWithEvent',
     'replanProcessBranchEvents',
   ].flatMap(operation =>
-    ['owner', 'outsider', 'anonymous'].map(
+    ['owner', 'outsider', 'anonymous', 'revoked'].map(
       actor =>
         ({
           name: `amendments.${operation}`,
           variant: actor === 'owner' ? 'authorized' : `${actor}-denied`,
-          actor,
+          actor: actor === 'revoked' ? 'outsider' : actor,
           outcome: actor === 'owner' ? 'success' : 'server-error',
           ...(actor === 'owner' ? {} : { error: 'permission_denied' }),
           observer: {
@@ -864,6 +1037,8 @@ function workflowCases(): MutationCase[] {
                   : operation === 'completeProcessTaskWithEvent'
                     ? 'support confirmation task completes and links chosen future event'
                     : 'unsetting future scheduled event clears step and creates one open schedule task',
+            revocation:
+              'Delegated amendment manage right exists before writer preload and is withdrawn by changing collaborator status; source-group role and target-event rights remain active where required',
             fixture:
               'owned fresh amendment, owned base group, real scoped event rights; SQL verifies scalar states and child counts',
           },
@@ -955,6 +1130,20 @@ function workflowCases(): MutationCase[] {
                 after = { implementation_status: 'implementation_failed' };
               } else if (operation === 'completeProcessTaskWithEvent') {
                 const event = await eventAdminFixture(f, ctx, 'amendment-task-event');
+                if (actor === 'revoked') {
+                  await f.insert('event_participant', {
+                    id: id('delegated-event-participant'),
+                    event_id: event.id,
+                    user_id: ctx.outsiderID,
+                    status: 'active',
+                  });
+                  await f.insert('event_participant_role', {
+                    id: id('delegated-event-role-link'),
+                    event_participant_id: id('delegated-event-participant'),
+                    role_id: event.roleID,
+                    assigned_by_id: ctx.ownerID,
+                  });
+                }
                 await f.update('event', event.id, {
                   start_date: '2100-01-01T00:00:00.000Z',
                   end_date: '2100-01-01T02:00:00.000Z',
@@ -1018,9 +1207,54 @@ function workflowCases(): MutationCase[] {
                 after = {
                   event_id: null,
                   status: 'pending_event',
-                  decision_status: 'previous_decision_outstanding',
+                  decision_status: 'forward_confirmed',
                 };
               }
+            }
+            const delegatedRoleID = id('delegated-role');
+            const delegatedCollaboratorID = id('delegated-collaborator');
+            if (actor === 'revoked') {
+              if (operation === 'initializeProcessPath') {
+                await f.insert('role', {
+                  id: id('source-group-role'),
+                  name: 'Path source member',
+                  scope: 'group',
+                  group_id: groupID,
+                });
+                await f.insert('group_membership', {
+                  id: id('source-membership'),
+                  group_id: groupID,
+                  user_id: ctx.outsiderID,
+                  status: 'active',
+                });
+                await f.insert('group_membership_role', {
+                  id: id('source-membership-role'),
+                  group_membership_id: id('source-membership'),
+                  role_id: id('source-group-role'),
+                  assigned_by_id: ctx.ownerID,
+                });
+              }
+              await f.insert('role', {
+                id: delegatedRoleID,
+                name: 'Delegated workflow manager',
+                scope: 'amendment',
+                amendment_id: amendmentID,
+              });
+              await f.insert('action_right', {
+                id: id('delegated-right'),
+                role_id: delegatedRoleID,
+                amendment_id: amendmentID,
+                resource: 'amendments',
+                action: 'manage',
+              });
+              await f.insert('amendment_collaborator', {
+                id: delegatedCollaboratorID,
+                amendment_id: amendmentID,
+                user_id: ctx.outsiderID,
+                role_id: delegatedRoleID,
+                status: 'active',
+                visibility: 'public',
+              });
             }
             await f.sealScopes();
             const locate = (data: unknown): Fields | undefined => {
@@ -1043,6 +1277,28 @@ function workflowCases(): MutationCase[] {
             };
             return {
               args: args as ReadonlyJSONValue,
+              ...(actor === 'revoked'
+                ? {
+                    requireWriterBefore: true,
+                    verifyRollback: (writer: unknown) => verifyRevokedAmendmentWriter(ctx, writer),
+                    beforeInvoke: async () => {
+                      await f.expect('amendment_collaborator', delegatedCollaboratorID, {
+                        status: 'active',
+                        role_id: delegatedRoleID,
+                        user_id: ctx.outsiderID,
+                      });
+                      await f.expect('action_right', id('delegated-right'), {
+                        action: 'manage',
+                        resource: 'amendments',
+                        amendment_id: amendmentID,
+                      });
+                      await f.update('amendment_collaborator', delegatedCollaboratorID, {
+                        status: 'revoked',
+                      });
+                      await f.sealScopes();
+                    },
+                  }
+                : {}),
               observe: {
                 request:
                   operation === 'initializeProcessPath'
@@ -1058,6 +1314,10 @@ function workflowCases(): MutationCase[] {
               },
               verify: async () => {
                 if (actor !== 'owner') {
+                  if (actor === 'revoked')
+                    await f.expect('amendment_collaborator', delegatedCollaboratorID, {
+                      status: 'revoked',
+                    });
                   await f.expect(table, rowID, before);
                   await f.verifyScopesUnchanged();
                   return;

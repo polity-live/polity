@@ -116,6 +116,13 @@
         "caseId": "covers the exact runtime registry; public orchestrators have substantive success cases"
       }
     ],
+    "tools/e2e/zero-performance/mutation-cases-canvas.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers every actual canvas discriminator with success, authentication, access and generation branches"
+      }
+    ],
     "tools/e2e/zero-performance/mutation-cases-content.ts": [
       {
         "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
@@ -149,6 +156,13 @@
         "file": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
         "project": "unit",
         "caseId": "seals prepared rollback state but proves fixture-owned scoped rows absent after restoration"
+      }
+    ],
+    "tools/e2e/zero-performance/mutation-cases-governance-revocation.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers grouped event creation ownership, delegation, denial and authority revoked after preload"
       }
     ],
     "tools/e2e/zero-performance/mutation-governance-fixtures.ts": [
@@ -225,7 +239,33 @@
   "actionReferences": {},
   "actionDeclarations": {},
   "sourceReferenceAdditions": {
+    "tools/e2e/zero-performance/mutation-request-completion.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
+        "project": "unit",
+        "caseId": "waits for a late partial response and returns only observed client time"
+      }
+    ],
+    "tools/e2e/zero-performance/sharding.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+        "project": "unit",
+        "caseId": "weights each revision actually measured, including a mutation-only bootstrap"
+      }
+    ],
+    "tools/e2e/zero-performance/execution.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+        "project": "unit",
+        "caseId": "matches collector and worker fingerprints and detects changed revision dependencies"
+      }
+    ],
     "tools/e2e/zero-performance/isolation.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects mistyped selections and incomplete or duplicate options before starting a stack"
+      },
       {
         "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
         "project": "unit",

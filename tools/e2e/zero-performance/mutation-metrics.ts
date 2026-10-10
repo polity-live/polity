@@ -42,6 +42,9 @@ export interface MutationSample {
   startedAt: number;
   clientAppliedAt: number;
   confirmedAt?: number;
+  /** Measuring-process observation that all correlated API requests completed; not an SDK ACK or server duration. */
+  serverWorkObservedAt?: number;
+  completionRequestIDs?: string[];
   observedAt?: number;
   clientApplyMs: number;
   serverConfirmedMs?: number;
@@ -129,6 +132,8 @@ export function mutationFailures(row: MutationMeasurement, absolute = true): str
         sample.attempts.length ||
         sample.confirmedAt !== undefined ||
         sample.serverConfirmedMs !== undefined ||
+        sample.serverWorkObservedAt !== undefined ||
+        sample.completionRequestIDs !== undefined ||
         sample.snapshotMutationID !== undefined ||
         sample.snapshotAppliedAt !== undefined
       )
@@ -146,6 +151,20 @@ export function mutationFailures(row: MutationMeasurement, absolute = true): str
       failures.push('Missing or invalid server confirmation timing');
     if (absolute && (sample.serverConfirmedMs ?? NaN) > MUTATION_BUDGETS.serverConfirmedMs)
       failures.push('Mutation server confirmation exceeds 1000 ms');
+    const completionIDs = sample.completionRequestIDs;
+    const attemptIDs = new Set(sample.attempts.map(attempt => attempt.requestID));
+    if (
+      !valid(sample.serverWorkObservedAt) ||
+      !valid(sample.confirmedAt) ||
+      (sample.serverWorkObservedAt ?? NaN) < (sample.confirmedAt ?? NaN) ||
+      !Array.isArray(completionIDs) ||
+      !completionIDs.length ||
+      completionIDs.some(id => typeof id !== 'string' || !id) ||
+      new Set(completionIDs).size !== completionIDs.length ||
+      completionIDs.length !== attemptIDs.size ||
+      completionIDs.some(id => !attemptIDs.has(id))
+    )
+      failures.push('Missing or invalid completed mutation API request proof');
     if (
       !Number.isSafeInteger(sample.mutationID) ||
       (sample.mutationID ?? NaN) < 1 ||

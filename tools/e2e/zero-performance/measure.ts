@@ -2,7 +2,7 @@ import { required } from './required';
 import { mkdir, readFile, writeFile, appendFile, stat } from 'node:fs/promises';
 import { writeAtomicReport } from './atomic-report';
 import path from 'node:path';
-import { randomUUID, createHash } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import postgres from 'postgres';
 import { Zero } from '@rocicorp/zero';
@@ -30,7 +30,7 @@ import {
 } from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
 import { measurementSummary, resultsCSV } from './results';
-import { executionMetadata } from './execution';
+import { executionMetadata, runtimeMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
 import type { MutationBrowserResult } from './mutation-browser';
 
@@ -43,16 +43,7 @@ const securitySelection: string[] | undefined = process.env.ZERO_PERFORMANCE_SEC
   : undefined;
 const logOutput = process.env.ZERO_PERFORMANCE_LOG_OUTPUT ?? output;
 const planOutput = process.env.ZERO_PERFORMANCE_PLAN_OUTPUT ?? output;
-const runtime = {
-  node: process.version,
-  platform: process.platform,
-  arch: process.arch,
-  zero: JSON.parse(await readFile('node_modules/@rocicorp/zero/package.json', 'utf8')).version,
-  lockSHA256: createHash('sha256')
-    .update(await readFile('pnpm-lock.yaml'))
-    .digest('hex'),
-  schemaTables: Object.keys(schema.tables).length,
-};
+const runtime = await runtimeMetadata(Object.keys(schema.tables).length);
 const sql = postgres(required(process.env.E2E_DATABASE_URL), {
   max: 2,
   prepare: false,

@@ -30,9 +30,45 @@ import {
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
   shouldCopyBenchmarkSource,
+  validateBenchmarkArguments,
 } from '../isolation.mjs';
 
 describe('benchmark source isolation', () => {
+  it('rejects mistyped selections and incomplete or duplicate options before starting a stack', () => {
+    expect(() => validateBenchmarkArguments(['--selection', 'cases.json'])).toThrow(
+      'Unknown benchmark option'
+    );
+    expect(() => validateBenchmarkArguments(['--selection-file'])).toThrow(
+      'Missing benchmark option value'
+    );
+    expect(() => validateBenchmarkArguments(['--mutation', '--collect-all'])).toThrow(
+      'Missing benchmark option value'
+    );
+    expect(() => validateBenchmarkArguments(['--layer', 'unknown'])).toThrow(
+      'Unknown benchmark layer'
+    );
+    expect(() => validateBenchmarkArguments(['--collect-all', '--collect-all'])).toThrow(
+      'Duplicate benchmark option'
+    );
+    expect(() =>
+      validateBenchmarkArguments([
+        '--layer',
+        'queries',
+        '--selection-file',
+        'cases.json',
+        '--collect-all',
+      ])
+    ).not.toThrow();
+    expect(() =>
+      validateBenchmarkArguments([
+        '--layer',
+        'mutations',
+        '--mutation',
+        'studio.canvas.command',
+        '--inventory-only',
+      ])
+    ).not.toThrow();
+  });
   it('excludes dependency, output and Git roots even when Git returns a bare symlink name', () => {
     for (const file of [
       'node_modules',

@@ -42,6 +42,45 @@ function manifest(base: Workload = workload()) {
   );
 }
 describe('mutation CI scheduling and confirmation', () => {
+  it('weights each revision actually measured, including a mutation-only bootstrap', () => {
+    const entry = mutation('fixture.write', 'save');
+    const head: Workload = {
+      queries: ['q/default', ...Array.from({ length: 15 }, (_, i) => `f${i}/default`)],
+      security: workload().security,
+      mutations: [entry],
+    };
+    const weights = Object.fromEntries(
+      head.queries.map(key => [key, key === 'q/default' ? 100 : 1])
+    );
+    weights[entry.key] = 150;
+    const plan = (compareMutations: boolean) =>
+      createManifest(
+        {
+          protocol: 'zero-performance/v12',
+          runID: 'revision-costs',
+          headSHA: 'a'.repeat(40),
+          baseSHA: 'b'.repeat(40),
+          harnessDigest: 'c'.repeat(64),
+          workloads: {
+            head,
+            base: {
+              ...head,
+              mutations: compareMutations ? [entry] : [],
+              ...(compareMutations
+                ? {}
+                : { mutationBootstrap: 'Baseline has no mutation catalog' }),
+            },
+          },
+        },
+        weights
+      );
+    // Query cost is 2*100; bootstrap mutation cost is only 150.
+    expect(plan(false).shards[0].head).toEqual(['q/default']);
+    // A supported baseline adds the second genuine 150-ms mutation workload.
+    expect(plan(true).shards[0].head).toEqual([entry.key]);
+    expect(() => validateManifest(plan(false))).not.toThrow();
+    expect(() => validateManifest(plan(true))).not.toThrow();
+  });
   it('validates external metadata against raw delivery counts in full and partial reports', async () => {
     const plan = manifest(),
       entry = workload().mutations[0];
