@@ -32,7 +32,7 @@ vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
   useRouterState: ({ select }: any) => select({ location: { pathname: mocks.pathname } }),
-  useSearch: () => ({}),
+  useSearch: ({ select }: any) => select({}),
 }));
 vi.mock('@/features/navigation/dynamic-navigation.tsx', () => ({
   DynamicNavigation: (props: any) => {
