@@ -53,6 +53,16 @@ export function installNavigationProbe() {
     zero.connection.state.subscribe(record);
   };
   scope.__zeroPerformanceActiveViews = () => [...activeViews.values()];
+  scope.__zeroPerformanceGroupAccess = (id: string) => {
+    const views = [...activeViews.values()].filter(
+      view => view.name === 'groups.wikiOverview' && view.args?.id === id
+    );
+    return {
+      observed: views.length > 0,
+      complete: views.length > 0 && views.every(view => view.type === 'complete'),
+      present: views.some(view => view.ids.includes(id)),
+    };
+  };
   const matchesView = (event: any, target: NavigationTarget) =>
     target.queryNames?.includes(event.name) &&
     event.type === 'complete' &&

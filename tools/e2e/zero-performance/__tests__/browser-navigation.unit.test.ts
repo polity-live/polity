@@ -75,6 +75,30 @@ function probe() {
 }
 
 describe('navigation paint measurement', () => {
+  it('requires a matching authoritative view for group revocation, including after release', () => {
+    const { scope } = probe();
+    const state = () => scope.__zeroPerformanceGroupAccess('private');
+    expect(state()).toEqual({ observed: false, complete: false, present: false });
+    const event = {
+      activationID: 'group-view',
+      phase: 'commit',
+      name: 'groups.wikiOverview',
+      args: { id: 'other' },
+      type: 'complete',
+      ids: [],
+      at: performance.now(),
+    };
+    scope.__zeroPerformanceView(event);
+    expect(state().observed).toBe(false);
+    scope.__zeroPerformanceView({ ...event, args: { id: 'private' }, type: 'unknown' });
+    expect(state()).toEqual({ observed: true, complete: false, present: false });
+    scope.__zeroPerformanceView({ ...event, args: { id: 'private' }, ids: ['private'] });
+    expect(state()).toEqual({ observed: true, complete: true, present: true });
+    scope.__zeroPerformanceView({ ...event, args: { id: 'private' } });
+    expect(state()).toEqual({ observed: true, complete: true, present: false });
+    scope.__zeroPerformanceView({ ...event, phase: 'release' });
+    expect(state()).toEqual({ observed: false, complete: false, present: false });
+  });
   it('accepts a visible matching node even when an earlier duplicate remains hidden', () => {
     history.replaceState(null, '', '/target');
     document.body.innerHTML = '<main><p style="opacity:0">Target</p><h1>Target</h1></main>';

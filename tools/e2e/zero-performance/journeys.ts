@@ -135,8 +135,16 @@ export async function measureJourneys(
     const sockets = new Set<WebSocket>();
     page.on('websocket', socket => sockets.add(socket));
     const pageErrors: string[] = [];
+    let renderLoopErrors = 0;
     page.on('pageerror', error => pageErrors.push(error.message));
     page.on('console', message => {
+      if (
+        message.type() === 'error' &&
+        /Maximum update depth exceeded|Too many re-renders/.test(message.text())
+      ) {
+        renderLoopErrors++;
+        if (renderLoopErrors <= 3) console.info('zero-performance-react-render-loop');
+      }
       if (message.type() === 'warning' && /Slow query/i.test(message.text()))
         warnings.push(message.text());
       if (message.text().startsWith('zero-performance-inspector:')) console.info(message.text());
@@ -631,19 +639,40 @@ export async function measureJourneys(
       if (!remaining || Object.values(remaining).some(Boolean))
         throw new Error('Revocation fixture still grants group discovery');
     });
-    let leaked = true;
+    let rootAccess = { observed: false, complete: false, present: true };
     while (Date.now() - revokedAt < BUDGETS.totalMs) {
-      leaked = await withDeadline(
-        page.evaluate(async id => {
-          const zero = (globalThis as any).__zero;
-          if (!zero) throw new Error('Missing Zero instance');
-          const rows = await zero.inspector.client.rows('group');
-          return rows.some((row: any) => row.id === id);
-        }, seed.groupId),
-        'Browser evaluate'
+      rootAccess = await withDeadline(
+        page.evaluate(id => (globalThis as any).__zeroPerformanceGroupAccess(id), seed.groupId),
+        'Revocation authoritative view'
       );
-      if (!leaked) break;
+      if (rootAccess.observed && rootAccess.complete && !rootAccess.present) break;
       await page.waitForTimeout(25);
+    }
+    // A real authoritative root result drives readiness. Inspect the complete
+    // replica afterwards, rather than forcing refresh/persist on every sync tick.
+    // The replica check remains required and inside the unchanged deadline.
+    let leaked = await withDeadline(
+      page.evaluate(
+        async id =>
+          (await (globalThis as any).__zero.inspector.client.rows('group')).some(
+            (row: any) => row.id === id
+          ),
+        seed.groupId
+      ),
+      'Revocation local replica'
+    );
+    while (leaked && Date.now() - revokedAt < BUDGETS.totalMs) {
+      await page.waitForTimeout(25);
+      leaked = await withDeadline(
+        page.evaluate(
+          async id =>
+            (await (globalThis as any).__zero.inspector.client.rows('group')).some(
+              (row: any) => row.id === id
+            ),
+          seed.groupId
+        ),
+        'Revocation local replica'
+      );
     }
     const revocation: JourneyResult = {
       route: `/group/${seed.groupId}`,
@@ -651,6 +680,9 @@ export async function measureJourneys(
       visibleMs: Date.now() - revokedAt,
       queries: [],
       failures: [
+        ...(!rootAccess.observed || !rootAccess.complete || rootAccess.present
+          ? ['Missing authoritative group revocation result']
+          : []),
         ...(leaked ? ['Private group remains synced after membership revocation'] : []),
         ...((await withDeadline(
           page.getByText(updatedName, { exact: true }).filter({ visible: true }).count(),
@@ -705,6 +737,14 @@ export async function measureJourneys(
         socket.off('framereceived', recordFrame);
       }
       await wireWrites;
+      await writeFile(
+        path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'revocation-inspector-wire.json'),
+        JSON.stringify({
+          scope: 'post-acceptance-diagnostic',
+          frames: wireFrames,
+          renderLoopErrors,
+        })
+      );
       if (inspectorProfiler) {
         try {
           const { profile } = await withDeadline(
