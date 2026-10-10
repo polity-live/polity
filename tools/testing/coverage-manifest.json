@@ -120976,6 +120976,11 @@
             "coveredStatements": 2,
             "totalStatements": 2
           }
+        },
+        {
+          "file": "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
+          "project": "unit",
+          "caseId": "forwards mutation identity while preserving authority, commit and delivery ordering"
         }
       ],
       "suggestedTestRefs": ["src/zero/__tests__/db-provider.collaboration.unit.test.ts"]

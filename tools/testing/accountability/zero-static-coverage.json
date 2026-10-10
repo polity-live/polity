@@ -237,6 +237,13 @@
         "caseId": "reports missing client identity as an empty string"
       }
     ],
+    "src/zero/db-provider.ts": [
+      {
+        "file": "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
+        "project": "unit",
+        "caseId": "forwards mutation identity while preserving authority, commit and delivery ordering"
+      }
+    ],
     "src/zero/query-definitions.ts": [
       {
         "file": "src/zero/__tests__/query-definitions.unit.test.ts",
