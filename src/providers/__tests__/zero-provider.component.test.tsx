@@ -13,10 +13,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../auth-provider', () => ({
-  useAuth: () => ({ session: mocks.session, loading: mocks.loading }),
+  useAuth: () => ({ session: mocks.session, user: mocks.session?.user, loading: mocks.loading }),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
+  useQuery: () => [[], { type: 'complete' }],
   ZeroProvider: (props: Record<string, unknown> & { children?: React.ReactNode }) => {
     mocks.zeroProps = props;
     return props.children;

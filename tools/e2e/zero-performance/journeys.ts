@@ -5,6 +5,7 @@ import {
   type Browser,
   type BrowserContext,
   type WebSocket,
+  type CDPSession,
 } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -634,6 +635,7 @@ export async function measureJourneys(
         : undefined;
     if (inspectorProfiler) {
       await withDeadline(inspectorProfiler.send('Profiler.enable'), 'Inspector CPU enable');
+      await withDeadline(inspectorProfiler.send('Debugger.enable'), 'Inspector debugger enable');
       await withDeadline(
         inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
         'Inspector CPU interval'
@@ -657,7 +659,10 @@ export async function measureJourneys(
       rootAccess = await withDeadline(
         page.evaluate(id => (globalThis as any).__zeroPerformanceGroupAccess(id), seed.groupId),
         'Revocation authoritative view'
-      );
+      ).catch(async error => {
+        if (inspectorProfiler) await captureBlockedRenderer(inspectorProfiler);
+        throw error;
+      });
       if (rootAccess.observed && rootAccess.complete && !rootAccess.present) break;
       await page.waitForTimeout(25);
     }
@@ -825,6 +830,36 @@ export async function measureJourneys(
     );
     await onUpdate(records);
     await withDeadline(browser.close(), 'Browser close');
+  }
+}
+
+/** Interrupt a failed diagnostic renderer briefly to retain its stack, without locals or arguments. */
+async function captureBlockedRenderer(session: CDPSession) {
+  const paused = new Promise<{
+    callFrames: {
+      functionName: string;
+      url: string;
+      location: { lineNumber: number; columnNumber?: number };
+    }[];
+  }>(resolve => session.once('Debugger.paused', resolve));
+  try {
+    await withDeadline(session.send('Debugger.pause'), 'Renderer diagnostic pause', 5_000);
+    const event = await withDeadline(paused, 'Renderer diagnostic stack', 5_000);
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'blocked-renderer-stack.json'),
+      JSON.stringify({
+        scope: 'after-failed-acceptance',
+        frames: event.callFrames.map(frame => ({
+          name: frame.functionName,
+          path: frame.url ? new URL(frame.url).pathname : '',
+          line: frame.location.lineNumber + 1,
+          column:
+            frame.location.columnNumber === undefined ? undefined : frame.location.columnNumber + 1,
+        })),
+      })
+    );
+  } finally {
+    await withDeadline(session.send('Debugger.resume'), 'Renderer diagnostic resume', 5_000);
   }
 }
 
