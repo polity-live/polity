@@ -749,6 +749,13 @@ export async function measureJourneys(
       revocation.inspectionMs = performance.now() - revocationInspectionAt;
     } catch (error) {
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
+      if (inspectorProfiler) {
+        try {
+          await captureBlockedRenderer(inspectorProfiler);
+        } catch {
+          revocation.failures.push('Blocked renderer stack diagnosis failed');
+        }
+      }
     } finally {
       for (const socket of sockets) {
         socket.off('framesent', recordFrame);
