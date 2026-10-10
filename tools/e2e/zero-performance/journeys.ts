@@ -372,6 +372,13 @@ export async function measureJourneys(
       // work and its overhead must never become part of the acceptance timings.
       const profiler = await context.newCDPSession(page);
       let profiling = false;
+      let tracing = false;
+      const timeline: unknown[] = [];
+      profiler.on('Tracing.dataCollected', ({ value }) => {
+        // Export timing fields only; trace payloads can contain application data.
+        for (const { name, cat, ph, ts, dur, pid, tid } of value)
+          timeline.push({ name, cat, ph, ts, dur, pid, tid });
+      });
       try {
         await page.evaluate(() => {
           const scope = globalThis as any;
@@ -400,7 +407,13 @@ export async function measureJourneys(
         await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
         await profiler.send('Profiler.start');
         profiling = true;
-        for (const route of routes) {
+        await profiler.send('Tracing.start', {
+          categories: 'devtools.timeline,blink.user_timing',
+          options: 'record-as-much-as-possible',
+        });
+        tracing = true;
+        for (const [index, route] of routes.entries()) {
+          await page.evaluate(index => performance.mark(`zero-route-${index}-start`), index);
           await navigate(page, route.path, route.search ?? {}, route);
           await page.waitForFunction(
             () => {
@@ -410,12 +423,28 @@ export async function measureJourneys(
             undefined,
             { timeout: 15_000 }
           );
+          await page.evaluate(index => performance.mark(`zero-route-${index}-end`), index);
         }
       } catch (error) {
         // Diagnostic replay must not prevent the subscribed update/revocation
         // checks from running. Preserve the failure on the real navigation record.
         required(records.at(-1)).failures.push(`Navigation CPU diagnostics: ${String(error)}`);
       } finally {
+        try {
+          if (tracing) {
+            const completed = new Promise<void>(resolve =>
+              profiler.once('Tracing.tracingComplete', () => resolve())
+            );
+            await profiler.send('Tracing.end');
+            await withDeadline(completed, 'Navigation timeline export');
+            await writeFile(
+              path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-timeline.json'),
+              JSON.stringify({ routes: routes.map(route => route.queryNames), events: timeline })
+            );
+          }
+        } catch (error) {
+          required(records.at(-1)).failures.push(`Navigation timeline export: ${String(error)}`);
+        }
         try {
           if (profiling) {
             const { profile } = await profiler.send('Profiler.stop');
@@ -563,42 +592,21 @@ export async function measureJourneys(
       ],
     };
     records.push(revocation);
+    const revocationInspectionAt = performance.now();
     try {
       revocation.queries = await inspect(page, clientSamples);
+      revocation.inspectionMs = performance.now() - revocationInspectionAt;
     } catch (error) {
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
     }
     // Retained-query export runs after navigation and synchronization acceptance.
     if (process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1') {
       try {
-        const retainedAt = performance.now();
-        const retainedQueries = await withDeadline(
-          page.evaluate(
-            async ({ adminPassword, userID }) => {
-              const zero = (globalThis as any).__zero;
-              if (!zero || zero.userID !== userID)
-                throw new Error('Browser is not authenticated as the benchmark actor');
-              if (!(await zero.inspector.authenticate(adminPassword)))
-                throw new Error('Browser inspector authentication rejected');
-              // The measured browser owns this client. Include all its active and
-              // TTL-retained queries without an unrelated aggregate RPC.
-              return (await zero.inspector.client.queries()).map((query: any) => ({
-                name: query.name,
-                id: query.id,
-                clientID: query.clientID,
-                args: query.args,
-                deleted: query.deleted,
-                client: query.hydrateClient,
-                server: query.hydrateServer,
-                total: query.hydrateTotal,
-                ttl: query.ttl,
-                inactive: query.inactivatedAt,
-              }));
-            },
-            { adminPassword: required(process.env.ZERO_ADMIN_PASSWORD), userID: OWNER_ID }
-          ),
-          'Retained query diagnostics'
-        );
+        // The mandatory revocation inspection just collected the full client
+        // snapshot, including background and TTL queries. Export that same
+        // snapshot rather than issuing an identical second Inspector RPC.
+        const inspectionMs = required(revocation.inspectionMs);
+        if (!revocation.queries.length) throw new Error('Missing retained query snapshot');
         await writeFile(
           path.join(
             required(process.env.ZERO_PERFORMANCE_OUTPUT),
@@ -606,8 +614,9 @@ export async function measureJourneys(
           ),
           JSON.stringify({
             scope: 'client',
-            inspectionMs: performance.now() - retainedAt,
-            queries: retainedQueries,
+            source: 'revocation-inspection',
+            inspectionMs,
+            queries: revocation.queries,
           })
         );
       } catch (error) {
