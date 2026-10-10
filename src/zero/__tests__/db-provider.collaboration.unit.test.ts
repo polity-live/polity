@@ -71,6 +71,7 @@ it('forwards mutation identity while preserving authority, commit and delivery o
   vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
   const logs = vi.spyOn(console, 'info').mockImplementation(() => undefined);
   const identity = { clientGroupID: 'group', clientID: 'client', mutationID: 7 };
+  const transactionInput = { ...identity, upstreamSchema: 'public' };
   const request = new Request('http://localhost/api/mutate', {
     method: 'POST',
     body: JSON.stringify({
@@ -85,10 +86,10 @@ it('forwards mutation identity while preserving authority, commit and delivery o
         io.events.push('delivery');
       });
       return 'updated';
-    }, identity)
+    }, transactionInput)
   );
   expect(result).toBe('updated');
-  expect(io.identity).toHaveBeenCalledExactlyOnceWith(identity);
+  expect(io.identity).toHaveBeenCalledExactlyOnceWith(transactionInput);
   expect(io.events).toEqual(['begin', 'authority', 'domain', 'commit', 'delivery']);
   const phases = logs.mock.calls.map(([entry]) => JSON.parse(String(entry)));
   expect(phases.map(entry => entry.phase)).toEqual([
