@@ -35,6 +35,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Start the browser client's storage/session initialization during module
+// evaluation, while the remaining route code loads. This holds no validated
+// identity: the provider still calls getUser before opening the loading gate.
+const browserSupabase = typeof window === 'undefined' ? undefined : createClient();
+
 interface AccessTokenClaims {
   amr?: (string | { method?: string })[];
 }
@@ -106,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [authStateLoading, setAuthStateLoading] = useState(false);
   const [authEventVersion, setAuthEventVersion] = useState(0);
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(() => browserSupabase ?? createClient(), []);
   const authGeneration = useRef(0);
   const userValidations = useRef(new Map<string, ReturnType<typeof supabase.auth.getUser>>());
   const validateUser = useCallback(

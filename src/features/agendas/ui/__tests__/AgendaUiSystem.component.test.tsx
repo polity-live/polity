@@ -147,5 +147,23 @@ describe('AgendaUiSystem', () => {
     expect(document.activeElement).toBe(speakerTab);
     fireEvent.mouseDown(speakerTab, { button: 0 });
     expect(screen.getByText('Speaker queue')).toBeTruthy();
+    expect(speakerTab.getAttribute('aria-selected')).toBe('true');
+    expect(
+      document
+        .getElementById(speakerTab.getAttribute('aria-controls')!)
+        ?.getAttribute('aria-labelledby')
+    ).toBe(speakerTab.id);
+    fireEvent.keyDown(speakerTab, { key: 'Home' });
+    expect(document.activeElement).toBe(detailsTab);
+    expect(screen.getByText('Amendment context')).toBeTruthy();
+    fireEvent.keyDown(detailsTab, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(speakerTab);
+    fireEvent.keyDown(speakerTab, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(detailsTab);
+    fireEvent.keyDown(detailsTab, { key: 'End' });
+    expect(document.activeElement).toBe(speakerTab);
+    fireEvent.keyDown(speakerTab, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(detailsTab);
+    expect(screen.queryByText('Speaker queue')).toBeNull();
   });
 });

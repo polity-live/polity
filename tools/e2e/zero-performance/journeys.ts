@@ -127,6 +127,7 @@ export async function measureJourneys(
     page.on('console', message => {
       if (message.type() === 'warning' && /Slow query/i.test(message.text()))
         warnings.push(message.text());
+      if (message.text().startsWith('zero-performance-inspector:')) console.info(message.text());
     });
     const routes: NavigationTarget[] = [
       {
@@ -868,7 +869,7 @@ async function inspectOnce(
     ),
     'Browser inspector authentication'
   );
-  const snapshot = await withDeadline(
+  const serializedSnapshot = await withDeadline(
     page.evaluate(
       async ({ userID }) => {
         const zero = (globalThis as any).__zero;
@@ -895,10 +896,16 @@ async function inspectOnce(
           await new Promise(resolve => setTimeout(resolve, 10));
         }
         (globalThis as any).__benchmarkInspectorStage = 'queries';
+        console.info(
+          `zero-performance-inspector:${JSON.stringify({ phase: 'queries', views: ((globalThis as any).__zeroPerformanceViewEvents ?? []).length, preloads: stateEvents().length })}`
+        );
         const queries = await zero.inspector.client.queries();
         (globalThis as any).__benchmarkInspectorStage = 'captured';
+        console.info(
+          `zero-performance-inspector:${JSON.stringify({ phase: 'captured', queries: queries.length })}`
+        );
         const captured = new Set(starts.map((event: PreloadLifecycleEvent) => event.activationID));
-        return {
+        return JSON.stringify({
           measuredAt: performance.now(),
           // Hook subscriptions can join an already materialized query while the
           // Inspector request is in flight. Capture their live state at this
@@ -920,7 +927,7 @@ async function inspectOnce(
             ttl: query.ttl,
             inactive: query.inactivatedAt,
           })),
-        };
+        });
         function stateEvents() {
           return (globalThis as any).__zeroPerformancePreloadEvents ?? [];
         }
@@ -942,6 +949,7 @@ async function inspectOnce(
       `${error instanceof Error ? error.message : String(error)}; ${JSON.stringify(state)}`
     );
   });
+  const snapshot = JSON.parse(serializedSnapshot);
   const events = snapshot.events as PreloadLifecycleEvent[];
   const observations: QueryObservation[] = snapshot.queries.map((query: any) => {
     const key = preloadKey(`queries.${query.name}`, query.args?.[0] ?? {});
