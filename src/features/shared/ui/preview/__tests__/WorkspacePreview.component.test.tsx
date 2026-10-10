@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   createMemoryHistory,
@@ -10,7 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PreviewButton, WorkspacePreviewProvider } from '../WorkspacePreview';
+import { PreviewButton, WorkspacePreviewProvider, useWorkspacePreview } from '../WorkspacePreview';
 vi.mock('../../ui/dialog', async original => {
   const actual = await original<typeof import('../../ui/dialog')>();
   return {
@@ -70,12 +70,20 @@ afterEach(() => {
   queryState.loading = false;
   queryState.available = true;
   queryState.row = null;
+  previewConsumerRender.mockClear();
+});
+
+const previewConsumerRender = vi.fn();
+const PreviewConsumer = memo(function PreviewConsumer() {
+  previewConsumerRender(useWorkspacePreview());
+  return null;
 });
 
 function List() {
   const [filter, setFilter] = useState('Open');
   return (
     <div>
+      <PreviewConsumer />
       <input aria-label="Filter" value={filter} onChange={event => setFilter(event.target.value)} />
       <div data-testid="scroll" style={{ height: 200, overflow: 'auto' }}>
         <div style={{ height: 800 }}>
@@ -106,6 +114,25 @@ async function setup(initialEntry = '/todos?status=pending') {
 }
 
 describe('workspace preview history and focus', () => {
+  it('keeps the action context stable across search and preview navigation while using the current location', async () => {
+    const router = await setup();
+    const renders = previewConsumerRender.mock.calls.length;
+    const action = previewConsumerRender.mock.calls.at(-1)?.[0];
+    await act(async () =>
+      router.navigate({ to: '/todos', search: { status: 'completed' } as any })
+    );
+    expect(previewConsumerRender.mock.calls.length).toBe(renders);
+    await act(async () => action.openPreview({ kind: 'todo', id: 'one' }));
+    await screen.findByRole('dialog');
+    expect(router.state.location.hash).toBe('preview=todo:one');
+    expect(router.state.location.search).toMatchObject({ status: 'completed' });
+    expect(previewConsumerRender.mock.calls.length).toBe(renders);
+    const replace = vi.spyOn(router.history, 'replace');
+    await act(async () => action.openPreview({ kind: 'todo', id: 'second' }));
+    expect(router.state.location.hash).toBe('preview=todo:second');
+    expect(replace).toHaveBeenCalledOnce();
+    replace.mockRestore();
+  });
   it('replaces an existing preview without adding history and tolerates a non-HTML focus target', async () => {
     const router = await setup('/todos#preview=todo:first');
     await screen.findByRole('dialog');
