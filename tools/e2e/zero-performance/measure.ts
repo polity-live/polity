@@ -33,6 +33,7 @@ import { measurementSummary, resultsCSV } from './results';
 import { executionMetadata, runtimeMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
 import type { MutationBrowserResult } from './mutation-browser';
+import { mutationBrowserFailures } from './mutation-browser-metrics';
 
 (globalThis as any).TESTING ??= false;
 
@@ -602,7 +603,10 @@ try {
   if (
     infrastructure.length ||
     results.some(result => result.failures.length) ||
-    (Array.isArray(journeys) && journeys.some((j: any) => j.failures.length))
+    (Array.isArray(journeys) &&
+      (journeys.some((j: any) => j.failures.length) ||
+        (!process.env.ZERO_PERFORMANCE_MUTATION_BOOTSTRAP &&
+          mutationBrowserFailures(browserMutations).length > 0)))
   )
     process.exitCode = 1;
 } catch (error) {

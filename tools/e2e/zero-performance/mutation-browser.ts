@@ -15,6 +15,8 @@ export interface MutationBrowserResult {
   finalVisibleMs: number | null;
   serverOutcome: 'success' | 'server-error' | 'unconfirmed';
   databaseVerified: boolean;
+  reloadVerified?: boolean;
+  reloadVerificationMs?: number | null;
   failures: string[];
   confirmationSource: 'independent-sql';
   confirmationSemantics: 'committed-state-observation-upper-bound';
@@ -27,6 +29,7 @@ export interface BrowserMutationPhases {
   visibleReaction: () => Promise<void>;
   committedState: () => Promise<void>;
   finalVisibleState: () => Promise<void>;
+  reloadState?: () => Promise<void>;
 }
 
 /** Journeys supplies a browser context without Playwright's baseURL option. */
@@ -39,7 +42,10 @@ export function browserMutationRouteURL(path: string, appURL: string | undefined
 /** UI and committed-state observers are independent; neither duration is an SDK ACK. */
 export async function measureBrowserMutationPhases(
   phases: BrowserMutationPhases,
-  record: (phase: 'uiMs' | 'serverConfirmedMs' | 'finalVisibleMs', elapsed: number) => void,
+  record: (
+    phase: 'uiMs' | 'serverConfirmedMs' | 'finalVisibleMs' | 'reloadVerificationMs',
+    elapsed: number
+  ) => void,
   now: () => number = () => performance.now()
 ): Promise<void> {
   const start = now();
@@ -52,6 +58,11 @@ export async function measureBrowserMutationPhases(
   if (failed?.status === 'rejected') throw failed.reason;
   await phases.finalVisibleState();
   record('finalVisibleMs', now() - start);
+  if (phases.reloadState) {
+    const reloadStart = now();
+    await phases.reloadState();
+    record('reloadVerificationMs', now() - reloadStart);
+  }
 }
 
 /** Uses the real owner page supplied by journeys. Every fixture enforces isolated DB aliases. */
@@ -114,13 +125,30 @@ export async function measureMutationBrowserActions(
   }
   const phasesFor = (row: MutationBrowserResult, phases: BrowserMutationPhases) => {
     stage = 'write and state observation';
-    return measureBrowserMutationPhases(phases, (phase, elapsed) => {
-      row[phase] = elapsed;
-      if (phase === 'serverConfirmedMs') {
-        row.serverOutcome = 'success';
-        row.databaseVerified = true;
+    const reloadState = phases.reloadState;
+    return measureBrowserMutationPhases(
+      {
+        ...phases,
+        finalVisibleState: async () => {
+          stage = 'current final visible state';
+          await phases.finalVisibleState();
+        },
+        reloadState: reloadState
+          ? async () => {
+              stage = 'reload durability verification';
+              await reloadState();
+            }
+          : undefined,
+      },
+      (phase, elapsed) => {
+        row[phase] = elapsed;
+        if (phase === 'reloadVerificationMs') row.reloadVerified = true;
+        if (phase === 'serverConfirmedMs') {
+          row.serverOutcome = 'success';
+          row.databaseVerified = true;
+        }
       }
-    });
+    );
   };
   await run('save', async (f, row) => {
     const name = `Mutation save ${namespace}`;
@@ -145,6 +173,9 @@ export async function measureMutationBrowserActions(
             (await sql`select name from public.group where id=${seed.groupId}`)[0]?.name === name
         ),
       finalVisibleState: async () => {
+        await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
+      },
+      reloadState: async () => {
         await page.reload();
         await waitForAppReady(page);
         await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
@@ -153,23 +184,21 @@ export async function measureMutationBrowserActions(
   });
   await run('send-message', async (f, row) => {
     const content = `Mutation message ${namespace}`;
+    const conversationName = `Mutation conversation ${namespace}`;
     await f.track('conversation', conversation.conversationId);
     await f.trackScope('message', 'conversation_id', conversation.conversationId);
     await f.trackScope('conversation_participant', 'conversation_id', conversation.conversationId);
     await f.trackScope('notification', 'sender_id', seed.userId);
-    const [baseline] =
-      await sql`select content from public.message where conversation_id=${conversation.conversationId} order by created_at desc limit 1`;
-    assert.equal(
-      typeof baseline?.content,
-      'string',
-      'Existing seeded message identifies the exact conversation'
-    );
+    // Public conversationPage searches persisted names; seeded message copy need not be unique.
+    await f.update('conversation', { id: conversation.conversationId, name: conversationName });
     await ready('/messages');
     await page
       .locator('[data-action-id="messages.conversation.search.change"]')
-      .fill(String(baseline.content));
+      .fill(conversationName);
+    stage = 'conversation search result';
     await expect(page.locator('[data-action-id="messages.conversation.select"]')).toHaveCount(1);
     await page.locator('[data-action-id="messages.conversation.select"]').click();
+    stage = 'conversation composer preparation';
     await page.locator('[data-action-id="messages.composer.text.change"]').fill(content);
     await expect(page.getByText(content, { exact: true })).toHaveCount(0);
     row.uiEvidence = 'Exact new message content visible in the conversation';
@@ -185,9 +214,17 @@ export async function measureMutationBrowserActions(
           return result.length === 1;
         }),
       finalVisibleState: async () => {
+        await expect(page.getByText(content, { exact: true }).first()).toBeVisible();
+      },
+      reloadState: async () => {
         await page.reload();
         await waitForAppReady(page);
-        await page.locator('[data-action-id="messages.conversation.search.change"]').fill(content);
+        await page
+          .locator('[data-action-id="messages.conversation.search.change"]')
+          .fill(conversationName);
+        await expect(page.locator('[data-action-id="messages.conversation.select"]')).toHaveCount(
+          1
+        );
         await page.locator('[data-action-id="messages.conversation.select"]').click();
         await expect(page.getByText(content, { exact: true }).first()).toBeVisible();
       },
@@ -233,6 +270,15 @@ export async function measureMutationBrowserActions(
             'active'
         ),
       finalVisibleState: async () => {
+        await expect(approval).toHaveCount(0);
+        await expect(
+          page
+            .locator('tr')
+            .filter({ hasText: String(user.handle) })
+            .first()
+        ).toBeVisible();
+      },
+      reloadState: async () => {
         await page.reload();
         await waitForAppReady(page);
         await expect(
@@ -338,10 +384,15 @@ export async function measureMutationBrowserActions(
           return result.length === 1;
         }),
       finalVisibleState: async () => {
-        await expect(page.getByRole('dialog')).toHaveCount(0);
+        stage = 'vote success overlay closure';
+        await expect(page.locator('[data-slot="vote-submission-overlay"]')).toHaveCount(0);
+        stage = 'vote current indication proof';
+        await expect(page.getByText('Your indication', { exact: true }).first()).toBeVisible();
+      },
+      reloadState: async () => {
         await page.reload();
         await waitForAppReady(page);
-        await expect(page.getByText(title, { exact: true }).first()).toBeVisible();
+        await expect(page.getByRole('heading', { name: title, exact: true }).first()).toBeVisible();
         await expect(page.getByText('Your indication', { exact: true }).first()).toBeVisible();
       },
     });

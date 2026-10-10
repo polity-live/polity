@@ -46,4 +46,12 @@ describe('bounded sequential query collection', () => {
       })
     ).toBe(false);
   });
+  it('recognizes incomplete browser mutation evidence as a recorded gate failure', () => {
+    const report = { infrastructure: [], measurements: [], journeys: [], browserMutations: [] };
+    expect(unexplainedWorkerExit(1, report)).toBe(false);
+    expect(unexplainedWorkerExit(2, report)).toBe(true);
+    expect(unexplainedWorkerExit(1, { infrastructure: [], measurements: [], journeys: [] })).toBe(
+      true
+    );
+  });
 });

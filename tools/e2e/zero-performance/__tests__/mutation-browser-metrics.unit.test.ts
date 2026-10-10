@@ -7,6 +7,8 @@ const rows = (): MutationBrowserResult[] =>
     uiMs: 50,
     serverConfirmedMs: 150,
     finalVisibleMs: 200,
+    reloadVerified: true,
+    reloadVerificationMs: 3_000,
     serverOutcome: 'success',
     databaseVerified: true,
     failures: [],
@@ -51,5 +53,20 @@ describe('browser mutation acceptance', () => {
     expect(mutationBrowserFailures(input, false)).toContain(
       'save: Missing independent UI/confirmation semantics'
     );
+  });
+  it('requires reload durability proof without charging a separate navigation to mutation latency', () => {
+    expect(mutationBrowserFailures(rows())).toEqual([]);
+    const input = rows();
+    input[0].reloadVerified = false;
+    expect(mutationBrowserFailures(input)).toContain(
+      'save: Missing or invalid independent reload proof'
+    );
+    input[0].reloadVerified = true;
+    for (const value of [null, NaN, Infinity, -1]) {
+      input[0].reloadVerificationMs = value;
+      expect(mutationBrowserFailures(input)).toContain(
+        'save: Missing or invalid independent reload proof'
+      );
+    }
   });
 });

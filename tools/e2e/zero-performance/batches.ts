@@ -1,4 +1,5 @@
 import type { Measurement } from './metrics';
+import { mutationBrowserFailures } from './mutation-browser-metrics';
 
 export const QUERY_BATCH_SIZE = 20;
 export const PROFILE_SUFFIXES = [
@@ -37,6 +38,7 @@ export function unexplainedWorkerExit(
     infrastructure?: readonly string[];
     measurements: readonly Pick<Measurement, 'failures'>[];
     journeys?: readonly { failures: readonly string[] }[];
+    browserMutations?: Parameters<typeof mutationBrowserFailures>[0];
   }
 ) {
   if (code === 0) return false;
@@ -44,6 +46,8 @@ export function unexplainedWorkerExit(
   return !(
     report.infrastructure?.length ||
     report.measurements.some(row => row.failures.length) ||
-    report.journeys?.some(row => row.failures.length)
+    report.journeys?.some(row => row.failures.length) ||
+    (report.browserMutations !== undefined &&
+      mutationBrowserFailures(report.browserMutations).length > 0)
   );
 }

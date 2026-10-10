@@ -10,6 +10,53 @@ function deferred() {
 }
 
 describe('browser mutation phase measurements', () => {
+  it('keeps mandatory reload verification outside the completed mutation duration', async () => {
+    let time = 0;
+    const recorded: [string, number][] = [];
+    await measureBrowserMutationPhases(
+      {
+        perform: async () => {
+          time = 100;
+        },
+        visibleReaction: async () => undefined,
+        committedState: async () => undefined,
+        finalVisibleState: async () => {
+          time = 200;
+        },
+        reloadState: async () => {
+          time = 3200;
+        },
+      },
+      (phase, elapsed) => recorded.push([phase, elapsed]),
+      () => time
+    );
+    expect(recorded).toEqual([
+      ['uiMs', 100],
+      ['serverConfirmedMs', 100],
+      ['finalVisibleMs', 200],
+      ['reloadVerificationMs', 3000],
+    ]);
+  });
+
+  it('retains actual successful action timings but fails a missing durable state after reload', async () => {
+    const recorded: string[] = [];
+    await expect(
+      measureBrowserMutationPhases(
+        {
+          perform: async () => undefined,
+          visibleReaction: async () => undefined,
+          committedState: async () => undefined,
+          finalVisibleState: async () => undefined,
+          reloadState: async () => {
+            throw new Error('durable state missing');
+          },
+        },
+        phase => recorded.push(phase)
+      )
+    ).rejects.toThrow('durable state missing');
+    expect(recorded).toEqual(['uiMs', 'serverConfirmedMs', 'finalVisibleMs']);
+  });
+
   it('resolves every action route absolutely for the journeys context without baseURL', () => {
     const currentURL = 'http://127.0.0.1:18880';
     for (const path of [

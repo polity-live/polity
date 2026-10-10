@@ -37,6 +37,7 @@ import {
   type MutationAPIRecord,
 } from './mutation-report';
 import { mutationFailures, type MutationMeasurement } from './mutation-metrics';
+import { mutationBrowserFailures } from './mutation-browser-metrics';
 
 const output = required(process.env.ZERO_PERFORMANCE_OUTPUT);
 const logOutput = process.env.ZERO_PERFORMANCE_LOG_OUTPUT ?? output;
@@ -200,6 +201,7 @@ async function worker(label: string, workerLayer: string, selected?: string[]) {
           ZERO_PERFORMANCE_LOG_OUTPUT: logOutput,
           ZERO_PERFORMANCE_PLAN_OUTPUT: directory,
           ZERO_PERFORMANCE_LAYER: workerLayer,
+          ZERO_PERFORMANCE_MUTATION_BOOTSTRAP: mutationInventoryResult.bootstrap ?? '',
           ZERO_PERFORMANCE_SELECTION: selected ? selectionFile : '',
           ZERO_PERFORMANCE_QUERY: '',
           ZERO_PERFORMANCE_CASE: '',
@@ -405,7 +407,10 @@ try {
     infrastructure.length ||
     measurements.some(row => row.failures.length) ||
     mutations.some(row => row.failures.length) ||
-    journeys?.some(row => row.failures.length)
+    (Array.isArray(journeys) &&
+      (journeys.some(row => row.failures.length) ||
+        (!mutationInventoryResult.bootstrap &&
+          mutationBrowserFailures(browserMutations).length > 0)))
   )
     process.exitCode = 1;
 }

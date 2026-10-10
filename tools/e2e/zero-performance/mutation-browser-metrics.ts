@@ -29,6 +29,13 @@ export function mutationBrowserFailures(
       !row.uiEvidence?.trim()
     )
       failures.push(`${row.action}: Missing independent UI/confirmation semantics`);
+    if (
+      row.reloadVerified !== true ||
+      typeof row.reloadVerificationMs !== 'number' ||
+      !Number.isFinite(row.reloadVerificationMs) ||
+      row.reloadVerificationMs < 0
+    )
+      failures.push(`${row.action}: Missing or invalid independent reload proof`);
     for (const field of ['uiMs', 'serverConfirmedMs', 'finalVisibleMs'] as const) {
       const value = row[field];
       if (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
