@@ -47,7 +47,9 @@ export function unexplainedWorkerExit(
     report.infrastructure?.length ||
     report.measurements.some(row => row.failures.length) ||
     report.journeys?.some(row => row.failures.length) ||
-    (report.browserMutations !== undefined &&
+    (Array.isArray(report.journeys) &&
+      report.browserMutations !== undefined &&
+      report.browserMutations.length > 0 &&
       mutationBrowserFailures(report.browserMutations).length > 0)
   );
 }
