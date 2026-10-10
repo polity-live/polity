@@ -28,6 +28,14 @@ export interface BrowserMutationPhases {
   committedState: () => Promise<void>;
   finalVisibleState: () => Promise<void>;
 }
+
+/** Journeys supplies a browser context without Playwright's baseURL option. */
+export function browserMutationRouteURL(path: string, appURL: string | undefined): string {
+  assert(appURL, 'Benchmark application URL is required');
+  const origin = new URL(appURL);
+  assert(['http:', 'https:'].includes(origin.protocol), 'Benchmark application URL must use HTTP');
+  return new URL(path, origin).href;
+}
 /** UI and committed-state observers are independent; neither duration is an SDK ACK. */
 export async function measureBrowserMutationPhases(
   phases: BrowserMutationPhases,
@@ -61,7 +69,7 @@ export async function measureMutationBrowserActions(
   let stage = 'fixture preparation';
   const ready = async (path: string) => {
     stage = 'route readiness';
-    await page.goto(path);
+    await page.goto(browserMutationRouteURL(path, process.env.VITE_APP_URL));
     await waitForAppReady(page);
     stage = 'UI preparation';
   };

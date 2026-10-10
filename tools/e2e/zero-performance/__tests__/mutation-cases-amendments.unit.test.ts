@@ -207,6 +207,42 @@ describe('reviewed amendment catalog', () => {
       expect(request?.[1].source_id).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
+      // Native runs exercised these independent setup paths before the shared UUID fix.
+      // Check each persisted CR, rather than inferring correctness from voting alone.
+      for (const operation of [
+        'updateChangeRequest',
+        'deleteChangeRequest',
+        'finalizeExpiredInternalChangeRequestVotes',
+        'finalizeInternalChangeRequestVote',
+        'repairInternalChangeRequestResolution',
+      ]) {
+        insert.mockClear();
+        const denied = cases.find(
+          item => item.name === `amendments.${operation}` && item.actor === 'anonymous'
+        );
+        if (!denied) throw new Error('Missing reviewed CR denial');
+        await denied.prepare({
+          sql: (() => undefined) as unknown as Sql,
+          id: `native-cr-setup-${operation}`,
+          ownerID: 'owner',
+          outsiderID: 'outsider',
+          actorID: 'anon',
+          actor: 'anonymous',
+        });
+        const persisted = insert.mock.calls.filter(([table]) => table === 'change_request');
+        expect(persisted).toHaveLength(1);
+        const fields = persisted[0][1];
+        expect(fields.source_id).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+        );
+        expect(fields.user_id).toBe('owner');
+        const parentIndex = insert.mock.calls.findIndex(
+          ([table, parent]) => table === 'amendment' && parent.id === fields.amendment_id
+        );
+        const requestIndex = insert.mock.calls.findIndex(([table]) => table === 'change_request');
+        expect(parentIndex).toBeGreaterThanOrEqual(0);
+        expect(parentIndex).toBeLessThan(requestIndex);
+      }
       // Actual SQL column is UUID, even though the mutator input schema accepts a string.
       for (const operation of [
         'createChangeRequest',

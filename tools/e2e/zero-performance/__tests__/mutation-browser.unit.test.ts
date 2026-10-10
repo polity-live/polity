@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { measureBrowserMutationPhases } from '../mutation-browser';
+import { browserMutationRouteURL, measureBrowserMutationPhases } from '../mutation-browser';
 
 function deferred() {
   let resolve!: () => void;
@@ -10,6 +10,27 @@ function deferred() {
 }
 
 describe('browser mutation phase measurements', () => {
+  it('resolves every action route absolutely for the journeys context without baseURL', () => {
+    const currentURL = 'http://127.0.0.1:18880';
+    for (const path of [
+      '/group/fixture/settings',
+      '/messages',
+      '/group/fixture/memberships',
+      '/event/fixture/agenda/fixture',
+    ]) {
+      expect(browserMutationRouteURL(path, currentURL)).toBe(`http://127.0.0.1:18880${path}`);
+    }
+  });
+
+  it('requires the configured benchmark origin rather than guessing from page location', () => {
+    expect(() => browserMutationRouteURL('/messages', undefined)).toThrow(
+      'Benchmark application URL is required'
+    );
+    expect(() => browserMutationRouteURL('/messages', 'about:blank')).toThrow(
+      'Benchmark application URL must use HTTP'
+    );
+  });
+
   it('requires a visible response and observes committed SQL independently of UI completion', async () => {
     const visible = deferred();
     const committed = deferred();

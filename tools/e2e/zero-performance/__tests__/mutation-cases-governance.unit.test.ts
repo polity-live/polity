@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { governanceMutationCases, governanceSQLExpected } from '../mutation-cases-governance';
 import { verifyRevokedGovernanceWriter } from '../mutation-cases-governance-revocation';
 import { groupSharedMutators } from '../../../../src/zero/groups/shared-mutators';
@@ -13,7 +13,7 @@ import {
   delegatedGovernanceFixture,
   verifyGovernanceNotificationsRestored,
 } from '../mutation-governance-fixtures';
-import type { MutationFixtures } from '../mutation-fixtures';
+import { MutationFixtures, mutationFixtureID } from '../mutation-fixtures';
 import type { MutationCaseContext } from '../mutation-case-types';
 import {
   createAgendaItemSchema,
@@ -21,6 +21,72 @@ import {
 } from '../../../../src/zero/agendas/schema';
 
 describe('reviewed governance mutation catalog', () => {
+  it('verifies the prepared authorized createVote against SQL timestamp storage through its actual callback', async () => {
+    const address = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';
+    for (const name of [
+      'ZERO_UPSTREAM_DB',
+      'E2E_DATABASE_URL',
+      'DATABASE_URL',
+      'SUPABASE_DB_URL',
+      'STUDIO_DATABASE_URL',
+      'STUDIO_TEST_DATABASE_URL',
+    ])
+      vi.stubEnv(name, address);
+    vi.stubEnv('SUPABASE_URL', 'http://127.0.0.1:15624');
+    let persisted = false;
+    const id = mutationFixtureID('prepared-vote', 'ballot');
+    const stored = {
+      id,
+      agenda_item_id: mutationFixtureID('prepared-vote', 'ballot-agenda'),
+      amendment_id: null,
+      title: 'Reviewed vote',
+      description: null,
+      status: 'pending',
+      purpose: 'closing',
+      majority_type: 'relative',
+      closing_type: 'moderator',
+      closing_duration_seconds: null,
+      closing_end_time: new Date(0),
+      visibility: 'public',
+      ballot_visibility: 'named',
+    };
+    try {
+      vi.spyOn(MutationFixtures.prototype, 'insert').mockResolvedValue(undefined);
+      vi.spyOn(MutationFixtures.prototype, 'track').mockResolvedValue(undefined);
+      vi.spyOn(MutationFixtures.prototype, 'rows').mockImplementation(async table =>
+        table === 'vote' && persisted ? [stored] : []
+      );
+      const verification = vi.spyOn(MutationFixtures.prototype, 'expect');
+      const entry = governanceMutationCases().find(
+        c =>
+          c.name === 'votes.createVote' &&
+          c.actor === 'owner' &&
+          c.variant === 'authorized-ballot-management'
+      );
+      expect(entry).toBeDefined();
+      if (!entry) throw new Error('Missing reviewed createVote case');
+      const prepared = await entry.prepare({
+        id: 'prepared-vote',
+        ownerID: 'owner',
+        outsiderID: 'outsider',
+        actorID: 'owner',
+        actor: 'owner',
+        sql: (() => {
+          throw new Error('Unexpected SQL in fixture double');
+        }) as unknown as MutationCaseContext['sql'],
+      });
+      persisted = true;
+      await expect(prepared.verify()).resolves.toBeUndefined();
+      expect(verification).toHaveBeenCalledWith(
+        'vote',
+        id,
+        expect.objectContaining({ closing_end_time: new Date(0) })
+      );
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllEnvs();
+    }
+  });
   it('keeps observed epoch zero distinct from the SQL timestamptz business expectation', () => {
     const observed = { closing_end_time: 0, closing_duration_seconds: 0, title: 'Reviewed vote' };
     expect(governanceSQLExpected('vote', observed)).toEqual({

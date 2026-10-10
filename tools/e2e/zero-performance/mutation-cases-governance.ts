@@ -1020,7 +1020,8 @@ function ballotManagementCases(): MutationCase[] {
             },
           },
           verify: async () => {
-            if (actor === 'owner') await f.expect(d.table, id, expected);
+            if (actor === 'owner')
+              await f.expect(d.table, id, governanceSQLExpected(d.table, expected));
             else assert.deepEqual(await f.rows(d.table, id), baseline);
           },
           restore: async () => {
