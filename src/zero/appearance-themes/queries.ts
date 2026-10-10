@@ -9,9 +9,9 @@ const ACTIVE_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 export const appearanceThemeQueries = {
   catalog: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.appearance_theme
-      // One indexed candidate set, with separate gates for each protected kind.
-      .where('kind', 'IN', ['builtin', 'personal', 'group'])
+    // The small literal candidate set avoids a JSON list subquery. Each
+    // protected kind retains its separate creator or group-membership gate.
+    whereAnyOf(zql.appearance_theme, 'kind', ['builtin', 'personal', 'group'])
       .where(({ and, cmp, exists, or }: any) =>
         and(
           or(cmp('kind', '!=', 'personal'), cmp('created_by_id', userID)),
