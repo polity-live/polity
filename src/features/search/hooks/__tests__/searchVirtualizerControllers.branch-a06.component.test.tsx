@@ -2,6 +2,7 @@
 
 import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import type { MutableRefObject } from 'react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchDocument, SearchListContext } from '../../types/search-document.types';
@@ -282,6 +283,48 @@ describe('search virtualizer controller branch matrix', () => {
     expect(scrollToIndex).toHaveBeenCalledWith(0, { align: 'start' });
     view.unmount();
     expect(resizeDisconnect).toHaveBeenCalled();
+  });
+
+  it('reuses measured lanes on return and observes a new viewport width', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1_601);
+    const measure = (width: number) =>
+      act(() =>
+        resizeCallback?.([{ contentRect: { width } } as ResizeObserverEntry], {} as ResizeObserver)
+      );
+    const firstVisit = render(<GridProbe />);
+    measure(1_100);
+    firstVisit.unmount();
+    const returnVisit = render(<GridProbe />);
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(3);
+    expect(latestGridController?.cells[0]?.width).toBeGreaterThan(300);
+    measure(740);
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(2);
+    returnVisit.unmount();
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1_602);
+    render(<GridProbe />);
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
+  });
+
+  it('bounds retained geometry and renders without a browser viewport', () => {
+    const viewport = vi.spyOn(window, 'innerWidth', 'get');
+    for (let index = 0; index < 9; index++) {
+      viewport.mockReturnValue(2_000 + index);
+      const view = render(<GridProbe />);
+      act(() =>
+        resizeCallback?.(
+          [{ contentRect: { width: 1_100 } } as ResizeObserverEntry],
+          {} as ResizeObserver
+        )
+      );
+      view.unmount();
+    }
+    viewport.mockReturnValue(2_000);
+    const view = render(<GridProbe />);
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
+    view.unmount();
+    vi.stubGlobal('window', undefined);
+    expect(renderToString(<GridProbe />)).toContain('scroll-parent');
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
   });
 
   it('coalesces scroll frames and cancels a pending frame during cleanup', () => {

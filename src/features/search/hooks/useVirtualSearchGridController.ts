@@ -48,6 +48,15 @@ function getRowKey(document: SearchDocument) {
   return document.id;
 }
 
+// Retain measured geometry only, never rows or authorization state. A resized
+// browser starts without a cached width; ResizeObserver remains authoritative.
+const measuredWidths = new Map<string, number>();
+function viewportKey(compact: boolean) {
+  return typeof window === 'undefined'
+    ? ''
+    : `${compact}:${window.innerWidth}:${window.innerHeight}`;
+}
+
 interface UseVirtualSearchGridControllerOptions {
   compact?: boolean;
   context: SearchListContext;
@@ -62,7 +71,8 @@ export function useVirtualSearchGridController({
   onTotalChange,
 }: UseVirtualSearchGridControllerOptions) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const geometryKey = viewportKey(compact);
+  const [width, setWidth] = useState(() => measuredWidths.get(geometryKey) ?? 0);
   const [hasNewResults, setHasNewResults] = useState(false);
   const isAwayFromTopRef = useRef(false);
   const previousHeadKeyRef = useRef<string | null>(null);
@@ -77,13 +87,17 @@ export function useVirtualSearchGridController({
     const resizeObserver = new ResizeObserver(entries => {
       const entry = entries[0];
       if (!entry) return;
+      // Keep a bounded cache for the recent layout sizes. Reusing the measured
+      // width avoids a zero-width render and a second lane/query rebuild on return.
+      if (measuredWidths.size >= 8) measuredWidths.clear();
+      measuredWidths.set(viewportKey(compact), entry.contentRect.width);
       startTransition(() => setWidth(entry.contentRect.width));
     });
 
     resizeObserver.observe(element);
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [compact]);
 
   useEffect(() => {
     const element = parentRef.current;
