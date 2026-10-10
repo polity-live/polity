@@ -94,6 +94,11 @@ export async function measureJourneys(
   const records: JourneyResult[] = [];
   const clientSamples: ViewClientSamples = new Map();
   const warnings: string[] = [];
+  const errorCounts = { page: 0, console: 0, react: {} as Record<string, number> };
+  const countReactError = (message: string) => {
+    const code = message.match(/Minified React error #(\d+)/)?.[1];
+    if (code) errorCounts.react[code] = (errorCounts.react[code] ?? 0) + 1;
+  };
   try {
     const context = await browser.newContext();
     await context.addInitScript(() => {
@@ -136,8 +141,16 @@ export async function measureJourneys(
     page.on('websocket', socket => sockets.add(socket));
     const pageErrors: string[] = [];
     let renderLoopErrors = 0;
-    page.on('pageerror', error => pageErrors.push(error.message));
+    page.on('pageerror', error => {
+      errorCounts.page++;
+      countReactError(error.message);
+      pageErrors.push(error.message);
+    });
     page.on('console', message => {
+      if (message.type() === 'error') {
+        errorCounts.console++;
+        countReactError(message.text());
+      }
       if (
         message.type() === 'error' &&
         /Maximum update depth exceeded|Too many re-renders/.test(message.text())
@@ -806,6 +819,10 @@ export async function measureJourneys(
     }
     return records;
   } finally {
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'browser-error-counts.json'),
+      JSON.stringify(errorCounts)
+    );
     await onUpdate(records);
     await withDeadline(browser.close(), 'Browser close');
   }
