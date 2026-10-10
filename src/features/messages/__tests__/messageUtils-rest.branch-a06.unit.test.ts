@@ -105,14 +105,42 @@ describe('message display branch remainder', () => {
     expect(getOtherParticipant({ type: 'direct', participants: [] }, 'current')).toBeUndefined();
   });
 
-  it('formats current and historic timestamps through both locale paths', () => {
+  it('preserves local current and historic timestamps without rebuilding locale formatters', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-09T12:00:00Z'));
-    const timeFormatter = vi.spyOn(Date.prototype, 'toLocaleTimeString').mockReturnValue('12:30');
-    expect(formatTime('2026-08-09T10:30:00Z')).toMatch(/12:30/);
-    expect(formatTime('2026-08-08T10:30:00Z')).toMatch(/Aug 8/);
-    timeFormatter.mockRestore();
-    vi.useRealTimers();
+    const formatter = vi.spyOn(Intl, 'DateTimeFormat');
+    try {
+      for (const timezone of ['America/New_York', 'Europe/Berlin', 'Asia/Kathmandu']) {
+        vi.stubEnv('TZ', timezone);
+        for (const today of ['2026-01-09T12:00:00Z', '2026-08-09T12:00:00Z']) {
+          vi.setSystemTime(new Date(today));
+          for (const date of [
+            today,
+            today.replace('12:00', '00:30'),
+            today.replace('12:00', '23:30'),
+            '2024-02-29T12:00:00Z',
+            0,
+            -8640000000000000,
+            8640000000000000,
+            'invalid',
+          ]) {
+            const value = new Date(date);
+            const now = new Date();
+            const expected =
+              now.getFullYear() === value.getFullYear() &&
+              now.getMonth() === value.getMonth() &&
+              now.getDate() === value.getDate()
+                ? value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                : value.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            expect(formatTime(date)).toBe(expected);
+          }
+        }
+      }
+      expect(formatter).not.toHaveBeenCalled();
+    } finally {
+      formatter.mockRestore();
+      vi.unstubAllEnvs();
+      vi.useRealTimers();
+    }
   });
 });
 
