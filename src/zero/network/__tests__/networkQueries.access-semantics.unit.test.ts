@@ -193,7 +193,21 @@ describe('network query access semantics with real Zero predicates', () => {
     const inspect = (node: any): void => {
       if (!node || typeof node !== 'object') return;
       if (node.type === 'correlatedSubquery') {
-        if (node.flip) {
+        if (node.flip && node.related.subquery.table === 'role') {
+          // A membership/guest link identifies exactly one group-scoped role.
+          // Its action-right traversal below still uses correlated planning.
+          expect(node.related.correlation).toEqual({
+            parentField: ['role_id'],
+            childField: ['id'],
+          });
+          expect(node.related.subquery.where.type).toBe('and');
+          expect(node.related.subquery.where.conditions).toContainEqual({
+            type: 'simple',
+            left: { type: 'column', name: 'scope' },
+            op: '=',
+            right: { type: 'literal', value: 'group' },
+          });
+        } else if (node.flip) {
           // Indexed endpoint selection starts from a single group primary key.
           // Every permission traversal still uses bounded correlated planning.
           expect(node.related.subquery.table).toBe('group');
