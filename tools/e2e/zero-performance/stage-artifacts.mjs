@@ -25,6 +25,9 @@ const records = new Set([
   'startup.json',
   'integrity.json',
   'failure.json',
+  'navigation.cpuprofile',
+  'navigation-timeline.json',
+  'navigation-style-reads.json',
 ]);
 const allowed = relative => {
   const segments = relative.split(path.sep);

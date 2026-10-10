@@ -42,6 +42,9 @@ describe('original CI artifact staging', () => {
       'base/stack-start.log',
       'head/query-api.ndjson',
       'head/initial/screenshots/failure.png',
+      'head/initial/workers/journeys/navigation.cpuprofile',
+      'head/initial/workers/journeys/navigation-timeline.json',
+      'head/initial/workers/journeys/navigation-style-reads.json',
     ];
     for (const relative of paths) await save(relative, `original\r\n${relative}\r\n`);
     const staged = await stageArtifacts(source, target);
