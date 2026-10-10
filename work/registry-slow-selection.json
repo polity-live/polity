@@ -1,1 +1,9 @@
-["blogs.entries/default","blogs.bloggerPage/default","blogs.bloggerPage/search","network.groupConnectionRequestPage/default","network.groupConnectionRequestPage/search","common.blogHashtags/default","common.reactions/default"]
+[
+  "blogs.entries/default",
+  "blogs.bloggerPage/default",
+  "blogs.bloggerPage/search",
+  "network.groupConnectionRequestPage/default",
+  "network.groupConnectionRequestPage/search",
+  "common.blogHashtags/default",
+  "common.reactions/default"
+]

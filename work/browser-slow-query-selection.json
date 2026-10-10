@@ -1,1 +1,6 @@
-["events.byIdFull/default","events.agendaItemsFull/default","agendas.changeRequestTimeline/default","amendments.collaborators/default"]
+[
+  "events.byIdFull/default",
+  "events.agendaItemsFull/default",
+  "agendas.changeRequestTimeline/default",
+  "amendments.collaborators/default"
+]

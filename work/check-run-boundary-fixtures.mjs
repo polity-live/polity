@@ -2,7 +2,9 @@ import postgres from 'postgres';
 const sql = postgres('postgresql://postgres:postgres@127.0.0.1:54322/postgres', {
   max: 1,
   prepare: false,
-  onnotice: () => {},
+  onnotice: () => {
+    /* This fixture diagnostic omits PostgreSQL notices. */
+  },
 });
 try {
   const counts = await sql.unsafe(`

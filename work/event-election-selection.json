@@ -1,1 +1,5 @@
-["users.current/default", "events.electionWithVotes/default", "events.delegateAssemblyComposition/default"]
+[
+  "users.current/default",
+  "events.electionWithVotes/default",
+  "events.delegateAssemblyComposition/default"
+]
