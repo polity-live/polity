@@ -213,10 +213,13 @@ export async function measureJourneys(
               { waitUntil: 'domcontentloaded' }
             );
           } else if (visit === 'back' && new URL(page.url()).pathname !== route.path) {
-            await page.evaluate(target => {
-              (globalThis as any).__beginBenchmarkNavigation(target);
-              history.back();
-            }, route);
+            await withDeadline(
+              page.evaluate(target => {
+                (globalThis as any).__beginBenchmarkNavigation(target);
+                history.back();
+              }, route),
+              'Browser evaluate'
+            );
           } else {
             await navigate(page, route.path, route.search ?? {}, route);
           }
@@ -225,59 +228,64 @@ export async function measureJourneys(
             undefined,
             { timeout: 15_000 }
           );
-          record.visibleMs = await page.evaluate(
-            () => (globalThis as any).__benchmarkPaint.displayed
+          record.visibleMs = await withDeadline(
+            page.evaluate(() => (globalThis as any).__benchmarkPaint.displayed),
+            'Browser evaluate'
           );
           await page.waitForFunction(
             () => (globalThis as any).__benchmarkPaint?.authoritative != null,
             undefined,
             { timeout: 15_000 }
           );
-          record.authoritativeMs = await page.evaluate(
-            () => (globalThis as any).__benchmarkPaint.authoritative
+          record.authoritativeMs = await withDeadline(
+            page.evaluate(() => (globalThis as any).__benchmarkPaint.authoritative),
+            'Browser evaluate'
           );
-          record.processing = await page.evaluate(() => {
-            const state = (globalThis as any).__benchmarkPaint;
-            const end = state.start + Math.max(state.displayed, state.authoritative);
-            return {
-              browserTimeOrigin: performance.timeOrigin,
-              connections: (globalThis as any).__zeroPerformanceConnectionEvents ?? [],
-              navigationStart: state.start,
-              // Keep only paths and timing; query strings and authentication
-              // headers may contain credentials and are never exported.
-              requests: (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
-                .filter(
-                  entry =>
-                    ['fetch', 'xmlhttprequest'].includes(entry.initiatorType) &&
-                    entry.startTime >= state.start &&
-                    entry.startTime <= end
-                )
-                .map(entry => ({
-                  path: new URL(entry.name).pathname,
-                  start: entry.startTime,
-                  duration: entry.duration,
-                  initiator: entry.initiatorType,
-                })),
-              longTasks: ((globalThis as any).__benchmarkLongTasks ?? []).filter(
-                (task: any) => task.start >= state.start && task.start <= end
-              ),
-              assets: (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
-                .filter(entry => {
-                  const address = new URL(entry.name);
-                  return (
-                    address.origin === location.origin &&
-                    address.pathname.startsWith('/assets/') &&
-                    entry.startTime >= state.start &&
-                    entry.startTime <= end
-                  );
-                })
-                .map(entry => ({
-                  path: new URL(entry.name).pathname,
-                  start: entry.startTime,
-                  duration: entry.duration,
-                })),
-            };
-          });
+          record.processing = await withDeadline(
+            page.evaluate(() => {
+              const state = (globalThis as any).__benchmarkPaint;
+              const end = state.start + Math.max(state.displayed, state.authoritative);
+              return {
+                browserTimeOrigin: performance.timeOrigin,
+                connections: (globalThis as any).__zeroPerformanceConnectionEvents ?? [],
+                navigationStart: state.start,
+                // Keep only paths and timing; query strings and authentication
+                // headers may contain credentials and are never exported.
+                requests: (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+                  .filter(
+                    entry =>
+                      ['fetch', 'xmlhttprequest'].includes(entry.initiatorType) &&
+                      entry.startTime >= state.start &&
+                      entry.startTime <= end
+                  )
+                  .map(entry => ({
+                    path: new URL(entry.name).pathname,
+                    start: entry.startTime,
+                    duration: entry.duration,
+                    initiator: entry.initiatorType,
+                  })),
+                longTasks: ((globalThis as any).__benchmarkLongTasks ?? []).filter(
+                  (task: any) => task.start >= state.start && task.start <= end
+                ),
+                assets: (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+                  .filter(entry => {
+                    const address = new URL(entry.name);
+                    return (
+                      address.origin === location.origin &&
+                      address.pathname.startsWith('/assets/') &&
+                      entry.startTime >= state.start &&
+                      entry.startTime <= end
+                    );
+                  })
+                  .map(entry => ({
+                    path: new URL(entry.name).pathname,
+                    start: entry.startTime,
+                    duration: entry.duration,
+                  })),
+              };
+            }),
+            'Browser evaluate'
+          );
           if (required(record.authoritativeMs) > BUDGETS.totalMs)
             record.failures.push(`Authoritative content exceeds ${BUDGETS.totalMs} ms`);
           if (visit !== 'first') {
@@ -292,10 +300,13 @@ export async function measureJourneys(
           const inspectionAt = performance.now();
           record.queries = await inspect(page, clientSamples);
           record.inspectionMs = performance.now() - inspectionAt;
-          const events = await page.evaluate(() => ({
-            preloads: (globalThis as any).__zeroPerformancePreloadEvents,
-            views: (globalThis as any).__zeroPerformanceViewEvents,
-          }));
+          const events = await withDeadline(
+            page.evaluate(() => ({
+              preloads: (globalThis as any).__zeroPerformancePreloadEvents,
+              views: (globalThis as any).__zeroPerformanceViewEvents,
+            })),
+            'Browser evaluate'
+          );
           record.preloadEvents = events.preloads;
           record.viewEvents = events.views;
           for (const query of record.queries) {
@@ -310,46 +321,50 @@ export async function measureJourneys(
               url: page.url(),
               body: (await page.locator('body').innerText()).slice(0, 8_000),
               errors: [...pageErrors],
-              activeViews: await page.evaluate(() =>
-                (globalThis as any).__zeroPerformanceActiveViews()
+              activeViews: await withDeadline(
+                page.evaluate(() => (globalThis as any).__zeroPerformanceActiveViews()),
+                'Browser evaluate'
               ),
-              layout: await page.evaluate(target => {
-                const content = target.contentSelector
-                  ? document.querySelector(target.contentSelector)
-                  : document.body;
-                const walker = document.createTreeWalker(
-                  content ?? document.body,
-                  NodeFilter.SHOW_TEXT
-                );
-                const candidates = [];
-                let node;
-                while ((node = walker.nextNode())) {
-                  if (node.textContent?.trim() !== target.text || !node.parentElement) continue;
-                  const element = node.parentElement;
-                  candidates.push({
-                    tag: element.tagName,
-                    rect: element.getBoundingClientRect().toJSON(),
-                    ancestors: Array.from(
-                      (function* () {
-                        for (let p: Element | null = element; p; p = p.parentElement) yield p;
-                      })()
-                    ).map(p => ({
-                      tag: p.tagName,
-                      id: p.id,
-                      opacity: getComputedStyle(p).opacity,
-                      display: getComputedStyle(p).display,
-                      visibility: getComputedStyle(p).visibility,
-                    })),
-                  });
-                }
-                return {
-                  width: innerWidth,
-                  height: innerHeight,
-                  scrollY,
-                  contentFound: Boolean(content),
-                  candidates,
-                };
-              }, route),
+              layout: await withDeadline(
+                page.evaluate(target => {
+                  const content = target.contentSelector
+                    ? document.querySelector(target.contentSelector)
+                    : document.body;
+                  const walker = document.createTreeWalker(
+                    content ?? document.body,
+                    NodeFilter.SHOW_TEXT
+                  );
+                  const candidates = [];
+                  let node;
+                  while ((node = walker.nextNode())) {
+                    if (node.textContent?.trim() !== target.text || !node.parentElement) continue;
+                    const element = node.parentElement;
+                    candidates.push({
+                      tag: element.tagName,
+                      rect: element.getBoundingClientRect().toJSON(),
+                      ancestors: Array.from(
+                        (function* () {
+                          for (let p: Element | null = element; p; p = p.parentElement) yield p;
+                        })()
+                      ).map(p => ({
+                        tag: p.tagName,
+                        id: p.id,
+                        opacity: getComputedStyle(p).opacity,
+                        display: getComputedStyle(p).display,
+                        visibility: getComputedStyle(p).visibility,
+                      })),
+                    });
+                  }
+                  return {
+                    width: innerWidth,
+                    height: innerHeight,
+                    scrollY,
+                    contentFound: Boolean(content),
+                    candidates,
+                  };
+                }, route),
+                'Browser evaluate'
+              ),
             };
             const screenshots = path.join(
               required(process.env.ZERO_PERFORMANCE_OUTPUT),
@@ -370,7 +385,7 @@ export async function measureJourneys(
     if (process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1') {
       // Replay only after the timed navigation samples. Profiling is diagnostic
       // work and its overhead must never become part of the acceptance timings.
-      const profiler = await context.newCDPSession(page);
+      const profiler = await withDeadline(context.newCDPSession(page), 'Browser newCDPSession');
       let profiling = false;
       let tracing = false;
       const timeline: unknown[] = [];
@@ -380,40 +395,52 @@ export async function measureJourneys(
           timeline.push({ name, cat, ph, ts, dur, pid, tid });
       });
       try {
-        await page.evaluate(() => {
-          const scope = globalThis as any;
-          const original = window.getComputedStyle;
-          const reads = new Map<string, number>();
-          // Attribute the profile's layout/style reads to static component markers,
-          // without retaining text, IDs, query arguments or authentication values.
-          window.getComputedStyle = function (element, pseudo) {
-            const key = JSON.stringify({
-              tag: element.tagName,
-              slot: element.getAttribute('data-slot'),
-              role: element.getAttribute('role'),
-              state: element.getAttribute('data-state'),
-              owner: element.closest('[data-slot]')?.getAttribute('data-slot') ?? null,
-            });
-            reads.set(key, (reads.get(key) ?? 0) + 1);
-            return original.call(window, element, pseudo);
-          };
-          scope.__finishBenchmarkStyleReads = () => {
-            window.getComputedStyle = original;
-            delete scope.__finishBenchmarkStyleReads;
-            return [...reads].map(([key, count]) => ({ ...JSON.parse(key), count }));
-          };
-        });
-        await profiler.send('Profiler.enable');
-        await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
-        await profiler.send('Profiler.start');
+        await withDeadline(
+          page.evaluate(() => {
+            const scope = globalThis as any;
+            const original = window.getComputedStyle;
+            const reads = new Map<string, number>();
+            // Attribute the profile's layout/style reads to static component markers,
+            // without retaining text, IDs, query arguments or authentication values.
+            window.getComputedStyle = function (element, pseudo) {
+              const key = JSON.stringify({
+                tag: element.tagName,
+                slot: element.getAttribute('data-slot'),
+                role: element.getAttribute('role'),
+                state: element.getAttribute('data-state'),
+                owner: element.closest('[data-slot]')?.getAttribute('data-slot') ?? null,
+              });
+              reads.set(key, (reads.get(key) ?? 0) + 1);
+              return original.call(window, element, pseudo);
+            };
+            scope.__finishBenchmarkStyleReads = () => {
+              window.getComputedStyle = original;
+              delete scope.__finishBenchmarkStyleReads;
+              return [...reads].map(([key, count]) => ({ ...JSON.parse(key), count }));
+            };
+          }),
+          'Browser evaluate'
+        );
+        await withDeadline(profiler.send('Profiler.enable'), 'Browser send');
+        await withDeadline(
+          profiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
+          'Browser send'
+        );
+        await withDeadline(profiler.send('Profiler.start'), 'Browser send');
         profiling = true;
-        await profiler.send('Tracing.start', {
-          categories: 'devtools.timeline,blink.user_timing',
-          options: 'record-as-much-as-possible',
-        });
+        await withDeadline(
+          profiler.send('Tracing.start', {
+            categories: 'devtools.timeline,blink.user_timing',
+            options: 'record-as-much-as-possible',
+          }),
+          'Browser send'
+        );
         tracing = true;
         for (const [index, route] of routes.entries()) {
-          await page.evaluate(index => performance.mark(`zero-route-${index}-start`), index);
+          await withDeadline(
+            page.evaluate(index => performance.mark(`zero-route-${index}-start`), index),
+            'Browser evaluate'
+          );
           await navigate(page, route.path, route.search ?? {}, route);
           await page.waitForFunction(
             () => {
@@ -423,7 +450,10 @@ export async function measureJourneys(
             undefined,
             { timeout: 15_000 }
           );
-          await page.evaluate(index => performance.mark(`zero-route-${index}-end`), index);
+          await withDeadline(
+            page.evaluate(index => performance.mark(`zero-route-${index}-end`), index),
+            'Browser evaluate'
+          );
         }
       } catch (error) {
         // Diagnostic replay must not prevent the subscribed update/revocation
@@ -435,7 +465,7 @@ export async function measureJourneys(
             const completed = new Promise<void>(resolve =>
               profiler.once('Tracing.tracingComplete', () => resolve())
             );
-            await profiler.send('Tracing.end');
+            await withDeadline(profiler.send('Tracing.end'), 'Browser send');
             await withDeadline(completed, 'Navigation timeline export');
             await writeFile(
               path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-timeline.json'),
@@ -447,7 +477,7 @@ export async function measureJourneys(
         }
         try {
           if (profiling) {
-            const { profile } = await profiler.send('Profiler.stop');
+            const { profile } = await withDeadline(profiler.send('Profiler.stop'), 'Browser send');
             await writeFile(
               path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation.cpuprofile'),
               JSON.stringify(profile)
@@ -457,8 +487,9 @@ export async function measureJourneys(
           required(records.at(-1)).failures.push(`Navigation CPU export: ${String(error)}`);
         } finally {
           try {
-            const reads = await page.evaluate(
-              () => (globalThis as any).__finishBenchmarkStyleReads?.() ?? null
+            const reads = await withDeadline(
+              page.evaluate(() => (globalThis as any).__finishBenchmarkStyleReads?.() ?? null),
+              'Browser evaluate'
             );
             if (reads !== null)
               await writeFile(
@@ -471,7 +502,7 @@ export async function measureJourneys(
           } catch (error) {
             required(records.at(-1)).failures.push(`Navigation style export: ${String(error)}`);
           } finally {
-            await profiler.detach().catch(error => {
+            await withDeadline(profiler.detach(), 'Navigation CPU detach').catch(error => {
               required(records.at(-1)).failures.push(`Navigation CPU cleanup: ${String(error)}`);
             });
           }
@@ -533,8 +564,9 @@ export async function measureJourneys(
           url: page.url(),
           body: (await page.locator('body').innerText()).slice(0, 8_000),
           errors: [...pageErrors],
-          activeViews: await page.evaluate(() =>
-            (globalThis as any).__zeroPerformanceActiveViews()
+          activeViews: await withDeadline(
+            page.evaluate(() => (globalThis as any).__zeroPerformanceActiveViews()),
+            'Browser evaluate'
           ),
           sync: { expectedName: updatedName, ...local },
         };
@@ -547,12 +579,15 @@ export async function measureJourneys(
     } catch (error) {
       update.failures.push(`Data-update inspection: ${String(error)}`);
     }
-    const hadGroup = await page.evaluate(
-      async id =>
-        (await (globalThis as any).__zero.inspector.client.rows('group')).some(
-          (row: any) => row.id === id
-        ),
-      seed.groupId
+    const hadGroup = await withDeadline(
+      page.evaluate(
+        async id =>
+          (await (globalThis as any).__zero.inspector.client.rows('group')).some(
+            (row: any) => row.id === id
+          ),
+        seed.groupId
+      ),
+      'Browser evaluate'
     );
     if (!hadGroup) throw new Error('Revocation has no positive subscribed result');
     const revokedAt = Date.now();
@@ -570,12 +605,15 @@ export async function measureJourneys(
     });
     let leaked = true;
     while (Date.now() - revokedAt < BUDGETS.totalMs) {
-      leaked = await page.evaluate(async id => {
-        const zero = (globalThis as any).__zero;
-        if (!zero) throw new Error('Missing Zero instance');
-        const rows = await zero.inspector.client.rows('group');
-        return rows.some((row: any) => row.id === id);
-      }, seed.groupId);
+      leaked = await withDeadline(
+        page.evaluate(async id => {
+          const zero = (globalThis as any).__zero;
+          if (!zero) throw new Error('Missing Zero instance');
+          const rows = await zero.inspector.client.rows('group');
+          return rows.some((row: any) => row.id === id);
+        }, seed.groupId),
+        'Browser evaluate'
+      );
       if (!leaked) break;
       await page.waitForTimeout(25);
     }
@@ -586,7 +624,10 @@ export async function measureJourneys(
       queries: [],
       failures: [
         ...(leaked ? ['Private group remains synced after membership revocation'] : []),
-        ...((await page.getByText(updatedName, { exact: true }).filter({ visible: true }).count())
+        ...((await withDeadline(
+          page.getByText(updatedName, { exact: true }).filter({ visible: true }).count(),
+          'Revocation visible content'
+        ))
           ? ['Private group remains visible after membership revocation']
           : []),
       ],
@@ -594,12 +635,15 @@ export async function measureJourneys(
     records.push(revocation);
     const inspectorProfiler =
       process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1'
-        ? await context.newCDPSession(page)
+        ? await withDeadline(context.newCDPSession(page), 'Browser newCDPSession')
         : undefined;
     if (inspectorProfiler) {
-      await inspectorProfiler.send('Profiler.enable');
-      await inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 });
-      await inspectorProfiler.send('Profiler.start');
+      await withDeadline(inspectorProfiler.send('Profiler.enable'), 'Browser send');
+      await withDeadline(
+        inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
+        'Browser send'
+      );
+      await withDeadline(inspectorProfiler.send('Profiler.start'), 'Browser send');
     }
     const revocationInspectionAt = performance.now();
     try {
@@ -624,7 +668,7 @@ export async function measureJourneys(
         } catch (error) {
           revocation.failures.push(`Inspector CPU export: ${String(error)}`);
         } finally {
-          await inspectorProfiler.detach();
+          await withDeadline(inspectorProfiler.detach(), 'Browser detach');
         }
       }
     }
@@ -670,7 +714,7 @@ export async function measureJourneys(
     return records;
   } finally {
     await onUpdate(records);
-    await browser.close();
+    await withDeadline(browser.close(), 'Browser close');
   }
 }
 
@@ -682,7 +726,7 @@ async function profileColdBoot(
 ) {
   const context = await browser.newContext({ storageState });
   const page = await context.newPage();
-  const profiler = await context.newCDPSession(page);
+  const profiler = await withDeadline(context.newCDPSession(page), 'Browser newCDPSession');
   let profiling = false;
   const timeline: unknown[] = [];
   profiler.on('Tracing.dataCollected', ({ value }) => {
@@ -701,14 +745,20 @@ async function profileColdBoot(
       },
       { key: ALPHA_WARNING_SESSION_KEY }
     );
-    await profiler.send('Profiler.enable');
-    await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
-    await profiler.send('Profiler.start');
+    await withDeadline(profiler.send('Profiler.enable'), 'Browser send');
+    await withDeadline(
+      profiler.send('Profiler.setSamplingInterval', { interval: 1000 }),
+      'Browser send'
+    );
+    await withDeadline(profiler.send('Profiler.start'), 'Browser send');
     profiling = true;
-    await profiler.send('Tracing.start', {
-      categories: 'devtools.timeline,blink.user_timing',
-      options: 'record-as-much-as-possible',
-    });
+    await withDeadline(
+      profiler.send('Tracing.start', {
+        categories: 'devtools.timeline,blink.user_timing',
+        options: 'record-as-much-as-possible',
+      }),
+      'Browser send'
+    );
     tracing = true;
     await page.goto(
       `${required(process.env.VITE_APP_URL)}${target.path}?${new URLSearchParams(target.search).toString()}`,
@@ -725,12 +775,15 @@ async function profileColdBoot(
     await writeFile(
       path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-cold-readiness.json'),
       JSON.stringify(
-        await page.evaluate(() => ({
-          diagnostic: true,
-          visibleMs: (globalThis as any).__benchmarkPaint.displayed,
-          authoritativeMs: (globalThis as any).__benchmarkPaint.authoritative,
-          connections: (globalThis as any).__zeroPerformanceConnectionEvents,
-        }))
+        await withDeadline(
+          page.evaluate(() => ({
+            diagnostic: true,
+            visibleMs: (globalThis as any).__benchmarkPaint.displayed,
+            authoritativeMs: (globalThis as any).__benchmarkPaint.authoritative,
+            connections: (globalThis as any).__zeroPerformanceConnectionEvents,
+          })),
+          'Browser evaluate'
+        )
       )
     );
   } finally {
@@ -746,7 +799,7 @@ async function profileColdBoot(
         const completed = new Promise<void>(resolve =>
           profiler.once('Tracing.tracingComplete', () => resolve())
         );
-        await profiler.send('Tracing.end');
+        await withDeadline(profiler.send('Tracing.end'), 'Browser send');
         await withDeadline(completed, 'Cold timeline export');
         await writeFile(
           path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-cold-timeline.json'),
@@ -754,8 +807,8 @@ async function profileColdBoot(
         );
       }
     } finally {
-      await profiler.detach();
-      await context.close();
+      await withDeadline(profiler.detach(), 'Browser detach');
+      await withDeadline(context.close(), 'Browser close');
     }
   }
 }
@@ -790,7 +843,7 @@ async function inspectOnce(
   page: Page,
   clientSamples: ViewClientSamples
 ): Promise<QueryObservation[]> {
-  const snapshot = await withDeadline(
+  await withDeadline(
     page.evaluate(
       async password => {
         const zero = (globalThis as any).__zero;
@@ -804,6 +857,17 @@ async function inspectOnce(
         (globalThis as any).__benchmarkInspectorStage = 'authenticate';
         if (!(await zero.inspector.authenticate(password.adminPassword)))
           throw new Error('Browser inspector authentication rejected');
+      },
+      { adminPassword: required(process.env.ZERO_ADMIN_PASSWORD), userID: OWNER_ID }
+    ),
+    'Browser inspector authentication'
+  );
+  const snapshot = await withDeadline(
+    page.evaluate(
+      async ({ userID }) => {
+        const zero = (globalThis as any).__zero;
+        if (!zero || zero.userID !== userID)
+          throw new Error('Browser identity changed before query inspection');
         (globalThis as any).__benchmarkInspectorStage = 'preload-readiness';
         // Wait only for currently observed activations, up to their unchanged one-second deadline.
         // Reading these app events does not issue inspector/analyzer requests.
@@ -855,7 +919,7 @@ async function inspectOnce(
           return (globalThis as any).__zeroPerformancePreloadEvents ?? [];
         }
       },
-      { adminPassword: required(process.env.ZERO_ADMIN_PASSWORD), userID: OWNER_ID }
+      { userID: OWNER_ID }
     ),
     'Browser query inspection'
   ).catch(async error => {
