@@ -26,7 +26,32 @@ import {
   verifyBuildAssets,
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
+  shouldCopyBenchmarkSource,
 } from '../isolation.mjs';
+
+describe('benchmark source isolation', () => {
+  it('excludes dependency, output and Git roots even when Git returns a bare symlink name', () => {
+    for (const file of [
+      'node_modules',
+      'node_modules/a.js',
+      'node_modules\\a.js',
+      'output',
+      'output/report.json',
+      '.git',
+      '.git/config',
+      '.env',
+      '.env.local',
+    ])
+      expect(shouldCopyBenchmarkSource(file)).toBe(false);
+    for (const file of [
+      'src/zero/queries.ts',
+      '.github/workflows/ci.yml',
+      'pnpm-lock.yaml',
+      'node_modules-policy.md',
+    ])
+      expect(shouldCopyBenchmarkSource(file)).toBe(true);
+  });
+});
 import {
   reportFailures,
   correlateQueryAPI,

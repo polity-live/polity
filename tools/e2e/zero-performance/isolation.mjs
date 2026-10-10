@@ -2,6 +2,12 @@ import path from 'node:path';
 import { statSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
+/** Git can inventory a root directory symlink without a trailing slash. */
+export function shouldCopyBenchmarkSource(file) {
+  const topLevel = file.replaceAll('\\', '/').split('/')[0];
+  return !['output', 'node_modules', '.git'].includes(topLevel) && !topLevel.startsWith('.env');
+}
+
 /** Locate the installed Corepack without relying on shell shims or downloading another version. */
 export function corepackPNPMEntryPoint(
   nodeExecutable,

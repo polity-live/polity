@@ -16,6 +16,7 @@ import {
   verifyBuildAssets,
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
+  shouldCopyBenchmarkSource,
 } from './isolation.mjs';
 import {
   verifyLinuxImage,
@@ -176,13 +177,7 @@ async function copySource() {
     });
     if (result.status !== 0) throw new Error('Cannot inventory working tree');
     for (const file of new Set(result.stdout.split('\0').filter(Boolean))) {
-      if (
-        file.startsWith('.env') ||
-        file.startsWith('output/') ||
-        file.startsWith('node_modules/') ||
-        file.startsWith('.git/')
-      )
-        continue;
+      if (!shouldCopyBenchmarkSource(file)) continue;
       const target = path.join(sandbox, file);
       await mkdir(path.dirname(target), { recursive: true });
       await cp(path.join(root, file), target);
