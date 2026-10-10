@@ -136,6 +136,18 @@ describe('shared event policy helpers', () => {
     ).resolves.toMatchObject({ offlineParticipant: { id: 'offline' } });
   });
 
+  it.each(['updateOfflineParticipant', 'deleteOfflineParticipant'] as const)(
+    '%s leaves no optimistic writes when the target is evicted during rebase',
+    async name => {
+      const tx = createTx('client');
+      tx.reason = 'rebase';
+      tx.run.mockResolvedValue(null);
+      await mutators[name].fn({ tx, ctx, args: { id: 'evicted' } } as never);
+      for (const table of Object.values(tx.mutate) as ReturnType<typeof mutationTable>[])
+        for (const method of Object.values(table)) expect(method).not.toHaveBeenCalled();
+    }
+  );
+
   it('detects connected-user conflicts and manages participant role links', async () => {
     const noUser = createTx();
     await helpers.assertUniqueConnectedOfflineUserWithinEvent(noUser, {

@@ -11,11 +11,12 @@ const networkCursorSchema = z
   .default(null);
 
 /** The validated group FKs make these PK joins equivalent to the two endpoint ID comparisons. */
-function whereGroupEndpointId<T>(q: T, groupId: string, first: string, second: string): T {
+function whereGroupEndpointId<T>(q: T, groupId: string, ...relations: string[]): T {
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists(first, (group: any) => group.where('id', groupId), { flip: true }),
-      exists(second, (group: any) => group.where('id', groupId), { flip: true })
+      ...relations.map(relation =>
+        exists(relation, (group: any) => group.where('id', groupId), { flip: true })
+      )
     )
   ) as T;
 }
@@ -91,15 +92,14 @@ export const networkQueries = {
   wikiNetwork: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
-      applyGroupConnectionAccess(zql.group_connection, userID)
-        .where(({ cmp, or }) =>
-          or(
-            cmp('group_a_id', '=', groupId),
-            cmp('group_b_id', '=', groupId),
-            cmp('from_group_id', '=', groupId),
-            cmp('to_group_id', '=', groupId)
-          )
-        )
+      whereGroupEndpointId(
+        applyGroupConnectionAccess(zql.group_connection, userID),
+        groupId,
+        'group_a',
+        'group_b',
+        'from_group',
+        'to_group'
+      )
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -207,15 +207,14 @@ export const networkQueries = {
   groupConnectionsByGroup: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
-      applyGroupConnectionAccess(zql.group_connection, userID)
-        .where(({ cmp, or }) =>
-          or(
-            cmp('group_a_id', '=', groupId),
-            cmp('group_b_id', '=', groupId),
-            cmp('from_group_id', '=', groupId),
-            cmp('to_group_id', '=', groupId)
-          )
-        )
+      whereGroupEndpointId(
+        applyGroupConnectionAccess(zql.group_connection, userID),
+        groupId,
+        'group_a',
+        'group_b',
+        'from_group',
+        'to_group'
+      )
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -252,12 +251,24 @@ export const networkQueries = {
     z.object({ groupAId: z.string(), groupBId: z.string() }),
     ({ args: { groupAId, groupBId }, ctx: { userID } }) =>
       applyGroupConnectionAccess(zql.group_connection, userID)
-        .where(({ and, cmp, or }) =>
+        .where(({ and, exists, or }) =>
           or(
-            and(cmp('group_a_id', '=', groupAId), cmp('group_b_id', '=', groupBId)),
-            and(cmp('group_a_id', '=', groupBId), cmp('group_b_id', '=', groupAId)),
-            and(cmp('from_group_id', '=', groupAId), cmp('to_group_id', '=', groupBId)),
-            and(cmp('from_group_id', '=', groupBId), cmp('to_group_id', '=', groupAId))
+            and(
+              exists('group_a', group => group.where('id', groupAId), { flip: true }),
+              exists('group_b', group => group.where('id', groupBId), { flip: true })
+            ),
+            and(
+              exists('group_a', group => group.where('id', groupBId), { flip: true }),
+              exists('group_b', group => group.where('id', groupAId), { flip: true })
+            ),
+            and(
+              exists('from_group', group => group.where('id', groupAId), { flip: true }),
+              exists('to_group', group => group.where('id', groupBId), { flip: true })
+            ),
+            and(
+              exists('from_group', group => group.where('id', groupBId), { flip: true }),
+              exists('to_group', group => group.where('id', groupAId), { flip: true })
+            )
           )
         )
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))

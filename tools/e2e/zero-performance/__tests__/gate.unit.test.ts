@@ -1165,6 +1165,9 @@ describe('Zero performance gate', () => {
       views: [{ ...query.views![0], releasedAt: 30 }],
     };
     expect(queryObservationFailures(retainViewClientSamples(released, 40, samples))).toEqual([]);
+    expect(
+      queryObservationFailures(retainViewClientSamples({ ...released, id: 'view' }, 40, samples))
+    ).toEqual([]);
     expect(hasUnmeasuredActiveViews([released])).toBe(false);
     expect(
       hasUnmeasuredActiveViews([
@@ -1173,6 +1176,8 @@ describe('Zero performance gate', () => {
     ).toBe(true);
     for (const changed of [
       { ...released, clientID: 'another-client' },
+      { ...released, name: 'users.byId' },
+      { ...released, args: [{ id: 'another-user' }] },
       { ...released, views: [{ ...released.views[0], activationID: 'another-view' }] },
     ])
       expect(queryObservationFailures(retainViewClientSamples(changed, 40, samples))).toContain(
@@ -1235,7 +1240,6 @@ describe('Zero performance gate', () => {
       ).toContain('Missing materialization metrics');
     }
     for (const changed of [
-      { ...later, client: null, id: 'another-query' },
       { ...later, client: null, clientID: 'another-client' },
       { ...later, client: null, name: 'users.byId' },
       { ...later, client: null, args: [{ id: 'another-user' }] },

@@ -57,8 +57,9 @@ export function retainViewClientSamples(
     views: query.views?.map(view => {
       const key = JSON.stringify([
         query.clientID,
-        query.id,
-        query.name,
+        // Inspector can evict the SDK ID after release. Named query identity and
+        // the exact activation still identify the original measured lifetime.
+        query.name ?? query.id,
         query.args,
         view.activationID,
       ]);

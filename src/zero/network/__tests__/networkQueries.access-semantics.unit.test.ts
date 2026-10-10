@@ -201,7 +201,10 @@ describe('network query access semantics with real Zero predicates', () => {
             type: 'simple',
             left: { type: 'column', name: 'id' },
             op: '=',
-            right: { type: 'literal', value: args.groupId },
+            right: {
+              type: 'literal',
+              value: expect.toBeOneOf([args.groupId, args.groupAId, args.groupBId]),
+            },
           });
         } else expect(node.flip).toBe(false);
         checks++;

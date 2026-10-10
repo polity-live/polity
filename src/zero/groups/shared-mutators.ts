@@ -194,6 +194,9 @@ async function loadMembershipForRoleMutation(
 ) {
   const membership = await tx.run(zql.group_membership.where('id', groupMembershipId).one());
   if (!membership) {
+    // Revocation can evict the target before Zero replays a pending mutation.
+    // Let the authoritative rejection arrive; do not recreate the local target.
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Membership not found');
   }
 
@@ -215,6 +218,7 @@ async function loadOfflineMembershipForRoleMutation(
     zql.group_offline_membership.where('id', groupOfflineMembershipId).one()
   );
   if (!membership) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Offline membership not found');
   }
 
@@ -234,6 +238,7 @@ async function loadGuestAccessForRoleMutation(
 ) {
   const guestAccess = await tx.run(zql.group_guest_access.where('id', groupGuestAccessId).one());
   if (!guestAccess) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Guest access not found');
   }
 
@@ -249,6 +254,7 @@ async function loadGuestAccessForRoleMutation(
 async function loadRole(tx: Parameters<typeof can>[0], roleId: string) {
   const role = await tx.run(zql.role.where('id', roleId).one());
   if (!role) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Role not found');
   }
   return role;
@@ -262,6 +268,7 @@ async function authorizeRoleHolderHistoryMutation(
   if (tx.location === 'client') return;
 
   const role = await loadRole(tx, roleId);
+  if (!role) return;
   await authorizeScopedRoleMutation(tx, ctx, role);
 }
 
@@ -287,6 +294,7 @@ async function assertRolesAssignableToMembers(
 ) {
   for (const roleId of [...new Set(roleIds.filter(Boolean))]) {
     const role = await loadRole(tx, roleId);
+    if (!role) return false;
     if (role.assignee_kind === 'guest') {
       throw new Error('Guest roles cannot be assigned to official group memberships.');
     }
@@ -303,6 +311,7 @@ async function assertRolesAssignableToGuests(
 ) {
   for (const roleId of [...new Set(roleIds.filter(Boolean))]) {
     const role = await loadRole(tx, roleId);
+    if (!role) return false;
     if (role.group_id !== groupId || role.scope !== 'group') {
       throw new Error('Guest roles must belong to the target group.');
     }
@@ -868,6 +877,7 @@ async function loadGroupOfflineMemberForMutation(
 ) {
   const offlineMember = await tx.run(zql.group_offline_member.where('id', offlineMemberId).one());
   if (!offlineMember) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Offline member not found');
   }
 
@@ -1050,6 +1060,7 @@ export const groupSharedMutators = {
 
   updateOfflineMember: defineMutator(groupOfflineMemberUpdateSchema, async ({ tx, ctx, args }) => {
     const offlineMember = await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
+    if (!offlineMember) return;
     const connectedUserId =
       args.connected_user_id !== undefined
         ? args.connected_user_id
@@ -1105,6 +1116,7 @@ export const groupSharedMutators = {
 
   deleteOfflineMember: defineMutator(groupOfflineMemberDeleteSchema, async ({ tx, ctx, args }) => {
     const offlineMember = await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
+    if (!offlineMember) return;
     await tx.mutate.group_offline_member.delete({ id: args.id });
     await appendEntityActivity(tx, ctx, {
       table: 'group_activity',
@@ -1197,7 +1209,8 @@ export const groupSharedMutators = {
     const now = Date.now();
     const { initial_role_id, ...membershipArgs } = args;
     if (initial_role_id) {
-      await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id);
+      if ((await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id)) === false)
+        return;
     }
     await tx.mutate.group_membership.insert({
       ...membershipArgs,
@@ -1369,7 +1382,8 @@ export const groupSharedMutators = {
     const now = Date.now();
     const { initial_role_id, ...membershipArgs } = args;
     if (initial_role_id) {
-      await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id);
+      if ((await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id)) === false)
+        return;
     }
     await tx.mutate.group_membership.insert({
       ...membershipArgs,
@@ -1412,6 +1426,7 @@ export const groupSharedMutators = {
   acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     if (!membership) {
+      if (tx.location === 'client' && tx.reason === 'rebase') return;
       throw new Error('Membership not found');
     }
     if (membership.user_id !== ctx.userID) {
@@ -1439,7 +1454,9 @@ export const groupSharedMutators = {
 
   addMembershipRole: defineMutator(groupMembershipRoleAssignSchema, async ({ tx, ctx, args }) => {
     const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
-    await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id);
+    if (!membership) return;
+    if ((await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id)) === false)
+      return;
     await addGroupMembershipRole(tx, args);
     await appendEntityActivity(tx, ctx, {
       table: 'group_activity',
@@ -1456,6 +1473,7 @@ export const groupSharedMutators = {
     groupMembershipRoleUnassignSchema,
     async ({ tx, ctx, args }) => {
       const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+      if (!membership) return;
       await removeGroupMembershipRole(tx, args);
       await appendEntityActivity(tx, ctx, {
         table: 'group_activity',
@@ -1471,7 +1489,9 @@ export const groupSharedMutators = {
 
   syncMembershipRoles: defineMutator(groupMembershipRolesSyncSchema, async ({ tx, ctx, args }) => {
     const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
-    await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id);
+    if (!membership) return;
+    if ((await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id)) === false)
+      return;
     await syncGroupMembershipRoles(tx, args);
   }),
 
@@ -1483,7 +1503,9 @@ export const groupSharedMutators = {
         ctx,
         args.group_offline_membership_id
       );
-      await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id);
+      if (!membership) return;
+      if ((await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id)) === false)
+        return;
       await addGroupOfflineMembershipRole(tx, args);
     }
   ),
@@ -1491,7 +1513,8 @@ export const groupSharedMutators = {
   removeOfflineMembershipRole: defineMutator(
     groupOfflineMembershipRoleUnassignSchema,
     async ({ tx, ctx, args }) => {
-      await loadOfflineMembershipForRoleMutation(tx, ctx, args.group_offline_membership_id);
+      if (!(await loadOfflineMembershipForRoleMutation(tx, ctx, args.group_offline_membership_id)))
+        return;
       await removeGroupOfflineMembershipRole(tx, args);
     }
   ),
@@ -1504,7 +1527,9 @@ export const groupSharedMutators = {
         ctx,
         args.group_offline_membership_id
       );
-      await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id);
+      if (!membership) return;
+      if ((await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id)) === false)
+        return;
       await syncGroupOfflineMembershipRoles(tx, args);
     }
   ),
@@ -1512,6 +1537,7 @@ export const groupSharedMutators = {
   updateMembership: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     if (!membership) {
+      if (tx.location === 'client' && tx.reason === 'rebase') return;
       throw new Error('Membership not found');
     }
     if (!isManualGroupMembershipSource(membership.source)) {
@@ -1549,7 +1575,7 @@ export const groupSharedMutators = {
       throw new Error('Guests must always be invited with at least one guest role.');
     }
 
-    await assertRolesAssignableToGuests(tx, args.group_id, desiredRoleIds);
+    if ((await assertRolesAssignableToGuests(tx, args.group_id, desiredRoleIds)) === false) return;
 
     const existingGuestAccess = await tx.run(
       zql.group_guest_access.where('group_id', args.group_id).where('user_id', args.user_id).one()
@@ -1614,6 +1640,7 @@ export const groupSharedMutators = {
   acceptGuestInvitation: defineMutator(groupGuestAccessAcceptSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
     if (!guestAccess) {
+      if (tx.location === 'client' && tx.reason === 'rebase') return;
       throw new Error('Guest access not found');
     }
 
@@ -1645,6 +1672,7 @@ export const groupSharedMutators = {
   revokeGuestAccess: defineMutator(groupGuestAccessDeleteSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
     if (!guestAccess) {
+      if (tx.location === 'client' && tx.reason === 'rebase') return;
       throw new Error('Guest access not found');
     }
 
@@ -1675,7 +1703,9 @@ export const groupSharedMutators = {
 
   addGuestRole: defineMutator(groupGuestRoleAssignSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
-    await assertRolesAssignableToGuests(tx, guestAccess.group_id, [args.role_id]);
+    if (!guestAccess) return;
+    if ((await assertRolesAssignableToGuests(tx, guestAccess.group_id, [args.role_id])) === false)
+      return;
     await addGroupGuestRole(tx, args);
     await appendEntityActivity(tx, ctx, {
       table: 'group_activity',
@@ -1690,6 +1720,7 @@ export const groupSharedMutators = {
 
   removeGuestRole: defineMutator(groupGuestRoleUnassignSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
+    if (!guestAccess) return;
     await removeGroupGuestRole(tx, args);
     await appendEntityActivity(tx, ctx, {
       table: 'group_activity',
@@ -1704,10 +1735,12 @@ export const groupSharedMutators = {
 
   syncGuestRoles: defineMutator(groupGuestRolesSyncSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
+    if (!guestAccess) return;
     if (args.role_ids.length === 0) {
       throw new Error('Guests must keep at least one guest role.');
     }
-    await assertRolesAssignableToGuests(tx, guestAccess.group_id, args.role_ids);
+    if ((await assertRolesAssignableToGuests(tx, guestAccess.group_id, args.role_ids)) === false)
+      return;
     await syncGroupGuestRoles(tx, args);
   }),
 

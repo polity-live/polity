@@ -247,6 +247,7 @@ export function governanceRevocationCases(base: MutationCase[]): MutationCase[] 
       (personalOrPublic.has(entry.name) && !secretManagerCommands.has(entry.name)) ||
       entry.actor !== 'outsider' ||
       (entry.error !== 'permission_denied' &&
+        !secretManagerCommands.has(entry.name) &&
         !protectedLookupCommands.has(entry.name) &&
         !['votes.submitVote', 'elections.submitElectionVote'].includes(entry.name))
     )

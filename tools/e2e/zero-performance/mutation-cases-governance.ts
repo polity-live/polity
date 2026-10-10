@@ -1491,7 +1491,9 @@ function ballotCastingCases(): MutationCase[] {
       ...(internal || actor !== 'owner' || deniedScenario
         ? {
             error:
-              internal || (d.kind === 'submit' && actor !== 'anonymous')
+              internal ||
+              d.kind === 'decision-indicative' ||
+              (d.kind === 'submit' && actor !== 'anonymous')
                 ? 'mutation_server_failed'
                 : 'permission_denied',
           }
@@ -1789,6 +1791,7 @@ function groupAccessCases(): MutationCase[] {
         actor === 'owner'
           ? ('success' as const)
           : [
+                'joinGroup',
                 'acceptGuestInvitation',
                 'acceptInvitation',
                 'syncMembershipRoles',
@@ -1809,6 +1812,7 @@ function groupAccessCases(): MutationCase[] {
       ...(actor !== 'owner'
         ? {
             error: [
+              'joinGroup',
               'acceptGuestInvitation',
               'acceptInvitation',
               'syncMembershipRoles',
@@ -1948,7 +1952,8 @@ function groupAccessCases(): MutationCase[] {
                 user_id: ctx.ownerID,
                 status: name === 'joinGroup' ? 'requested' : 'invited',
                 visibility: 'public',
-                ...(name === 'inviteMember' && actor !== 'owner'
+                ...((name === 'inviteMember' && actor !== 'owner') ||
+                (name === 'joinGroup' && actor === 'anonymous')
                   ? {}
                   : { initial_role_id: roleID }),
               }

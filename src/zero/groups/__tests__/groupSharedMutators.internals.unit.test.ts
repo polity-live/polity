@@ -164,6 +164,15 @@ describe('shared group mutator policy helpers', () => {
       missing.run.mockResolvedValueOnce(null);
       await expect(load(missing, ctx, 'id')).rejects.toThrow(message);
 
+      const optimistic = createTx('client');
+      optimistic.reason = 'optimistic';
+      optimistic.run.mockResolvedValueOnce(null);
+      await expect(load(optimistic, ctx, 'id')).rejects.toThrow(message);
+      const rebase = createTx('client');
+      rebase.reason = 'rebase';
+      rebase.run.mockResolvedValueOnce(null);
+      await expect(load(rebase, ctx, 'id')).resolves.toBeUndefined();
+
       const present = createTx();
       present.run.mockResolvedValueOnce({ id: 'id', group_id: 'group' });
       await expect(load(present, ctx, 'id')).resolves.toMatchObject({ id: 'id' });

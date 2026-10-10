@@ -5953,6 +5953,8 @@ export async function mountCityDesignScene(
   }
 
   function applyCameraPan(deltaRight: number, deltaForward: number) {
+    // Explicit navigation takes over even on the last frame of a focus animation.
+    focusAnimation = null;
     const { forward, right } = getHorizontalCameraAxes();
     const move = right.multiplyScalar(deltaRight).add(forward.multiplyScalar(deltaForward));
     camera.position.add(move);
@@ -5962,6 +5964,7 @@ export async function mountCityDesignScene(
   }
 
   function applyCameraZoom(direction: 'in' | 'out') {
+    focusAnimation = null;
     const offset = camera.position.clone().sub(controls.target);
     const distance = offset.length();
     if (distance < 0.0001) return;
@@ -5976,6 +5979,7 @@ export async function mountCityDesignScene(
   }
 
   function applyCameraTurn(direction: 'left' | 'right') {
+    focusAnimation = null;
     const offset = camera.position.clone().sub(controls.target);
     offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), direction === 'left' ? 0.12 : -0.12);
     camera.position.copy(controls.target).add(offset);
