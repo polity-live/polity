@@ -2,6 +2,7 @@
 
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ProjectedSubscriptionState } from '@/features/search/types/projected-card-state';
 
 const mocks = vi.hoisted(() => ({
   blog: undefined as Record<string, unknown> | undefined,
@@ -14,16 +15,20 @@ const mocks = vi.hoisted(() => ({
   createBlogFull: vi.fn(),
   waitForClientApply: vi.fn(),
   navigate: vi.fn(),
+  readBlogState: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
 
 vi.mock('@/zero/blogs/useBlogState', () => ({
-  useBlogState: () => ({
-    blog: mocks.blog,
-    subscribers: mocks.subscribers,
-    subscriberCount: mocks.subscriberCount,
-  }),
+  useBlogState: (input: unknown) => {
+    mocks.readBlogState(input);
+    return {
+      blog: mocks.blog,
+      subscribers: mocks.subscribers,
+      subscriberCount: mocks.subscriberCount,
+    };
+  },
 }));
 vi.mock('@/zero/blogs/useBlogActions', () => ({
   useBlogActions: () => ({
@@ -106,11 +111,11 @@ describe('remaining blog hooks A10', () => {
 
   it('covers projected, persisted, optimistic, duplicate, fallback, and error subscriptions', async () => {
     mocks.user = { id: 'user-1' };
-    const projected = {
-      subscriptions: [{ id: 'nested', subscriber_user: { id: 'user-1' } }],
+    const projected: ProjectedSubscriptionState = {
+      subscriptions: [{ id: 'projected', subscriber_id: 'user-1' }],
       subscriberCount: 7,
       isLoading: true,
-    } as never;
+    };
     const projectedHook = renderHook(() => useSubscribeBlog('blog-1', projected));
     await waitFor(() => expect(projectedHook.result.current.isSubscribed).toBe(true));
     expect(projectedHook.result.current.subscriberCount).toBe(7);
@@ -118,18 +123,6 @@ describe('remaining blog hooks A10', () => {
     expect(mocks.subscribeToBlog).not.toHaveBeenCalled();
     await act(() => projectedHook.result.current.unsubscribe());
     projectedHook.unmount();
-
-    const missingProjection = renderHook(() =>
-      useSubscribeBlog('blog-1', {
-        subscriptions: undefined,
-        subscriberCount: undefined,
-        isLoading: false,
-      } as never)
-    );
-    await waitFor(() => expect(missingProjection.result.current.subscriberCount).toBe(0));
-    await act(() => missingProjection.result.current.subscribe());
-    await act(() => missingProjection.result.current.unsubscribe());
-    missingProjection.unmount();
 
     mocks.subscribers = [];
     mocks.subscriberCount = 2;
@@ -157,6 +150,32 @@ describe('remaining blog hooks A10', () => {
     await act(() => hook.result.current.unsubscribe());
     expect(hook.result.current.isSubscribed).toBe(true);
     await act(() => hook.result.current.toggleSubscribe());
+  });
+
+  it('normalizes missing projection data and preserves the persisted count fallback', async () => {
+    mocks.user = { id: 'user-1' };
+    // Deliberately incomplete runtime data exercises the defensive fallback.
+    const projected = {
+      subscriptions: undefined,
+      subscriberCount: undefined,
+      isLoading: false,
+    } as unknown as ProjectedSubscriptionState;
+    const { result, rerender } = renderHook(() => useSubscribeBlog('blog-1', projected));
+    expect(result.current).toMatchObject({ isSubscribed: false, subscriberCount: 0 });
+    expect(mocks.readBlogState).toHaveBeenLastCalledWith({
+      blogId: undefined,
+      includeSubscribers: false,
+    });
+
+    await act(() => result.current.subscribe());
+    expect(result.current).toMatchObject({ isSubscribed: true, subscriberCount: 1 });
+    await act(() => result.current.unsubscribe());
+    expect(mocks.unsubscribeFromBlog).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000010');
+    expect(result.current).toMatchObject({ isSubscribed: false, subscriberCount: 0 });
+
+    mocks.subscriberCount = 4;
+    rerender();
+    expect(result.current).toMatchObject({ isSubscribed: false, subscriberCount: 4 });
   });
 
   it('guards missing subscription identities and ignores toggles while loading', async () => {

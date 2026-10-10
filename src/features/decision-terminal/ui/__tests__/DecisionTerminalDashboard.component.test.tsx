@@ -11,9 +11,10 @@ import { DecisionTerminal } from '../DecisionTerminal';
 import type { DecisionItem } from '../types';
 import { Button } from '@/features/shared/ui/ui/button';
 
-const { saveDecisionTerminalDashboard, canVote } = vi.hoisted(() => ({
+const { saveDecisionTerminalDashboard, canVote, useQuery } = vi.hoisted(() => ({
   saveDecisionTerminalDashboard: vi.fn(),
   canVote: vi.fn(() => true),
+  useQuery: vi.fn(),
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -82,6 +83,7 @@ vi.mock('@/zero/rbac', () => ({
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
+  useQuery,
   useZero: () => ({
     mutate: vi.fn(),
   }),
@@ -233,6 +235,7 @@ afterEach(() => {
 describe('DecisionTerminal dashboard', () => {
   it('renders every default terminal widget when no dashboard preference exists', () => {
     render(<DecisionTerminal decisions={[decision()]} />);
+    expect(useQuery).not.toHaveBeenCalled();
 
     const dragHandles = screen.getAllByTestId('decision-widget-drag-handle');
     expect(dragHandles).toHaveLength(createDefaultDecisionTerminalDashboardConfig().widgets.length);

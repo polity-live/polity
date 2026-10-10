@@ -31,9 +31,8 @@ export function useSubscribeBlog(
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
   const subscriptionData = {
-    subscribers: (projectedState
-      ? projectedState.subscriptions
-      : (subscribers ?? [])) as readonly SubscriptionRowState[],
+    subscribers: ((projectedState ? projectedState.subscriptions : subscribers) ??
+      []) as readonly SubscriptionRowState[],
   };
   const resolvedPersistedSubscriberCount =
     projectedState?.subscriberCount ?? persistedSubscriberCount;
@@ -41,7 +40,7 @@ export function useSubscribeBlog(
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subs = subscriptionData?.subscribers || [];
+    const subs = subscriptionData.subscribers;
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
@@ -72,7 +71,7 @@ export function useSubscribeBlog(
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionData?.subscribers || []).find(
+    const existing = subscriptionData.subscribers.find(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
@@ -121,7 +120,7 @@ export function useSubscribeBlog(
       return;
     }
 
-    const subs = subscriptionData?.subscribers || [];
+    const subs = subscriptionData.subscribers;
     let subsToDelete = subs.filter(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
