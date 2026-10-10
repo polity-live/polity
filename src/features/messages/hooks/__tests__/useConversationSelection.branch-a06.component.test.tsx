@@ -22,6 +22,35 @@ function conversation(id: string, overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe('useConversationSelection exhaustive branches', () => {
+  it('opens an authorized local deep link on the first render without exposing an absent conversation', () => {
+    window.history.replaceState(
+      { polityMessageSelection: { viewerID: 'owner', conversationID: 'previous' } },
+      '',
+      '/messages'
+    );
+    const rows = [conversation('previous'), conversation('target')];
+    const options = { restoreOnNavigation: true, viewerID: 'owner' };
+    const renders: (string | null)[] = [];
+    const linked = renderHook(() => {
+      const selection = useConversationSelection(rows, {
+        ...options,
+        initialConversationID: 'target',
+      });
+      renders.push(selection.selectedConversationId);
+      return selection;
+    });
+    expect(renders[0]).toBe('target');
+    expect(linked.result.current.selectedConversation?.id).toBe('target');
+    linked.unmount();
+    window.history.replaceState({}, '', '/messages');
+    const absent = renderHook(() =>
+      useConversationSelection(rows, { ...options, initialConversationID: 'private-or-missing' })
+    );
+    expect(absent.result.current.selectedConversationId).toBeNull();
+    expect(absent.result.current.selectedConversation).toBeUndefined();
+    absent.unmount();
+    window.history.replaceState({}, '', '/');
+  });
   it('restores navigation selection for the same viewer while preserving router history state', () => {
     window.history.replaceState({ __TSR_index: 7 }, '', '/messages');
     const options = { restoreOnNavigation: true, viewerID: 'owner' };
