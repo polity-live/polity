@@ -70,12 +70,18 @@ export function partialReportFailures(
           `${reconstructed[index].key}: API correlation does not match raw diagnostics`
         );
   }
-  for (const measurement of report.measurements)
+  for (const measurement of report.measurements) {
+    failures.push(
+      ...executionFailures(measurement.execution, manifest, shard, revision, phase, runnerID).map(
+        failure => `${measurement.key}: ${failure}`
+      )
+    );
     failures.push(
       ...checkBudgets(measurement)
         .filter(failure => absolute || !isAbsoluteBudgetFailure(failure))
         .map(failure => `${measurement.key}: ${failure}`)
     );
+  }
   if (shard.layer === 'security') {
     const expected =
       manifest.workloads[revision]?.security.filter(entry => selected.includes(entry.key)) ?? [];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createManifest, type Manifest, type Shard } from '../sharding';
+import { createManifest, type Execution, type Manifest, type Shard } from '../sharding';
 import {
   comparisons,
   confirmationFailures,
@@ -42,10 +42,20 @@ function report(
   phase: 'initial' | 'confirmation' = 'initial',
   serverMs = 30
 ): Report {
+  const execution: Execution = {
+    manifestDigest: manifest.digest,
+    shardID: shard.id,
+    revision,
+    sourceSHA: revision === 'head' ? manifest.headSHA : manifest.baseSHA!,
+    harnessDigest: manifest.harnessDigest,
+    runnerID: 'runner',
+    phase,
+  };
   const structure = { bytes: 100, queries: 1, conditions: 1, maxQueryDepth: 1 };
   const records: any[] = [];
   const measurements: Measurement[] = shardMeasurementKeys(shard, revision).map((key, row) => ({
     key,
+    execution,
     name: 'q',
     variant: 'default',
     actor: key.split('/').at(-1)!,
@@ -113,20 +123,31 @@ function report(
     measurements,
     apiDiagnostics: records,
     serverWarnings: [],
-    execution: {
-      manifestDigest: manifest.digest,
-      shardID: shard.id,
-      revision,
-      sourceSHA: revision === 'head' ? manifest.headSHA : manifest.baseSHA!,
-      harnessDigest: manifest.harnessDigest,
-      runnerID: 'runner',
-      phase,
-    },
+    execution,
     fixturePreflight: { expected: shard[revision], completed: shard[revision], failures: [] },
   };
 }
 
 describe('distributed measurement acceptance', () => {
+  it.each(['missing', 'wrong-revision', 'wrong-runner', 'wrong-manifest'])(
+    'rejects %s identity on an individual measurement',
+    mismatch => {
+      const { manifest, shard } = fixture();
+      const value = report(manifest, shard);
+      const measurement = value.measurements[0];
+      const identity = { ...measurement.execution! };
+      if (mismatch === 'missing') measurement.execution = undefined;
+      else {
+        if (mismatch === 'wrong-revision') identity.sourceSHA = manifest.baseSHA!;
+        if (mismatch === 'wrong-runner') identity.runnerID = 'another-runner';
+        if (mismatch === 'wrong-manifest') identity.manifestDigest = '0'.repeat(64);
+        measurement.execution = identity;
+      }
+      expect(partialReportFailures(value, manifest, shard, 'head', 'initial', 'runner')).toContain(
+        `${measurement.key}: Missing or mismatched revision/runner/manifest identity`
+      );
+    }
+  );
   it('retains source, runner and shard provenance in partial and merged CSVs', () => {
     const { manifest, shard } = fixture(),
       value = report(manifest, shard);

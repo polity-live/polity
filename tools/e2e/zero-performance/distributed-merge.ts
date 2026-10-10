@@ -226,12 +226,7 @@ export async function mergeShards(
         allReports.push(report);
         const full = aggregate[revision];
         if (!full) throw new Error('Missing revision aggregate');
-        full.measurements.push(
-          ...report.measurements.map(measurement => ({
-            ...measurement,
-            execution: report.execution,
-          }))
-        );
+        full.measurements.push(...report.measurements);
         full.apiDiagnostics?.push(...(report.apiDiagnostics ?? []));
         full.serverWarnings?.push(...(report.serverWarnings ?? []));
         full.infrastructure.push(...report.infrastructure);

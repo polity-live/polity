@@ -91,6 +91,7 @@ async function partial(
       const joinsArtifact = await writeJoinPlanArtifact(destination, key, []);
       return {
         key,
+        execution,
         name: 'users.current',
         variant: key.split('/')[1],
         profile: shard.layer === 'security' ? 'security' : key.split('/')[2],
