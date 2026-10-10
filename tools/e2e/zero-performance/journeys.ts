@@ -1,5 +1,5 @@
 import { required, withDeadline } from './required';
-import { chromium, type Page } from '@playwright/test';
+import { chromium, type Page, type Browser, type BrowserContext } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createServerClient } from '@supabase/ssr';
@@ -592,12 +592,41 @@ export async function measureJourneys(
       ],
     };
     records.push(revocation);
+    const inspectorProfiler =
+      process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1'
+        ? await context.newCDPSession(page)
+        : undefined;
+    if (inspectorProfiler) {
+      await inspectorProfiler.send('Profiler.enable');
+      await inspectorProfiler.send('Profiler.setSamplingInterval', { interval: 1000 });
+      await inspectorProfiler.send('Profiler.start');
+    }
     const revocationInspectionAt = performance.now();
     try {
       revocation.queries = await inspect(page, clientSamples);
       revocation.inspectionMs = performance.now() - revocationInspectionAt;
     } catch (error) {
       revocation.failures.push(`Revocation inspection: ${String(error)}`);
+    } finally {
+      if (inspectorProfiler) {
+        try {
+          const { profile } = await withDeadline(
+            inspectorProfiler.send('Profiler.stop'),
+            'Inspector CPU export'
+          );
+          await writeFile(
+            path.join(
+              required(process.env.ZERO_PERFORMANCE_OUTPUT),
+              'revocation-inspector.cpuprofile'
+            ),
+            JSON.stringify(profile)
+          );
+        } catch (error) {
+          revocation.failures.push(`Inspector CPU export: ${String(error)}`);
+        } finally {
+          await inspectorProfiler.detach();
+        }
+      }
     }
     // Retained-query export runs after navigation and synchronization acceptance.
     if (process.env.ZERO_PERFORMANCE_CPU_PROFILE === '1') {
@@ -626,11 +655,108 @@ export async function measureJourneys(
             `Retained query diagnostics: ${error instanceof Error ? error.message : String(error)}`
           );
       }
+      try {
+        await profileColdBoot(browser, await context.storageState(), {
+          path: '/search',
+          text: seed.eventTitle,
+          search: { q: seed.eventTitle, types: 'event' },
+          queryArgs: { query: seed.eventTitle, types: ['event'] },
+          queryNames: ['search.searchDocumentPage'],
+        });
+      } catch (error) {
+        revocation.failures.push(`Cold boot diagnostics: ${String(error)}`);
+      }
     }
     return records;
   } finally {
     await onUpdate(records);
     await browser.close();
+  }
+}
+
+/** A separate fresh browser context, after all acceptance samples have finished. */
+async function profileColdBoot(
+  browser: Browser,
+  storageState: Awaited<ReturnType<BrowserContext['storageState']>>,
+  target: NavigationTarget
+) {
+  const context = await browser.newContext({ storageState });
+  const page = await context.newPage();
+  const profiler = await context.newCDPSession(page);
+  let profiling = false;
+  const timeline: unknown[] = [];
+  profiler.on('Tracing.dataCollected', ({ value }) => {
+    for (const { name, cat, ph, ts, dur, pid, tid } of value)
+      timeline.push({ name, cat, ph, ts, dur, pid, tid });
+  });
+  let tracing = false;
+  try {
+    await page.addInitScript(
+      `globalThis.__name = (value) => value; (${installNavigationProbe.toString()})(); globalThis.__beginBenchmarkNavigation(${JSON.stringify(target)}, 0);`
+    );
+    await page.addInitScript(
+      ({ key }) => {
+        localStorage.setItem('i18nextLng', 'en');
+        sessionStorage.setItem(key, 'true');
+      },
+      { key: ALPHA_WARNING_SESSION_KEY }
+    );
+    await profiler.send('Profiler.enable');
+    await profiler.send('Profiler.setSamplingInterval', { interval: 1000 });
+    await profiler.send('Profiler.start');
+    profiling = true;
+    await profiler.send('Tracing.start', {
+      categories: 'devtools.timeline,blink.user_timing',
+      options: 'record-as-much-as-possible',
+    });
+    tracing = true;
+    await page.goto(
+      `${required(process.env.VITE_APP_URL)}${target.path}?${new URLSearchParams(target.search).toString()}`,
+      { waitUntil: 'domcontentloaded' }
+    );
+    await page.waitForFunction(
+      () => {
+        const state = (globalThis as any).__benchmarkPaint;
+        return state?.displayed != null && state?.authoritative != null;
+      },
+      undefined,
+      { timeout: 15_000 }
+    );
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-cold-readiness.json'),
+      JSON.stringify(
+        await page.evaluate(() => ({
+          diagnostic: true,
+          visibleMs: (globalThis as any).__benchmarkPaint.displayed,
+          authoritativeMs: (globalThis as any).__benchmarkPaint.authoritative,
+          connections: (globalThis as any).__zeroPerformanceConnectionEvents,
+        }))
+      )
+    );
+  } finally {
+    try {
+      if (profiling) {
+        const { profile } = await withDeadline(profiler.send('Profiler.stop'), 'Cold CPU export');
+        await writeFile(
+          path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-cold.cpuprofile'),
+          JSON.stringify(profile)
+        );
+      }
+      if (tracing) {
+        const completed = new Promise<void>(resolve =>
+          profiler.once('Tracing.tracingComplete', () => resolve())
+        );
+        await profiler.send('Tracing.end');
+        await withDeadline(completed, 'Cold timeline export');
+        await writeFile(
+          path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-cold-timeline.json'),
+          JSON.stringify({ events: timeline })
+        );
+      }
+    } finally {
+      await profiler.detach();
+      await context.close();
+    }
   }
 }
 
