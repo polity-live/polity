@@ -49,6 +49,7 @@ CREATE TABLE public.conversation_participant (
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);
 CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant (conversation_id, id);
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant (user_id);
+CREATE INDEX idx_conversation_participant_user_id ON public.conversation_participant (user_id, id);
 CREATE UNIQUE INDEX idx_conversation_participant_unique_membership
   ON public.conversation_participant (conversation_id, user_id);
 CREATE INDEX idx_conversation_participant_user_left

@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  725,
-  'all 725 application indexes are installed'
+  726,
+  'all 726 application indexes are installed'
 );
 
 SELECT is(

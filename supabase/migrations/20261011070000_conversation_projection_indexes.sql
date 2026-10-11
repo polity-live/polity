@@ -5,3 +5,6 @@ CREATE INDEX idx_conversation_group_id
 
 CREATE INDEX idx_conversation_participant_conversation_id
   ON public.conversation_participant (conversation_id, id);
+
+CREATE INDEX idx_conversation_participant_user_id
+  ON public.conversation_participant (user_id, id);
