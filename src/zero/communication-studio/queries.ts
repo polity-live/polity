@@ -125,7 +125,7 @@ export const studioQueries = {
           .orderBy('source_id', 'asc');
       // A selected source kind cannot satisfy another kind's authorization
       // branch. Keep only the relevant parent predicates in the query plan.
-      const selectedTypes = new Set(
+      const selectedTypes = new Set<string>(
         args.refs.length
           ? args.refs.map(ref => ref.type)
           : args.type
@@ -146,7 +146,9 @@ export const studioQueries = {
         { types: ['amendment'], relation: 'amendment', access: applyAmendmentQueryAccess },
         { types: ['user'], relation: 'user', access: applyUserQueryAccess },
         { types: ['group'], relation: 'group', access: applyGroupQueryAccess },
-      ].filter(parent => parent.types.some(type => selectedTypes.has(type as any)));
+      ]
+        .map(parent => ({ ...parent, types: parent.types.filter(type => selectedTypes.has(type)) }))
+        .filter(parent => parent.types.length);
       q = q.where(({ or, and, cmp, exists }: any) =>
         or(
           ...parentAccess.map(parent =>

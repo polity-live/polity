@@ -177,13 +177,7 @@ describe('Studio event presentation projections', () => {
         const relation = type === 'agenda_item' ? 'event' : type;
         expect(authorization.filter(call => call[0] === 'or').at(-1)).toEqual([
           'or',
-          [
-            'and',
-            relation === 'event'
-              ? ['cmp', 'source_type', 'IN', ['event', 'agenda_item']]
-              : ['cmp', 'source_type', type],
-            ['exists', relation],
-          ],
+          ['and', ['cmp', 'source_type', type], ['exists', relation]],
         ]);
         expect(authorization).toContainEqual(['exists', relation]);
         expect(query.calls.slice(-2)).toEqual([

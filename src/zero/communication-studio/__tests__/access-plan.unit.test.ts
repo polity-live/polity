@@ -33,11 +33,20 @@ it.each([
         studioQueries.liveSources.fn({ args: { refs: [], type }, ctx: { userID } } as never)
       );
       const parentConditions: any[] = [];
+      const sourceConditions: any[] = [];
       const visit = (condition: any) => {
         if (condition.type === 'correlatedSubquery') parentConditions.push(condition);
-        else for (const child of condition.conditions ?? []) visit(child);
+        else {
+          if (condition.type === 'simple' && condition.left.name === 'source_type')
+            sourceConditions.push(condition);
+          for (const child of condition.conditions ?? []) visit(child);
+        }
       };
       visit(ast.where);
+      expect(sourceConditions.length).toBeGreaterThan(0);
+      expect(
+        sourceConditions.every(condition => condition.op === '=' && condition.right.value === type)
+      ).toBe(true);
       expect(parentConditions).toHaveLength(1);
       expect(parentConditions[0].flip).toBe(false);
       expect(parentConditions[0].related.subquery.table).toBe(relation);
