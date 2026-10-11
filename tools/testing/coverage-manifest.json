@@ -135490,7 +135490,18 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves the direct runtime identity while installing only the owned Docker scan adapter"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unavailable Docker runtime identity %s"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
