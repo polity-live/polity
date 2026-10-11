@@ -19765,8 +19765,14 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+          "project": "component",
+          "caseId": "uses a local builder callback without Plate events, and blocks invalid or pending previews"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -19804,6 +19810,16 @@
     },
     {
       "path": "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
       "domain": "features:charts",
       "owner": "polity/features:charts",
       "kind": "test-infrastructure",
@@ -19887,6 +19903,7 @@
         "src/features/charts/context/__tests__/ChartDatasetContext.component.test.tsx",
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -19900,11 +19917,19 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses the shared theme colors for every chart series",
+          "scenarios": []
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -19936,6 +19961,7 @@
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -19944,8 +19970,7 @@
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
-        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
-        "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx"
+        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx"
       ]
     },
     {
@@ -19954,11 +19979,18 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
+          "project": "component",
+          "caseId": "adds the provider and links external sources without duplicate labels"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -19973,11 +20005,18 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+          "project": "component",
+          "caseId": "uses a local builder callback without Plate events, and blocks invalid or pending previews"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -19991,16 +20030,24 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+          "project": "unit",
+          "caseId": "prioritizes the GENESIS catalogue language even when the input uses another language"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
-        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx"
       ]
     },
     {
@@ -20027,6 +20074,7 @@
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -20040,11 +20088,18 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps group dataset access restricted to owners, active members and authorized guests"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -20058,11 +20113,18 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
+          "project": "unit",
+          "caseId": "transfers area and period for %s without unemployment-specific defaults"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
@@ -20094,6 +20156,7 @@
       "suggestedTestRefs": [
         "src/features/charts/__tests__/chart-currency.component-flow.test.tsx",
         "src/features/charts/__tests__/dataset-workflow.component-flow.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
         "src/features/network/types/__tests__/network.types.unit.test.ts",
         "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
@@ -20123,14 +20186,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20158,14 +20222,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20193,14 +20258,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20209,20 +20275,27 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits area charts, axis labels and grid while retaining missing values"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20250,14 +20323,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20285,15 +20359,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20321,14 +20395,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20356,14 +20431,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20372,20 +20448,27 @@
       "owner": "polity/features:charts",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+          "project": "component",
+          "caseId": "invokes every dialog, finder, builder, filter, option, and upload handler"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20413,14 +20496,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20448,14 +20532,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20483,14 +20568,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20515,6 +20601,16 @@
     },
     {
       "path": "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
       "domain": "features:charts",
       "owner": "polity/features:charts",
       "kind": "test-infrastructure",
@@ -20584,6 +20680,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
       "domain": "features:charts",
       "owner": "polity/features:charts",
@@ -20628,14 +20734,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -20663,14 +20770,15 @@
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
       ]
     },
     {
@@ -22475,8 +22583,14 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/canvas-frame-assignment.unit.test.ts",
+          "project": "unit",
+          "caseId": "detaches and reattaches %s without changing its world pose"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
@@ -23243,8 +23357,14 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/data-view-import.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves %s options, multiple series and value gaps"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
@@ -24519,7 +24639,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "lets a user type into an existing text node after one click"
+          "caseId": "selects existing text with one click and lets a user type after a double click"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -24858,7 +24978,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "lets a user type into an existing text node after one click"
+          "caseId": "selects existing text with one click and lets a user type after a double click"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -26033,8 +26153,14 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/transform-compatibility.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves all valid canonical transform ranges when rendering and exporting %s"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/ai-design-coverage.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
@@ -26345,7 +26471,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+          "caseId": "types immediately with the text tool and selects before editing with the selection tool"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -26871,7 +26997,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+          "caseId": "types immediately with the text tool and selects before editing with the selection tool"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -27044,7 +27170,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
           "project": "component",
-          "caseId": "rejects out-of-range column widths and nonnumeric chart values and supports line charts"
+          "caseId": "rejects out-of-range column widths and allows missing values in line charts"
         }
       ],
       "suggestedTestRefs": [
@@ -27068,8 +27194,14 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "preserves the active dataset and filters when the account token refreshes"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -27346,7 +27478,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+          "caseId": "edits presentation order and starts the actual preview from its dropdown on $name"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
@@ -27669,7 +27801,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "lets a user type into an existing text node after one click"
+          "caseId": "selects existing text with one click and lets a user type after a double click"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -28068,8 +28200,14 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+          "project": "component",
+          "caseId": "announces loading with a localized label through the shared and Studio screens"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -28106,7 +28244,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "lets a user type into an existing text node after one click"
+          "caseId": "selects existing text with one click and lets a user type after a double click"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -29266,7 +29404,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+          "caseId": "edits presentation order and starts the actual preview from its dropdown on $name"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
@@ -29340,7 +29478,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
           "project": "browser-component",
-          "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+          "caseId": "types immediately with the text tool and selects before editing with the selection tool"
         },
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -36625,6 +36763,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/decision-terminal/ui/__tests__/DecisionResultHelpers.unit.test.ts",
         "src/features/decision-terminal/ui/__tests__/DecisionTerminalDashboard.component.test.tsx",
         "src/features/decision-terminal/ui/__tests__/DecisionTerminalUtilities.branch.component.test.tsx",
@@ -73272,7 +73411,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73301,7 +73441,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73330,7 +73471,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73361,6 +73503,7 @@
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
         "src/features/timeline/ui/cards/__tests__/TimelineCardLoadingStates.component.test.tsx"
       ]
     },
@@ -73392,7 +73535,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73421,7 +73565,8 @@
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73430,14 +73575,21 @@
       "owner": "polity/features:shared",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+          "project": "component",
+          "caseId": "announces loading with a localized label through the shared and Studio screens"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/shared/ui/feedback/__tests__/FeedbackStates.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
-        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx"
+        "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx"
       ]
     },
     {
@@ -73491,6 +73643,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/feedback/index.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -73520,6 +73682,7 @@
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingStates.component.test.tsx",
+        "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
         "tools/testing/performance/city-design/index.html"
       ]
     },
@@ -74938,6 +75101,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/shared/ui/form/__tests__/A01FormBranches.component.test.tsx",
         "src/features/shared/ui/form/__tests__/ChoiceAndSwitchField.component.test.tsx",
         "src/features/shared/ui/form/__tests__/CreateFields.component.test.tsx",
@@ -74948,8 +75112,7 @@
         "src/features/shared/ui/form/__tests__/FormSection.component.test.tsx",
         "src/features/shared/ui/form/__tests__/GeoAddressFieldsController.component.test.tsx",
         "src/features/shared/ui/form/__tests__/GeoAddressMap.adapter.component.test.tsx",
-        "src/features/shared/ui/form/__tests__/GeoAddressMapView.loading.component.test.tsx",
-        "src/features/shared/ui/form/__tests__/NativeSelectField.component.test.tsx"
+        "src/features/shared/ui/form/__tests__/GeoAddressMapView.loading.component.test.tsx"
       ]
     },
     {
@@ -87621,13 +87784,13 @@
         "src/features/charts/context/__tests__/ChartDatasetContext.component.test.tsx",
         "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
         "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
-        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioDataChart.browser-component.test.tsx",
-        "src/features/docs/ui/__tests__/docs-search-article.branch-a04.component.test.tsx"
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
+        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx"
       ]
     },
     {
@@ -89043,7 +89206,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-selection-bounds.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx"
       ]
     },
     {
@@ -89638,6 +89801,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
@@ -89648,8 +89812,7 @@
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/overlay-portal-boundary.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/pagination.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/overlay-portal-boundary.component.test.tsx"
       ]
     },
     {
@@ -101569,8 +101732,14 @@
       "owner": "polity/src:i18n",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps German and English presentation copy complete for every show control"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/StudioShowTools.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx"
@@ -103508,8 +103677,14 @@
       "owner": "polity/src:i18n",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps German and English presentation copy complete for every show control"
+        }
+      ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/StudioShowTools.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx"
@@ -109348,8 +109523,17 @@
       "owner": "polity/routes:api",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "prepares %s with validated scope without importing observations",
+          "evidence": {
+            "relation": "direct"
+          }
+        }
+      ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
@@ -112732,7 +112916,7 @@
         {
           "file": "src/server/datasets/__tests__/genesis.unit.test.ts",
           "project": "unit",
-          "caseId": "does not call GENESIS for blank or one-character terms",
+          "caseId": "skips short queries and requires a configured token",
           "evidence": {
             "kind": "instrumented-full-suite",
             "relation": "direct",
@@ -112763,8 +112947,14 @@
       "owner": "polity/server:datasets",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/genesis.unit.test.ts",
+          "project": "unit",
+          "caseId": "classifies interrupted response streams and releases the credential queue"
+        }
+      ],
       "suggestedTestRefs": [
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
@@ -112786,8 +112976,14 @@
       "owner": "polity/server:datasets",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/importScope.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects unavailable areas, year gaps and contradictory dimensions without broadening"
+        }
+      ],
       "suggestedTestRefs": [
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
@@ -112881,8 +113077,14 @@
       "owner": "polity/server:datasets",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses defaults and optionally returns provider status"
+        }
+      ],
       "suggestedTestRefs": [
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
@@ -112940,8 +113142,14 @@
       "owner": "polity/server:datasets",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
+          "project": "unit",
+          "caseId": "coalesces concurrent queries and expires successful public results after five minutes"
+        }
+      ],
       "suggestedTestRefs": [
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
@@ -113035,8 +113243,14 @@
       "owner": "polity/server:datasets",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/text.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves UTF-8 columns and cells with BOM=%s"
+        }
+      ],
       "suggestedTestRefs": [
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
@@ -122359,6 +122573,16 @@
       ]
     },
     {
+      "path": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+      "domain": "zero:communication-studio",
+      "owner": "polity/zero:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/communication-studio/__tests__/client.component.test.tsx",
       "domain": "zero:communication-studio",
       "owner": "polity/zero:communication-studio",
@@ -122529,11 +122753,11 @@
         "src/features/communication-studio/logic/__tests__/studio-selection-commands.unit.test.ts",
         "src/server/studio/__tests__/project-commands.unit.test.ts",
         "src/server/studio/__tests__/zero-commands.database-integration.test.ts",
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
-        "src/zero/communication-studio/__tests__/observe.unit.test.ts",
-        "src/zero/communication-studio/__tests__/projections.unit.test.ts"
+        "src/zero/communication-studio/__tests__/observe.unit.test.ts"
       ]
     },
     {
@@ -122552,6 +122776,7 @@
       ],
       "suggestedTestRefs": [
         "src/zero/__tests__/observed-query.component.test.tsx",
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -122577,6 +122802,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -122607,6 +122833,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -122687,9 +122914,9 @@
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
-        "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
-        "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx"
+        "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts"
       ]
     },
     {
@@ -122720,6 +122947,7 @@
         "src/lib/ai/__tests__/schemas.unit.test.ts",
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -122727,8 +122955,7 @@
         "src/zero/communication-studio/__tests__/projections.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
-        "src/zero/communication-studio/__tests__/state.component.test.tsx",
-        "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts"
+        "src/zero/communication-studio/__tests__/state.component.test.tsx"
       ]
     },
     {
@@ -122849,10 +123076,10 @@
         "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
-        "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
-        "src/zero/communication-studio/__tests__/observe.unit.test.ts"
+        "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx"
       ]
     },
     {
@@ -123023,6 +123250,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -123048,6 +123276,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -123088,6 +123317,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -123113,6 +123343,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
         "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
@@ -133790,6 +134021,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/tests/event_studio.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/tests/events_agenda_delegation.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -137024,6 +137265,16 @@
     },
     {
       "path": "tools/testing/accountability/studio-ai-ci.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/studio-datasets-ci.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

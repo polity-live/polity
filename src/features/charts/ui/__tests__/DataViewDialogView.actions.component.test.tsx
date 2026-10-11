@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 
 import type { DataViewDialogModel } from '../../hooks/useDataViewDialogModel';
 import { DataViewDialogView } from '../DataViewDialogView';
@@ -219,6 +220,118 @@ vi.mock('@/features/shared/ui/ui/tabs', async () => {
       );
     },
   };
+});
+
+it('activates search recovery and time-range removal from focused native buttons', async () => {
+  const user = userEvent.setup();
+  const finder = model({
+    searchQuery: 'population 2025 Germany',
+    searchResults: [],
+    selectedResult: null,
+    providers: ['EUROSTAT'],
+    error: 'unauthorized',
+    providerErrors: [{ provider: 'GOVDATA', message: 'offline' }],
+  });
+  const view = render(<DataViewDialogView model={finder} />);
+  const activate = async (button: HTMLElement) => {
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    await user.keyboard('{Enter}');
+  };
+  for (const id of [
+    'charts.data-view.search.retry',
+    'charts.data-view.search.relax-period',
+    'charts.data-view.search.relax-area',
+    'charts.data-view.search.expand-sources',
+  ]) {
+    await activate(view.container.querySelector(`[data-action-id="${id}"]`)!);
+  }
+  await activate(view.getAllByRole('button', { name: 'plateJs.dataView.retrySearch' }).at(-1)!);
+  expect(finder.retrySearch).toHaveBeenCalledTimes(2);
+  expect(finder.setProviders).toHaveBeenCalledWith([
+    'EUROSTAT',
+    'GENESIS_DESTATIS',
+    'GOVDATA',
+    'UPLOAD',
+  ]);
+  const updates = vi
+    .mocked(finder.setSearchFilters)
+    .mock.calls.map(([update]: any[]) =>
+      update({ area: 'Germany', period: { start: 2025, end: 2025 } })
+    );
+  expect(updates).toContainEqual({ area: 'Germany', period: null });
+  expect(updates).toContainEqual({ area: null, period: { start: 2025, end: 2025 } });
+  const builder = model({
+    stage: 'build',
+    query: { ...model().query, timeRange: { startYear: 2024, endYear: 2025 } },
+  });
+  view.rerender(<DataViewDialogView model={builder} />);
+  await activate(view.getByRole('button', { name: 'plateJs.dataView.removeSearchPeriod' }));
+  expect(builder.setQuery.mock.calls[0][0](builder.query).timeRange).toBeNull();
+});
+
+it('cancels import preparation by keyboard and renders import busy, invalid, error and unauthorized states', async () => {
+  const user = userEvent.setup();
+  const base = {
+    stage: 'prepare',
+    preparation: { title: 'Population', dimensions: [], estimatedBytes: 100, importAllowed: true },
+    importFilters: {},
+    restrictImport: false,
+    cancelPreparation: vi.fn(),
+  };
+  const prepared = model(base);
+  const view = render(<DataViewDialogView model={prepared} />);
+  const back = view.getByRole('button', { name: 'plateJs.dataView.backToResults' });
+  back.focus();
+  expect(document.activeElement).toBe(back);
+  await user.keyboard('{Enter}');
+  expect(prepared.cancelPreparation).toHaveBeenCalledOnce();
+  const confirm = view.getByRole('button', { name: 'plateJs.dataView.importSelection' });
+  confirm.focus();
+  await user.keyboard('{Enter}');
+  expect(prepared.useSelectedDataset).toHaveBeenCalledOnce();
+  for (const error of ['Dataset failed', 'unauthorized']) {
+    view.rerender(<DataViewDialogView model={model({ ...base, error })} />);
+    expect(view.getByText(error)).toBeTruthy();
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({ ...base, importFilters: { period: { start: 2026, end: 2025 } } })}
+    />
+  );
+  expect(
+    (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+      .disabled
+  ).toBe(true);
+  view.rerender(<DataViewDialogView model={model({ ...base, preparing: true })} />);
+  expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+});
+
+it('opens scoped import from keyboard and retains busy and failed authorization feedback', async () => {
+  const user = userEvent.setup();
+  const source = { ...result, provider: 'EUROSTAT', providerDatasetId: 'population' };
+  const finder = model({ selectedResult: source, searchResults: [source] });
+  const view = render(<DataViewDialogView model={finder} />);
+  const scope = view.getByRole('button', { name: 'plateJs.dataView.restrictImport' });
+  scope.focus();
+  expect(document.activeElement).toBe(scope);
+  await user.keyboard('{Enter}');
+  expect(finder.useSelectedDataset).toHaveBeenCalledWith(true);
+  for (const error of ['Dataset failed', 'unauthorized']) {
+    view.rerender(<DataViewDialogView model={model({ selectedResult: source, error })} />);
+    expect(view.getByText(error)).toBeTruthy();
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.restrictImport' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+  }
+  view.rerender(<DataViewDialogView model={model({ selectedResult: source, preparing: true })} />);
+  expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+  expect(view.queryByRole('button', { name: 'plateJs.dataView.restrictImport' })).toBeNull();
 });
 
 vi.mock('@/features/shared/ui/ui/toggle-group', async () => {

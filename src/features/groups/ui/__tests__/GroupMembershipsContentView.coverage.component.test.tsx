@@ -58,6 +58,9 @@ vi.mock('../PendingRequestsTable', () => ({
 vi.mock('../PendingInvitationsTable', () => ({
   PendingInvitationsTable: captureComponent('PendingInvitationsTable'),
 }));
+vi.mock('../GroupEmailInvitationsPanel', () => ({
+  GroupEmailInvitationsPanel: captureComponent('GroupEmailInvitationsPanel'),
+}));
 vi.mock('../InviteMembersDialog', () => ({
   InviteMembersDialog: captureComponent('InviteMembersDialog'),
 }));

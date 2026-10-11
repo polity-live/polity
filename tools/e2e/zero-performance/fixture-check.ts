@@ -74,9 +74,7 @@ try {
   }
   if (!selected)
     await securityScenarios(sql, async (name, variant, args, actor, expected) => {
-      const entry = required(
-        loadCases().find(entry => entry.name === name && entry.variant === 'default')
-      );
+      const entry = required(all.find(entry => entry.name === name && entry.variant === 'default'));
       const context =
         actor === 'owner' ? OWNER : actor === 'outsider' ? OUTSIDER : { userID: 'anon', email: '' };
       const actual = await expectedRootIDs(

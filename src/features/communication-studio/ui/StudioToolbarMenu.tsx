@@ -101,7 +101,7 @@ export function StudioMenuItem({
       disabled={disabled}
       className={cn('py-1', iconOnly && 'justify-center px-2')}
       onSelect={onSelect}
-      tabIndex={tabIndex}
+      tabIndex={tabIndex ?? -1}
     >
       {icon}
       {iconOnly ? <span className="sr-only">{label}</span> : <span>{label}</span>}

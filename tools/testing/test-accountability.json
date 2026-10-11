@@ -27479,7 +27479,7 @@
       {
         "file": "src/server/datasets/__tests__/genesis.unit.test.ts",
         "project": "unit",
-        "caseId": "does not call GENESIS for blank or one-character terms",
+        "caseId": "skips short queries and requires a configured token",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "direct",

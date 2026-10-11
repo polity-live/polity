@@ -76,6 +76,11 @@ export const studioTranslations = {
     creditsCopyFailed:
       'Credits konnten nicht kopiert werden. Zwischenablage prüfen und erneut versuchen.',
     testTone: 'Testklang (3 Sekunden)',
+    chooseExactlyOneAudioSource: 'Wähle genau eine Audioquelle',
+    chooseOneAudioSource: 'Wähle eine Audioquelle',
+    chooseFrame: 'Wähle einen Rahmen',
+    globalRulesAreTransitions: 'Globale Regeln sind Übergangsklänge',
+    transitionsPlayOnEntry: 'Übergänge werden beim Betreten des Rahmens abgespielt',
     audioDisconnected: 'Audioausgang nicht verbunden',
     audioConnecting: 'Audioverbindung wird geprüft…',
     volume: 'Lautstärke',

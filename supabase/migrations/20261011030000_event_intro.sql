@@ -43,3 +43,6 @@ BEGIN
  PERFORM set_config('polity.canvas_command','',true);
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.studio_leave_intro_audio() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.studio_leave_intro_audio() TO service_role;

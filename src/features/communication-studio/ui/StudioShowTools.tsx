@@ -367,11 +367,23 @@ function MusicCredits({ builtin }: { builtin?: string }) {
       {getPresentationMusicCredits(builtin).map(track => (
         <p key={track.id}>
           {track.title} · {track.author} ·{' '}
-          <a href={track.source} target="_blank" rel="noreferrer" className="underline">
+          <a
+            data-action-kind="interaction"
+            href={track.source}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
             {t('creditSource')}
           </a>{' '}
           ·{' '}
-          <a href={track.license.url} target="_blank" rel="noreferrer" className="underline">
+          <a
+            data-action-kind="interaction"
+            href={track.license.url}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
             {track.license.name}
           </a>
         </p>
@@ -666,7 +678,7 @@ export function StudioShowTools({
     ...assets
       .filter(a => a.mime.startsWith('audio/'))
       .map(a => ({ value: a.id, label: a.name, group: live('uploadedMusic') })),
-    { value: 'builtin:test-tone', label: `${live('testTone')} · 3 s`, group: live('testSound') },
+    { value: 'builtin:test-tone', label: live('testTone'), group: live('testSound') },
   ];
   if (draft?.assetId && missing)
     musicOptions.push({
@@ -745,6 +757,7 @@ export function StudioShowTools({
             </span>
           </Hint>
           <Button
+            data-action-kind="interaction"
             variant="ghost"
             size="icon"
             className="size-7 shrink-0"
@@ -758,6 +771,7 @@ export function StudioShowTools({
             <PencilLine className="size-3.5" />
           </Button>
           <Button
+            data-action-kind="interaction"
             variant="ghost"
             size="icon"
             className="size-7 shrink-0"
@@ -831,6 +845,7 @@ export function StudioShowTools({
         >
           {t(removed.kind === 'rule' ? 'removed' : 'removedAnimation')}
           <Button
+            data-action-kind="interaction"
             size="sm"
             variant="outline"
             disabled={disabled}
@@ -910,6 +925,7 @@ export function StudioShowTools({
                       )
                       .map(renderRule)}
                     <Button
+                      data-action-kind="interaction"
                       className="w-full justify-start"
                       variant="ghost"
                       size="sm"
@@ -931,6 +947,7 @@ export function StudioShowTools({
                       )
                       .map(renderRule)}
                     <Button
+                      data-action-kind="interaction"
                       className="w-full justify-start"
                       variant="ghost"
                       size="sm"
@@ -952,6 +969,7 @@ export function StudioShowTools({
                             : t('video')}
                         </span>
                         <Button
+                          data-action-kind="interaction"
                           size="icon"
                           variant="ghost"
                           className="size-7 shrink-0"
@@ -968,6 +986,7 @@ export function StudioShowTools({
                           <PencilLine className="size-3.5" />
                         </Button>
                         <Button
+                          data-action-kind="interaction"
                           size="icon"
                           variant="ghost"
                           className="size-7 shrink-0"
@@ -994,6 +1013,7 @@ export function StudioShowTools({
                     )}
                     {!hasBackground && (
                       <Button
+                        data-action-kind="interaction"
                         className="w-full justify-start"
                         size="sm"
                         variant="ghost"
@@ -1035,6 +1055,7 @@ export function StudioShowTools({
                           </button>
                         </Hint>
                         <Button
+                          data-action-kind="interaction"
                           variant="ghost"
                           size="icon"
                           className="size-7 shrink-0"
@@ -1056,6 +1077,7 @@ export function StudioShowTools({
                           <PencilLine className="size-3.5" />
                         </Button>
                         <Button
+                          data-action-kind="interaction"
                           variant="ghost"
                           size="icon"
                           className="size-7 shrink-0"
@@ -1085,6 +1107,7 @@ export function StudioShowTools({
                       </div>
                     ))}
                     <Button
+                      data-action-kind="interaction"
                       className="w-full justify-start"
                       variant="ghost"
                       size="sm"
@@ -1123,6 +1146,7 @@ export function StudioShowTools({
           .filter(c => cueChannel(c) === 'transition' && cueScope(c) === 'global')
           .map(renderRule)}
         <Button
+          data-action-kind="interaction"
           variant="ghost"
           size="sm"
           disabled={disabled}
@@ -1263,6 +1287,7 @@ export function StudioShowTools({
                       onFilesRejected={() => setUploadError(t('audioRejected'))}
                     />
                     <Button
+                      data-action-kind="interaction"
                       variant="outline"
                       disabled={!validDraft}
                       onClick={() => {
@@ -1528,12 +1553,17 @@ export function StudioShowTools({
               {t('cancel')}
             </Button>
             {draft && (
-              <Button disabled={!validDraft || !!conflict || uploading || disabled} onClick={save}>
+              <Button
+                data-action-kind="interaction"
+                disabled={!validDraft || !!conflict || uploading || disabled}
+                onClick={save}
+              >
                 {t('save')}
               </Button>
             )}
             {animation && (
               <Button
+                data-action-kind="interaction"
                 disabled={
                   disabled ||
                   uploading ||

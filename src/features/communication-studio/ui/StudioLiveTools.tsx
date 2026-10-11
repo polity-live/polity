@@ -92,6 +92,7 @@ export function StudioLiveTools({
     <>
       {onInsertData && (
         <ToolbarButton
+          data-action-kind="interaction"
           data-action-id="studio.data-view.open"
           type="button"
           tooltip={translateText('features.studio.dataImport.insert')}

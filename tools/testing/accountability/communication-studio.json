@@ -2417,14 +2417,8 @@
     "src/features/communication-studio/ui/StudioDataProperties.tsx#input-ca2b57adc2": {
       "actionId": "communication-studio.studio-data-properties.activate.input-e3bdd3d2be"
     },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-8f99952091": {
-      "actionId": "communication-studio.studio-data-properties.activate.input-da9dfdfba0"
-    },
     "src/features/communication-studio/ui/StudioDataProperties.tsx#select-bac312eb9b": {
       "actionId": "communication-studio.studio-data-properties.activate.select-1481c471ce"
-    },
-    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-ff210d962d": {
-      "actionId": "communication-studio.studio-data-properties.activate.select-1f227bef7a"
     },
     "src/features/communication-studio/ui/StudioPanel.tsx#ToolbarButton-c0046f9db8": {
       "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"

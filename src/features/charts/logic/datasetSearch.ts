@@ -391,7 +391,7 @@ function topicScore(result: DatasetSearchResult, intent: DatasetSearchIntent) {
             'the',
             'for',
             'von',
-            'fuer',
+            normalizeDatasetSearchText('für'),
           ].includes(token)
       );
     const haystack = normalizeDatasetSearchText(`${title} ${description}`);

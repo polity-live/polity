@@ -496,8 +496,9 @@ export async function securityScenarios(sql: Sql, check: CheckSecurity) {
     await sql`delete from public.subscriber where id=${subscription}`;
     await sql`delete from public.group_connection where id=${connection}`;
     await sql`delete from public."group" where id=${publicGroup}`;
-    await sql`delete from public."group" where id=${group}`;
+    // Remove event children before their group; projects inherit event access and group links.
     await sql`delete from public.event where id=${event}`;
+    await sql`delete from public."group" where id=${group}`;
     await sql`delete from public.amendment where id=${amendment}`;
     await sql`delete from public.app_tutorial_run where id=${tutorial}`;
   }

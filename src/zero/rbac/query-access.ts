@@ -6,7 +6,8 @@ export function isAuthenticatedUserId(userID: string | undefined | null): userID
 }
 
 export function denyAllRows<T>(q: T): T {
-  return (q as any).where('id', '__unauthorized__') as T;
+  // Primary keys cannot be null. This also compiles safely for UUID columns.
+  return (q as any).where('id', 'IS', null) as T;
 }
 
 export function requireQueryUser<T>(q: T, userID: string | undefined | null, field = 'user_id'): T {

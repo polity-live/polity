@@ -1,8 +1,8 @@
 -- One authoritative cue evaluator for manual commands, agenda-follow and voting phases.
 CREATE OR REPLACE FUNCTION public.studio_resolve_show_audio(eid uuid, fid uuid, names text[], base jsonb, now_ms bigint)
 RETURNS jsonb LANGUAGE plpgsql SET search_path=public AS $$
-DECLARE d jsonb; pid uuid; cue jsonb; lane text; selected_trigger text; out_audio jsonb:=base;
- fired jsonb:=coalesce(base->'_cueFired','{}'); event_key text; fresh text[]:='{}'; name text; result jsonb; pos double precision;
+DECLARE d jsonb; pid uuid; cue jsonb; lane text; out_audio jsonb:=base;
+        fired jsonb:=coalesce(base->'_cueFired','{}'); event_key text; fresh text[]:=ARRAY[]::text[]; name text; result jsonb; pos double precision;
 BEGIN
  SELECT ep.project_id,st.document INTO pid,d FROM event_presentation ep JOIN studio_state st ON st.project_id=ep.project_id
  WHERE ep.event_id=eid AND (ep.running OR current_setting('polity.show_starting',true)=eid::text) AND ep.lease_until>now_ms;
@@ -24,7 +24,6 @@ BEGIN
      AND a.workspace_id IS NULL AND a.mime_type IN ('audio/mpeg','audio/wav')))
   ORDER BY CASE WHEN c->>'scope'='global' THEN 1 ELSE 0 END,array_position(fresh,c->>'trigger'),ord LIMIT 1;
   IF cue IS NULL THEN CONTINUE; END IF;
-  selected_trigger:=cue->>'trigger';
   IF coalesce(cue->>'action','play') IN ('pause','stop') THEN
    pos:=coalesce((base->>'position')::double precision,0)+CASE WHEN base->>'status'='playing' THEN greatest(0,(now_ms-coalesce((base->>'at')::bigint,now_ms))/1000.0) ELSE 0 END;
    result:=(out_audio-'transition')||jsonb_build_object('status',CASE WHEN cue->>'action'='pause' THEN 'paused' ELSE 'stopped' END,

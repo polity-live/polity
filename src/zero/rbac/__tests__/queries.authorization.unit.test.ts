@@ -41,11 +41,7 @@ describe('viewer-scoped RBAC queries', () => {
       args: { userId: 'other-user' },
       ctx: { userID: 'user-1', email: 'person@example.test' },
     });
-    expect(harness.lastQuery('group_membership').calls).toContainEqual([
-      'where',
-      'id',
-      '__unauthorized__',
-    ]);
+    expect(harness.lastQuery('group_membership').calls).toContainEqual(['where', 'id', 'IS', null]);
 
     harness.reset();
     rbacQueries.guestPermissions.fn({
@@ -55,7 +51,8 @@ describe('viewer-scoped RBAC queries', () => {
     expect(harness.lastQuery('group_guest_access').calls).toContainEqual([
       'where',
       'id',
-      '__unauthorized__',
+      'IS',
+      null,
     ]);
   });
 

@@ -72,6 +72,7 @@ export function DatasetSearchControls({
               </PopoverTrigger>
               <PopoverContent align="start" className="w-72">
                 <form
+                  data-action-kind="interaction"
                   className="space-y-3"
                   onSubmit={event => {
                     event.preventDefault();
@@ -124,6 +125,7 @@ export function DatasetSearchControls({
                     </div>
                   )}
                   <Button
+                    data-action-kind="interaction"
                     type="submit"
                     size="sm"
                     disabled={key === 'area' ? !area.trim() : !validPeriod}

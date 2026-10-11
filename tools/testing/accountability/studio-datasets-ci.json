@@ -1,0 +1,925 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/charts/hooks/useDataViewBuilderModel.ts": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "project": "component",
+        "caseId": "uses a local builder callback without Plate events, and blocks invalid or pending previews"
+      }
+    ],
+    "src/features/charts/logic/chartPalette.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the shared theme colors for every chart series",
+        "scenarios": []
+      }
+    ],
+    "src/features/charts/logic/dataViewAttribution.ts": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
+        "project": "component",
+        "caseId": "adds the provider and links external sources without duplicate labels"
+      }
+    ],
+    "src/features/charts/logic/dataViewInsertion.ts": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "project": "component",
+        "caseId": "uses a local builder callback without Plate events, and blocks invalid or pending previews"
+      }
+    ],
+    "src/features/charts/logic/datasetSearch.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "project": "unit",
+        "caseId": "prioritizes the GENESIS catalogue language even when the input uses another language"
+      }
+    ],
+    "src/features/charts/logic/groupDatasetRights.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps group dataset access restricted to owners, active members and authorized guests"
+      }
+    ],
+    "src/features/charts/logic/providerDataView.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
+        "project": "unit",
+        "caseId": "transfers area and period for %s without unemployment-specific defaults"
+      }
+    ],
+    "src/features/charts/ui/ChartTypeSelector.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits area charts, axis labels and grid while retaining missing values"
+      }
+    ],
+    "src/features/charts/ui/DatasetSearchControls.tsx": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "invokes every dialog, finder, builder, filter, option, and upload handler"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-frame-assignment.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas-frame-assignment.unit.test.ts",
+        "project": "unit",
+        "caseId": "detaches and reattaches %s without changing its world pose"
+      }
+    ],
+    "src/features/communication-studio/logic/data-view-import.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/data-view-import.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves %s options, multiple series and value gaps"
+      }
+    ],
+    "src/features/communication-studio/logic/transform-fields.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/transform-compatibility.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves all valid canonical transform ranges when rendering and exporting %s"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataViewDialog.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the active dataset and filters when the account token refreshes"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLoadingScreen.tsx": [
+      {
+        "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+        "project": "component",
+        "caseId": "announces loading with a localized label through the shared and Studio screens"
+      }
+    ],
+    "src/features/shared/ui/feedback/PolityLoadingScreen.tsx": [
+      {
+        "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+        "project": "component",
+        "caseId": "announces loading with a localized label through the shared and Studio screens"
+      }
+    ],
+    "src/i18n/locales/de/features/studioShow.ts": [
+      {
+        "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps German and English presentation copy complete for every show control"
+      }
+    ],
+    "src/i18n/locales/en/features/studioShow.ts": [
+      {
+        "file": "src/features/shared/ui/feedback/__tests__/PolityLoadingScreen.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps German and English presentation copy complete for every show control"
+      }
+    ],
+    "src/routes/api/datasets/prepare.ts": [
+      {
+        "file": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "prepares %s with validated scope without importing observations",
+        "evidence": {
+          "relation": "direct"
+        }
+      }
+    ],
+    "src/server/datasets/genesisTransport.ts": [
+      {
+        "file": "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "project": "unit",
+        "caseId": "classifies interrupted response streams and releases the credential queue"
+      }
+    ],
+    "src/server/datasets/importScope.ts": [
+      {
+        "file": "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable areas, year gaps and contradictory dimensions without broadening"
+      }
+    ],
+    "src/server/datasets/providerError.ts": [
+      {
+        "file": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses defaults and optionally returns provider status"
+      }
+    ],
+    "src/server/datasets/searchRuntime.ts": [
+      {
+        "file": "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
+        "project": "unit",
+        "caseId": "coalesces concurrent queries and expires successful public results after five minutes"
+      }
+    ],
+    "src/server/datasets/text.ts": [
+      {
+        "file": "src/server/datasets/__tests__/text.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves UTF-8 columns and cells with BOM=%s"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/charts/ui/ChartTypeSelector.tsx#charts.data-view.chart.select-type": [
+      {
+        "file": "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
+        "project": "component",
+        "caseId": "selects every enabled chart type by keyboard and blocks a disabled pie choice",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSearchControls.tsx#charts.dataset-search-controls.activate.button-44809473bf": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "project": "component",
+        "caseId": "edits and removes area and period with keyboard focus and rejects invalid local filter drafts",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSearchControls.tsx#charts.data-view.search.apply-filter": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "project": "component",
+        "caseId": "edits and removes area and period with keyboard focus and rejects invalid local filter drafts",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSearchControls.tsx#charts.dataset-search-controls.plate-js-data-view-apply-search-filter": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "project": "component",
+        "caseId": "edits and removes area and period with keyboard focus and rejects invalid local filter drafts",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSearchControls.tsx#charts.dataset-search-controls.set-filters": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
+        "project": "component",
+        "caseId": "edits and removes area and period with keyboard focus and rejects invalid local filter drafts",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-back-to-results": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "cancels import preparation by keyboard and renders import busy, invalid, error and unauthorized states",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-import-selection": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "cancels import preparation by keyboard and renders import busy, invalid, error and unauthorized states",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-more-options": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes stable chart, table, metric, upload and save configuration actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-restrict-import": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "opens scoped import from keyboard and retains busy and failed authorization feedback",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-retry-search": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.set-query": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.search.expand-sources": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.search.relax-area": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.search.relax-period": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.search.retry": [
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "activates search recovery and time-range removal from focused native buttons",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.search.toggle-other": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "interprets, edits and removes filters and retains navigation before insertion on $name",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx#communication-studio.context.action.activate": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "selects text without editing, edits with the button, and keeps it movable after Done (%s)",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.inlinecheckbox-f13b2fe07a": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits area charts, axis labels and grid while retaining missing values",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-0042898195": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-b8bf6854af": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits area charts, axis labels and grid while retaining missing values",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#studio.live.select10.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "edits presentation order and starts the actual preview from its dropdown on $name",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLayersPanel.tsx#communication-studio.studio-layers-panel.activate.button-875ea22764": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "collapses descendants with mouse and keyboard without changing selection, even read-only",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "temporarily expands search matches and restores collapsed branches after clearing the query",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.data-view.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "offers a direct visualization icon with keyboard access on $name",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "disables the visualization icon for read-only documents",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.a-f5f95ce427": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "links music credits directly to external sources and licenses",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-1235dd1e81": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "blocks local confirmations and background creation when editing access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-1e37514114": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-3793f781eb": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-3c8308ffd4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-6dedd05f92": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-8657d11ee5": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "starts and stops local audio through native keyboard focus and disables listening without a source",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows playback failures as a Polity danger notice and clears them when editing the source",
+        "scenarios": ["error"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-8b48dac610": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-963edc5774": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-98d5796f45": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-9f81797b01": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "blocks local confirmations and background creation when editing access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-a4077c6043": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-dfa48fd652": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-ee0d980339": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background video and element animation choices using keyboard without committing cancelled drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.button-ee2229921d": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background video and element animation choices using keyboard without committing cancelled drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.add-animation": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.add-background": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "adds, edits, removes and restores background and element animations with native keyboard controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "blocks local confirmations and background creation when editing access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.add-global": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.add-music": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.add-transition": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.cancel": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.change-draft": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.credit-source": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "links music credits directly to external sources and licenses",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.frame": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.on-change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.open-preview": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.replay": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.set-expanded": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.set-with-audio": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.simulate": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and collapses slide layers and operates preview controls through keyboard focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.undo": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["idle", "success", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.selectitem-4cf5dd0fae": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.selecttrigger-78ed559bc3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-339d3f1790": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-369aa5e1a3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-3a93a89224": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "opens saved music rules with keyboard and disables their editing when access is revoked",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-3cf94d5672": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-4dbeb918cd": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits music and global transition rules through focused keyboard controls and preserves local drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-8f65ed10ff": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background video and element animation choices using keyboard without committing cancelled drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-937a0f68cb": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background video and element animation choices using keyboard without committing cancelled drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx#communication-studio.studio-show-tools.activate.showselect-aea095ffe4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background video and element animation choices using keyboard without committing cancelled drafts",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#communication-studio.studio-toolbar-menu.on-select": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "dispatches the %s menu action %s exactly once by keyboard and restores toolbar focus",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "prevents keyboard opening of a disabled Studio toolbar menu and preserves its item callback",
+        "scenarios": ["disabled"]
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/charts/ui/DatasetSearchControls.tsx#Button-44809473bf": {
+      "actionId": "charts.dataset-search-controls.activate.button-44809473bf"
+    },
+    "src/features/charts/ui/DatasetSearchControls.tsx#PopoverTrigger-e558429676": {
+      "actionId": "charts.dataset-search-controls.activate.button-44809473bf"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#InlineCheckbox-f13b2fe07a": {
+      "actionId": "communication-studio.studio-data-properties.activate.inlinecheckbox-f13b2fe07a"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-0042898195": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-0042898195"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-b8bf6854af": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-b8bf6854af"
+    },
+    "src/features/communication-studio/ui/StudioLayersPanel.tsx#button-875ea22764": {
+      "actionId": "communication-studio.studio-layers-panel.activate.button-875ea22764"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#button-3c8308ffd4": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-3c8308ffd4"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-8b48dac610": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-8b48dac610"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#button-a4077c6043": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-a4077c6043"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-ee0d980339": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-ee0d980339"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-ee2229921d": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-ee2229921d"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#SelectItem-4cf5dd0fae": {
+      "actionId": "communication-studio.studio-show-tools.activate.selectitem-4cf5dd0fae"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#SelectTrigger-78ed559bc3": {
+      "actionId": "communication-studio.studio-show-tools.activate.selecttrigger-78ed559bc3"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-339d3f1790": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-339d3f1790"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-369aa5e1a3": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-369aa5e1a3"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-3a93a89224": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-3a93a89224"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-3cf94d5672": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-3cf94d5672"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-4dbeb918cd": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-4dbeb918cd"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-8f65ed10ff": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-8f65ed10ff"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-937a0f68cb": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-937a0f68cb"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-aea095ffe4": {
+      "actionId": "communication-studio.studio-show-tools.activate.showselect-aea095ffe4"
+    },
+    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#DropdownMenuTrigger-a68a27f74d": {
+      "actionId": "communication-studio.toolbar.menu.open"
+    },
+    "src/features/charts/ui/DataViewDialogView.tsx#CollapsibleTrigger-f5ba1c8aab-2": {
+      "actionId": "charts.data-view.options.toggle"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#a-9ec564f224": {
+      "actionId": "communication-studio.studio-show-tools.activate.a-f5f95ce427"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-267eecf267": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-3793f781eb"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-5ead3fc687": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-6dedd05f92"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-661e11f4bd": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-963edc5774"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-80d9f61cd1": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-dfa48fd652"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-953b0da3b2": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-8657d11ee5"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-a30c93f302": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-9f81797b01"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-a4ec7014be": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-1235dd1e81"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-aff0bcb690": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-98d5796f45"
+    },
+    "src/features/communication-studio/ui/StudioShowTools.tsx#Button-b631b38320": {
+      "actionId": "communication-studio.studio-show-tools.activate.button-1e37514114"
+    }
+  }
+}

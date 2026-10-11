@@ -1,22 +1,22 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 192,
-    "columns": 1973,
-    "primaryKeys": 193,
-    "checks": 186,
-    "foreignKeys": 464,
+    "tables": 197,
+    "columns": 2039,
+    "primaryKeys": 198,
+    "checks": 190,
+    "foreignKeys": 479,
     "uniqueConstraints": 75,
     "uniqueIndexes": 31,
     "uniqueRules": 106,
-    "indexes": 754,
-    "functions": 128,
-    "triggers": 117,
+    "indexes": 760,
+    "functions": 152,
+    "triggers": 122,
     "policies": 169,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 123,
+    "checkViolations": 125,
     "uniqueViolations": 89
   },
   "globalTests": {
@@ -404,6 +404,11 @@
       "source": "76_group_email_invitations.sql",
       "behavior": ["group_email_invitations.sql"],
       "securityBehavior": ["group_email_invitations.sql"]
+    },
+    {
+      "source": "75_event_studio.sql",
+      "behavior": ["event_studio.sql"],
+      "securityBehavior": ["event_studio.sql"]
     }
   ]
 }

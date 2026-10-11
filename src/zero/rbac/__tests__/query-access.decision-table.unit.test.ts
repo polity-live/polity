@@ -96,12 +96,14 @@ describe('query access authentication decision table', () => {
     expect(expectQueryMutation(query => denyAllRows(query)).calls).toContainEqual([
       'where',
       'id',
-      '__unauthorized__',
+      'IS',
+      null,
     ]);
     expect(expectQueryMutation(query => requireQueryUser(query, undefined)).calls).toContainEqual([
       'where',
       'id',
-      '__unauthorized__',
+      'IS',
+      null,
     ]);
     expect(expectQueryMutation(query => requireQueryUser(query, 'viewer')).calls).toContainEqual([
       'where',
@@ -114,10 +116,10 @@ describe('query access authentication decision table', () => {
 
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'viewer', undefined)).calls
-    ).toContainEqual(['where', 'id', '__unauthorized__']);
+    ).toContainEqual(['where', 'id', 'IS', null]);
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'other', 'viewer')).calls
-    ).toContainEqual(['where', 'id', '__unauthorized__']);
+    ).toContainEqual(['where', 'id', 'IS', null]);
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'viewer', 'viewer')).calls
     ).toContainEqual(['where', 'user_id', 'viewer']);

@@ -83,20 +83,20 @@ $$;
 ALTER FUNCTION public.studio_access(uuid,uuid,boolean) RENAME TO studio_access_without_events;
 CREATE FUNCTION public.studio_access(actor uuid,pid uuid,edit boolean DEFAULT false) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT CASE WHEN p.event_id IS NOT NULL THEN CASE WHEN edit THEN event_studio_can_manage(actor,p.event_id) ELSE event_studio_can_read(actor,p.event_id) END
- ELSE studio_access_without_events(actor,pid,edit) END FROM studio_project p WHERE p.id=pid;
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN CASE WHEN edit THEN event_studio_can_manage(actor,p.event_id) ELSE event_studio_can_read(actor,p.event_id) END
+ ELSE studio_access_without_events(actor,pid,edit) END FROM studio_project p WHERE p.id=pid),false);
 $$;
 ALTER FUNCTION public.studio_collaboration_access(uuid,uuid) RENAME TO studio_collaboration_access_without_events;
 CREATE FUNCTION public.studio_collaboration_access(actor uuid,pid uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
- ELSE studio_collaboration_access_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid;
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
+ ELSE studio_collaboration_access_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid),false);
 $$;
 ALTER FUNCTION public.canvas_manage(uuid,uuid) RENAME TO canvas_manage_without_events;
 CREATE FUNCTION public.canvas_manage(actor uuid,pid uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
- ELSE canvas_manage_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid;
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
+ ELSE canvas_manage_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid),false);
 $$;
 REVOKE ALL ON FUNCTION public.event_studio_can_read(uuid,uuid),public.event_studio_can_manage(uuid,uuid),public.studio_access(uuid,uuid,boolean),public.studio_collaboration_access(uuid,uuid),public.canvas_manage(uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.event_studio_can_read(uuid,uuid),public.event_studio_can_manage(uuid,uuid),public.studio_access(uuid,uuid,boolean),public.studio_collaboration_access(uuid,uuid),public.canvas_manage(uuid,uuid) TO service_role;
@@ -145,7 +145,7 @@ GRANT EXECUTE ON FUNCTION public.sync_studio_search_acl(uuid) TO service_role;
 
 CREATE FUNCTION public.studio_clone_event_nodes(kind_name text,source uuid,frame_position integer) RETURNS jsonb
 LANGUAGE plpgsql SET search_path=public AS $$
- DECLARE value text; token text; new_frame text;
+DECLARE value text; token text;
  BEGIN
  SELECT document->'nodes' INTO value FROM studio_event_template WHERE kind=kind_name;
  IF value IS NULL THEN SELECT document->'nodes' INTO value FROM studio_event_template WHERE kind='discussion'; END IF;
@@ -331,6 +331,10 @@ CREATE FUNCTION public.studio_refresh_source(kind_name text,sid uuid) RETURNS vo
  WHEN 'group' THEN gid:=sid; SELECT jsonb_build_object('title',name,'description',description,'image_url',image_url) INTO p FROM "group" WHERE id=sid;
  END CASE;
  IF p IS NULL THEN DELETE FROM studio_live_source WHERE source_type=kind_name AND source_id=sid; RETURN; END IF;
+ -- Legacy votes and elections may carry an agenda identifier without a parent row.
+ -- Keep their source payload available while linking only existing agenda items.
+ IF aid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM agenda_item WHERE id=aid) THEN aid:=NULL; END IF;
+ IF eid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM event WHERE id=eid) THEN eid:=NULL; END IF;
  INSERT INTO studio_live_source(source_type,source_id,event_id,agenda_item_id,vote_id,election_id,amendment_id,user_id,group_id,payload,updated_at)
  VALUES(kind_name,sid,eid,aid,vid,elid,amid,uid,gid,p,(extract(epoch FROM clock_timestamp())*1000)::bigint)
  ON CONFLICT(source_type,source_id) DO UPDATE SET event_id=excluded.event_id,agenda_item_id=excluded.agenda_item_id,vote_id=excluded.vote_id,election_id=excluded.election_id,amendment_id=excluded.amendment_id,user_id=excluded.user_id,group_id=excluded.group_id,payload=excluded.payload,updated_at=excluded.updated_at;
@@ -442,8 +446,8 @@ FOR EACH ROW EXECUTE FUNCTION public.studio_leave_intro_audio();
 -- One authoritative cue evaluator for manual commands, agenda-follow and voting phases.
 CREATE OR REPLACE FUNCTION public.studio_resolve_show_audio(eid uuid, fid uuid, names text[], base jsonb, now_ms bigint)
 RETURNS jsonb LANGUAGE plpgsql SET search_path=public AS $$
-DECLARE d jsonb; pid uuid; cue jsonb; lane text; selected_trigger text; out_audio jsonb:=base;
- fired jsonb:=coalesce(base->'_cueFired','{}'); event_key text; fresh text[]:='{}'; name text; result jsonb; pos double precision;
+DECLARE d jsonb; pid uuid; cue jsonb; lane text; out_audio jsonb:=base;
+        fired jsonb:=coalesce(base->'_cueFired','{}'); event_key text; fresh text[]:=ARRAY[]::text[]; name text; result jsonb; pos double precision;
 BEGIN
  SELECT ep.project_id,st.document INTO pid,d FROM event_presentation ep JOIN studio_state st ON st.project_id=ep.project_id
  WHERE ep.event_id=eid AND (ep.running OR current_setting('polity.show_starting',true)=eid::text) AND ep.lease_until>now_ms;
@@ -465,7 +469,6 @@ BEGIN
      AND a.workspace_id IS NULL AND a.mime_type IN ('audio/mpeg','audio/wav')))
   ORDER BY CASE WHEN c->>'scope'='global' THEN 1 ELSE 0 END,array_position(fresh,c->>'trigger'),ord LIMIT 1;
   IF cue IS NULL THEN CONTINUE; END IF;
-  selected_trigger:=cue->>'trigger';
   IF coalesce(cue->>'action','play') IN ('pause','stop') THEN
    pos:=coalesce((base->>'position')::double precision,0)+CASE WHEN base->>'status'='playing' THEN greatest(0,(now_ms-coalesce((base->>'at')::bigint,now_ms))/1000.0) ELSE 0 END;
    result:=(out_audio-'transition')||jsonb_build_object('status',CASE WHEN cue->>'action'='pause' THEN 'paused' ELSE 'stopped' END,
@@ -649,3 +652,11 @@ LANGUAGE plpgsql SET search_path=public AS $$
 $$;
 
 
+
+ALTER TABLE public.studio_event_template ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.studio_event_template FROM anon,authenticated;
+REVOKE ALL ON FUNCTION public.studio_event_structure_changed(),public.studio_event_document_guard(),public.studio_event_project_guard(),public.studio_source_changed(),public.studio_event_access_changed() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.studio_event_structure_changed(),public.studio_event_document_guard(),public.studio_event_project_guard(),public.studio_source_changed(),public.studio_event_access_changed() TO service_role;
+
+REVOKE ALL ON FUNCTION public.studio_leave_intro_audio() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.studio_leave_intro_audio() TO service_role;

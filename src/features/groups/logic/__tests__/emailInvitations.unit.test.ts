@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { emailInvitations as de } from '@/i18n/locales/de/features/groups/emailInvitations';
 import { emailInvitations as en } from '@/i18n/locales/en/features/groups/emailInvitations';
 import {
@@ -7,6 +8,26 @@ import {
   parseInvitationEmails,
   parseInvitationRecipients,
 } from '../emailInvitations';
+
+afterEach(() => useLanguageStore.setState({ language: 'en' }));
+
+it.each(['en', 'de'] as const)(
+  'localizes exclusive recipient validation at parse time in %s',
+  language => {
+    useLanguageStore.setState({ language });
+    const result = invitationManagementSchema.safeParse({
+      action: 'preview',
+      roleIds: [crypto.randomUUID()],
+    });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ['recipients'],
+      message:
+        language === 'de'
+          ? 'Gib genau ein Empfängerformat an'
+          : 'Provide exactly one recipient format',
+    });
+  }
+);
 
 describe('email invitation input', () => {
   it('accepts exactly one recipient format and rejects oversized names', () => {

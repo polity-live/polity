@@ -35,7 +35,9 @@ export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T
 
 function collaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
   return or(
-    exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor)),
+    exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor), {
+      flip: false,
+    }),
     and(
       cmp('event_id', 'IS', null),
       or(
@@ -70,7 +72,7 @@ export function studioProjectCollaborativeAccess<T>(project: T, actor: string): 
 export function studioProjectReadAccess<T>(project: T, actor: string | null): T {
   return (project as any).where((helpers: any) =>
     helpers.or(
-      helpers.exists('event', (event: any) => applyEventQueryAccess(event, actor)),
+      helpers.exists('event', (event: any) => applyEventQueryAccess(event, actor), { flip: false }),
       helpers.and(
         helpers.cmp('event_id', 'IS', null),
         helpers.or(

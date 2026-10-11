@@ -31,8 +31,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND relation.relkind = 'r'
   ),
-  173,
-  'the application owns 173 public tables'
+  178,
+  'the application owns 178 public tables'
 );
 
 SELECT is(
@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1824,
-  'all 1824 application columns are installed'
+  1864,
+  'all 1864 application columns are installed'
 );
 
 SELECT is(
@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  153,
-  'all 153 business CHECK constraints are installed'
+  156,
+  'all 156 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  420,
-  'all 420 foreign keys are installed'
+  435,
+  'all 435 foreign keys are installed'
 );
 
 SELECT is(
@@ -116,8 +116,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'u'
   ),
-  66,
-  'all 66 UNIQUE constraints are installed'
+  68,
+  'all 68 UNIQUE constraints are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  715,
-  'all 715 application indexes are installed'
+  723,
+  'all 723 application indexes are installed'
 );
 
 SELECT is(
@@ -160,8 +160,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  91,
-  'all 91 application functions are installed'
+  112,
+  'all 112 application functions are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  83,
-  'all 83 privileged functions are SECURITY DEFINER'
+  90,
+  'all 90 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  86,
-  'all 86 application triggers are installed'
+  117,
+  'all 117 application triggers are installed'
 );
 
 SELECT is(

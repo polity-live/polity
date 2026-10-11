@@ -102,13 +102,13 @@ for (const personal of [false, true]) {
         .click();
       await expect(projectTitle(reviewerPage)).toBeEnabled();
       await projectTitle(reviewerPage).fill('Voted group design');
-      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+      await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await reviewerPage.getByRole('button', { name: 'Remove this accent', exact: true }).click();
       await expect(
         reviewerPage.locator(`[data-studio-layer-id="${removalTarget.id}"]`)
       ).toHaveAttribute('aria-selected', 'true');
       // Close Layers without invoking the canvas Escape shortcut, which clears selection.
-      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+      await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await expect(reviewerPage.getByRole('tree')).toBeHidden();
       await reviewerPage.keyboard.press('Delete');
       await expect(
@@ -127,7 +127,7 @@ for (const personal of [false, true]) {
         })
         .toBe(false);
       if (await reviewerPage.getByRole('tree').isVisible())
-        await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+        await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await reviewerPage.getByRole('button', { name: 'Frame', exact: true }).click();
       const squareFrame = reviewerPage.getByRole('menuitem', { name: /square/i });
       await expect(squareFrame).toBeEnabled({ timeout: 10_000 });

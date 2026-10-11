@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { presentationBuiltinIds } from '@/features/communication-studio/logic/presentation-audio';
 export const presentationCommandSchema = z.object({
   operationId: z.string().uuid(),
@@ -27,7 +28,7 @@ export const presentationCommandSchema = z.object({
       fadeOutSeconds: z.number().min(0).max(30).optional(),
     })
     .refine(audio => !(audio.assetId && audio.builtin), {
-      message: 'Choose one audio source',
+      error: () => translateText('features.studio.eventLive.chooseOneAudioSource'),
     })
     .optional(),
 });

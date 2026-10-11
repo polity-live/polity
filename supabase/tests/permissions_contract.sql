@@ -96,6 +96,27 @@ SELECT set_eq(
       ('canvas_manage(uuid,uuid)'::TEXT),
       ('canvas_proposal_access(uuid,uuid)'::TEXT),
       ('canvas_capability(uuid,uuid,text)'::TEXT),
+      ('studio_access_without_events(uuid,uuid,boolean)'::TEXT),
+      ('studio_collaboration_access_without_events(uuid,uuid)'::TEXT),
+      ('canvas_manage_without_events(uuid,uuid)'::TEXT),
+      ('event_studio_can_read(uuid,uuid)'::TEXT),
+      ('event_studio_can_manage(uuid,uuid)'::TEXT),
+      ('sync_studio_search_acl(uuid)'::TEXT),
+      ('studio_event_structure_changed()'::TEXT),
+      ('studio_event_document_guard()'::TEXT),
+      ('studio_event_project_guard()'::TEXT),
+      ('studio_source_changed()'::TEXT),
+      ('studio_refresh_source(text,uuid)'::TEXT),
+      ('studio_sync_event(uuid)'::TEXT),
+      ('studio_clone_event_nodes(text,uuid,integer)'::TEXT),
+      ('studio_fire_show_cue(uuid,uuid,text)'::TEXT),
+      ('studio_vote_payload(uuid)'::TEXT),
+      ('studio_election_payload(uuid)'::TEXT),
+      ('studio_event_access_changed()'::TEXT),
+      ('studio_leave_intro_audio()'::TEXT),
+      ('studio_resolve_show_audio(uuid,uuid,text[],jsonb,bigint)'::TEXT),
+      ('studio_presentation_audio_rules()'::TEXT),
+      ('studio_agenda_audio_activation()'::TEXT),
       ('studio_presence_channel_access(text)'::TEXT)
   $sql$,
   'the service role can execute exactly the server RPC allowlist'
@@ -128,8 +149,8 @@ SELECT is(
         'TRIGGER'
       )
   ),
-  1211,
-  'the service role has all seven privileges on all 173 tables'
+  1246,
+  'the service role has all seven privileges on all 178 tables'
 );
 
 SELECT is(

@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+import { translate } from '@/features/shared/hooks/use-translation';
 import { showCueSchema } from '../live-contract';
 import { studioDocumentV3Schema } from '../document-v3';
 import { createEventTemplate } from '../event-templates';
@@ -15,6 +17,44 @@ import {
   presentationSequenceVoices,
   presentationSequenceEnd,
 } from '../presentation-audio';
+
+afterEach(() => useLanguageStore.setState({ language: 'en' }));
+
+it.each(['en', 'de'] as const)('localizes audio validation at parse time in %s', language => {
+  useLanguageStore.setState({ language });
+  const base = { id: crypto.randomUUID(), frameId: crypto.randomUUID(), trigger: 'enter' };
+  const cases = [
+    [base, 'chooseExactlyOneAudioSource'],
+    [{ ...base, builtin: 'test-tone', assetId: crypto.randomUUID() }, 'chooseOneAudioSource'],
+    [{ ...base, builtin: 'test-tone', frameId: undefined }, 'chooseFrame'],
+    [
+      { ...base, builtin: 'test-tone', scope: 'global', channel: 'music' },
+      'globalRulesAreTransitions',
+    ],
+    [
+      { ...base, builtin: 'test-tone', channel: 'transition', trigger: 'final' },
+      'transitionsPlayOnEntry',
+    ],
+  ] as const;
+  for (const [cue, key] of cases) {
+    expect(showCueSchema.safeParse(cue).error?.issues.map(issue => issue.message)).toContain(
+      translate(`features.studio.eventLive.${key}`)
+    );
+  }
+  const result = presentationCommandSchema.safeParse({
+    operationId: crypto.randomUUID(),
+    eventId: crypto.randomUUID(),
+    deviceId: crypto.randomUUID(),
+    action: 'control',
+    audio: { status: 'playing', builtin: 'test-tone', assetId: crypto.randomUUID() },
+  });
+  expect(result.error?.issues[0].message).toBe(
+    translate('features.studio.eventLive.chooseOneAudioSource')
+  );
+  expect(result.error?.issues[0].message).toBe(
+    language === 'de' ? 'Wähle eine Audioquelle' : 'Choose one audio source'
+  );
+});
 
 it('ships original music with verified bytes, complete attribution and only allowlisted local sources', () => {
   const hashes = [

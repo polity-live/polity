@@ -115,6 +115,7 @@ export class Fixtures {
 
   private baseline(table: string, field: string, column: Column): unknown {
     if (field === 'id') return FIXTURE_ID;
+    if (table === 'studio_project' && field === 'document_schema_version') return 6;
     if (ownFields.has(field) || field.endsWith('_user_id')) return OWNER_ID;
     if (field === 'visibility') return 'private';
     if (field === 'handle') return 'benchmark';
@@ -245,10 +246,12 @@ export class Fixtures {
           return;
         }
         if (where.type === 'or') {
-          const owner = where.conditions.find(
-            (c: any) =>
-              c.type === 'simple' && ownFields.has(c.left?.name) && c.right?.value === OWNER_ID
-          );
+          // Ownership can be nested behind null scope checks. Prefer that branch
+          // so ordinary personal fixtures do not create event-managed projects.
+          const containsOwner = (c: any): boolean =>
+            (c.type === 'simple' && ownFields.has(c.left?.name) && c.right?.value === OWNER_ID) ||
+            (['and', 'or'].includes(c.type) && c.conditions.some(containsOwner));
+          const owner = where.conditions.find(containsOwner);
           const alternatives = owner
             ? [owner, ...where.conditions.filter((c: unknown) => c !== owner)]
             : where.conditions;
@@ -365,7 +368,10 @@ export class Fixtures {
         !['title', 'text', 'image_url', 'video_url'].some(key => record.values[key])
       )
         record.values.text = 'benchmark';
-      if (record.table === 'studio_project') record.values.owner_id ??= OWNER_ID;
+      if (record.table === 'studio_project') {
+        record.values.owner_id ??= OWNER_ID;
+        record.values.document_schema_version ??= 6;
+      }
       // populate_search_document_location fills group_id from entity_id before
       // insertion. Plan that real parent so the enabled FK/trigger can succeed.
       if (

@@ -19,6 +19,9 @@ export const I18N_AUDIT_VALUE_ALLOWLIST: readonly I18nAuditAllowlistEntry[] = [
   { value: '1-9', reason: 'language-neutral compact sort notation' },
   { value: 'Frankfurter', reason: 'proper name of a subscription plan' },
   { value: 'Berlin Mitte', reason: 'real place name used by the city-design seed' },
+  { value: 'The Complex', reason: 'original recording title required in music attribution' },
+  { value: 'Impact Prelude', reason: 'original recording title required in music attribution' },
+  { value: 'Eternal Hope', reason: 'original recording title required in music attribution' },
   {
     value: /^(?:24h|[Kmvx]|0 (?:B|Byte)|\d+x\d+|< ?1 km)$/,
     reason: 'unit or compact notation',

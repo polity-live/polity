@@ -209,6 +209,7 @@ export function StudioPanel({
             </PopoverTrigger>
             <PopoverContent
               data-canvas-focus-occluder
+              aria-label={label}
               onEscapeKeyDown={preserveLayerRenameOnEscape}
               className="z-[60] max-h-[75vh] w-[min(28rem,90vw)] overflow-auto"
               align="start"

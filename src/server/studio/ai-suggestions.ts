@@ -670,7 +670,7 @@ async function generateStudioSuggestionImpl(
     } else {
       const now = Date.now();
       await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at)
-        values(${projectId},${actor},null,${plan.title},${kind},'private',5,${now},${now})`;
+        values(${projectId},${actor},null,${plan.title},${kind},'private',6,${now},${now})`;
       await tx`insert into studio_state(project_id,document,updated_at)
         values(${projectId},${tx.json(jsonValue(snapshot.canonical))},${now})`;
     }

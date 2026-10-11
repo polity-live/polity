@@ -38,6 +38,23 @@ function planner() {
 
 describe('positive fixtures with constrained correlated keys', () => {
   it.each([
+    'studio.sessionProject',
+    'studio.control',
+    'studio.document',
+    'projectChat.conversations',
+  ])('plans personal project ownership for %s without creating an event', name => {
+    const entry = loadCases().find(entry => entry.name === name)!;
+    const result = planner().plan(queryAST(buildQuery(entry, OWNER)));
+    const project = result.records.find(record => record.table === 'studio_project')!;
+    expect(project.values).toMatchObject({
+      owner_id: OWNER.userID,
+      event_id: null,
+      document_schema_version: 6,
+    });
+    expect(result.records.some(record => record.table === 'event')).toBe(false);
+  });
+
+  it.each([
     'hierarchyPathsByGroup',
     'effectiveRightsByGroup',
     'membershipExclusivityLocksByGroup',

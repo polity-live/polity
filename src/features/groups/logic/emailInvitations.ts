@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const invitationTokenPattern = /^[A-Za-z0-9_-]{43}$/;
 export function parseInvitationEmails(input: string | string[]) {
@@ -114,7 +115,7 @@ export const invitationRequestSchema = z
     idempotencyKey: z.uuid().optional(),
   })
   .refine(input => (input.emails !== undefined) !== (input.recipients !== undefined), {
-    message: 'Provide exactly one recipient format',
+    error: () => translateText('features.groups.emailInvitations.chooseOneRecipientFormat'),
     path: ['recipients'],
   });
 export const invitationManagementSchema = z.discriminatedUnion('action', [

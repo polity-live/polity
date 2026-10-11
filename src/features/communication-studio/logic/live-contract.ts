@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { presentationBuiltinIds, type PresentationBuiltinId } from './presentation-audio';
 export { presentationTestTone } from './presentation-audio';
 
@@ -65,17 +66,21 @@ export const showCueSchema = z
     durationSeconds: z.number().min(1).max(30).optional(),
   })
   .refine(cue => cue.action !== 'play' || Boolean(cue.assetId) !== Boolean(cue.builtin), {
-    message: 'Choose exactly one audio source',
+    error: () => translateText('features.studio.eventLive.chooseExactlyOneAudioSource'),
   })
-  .refine(cue => !(cue.assetId && cue.builtin), { message: 'Choose one audio source' })
-  .refine(cue => cue.scope === 'global' || !!cue.frameId, { message: 'Choose a frame' })
+  .refine(cue => !(cue.assetId && cue.builtin), {
+    error: () => translateText('features.studio.eventLive.chooseOneAudioSource'),
+  })
+  .refine(cue => cue.scope === 'global' || !!cue.frameId, {
+    error: () => translateText('features.studio.eventLive.chooseFrame'),
+  })
   .refine(
     cue => cue.scope !== 'global' || (cue.channel === 'transition' && cue.trigger === 'enter'),
-    { message: 'Global rules are transition sounds' }
+    { error: () => translateText('features.studio.eventLive.globalRulesAreTransitions') }
   )
   .refine(
     cue => cue.channel !== 'transition' || (cue.trigger === 'enter' && cue.action === 'play'),
-    { message: 'Transitions play on frame entry' }
+    { error: () => translateText('features.studio.eventLive.transitionsPlayOnEntry') }
   )
   .transform(cue => ({
     ...cue,

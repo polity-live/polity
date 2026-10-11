@@ -1,4 +1,5 @@
 export const emailInvitations = {
+  chooseOneRecipientFormat: 'Provide exactly one recipient format',
   sending: 'Sending invitations…',
   sendSuccess: 'Invitations sent',
   sendFailed: 'Some invitations could not be sent',

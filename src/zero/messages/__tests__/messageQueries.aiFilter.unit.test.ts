@@ -159,7 +159,7 @@ describe('messageQueries unread summary projection', () => {
     });
 
     expect(queryState.conversationQueries[0].calls).toEqual([
-      ['where', 'id', '__unauthorized__'],
+      ['where', 'id', 'IS', null],
       ['whereExists', 'conversation', expect.any(Function), { flip: false }],
       ['related', 'conversation', []],
     ]);
