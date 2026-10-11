@@ -619,6 +619,16 @@
       {
         "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
         "project": "unit",
+        "caseId": "projects filtered event-manager access for %s in the %s phase"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a readable event project read-only without the event-manager relation for %s"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
+        "project": "unit",
         "caseId": "derives capabilities from personal collaboration and assigned group roles without granting readers management"
       },
       {

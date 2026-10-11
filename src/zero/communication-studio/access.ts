@@ -1,5 +1,9 @@
 import { whereAnyOf } from '../shared/query-conditions';
-import { applyEventStudioManagerQueryAccess, applyEventQueryAccess } from '../rbac/query-access';
+import {
+  applyEventStudioManagerQueryAccess,
+  applyEventQueryAccess,
+  isAuthenticatedUserId,
+} from '../rbac/query-access';
 
 const activeMemberships = ['active', 'member', 'admin'];
 
@@ -70,15 +74,18 @@ export function studioProjectCollaborativeAccess<T>(project: T, actor: string): 
 }
 
 export function studioProjectReadAccess<T>(project: T, actor: string | null): T {
+  const viewer = isAuthenticatedUserId(actor) ? actor : null;
   return (project as any).where((helpers: any) =>
     helpers.or(
-      helpers.exists('event', (event: any) => applyEventQueryAccess(event, actor), { flip: false }),
+      helpers.exists('event', (event: any) => applyEventQueryAccess(event, viewer), {
+        flip: false,
+      }),
       helpers.and(
         helpers.cmp('event_id', 'IS', null),
         helpers.or(
           helpers.cmp('visibility', 'public'),
-          ...(actor
-            ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(actor, helpers)]
+          ...(viewer
+            ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(viewer, helpers)]
             : [])
         )
       )

@@ -122673,6 +122673,11 @@
         {
           "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
           "project": "unit",
+          "caseId": "normalizes direct Studio read identity %s to the same public access as null"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
           "caseId": "offers only manageable groups as clone and create targets"
         },
         {
@@ -122824,6 +122829,16 @@
         {
           "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
           "project": "unit",
+          "caseId": "projects filtered event-manager access for %s in the %s phase"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps a readable event project read-only without the event-manager relation for %s"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/projections.unit.test.ts",
+          "project": "unit",
           "caseId": "derives capabilities from personal collaboration and assigned group roles without granting readers management"
         },
         {
@@ -122857,6 +122872,11 @@
           "file": "tools/e2e/studio/canvas.e2e.spec.ts",
           "project": "playwright",
           "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "separates presentation viewing from agenda administration for identity %s"
         },
         {
           "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
@@ -122966,6 +122986,11 @@
       "verification": "instrument",
       "coverageStatus": "referenced",
       "testRefs": [
+        {
+          "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "routes every typed command to its domain service and receipt in the supplied transaction"
+        },
         {
           "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
           "project": "unit",
@@ -123090,6 +123115,11 @@
       "verification": "instrument",
       "coverageStatus": "referenced",
       "testRefs": [
+        {
+          "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires action-specific canvas inputs and keeps every client write free of canonical changes"
+        },
         {
           "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
           "project": "unit",

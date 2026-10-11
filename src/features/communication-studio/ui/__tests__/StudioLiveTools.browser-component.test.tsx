@@ -154,18 +154,23 @@ it('opens icon panels by keyboard and retains the selected entity across panel c
   await userEvent.keyboard('{Enter}');
   await userEvent.keyboard('{Escape}');
   await waitFor(() => expect(dataTrigger).toHaveFocus());
-  await userEvent.click(screen.getByRole('button', { name: 'Responsive Layout' }));
+  const layoutTrigger = screen.getByRole('button', { name: 'Responsive Layout' });
+  await userEvent.click(layoutTrigger);
   await waitFor(() =>
     expect(screen.getByRole('combobox', { name: 'Layout preview' })).toBeVisible()
   );
   expect(screen.queryByRole('textbox', { name: 'Entity' })).toBeNull();
   await page.screenshot({ path: '../../../../../output/playwright/studio-layout-desktop.png' });
   await userEvent.keyboard('{Escape}');
-  await userEvent.click(screen.getByRole('button', { name: 'Music & Animation' }));
+  await waitFor(() => expect(layoutTrigger).toHaveFocus());
+  const musicTrigger = screen.getByRole('button', { name: 'Music & Animation' });
+  musicTrigger.focus();
+  await userEvent.keyboard('{Enter}');
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add music' })).toBeVisible());
   expect(screen.getByRole('region', { name: 'Animations' })).toBeVisible();
   await page.screenshot({ path: '../../../../../output/playwright/studio-music-desktop.png' });
   await userEvent.keyboard('{Escape}');
+  await waitFor(() => expect(musicTrigger).toHaveFocus());
   await userEvent.click(dataTrigger);
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Remove Delegiertenversammlung 2026' })).toBeVisible()
@@ -205,10 +210,12 @@ it('keeps typeahead results inside the mobile sheet and permits selecting and re
 
 it('keeps read-only typeahead and edit controls disabled inside the panels', async () => {
   render(<Harness disabled />);
-  await userEvent.click(screen.getByRole('button', { name: /Polity data/i }));
+  const dataTrigger = screen.getByRole('button', { name: /Polity data/i });
+  await userEvent.click(dataTrigger);
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Entity' })).toBeDisabled());
   expect(screen.getByRole('combobox', { name: 'Source' })).toBeDisabled();
   await userEvent.keyboard('{Escape}');
+  await waitFor(() => expect(dataTrigger).toHaveFocus());
   await userEvent.click(screen.getByRole('button', { name: 'Music & Animation' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add music' })).toBeDisabled());
 });

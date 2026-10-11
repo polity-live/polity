@@ -1,7 +1,13 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-const io = vi.hoisted(() => ({ call: vi.fn(), receipt: vi.fn(), apply: vi.fn() }));
+const io = vi.hoisted(() => ({
+  call: vi.fn(),
+  receipt: vi.fn(),
+  apply: vi.fn(),
+  presentation: vi.fn(),
+}));
 vi.mock('@/server/studio/command-receipts', () => ({ studioCommandResult: io.receipt }));
 vi.mock('@/server/studio/operations', () => ({ applyStudioOperation: io.apply }));
+vi.mock('@/server/studio/presentation', () => ({ applyPresentationCommand: io.presentation }));
 vi.mock('@/server/studio/service', () =>
   Object.fromEntries(
     ['createProjectFromSelection', 'duplicateProject', 'beginUpload', 'finishUpload'].map(name => [
@@ -50,6 +56,7 @@ vi.mock('@/server/studio/governance', () => ({
 import { studioServerMutators } from '../server-mutators';
 import { studioSharedMutators } from '../shared-mutators';
 import { studioCommandSchemas, canvasCommandSchema } from '../commands';
+import { presentationCommandSchema } from '../presentation-schema';
 import { encodeAppError } from '@/features/shared/errors/app-error';
 const id = crypto.randomUUID();
 const input = {
@@ -85,7 +92,97 @@ const input = {
 beforeEach(() => {
   vi.clearAllMocks();
   io.call.mockResolvedValue({ ok: true });
+  io.presentation.mockReset().mockResolvedValue(undefined);
   io.receipt.mockImplementation(async (_tx, _actor, _command, _input, body) => body());
+});
+it('keeps presentation device registration optimistic without writing canonical state, including anonymous viewers', async () => {
+  const tx = { mutate: vi.fn(), query: vi.fn() };
+  const args = presentationCommandSchema.parse({
+    operationId: id,
+    eventId: id,
+    deviceId: id,
+    action: 'device',
+    name: ' Audience screen ',
+  });
+  expect(args).toMatchObject({ name: 'Audience screen', takeover: false });
+  for (const userID of ['actor', '', 'anon']) {
+    await studioSharedMutators.presentation.fn({
+      tx: tx as never,
+      ctx: { userID, email: '' },
+      args,
+    });
+  }
+  expect(tx.mutate).not.toHaveBeenCalled();
+  expect(tx.query).not.toHaveBeenCalled();
+  expect(io.presentation).not.toHaveBeenCalled();
+  expect(io.receipt).not.toHaveBeenCalled();
+  expect(presentationCommandSchema.safeParse({ ...args, deviceId: 'invalid' }).success).toBe(false);
+});
+it('awaits the authoritative presentation command with its transaction, identity, revision, and operation receipt ID', async () => {
+  const tx = { location: 'server' };
+  const args = presentationCommandSchema.parse({
+    operationId: id,
+    eventId: crypto.randomUUID(),
+    deviceId: crypto.randomUUID(),
+    action: 'control',
+    expectedRevision: 3,
+    mode: 'studio',
+    frameId: crypto.randomUUID(),
+    followAgenda: false,
+    resultsVisible: true,
+    running: true,
+    audioDeviceId: null,
+    audio: { builtin: 'test-tone', status: 'playing', position: 0, volume: 0.5 },
+  });
+  let confirm!: () => void;
+  io.presentation.mockReturnValueOnce(
+    new Promise<void>(resolve => {
+      confirm = resolve;
+    })
+  );
+  const mutation = studioServerMutators.presentation.fn({
+    tx: tx as never,
+    ctx: { userID: 'manager', email: '' },
+    args,
+  });
+  const completed = vi.fn();
+  void mutation.then(completed);
+  await Promise.resolve();
+  expect(completed).not.toHaveBeenCalled();
+  expect(io.presentation).toHaveBeenCalledExactlyOnceWith(tx, 'manager', args);
+  // The presentation service owns event-specific replay receipts and authorization.
+  expect(io.receipt).not.toHaveBeenCalled();
+  confirm();
+  await expect(mutation).resolves.toBeUndefined();
+  expect(completed).toHaveBeenCalledOnce();
+});
+it.each([
+  ['', encodeAppError('permission_denied')],
+  ['anon', encodeAppError('permission_denied')],
+  ['viewer', encodeAppError('permission_denied')],
+  ['manager', 'Operation ID reused'],
+  ['manager', 'Presentation unavailable'],
+])('propagates the authoritative presentation rejection for %s: %s', async (userID, message) => {
+  const tx = { location: 'server' };
+  const args = presentationCommandSchema.parse({
+    operationId: id,
+    eventId: id,
+    deviceId: id,
+    action: 'claim',
+    takeover: true,
+  });
+  const rejection = new Error(message);
+  io.presentation.mockRejectedValueOnce(rejection);
+  await expect(
+    studioServerMutators.presentation.fn({
+      tx: tx as never,
+      ctx: { userID, email: '' },
+      args,
+    })
+  ).rejects.toBe(rejection);
+  expect(io.presentation).toHaveBeenCalledExactlyOnceWith(tx, userID, args);
+  expect(io.receipt).not.toHaveBeenCalled();
+  expect(io.call).not.toHaveBeenCalled();
 });
 it('routes every typed command to its domain service and receipt in the supplied transaction', async () => {
   const tx = { location: 'server' };

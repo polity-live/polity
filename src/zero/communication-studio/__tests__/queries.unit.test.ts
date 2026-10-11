@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createQueryHarness, evaluatePredicate } from '../../__tests__/test-utils/zeroHarness';
-vi.mock('@rocicorp/zero', () => ({ defineQuery: (_schema: unknown, fn: unknown) => ({ fn }) }));
+vi.mock('@rocicorp/zero', () => ({
+  defineQuery: (schema: unknown, fn: unknown) => ({ fn, schema }),
+}));
 const io = vi.hoisted(() => ({ zql: {} as any }));
 vi.mock('../../schema', () => ({ zql: new Proxy({}, { get: (_target, key) => io.zql[key] }) }));
 import { studioQueries } from '../queries';
+import { studioProjectReadAccess } from '../access';
 let harness: ReturnType<typeof createQueryHarness>;
 beforeEach(() => {
   harness = createQueryHarness();
@@ -15,6 +18,255 @@ function access(table: string) {
     .calls.find(c => c[0] === 'where' && typeof c[1] === 'function');
   return evaluatePredicate(call?.[1]);
 }
+
+function rules(table: string) {
+  return harness
+    .lastQuery(table)
+    .calls.flatMap(call =>
+      call[0] === 'where' && typeof call[1] === 'function' ? evaluatePredicate(call[1]) : [call]
+    );
+}
+
+describe('Studio event presentation projections', () => {
+  const eventId = '00000000-0000-4000-8000-000000000001';
+  const deviceId = '00000000-0000-4000-8000-000000000002';
+  const emptyId = '00000000-0000-0000-0000-000000000000';
+
+  it.each(['alice', undefined, null, 'anon', ''])(
+    'separates presentation viewing from agenda administration for identity %s',
+    userID => {
+      const ctx = { userID, email: '' } as any;
+      studioQueries.eventProject.fn({ args: { eventId }, ctx });
+      expect(harness.lastQuery('studio_project').calls).toContainEqual([
+        'where',
+        'event_id',
+        eventId,
+      ]);
+      expect(harness.lastQuery('studio_project').calls).toContainEqual(['one']);
+      expect(access('studio_project')).toContainEqual(['exists', 'event']);
+      expect(access('studio_project')).toContainEqual(
+        userID === 'alice'
+          ? ['cmp', 'creator_id', userID]
+          : ['where', 'event', 'visibility', 'public']
+      );
+      if (userID !== 'alice') {
+        const projectRules = access('studio_project');
+        expect(JSON.stringify(projectRules)).not.toContain('authenticated');
+        expect(
+          projectRules.some(call => ['owner_id', 'creator_id', 'user_id'].includes(String(call[1])))
+        ).toBe(false);
+        expect(projectRules).not.toContainEqual(['exists', 'collaborators']);
+        expect(projectRules).not.toContainEqual(['exists', 'group']);
+      }
+
+      studioQueries.eventPresentation.fn({ args: { eventId }, ctx });
+      expect(harness.lastQuery('event_presentation').calls).toEqual(
+        expect.arrayContaining([['where', 'event_id', eventId], ['one']])
+      );
+      const viewing = rules('event_presentation.event');
+      expect(viewing).toContainEqual(
+        userID === 'alice' ? ['cmp', 'creator_id', userID] : ['where', 'visibility', 'public']
+      );
+      expect(viewing).not.toContainEqual(['where', 'id', 'IS', null]);
+
+      studioQueries.eventManager.fn({ args: { eventId }, ctx });
+      expect(harness.lastQuery('event').calls).toEqual(
+        expect.arrayContaining([['where', 'id', eventId], ['one']])
+      );
+      const managing = rules('event');
+      if (userID === 'alice') {
+        expect(managing).toContainEqual(['cmp', 'creator_id', userID]);
+        expect(managing).toContainEqual([
+          'where',
+          'roles.event_action_rights',
+          'resource',
+          'IN',
+          ['events', 'agendaItems'],
+        ]);
+        expect(managing).toContainEqual([
+          'where',
+          'roles.event_action_rights',
+          'action',
+          'IN',
+          ['manage'],
+        ]);
+      } else {
+        expect(managing).toContainEqual(['where', 'id', 'IS', null]);
+      }
+    }
+  );
+
+  it.each(['anon', ''])(
+    'normalizes direct Studio read identity %s to the same public access as null',
+    actor => {
+      studioProjectReadAccess(harness.createQuery('studio_project'), null);
+      const anonymous = access('studio_project');
+      studioProjectReadAccess(harness.createQuery('studio_project'), actor);
+      expect(access('studio_project')).toEqual(anonymous);
+    }
+  );
+
+  it.each(['alice', undefined, null, 'anon', ''])(
+    'limits nonmanager device discovery to the requested device and its viewer %s',
+    userID => {
+      for (const requestedDevice of [deviceId, undefined]) {
+        studioQueries.presentationDevices.fn({
+          args: { eventId, deviceId: requestedDevice },
+          ctx: { userID, email: '' } as any,
+        });
+        const query = harness.lastQuery('event_presentation_device');
+        expect(query.calls).toContainEqual(['where', 'event_id', eventId]);
+        expect(query.calls).toContainEqual(['orderBy', 'last_seen', 'desc']);
+        const deviceRules = access('event_presentation_device');
+        expect(deviceRules).toContainEqual(['cmp', 'id', requestedDevice ?? emptyId]);
+        expect(deviceRules).toContainEqual(
+          userID === 'alice' ? ['cmp', 'user_id', userID] : ['cmp', 'user_id', 'IS', null]
+        );
+        const alternatives = deviceRules.filter(call => call[0] === 'or').at(-1);
+        expect(alternatives?.slice(1).map(term => (term as any[])[0])).toEqual(['exists', 'and']);
+        expect(
+          deviceRules.filter(call => call[0] === 'exists' && call[1] === 'event')
+        ).toHaveLength(2);
+        if (userID === 'alice') {
+          expect(deviceRules).toContainEqual([
+            'where',
+            'roles.event_action_rights',
+            'resource',
+            'IN',
+            ['events', 'agendaItems'],
+          ]);
+        } else {
+          expect(deviceRules).toContainEqual(['where', 'event', 'id', 'IS', null]);
+          expect(deviceRules).toContainEqual(['where', 'event', 'visibility', 'public']);
+        }
+      }
+    }
+  );
+
+  const sourceTypes = [
+    'event',
+    'agenda_item',
+    'vote',
+    'election',
+    'amendment',
+    'user',
+    'group',
+  ] as const;
+  it.each(sourceTypes)(
+    'requests each %s source by its exact type and ID with parent authorization',
+    type => {
+      for (const userID of ['alice', 'anon']) {
+        studioQueries.liveSources.fn({
+          args: { refs: [{ type, id: eventId }] },
+          ctx: { userID, email: '' },
+        });
+        const query = harness.lastQuery('studio_live_source');
+        const selection = evaluatePredicate(query.calls[0][1]);
+        expect(selection).toContainEqual([
+          'and',
+          ['cmp', 'source_type', type],
+          ['cmp', 'source_id', eventId],
+        ]);
+        const authorization = evaluatePredicate(query.calls[1][1]);
+        expect(authorization.filter(call => call[0] === 'or').at(-1)).toEqual([
+          'or',
+          ['and', ['cmp', 'source_type', 'IN', ['event', 'agenda_item']], ['exists', 'event']],
+          ...['vote', 'election', 'amendment', 'user', 'group'].map(relation => [
+            'and',
+            ['cmp', 'source_type', relation],
+            ['exists', relation],
+          ]),
+        ]);
+        expect(authorization).toContainEqual(['exists', type === 'agenda_item' ? 'event' : type]);
+        expect(authorization).toContainEqual([
+          'cmp',
+          'source_type',
+          'IN',
+          ['event', 'agenda_item'],
+        ]);
+        for (const relation of ['event', 'vote', 'election', 'amendment', 'user', 'group'])
+          expect(authorization).toContainEqual(['exists', relation]);
+        expect(authorization).toContainEqual(
+          userID === 'alice'
+            ? ['cmp', 'creator_id', userID]
+            : ['where', 'event', 'visibility', 'public']
+        );
+        expect(query.calls.slice(-2)).toEqual([
+          ['orderBy', 'source_type', 'asc'],
+          ['orderBy', 'source_id', 'asc'],
+        ]);
+      }
+    }
+  );
+
+  it('prioritizes explicit references, then source type, then event, and denies an empty selection', () => {
+    const inputs = [
+      { refs: [{ type: 'vote', id: deviceId }], type: 'group', eventId },
+      { refs: [], type: 'group', eventId },
+      { refs: [], eventId },
+      { refs: [] },
+    ] as const;
+    const expected = [
+      ['and', ['cmp', 'source_type', 'vote'], ['cmp', 'source_id', deviceId]],
+      ['cmp', 'source_type', 'group'],
+      ['cmp', 'event_id', eventId],
+      ['cmp', 'source_id', emptyId],
+    ];
+    inputs.forEach((args, index) => {
+      studioQueries.liveSources.fn({ args: args as any, ctx: { userID: 'alice', email: '' } });
+      expect(evaluatePredicate(harness.lastQuery('studio_live_source').calls[0][1])).toContainEqual(
+        expected[index]
+      );
+    });
+  });
+
+  it('keeps each source type paired with its ID when selecting mixed references', () => {
+    studioQueries.liveSources.fn({
+      args: {
+        refs: [
+          { type: 'event', id: eventId },
+          { type: 'vote', id: deviceId },
+        ],
+      },
+      ctx: { userID: 'alice', email: '' },
+    });
+    const selection = evaluatePredicate(harness.lastQuery('studio_live_source').calls[0][1]);
+    expect(selection.at(-1)).toEqual([
+      'or',
+      ['and', ['cmp', 'source_type', 'event'], ['cmp', 'source_id', eventId]],
+      ['and', ['cmp', 'source_type', 'vote'], ['cmp', 'source_id', deviceId]],
+    ]);
+  });
+
+  it('validates event identifiers, optional device identifiers, source kinds and reference limits', () => {
+    for (const name of [
+      'eventProject',
+      'eventPresentation',
+      'eventManager',
+      'presentationDevices',
+    ] as const) {
+      const schema = (studioQueries[name] as any).schema;
+      expect(schema.safeParse({ eventId }).success).toBe(true);
+      expect(schema.safeParse({ eventId: 'invalid' }).success).toBe(false);
+    }
+    const devices = (studioQueries.presentationDevices as any).schema;
+    expect(devices.safeParse({ eventId, deviceId }).success).toBe(true);
+    expect(devices.safeParse({ eventId, deviceId: 'invalid' }).success).toBe(false);
+    const sources = (studioQueries.liveSources as any).schema;
+    const refs = sourceTypes.map(type => ({ type, id: eventId }));
+    expect(sources.safeParse({ refs, type: 'event', eventId }).success).toBe(true);
+    expect(sources.safeParse({ refs: [] }).success).toBe(true);
+    expect(sources.safeParse({ refs: Array(2000).fill(refs[0]) }).success).toBe(true);
+    for (const args of [
+      { refs: Array(2001).fill(refs[0]) },
+      { refs: [{ type: 'unknown', id: eventId }] },
+      { refs: [{ type: 'event', id: 'invalid' }] },
+      { refs: [], type: 'unknown' },
+      { refs: [], eventId: 'invalid' },
+    ])
+      expect(sources.safeParse(args).success).toBe(false);
+  });
+});
 describe('Studio Zero visibility projections', () => {
   it.each(['alice', undefined, null, 'anon', ''])(
     'filters owner and document projections by current identity %s',

@@ -7661,6 +7661,11 @@
       {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",
+        "caseId": "normalizes direct Studio read identity %s to the same public access as null"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
         "caseId": "offers only manageable groups as clone and create targets"
       },
       {
@@ -7712,6 +7717,11 @@
       }
     ],
     "src/zero/communication-studio/server-mutators.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+        "project": "unit",
+        "caseId": "routes every typed command to its domain service and receipt in the supplied transaction"
+      },
       {
         "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
         "project": "unit",
@@ -7814,6 +7824,11 @@
       }
     ],
     "src/zero/communication-studio/shared-mutators.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires action-specific canvas inputs and keeps every client write free of canonical changes"
+      },
       {
         "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
         "project": "unit",
@@ -10711,6 +10726,11 @@
       }
     ],
     "src/zero/communication-studio/queries.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "separates presentation viewing from agenda administration for identity %s"
+      },
       {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",
