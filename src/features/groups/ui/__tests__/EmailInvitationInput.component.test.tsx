@@ -6,6 +6,41 @@ import { EmailInvitationInput } from '../EmailInvitationInput';
 import type { EmailInvitationComposer } from '../../hooks/useEmailInvitationComposer';
 
 afterEach(cleanup);
+it('shows checking, sending and retry notices while locking recipient editing', async () => {
+  const refreshInvitations = vi.fn(async () => undefined);
+  const composer = {
+    t: (key: string) => key,
+    text: 'a@example.com',
+    parsed: { emails: ['a@example.com'], invalid: [], duplicates: [] },
+    recipients: [{ email: 'a@example.com' }],
+    checking: true,
+    sending: true,
+    error: 'send-error',
+    listError: 'list-error',
+    refreshInvitations,
+    openInvitations: [{ id: 'older', email: 'old@example.com', delivery_status: 'sent' }],
+  } as unknown as EmailInvitationComposer;
+  render(<EmailInvitationInput composer={composer} />);
+  expect(screen.getAllByRole('status')).toHaveLength(2);
+  expect((screen.getByRole('textbox', { name: /addresses/ }) as HTMLTextAreaElement).disabled).toBe(
+    true
+  );
+  expect(screen.getAllByRole('alert')).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: /retry$/ }));
+  expect(refreshInvitations).toHaveBeenCalledOnce();
+});
+it('reports skipped recipients without claiming a message was sent', () => {
+  const composer = {
+    t: (key: string) => key,
+    text: '',
+    parsed: { emails: [], invalid: [], duplicates: [] },
+    recipients: [],
+    openInvitations: [],
+    result: { available: 4, results: [{ email: 'a@example.com', status: 'member' }] },
+  } as unknown as EmailInvitationComposer;
+  render(<EmailInvitationInput composer={composer} />);
+  expect(screen.getByTestId('email-invitation-send-result').textContent).toContain('nothingSent');
+});
 it.each([
   ['sent', 'sendSuccess', 'status', 'success'],
   ['unknown', 'sendUnknown', 'alert', 'warning'],

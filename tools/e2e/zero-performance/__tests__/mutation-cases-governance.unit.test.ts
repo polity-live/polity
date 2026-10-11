@@ -309,19 +309,47 @@ describe('reviewed governance mutation catalog', () => {
     await expect(
       verifyRevokedGovernanceWriter(
         ctx,
-        writer({ id: 'scope', name: 'Original', created_at: Math.trunc(exact) })
+        writer({ id: 'scope', name: 'Original', created_at: Math.trunc(exact) }),
+        0
       )
     ).rejects.toThrow('Rollback field proof: group.created_at');
     await expect(
-      verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope', name: 'Changed' }))
+      verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope', name: 'Changed' }), 0)
     ).rejects.toThrow('Rollback field proof: group.name');
     records = [];
-    await expect(verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope' }))).rejects.toThrow(
+    await expect(verifyRevokedGovernanceWriter(ctx, writer({ id: 'scope' }), 0)).rejects.toThrow(
       'Rollback row proof: group'
     );
     await expect(
       verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map: async () => new Map() } } })
     ).resolves.toBeUndefined();
+  });
+  it('awaits revocation-driven eviction from fresh snapshots, while persistent phantoms and malformed telemetry fail', async () => {
+    const sql = ((input: string | TemplateStringsArray) =>
+      typeof input === 'string'
+        ? input
+        : Promise.resolve([])) as unknown as MutationCaseContext['sql'];
+    const ctx = { sql } as MutationCaseContext;
+    const deletedRight = new Map([['e/action_right/revoked', { id: 'revoked' }]]);
+    const map = vi.fn().mockResolvedValueOnce(deletedRight).mockResolvedValue(new Map());
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map } } })
+    ).resolves.toBeUndefined();
+    expect(map).toHaveBeenCalledTimes(2);
+    map.mockReset().mockResolvedValue(deletedRight);
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map } } }, 0)
+    ).rejects.toThrow('Rollback row proof: action_right');
+    map.mockReset().mockResolvedValue(new Map([['e/action_right/bad', null]]));
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map } } })
+    ).rejects.toThrow('Invalid cached application row');
+    expect(map).toHaveBeenCalledTimes(1);
+    map.mockReset().mockRejectedValue(new Error('Inspector unavailable'));
+    await expect(
+      verifyRevokedGovernanceWriter(ctx, { inspector: { client: { map } } })
+    ).rejects.toThrow('Inspector unavailable');
+    expect(map).toHaveBeenCalledTimes(1);
   });
   it('labels notification restoration failures without exposing notification identities', async () => {
     const ctx = {

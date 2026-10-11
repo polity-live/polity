@@ -150,9 +150,8 @@ export function createStudioDataViewNodes(
     node.groupIds = [groupId];
     if (node.type === 'richText' && values?.bold)
       node.content.forEach(p =>
-        p.children.forEach(child => {
-          if ('text' in child) child.bold = true;
-        })
+        // Newly created text nodes contain only the plain text leaves emitted by the importer.
+        p.children.forEach(child => Object.assign(child, { bold: true }))
       );
     nodes.push(node);
   };

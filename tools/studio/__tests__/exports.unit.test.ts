@@ -219,6 +219,23 @@ function installMediaDecoderBoundary(
   return { seek };
 }
 describe('Studio export artifacts', () => {
+  it.each([false, true])(
+    'preserves the requested native chart grid visibility (%s) in the presentation',
+    async grid => {
+      const doc = createDocument('single', 'Native grid');
+      const chart = element('chart');
+      chart.chart!.grid = grid;
+      doc.pages[0].elements = [chart];
+      const files = unzipSync((await exportDoc(doc, 'pptx')).bytes);
+      const entry = Object.entries(files).find(([file]) =>
+        /^ppt\/charts\/chart\d+\.xml$/.test(file)
+      )!;
+      const xml = strFromU8(entry[1]);
+      const gridXml = xml.match(/<c:majorGridlines>([\s\S]*?)<\/c:majorGridlines>/)?.[1];
+      if (grid) expect(gridXml).toContain('a:solidFill');
+      else expect(xml).not.toContain('<c:majorGridlines>');
+    }
+  );
   it.each(['image', 'video'] as const)(
     'loads an uncached %s before writing a raster poster into the Canva deck',
     async type => {

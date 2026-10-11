@@ -51,9 +51,8 @@ function usePresentationButtons(root: RefObject<HTMLDivElement | null>, pinned: 
     swallowClick: false,
   });
   useEffect(() => {
-    const screen = root.current;
-    const buttons = toolbar.current;
-    if (!screen || !buttons) return;
+    const screen = root.current as HTMLDivElement;
+    const buttons = toolbar.current as HTMLDivElement;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let showing = true;
     const held = () => pinned || interaction.current.hovering || interaction.current.keyboardFocus;
@@ -327,7 +326,6 @@ export function EventPresentation({
     return () => document.removeEventListener('fullscreenchange', syncFullscreen);
   }, []);
   useEffect(() => {
-    if (!root.current) return;
     const measure = () =>
       setTopOffset(Math.max(0, Math.round(root.current?.getBoundingClientRect().top ?? 0)));
     measure();
@@ -336,7 +334,7 @@ export function EventPresentation({
       const r = entries[0].contentRect;
       setPortrait(r.height > r.width);
     });
-    resize.observe(root.current);
+    resize.observe(root.current as HTMLDivElement);
     window.addEventListener('resize', measure);
     return () => {
       resize.disconnect();

@@ -32,7 +32,7 @@ export function usePresentationAudio(
   const [error, setError] = useState('');
   const changeStatus = useCallback((next: PresentationAudioStatus) => {
     statusRef.current = next;
-    if (mounted.current) setStatus(next);
+    setStatus(next);
   }, []);
   const synchronize = useCallback(() => {
     const { state: s, deviceId: id, online: connected, clockOffset: offset } = latest.current;

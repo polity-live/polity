@@ -84,6 +84,7 @@ vi.mock('../../hooks/useStudioDocument', () => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
   useTranslation: () => ({
+    i18n: { language: 'en' },
     t: (key: string, params?: Record<string, unknown>) => {
       if (key === 'features.studio.tableSizeDescription')
         return `${params?.label}: ${params?.rows} x ${params?.columns}`;

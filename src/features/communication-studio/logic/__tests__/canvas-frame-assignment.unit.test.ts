@@ -21,6 +21,58 @@ function fixture(type: 'chart' | 'text' | 'rect' | 'table' = 'rect') {
   return { document, frame, node };
 }
 
+it('does not reparent a persisted group whose members belong to different frames', () => {
+  const { document, frame, node } = fixture();
+  const other = structuredClone(node);
+  other.id = crypto.randomUUID();
+  other.parentFrameId = null;
+  const group = crypto.randomUUID();
+  node.groupIds = other.groupIds = [group];
+  node.transform.x = other.transform.x = 500;
+  document.nodes.push(other);
+  assignDraggedStudioNodesToFrames(document, [node.id, other.id]);
+  expect(node.parentFrameId).toBe(frame.id);
+  expect(other.parentFrameId).toBeNull();
+});
+
+it('detaches from a nested frame when its persisted ancestor is missing', () => {
+  const { document, frame, node } = fixture();
+  frame.parentFrameId = crypto.randomUUID();
+  node.transform.x = 500;
+  assignDraggedStudioNodesToFrames(document, [node.id]);
+  expect(node.parentFrameId).toBeNull();
+});
+
+it('walks beyond a non-containing parent and assigns a complete group in stable ID order', () => {
+  const { document, frame, node } = fixture();
+  const outer = createFrameNode('custom', { transform: { x: 0, y: 0, width: 1500, height: 1500 } });
+  const middle = createFrameNode('custom', {
+    parentFrameId: outer.id,
+    transform: { x: 0, y: 0, width: 450, height: 450 },
+  });
+  frame.parentFrameId = middle.id;
+  node.transform.x = 500;
+  const other = structuredClone(node);
+  other.id = crypto.randomUUID();
+  const group = crypto.randomUUID();
+  node.groupIds = other.groupIds = [group];
+  document.nodes.push(outer, middle, other);
+  assignDraggedStudioNodesToFrames(document, [node.id, other.id]);
+  expect(node.parentFrameId).toBe(outer.id);
+  expect(other.parentFrameId).toBe(outer.id);
+  const ordered = [node, other].sort((a, b) => a.id.localeCompare(b.id));
+  expect(ordered[1].zIndex).toBe(ordered[0].zIndex + 1);
+});
+
+it('handles collapsed persisted frame and content edges without producing an invalid separating axis', () => {
+  const { document, frame, node } = fixture();
+  frame.transform.width = 0;
+  node.transform.x = 0;
+  node.transform.width = node.transform.height = 0;
+  assignDraggedStudioNodesToFrames(document, [node.id]);
+  expect(node.parentFrameId).toBe(frame.id);
+});
+
 it.each(['chart', 'text', 'rect', 'table'] as const)(
   'detaches and reattaches %s without changing its world pose',
   type => {

@@ -234,3 +234,22 @@ it('notifies the workspace when an open panel is unmounted', async () => {
     window.removeEventListener('studio-panel', listener);
   }
 });
+
+it('keeps keyboard focus on an incoming toolbar action when its popover closes', async () => {
+  const view = render(
+    <Toolbar>
+      <StudioPanel label="Layers" panelKey="layers">
+        <button>Panel action</button>
+      </StudioPanel>
+      <button>Incoming toolbar action</button>
+    </Toolbar>
+  );
+  request('layers');
+  await screen.findByRole('button', { name: 'Panel action' });
+  const incoming = screen.getByRole('button', { name: 'Incoming toolbar action' });
+  incoming.focus();
+  act(() => window.dispatchEvent(new Event('studio-close-panels')));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Panel action' })).toBeNull());
+  expect(incoming).toHaveFocus();
+  view.unmount();
+});

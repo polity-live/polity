@@ -679,3 +679,34 @@ it('supersedes automatic activation with a gesture and deduplicates concurrent g
   expect(players[7].src).toBe('/api/studio/media/intro');
   h.unmount();
 });
+
+it('does not activate offline or after unmount and reuses an already unlocked player for a new gesture', async () => {
+  const h = renderHook(({ online, current }) => usePresentationAudio(current, 'screen', online), {
+    initialProps: { online: false, current: undefined as ShowState | undefined },
+  });
+  await act(() => h.result.current.activate());
+  expect(players).toHaveLength(0);
+  await act(async () => h.rerender({ online: true, current: state() }));
+  expect(h.result.current.status).toBe('ready');
+  await act(() => h.result.current.activate());
+  expect(players).toHaveLength(6);
+  await act(async () => h.rerender({ online: true, current: undefined }));
+  const activate = h.result.current.activate;
+  h.unmount();
+  await activate();
+  expect(players).toHaveLength(6);
+});
+
+it('ignores a rejected browser probe after the screen has unmounted', async () => {
+  const reject: ((error: Error) => void)[] = [];
+  vi.stubGlobal(
+    'Audio',
+    class extends FakeAudio {
+      play = vi.fn(() => new Promise<void>((_resolve, fail) => reject.push(fail)));
+    }
+  );
+  const h = renderHook(() => usePresentationAudio(state(), 'screen', true));
+  h.unmount();
+  await act(async () => reject.forEach(fail => fail(new Error('probe cancelled'))));
+  expect(players.every(player => player.src === '')).toBe(true);
+});

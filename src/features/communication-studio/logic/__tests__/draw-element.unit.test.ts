@@ -34,6 +34,92 @@ function render(value: StudioElement) {
   drawStudioElement(ctx, value);
   return ctx;
 }
+
+it('omits missing result counts and renders totals without an electorate percentage', () => {
+  const ctx = render(
+    element('chart', {
+      chart: {
+        kind: 'bar',
+        layout: 'results',
+        legend: false,
+        labels: ['Missing', 'Known'],
+        series: [{ id: crypto.randomUUID(), name: 'Votes', color: '#12362D', values: [null, 2] }],
+      },
+    })
+  );
+  expect(ctx.fillRect).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(ctx.fillText).mock.calls.map(call => call[0])).toContain('2');
+  expect(vi.mocked(ctx.fillText).mock.calls.some(call => call[0].includes('%'))).toBe(false);
+});
+
+it('omits empty and zero pie slices', () => {
+  const ctx = render(
+    element('chart', {
+      chart: {
+        kind: 'pie',
+        legend: false,
+        labels: ['Missing', 'Zero', 'Present'],
+        series: [
+          { id: crypto.randomUUID(), name: 'Votes', color: '#12362D', values: [null, 0, 3] },
+        ],
+      },
+    })
+  );
+  expect(ctx.arc).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(ctx.fillText).mock.calls.map(call => call[0])).toEqual(['Present']);
+});
+
+it('draws negative-only line series on a zero-terminated axis and avoids overlapping labels', () => {
+  const ctx = render(
+    element('chart', {
+      width: 100,
+      chart: {
+        kind: 'line',
+        legend: false,
+        labels: ['First long label', 'Second long label'],
+        series: [{ id: crypto.randomUUID(), name: 'Debt', color: '#12362D', values: [-4, -2] }],
+      },
+    })
+  );
+  expect(ctx.lineTo).toHaveBeenCalled();
+  expect(ctx.bezierCurveTo).not.toHaveBeenCalled();
+  const labels = vi.mocked(ctx.fillText).mock.calls.map(call => call[0]);
+  expect(labels).toContain('0');
+  expect(labels).toContain('-4');
+  expect(labels.filter(label => label.includes('long label'))).toHaveLength(1);
+});
+
+it('centers a single line observation without drawing a connecting segment', () => {
+  const ctx = render(
+    element('chart', {
+      chart: {
+        kind: 'line',
+        legend: false,
+        labels: ['Only'],
+        series: [{ id: crypto.randomUUID(), name: 'Observation', color: '#12362D', values: [1] }],
+      },
+    })
+  );
+  expect(ctx.arc).toHaveBeenCalledOnce();
+  expect(ctx.lineTo).not.toHaveBeenCalled();
+  expect(ctx.bezierCurveTo).not.toHaveBeenCalled();
+});
+
+it('fills a continuous two-point area without painting isolated point markers', () => {
+  const ctx = render(
+    element('chart', {
+      chart: {
+        kind: 'area',
+        legend: false,
+        labels: ['Before', 'After'],
+        series: [{ id: crypto.randomUUID(), name: 'Progress', color: '#12362D', values: [1, 2] }],
+      },
+    })
+  );
+  expect(ctx.fill).toHaveBeenCalled();
+  expect(ctx.lineTo).toHaveBeenCalled();
+  expect(ctx.arc).not.toHaveBeenCalled();
+});
 it('keeps every cell visible in a 50-row imported table', () => {
   const table = createTableData({ rowCount: 50, colCount: 1 });
   table.rows.forEach((row, i) => {

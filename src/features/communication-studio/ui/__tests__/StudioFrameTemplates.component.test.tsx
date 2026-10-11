@@ -5,8 +5,23 @@ import { StudioFrameTemplates, useStudioFrameTemplateSelection } from '../Studio
 import { createEventTemplate, eventTemplateTypes } from '../../logic/event-templates';
 import { politySourceTypes, type LiveSource } from '../../logic/live-contract';
 import type { StudioDocumentV3 } from '../../logic/document-v3';
+import type { ComponentProps } from 'react';
+import type { Button } from '@/features/shared/ui/ui/button';
 
-const data = vi.hoisted(() => ({ rows: [] as LiveSource[] }));
+const data = vi.hoisted(() => ({
+  rows: [] as LiveSource[] | undefined,
+  add: undefined as ComponentProps<typeof Button>['onClick'],
+}));
+vi.mock('@/features/shared/ui/ui/button', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/features/shared/ui/ui/button')>();
+  return {
+    ...actual,
+    Button: (props: ComponentProps<typeof Button>) => {
+      data.add = props.onClick;
+      return <actual.Button {...props} />;
+    },
+  };
+});
 vi.mock('@/zero/observed-query', () => ({ useQuery: () => [data.rows] }));
 const sourceId = crypto.randomUUID();
 beforeEach(() => {
@@ -96,5 +111,47 @@ it('disables template edits for read-only documents', () => {
   expect(screen.getByRole('textbox', { name: 'Entity' }).matches(':disabled')).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Add template' }));
   expect(screen.getByRole('button', { name: 'Add template' }).matches(':disabled')).toBe(true);
+  data.add!({} as Parameters<NonNullable<typeof data.add>>[0]);
   expect(harness.update).not.toHaveBeenCalled();
+});
+
+it.each([{ name: 'Named group' }, { first_name: 'Ada', last_name: 'Lovelace' }, {}])(
+  'finds a source using its available identity fields %j',
+  payload => {
+    data.rows = [{ source_type: 'event', source_id: sourceId, payload }];
+    const harness = mountTemplates();
+    const label =
+      'name' in payload ? payload.name : 'first_name' in payload ? 'Ada Lovelace' : sourceId;
+    selectEntity(label!);
+    fireEvent.click(screen.getByRole('button', { name: 'Add template' }));
+    expect(harness.update).toHaveBeenCalledOnce();
+    expect(harness.getDocument().nodes.some(node => node.liveBinding?.sourceId === sourceId)).toBe(
+      true
+    );
+  }
+);
+
+it('treats an unresolved source query as empty and defends insertion callbacks without a valid selection', () => {
+  data.rows = undefined;
+  const harness = mountTemplates();
+  expect(screen.getByRole('button', { name: 'Add template' }).matches(':disabled')).toBe(true);
+  data.add!({} as Parameters<NonNullable<typeof data.add>>[0]);
+  expect(harness.update).not.toHaveBeenCalled();
+});
+
+it('isolates control keys from toolbar navigation while permitting Escape to dismiss the panel', () => {
+  mountTemplates();
+  const listener = vi.fn();
+  window.addEventListener('keydown', listener);
+  try {
+    const fieldset = globalThis.document.querySelector(
+      '[data-action-id="studio.template.keyboard"]'
+    )!;
+    fireEvent.keyDown(fieldset, { key: 'ArrowDown' });
+    expect(listener).not.toHaveBeenCalled();
+    fireEvent.keyDown(fieldset, { key: 'Escape' });
+    expect(listener).toHaveBeenCalledOnce();
+  } finally {
+    window.removeEventListener('keydown', listener);
+  }
 });

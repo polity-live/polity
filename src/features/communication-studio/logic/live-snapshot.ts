@@ -55,8 +55,10 @@ export function createLiveSnapshot(
       const mapping = new Map(copies.map(n => [n.id, crypto.randomUUID()]));
       for (const n of copies) {
         const old = n.id;
-        n.id = mapping.get(old) ?? old;
-        if (n.parentFrameId) n.parentFrameId = mapping.get(n.parentFrameId) ?? n.parentFrameId;
+        // Every copied node and the root frame have entries in this mapping.
+        n.id = mapping.get(old) as string;
+        // Descendants are added only when their parent is already in the same subtree.
+        if (n.parentFrameId) n.parentFrameId = mapping.get(n.parentFrameId) as string;
         if (n.type === 'frame') {
           delete n.eventSource;
           if (old === frame.id) {
@@ -68,11 +70,10 @@ export function createLiveSnapshot(
         if (n.type === 'richText')
           for (const paragraph of n.content) {
             paragraph.id = crypto.randomUUID();
-            for (const child of paragraph.children)
-              if ('id' in child) child.id = crypto.randomUUID();
+            for (const child of paragraph.children) child.id = crypto.randomUUID();
           }
       }
-      ids.push(mapping.get(frame.id) ?? frame.id);
+      ids.push(mapping.get(frame.id) as string);
       snapshot.nodes.push(...copies);
     }
     expanded.set(frame.id, ids);

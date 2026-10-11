@@ -68,6 +68,26 @@ it('toggles native donut rendering', () => {
   fireEvent.click(screen.getByRole('checkbox', { name: 'donut' }));
   expect(value().chart).toMatchObject({ kind: 'pie', donut: true });
 });
+
+it('converts missing and non-positive bar values into visible pie slices', () => {
+  const initial = element('chart');
+  initial.chart!.series[0].values = [null, 0, -3, 4];
+  initial.chart!.labels = ['Missing', 'Zero', 'Negative', 'Positive'];
+  const value = show('chart', initial);
+  selectChartType('pie');
+  expect(value().chart!.series[0].values).toEqual([1, 1, 1, 4]);
+  expect(value().chart!.kind).toBe('pie');
+});
+
+it('rejects a numeric edit whose native number conversion is unavailable', () => {
+  const value = show('chart');
+  const before = structuredClone(value());
+  const input = screen.getByRole('spinbutton', { name: 'Series A' }) as HTMLInputElement;
+  const conversion = vi.spyOn(input, 'valueAsNumber', 'get').mockReturnValue(NaN);
+  fireEvent.change(input, { target: { value: '3' } });
+  expect(value()).toEqual(before);
+  conversion.mockRestore();
+});
 it.each(['addRow', 'removeRow', 'addColumn', 'removeColumn'])(
   'changes table dimensions with %s through keyboard focus while preserving surviving cell identities',
   async action => {

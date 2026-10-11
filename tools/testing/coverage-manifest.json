@@ -1760,6 +1760,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "src/routes/__tests__/group-invitation-route.component.test.tsx",
         "src/server/__tests__/group-invitation-email.component.test.tsx",
         "src/server/__tests__/group-invitation-webhook.service-integration.test.ts"
       ]
@@ -2417,6 +2418,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
+      "domain": "features:agendas",
+      "owner": "polity/features:agendas",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
       "domain": "features:agendas",
       "owner": "polity/features:agendas",
@@ -2458,6 +2469,16 @@
     },
     {
       "path": "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx",
+      "domain": "features:agendas",
+      "owner": "polity/features:agendas",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/agendas/hooks/__tests__/usePresentationAudio.callbacks.component.test.tsx",
       "domain": "features:agendas",
       "owner": "polity/features:agendas",
       "kind": "test-infrastructure",
@@ -2515,11 +2536,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2551,11 +2572,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2587,11 +2608,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2623,11 +2644,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2659,11 +2680,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2695,11 +2716,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2731,11 +2752,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2767,11 +2788,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2808,11 +2829,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2849,11 +2870,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2878,11 +2899,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2914,11 +2935,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2950,11 +2971,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -2991,11 +3012,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -3027,11 +3048,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -3063,11 +3084,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -3099,11 +3120,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -3138,11 +3159,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -3174,11 +3195,11 @@
         "src/features/agendas/hooks/__tests__/useAgendaItemCRVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaItemVoting.unit.test.ts",
         "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useCreateAgendaItemFormController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useFixedAgendaToolbarController.unit.test.ts",
-        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
-        "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx"
+        "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx"
       ]
     },
     {
@@ -21780,6 +21801,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/live-projection.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -21871,6 +21902,16 @@
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/presentation-audio-player.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -23649,6 +23690,7 @@
       "suggestedTestRefs": [
         "e2e/visual.e2e.spec.ts-snapshots/authenticated-documentation-dialog-open-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/authenticated-documentation-dialog-open-chromium-desktop-win32.png",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/agendas/logic/__tests__/changeRequestDocumentPreview.unit.test.ts",
         "src/features/app-tutorial/__tests__/city-design-fixture-document.unit.test.ts",
         "src/features/change-requests/logic/__tests__/filterDocumentToSingleSuggestion.unit.test.ts",
@@ -23657,8 +23699,7 @@
         "src/features/communication-studio/logic/__tests__/ai-design.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-ancestry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx"
+        "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx"
       ]
     },
     {
@@ -24905,6 +24946,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx",
+        "src/features/agendas/hooks/__tests__/usePresentationAudio.callbacks.component.test.tsx",
         "src/features/agendas/hooks/__tests__/usePresentationAudio.component.test.tsx",
         "src/features/agendas/ui/__tests__/EventPresentation.audio-controls.browser-component.test.tsx",
         "src/features/agendas/ui/__tests__/EventPresentation.audio-start.browser-component.test.tsx",
@@ -24914,8 +24956,7 @@
         "src/features/communication-studio/logic/__tests__/canvas-content.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-crop-gesture.browser-component.test.tsx",
         "src/features/communication-studio/logic/__tests__/canvas-drag-preview.browser-component.test.tsx",
-        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/canvas-frame-assignment.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/canvas-focus.unit.test.ts"
       ]
     },
     {
@@ -26938,8 +26979,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -26947,9 +26990,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -26967,8 +27008,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -26976,9 +27019,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27046,8 +27087,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27055,9 +27098,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27120,8 +27161,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27129,9 +27172,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27174,8 +27215,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27183,9 +27226,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27203,8 +27244,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27212,9 +27255,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27728,17 +27769,17 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/logic/__tests__/studio-editor-commands.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27766,8 +27807,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27775,9 +27818,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27865,8 +27906,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27874,9 +27917,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27894,8 +27935,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27903,9 +27946,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -27943,8 +27984,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -27952,9 +27995,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28007,8 +28048,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28016,9 +28059,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28146,8 +28187,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28155,9 +28198,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28180,8 +28221,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28189,9 +28232,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28209,8 +28250,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28218,9 +28261,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28353,8 +28394,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28362,9 +28405,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28472,8 +28513,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28481,9 +28524,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28521,8 +28562,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28530,9 +28573,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28735,8 +28776,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28744,9 +28787,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28839,8 +28880,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28848,9 +28891,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28873,8 +28914,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28882,9 +28925,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28952,8 +28993,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28961,9 +29004,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -28981,8 +29022,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -28990,9 +29033,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -29080,8 +29121,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -29089,9 +29132,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -29164,8 +29205,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -29173,9 +29216,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -29448,8 +29489,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -29457,9 +29500,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -29497,8 +29538,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -29506,9 +29549,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -29786,8 +29827,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -29795,10 +29838,18 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
@@ -29812,6 +29863,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -29961,6 +30022,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -29982,6 +30053,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioEditor.live-data.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -30605,8 +30686,10 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
@@ -30614,9 +30697,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCloneDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
       ]
     },
     {
@@ -84230,8 +84311,8 @@
         "src/features/communication-studio/ui/__tests__/StudioEditor.boundaries.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioEditor.canvas-events.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioEditor.live-data.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioEditor.native-canvas.browser-component.test.tsx"
       ]
     },
     {
@@ -101368,6 +101449,7 @@
         "e2e/group-email-invitations.e2e.spec.ts",
         "src/features/groups/logic/__tests__/emailInvitations.unit.test.ts",
         "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "src/server/__tests__/group-email-invitations-boundaries.unit.test.ts",
         "src/server/__tests__/group-email-invitations.database-integration.test.ts",
         "src/server/__tests__/group-email-invitations.unit.test.ts",
         "supabase/tests/group_email_invitations.sql",
@@ -101719,11 +101801,11 @@
         "e2e/studio-media.e2e.spec.ts",
         "e2e/studio-personal-invitation.e2e.spec.ts",
         "e2e/studio-project-chat.e2e.spec.ts",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts"
       ]
     },
     {
@@ -103313,6 +103395,7 @@
         "e2e/group-email-invitations.e2e.spec.ts",
         "src/features/groups/logic/__tests__/emailInvitations.unit.test.ts",
         "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "src/server/__tests__/group-email-invitations-boundaries.unit.test.ts",
         "src/server/__tests__/group-email-invitations.database-integration.test.ts",
         "src/server/__tests__/group-email-invitations.unit.test.ts",
         "supabase/tests/group_email_invitations.sql",
@@ -103664,11 +103747,11 @@
         "e2e/studio-media.e2e.spec.ts",
         "e2e/studio-personal-invitation.e2e.spec.ts",
         "e2e/studio-project-chat.e2e.spec.ts",
+        "src/features/agendas/hooks/__tests__/useAnimatedStudioDocument.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/rename-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-canvas-clipboard.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-canvas-commands.unit.test.ts"
       ]
     },
     {
@@ -106156,6 +106239,16 @@
     },
     {
       "path": "src/routes/__tests__/group-email-invitation-routes.unit.test.ts",
+      "domain": "routes:ui",
+      "owner": "polity/routes:ui",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/routes/__tests__/group-invitation-route.component.test.tsx",
       "domain": "routes:ui",
       "owner": "polity/routes:ui",
       "kind": "test-infrastructure",
@@ -110688,6 +110781,11 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
+          "file": "src/routes/__tests__/group-invitation-route.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps invitation tokens out of referrers/search indexing and passes the exact route token to the invitation page"
+        },
+        {
           "file": "e2e/group-email-invitations.e2e.spec.ts",
           "project": "playwright",
           "caseId": "admin invites two new accounts and each explicitly accepts its personal link @acceptance",
@@ -111250,6 +111348,16 @@
     },
     {
       "path": "src/server/__tests__/group-conflict-validation.coverage.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/__tests__/group-email-invitations-boundaries.unit.test.ts",
       "domain": "server:__tests__",
       "owner": "polity/server:__tests__",
       "kind": "test-infrastructure",
@@ -112688,6 +112796,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/datasets/__tests__/importScope.unit.test.ts",
       "domain": "server:datasets",
       "owner": "polity/server:datasets",
@@ -112719,6 +112837,16 @@
     },
     {
       "path": "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/providerError.unit.test.ts",
       "domain": "server:datasets",
       "owner": "polity/server:datasets",
       "kind": "test-infrastructure",
@@ -112859,14 +112987,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -112895,14 +113023,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -112931,14 +113059,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -112960,14 +113088,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -112989,14 +113117,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113022,17 +113150,17 @@
       ],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignProjection.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/live-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projectionRequest.unit.test.ts"
       ]
     },
     {
@@ -113061,14 +113189,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113090,14 +113218,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113126,14 +113254,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113155,14 +113283,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113227,14 +113355,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113256,14 +113384,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113292,14 +113420,14 @@
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
         "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
+        "src/server/datasets/__tests__/providerError.unit.test.ts",
         "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts",
-        "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
-        "src/server/datasets/__tests__/service.contract.unit.test.ts"
+        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
       ]
     },
     {
@@ -113665,6 +113793,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignProjection.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/live-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
         "src/server/datasets/__tests__/projection.unit.test.ts",
@@ -113674,8 +113803,7 @@
         "src/server/eurostat/__tests__/importer.contract.unit.test.ts",
         "src/server/eurostat/__tests__/metadata.contract.unit.test.ts",
         "src/server/eurostat/__tests__/metadata.unit.test.ts",
-        "src/server/eurostat/__tests__/projection.contract.unit.test.ts",
-        "src/zero/communication-studio/__tests__/projections.unit.test.ts"
+        "src/server/eurostat/__tests__/projection.contract.unit.test.ts"
       ]
     },
     {
@@ -114023,6 +114151,7 @@
       "suggestedTestRefs": [
         "e2e/group-email-invitations.e2e.spec.ts",
         "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "src/server/__tests__/group-email-invitations-boundaries.unit.test.ts",
         "src/server/__tests__/group-email-invitations.database-integration.test.ts",
         "src/server/__tests__/group-email-invitations.unit.test.ts",
         "supabase/tests/group_email_invitations.sql",
@@ -117259,17 +117388,17 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx",
+        "src/features/agendas/hooks/__tests__/usePresentationAudio.callbacks.component.test.tsx",
         "src/features/agendas/hooks/__tests__/usePresentationAudio.component.test.tsx",
         "src/features/agendas/ui/__tests__/EventPresentation.audio-controls.browser-component.test.tsx",
         "src/features/agendas/ui/__tests__/EventPresentation.audio-start.browser-component.test.tsx",
         "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/presentation-audio-player.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/presentation-audio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/routes/__tests__/event-presentation-route.component.test.tsx",
         "src/server/studio/__tests__/after-commit.unit.test.ts",
-        "src/server/studio/__tests__/ai-sources.unit.test.ts",
-        "src/server/studio/__tests__/ai-suggestions.database-integration.test.ts",
-        "src/server/studio/__tests__/ai-suggestions.unit.test.ts"
+        "src/server/studio/__tests__/ai-sources.unit.test.ts"
       ]
     },
     {
@@ -136505,6 +136634,16 @@
     },
     {
       "path": "tools/studio/__tests__/event-template-catalog.unit.test.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/studio/__tests__/event-template-cli.unit.test.ts",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
       "kind": "test-infrastructure",

@@ -25,7 +25,7 @@ function selectEntity(query: string) {
   fireEvent.change(input, { target: { value: query } });
   fireEvent.keyDown(input, { key: 'Enter' });
 }
-const data = vi.hoisted(() => ({ rows: [] as any[] }));
+const data = vi.hoisted(() => ({ rows: [] as any[] | undefined }));
 vi.mock('../KonvaStudioCanvas', () => ({
   default: () => <div data-testid="intro-preview" />,
 }));
@@ -43,7 +43,7 @@ it('opens visualization insertion from the toolbar and closes the current panel'
     <Tools
       document={document}
       frameId={document.nodes[0].id}
-      sources={data.rows}
+      sources={data.rows ?? []}
       assets={[]}
       update={vi.fn()}
       portrait={false}
@@ -66,7 +66,7 @@ function mountTools(disabled = false) {
     document,
     frameId: document.nodes[0].id,
     selectedId: title.id,
-    sources: data.rows,
+    sources: data.rows ?? [],
     assets: [{ id: asset, name: 'Intro', mime: 'audio/mpeg' }],
     update: (edit: (d: StudioDocumentV3) => void) => {
       document = structuredClone(document);
@@ -191,7 +191,7 @@ it('inserts and detaches entity variables, edits portrait layouts and manages pr
     document,
     frameId: frame.id,
     selectedId: title.id,
-    sources: data.rows,
+    sources: data.rows ?? [],
     assets: [{ id: asset, name: 'Intro', mime: 'audio/mpeg' }],
     update: (edit: (d: StudioDocumentV3) => void) => {
       document = structuredClone(document);
@@ -252,4 +252,128 @@ it('requires a source to save music while offering integrated music without uplo
   openPanel('music-animation');
   fireEvent.click(screen.getByRole('button', { name: 'Add music' }));
   expect(screen.getByRole('button', { name: 'Save' }).matches(':disabled')).toBe(true);
+});
+
+it.each([
+  ['results', 'results'],
+  ['speakers', 'speakers'],
+  ['countdown', 'countdown'],
+  ['start_time', 'datetime'],
+  ['title', 'text'],
+] as const)('inserts a %s variable with its matching display format', (field, format) => {
+  const harness = mountTools();
+  openPanel('polity-data');
+  selectEntity('Live Event');
+  fireEvent.change(screen.getByRole('combobox', { name: 'Value' }), { target: { value: field } });
+  fireEvent.click(screen.getByRole('button', { name: 'Insert variable' }));
+  expect(harness.getDocument().nodes.at(-1)?.liveBinding).toMatchObject({
+    field,
+    format,
+    sourceId: event,
+  });
+});
+
+it('links an agenda-bound node to its parent event and refuses zero portrait dimensions', () => {
+  const document = createEventTemplate('discussion', event);
+  const title = document.nodes.find(node => node.liveBinding?.field === 'title')!;
+  const update = vi.fn();
+  render(
+    <Tools
+      document={document}
+      frameId={document.nodes[0].id}
+      selectedId={title.id}
+      sources={[
+        {
+          source_type: 'agenda_item',
+          source_id: event,
+          event_id: asset,
+          payload: { title: 'Discussion' },
+        },
+      ]}
+      assets={[]}
+      update={update}
+      portrait
+      setPortrait={vi.fn()}
+    />
+  );
+  openPanel('polity-data');
+  expect(screen.getByRole('link').getAttribute('href')).toBe(`/event/${asset}/agenda`);
+  openPanel('responsive-layout');
+  expect(
+    (screen.getByRole('combobox', { name: 'Layout preview' }) as HTMLSelectElement).value
+  ).toBe('portrait');
+  for (const label of ['Portrait width', 'Portrait height'])
+    fireEvent.change(screen.getByRole('spinbutton', { name: label }), { target: { value: '0' } });
+  expect(update).not.toHaveBeenCalled();
+});
+
+it('shows the wide geometry until a selected node has its first portrait override', () => {
+  const harness = mountTools();
+  const node = harness.getDocument().nodes.find(node => node.id === harness.selectedId)!;
+  delete node.portrait;
+  harness.refresh();
+  openPanel('responsive-layout');
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expect(
+      (screen.getByRole('spinbutton', { name: `Portrait ${key}` }) as HTMLInputElement)
+        .valueAsNumber
+    ).toBe(node.transform[key]);
+  }
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Portrait x' }), {
+    target: { value: '42' },
+  });
+  expect(
+    harness.getDocument().nodes.find(node => node.id === harness.selectedId)!.portrait?.transform?.x
+  ).toBe(42);
+});
+
+it('keeps an unresolved entity query empty and lets unnamed sources be selected by their stable ID', () => {
+  data.rows = undefined;
+  const harness = mountTools();
+  openPanel('polity-data');
+  expect(screen.getByRole('button', { name: 'Insert variable' }).matches(':disabled')).toBe(true);
+  data.rows = [{ source_type: 'event', source_id: event, payload: {} }];
+  harness.refresh();
+  selectEntity(event);
+  fireEvent.click(screen.getByRole('button', { name: 'Insert variable' }));
+  expect(harness.getDocument().nodes.at(-1)?.liveBinding?.sourceId).toBe(event);
+});
+
+it('ignores live-binding and portrait edits when a collaborator removes the selected node before the transaction', () => {
+  const document = createEventTemplate('cover', event);
+  const title = document.nodes.find(node => node.liveBinding?.field === 'title')!;
+  const changed: StudioDocumentV3[] = [];
+  const update = vi.fn((edit: (draft: StudioDocumentV3) => void) => {
+    const draft = structuredClone(document);
+    draft.nodes = draft.nodes.filter(node => node.id !== title.id);
+    edit(draft);
+    changed.push(draft);
+  });
+  render(
+    <Tools
+      document={document}
+      frameId={document.nodes[0].id}
+      selectedId={title.id}
+      sources={data.rows ?? []}
+      assets={[]}
+      update={update}
+      portrait={false}
+      setPortrait={vi.fn()}
+    />
+  );
+  openPanel('polity-data');
+  selectEntity('Live Event');
+  fireEvent.click(screen.getByRole('button', { name: 'Bind selection' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Convert to static content' }));
+  openPanel('responsive-layout');
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Portrait x' }), {
+    target: { value: '12' },
+  });
+  expect(changed).toHaveLength(3);
+  expect(changed.every(draft => draft.nodes.every(node => node.id !== title.id))).toBe(true);
+  const count = update.mock.calls.length;
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Portrait width' }), {
+    target: { value: '' },
+  });
+  expect(update).toHaveBeenCalledTimes(count);
 });

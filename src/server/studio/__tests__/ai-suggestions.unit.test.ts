@@ -833,6 +833,22 @@ describe('Studio AI plans, snapshots, persistence and cleanup', () => {
     );
     const document = legacyDocumentToV3(legacy);
     document.nodes.find(node => node.type === 'chart')!.sourceAssetId = chartFile;
+    const frame = document.nodes.find(node => node.type === 'frame')!;
+    document.show = {
+      order: 'agenda',
+      cues: [
+        {
+          id: crypto.randomUUID(),
+          frameId: frame.id,
+          assetId: image,
+          trigger: 'enter',
+          action: 'play',
+          volume: 0.5,
+          loop: false,
+          fadeSeconds: 1,
+        },
+      ],
+    };
     prune = { document };
     cleanupRows = [
       { id: image, storage_path: 'image' },
@@ -979,6 +995,32 @@ describe('Studio AI plans, snapshots, persistence and cleanup', () => {
         { id: canonicalAsset, name: 'Canonical image' },
       ];
       const frame = document.nodes.find(node => node.type === 'frame')!;
+      frame.intro = { mode: 'video', assetId: copied, intensity: 0.5 };
+      document.show = {
+        order: 'agenda',
+        cues: [
+          {
+            id: crypto.randomUUID(),
+            frameId: frame.id,
+            assetId: copied,
+            trigger: 'enter',
+            action: 'play',
+            volume: 0.5,
+            loop: false,
+            fadeSeconds: 1,
+          },
+        ],
+      };
+      document.nodes.push({
+        ...structuredClone(frame),
+        id: crypto.randomUUID(),
+        intro: { mode: 'video', assetId: canonicalAsset, intensity: 0.5 },
+      });
+      Object.assign(io.sql, {
+        unsafe: vi.fn(async (_query: string, args: unknown[][]) =>
+          args[1].map((id: unknown) => ({ id, mime_type: 'video/mp4' }))
+        ),
+      });
       const image = (assetId: string) => ({
         kind: 'media',
         assetId,

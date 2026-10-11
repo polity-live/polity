@@ -237,7 +237,16 @@
         "file": "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "project": "component",
         "caseId": "opens scoped import from keyboard and retains busy and failed authorization feedback",
-        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
       }
     ],
     "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view-dialog.plate-js-data-view-retry-search": [
@@ -864,7 +873,7 @@
     "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-339d3f1790": {
       "actionId": "communication-studio.studio-show-tools.activate.showselect-339d3f1790"
     },
-    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-369aa5e1a3": {
+    "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-36ecdc0ca1": {
       "actionId": "communication-studio.studio-show-tools.activate.showselect-369aa5e1a3"
     },
     "src/features/communication-studio/ui/StudioShowTools.tsx#ShowSelect-3a93a89224": {

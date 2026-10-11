@@ -53,6 +53,8 @@ describe('InviteMembersDialog controller branches', () => {
     expect(mocks.viewProps.emailComposer.mode).toBe('email');
     expect(mocks.viewProps.inviteLabel).toBe('features.groups.emailInvitations.send');
     expect(mocks.viewProps.inviteDisabled).toBe(true);
+    act(() => mocks.viewProps.onInvite());
+    expect(mocks.run).not.toHaveBeenCalled();
     view.rerender(<InviteMembersDialog {...base} />);
     expect(mocks.viewProps.emailComposer).toBeUndefined();
     expect(mocks.viewProps.inviteLabel).toBe('Invite');

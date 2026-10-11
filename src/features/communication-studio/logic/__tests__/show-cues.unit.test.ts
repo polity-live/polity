@@ -1,6 +1,14 @@
 import { expect, it } from 'vitest';
 import { showCueSchema } from '../live-contract';
-import { audioEnvelope, cueChannel, cueFadeIn, cueFadeOut, conflictingCue } from '../show-cues';
+import {
+  audioEnvelope,
+  audioPosition,
+  audioDuration,
+  cueChannel,
+  cueFadeIn,
+  cueFadeOut,
+  conflictingCue,
+} from '../show-cues';
 import { createEventTemplate } from '../event-templates';
 import { applyStudioCommandV3 } from '../commands-v3';
 import { createStudioV3ClipboardPayload, pasteStudioV3Clipboard } from '../studio-clipboard';
@@ -30,6 +38,7 @@ it('retains legacy settings and validates independent global transition rules', 
     durationSeconds: 3,
   });
   expect(global.loop).toBe(false);
+  expect(conflictingCue([global], { ...global, id: crypto.randomUUID() })).toBe(global);
   expect(showCueSchema.safeParse({ ...global, channel: 'music' }).success).toBe(false);
   expect(showCueSchema.safeParse({ ...global, trigger: 'final' }).success).toBe(false);
   expect(showCueSchema.safeParse({ ...legacy, assetId: crypto.randomUUID() }).success).toBe(false);
@@ -93,4 +102,20 @@ it('copies local rules with frames and retains exactly one global rule', () => {
   });
   expect(pasted.document.show!.cues).toHaveLength(3);
   expect(pasted.document.show!.cues.filter(c => c.scope === 'global')).toHaveLength(1);
+});
+
+it('preserves the captured audio position until a playing cue has an explicit clock anchor', () => {
+  expect(audioPosition({ status: 'playing', position: 4 }, 1000)).toBe(4);
+  expect(audioPosition({ status: 'playing', position: 4, at: 500 }, 1000)).toBe(4.5);
+  expect(audioPosition({ status: 'playing', position: 4, at: 2000 }, 1000)).toBe(4);
+  expect(audioPosition({ status: 'paused', position: 4, at: 500 }, 1000)).toBe(4);
+});
+
+it('keeps an unknown uploaded track open-ended while respecting measured and explicit cue durations', () => {
+  const assetId = crypto.randomUUID();
+  expect(audioDuration({ assetId })).toBe(Infinity);
+  expect(audioDuration({ assetId }, 61)).toBe(61);
+  expect(audioDuration({ assetId, durationSeconds: 3 }, 61)).toBe(3);
+  expect(audioDuration({ assetId, loop: true }, 61)).toBe(Infinity);
+  expect(audioDuration({ assetId, loop: true, durationSeconds: 3 }, 61)).toBe(3);
 });

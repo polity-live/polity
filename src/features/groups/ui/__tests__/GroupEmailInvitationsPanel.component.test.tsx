@@ -3,15 +3,68 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 const request = vi.hoisted(() => vi.fn());
+const language = vi.hoisted(() => ({ value: 'en' }));
 vi.mock('../../hooks/useEmailInvitationComposer', () => ({
   emailInvitationRequest: request,
-  EmailInvitationApiError: class extends Error {},
+  EmailInvitationApiError: class extends Error {
+    constructor(
+      public code: string,
+      public available?: number
+    ) {
+      super(code);
+    }
+  },
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  useTranslation: () => ({ t: (key: string) => key, language: 'en' }),
+  useTranslation: () => ({ t: (key: string) => key, language: language.value }),
   translate: (key: string) => key,
 }));
 import { GroupEmailInvitationsPanel } from '../GroupEmailInvitationsPanel';
+import { EmailInvitationApiError } from '../../hooks/useEmailInvitationComposer';
+
+it.each([true, false])(
+  'keeps action failures visible and retries loading safely, typed=%s',
+  async typed => {
+    language.value = 'de';
+    const row = {
+      id: 'pending',
+      email: 'a@example.com',
+      role_names: [],
+      state: 'pending',
+      delivery_status: 'sent',
+      expires_at: '2026-10-15T12:00:00Z',
+      last_attempt_at: null,
+    };
+    request
+      .mockResolvedValueOnce({ invitations: [row] })
+      .mockRejectedValueOnce(
+        typed ? new EmailInvitationApiError('quota_exceeded', 0) : new Error('offline')
+      )
+      .mockResolvedValue({ invitations: [] });
+    render(<GroupEmailInvitationsPanel groupId="group" />);
+    fireEvent.click(await screen.findByRole('button', { name: /revoke$/ }));
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      typed ? 'quota_exceeded' : 'server_error'
+    );
+    fireEvent.click(screen.getByRole('button', { name: /retry$/ }));
+    await screen.findByText(/noInvitations$/);
+    language.value = 'en';
+  }
+);
+it('surfaces a typed load failure with its available quota', async () => {
+  request.mockRejectedValueOnce(new EmailInvitationApiError('quota_exceeded', 3));
+  render(<GroupEmailInvitationsPanel groupId="group" />);
+  expect((await screen.findByRole('alert')).textContent).toContain('quota_exceeded');
+});
+it('clears unavailable quota data for a generic list-loading failure', async () => {
+  request.mockRejectedValueOnce(new Error('offline'));
+  render(<GroupEmailInvitationsPanel groupId="group" />);
+  expect((await screen.findByRole('alert')).textContent).toContain('server_error');
+  request.mockResolvedValueOnce({ invitations: [] });
+  fireEvent(window, new Event('polity-email-invitations-changed'));
+  await screen.findByText(/noInvitations$/);
+  expect(screen.queryByRole('alert')).toBeNull();
+});
 
 it('uses the shared member-table layout with named recipients, role tags, status badges and icon actions', async () => {
   const common = { role_names: ['Member', 'Editor'], last_attempt_at: null, expires_at: null };

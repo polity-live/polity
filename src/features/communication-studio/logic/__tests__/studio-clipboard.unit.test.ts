@@ -19,6 +19,92 @@ import {
 
 const projectId = crypto.randomUUID();
 
+it('drops stale audio cues whose frame is not included in an external clipboard', () => {
+  const document = createStudioDocumentV3('Stale clipboard');
+  const frame = createFrameNode('square');
+  document.nodes.push(frame);
+  const payload = createStudioV3ClipboardPayload({
+    projectId,
+    document,
+    selectedNodeIds: [frame.id],
+  })!;
+  payload.cues = [
+    {
+      id: crypto.randomUUID(),
+      frameId: crypto.randomUUID(),
+      trigger: 'enter',
+      action: 'play',
+      builtin: 'test-tone',
+      volume: 0.5,
+      fadeSeconds: 0,
+      loop: false,
+    },
+  ];
+  const restored = parseStudioClipboard(stringifyStudioClipboard(payload))!;
+  expect(restored).not.toBeNull();
+  const pasted = pasteStudioV3Clipboard({ document, payload: restored, projectId });
+  expect(pasted.document.show?.cues).toEqual([]);
+  expect(document.show).toBeUndefined();
+});
+
+it('remaps copied frame audio cues without duplicating global transition cues', () => {
+  const document = createStudioDocumentV3('Audio clipboard');
+  const frame = createFrameNode('square');
+  document.nodes.push(frame);
+  const frameCue = {
+    id: crypto.randomUUID(),
+    frameId: frame.id,
+    trigger: 'enter' as const,
+    action: 'play' as const,
+    builtin: 'test-tone' as const,
+    volume: 0.5,
+    fadeSeconds: 0,
+    loop: false,
+  };
+  document.show = {
+    order: 'manual',
+    cues: [
+      frameCue,
+      { ...frameCue, id: crypto.randomUUID(), frameId: crypto.randomUUID() },
+      { ...frameCue, id: crypto.randomUUID(), frameId: undefined },
+      {
+        ...frameCue,
+        id: crypto.randomUUID(),
+        frameId: undefined,
+        scope: 'global',
+        channel: 'transition',
+      },
+    ],
+  };
+  const payload = createStudioV3ClipboardPayload({
+    projectId,
+    document,
+    selectedNodeIds: [frame.id],
+  })!;
+  expect(payload.cues).toEqual([frameCue]);
+  payload.cues = [
+    frameCue,
+    {
+      ...frameCue,
+      id: crypto.randomUUID(),
+      frameId: undefined,
+      scope: 'global',
+      channel: 'transition',
+    },
+  ];
+  const pasted = pasteStudioV3Clipboard({
+    document: createStudioDocumentV3('Pasted audio clipboard'),
+    payload,
+    projectId,
+  });
+  expect(pasted.document.show?.cues).toHaveLength(1);
+  expect(pasted.document.show?.cues[0]).toMatchObject({
+    frameId: pasted.selectedNodeIds[0],
+    builtin: 'test-tone',
+  });
+  expect(pasted.document.show?.cues[0].id).not.toBe(frameCue.id);
+});
+
 describe('Studio project clipboard', () => {
   it('rejects duplicate source node IDs in a parsed external clipboard without changing the document', () => {
     const document = createStudioDocumentV3('Duplicate clipboard');

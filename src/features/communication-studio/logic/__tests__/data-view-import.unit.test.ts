@@ -185,4 +185,110 @@ describe('resolved Studio data import', () => {
       expect(document).toEqual(before);
     }
   });
+
+  it('rejects malformed table headers and cells before creating editable content', () => {
+    const table: Extract<DataViewProjection, { view: 'table' }> = {
+      view: 'table',
+      snapshotId: 'snapshot',
+      columns: ['Value'],
+      rows: [{ Value: 'valid' }],
+      rowCount: 1,
+    };
+    for (const invalid of [
+      { ...table, rows: [] },
+      { ...table, columns: [] },
+      { ...table, columns: ['Value', 'Value'] },
+      { ...table, columns: ['A'.repeat(10001)] },
+      { ...table, rows: [{ Value: 'A'.repeat(10001) }] },
+    ])
+      expect(validateStudioDataProjection(invalid, 'bar')).not.toBeNull();
+    expect(validateStudioDataProjection({ ...table, rows: [{}] }, 'bar')).toBeNull();
+    const config = { ...configuration(), view: 'table' as const };
+    expect(() => createStudioDataViewNodes(config, projection, frame)).toThrow();
+    expect(() =>
+      insertStudioDataView(
+        createStudioDocumentV5('Missing frame'),
+        crypto.randomUUID(),
+        configuration(),
+        projection
+      )
+    ).toThrow();
+  });
+
+  it('rejects zero pie totals, invalid labels and excessive repeated slices', () => {
+    for (const points of [
+      [{ x: 'A', value: 0 }],
+      [{ x: 'A'.repeat(10001), value: 1 }],
+      [{ x: 'A', series: 'A'.repeat(10001), value: 1 }],
+      Array.from({ length: 101 }, () => ({ x: 'same', value: 1 })),
+    ])
+      expect(validateStudioDataProjection({ ...projection, points }, 'pie')).not.toBeNull();
+    const stat: Extract<DataViewProjection, { view: 'stat' }> = {
+      view: 'stat',
+      snapshotId: 'snapshot',
+      value: 1,
+      label: 'Value',
+      aggregation: 'sum',
+      rowCount: 0,
+    };
+    expect(validateStudioDataProjection(stat, 'bar')).not.toBeNull();
+    expect(
+      validateStudioDataProjection({ ...stat, rowCount: 1, value: NaN }, 'bar')
+    ).not.toBeNull();
+  });
+
+  it('imports missing values with default chart settings and without optional attribution text', () => {
+    const config = configuration();
+    delete config.chartType;
+    config.presentation.title = '';
+    config.source.title = '';
+    delete config.presentation.description;
+    config.presentation.showLegend = false;
+    config.presentation.showGrid = false;
+    delete config.source.sourceUrl;
+    delete config.source.snapshotTakenAt;
+    const single = { ...projection, points: [{ x: 'Year', value: 2 }] };
+    const nodes = createStudioDataViewNodes(config, single, frame);
+    const chart = nodes.find(n => n.type === 'chart');
+    expect(chart?.type === 'chart' && chart.data).toMatchObject({
+      kind: 'bar',
+      legend: false,
+      grid: false,
+      labels: ['Year'],
+      series: [{ name: 'value', values: [2] }],
+    });
+    expect(nodes.filter(n => n.type === 'richText')).toHaveLength(1);
+    const pie = createStudioDataViewNodes({ ...config, chartType: 'pie' }, single, frame).find(
+      n => n.type === 'chart'
+    );
+    expect(pie?.type === 'chart' && pie.data.labels).toEqual(['Year']);
+    const mixed = createStudioDataViewNodes(
+      { ...config, chartType: 'pie' },
+      {
+        ...projection,
+        points: [
+          { x: 'Year', value: 2 },
+          { x: 'Year', series: 'Named', value: 3 },
+        ],
+      },
+      frame
+    ).find(n => n.type === 'chart');
+    expect(mixed?.type === 'chart' && mixed.data.labels).toEqual(['Year · value', 'Year · Named']);
+    const document = createStudioDocumentV5('Background import');
+    const plainFrame = structuredClone(frame);
+    plainFrame.style.fillBinding = null;
+    plainFrame.style.fill = null;
+    document.nodes.push(plainFrame);
+    expect(insertStudioDataView(document, plainFrame.id, config, single)).not.toHaveLength(0);
+    plainFrame.style.fillBinding = 'background';
+    expect(insertStudioDataView(document, plainFrame.id, config, single)).not.toHaveLength(0);
+    const tableConfig = { ...config, view: 'table' as const };
+    const tableNodes = createStudioDataViewNodes(
+      tableConfig,
+      { view: 'table', snapshotId: 'snapshot', columns: ['Missing'], rows: [{}], rowCount: 1 },
+      frame
+    );
+    const table = tableNodes.find(n => n.type === 'table');
+    expect(table?.type === 'table' && table.data.rows[1].cells[0].text).toBe('');
+  });
 });

@@ -12,6 +12,10 @@ import { handleResendWebhookRequest } from '@/server/newsletter-routes';
 import { handleNewsletterSyncRequest } from '@/server/newsletter-routes';
 
 type Row = Record<string, any>;
+const invitationEvents = vi.hoisted(() => ({ process: vi.fn(async () => undefined) }));
+vi.mock('@/server/group-email-invitations', () => ({
+  processInvitationWebhook: invitationEvents.process,
+}));
 
 class FakeQuery {
   private filters: [string, unknown][] = [];
@@ -900,6 +904,26 @@ describe('newsletter service boundary contracts', () => {
 });
 
 describe('newsletter endpoints and webhooks', () => {
+  it('dispatches a verified delivery through the default invitation webhook service', async () => {
+    const db = createFakeSupabase(),
+      api = createFakeResend();
+    const event = {
+      type: 'email.delivered',
+      created_at: '2026-10-11T12:00:00Z',
+      data: { email_id: 'default-invitation' },
+    };
+    api.setEvent(event);
+    await handleResendWebhook(
+      {
+        rawBody: '{}',
+        svixId: 'default-invitation',
+        svixTimestamp: '123',
+        svixSignature: 'signature',
+      },
+      { supabase: db.client as any, resend: api.resend as any, config }
+    );
+    expect(invitationEvents.process).toHaveBeenCalledWith(event);
+  });
   it('dispatches invitation delivery only after signature verification and skips duplicate events', async () => {
     const db = createFakeSupabase();
     const api = createFakeResend();

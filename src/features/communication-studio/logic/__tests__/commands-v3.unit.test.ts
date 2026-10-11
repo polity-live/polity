@@ -15,6 +15,19 @@ import {
 import { createStudioNodeFromElement } from '../create-studio-node';
 import { element } from '../document';
 
+it('protects agenda-managed frames from deletion and leaves the document intact', () => {
+  const document = createStudioDocumentV3('Agenda');
+  const frame = createFrameNode('widescreen', {
+    eventSource: { type: 'event', id: crypto.randomUUID(), template: 'cover' },
+  });
+  document.nodes.push(frame);
+  const before = structuredClone(document);
+  expect(() =>
+    applyStudioCommandV3(document, { type: 'deleteNodes', nodeIds: [frame.id] })
+  ).toThrow('Event frames are managed by the agenda');
+  expect(document).toEqual(before);
+});
+
 function fixture() {
   const document = createStudioDocumentV3('Command safety');
   const first = createFrameNode('custom', {

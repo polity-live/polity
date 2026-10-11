@@ -6,6 +6,7 @@ import {
   shapeNodeSchema,
   type StudioDocumentV3,
   type StudioNode,
+  type RichTextNode,
 } from './document-v3';
 import { type LiveBinding } from './live-contract';
 import { applyThemeSnapshot, type StudioThemeSnapshot } from './theme';
@@ -26,7 +27,7 @@ export function createBoundText(
   binding: LiveBinding,
   parentFrameId: string,
   zIndex = 0
-): StudioNode {
+): RichTextNode {
   return richTextNodeSchema.parse({
     id: crypto.randomUUID(),
     name: binding.field,
@@ -108,14 +109,13 @@ export function createEventTemplate(
       transform: { x: 70, y: portraitY, width: 940, height: portraitHeight },
       fontSize: size,
     };
-    if (node.type === 'richText') {
-      node.typography.fontSize = size;
-      node.textRole = field === 'title' ? 'title' : field === 'details' ? 'body' : 'subtitle';
-      const style = document.theme.textStyles.find(s =>
-        field === 'title' ? /headline|title/i.test(s.name) : /body/i.test(s.name)
-      );
-      if (style) node.typography.textStyleId = style.id;
-    }
+    node.typography.fontSize = size;
+    node.textRole = field === 'title' ? 'title' : field === 'details' ? 'body' : 'subtitle';
+    // The freshly created document always has the default headline and body styles.
+    const style = document.theme.textStyles.find(s =>
+      field === 'title' ? /headline|title/i.test(s.name) : /body/i.test(s.name)
+    ) as StudioThemeSnapshot['textStyles'][number];
+    node.typography.textStyleId = style.id;
     document.nodes.push(node);
   };
   add(cover ? 'organizer' : 'status', 'text', 70, 70, 30, 110, 90);

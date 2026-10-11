@@ -19,8 +19,9 @@ export function createSpatialIntro(
   const scale = Math.min(1, 1920 / Math.max(width, height));
   canvas.width = Math.max(1, Math.round(width * scale));
   canvas.height = Math.max(1, Math.round(height * scale));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Intro canvas unavailable');
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Intro canvas unavailable');
+  const ctx = context;
   const webglCanvas = document.createElement('canvas');
   const renderer = new THREE.WebGLRenderer({
     canvas: webglCanvas,
@@ -130,7 +131,6 @@ export function createSpatialIntro(
     target.set(-Math.cos(yaw) * offset, width < height ? 3.2 : 0, -5 + Math.sin(yaw) * offset);
     camera.lookAt(target);
     renderer.render(scene, camera);
-    if (!ctx) return;
     ctx.globalAlpha = alpha;
     ctx.drawImage(webglCanvas, 0, 0);
   }

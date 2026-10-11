@@ -57,6 +57,7 @@ vi.mock('three', async original => {
 });
 import * as THREE from 'three';
 import { createIllustratedDemocracy, createSculpturalDemocracy } from '../democracy-intro';
+import { createCinematicDemocracy } from '../democracy-cinematic';
 import { createEventTemplate } from '../event-templates';
 import { createSpatialIntro, paintIntroSnapshot } from '../event-intro-renderer';
 
@@ -88,6 +89,29 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.clearAllMocks();
+});
+
+it('fails before allocating GPU resources when a drawing context is unavailable', () => {
+  vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(null);
+  const theme = createEventTemplate('cover', crypto.randomUUID()).theme;
+  expect(() => createIllustratedDemocracy(1920, 1080, theme)).toThrow('Intro canvas unavailable');
+  expect(() => createCinematicDemocracy(1920, 1080, theme, [])).toThrow('Intro canvas unavailable');
+  expect(io.render).not.toHaveBeenCalled();
+});
+
+it('keeps illustrated motion stationary when intensity is zero', () => {
+  ctx.rotate = vi.fn();
+  const scene = createIllustratedDemocracy(
+    1920,
+    1080,
+    createEventTemplate('cover', crypto.randomUUID()).theme
+  );
+  scene.render(0, 0);
+  const rotations = vi.mocked(ctx.rotate).mock.calls.map(call => [...call]);
+  vi.mocked(ctx.rotate).mockClear();
+  scene.render(5000, 0);
+  expect(vi.mocked(ctx.rotate).mock.calls).toEqual(rotations);
+  scene.dispose();
 });
 
 it('renders scalable illustrations without a GPU and disposes their bounded backing canvas', () => {

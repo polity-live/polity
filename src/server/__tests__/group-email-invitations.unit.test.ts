@@ -22,6 +22,72 @@ const config: InvitationConfig = {
   allowedRecipients: ['delivered@resend.dev'],
 };
 describe('Resend invitation provider', () => {
+  it('maps unavailable quota HTTP responses separately from delivery errors', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('private quota', { status: 429 }))
+    );
+    await expect(createInvitationProvider(config).usage()).rejects.toMatchObject({
+      code: 'quota_unavailable',
+      status: 503,
+    });
+  });
+  it.each([400, 500, 403])('maps sending HTTP %s to a safe delivery failure', async status => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('private', { status }))
+    );
+    await expect(createInvitationProvider(config).send([], 'key')).rejects.toMatchObject({
+      code:
+        status === 400
+          ? 'delivery_failed'
+          : status === 403
+            ? 'provider_access_denied'
+            : 'delivery_unknown',
+    });
+  });
+  it.each(['network', 'json', 'shape', 'count', 'missing-id'])(
+    'rejects uncertain batch sending responses: %s',
+    async kind => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => {
+          if (kind === 'network') throw new Error('offline');
+          if (kind === 'json') return new Response('bad json');
+          return Response.json(
+            kind === 'shape' ? {} : kind === 'count' ? { data: [] } : { data: [{}] }
+          );
+        })
+      );
+      await expect(
+        createInvitationProvider(config).send(
+          [{ from: config.from, to: ['a@example.com'], subject: 'Invite', html: 'mail', tags: [] }],
+          'key'
+        )
+      ).rejects.toMatchObject({ code: 'delivery_unknown' });
+    }
+  );
+  it('preserves ordered provider IDs and the batch idempotency header', async () => {
+    const fetch = vi.fn(async () => Response.json({ data: [{ id: 'mail-1' }] }));
+    vi.stubGlobal('fetch', fetch);
+    const mail = {
+      from: config.from,
+      to: ['a@example.com'],
+      subject: 'Invite',
+      html: 'mail',
+      tags: [],
+    };
+    expect(await createInvitationProvider(config).send([mail], 'key')).toEqual(['mail-1']);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.resend.com/emails/batch',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'Idempotency-Key': 'key' }),
+        body: JSON.stringify([mail]),
+      })
+    );
+  });
   it('retrieves usage without requiring a sending address', async () => {
     const usage = {
       emails: { daily: { used: 10, limit: 100 }, monthly: { used: 100, limit: 3000 } },
@@ -89,6 +155,39 @@ describe('Resend invitation provider', () => {
   });
 });
 describe('email invitation security and budget', () => {
+  it('uses safe environment defaults and rejects credentials, URL suffixes and invalid daily limits', () => {
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_ENVIRONMENT', '');
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_BASE_URL', '');
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(invitationConfig()).toMatchObject({
+      production: true,
+      baseUrl: 'https://www.polity.live',
+    });
+    vi.stubEnv('NODE_ENV', 'test');
+    expect(invitationConfig()).toMatchObject({
+      production: false,
+      baseUrl: 'http://localhost:3000',
+    });
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_ENVIRONMENT', 'invalid');
+    expect(() => invitationConfig()).toThrow('configuration');
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_ENVIRONMENT', 'development');
+    for (const url of [
+      'http://user:password@localhost:3000',
+      'http://localhost:3000/path',
+      'http://localhost:3000/?query=1',
+      'http://localhost:3000/#hash',
+    ]) {
+      vi.stubEnv('GROUP_EMAIL_INVITATIONS_BASE_URL', url);
+      expect(() => invitationConfig()).toThrow('configuration');
+    }
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_BASE_URL', 'http://127.0.0.1:3000');
+    for (const limit of ['0', '101', '1.5', 'NaN']) {
+      vi.stubEnv('GROUP_EMAIL_INVITATIONS_DAILY_LIMIT', limit);
+      expect(() => invitationConfig()).toThrow('configuration');
+    }
+    vi.stubEnv('GROUP_EMAIL_INVITATIONS_DAILY_LIMIT', '3');
+    expect(invitationConfig().limit).toBe(3);
+  });
   it('reserves half the provider quota and subtracts outstanding batches', () => {
     const usage = {
       emails: { daily: { used: 40, limit: 100 }, monthly: { used: 2_980, limit: 3_000 } },

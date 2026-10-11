@@ -10,6 +10,18 @@ import {
   toggleSelection,
 } from '../studio-selection';
 
+it('restores a primary node after removing an item from a selection with no primary', () => {
+  const document = createStudioDocumentV3('Restored selection');
+  const first = createFrameNode('custom'),
+    second = createFrameNode('custom');
+  document.nodes.push(first, second);
+  const current = { ...emptyStudioSelection(), nodeIds: [first.id, second.id] };
+  expect(layerSelection(document, current, first.id, true)).toMatchObject({
+    nodeIds: [second.id],
+    primaryId: second.id,
+  });
+});
+
 it('selects exact layer IDs across frames, toggles membership and maintains the primary node', () => {
   const document = createStudioDocumentV3('Layers');
   const groupId = crypto.randomUUID();

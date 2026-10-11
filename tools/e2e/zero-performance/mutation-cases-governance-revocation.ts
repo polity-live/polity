@@ -201,42 +201,67 @@ const protectedLookupCommands = new Set([
 ]);
 
 /** Reuses reviewed SQL-only fixtures/oracles, never subject implementations or their outputs. */
-export async function verifyRevokedGovernanceWriter(ctx: MutationCaseContext, writer: unknown) {
+export async function verifyRevokedGovernanceWriter(
+  ctx: MutationCaseContext,
+  writer: unknown,
+  timeoutMs = 15_000
+) {
   const local = writer as { inspector: { client: { map(): Promise<Map<string, unknown>> } } };
   assert.equal(typeof local?.inspector?.client?.map, 'function', 'Missing public writer inspector');
-  for (const [key, value] of await local.inspector.client.map()) {
-    if (!key.startsWith('e/')) continue;
-    assert.ok(value && typeof value === 'object', 'Invalid cached application row');
-    const tableName = key.split('/')[1];
-    const definition = (
-      schema.tables as Record<
-        string,
-        {
-          serverName?: string;
-          columns: Record<string, { serverName?: string }>;
+  const until = performance.now() + timeoutMs;
+  while (true) {
+    let mismatch: assert.AssertionError | undefined;
+    for (const [key, value] of await local.inspector.client.map()) {
+      if (!key.startsWith('e/')) continue;
+      assert.ok(value && typeof value === 'object', 'Invalid cached application row');
+      const tableName = key.split('/')[1];
+      const definition = (
+        schema.tables as Record<
+          string,
+          {
+            serverName?: string;
+            columns: Record<string, { serverName?: string }>;
+          }
+        >
+      )[tableName];
+      assert.ok(definition, 'Unknown cached application table');
+      const row = value as Record<string, unknown>;
+      assert.equal(typeof row.id, 'string', 'Cached application row has no identity');
+      const table = definition.serverName ?? tableName;
+      const records = await ctx.sql`select * from ${ctx.sql(table)} where id = ${String(row.id)}`;
+      try {
+        assert.equal(records.length, 1, `Rollback row proof: ${tableName}`);
+        for (const [field, column] of Object.entries(definition.columns)) {
+          if (!(field in row)) continue;
+          const columnName = column.serverName ?? field;
+          const expected = records[0][columnName];
+          if (expected instanceof Date) {
+            const values = await replicatedTimestampValues(
+              ctx.sql,
+              table,
+              columnName,
+              String(row.id)
+            );
+            assert.ok(
+              typeof row[field] === 'number' && values.includes(row[field]),
+              `Rollback field proof: ${tableName}.${field}`
+            );
+            continue;
+          }
+          assert.deepEqual(row[field], expected, `Rollback field proof: ${tableName}.${field}`);
         }
-      >
-    )[tableName];
-    assert.ok(definition, 'Unknown cached application table');
-    const row = value as Record<string, unknown>;
-    assert.equal(typeof row.id, 'string', 'Cached application row has no identity');
-    const table = definition.serverName ?? tableName;
-    const records = await ctx.sql`select * from ${ctx.sql(table)} where id = ${String(row.id)}`;
-    assert.equal(records.length, 1, `Rollback row proof: ${tableName}`);
-    for (const [field, column] of Object.entries(definition.columns)) {
-      if (!(field in row)) continue;
-      const columnName = column.serverName ?? field;
-      const expected = records[0][columnName];
-      if (expected instanceof Date) {
-        const values = await replicatedTimestampValues(ctx.sql, table, columnName, String(row.id));
-        assert.ok(
-          typeof row[field] === 'number' && values.includes(row[field]),
-          `Rollback field proof: ${tableName}.${field}`
-        );
-        continue;
+      } catch (error) {
+        if (!(error instanceof assert.AssertionError)) throw error;
+        mismatch = error;
+        break;
       }
-      assert.deepEqual(row[field], expected, `Rollback field proof: ${tableName}.${field}`);
     }
+    if (!mismatch) return;
+    // A replicated mutation response can precede the query eviction/rebase caused
+    // by the independent authority revocation. Use the existing rollback deadline
+    // to prove exact SQL equality from a fresh inspector map, never skip stale rows.
+    if (performance.now() >= until) throw mismatch;
+    await new Promise<void>(resolve => setTimeout(resolve, 5));
   }
 }
 

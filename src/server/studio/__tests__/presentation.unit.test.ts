@@ -1,5 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { createEventTemplate } from '@/features/communication-studio/logic/event-templates';
+import { checksum } from '@/server/checksum';
+import { presentationCommandSchema } from '@/zero/communication-studio/presentation-schema';
 import {
   presentationMusic,
   presentationSequence,
@@ -14,13 +16,15 @@ const mock = vi.hoisted(() => ({
   event: { status: 'active', current_agenda_item_id: null as string | null },
   outputConnected: true,
   assetAvailable: true,
+  receipt: null as { actor_id: string; input_hash: string } | null,
 }));
 vi.mock('@/server/transaction', () => ({
   sqlTransaction: () => ({ query: mock.query }),
   lockAuthority: vi.fn(async () => undefined),
   rows: async (_: unknown, q: string) => {
     if (q.includes('as read')) return [mock.access];
-    if (q.includes('from event_presentation where')) return [mock.state];
+    if (q.includes('from event_presentation where')) return mock.state ? [mock.state] : [];
+    if (q.includes('from event_presentation_operation')) return mock.receipt ? [mock.receipt] : [];
     if (q.includes('select user_id,event_id')) return mock.device ? [mock.device] : [];
     if (q.includes('from studio_state')) return [{ document: mock.document }];
     if (q.includes('from event where')) return [mock.event];
@@ -48,6 +52,7 @@ beforeEach(() => {
   mock.outputConnected = true;
   mock.assetAvailable = true;
   mock.device = undefined;
+  mock.receipt = null;
   mock.document = createEventTemplate('cover', event);
   mock.state = {
     project_id: event,
@@ -64,6 +69,49 @@ beforeEach(() => {
     audio: { assetId: asset, status: 'playing', position: 15, at: Date.now() - 1000, volume: 0.8 },
   };
   mock.event = { status: 'active', current_agenda_item_id: null };
+});
+
+it('replays a completed operation without writes and rejects either changed actor or input', async () => {
+  const input = presentationCommandSchema.parse({
+    action: 'claim',
+    operationId: crypto.randomUUID(),
+    eventId: event,
+    deviceId: device,
+  });
+  mock.receipt = { actor_id: actor, input_hash: checksum(input) };
+  await applyPresentationCommand({} as never, actor, input);
+  expect(mock.query).not.toHaveBeenCalled();
+  mock.receipt.actor_id = crypto.randomUUID();
+  await expect(applyPresentationCommand({} as never, actor, input)).rejects.toThrow(
+    'Operation ID reused'
+  );
+  mock.receipt.actor_id = actor;
+  mock.receipt.input_hash = 'changed';
+  await expect(applyPresentationCommand({} as never, actor, input)).rejects.toThrow(
+    'Operation ID reused'
+  );
+  expect(mock.query).not.toHaveBeenCalled();
+});
+it('refuses a device from another event and stops inherited audio when the presentation is stopped', async () => {
+  mock.device = { user_id: actor, event_id: crypto.randomUUID() };
+  await expect(command('heartbeat')).rejects.toThrow('permission_denied');
+  mock.device = undefined;
+  await command('control', { running: false });
+  expect((mock.query.mock.calls.at(-2)![1][7] as any).status).toBe('stopped');
+});
+
+it('rejects a stale control revision and an unavailable uploaded audio asset before updating presentation', async () => {
+  await expect(command('control', { expectedRevision: 0 })).rejects.toThrow('zwischenzeitlich');
+  expect(mock.query).not.toHaveBeenCalled();
+  mock.assetAvailable = false;
+  await expect(
+    command('control', { audio: { assetId: asset, status: 'playing' } })
+  ).rejects.toThrow('Audiodatei ist nicht verfügbar');
+  expect(mock.query).not.toHaveBeenCalled();
+  mock.assetAvailable = true;
+  delete mock.state.audio.at;
+  await command('control', { audio: { status: 'paused' } });
+  expect((mock.query.mock.calls.at(-2)![1][7] as any).position).toBe(15);
 });
 
 it('preserves sequence time for days and its non-looping finish through pause and volume commands', async () => {
@@ -97,6 +145,46 @@ it('preserves sequence time for days and its non-looping finish through pause an
   await command('control', { audio: { status: 'playing', builtin: 'cinematic-hope' } });
   expect(capture().sequenceEndPosition).toBeUndefined();
 });
+it('allows anonymous display heartbeats while refusing anonymous controller claims', async () => {
+  await applyPresentationCommand({} as never, 'anon', {
+    eventId: event,
+    deviceId: device,
+    action: 'heartbeat',
+    name: 'Display',
+    operationId: crypto.randomUUID(),
+  });
+  expect(mock.query).toHaveBeenCalledWith(
+    expect.stringContaining('insert into event_presentation_device'),
+    [device, event, null, 'Display', expect.any(Number)]
+  );
+  await expect(
+    applyPresentationCommand({} as never, 'anon', {
+      eventId: event,
+      deviceId: device,
+      action: 'claim',
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('permission_denied');
+});
+it('rejects a presentation removed after authorization', async () => {
+  mock.state = null;
+  await expect(command('claim')).rejects.toThrow('Presentation unavailable');
+  expect(mock.query).not.toHaveBeenCalled();
+});
+it('releases a current controller and stops its playback', async () => {
+  await command('release');
+  expect(mock.query).toHaveBeenCalledWith(expect.stringContaining('controller_id=null'), [
+    event,
+    expect.any(Number),
+  ]);
+});
+it('follows an agenda with no matching visible frame and keeps audio position without an origin timestamp', async () => {
+  mock.document.nodes = [];
+  mock.state.audio = { status: 'playing', position: 4 };
+  await command('control', { followAgenda: true, audio: { status: 'playing', volume: 0.4 } });
+  expect(mock.query.mock.calls.at(-2)![1][2]).toBeNull();
+  expect(mock.query.mock.calls.at(-2)![1][7]).toMatchObject({ position: 4, volume: 0.4 });
+});
 it('allows visual commands with a disconnected inherited output but rejects explicitly selecting it', async () => {
   mock.outputConnected = false;
   const frame = createEventTemplate('speech', event).nodes[0];
@@ -116,6 +204,9 @@ it('allows visual commands with a disconnected inherited output but rejects expl
   await expect(command('control', { audioDeviceId: device })).rejects.toThrow('Audiogerät');
   await command('control', { audioDeviceId: null });
   expect(mock.query.mock.calls.at(-2)![1][6]).toBeNull();
+  mock.outputConnected = true;
+  await command('control', { audioDeviceId: device });
+  expect(mock.query.mock.calls.at(-2)![1][6]).toBe(device);
 });
 it('switches between built-in test audio and protected assets without retaining the previous source', async () => {
   await command('control', {

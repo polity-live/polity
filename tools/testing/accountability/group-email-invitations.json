@@ -57,6 +57,11 @@
     ],
     "src/routes/invite/$token.tsx": [
       {
+        "file": "src/routes/__tests__/group-invitation-route.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps invitation tokens out of referrers/search indexing and passes the exact route token to the invitation page"
+      },
+      {
         "file": "e2e/group-email-invitations.e2e.spec.ts",
         "project": "playwright",
         "caseId": "admin invites two new accounts and each explicitly accepts its personal link @acceptance",

@@ -30,6 +30,30 @@ it.each(['en', 'de'] as const)(
 );
 
 describe('email invitation input', () => {
+  it('accepts legacy arrays and empty input while rejecting invalid named recipients', () => {
+    expect(parseInvitationEmails([' A@EXAMPLE.COM ', 'a@example.com'])).toEqual({
+      emails: ['a@example.com'],
+      duplicates: ['a@example.com'],
+      invalid: [],
+    });
+    expect(parseInvitationRecipients({})).toEqual({
+      recipients: [],
+      duplicates: [],
+      invalid: [],
+      conflictingNames: [],
+    });
+    expect(parseInvitationRecipients({ recipients: [{ email: 'bad' }] }).invalid).toEqual(['bad']);
+    const parsed = parseInvitationRecipients({
+      recipients: [
+        { email: 'a@example.com', lastName: 'First' },
+        { email: 'a@example.com', lastName: 'Other', firstName: 'Ada' },
+      ],
+    });
+    expect(parsed.conflictingNames).toEqual(['a@example.com']);
+    expect(parsed.recipients).toEqual([
+      { email: 'a@example.com', firstName: 'Ada', lastName: 'First' },
+    ]);
+  });
   it('accepts exactly one recipient format and rejects oversized names', () => {
     const common = { action: 'preview', roleIds: [crypto.randomUUID()] };
     expect(

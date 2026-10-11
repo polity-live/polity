@@ -1,6 +1,6 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { createEventTemplate } from '../event-templates';
-import { frameNodeSchema } from '../document-v3';
+import { frameNodeSchema, mediaNodeSchema } from '../document-v3';
 import { frameIntro, introElapsed, introPhase, studioNodeAssetIds } from '../event-intro';
 import { countdownText, projectLiveDocument } from '../live-projection';
 import { createLiveSnapshot } from '../live-snapshot';
@@ -79,4 +79,41 @@ it('includes only an active background video in document asset references', () =
   expect(studioNodeAssetIds(frame)).toEqual([asset]);
   frame.intro.mode = 'static';
   expect(studioNodeAssetIds(frame)).toEqual([]);
+});
+
+it('handles legacy frames without a cover fallback and measures a current phase without an explicit epoch', () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(1800000000000);
+    const frame = createEventTemplate('speech', event).nodes[0];
+    if (frame.type !== 'frame') throw new Error('frame');
+    delete frame.intro;
+    expect(frameIntro(frame)).toBeUndefined();
+    delete frame.eventSource;
+    expect(frameIntro(frame)).toBeUndefined();
+    expect(introElapsed({ mode: 'spatial', assetId: null, intensity: 0 })).toBe(1800000000000);
+    frame.intro = { mode: 'video', assetId: null, intensity: 0.45 };
+    expect(studioNodeAssetIds(frame)).toEqual([]);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('collects media and uploaded chart sources without treating generated chart data as an asset', () => {
+  const frame = createEventTemplate('cover', event).nodes[0];
+  const asset = crypto.randomUUID();
+  const media = mediaNodeSchema.parse({
+    ...frame,
+    type: 'media',
+    mediaType: 'image',
+    assetId: asset,
+  });
+  expect(studioNodeAssetIds(media)).toEqual([asset]);
+  const chart = createEventTemplate('vote', crypto.randomUUID()).nodes.find(
+    n => n.type === 'chart'
+  );
+  if (!chart || chart.type !== 'chart') throw new Error('Expected vote chart');
+  expect(studioNodeAssetIds(chart)).toEqual([]);
+  chart.sourceAssetId = asset;
+  expect(studioNodeAssetIds(chart)).toEqual([asset]);
 });

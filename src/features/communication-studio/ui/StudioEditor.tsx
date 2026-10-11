@@ -1648,9 +1648,8 @@ function StudioEditorReady({
                   })
                 }
                 onSelect={(node, rootFrameId, additive) => {
-                  if (!c.v3Value) return;
                   const next = layerSelection(
-                    c.v3Value,
+                    c.v3Value as StudioDocumentV3,
                     { ...selectionState, nodeIds: c.selected },
                     node.id,
                     additive
@@ -2031,9 +2030,8 @@ function StudioEditorReady({
             selectedId={c.selected[0]}
             selectedNodeIds={selectedNodeIds}
             onSelect={(node, rootFrameId) => {
-              if (!c.v3Value) return;
               const next = layerSelection(
-                c.v3Value,
+                c.v3Value as StudioDocumentV3,
                 { ...selectionState, nodeIds: c.selected },
                 node.id,
                 false
@@ -2078,7 +2076,8 @@ function StudioEditorReady({
               setSelectionState({
                 ...emptyStudioSelection(),
                 nodeIds: ids,
-                primaryId: ids[0] ?? null,
+                // A valid import always creates its title and data content nodes.
+                primaryId: ids[0],
               });
             }}
           />

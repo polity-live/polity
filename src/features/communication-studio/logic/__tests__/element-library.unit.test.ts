@@ -43,6 +43,17 @@ function linked(nodes: StudioNode[]) {
   return { document, previous, created, root, instance: document.componentInstances[0] };
 }
 
+it('retains an intro video reference when no replacement asset mapping is supplied', () => {
+  const source = createFrameNode('square');
+  const assetId = crypto.randomUUID();
+  source.intro = { mode: 'video', scene: 'democracy-sculptural', assetId, intensity: 0.6 };
+  const created = instantiateElementSet(
+    { nodes: [source], width: 1080, height: 1080, assets: [] },
+    { setId: crypto.randomUUID(), revisionId: crypto.randomUUID(), x: 0, y: 0 }
+  );
+  expect(created.nodes[0].type === 'frame' && created.nodes[0].intro?.assetId).toBe(assetId);
+});
+
 it('copies cover background video assets and preserves their local reference in linked revisions', () => {
   const source = createFrameNode('square');
   const asset = crypto.randomUUID(),

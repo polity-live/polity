@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   activate: vi.fn(async () => undefined),
   audioStatus: 'idle',
   audioError: '',
+  animatedNull: false,
 }));
 vi.mock('@/zero/communication-studio/useEventPresentation', () => ({
   useEventPresentation: () => mocks.show,
@@ -30,7 +31,7 @@ vi.mock('../../hooks/usePresentationAudio', () => ({
   }),
 }));
 vi.mock('../../hooks/useAnimatedStudioDocument', () => ({
-  useAnimatedStudioDocument: (d: unknown) => d,
+  useAnimatedStudioDocument: (d: unknown) => (mocks.animatedNull ? null : d),
 }));
 vi.mock('@/features/communication-studio/ui/KonvaStudioCanvas', () => ({
   default: () => <div data-testid="presentation-canvas" />,
@@ -50,6 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.audioStatus = 'idle';
   mocks.audioError = '';
+  mocks.animatedNull = false;
   const document = createEventTemplate('cover', event);
   const frame = document.nodes[0];
   mocks.show = {
@@ -120,6 +122,174 @@ it('offers the three event screens and restricts the controller link to managers
   const menu = await screen.findByRole('menu');
   fireEvent.keyDown(menu, { key: 'Escape' });
   await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+});
+
+it('keeps launcher clicks and pointer presses from activating the surrounding event card', () => {
+  const cardClick = vi.fn();
+  const cardPointer = vi.fn();
+  render(
+    <div onClick={cardClick} onPointerDown={cardPointer}>
+      <EventPresentationLauncher eventId={event} onOpenLiveFocus={vi.fn()} />
+    </div>
+  );
+  const trigger = screen.getByRole('button', { name: 'Open live focus' });
+  fireEvent.pointerDown(trigger, { button: 2 });
+  fireEvent.click(trigger);
+  expect(cardPointer).not.toHaveBeenCalled();
+  expect(cardClick).not.toHaveBeenCalled();
+});
+
+it('navigates multiple slides, exports the chosen format and shows an unfinished export honestly', async () => {
+  const second = createEventTemplate('speech', crypto.randomUUID());
+  second.nodes[0].zIndex = 10;
+  mocks.show.projected.nodes.push(...second.nodes);
+  mocks.show.state.results_visible = true;
+  mocks.show.exportJob = { status: 'queued', progress: 25 };
+  const r = render(<EventPresentation eventId={event} regie />);
+  await screen.findByTestId('presentation-canvas');
+  fireEvent.click(document.querySelector('[data-action-id="event.show.next"]')!);
+  expect(mocks.command).toHaveBeenLastCalledWith({
+    action: 'control',
+    frameId: second.nodes[0].id,
+  });
+  mocks.show.state.frame_id = second.nodes[0].id;
+  r.rerender(<EventPresentation eventId={event} regie />);
+  fireEvent.click(document.querySelector('[data-action-id="event.show.previous"]')!);
+  expect(mocks.command).toHaveBeenLastCalledWith({
+    action: 'control',
+    frameId: mocks.show.projected.nodes[0].id,
+  });
+  fireEvent.change(document.querySelector('[data-action-id="event.show.select2.change"]')!, {
+    target: { value: second.nodes[0].id },
+  });
+  expect(mocks.command).toHaveBeenLastCalledWith({
+    action: 'control',
+    frameId: second.nodes[0].id,
+  });
+  fireEvent.change(document.querySelector('[data-action-id="event.show.select3.change"]')!, {
+    target: { value: 'png' },
+  });
+  expect(screen.getByText('queued · 25%')).toBeTruthy();
+  mocks.show.exportJob.error = 'Export worker unavailable';
+  r.rerender(<EventPresentation eventId={event} regie />);
+  expect(screen.getByText('Export worker unavailable')).toBeTruthy();
+  fireEvent.click(document.querySelector('[data-action-id="event.show.reveal"]')!);
+  expect(mocks.command).toHaveBeenLastCalledWith({ action: 'control', resultsVisible: false });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Audio output' }), {
+    target: { value: '' },
+  });
+  await waitFor(() =>
+    expect(mocks.command).toHaveBeenLastCalledWith({ action: 'control', audioDeviceId: null })
+  );
+});
+
+it('sizes portrait speaker pages through the real resize callback and tolerates a queued callback after unmount', () => {
+  let resize!: ResizeObserverCallback;
+  const disconnect = vi.fn();
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      constructor(callback: ResizeObserverCallback) {
+        resize = callback;
+      }
+      observe() {
+        /* Controlled observer remains quiet until the test dispatches it. */
+      }
+      disconnect = disconnect;
+    }
+  );
+  try {
+    mocks.show.eventSources[1].payload.speakers = Array.from({ length: 7 }, (_, i) => ({
+      name: `Speaker ${i + 1}`,
+      completed: false,
+    }));
+    const r = render(<EventPresentation eventId={event} initialMode="speakers" />);
+    const entry = { contentRect: { width: 400, height: 800 } } as ResizeObserverEntry;
+    act(() => resize([entry], {} as ResizeObserver));
+    expect(screen.getByText(/Speaker 4/)).toBeTruthy();
+    expect(screen.queryByText(/Speaker 5/)).toBeNull();
+    r.unmount();
+    act(() => resize([entry], {} as ResizeObserver));
+    expect(disconnect).toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it('falls back to a themed static frame while animation initializes and preserves the chosen intro animation', async () => {
+  const frame = mocks.show.projected.nodes[0];
+  mocks.animatedNull = true;
+  frame.intro.mode = 'static';
+  delete frame.showAnimation;
+  const r = render(<EventPresentation eventId={event} />);
+  await screen.findByTestId('presentation-canvas');
+  expect(r.container.querySelector('.polity-show-fade')).toBeTruthy();
+  delete frame.intro;
+  r.rerender(<EventPresentation eventId={event} />);
+  expect(r.container.querySelector('.polity-show-none')).toBeTruthy();
+  frame.eventSource.template = 'speech';
+  r.rerender(<EventPresentation eventId={event} />);
+  expect(r.container.querySelector('.polity-show-fade')).toBeTruthy();
+});
+
+it('shows safe defaults while show state is unavailable and accepts an empty audio selection without sending it', async () => {
+  mocks.show.state = undefined;
+  mocks.show.sources = undefined;
+  mocks.show.document = null;
+  const r = render(<EventPresentation eventId={event} regie />);
+  await screen.findByTestId('presentation-canvas');
+  const music = screen.getByRole('combobox', { name: 'Music' });
+  fireEvent.change(music, { target: { value: '' } });
+  expect(mocks.command).not.toHaveBeenCalled();
+  fireEvent.click(document.querySelector('[data-action-id="event.show.fullscreen"]')!);
+  expect(mocks.activate).not.toHaveBeenCalled();
+  fireEvent.click(document.querySelector('[data-action-id="event.show.audio.playing"]')!);
+  await waitFor(() => expect(mocks.command).toHaveBeenCalled());
+  fireEvent.click(document.querySelector('[data-action-id="event.show.audio.paused"]')!);
+  setVolume(0.5);
+  r.unmount();
+});
+
+it('orders unscheduled agenda items last and renders an empty speaker view when no item is active', () => {
+  mocks.show.eventSources[0].payload = { start_time: 1800000000000 };
+  mocks.show.eventSources.push({
+    source_type: 'agenda_item',
+    source_id: crypto.randomUUID(),
+    payload: { title: 'Unscheduled', status: 'pending' },
+  });
+  delete mocks.show.eventSources[1].payload.order_index;
+  const r = render(<EventPresentation eventId={event} initialMode="agenda" />);
+  expect(screen.getByText('Opening speech')).toBeTruthy();
+  r.rerender(<EventPresentation eventId={event} initialMode="speakers" />);
+  expect(screen.getByText('Speaker list is empty')).toBeTruthy();
+});
+
+it('preserves paused audio choices and reports a rejected volume command without an unhandled promise', async () => {
+  mocks.show.state.audio = { assetId: 'music', status: 'paused', position: 4 };
+  const r = render(<EventPresentation eventId={event} regie />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Loop' }));
+  expect(mocks.command).toHaveBeenLastCalledWith(
+    expect.objectContaining({ audio: { status: 'paused', loop: true } })
+  );
+  mocks.show.state.audio.status = 'stopped';
+  r.rerender(<EventPresentation eventId={event} regie />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Loop' }));
+  expect(mocks.command).toHaveBeenLastCalledWith(
+    expect.objectContaining({ audio: { status: 'stopped', loop: true } })
+  );
+  mocks.show.state.audio.status = 'playing';
+  r.rerender(<EventPresentation eventId={event} regie />);
+  fireEvent.click(document.querySelector('[data-action-id="event.show.audio.paused"]')!);
+  expect(mocks.command).toHaveBeenLastCalledWith(
+    expect.objectContaining({ audio: expect.objectContaining({ position: 4 }) })
+  );
+  mocks.command.mockRejectedValueOnce(new Error('volume denied'));
+  setVolume(0.8);
+  await waitFor(() =>
+    expect(mocks.command).toHaveBeenCalledWith(
+      expect.objectContaining({ audio: expect.objectContaining({ volume: 0.8 }) })
+    )
+  );
 });
 
 it('shares the Live Focus layout and follows the active item with ACL-filtered and revealable results', () => {
@@ -374,6 +544,11 @@ it('uses the first hidden touch only to reveal buttons and lets the next gesture
   };
   act(() => vi.advanceTimersByTime(3000));
   pointer(root, 'pointerenter');
+  expect(toolbar.getAttribute('data-visible')).toBe('false');
+  pointer(root, 'pointerleave');
+  pointer(toolbar, 'pointerenter');
+  pointer(toolbar, 'pointerleave');
+  fireEvent.keyDown(document.body, { key: 'Escape' });
   expect(toolbar.getAttribute('data-visible')).toBe('false');
   // A stale control target also must not receive the reveal gesture's click.
   const controls = screen.getByRole('button', { name: 'Show controls' });

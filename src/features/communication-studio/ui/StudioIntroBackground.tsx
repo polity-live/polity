@@ -47,7 +47,8 @@ export function StudioIntroBackground({
         mode,
         scene,
         assetId: null,
-        intensity: intensity ?? 0.45,
+        // frameIntro returns a schema-validated intro or the complete default intro.
+        intensity: intensity as number,
         epochMs,
         snapshotAt: animate ? snapshotAt : (epochMs ?? 0),
       },

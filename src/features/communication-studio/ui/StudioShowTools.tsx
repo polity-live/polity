@@ -152,12 +152,7 @@ function ShowDialog({
   const description = t('previewHelp');
   if (mobile)
     return (
-      <Sheet
-        open
-        onOpenChange={open => {
-          if (!open) onClose();
-        }}
-      >
+      <Sheet open onOpenChange={onClose}>
         <SheetContent
           data-studio-show-dialog
           side="bottom"
@@ -170,12 +165,7 @@ function ShowDialog({
       </Sheet>
     );
   return (
-    <Dialog
-      open
-      onOpenChange={open => {
-        if (!open) onClose();
-      }}
-    >
+    <Dialog open onOpenChange={onClose}>
       <DialogContent
         data-studio-show-dialog
         className="z-[80] flex max-h-[90dvh] max-w-2xl flex-col overflow-auto"
@@ -400,9 +390,8 @@ function SceneThumbnail({
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (!canvas.current) return;
     const dispose = createIntroPlayer(
-      canvas.current,
+      canvas.current as HTMLCanvasElement,
       { ...defaultEventIntro, scene, snapshotAt: 15000, epochMs: 0 },
       theme,
       undefined,
@@ -433,7 +422,6 @@ function FramePreview({
   running = false,
   elapsed = 0,
   replay = 0,
-  animateElements = false,
 }: {
   document: StudioDocumentV3;
   frameId: string;
@@ -443,7 +431,6 @@ function FramePreview({
   running?: boolean;
   elapsed?: number;
   replay?: number;
-  animateElements?: boolean;
 }) {
   const [position, setPosition] = useState(elapsed / 1000);
   useEffect(() => {
@@ -491,8 +478,8 @@ function FramePreview({
           editable={false}
           fit="contain"
           guides={false}
-          showCue={animateElements ? `preview:${replay}` : undefined}
-          showPosition={animateElements ? position : undefined}
+          showCue={`preview:${replay}`}
+          showPosition={position}
         />
       </Suspense>
     </div>
@@ -631,7 +618,6 @@ export function StudioShowTools({
     setDraft(d => d && { ...d, ...patch });
   };
   const save = () => {
-    if (!draft || !validDraft || conflict || disabled) return;
     const cue = showCueSchema.parse(draft);
     update(d => {
       d.show ??= { order: 'agenda', cues: [] };
@@ -641,21 +627,20 @@ export function StudioShowTools({
     });
     closeEditor();
   };
-  const upload = async (file: File | undefined, background: boolean) => {
-    if (!file || !onUpload || disabled) return;
+  const upload = async (file: File, background: boolean) => {
     const generation = ++uploadGeneration.current;
     setUploading(true);
     setUploadError('');
     try {
-      const asset = await onUpload(file, background);
+      const asset = await (onUpload as NonNullable<typeof onUpload>)(file, background);
       if (generation !== uploadGeneration.current) return;
       if (asset) {
         if (background)
-          setAnimation(a =>
-            a?.kind === 'background'
-              ? { ...a, intro: { ...a.intro, mode: 'video', assetId: asset.id } }
-              : a
-          );
+          setAnimation(a => {
+            // Closing or replacing the editor invalidates this upload generation.
+            const current = a as Extract<AnimationDraft, { kind: 'background' }>;
+            return { ...current, intro: { ...current.intro, mode: 'video', assetId: asset.id } };
+          });
         else changeDraft({ assetId: asset.id, builtin: undefined, loop: false });
       } else setUploadError(t('uploadError'));
     } catch {
@@ -1050,7 +1035,9 @@ export function StudioShowTools({
                           >
                             {node.name}
                             <span className="text-muted-foreground ml-2 text-xs">
-                              {live(`animations.${node.showAnimation?.preset ?? 'none'}`)}
+                              {live(
+                                `animations.${(node.showAnimation as NonNullable<StudioNode['showAnimation']>).preset}`
+                              )}
                             </span>
                           </button>
                         </Hint>
@@ -1113,12 +1100,11 @@ export function StudioShowTools({
                       size="sm"
                       disabled={disabled || !elementTarget}
                       onClick={() => {
-                        if (!elementTarget) return;
-                        onSelect?.(elementTarget, f.id);
+                        onSelect?.(elementTarget as StudioNode, f.id);
                         setAnimation({
                           kind: 'element',
-                          targetId: elementTarget.id,
-                          animation: elementTarget.showAnimation ?? {
+                          targetId: (elementTarget as StudioNode).id,
+                          animation: (elementTarget as StudioNode).showAnimation ?? {
                             preset: 'fade',
                             duration: 0.8,
                             intensity: 0.5,
@@ -1207,7 +1193,7 @@ export function StudioShowTools({
                 {cueScope(draft) !== 'global' && (
                   <ShowSelect
                     label={t('target')}
-                    value={draft.frameId ?? frameId}
+                    value={draft.frameId as string}
                     options={frames.map(f => ({
                       value: f.id,
                       label: `${frames.indexOf(f) + 1} · ${f.name}`,
@@ -1283,7 +1269,7 @@ export function StudioShowTools({
                       hint={t('audioHint')}
                       testId="studio-audio-dropzone"
                       inputProps={{ 'aria-label': t('upload') }}
-                      onFilesSelected={files => upload(files[0], false)}
+                      onFilesSelected={files => upload(files[0] as File, false)}
                       onFilesRejected={() => setUploadError(t('audioRejected'))}
                     />
                     <Button
@@ -1428,7 +1414,7 @@ export function StudioShowTools({
                       hint="MP4"
                       testId="studio-video-dropzone"
                       inputProps={{ 'aria-label': t('uploadVideo') }}
-                      onFilesSelected={files => upload(files[0], true)}
+                      onFilesSelected={files => upload(files[0] as File, true)}
                       onFilesRejected={() => setUploadError(t('videoRejected'))}
                     />
                     {!animation.intro.assetId && <p role="status">{t('noVideo')}</p>}
@@ -1512,7 +1498,6 @@ export function StudioShowTools({
               <FramePreview
                 document={previewDocument}
                 frameId={targetFrameId}
-                animateElements
                 {...{ sources, assets, portrait, running, elapsed, replay }}
               />
               <div className="flex flex-wrap items-center gap-2">

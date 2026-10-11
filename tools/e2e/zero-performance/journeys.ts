@@ -516,6 +516,44 @@ export async function measureJourneys(
             'Browser evaluate'
           );
         }
+        // Back navigation has its own browser/router work. Replay the real
+        // history traversal too, after the acceptance samples are complete.
+        // First leave the last destination, just as the timed back itinerary does.
+        const departure = required(routes[0]);
+        await navigate(page, departure.path, departure.search ?? {}, departure);
+        await page.waitForFunction(
+          () => {
+            const state = (globalThis as any).__benchmarkPaint;
+            return state?.displayed != null && state?.authoritative != null;
+          },
+          undefined,
+          { timeout: 15_000 }
+        );
+        for (const [index, route] of [...routes.entries()].reverse()) {
+          await withDeadline(
+            page.evaluate(
+              ({ index, target }) => {
+                performance.mark(`zero-back-route-${index}-start`);
+                (globalThis as any).__beginBenchmarkNavigation(target);
+                history.back();
+              },
+              { index, target: route }
+            ),
+            'Browser evaluate'
+          );
+          await page.waitForFunction(
+            () => {
+              const state = (globalThis as any).__benchmarkPaint;
+              return state?.displayed != null && state?.authoritative != null;
+            },
+            undefined,
+            { timeout: 15_000 }
+          );
+          await withDeadline(
+            page.evaluate(index => performance.mark(`zero-back-route-${index}-end`), index),
+            'Browser evaluate'
+          );
+        }
       } catch (error) {
         // Diagnostic replay must not prevent the subscribed update/revocation
         // checks from running. Preserve the failure on the real navigation record.

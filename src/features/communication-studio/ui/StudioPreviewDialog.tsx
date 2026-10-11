@@ -138,7 +138,8 @@ export function StudioPreviewDialog({
                 <Suspense fallback={<StudioLoadingScreen label={tr('loading')} />}>
                   <KonvaStudioCanvas
                     key={frame.id}
-                    document={live.projected ?? document}
+                    // The live hook receives this required document and always projects it.
+                    document={live.projected as StudioDocumentV3}
                     activeFrameId={frame.id}
                     fit="contain"
                     assets={assets}

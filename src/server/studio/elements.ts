@@ -430,12 +430,14 @@ export async function synchronizeProjectElementInstances(userId: string, project
           assetCount += 1;
           assetBytes += size;
         }
+        // Every referenced ID in this parsed snapshot was reused or copied above;
+        // unavailable library assets fail before this remapping pass.
         for (const node of next.nodes) {
-          if (node.type === 'media') node.assetId = assetRemap.get(node.assetId) ?? node.assetId;
+          if (node.type === 'media') node.assetId = assetRemap.get(node.assetId) as string;
           if (node.type === 'chart' && node.sourceAssetId)
-            node.sourceAssetId = assetRemap.get(node.sourceAssetId) ?? node.sourceAssetId;
+            node.sourceAssetId = assetRemap.get(node.sourceAssetId) as string;
           if (node.type === 'frame' && node.intro?.assetId)
-            node.intro.assetId = assetRemap.get(node.intro.assetId) ?? node.intro.assetId;
+            node.intro.assetId = assetRemap.get(node.intro.assetId) as string;
         }
         mergeElementSetRevision(document, instance.id, previous, next, set.current_revision_id);
         changed = true;

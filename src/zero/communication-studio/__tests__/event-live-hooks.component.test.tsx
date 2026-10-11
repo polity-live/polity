@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { renderToString } from 'react-dom/server';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { createEventTemplate } from '@/features/communication-studio/logic/event-templates';
 import { useLiveStudioState } from '../useLiveStudioState';
 import { useEventPresentation } from '../useEventPresentation';
@@ -100,7 +102,11 @@ it('checks connection before warning and refreshes heartbeats on focus, visibili
   expect(mock.mutate).toHaveBeenCalledTimes(4);
   delete (window.document as any).visibilityState;
 });
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 it('reactively resolves entity bindings and countdowns in editable wide and portrait layouts', () => {
   vi.useFakeTimers();
   const document = createEventTemplate('cover', event);
@@ -202,4 +208,130 @@ it('honors reduced motion while presenting live tally changes and missing docume
   expect(h.result.current).toBeNull();
   h.unmount();
   window.matchMedia = media;
+});
+
+it('reuses the session device, calibrates the server clock and exposes media and query failures', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(100000);
+  const deviceId = crypto.randomUUID();
+  sessionStorage.setItem(`polity-show:${event}:device`, deviceId);
+  const document = createEventTemplate('cover', event);
+  mock.rows.eventProject = [{ id: event }];
+  mock.rows.document = [{ document, content_revision: 4 }];
+  mock.rows.assets = [[{ id: 'media', name: 'Sound', mime_type: 'audio/mpeg' }]];
+  mock.rows.presentationDevices = [[]];
+  mock.rows.eventPresentation = [
+    { frame_id: 'first', controller_device_id: deviceId, lease_until: 200000 },
+  ];
+  const h = renderHook(() => useEventPresentation(event));
+  await act(() => Promise.resolve());
+  mock.rows.presentationDevices = [[{ id: deviceId, last_seen: 102000 }]];
+  h.rerender();
+  expect(h.result.current.deviceId).toBe(deviceId);
+  expect(h.result.current.clockOffset).toBe(2000);
+  expect(h.result.current.now).toBe(102000);
+  expect(h.result.current.hasControl).toBe(true);
+  expect(h.result.current.assets).toEqual([
+    { id: 'media', name: 'Sound', mime: 'audio/mpeg', url: '/api/studio/media/media' },
+  ]);
+  act(() => vi.advanceTimersByTime(10000));
+  expect(h.result.current.page).toBe(1);
+  mock.rows.eventPresentation = [{ frame_id: 'second' }];
+  h.rerender();
+  expect(h.result.current.page).toBe(0);
+  mock.deviceStatus = 'error';
+  h.rerender();
+  expect(h.result.current.online).toBe(false);
+  expect(h.result.current.connectionChecking).toBe(false);
+  h.unmount();
+});
+
+it('contains export failures and reports server command errors without claiming a successful command', async () => {
+  const notify = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+  const empty = renderHook(() => useEventPresentation(event));
+  await act(() => Promise.resolve());
+  await act(() => empty.result.current.exportSnapshot('frame', 'png'));
+  expect(mock.requestExport).not.toHaveBeenCalled();
+  mock.rows.eventProject = [{ id: event }];
+  mock.rows.document = [{ document: createEventTemplate('cover', event), content_revision: 4 }];
+  empty.rerender();
+  const unavailable = new Error('Export unavailable');
+  mock.requestExport.mockRejectedValueOnce(unavailable);
+  await act(() => empty.result.current.exportSnapshot('frame', 'png'));
+  expect(mock.notifyError).toHaveBeenCalledWith(unavailable);
+  for (const failure of [new Error('Authority revoked'), 'Network failed']) {
+    mock.confirmed.mockRejectedValueOnce(failure);
+    await act(async () => {
+      await expect(empty.result.current.command({ action: 'claim' })).rejects.toBe(failure);
+    });
+  }
+  expect(notify).toHaveBeenCalledWith('Authority revoked');
+  expect(notify).toHaveBeenCalledTimes(2);
+  empty.unmount();
+});
+
+it('starts offline, skips heartbeats and ignores a pending acknowledgement after unmount', async () => {
+  vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+  const offline = renderHook(() => useEventPresentation(event));
+  expect(offline.result.current.connectionChecking).toBe(false);
+  expect(offline.result.current.online).toBe(false);
+  expect(mock.mutate).not.toHaveBeenCalled();
+  offline.unmount();
+  vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+  let acknowledge!: () => void;
+  mock.confirmed.mockImplementation(
+    () =>
+      new Promise<void>(resolve => {
+        acknowledge = resolve;
+      })
+  );
+  const pending = renderHook(() => useEventPresentation(event));
+  pending.unmount();
+  await act(async () => acknowledge());
+  expect(mock.mutate).toHaveBeenCalledOnce();
+});
+
+it('renders an unregistered device safely on the server without browser globals', () => {
+  vi.stubGlobal('window', undefined);
+  vi.stubGlobal('navigator', undefined);
+  function ServerScreen() {
+    const show = useEventPresentation(event);
+    return <span>{show.deviceId || 'unregistered'}</span>;
+  }
+  expect(renderToString(<ServerScreen />)).toContain('unregistered');
+  expect(mock.mutate).not.toHaveBeenCalled();
+});
+
+it('ignores an already queued offline heartbeat after its subscription has been disposed', async () => {
+  const intervals = vi.spyOn(globalThis, 'setInterval');
+  const h = renderHook(() => useEventPresentation(event));
+  await act(() => Promise.resolve());
+  const heartbeat = intervals.mock.calls.find(([, delay]) => delay === 5000)![0] as () => void;
+  h.unmount();
+  vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+  await act(async () => heartbeat());
+  expect(mock.mutate).toHaveBeenCalledOnce();
+});
+
+it('subscribes to readable linked results and recognizes an explicit countdown format', () => {
+  vi.useFakeTimers();
+  const document = createEventTemplate('cover', event);
+  const countdown = document.nodes.find(node => node.liveBinding?.field === 'countdown');
+  if (!countdown?.liveBinding) throw new Error('countdown');
+  countdown.liveBinding.field = 'title';
+  countdown.liveBinding.format = 'countdown';
+  mock.rows.liveSources = [
+    [
+      {
+        source_type: 'agenda_item',
+        source_id: event,
+        payload: { result_source_type: 'vote', result_source_id: crypto.randomUUID() },
+      },
+    ],
+  ];
+  const h = renderHook(() => useLiveStudioState(document));
+  expect(h.result.current.sources).toHaveLength(2);
+  act(() => vi.advanceTimersByTime(1000));
+  expect(h.result.current.projected).not.toBeNull();
+  h.unmount();
 });

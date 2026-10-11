@@ -143,7 +143,6 @@ export async function applyPresentationCommand(
             n => n.type === 'frame' && n.visible && n.eventSource?.type === 'event'
           )?.id ??
           null;
-        if (event.status === 'cancelled' && args.running) throw new Error('Event ist abgesagt');
       }
       if (
         frameId &&

@@ -518,6 +518,9 @@ describe('Studio shared persistence and media authority', () => {
       ['image/jpeg', new Uint8Array([255, 216, 255])],
       ['image/webp', Buffer.from('RIFF0000WEBP')],
       ['video/mp4', Buffer.from('0000ftyp')],
+      ['audio/mpeg', Buffer.from('ID3')],
+      ['audio/mpeg', new Uint8Array([255, 224])],
+      ['audio/wav', Buffer.from('RIFF0000WAVE')],
     ] as const) {
       asset.mime_type = mime;
       io.fetch.mockResolvedValueOnce(new Response(bytes));
@@ -527,7 +530,7 @@ describe('Studio shared persistence and media authority', () => {
       });
       expect(io.access).toHaveBeenLastCalledWith('editor', 'project', true, io.sql);
     }
-    expect(writes('update studio_asset set ready=true')).toHaveLength(4);
+    expect(writes('update studio_asset set ready=true')).toHaveLength(7);
   });
   it('fails media verification on missing or inconsistent object metadata and never makes it ready', async () => {
     io.info.mockResolvedValueOnce({ data: { size: 15 }, error: null });
@@ -590,6 +593,31 @@ describe('Studio shared persistence and media authority', () => {
     available = [{ ...asset, id: video, mime_type: 'video/mp4' }];
     const frame = source.document.nodes.find((node: any) => node.type === 'frame');
     frame.intro = { mode: 'video', assetId: video, intensity: 0.65 };
+    source.document.show = {
+      order: 'agenda',
+      cues: [
+        {
+          id: crypto.randomUUID(),
+          frameId: frame.id,
+          assetId: video,
+          trigger: 'enter',
+          action: 'play',
+          volume: 0.65,
+          loop: false,
+          fadeSeconds: 1,
+        },
+        {
+          id: crypto.randomUUID(),
+          frameId: frame.id,
+          builtin: 'cinematic-atmosphere',
+          trigger: 'closed',
+          action: 'stop',
+          volume: 0.65,
+          loop: false,
+          fadeSeconds: 1,
+        },
+      ],
+    };
     await duplicateProject('reader', 'original', 'group');
     const value = writes('insert into studio_state')[0][2] as any;
     const copiedId = writes('insert into studio_asset')[0][1];
@@ -599,6 +627,121 @@ describe('Studio shared persistence and media authority', () => {
       intensity: 0.65,
     });
     expect(copiedId).not.toBe(video);
+    expect(value.show.cues.map((cue: any) => cue.assetId)).toEqual([copiedId, undefined]);
+  });
+  it.each([true, false])(
+    'remaps saved-template video backgrounds when the asset is available=%s',
+    async present => {
+      const video = crypto.randomUUID();
+      template.document.nodes.find((node: any) => node.type === 'frame').intro = {
+        mode: 'video',
+        assetId: video,
+        intensity: 0.5,
+      };
+      available = present ? [{ ...asset, id: video, mime_type: 'video/mp4' }] : [];
+      const frameId = template.document.nodes.find((node: any) => node.type === 'frame').id;
+      template.document.show = {
+        order: 'agenda',
+        cues: [
+          {
+            id: crypto.randomUUID(),
+            frameId,
+            assetId: video,
+            trigger: 'enter',
+            action: 'play',
+            volume: 0.5,
+            loop: false,
+            fadeSeconds: 1,
+          },
+        ],
+      };
+      await createProjectFromSelection(
+        'owner',
+        selection({ template: { kind: 'project', id: 'saved' } })
+      );
+      const stored = writes('insert into studio_state')[0][2] as StudioDocumentV3;
+      const frame = stored.nodes.find(node => node.type === 'frame')!;
+      if (frame.type !== 'frame') throw new Error('Template frame missing');
+      expect(frame.intro).toMatchObject({
+        mode: present ? 'video' : 'static',
+        assetId: present ? writes('insert into studio_asset')[0][1] : null,
+      });
+      expect(stored.show?.cues[0].assetId).toBe(
+        present ? writes('insert into studio_asset')[0][1] : video
+      );
+    }
+  );
+  it('downgrades a copied background to static when its source file disappeared', async () => {
+    source.document.nodes.find((node: any) => node.type === 'frame').intro = {
+      mode: 'video',
+      assetId: crypto.randomUUID(),
+      intensity: 0.5,
+    };
+    const audio = crypto.randomUUID();
+    source.document.show = {
+      order: 'agenda',
+      cues: [
+        {
+          id: crypto.randomUUID(),
+          frameId: source.document.nodes[0].id,
+          assetId: audio,
+          trigger: 'enter',
+          action: 'play',
+          volume: 0.5,
+          loop: false,
+          fadeSeconds: 1,
+        },
+      ],
+    };
+    await duplicateProject('reader', 'original');
+    const stored = writes('insert into studio_state')[0][2] as StudioDocumentV3;
+    const frame = stored.nodes.find(node => node.type === 'frame');
+    if (frame?.type !== 'frame') throw new Error('Copied background frame missing');
+    expect(frame.intro).toMatchObject({
+      mode: 'static',
+      assetId: null,
+    });
+    expect(stored.show?.cues[0].assetId).toBe(audio);
+  });
+  it('rejects an image as a background video and accepts a verified MP4', async () => {
+    const video = crypto.randomUUID();
+    const doc = createEventTemplate('cover', crypto.randomUUID());
+    const frame = doc.nodes.find(node => node.type === 'frame');
+    if (frame?.type !== 'frame') throw new Error('Background frame missing');
+    frame.intro = {
+      mode: 'video',
+      assetId: video,
+      intensity: 0.5,
+    };
+    available = [{ id: video, mime_type: 'image/png' }];
+    await expect(validateAssets('project', doc)).rejects.toThrow(
+      'Background media must be a video'
+    );
+    available[0].mime_type = 'video/mp4';
+    await expect(validateAssets('project', doc)).resolves.toBeUndefined();
+  });
+  it('validates cue audio independently from visible document nodes and refuses missing project media', async () => {
+    const audio = crypto.randomUUID();
+    const doc = createEventTemplate('cover', crypto.randomUUID());
+    doc.show = {
+      order: 'agenda',
+      cues: [
+        {
+          id: crypto.randomUUID(),
+          frameId: doc.nodes[0].id,
+          assetId: audio,
+          trigger: 'enter',
+          action: 'play',
+          volume: 0.5,
+          loop: false,
+          fadeSeconds: 1,
+        },
+      ],
+    };
+    available = [{ ...asset, id: audio, mime_type: 'audio/mpeg' }];
+    await expect(validateAssets('project', doc)).resolves.toBeUndefined();
+    available = [];
+    await expect(validateAssets('project', doc)).rejects.toThrow('A media file is missing');
   });
   it('cleans partial copies after storage or transaction failure and never exposes the incomplete copy', async () => {
     available = [

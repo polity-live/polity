@@ -89,7 +89,8 @@ export function createPresentationAudioPlayer(
     const older = groups.filter(g => belongs(g) && g !== current);
     older.forEach(release);
     groups = groups.filter(g => !older.includes(g));
-    const free = slots.find(s => !groups.some(g => g.slots[0] === s[0])) ?? slots[0];
+    // Older groups have been released, so at most the current group occupies this two-lane set.
+    const free = slots.find(s => !groups.some(g => g.slots[0] === s[0])) as number[];
     groups.push({ spec, key, slots: free, started: performance.now() });
   };
   const tick = () => {
@@ -195,13 +196,7 @@ export function createPresentationAudioPlayer(
                 return;
               }
               pending.delete(index);
-              if (
-                disposed ||
-                !allowed ||
-                lease <= now() ||
-                (!groups.includes(group) && !groups.some(g => g.slots.includes(index)))
-              )
-                player.pause();
+              if (disposed || !allowed || lease <= now()) player.pause();
               else if (!failed.size) onError(false);
             })
             .catch(error => {

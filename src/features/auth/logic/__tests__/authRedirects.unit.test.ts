@@ -5,6 +5,8 @@ import {
   getAuthRedirectUrl,
   getSafeAuthRedirect,
   getSafeSignInRedirect,
+  getInvitationOnboardingDestination,
+  peekPendingInvitationRedirect,
   storePendingSignInRedirect,
 } from '../authRedirects';
 
@@ -14,6 +16,10 @@ afterEach(() => {
 });
 
 describe('getAuthRedirectUrl', () => {
+  it('has no invitation onboarding destination during server rendering', () => {
+    vi.stubGlobal('window', undefined);
+    expect(getInvitationOnboardingDestination()).toBeNull();
+  });
   it('builds an absolute redirect without requiring a browser global', () => {
     expect(getAuthRedirectUrl('/auth/callback')).toMatch(/^https?:\/\/[^/]+\/auth\/callback$/);
   });
@@ -69,6 +75,23 @@ describe('getSafeAuthRedirect', () => {
 });
 
 describe('pending sign-in redirects', () => {
+  it.each([null, '/group/invalid', `/group/${crypto.randomUUID()}`])(
+    'validates a stored onboarding group destination: %s',
+    value => {
+      vi.stubGlobal('window', {});
+      vi.stubGlobal('sessionStorage', { getItem: () => value });
+      expect(getInvitationOnboardingDestination()).toBe(
+        value?.startsWith('/group/') && value.length === 43 ? value : null
+      );
+    }
+  );
+  it.each([null, '/group/abc', '/invite/short'])(
+    'ignores a stored non-invitation redirect: %s',
+    value => {
+      vi.stubGlobal('window', { sessionStorage: { getItem: () => value } });
+      expect(peekPendingInvitationRedirect()).toBeNull();
+    }
+  );
   it('preserves safe local paths, queries and hashes while rejecting unsafe targets', () => {
     vi.stubGlobal('window', { location: { origin: 'https://polity.example' } });
 
@@ -121,6 +144,9 @@ describe('pending sign-in redirects', () => {
 
     expect(() => storePendingSignInRedirect('/settings')).not.toThrow();
     expect(consumePendingSignInRedirect()).toBe('/');
+
+    vi.stubGlobal('sessionStorage', deniedStorage);
+    expect(getInvitationOnboardingDestination()).toBeNull();
 
     vi.stubGlobal('window', undefined);
     expect(() => storePendingSignInRedirect('/settings')).not.toThrow();
