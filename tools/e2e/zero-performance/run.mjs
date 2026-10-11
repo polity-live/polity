@@ -527,6 +527,9 @@ ${storageBuckets}
       ZERO_QUERY_ALLOWED_CLIENT_HEADERS: 'x-zero-performance-client-id',
       ZERO_MUTATE_URL: `${appURL}/api/mutate`,
       ZERO_PORT: String(start + 1),
+      // A default SDK nanoid can start with '-' and be misparsed as another flag
+      // when propagated to child workers. Both revisions get a unique safe ID.
+      ZERO_TASK_ID: `polity-benchmark-${runID}`,
       ZERO_REPLICA_FILE: path.join(artifactRoot, 'replica.db'),
       ZERO_NUM_SYNC_WORKERS: '1',
       ZERO_ADMIN_PASSWORD: `benchmark-${runID}`,
