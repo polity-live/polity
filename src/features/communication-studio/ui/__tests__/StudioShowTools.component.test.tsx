@@ -90,8 +90,10 @@ function Harness({
 let user: ReturnType<typeof userEvent.setup>;
 const doc = () => JSON.parse(screen.getByTestId('document').textContent!) as StudioDocumentV3;
 async function choose(label: string, option: string | RegExp) {
-  await user.click(screen.getByRole('combobox', { name: label }));
-  await user.click(await screen.findByRole('option', { name: option }));
+  const trigger = screen.getByLabelText(label, { selector: 'button[role="combobox"]' });
+  await user.click(trigger);
+  const choices = within(await screen.findByRole('listbox'));
+  await user.click(choices.getByRole('option', { name: option }));
 }
 beforeEach(() => {
   user = userEvent.setup({ delay: null });
@@ -106,11 +108,13 @@ beforeEach(() => {
 it('shows the slide context and commits add/edit once, with source and target fully editable', async () => {
   render(<Harness />);
   expect(screen.getAllByText('Slide 1 · Opening')).toHaveLength(1);
-  await user.click(screen.getByRole('button', { name: 'Add music' }));
-  expect(screen.getByRole('button', { name: 'Save' }).matches(':disabled')).toBe(true);
+  const music = within(screen.getByRole('region', { name: 'Slide music' }));
+  await user.click(music.getByRole('button', { name: 'Add music' }));
+  let editor = within(screen.getByRole('dialog', { name: 'Edit slide music' }));
+  expect(editor.getByRole('button', { name: 'Save' }).matches(':disabled')).toBe(true);
   await choose('Music or sound', /Cinematic opening/);
   expect(doc().show!.cues).toHaveLength(0);
-  await user.click(screen.getByRole('button', { name: 'Save' }));
+  await user.click(editor.getByRole('button', { name: 'Save' }));
   expect(commits).toHaveBeenCalledTimes(1);
   const first = doc().show!.cues[0];
   expect(first).toMatchObject({
@@ -121,20 +125,17 @@ it('shows the slide context and commits add/edit once, with source and target fu
     fadeOutSeconds: 1,
     volume: 0.65,
   });
-  expect(screen.getByRole('button', { name: /When slide “Opening” is shown/ })).toBeTruthy();
-  await user.click(
-    within(screen.getByRole('region', { name: 'Slide music' })).getByRole('button', {
-      name: 'Edit',
-    })
-  );
+  expect(music.getByRole('button', { name: /When slide “Opening” is shown/ })).toBeTruthy();
+  await user.click(music.getByRole('button', { name: 'Edit' }));
+  editor = within(screen.getByRole('dialog', { name: 'Edit slide music' }));
   await choose('Music or sound', 'My sound');
   await choose('Target slide', /Debate/);
-  fireEvent.keyDown(screen.getByRole('slider', { name: /^Volume/ }), { key: 'End' });
-  fireEvent.change(screen.getByRole('spinbutton', { name: 'Fade out (seconds)' }), {
+  fireEvent.keyDown(editor.getByRole('slider', { name: /^Volume/ }), { key: 'End' });
+  fireEvent.change(editor.getByRole('spinbutton', { name: 'Fade out (seconds)' }), {
     target: { value: '2' },
   });
   expect(commits).toHaveBeenCalledTimes(1);
-  await user.click(screen.getByRole('button', { name: 'Save' }));
+  await user.click(editor.getByRole('button', { name: 'Save' }));
   expect(doc().show!.cues[0]).toMatchObject({
     id: first.id,
     assetId: asset,
@@ -381,12 +382,13 @@ async function keyboardButton(button: HTMLElement) {
   await user.keyboard('{Enter}');
 }
 async function keyboardChoice(label: string, option: string | RegExp) {
-  const trigger = screen.getByRole('combobox', { name: label });
+  const trigger = screen.getByLabelText(label, { selector: 'button[role="combobox"]' });
   await keyboardButton(trigger);
-  const choice = await screen.findByRole('option', { name: option });
+  const choices = within(await screen.findByRole('listbox'));
+  const choice = choices.getByRole('option', { name: option });
   if (label === 'When') {
     expect(
-      screen.getAllByRole('option').some(item => item.getAttribute('aria-disabled') === 'true')
+      choices.getAllByRole('option').some(item => item.getAttribute('aria-disabled') === 'true')
     ).toBe(true);
   }
   choice.focus();

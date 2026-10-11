@@ -62,6 +62,8 @@ import { createSpatialIntro, paintIntroSnapshot } from '../event-intro-renderer'
 
 let ctx: CanvasRenderingContext2D;
 beforeEach(() => {
+  // Only record operations asserted below. Minute-by-minute rendering otherwise
+  // retains hundreds of thousands of unused primitive calls under coverage.
   ctx = Object.fromEntries(
     [
       'save',
@@ -78,7 +80,7 @@ beforeEach(() => {
       'arc',
       'fillRect',
       'drawImage',
-    ].map(key => [key, vi.fn()])
+    ].map(key => [key, key === 'fill' || key === 'drawImage' ? vi.fn() : () => undefined])
   ) as any;
   ctx.createLinearGradient = () => ({ addColorStop: vi.fn() }) as any;
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as any);
@@ -94,9 +96,12 @@ it('renders scalable illustrations without a GPU and disposes their bounded back
     3840,
     createEventTemplate('cover', crypto.randomUUID()).theme
   );
+  const backingSize = [scene.canvas.width, scene.canvas.height];
+  expect(backingSize).toEqual([1080, 1920]);
   expect(scene.canvas.height).toBe(1920);
   for (let minute = 0; minute <= 1440; minute++)
     expect(scene.render(minute * 60000, 0.45)).toBe(true);
+  expect([scene.canvas.width, scene.canvas.height]).toEqual(backingSize);
   expect(ctx.fill).toHaveBeenCalled();
   expect(io.render).not.toHaveBeenCalled();
   scene.dispose();
