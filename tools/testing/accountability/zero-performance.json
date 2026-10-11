@@ -377,6 +377,57 @@
         "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
       }
     ],
+    "tools/e2e/zero-performance/sqlite-scan-status.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "excludes only unavailable non-loop sentinels while retaining actual sort work"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "matches duplicate names by ordered complete identity"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "clears the snapshot on each native reset and leaves EXPLAIN intact"
+      }
+    ],
+    "tools/e2e/zero-performance/scan-status-artifacts.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports only fresh cursor executions and validates exact zero-row analysis evidence"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects raw telemetry alterations even when the artifact hash is recomputed"
+      }
+    ],
+    "tools/e2e/zero-performance/plan-artifacts.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains every worker analysis/export artifact in the published collector report"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing report evidence %s"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects reuse of one execution as another analysis or export"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects wrong associated runtime %s"
+      }
+    ],
     "tools/e2e/zero-performance/fixtures.ts": [
       {
         "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",

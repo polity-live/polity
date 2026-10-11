@@ -7659,6 +7659,11 @@
     ],
     "src/zero/communication-studio/access.ts": [
       {
+        "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+        "project": "unit",
+        "caseId": "plans the selected Studio event per project while preserving audience and manager access for %s"
+      },
+      {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",
         "caseId": "normalizes direct Studio read identity %s to the same public access as null"
@@ -10726,6 +10731,11 @@
       }
     ],
     "src/zero/communication-studio/queries.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+        "project": "unit",
+        "caseId": "plans only the selected %s source parent with the complete existing audience predicates"
+      },
       {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",

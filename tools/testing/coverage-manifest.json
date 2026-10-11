@@ -122671,6 +122671,11 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
+          "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+          "project": "unit",
+          "caseId": "plans the selected Studio event per project while preserving audience and manager access for %s"
+        },
+        {
           "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
           "project": "unit",
           "caseId": "normalizes direct Studio read identity %s to the same public access as null"
@@ -122872,6 +122877,11 @@
           "file": "tools/e2e/studio/canvas.e2e.spec.ts",
           "project": "playwright",
           "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+          "project": "unit",
+          "caseId": "plans only the selected %s source parent with the complete existing audience predicates"
         },
         {
           "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
@@ -135115,7 +135125,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/sharding.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -135887,7 +135917,28 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains every worker analysis/export artifact in the published collector report"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects missing report evidence %s"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects reuse of one execution as another analysis or export"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects wrong associated runtime %s"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -135941,6 +135992,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/scan-status-artifacts.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "exports only fresh cursor executions and validates exact zero-row analysis evidence"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects raw telemetry alterations even when the artifact hash is recomputed"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/security.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -135982,6 +136054,52 @@
           "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
           "project": "unit",
           "caseId": "weights each revision actually measured, including a mutation-only bootstrap"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/sqlite-scan-native.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/sqlite-scan-preload.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/sqlite-scan-status.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+          "project": "unit",
+          "caseId": "excludes only unavailable non-loop sentinels while retaining actual sort work"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+          "project": "unit",
+          "caseId": "matches duplicate names by ordered complete identity"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+          "project": "unit",
+          "caseId": "clears the snapshot on each native reset and leaves EXPLAIN intact"
         }
       ],
       "suggestedTestRefs": []
