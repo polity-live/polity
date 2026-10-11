@@ -7,6 +7,7 @@ const io = vi.hoisted(() => ({ zql: {} as any }));
 vi.mock('../../schema', () => ({ zql: new Proxy({}, { get: (_target, key) => io.zql[key] }) }));
 import { studioQueries } from '../queries';
 import { studioProjectReadAccess } from '../access';
+import { resultQuery } from '../../common/__tests__/query-result-harness';
 let harness: ReturnType<typeof createQueryHarness>;
 beforeEach(() => {
   harness = createQueryHarness();
@@ -173,29 +174,18 @@ describe('Studio event presentation projections', () => {
           ['cmp', 'source_id', eventId],
         ]);
         const authorization = evaluatePredicate(query.calls[1][1]);
+        const relation = type === 'agenda_item' ? 'event' : type;
         expect(authorization.filter(call => call[0] === 'or').at(-1)).toEqual([
           'or',
-          ['and', ['cmp', 'source_type', 'IN', ['event', 'agenda_item']], ['exists', 'event']],
-          ...['vote', 'election', 'amendment', 'user', 'group'].map(relation => [
+          [
             'and',
-            ['cmp', 'source_type', relation],
+            relation === 'event'
+              ? ['cmp', 'source_type', 'IN', ['event', 'agenda_item']]
+              : ['cmp', 'source_type', type],
             ['exists', relation],
-          ]),
+          ],
         ]);
-        expect(authorization).toContainEqual(['exists', type === 'agenda_item' ? 'event' : type]);
-        expect(authorization).toContainEqual([
-          'cmp',
-          'source_type',
-          'IN',
-          ['event', 'agenda_item'],
-        ]);
-        for (const relation of ['event', 'vote', 'election', 'amendment', 'user', 'group'])
-          expect(authorization).toContainEqual(['exists', relation]);
-        expect(authorization).toContainEqual(
-          userID === 'alice'
-            ? ['cmp', 'creator_id', userID]
-            : ['where', 'event', 'visibility', 'public']
-        );
+        expect(authorization).toContainEqual(['exists', relation]);
         expect(query.calls.slice(-2)).toEqual([
           ['orderBy', 'source_type', 'asc'],
           ['orderBy', 'source_id', 'asc'],
@@ -209,13 +199,11 @@ describe('Studio event presentation projections', () => {
       { refs: [{ type: 'vote', id: deviceId }], type: 'group', eventId },
       { refs: [], type: 'group', eventId },
       { refs: [], eventId },
-      { refs: [] },
     ] as const;
     const expected = [
       ['and', ['cmp', 'source_type', 'vote'], ['cmp', 'source_id', deviceId]],
       ['cmp', 'source_type', 'group'],
       ['cmp', 'event_id', eventId],
-      ['cmp', 'source_id', emptyId],
     ];
     inputs.forEach((args, index) => {
       studioQueries.liveSources.fn({ args: args as any, ctx: { userID: 'alice', email: '' } });
@@ -223,6 +211,66 @@ describe('Studio event presentation projections', () => {
         expected[index]
       );
     });
+  });
+
+  it('denies an empty source selection even when a visible source has a nil UUID', () => {
+    io.zql = { studio_live_source: resultQuery() };
+    const query = studioQueries.liveSources.fn({
+      args: { refs: [] },
+      ctx: { userID: 'alice', email: '' },
+    }) as any;
+    expect(
+      query.run([
+        { id: emptyId, source_id: emptyId, source_type: 'event', event: { visibility: 'public' } },
+      ])
+    ).toEqual([]);
+  });
+
+  it('retains parent authorization and exact source pairs for mixed event and group references', () => {
+    io.zql = { studio_live_source: resultQuery() };
+    const query = studioQueries.liveSources.fn({
+      args: {
+        refs: [
+          { type: 'event', id: eventId },
+          { type: 'group', id: deviceId },
+        ],
+        type: 'vote',
+      },
+      ctx: { userID: 'anon', email: '' },
+    }) as any;
+    const rows = [
+      {
+        id: 'visible-event',
+        source_type: 'event',
+        source_id: eventId,
+        event: { visibility: 'public' },
+      },
+      {
+        id: 'private-event',
+        source_type: 'event',
+        source_id: eventId,
+        event: { visibility: 'private' },
+      },
+      {
+        id: 'wrong-pair',
+        source_type: 'event',
+        source_id: deviceId,
+        event: { visibility: 'public' },
+      },
+      {
+        id: 'visible-group',
+        source_type: 'group',
+        source_id: deviceId,
+        group: { visibility: 'public' },
+      },
+      {
+        id: 'private-group',
+        source_type: 'group',
+        source_id: deviceId,
+        group: { visibility: 'private' },
+      },
+    ];
+    expect(query.run(rows).map((row: any) => row.id)).toEqual(['visible-event', 'visible-group']);
   });
 
   it('keeps each source type paired with its ID when selecting mixed references', () => {
@@ -241,6 +289,10 @@ describe('Studio event presentation projections', () => {
       ['and', ['cmp', 'source_type', 'event'], ['cmp', 'source_id', eventId]],
       ['and', ['cmp', 'source_type', 'vote'], ['cmp', 'source_id', deviceId]],
     ]);
+    const authorization = evaluatePredicate(harness.lastQuery('studio_live_source').calls[1][1]);
+    expect(authorization).toContainEqual(['exists', 'event']);
+    expect(authorization).toContainEqual(['exists', 'vote']);
+    expect(authorization).not.toContainEqual(['exists', 'election']);
   });
 
   it('validates event identifiers, optional device identifiers, source kinds and reference limits', () => {
@@ -270,6 +322,78 @@ describe('Studio event presentation projections', () => {
       { refs: [], eventId: 'invalid' },
     ])
       expect(sources.safeParse(args).success).toBe(false);
+  });
+});
+
+describe('Studio theme scope results', () => {
+  const nilID = '00000000-0000-0000-0000-000000000000';
+  const themes = [
+    {
+      id: 'own',
+      kind: 'personal',
+      created_by_id: 'alice',
+      name: 'A',
+      current_revision: { status: 'published' },
+    },
+    {
+      id: 'other',
+      kind: 'personal',
+      created_by_id: 'bob',
+      name: 'B',
+      current_revision: { status: 'published' },
+    },
+    {
+      id: 'draft',
+      kind: 'personal',
+      created_by_id: 'alice',
+      name: 'C',
+      current_revision: { status: 'draft' },
+    },
+    {
+      id: 'nil-group',
+      kind: 'group',
+      group_id: nilID,
+      name: 'D',
+      group: { owner_id: 'alice' },
+      current_revision: { status: 'published' },
+    },
+    {
+      id: nilID,
+      kind: 'personal',
+      created_by_id: nilID,
+      name: 'E',
+      current_revision: { status: 'published' },
+    },
+  ];
+
+  it('keeps a null group scope personal, including when an authorized nil UUID group exists', () => {
+    io.zql = { appearance_theme: resultQuery() };
+    const query = studioQueries.themes.fn({
+      args: { groupId: null },
+      ctx: { userID: 'alice', email: '' },
+    }) as any;
+    expect(query.run(themes).map((row: any) => row.id)).toEqual(['own']);
+  });
+
+  it.each(['anon', undefined, null, ''])(
+    'denies theme discovery for anonymous identity %s including a nil UUID creator',
+    userID => {
+      io.zql = { appearance_theme: resultQuery() };
+      const query = studioQueries.themes.fn({
+        args: { groupId: nilID },
+        ctx: { userID, email: '' } as any,
+      }) as any;
+      expect(query.run(themes)).toEqual([]);
+    }
+  );
+
+  it('retains authorized group themes when that exact group is explicitly requested', () => {
+    io.zql = { appearance_theme: resultQuery() };
+    const query = studioQueries.themes.fn({
+      args: { groupId: nilID },
+      ctx: { userID: 'alice', email: '' },
+    }) as any;
+    expect(query.run(themes).map((row: any) => row.id)).toEqual(['nil-group', 'own']);
   });
 });
 describe('Studio Zero visibility projections', () => {

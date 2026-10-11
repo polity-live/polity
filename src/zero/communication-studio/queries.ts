@@ -11,6 +11,8 @@ import {
   applyUserQueryAccess,
   applyVoteQueryAccess,
   applyElectionQueryAccess,
+  denyAllRows,
+  isAuthenticatedUserId,
 } from '../rbac/query-access';
 import { politySourceTypes } from '@/features/communication-studio/logic/live-contract';
 import {
@@ -117,40 +119,45 @@ export const studioQueries = {
       eventId: z.string().uuid().optional(),
     }),
     ({ args, ctx }) => {
+      if (!args.refs.length && !args.type && !args.eventId)
+        return denyAllRows(zql.studio_live_source)
+          .orderBy('source_type', 'asc')
+          .orderBy('source_id', 'asc');
+      // A selected source kind cannot satisfy another kind's authorization
+      // branch. Keep only the relevant parent predicates in the query plan.
+      const selectedTypes = new Set(
+        args.refs.length
+          ? args.refs.map(ref => ref.type)
+          : args.type
+            ? [args.type]
+            : politySourceTypes
+      );
       let q: any = zql.studio_live_source.where(({ or, cmp, and }: any) =>
         args.refs.length
           ? or(...args.refs.map(ref => and(cmp('source_type', ref.type), cmp('source_id', ref.id))))
           : args.type
             ? cmp('source_type', args.type)
-            : args.eventId
-              ? cmp('event_id', args.eventId)
-              : cmp('source_id', '00000000-0000-0000-0000-000000000000')
+            : cmp('event_id', args.eventId)
       );
+      const parentAccess = [
+        { types: ['event', 'agenda_item'], relation: 'event', access: applyEventQueryAccess },
+        { types: ['vote'], relation: 'vote', access: applyVoteQueryAccess },
+        { types: ['election'], relation: 'election', access: applyElectionQueryAccess },
+        { types: ['amendment'], relation: 'amendment', access: applyAmendmentQueryAccess },
+        { types: ['user'], relation: 'user', access: applyUserQueryAccess },
+        { types: ['group'], relation: 'group', access: applyGroupQueryAccess },
+      ].filter(parent => parent.types.some(type => selectedTypes.has(type as any)));
       q = q.where(({ or, and, cmp, exists }: any) =>
         or(
-          and(
-            cmp('source_type', 'IN', ['event', 'agenda_item']),
-            exists('event', (e: any) => applyEventQueryAccess(e, ctx.userID))
-          ),
-          and(
-            cmp('source_type', 'vote'),
-            exists('vote', (v: any) => applyVoteQueryAccess(v, ctx.userID))
-          ),
-          and(
-            cmp('source_type', 'election'),
-            exists('election', (e: any) => applyElectionQueryAccess(e, ctx.userID))
-          ),
-          and(
-            cmp('source_type', 'amendment'),
-            exists('amendment', (a: any) => applyAmendmentQueryAccess(a, ctx.userID))
-          ),
-          and(
-            cmp('source_type', 'user'),
-            exists('user', (u: any) => applyUserQueryAccess(u, ctx.userID))
-          ),
-          and(
-            cmp('source_type', 'group'),
-            exists('group', (g: any) => applyGroupQueryAccess(g, ctx.userID))
+          ...parentAccess.map(parent =>
+            and(
+              parent.types.length === 1
+                ? cmp('source_type', parent.types[0])
+                : cmp('source_type', 'IN', parent.types),
+              exists(parent.relation, (query: any) => parent.access(query, ctx.userID), {
+                flip: false,
+              })
+            )
           )
         )
       );
@@ -255,23 +262,32 @@ export const studioQueries = {
       .related('project', p => p.related('owner'))
       .orderBy('updated_at', 'desc')
   ),
-  themes: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) =>
-    zql.appearance_theme
+  themes: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) => {
+    if (!isAuthenticatedUserId(ctx.userID))
+      return denyAllRows(zql.appearance_theme)
+        .related('current_revision')
+        .orderBy('kind', 'asc')
+        .orderBy('name', 'asc');
+    return zql.appearance_theme
       .whereExists('current_revision', r => r.where('status', 'published'))
       .where(({ or, and, cmp, exists }) =>
         or(
           and(cmp('kind', 'personal'), cmp('created_by_id', requireQueryUser(ctx.userID))),
-          and(
-            cmp('kind', 'group'),
-            cmp('group_id', '=', args.groupId ?? '00000000-0000-0000-0000-000000000000'),
-            exists('group', g => groupProjectsAccess(g, requireQueryUser(ctx.userID)))
-          )
+          ...(args.groupId === null
+            ? []
+            : [
+                and(
+                  cmp('kind', 'group'),
+                  cmp('group_id', '=', args.groupId),
+                  exists('group', g => groupProjectsAccess(g, requireQueryUser(ctx.userID)))
+                ),
+              ])
         )
       )
       .related('current_revision')
       .orderBy('kind', 'asc')
-      .orderBy('name', 'asc')
-  ),
+      .orderBy('name', 'asc');
+  }),
   elementSets: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) =>
     elementSets(requireQueryUser(ctx.userID), args.groupId)
   ),

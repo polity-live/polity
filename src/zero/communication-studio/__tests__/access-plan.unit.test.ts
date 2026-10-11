@@ -2,12 +2,51 @@ import { expect, it } from 'vitest';
 import { zql } from '../../schema';
 import { applyEventQueryAccess, applyEventStudioManagerQueryAccess } from '../../rbac/query-access';
 import { studioProjectCollaborativeAccess, studioProjectReadAccess } from '../access';
+import { studioQueries } from '../queries';
+import {
+  applyVoteQueryAccess,
+  applyElectionQueryAccess,
+  applyAmendmentQueryAccess,
+  applyUserQueryAccess,
+  applyGroupQueryAccess,
+} from '../../rbac/query-access';
 import { queryAST } from '../../../../tools/e2e/zero-performance/oracle';
 import {
   amendmentChatAccess,
   projectConversationAccess,
   studioChatAccess,
 } from '../../project-chat/access';
+
+it.each([
+  ['event', 'event', applyEventQueryAccess],
+  ['agenda_item', 'event', applyEventQueryAccess],
+  ['vote', 'vote', applyVoteQueryAccess],
+  ['election', 'election', applyElectionQueryAccess],
+  ['amendment', 'amendment', applyAmendmentQueryAccess],
+  ['user', 'user', applyUserQueryAccess],
+  ['group', 'group', applyGroupQueryAccess],
+] as const)(
+  'plans only the selected %s source parent with the complete existing audience predicates',
+  (type, relation, access) => {
+    for (const userID of ['00000000-0000-4000-8000-000000000001', 'anon']) {
+      const ast = queryAST(
+        studioQueries.liveSources.fn({ args: { refs: [], type }, ctx: { userID } } as never)
+      );
+      const parentConditions: any[] = [];
+      const visit = (condition: any) => {
+        if (condition.type === 'correlatedSubquery') parentConditions.push(condition);
+        else for (const child of condition.conditions ?? []) visit(child);
+      };
+      visit(ast.where);
+      expect(parentConditions).toHaveLength(1);
+      expect(parentConditions[0].flip).toBe(false);
+      expect(parentConditions[0].related.subquery.table).toBe(relation);
+      expect(parentConditions[0].related.subquery.where).toEqual(
+        queryAST(access((zql as any)[relation], userID)).where
+      );
+    }
+  }
+);
 
 it.each(['owner', 'outsider'])(
   'plans the selected Studio event per project while preserving audience and manager access for %s',
