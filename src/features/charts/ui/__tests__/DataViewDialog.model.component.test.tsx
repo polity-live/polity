@@ -4,6 +4,7 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useDataViewDialogModel } from '../../hooks/useDataViewDialogModel';
+import { useDataViewBuilderModel } from '../../hooks/useDataViewBuilderModel';
 import { OPEN_DATA_VIEW_DIALOG_EVENT } from '../chartDialogEvents';
 import type {
   DataViewProjection,
@@ -31,6 +32,7 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
   createDataViewProjection: vi.fn(),
   createProviderSnapshot: vi.fn(),
+  prepareProviderDataset: vi.fn(),
   loadDatasetColumnValues: vi.fn(),
   loadDatasetDetails: vi.fn(),
   searchDatasetCatalog: vi.fn(),
@@ -69,6 +71,7 @@ vi.mock('@/features/shared/errors/app-error', () => ({
 vi.mock('../../api/datasetClient', () => ({
   createDataViewProjection: mocks.createDataViewProjection,
   createProviderSnapshot: mocks.createProviderSnapshot,
+  prepareProviderDataset: mocks.prepareProviderDataset,
   loadDatasetColumnValues: mocks.loadDatasetColumnValues,
   loadDatasetDetails: mocks.loadDatasetDetails,
   searchDatasetCatalog: mocks.searchDatasetCatalog,
@@ -164,6 +167,16 @@ async function flushTimers(milliseconds: number) {
   });
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
@@ -179,6 +192,15 @@ beforeEach(() => {
   mocks.searchDatasetCatalog.mockResolvedValue({ results: [], errors: [] });
   mocks.loadDatasetDetails.mockResolvedValue({ columnProfiles: profiles });
   mocks.createProviderSnapshot.mockResolvedValue(snapshot());
+  mocks.prepareProviderDataset.mockImplementation(async request => ({
+    provider: request.provider,
+    code: request.code,
+    title: 'Dataset',
+    dimensions: [],
+    estimatedBytes: 100,
+    importAllowed: true,
+    suggestedFilters: request.filters ?? {},
+  }));
   mocks.createDataViewProjection.mockResolvedValue(projection());
   mocks.loadDatasetColumnValues.mockResolvedValue(['A', 'B']);
   mocks.uploadDataset.mockResolvedValue(snapshot({ provider: 'UPLOAD', publisher: null }));
@@ -190,6 +212,343 @@ afterEach(() => {
 });
 
 describe('useDataViewDialogModel boundaries', () => {
+  it.each([null, 25 * 1024 * 1024])(
+    'prepares size %s before import and preserves manual scope changes',
+    async estimatedBytes => {
+      mocks.prepareProviderDataset.mockResolvedValueOnce({
+        provider: 'EUROSTAT',
+        code: 'demo-code',
+        title: 'Dataset',
+        dimensions: [],
+        estimatedBytes,
+        importAllowed: true,
+        suggestedFilters: {},
+      });
+      const dimensions = [
+        {
+          id: 'Region',
+          label: 'Region',
+          position: 0,
+          values: [
+            { id: 'DE', label: 'Germany' },
+            { id: 'FR', label: 'France' },
+          ],
+        },
+      ];
+      mocks.createProviderSnapshot.mockResolvedValueOnce(
+        snapshot({
+          columnProfiles: profiles.map(item =>
+            item.name === 'Region' ? { ...item, role: 'geo' } : item
+          ),
+          provenance: {
+            providerDimensions: dimensions,
+            geoDimension: 'Region',
+            timeDimension: 'Year',
+            importScope: { Region: ['FR'] },
+          },
+        })
+      );
+      const { result } = renderHook(() => useDataViewDialogModel());
+      act(() => {
+        openDialog();
+        result.current.setSearchQuery('Population 2025 Deutschland');
+      });
+      act(() => result.current.setSelectedResult(searchResult()));
+      await act(async () => result.current.useSelectedDataset());
+      expect(result.current.stage).toBe('prepare');
+      expect(result.current.preparing).toBe(false);
+      expect(mocks.createProviderSnapshot).not.toHaveBeenCalled();
+      expect(result.current.importFilters).toEqual({
+        area: 'Deutschland',
+        period: { start: 2025, end: 2025 },
+      });
+      act(() =>
+        result.current.setImportFilters({ area: 'France', period: { start: 2024, end: 2024 } })
+      );
+      await act(async () => result.current.useSelectedDataset());
+      expect(mocks.createProviderSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filters: { area: 'France', period: { start: 2024, end: 2024 } },
+        }),
+        'token',
+        expect.any(AbortSignal)
+      );
+      expect(result.current.query).toMatchObject({
+        filters: { Region: 'FR' },
+        timeRange: { column: 'Year', startYear: 2024, endYear: 2024 },
+      });
+    }
+  );
+
+  it('fully imports a small dataset while carrying search scope into the preview', async () => {
+    mocks.createProviderSnapshot.mockResolvedValueOnce(
+      snapshot({
+        columnProfiles: profiles.map(item =>
+          item.name === 'Region' ? { ...item, role: 'geo' } : item
+        ),
+        provenance: {
+          providerDimensions: [
+            {
+              id: 'Region',
+              label: 'Region',
+              position: 0,
+              values: [{ id: 'DE', label: 'Germany' }],
+            },
+          ],
+          geoDimension: 'Region',
+          timeDimension: 'Year',
+        },
+      })
+    );
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => {
+      openDialog();
+      result.current.setSearchQuery('Population 2024–2025 Deutschland');
+    });
+    act(() => result.current.setSelectedResult(searchResult()));
+    await act(async () => result.current.useSelectedDataset());
+    expect(mocks.createProviderSnapshot.mock.calls[0][0]).not.toHaveProperty('filters');
+    expect(result.current.query).toMatchObject({
+      filters: { Region: 'DE' },
+      timeRange: { column: 'Year', startYear: 2024, endYear: 2025 },
+    });
+  });
+
+  it('aborts preparation on closing and ignores late metadata after reopening', async () => {
+    const pending = deferred<any>();
+    mocks.prepareProviderDataset.mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    act(() => result.current.setSelectedResult(searchResult()));
+    let loading!: Promise<void>;
+    act(() => {
+      loading = result.current.useSelectedDataset();
+    });
+    const signal = mocks.prepareProviderDataset.mock.calls[0][2];
+    expect(result.current.preparing).toBe(true);
+    act(() => result.current.setOpen(false));
+    expect(signal.aborted).toBe(true);
+    act(() => openDialog());
+    await act(async () => {
+      pending.resolve({
+        provider: 'EUROSTAT',
+        code: 'demo-code',
+        dimensions: [],
+        estimatedBytes: null,
+      });
+      await loading;
+    });
+    expect(result.current.stage).toBe('find');
+    expect(result.current.preparation).toBeNull();
+    expect(mocks.createProviderSnapshot).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    'shows preparation until a stored=%s dataset settles before projecting',
+    async stored => {
+      const pending = deferred<DatasetSnapshotImportResult>();
+      const api = stored ? mocks.loadDatasetDetails : mocks.createProviderSnapshot;
+      api.mockReturnValueOnce(pending.promise);
+      const { result } = renderHook(() => useDataViewDialogModel());
+      act(() => openDialog());
+      act(() =>
+        result.current.setSelectedResult(searchResult(stored ? { snapshotId: 'snapshot-1' } : {}))
+      );
+      let loading!: Promise<void>;
+      act(() => {
+        loading = result.current.useSelectedDataset();
+      });
+      expect(result.current.preparing).toBe(true);
+      expect(result.current.canInsert).toBe(false);
+      await act(async () => result.current.useSelectedDataset());
+      expect(api).toHaveBeenCalledTimes(1);
+      await flushTimers(500);
+      expect(mocks.createDataViewProjection).not.toHaveBeenCalled();
+      await act(async () => {
+        pending.resolve(snapshot());
+        await loading;
+      });
+      expect(result.current.preparing).toBe(false);
+      expect(result.current.stage).toBe('build');
+      expect(result.current.projectionLoading).toBe(true);
+      await flushTimers(250);
+      expect(result.current.canInsert).toBe(true);
+    }
+  );
+
+  it.each([false, true])(
+    'clears preparation and permits retry after a stored=%s dataset fails',
+    async stored => {
+      const pending = deferred<DatasetSnapshotImportResult>();
+      (stored ? mocks.loadDatasetDetails : mocks.createProviderSnapshot).mockReturnValueOnce(
+        pending.promise
+      );
+      const { result } = renderHook(() => useDataViewDialogModel());
+      act(() => openDialog());
+      act(() =>
+        result.current.setSelectedResult(searchResult(stored ? { snapshotId: 'snapshot-1' } : {}))
+      );
+      let loading!: Promise<void>;
+      act(() => {
+        loading = result.current.useSelectedDataset();
+      });
+      await act(async () => {
+        pending.reject(new Error('dataset failed'));
+        await loading;
+      });
+      expect(result.current.preparing).toBe(false);
+      expect(result.current.error).toBe('localized:dataset failed');
+      expect(result.current.stage).toBe('find');
+      await act(async () => result.current.useSelectedDataset());
+      expect(result.current.error).toBeNull();
+      expect(result.current.stage).toBe('build');
+    }
+  );
+
+  it('waits for restored metadata before requesting the preview', async () => {
+    const pending = deferred<{ columnProfiles: DatasetColumnProfile[] }>();
+    mocks.loadDatasetDetails.mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    const element: TDataViewElement = {
+      type: 'data_view',
+      view: 'chart',
+      chartType: 'line',
+      source: {
+        kind: 'dataset',
+        provider: 'UPLOAD',
+        datasetId: 'dataset-1',
+        snapshotId: 'snapshot-1',
+        title: 'Stored',
+      },
+      query: { filters: {}, aggregation: 'sum', dimensionColumn: 'Year', measureColumn: 'Value' },
+      presentation: {},
+      children: [{ text: '' }],
+    };
+    act(() => openDialog(element));
+    expect(result.current.preparing).toBe(true);
+    expect(result.current.canInsert).toBe(false);
+    await flushTimers(500);
+    expect(mocks.createDataViewProjection).not.toHaveBeenCalled();
+    await act(async () => {
+      pending.resolve({ columnProfiles: profiles });
+    });
+    expect(result.current.preparing).toBe(false);
+    expect(result.current.columnProfiles).toEqual(profiles);
+    await flushTimers(250);
+    expect(result.current.canInsert).toBe(true);
+  });
+
+  it.each(['resolve', 'reject'] as const)(
+    'ignores an old import that %ss after closing and reopening',
+    async settle => {
+      const previous = deferred<DatasetSnapshotImportResult>();
+      const current = deferred<DatasetSnapshotImportResult>();
+      mocks.createProviderSnapshot
+        .mockReturnValueOnce(previous.promise)
+        .mockReturnValueOnce(current.promise);
+      const { result } = renderHook(() => useDataViewDialogModel());
+      act(() => openDialog());
+      act(() => result.current.setSelectedResult(searchResult()));
+      let previousLoading!: Promise<void>;
+      act(() => {
+        previousLoading = result.current.useSelectedDataset();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(mocks.createProviderSnapshot).toHaveBeenCalledOnce();
+      act(() => result.current.setOpen(false));
+      expect(result.current.preparing).toBe(false);
+      expect(result.current.projectionLoading).toBe(false);
+      act(() => openDialog());
+      act(() => result.current.setSelectedResult(searchResult({ id: 'new' })));
+      let currentLoading!: Promise<void>;
+      act(() => {
+        currentLoading = result.current.useSelectedDataset();
+      });
+      await act(async () => {
+        if (settle === 'resolve') previous.resolve(snapshot());
+        else previous.reject(new Error('obsolete'));
+        await previousLoading;
+      });
+      expect(result.current.preparing).toBe(true);
+      expect(result.current.stage).toBe('find');
+      expect(result.current.snapshot).toBeNull();
+      expect(result.current.error).toBeNull();
+      await act(async () => {
+        current.resolve(snapshot({ datasetId: 'new' }));
+        await currentLoading;
+      });
+      expect(result.current.preparing).toBe(false);
+      expect(result.current.snapshot?.datasetId).toBe('new');
+    }
+  );
+
+  it('clears an obsolete preview spinner when the configuration becomes incomplete', async () => {
+    const pending = deferred<DataViewProjection>();
+    mocks.createDataViewProjection.mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    act(() => result.current.setSelectedResult(searchResult()));
+    await act(async () => result.current.useSelectedDataset());
+    await flushTimers(250);
+    expect(result.current.projectionLoading).toBe(true);
+    act(() => result.current.setQuery({ filters: {}, aggregation: 'sum' }));
+    expect(result.current.projectionLoading).toBe(false);
+    await act(async () => {
+      pending.resolve(projection());
+    });
+    expect(result.current.projection).toBeNull();
+    expect(result.current.canInsert).toBe(false);
+  });
+
+  it('uses a local builder callback without Plate events, and blocks invalid or pending previews', async () => {
+    const insert = vi.fn();
+    let blocked = false;
+    let readOnly = false;
+    const { result, rerender } = renderHook(() =>
+      useDataViewBuilderModel({
+        onInsert: insert,
+        canInsert: !readOnly,
+        validate: () => (blocked ? 'Reduce to 49 rows' : null),
+      })
+    );
+    act(() => openDialog());
+    expect(result.current.open).toBe(false);
+    act(() => {
+      result.current.resetDialog();
+      result.current.setOpen(true);
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => result.current.useSelectedDataset());
+    expect(result.current.canInsert).toBe(false);
+    act(() => result.current.save());
+    expect(insert).not.toHaveBeenCalled();
+    await flushTimers(250);
+    blocked = true;
+    rerender();
+    expect(result.current.error).toBe('Reduce to 49 rows');
+    act(() => result.current.save());
+    expect(insert).not.toHaveBeenCalled();
+    blocked = false;
+    readOnly = true;
+    rerender();
+    act(() => result.current.save());
+    expect(insert).not.toHaveBeenCalled();
+    readOnly = false;
+    rerender();
+    act(() => result.current.setQuery(q => ({ ...q, limit: 25 })));
+    expect(result.current.canInsert).toBe(false);
+    await flushTimers(250);
+    act(() => result.current.save());
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'data_view', query: expect.objectContaining({ limit: 25 }) }),
+      projection(),
+      null
+    );
+    expect(mocks.insertNodes).not.toHaveBeenCalled();
+    expect(result.current.open).toBe(false);
+  });
   it('resets new dialogs and handles finder guards, success, failure, and cancellation', async () => {
     const { result } = renderHook(() => useDataViewDialogModel());
     expect(result.current).toMatchObject({
@@ -265,7 +624,50 @@ describe('useDataViewDialogModel boundaries', () => {
     act(() => result.current.setSearchQuery('cancelled-next'));
     rejectCancelled(new Error('ignored'));
     await act(async () => Promise.resolve());
-    expect(result.current.error).toBe('localized:search failed');
+    expect(result.current.error).toBeNull();
+    expect(mocks.searchDatasetCatalog.mock.calls.at(-1)![0].signal.aborted).toBe(true);
+  });
+
+  it('shows search immediately, preserves removed filters and cancels obsolete and closed searches', async () => {
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    act(() => result.current.setSearchQuery('Arbeitslose 2025 Deutschland'));
+    expect(result.current.searching).toBe(true);
+    expect(result.current.searchIntent).toMatchObject({
+      topic: 'Arbeitslose',
+      area: 'Deutschland',
+      period: { start: 2025, end: 2025 },
+    });
+    await flushTimers(299);
+    expect(mocks.searchDatasetCatalog).not.toHaveBeenCalled();
+    await flushTimers(1);
+    expect(result.current.searching).toBe(false);
+
+    let resolveOld!: (value: any) => void;
+    mocks.searchDatasetCatalog.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveOld = resolve;
+      })
+    );
+    act(() => result.current.setSearchFilters({ period: null, area: 'Recklinghausen' }));
+    expect(result.current.searching).toBe(true);
+    await flushTimers(300);
+    const oldSignal = mocks.searchDatasetCatalog.mock.calls.at(-1)![0].signal;
+    expect(result.current.searchIntent).toMatchObject({ area: 'Recklinghausen', period: null });
+    act(() => result.current.retrySearch());
+    expect(oldSignal.aborted).toBe(true);
+    resolveOld({ results: [searchResult()], errors: [] });
+    await act(async () => Promise.resolve());
+    expect(result.current.searchResults).toEqual([]);
+    await flushTimers(300);
+    expect(mocks.searchDatasetCatalog).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: { period: null, area: 'Recklinghausen' } })
+    );
+    act(() => result.current.setSearchQuery('Arbeitslose 2026 Deutschland'));
+    expect(result.current.searchIntent).toMatchObject({ area: 'Recklinghausen', period: null });
+    await flushTimers(300);
+    act(() => result.current.setOpen(false));
+    expect(mocks.searchDatasetCatalog.mock.calls.at(-1)![0].signal.aborted).toBe(true);
   });
 
   it('defaults unsupported or absent UI languages to English', () => {
@@ -322,6 +724,9 @@ describe('useDataViewDialogModel boundaries', () => {
     act(() => openDialog({ ...element, source: { ...element.source, datasetId: 'broken' } }));
     await act(async () => Promise.resolve());
     expect(result.current.error).toBe('localized:details failed');
+    expect(result.current.preparing).toBe(false);
+    await flushTimers(500);
+    expect(mocks.createDataViewProjection).not.toHaveBeenCalled();
 
     let resolveDetails!: (value: any) => void;
     mocks.loadDatasetDetails.mockReturnValueOnce(
@@ -361,7 +766,8 @@ describe('useDataViewDialogModel boundaries', () => {
     await act(async () => result.current.useSelectedDataset());
     expect(mocks.createProviderSnapshot).toHaveBeenLastCalledWith(
       { provider: 'EUROSTAT', code: 'demo-code', language: 'de' },
-      'token'
+      'token',
+      expect.any(AbortSignal)
     );
     expect(result.current.columnProfiles).toEqual(profiles);
 
@@ -374,7 +780,8 @@ describe('useDataViewDialogModel boundaries', () => {
     await act(async () => result.current.useSelectedDataset());
     expect(mocks.createProviderSnapshot).toHaveBeenLastCalledWith(
       { provider: 'GENESIS_DESTATIS', code: 'genesis-de', language: 'de' },
-      'token'
+      'token',
+      expect.any(AbortSignal)
     );
 
     act(() => {
@@ -404,7 +811,8 @@ describe('useDataViewDialogModel boundaries', () => {
     await act(async () => result.current.useSelectedDataset());
     expect(mocks.createProviderSnapshot).toHaveBeenLastCalledWith(
       { provider: 'GENESIS_DESTATIS', code: 'genesis-code', language: 'en' },
-      'token'
+      'token',
+      expect.any(AbortSignal)
     );
 
     act(() => {
@@ -685,13 +1093,22 @@ describe('useDataViewDialogModel boundaries', () => {
     act(() => result.current.save());
     expect(mocks.setNodes).toHaveBeenCalled();
 
-    act(() => result.current.setView('table'));
+    mocks.createDataViewProjection.mockResolvedValueOnce(projection('table'));
+    act(() => {
+      result.current.setOpen(true);
+      result.current.setView('table');
+    });
+    expect(result.current.canInsert).toBe(false);
+    await flushTimers(250);
     act(() => result.current.save());
     expect(mocks.setNodes).toHaveBeenCalledWith(
       expect.objectContaining({ chartType: undefined }),
       expect.anything()
     );
 
+    mocks.createDataViewProjection.mockResolvedValueOnce(projection('table'));
+    act(() => result.current.setOpen(true));
+    await flushTimers(250);
     mocks.setNodes.mockImplementationOnce(() => {
       throw new Error('editor failed');
     });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { studioNodeAssetIds } from './event-intro';
 import {
   componentInstanceSchema,
   studioNodeSchema,
@@ -80,15 +81,7 @@ export function createElementSetSnapshot(
   const minY = Math.min(...topLevel.map(node => node.transform.y));
   const maxX = Math.max(...topLevel.map(node => node.transform.x + node.transform.width));
   const maxY = Math.max(...topLevel.map(node => node.transform.y + node.transform.height));
-  const usedAssets = new Set(
-    chosen.flatMap(node =>
-      node.type === 'media'
-        ? [node.assetId]
-        : node.type === 'chart' && node.sourceAssetId
-          ? [node.sourceAssetId]
-          : []
-    )
-  );
+  const usedAssets = new Set(chosen.flatMap(studioNodeAssetIds));
   return elementSetSnapshotSchema.parse({
     nodes: chosen.map(node => ({
       ...structuredClone(node),
@@ -147,6 +140,8 @@ function remapNode(
   if (next.type === 'media') next.assetId = assetIds.get(next.assetId) ?? next.assetId;
   if (next.type === 'chart' && next.sourceAssetId)
     next.sourceAssetId = assetIds.get(next.sourceAssetId) ?? next.sourceAssetId;
+  if (next.type === 'frame' && next.intro?.mode === 'video' && next.intro.assetId)
+    next.intro.assetId = assetIds.get(next.intro.assetId) ?? next.intro.assetId;
   return studioNodeSchema.parse(next);
 }
 
@@ -243,6 +238,13 @@ export function mergeElementSetRevision(
     if (old.type === 'media' && local.type === 'media') assetIds.set(old.assetId, local.assetId);
     if (old.type === 'chart' && local.type === 'chart' && old.sourceAssetId && local.sourceAssetId)
       assetIds.set(old.sourceAssetId, local.sourceAssetId);
+    if (
+      old.type === 'frame' &&
+      local.type === 'frame' &&
+      old.intro?.assetId &&
+      local.intro?.assetId
+    )
+      assetIds.set(old.intro.assetId, local.intro.assetId);
   }
   const remap = (source: StudioNode, id: string) =>
     remapNode(source, id, nodeIds, groupIds, assetIds, offset.parentFrameId, offset.x, offset.y, 0);
@@ -315,6 +317,7 @@ export function trackElementInstanceOverrides(before: StudioDocumentV3, after: S
         'content',
         'typography',
         'assetId',
+        'intro',
         'fit',
         'focus',
         'crop',

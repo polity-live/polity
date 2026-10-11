@@ -99,6 +99,41 @@ export function worldToLocalPoint(
   return point(invertTransformMatrix(worldMatrix(document, parent)), value);
 }
 
+/** Preserve the complete world pose when changing an orthogonal frame basis. */
+export function transformInFrame(
+  document: StudioDocumentV3,
+  node: StudioNode,
+  parentFrameId: string | null
+): StudioNode['transform'] {
+  const parent = document.nodes.find(candidate => candidate.id === parentFrameId);
+  const relative = multiply(
+    parent ? invertTransformMatrix(worldMatrix(document, parent)) : identity,
+    worldMatrix(document, node)
+  );
+  const [a, b, c, d] = relative;
+  const { width, height, flipX } = node.transform;
+  const center = point(relative, { x: width / 2, y: height / 2 });
+  const signX = flipX ? -1 : 1;
+  return {
+    ...node.transform,
+    x: center.x - width / 2,
+    y: center.y - height / 2,
+    rotation: (Math.atan2(b * signX, a * signX) * 180) / Math.PI,
+    flipY: (a * d - b * c) * signX < 0,
+  };
+}
+
+export function worldCorners(document: StudioDocumentV3, node: StudioNode): Point[] {
+  const matrix = worldMatrix(document, node);
+  const { width, height } = node.transform;
+  return [
+    point(matrix, { x: 0, y: 0 }),
+    point(matrix, { x: width, y: 0 }),
+    point(matrix, { x: width, y: height }),
+    point(matrix, { x: 0, y: height }),
+  ];
+}
+
 export function worldBounds(document: StudioDocumentV3, node: StudioNode): Bounds {
   const matrix = worldMatrix(document, node);
   const { width, height } = node.transform;

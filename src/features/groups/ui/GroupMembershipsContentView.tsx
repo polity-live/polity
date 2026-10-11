@@ -8,6 +8,7 @@ import { OpenAssignmentsPanel } from '@/features/groups/ui/OpenAssignmentsPanel'
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
 import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog';
+import { GroupEmailInvitationsPanel } from './GroupEmailInvitationsPanel';
 import { GuestsTable } from '@/features/groups/ui/GuestsTable';
 import { ChangeRoleDialog } from '@/features/groups/ui/ChangeRoleDialog';
 import { MemberRightsDialog } from '@/features/groups/ui/MemberRightsDialog';
@@ -415,6 +416,11 @@ export function GroupMembershipsContentView({
             />
           ) : activeTab === 'membershipsByUser' || activeTab === 'membershipsByRole' ? (
             <InviteMembersDialog
+              emailGroupId={
+                !guestOnlyMembershipFlow && group?.group_type !== 'hierarchical'
+                  ? groupId
+                  : undefined
+              }
               isOpen={inviteOpen}
               onOpenChange={setInviteOpen}
               selectedUsers={guestOnlyMembershipFlow ? selectedGuestUserIds : selectedUserIds}
@@ -497,6 +503,11 @@ export function GroupMembershipsContentView({
         showMembershipsByRole={canManageMembers}
         membershipsByUserContent={
           <div className="space-y-4">
+            {canManageMembers &&
+              !guestOnlyMembershipFlow &&
+              group?.group_type !== 'hierarchical' && (
+                <GroupEmailInvitationsPanel groupId={groupId} />
+              )}
             <PendingRequestsTable
               requests={filteredPendingRequests}
               virtualSource={membershipVirtualSources.requested}

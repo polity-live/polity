@@ -5,6 +5,7 @@ import { drawStudioElement } from './draw-element';
 import { semanticElement } from './v3-adapter';
 import { studioMediaGeometry } from './studio-crop';
 import type { StudioElement } from './document';
+import { paintIntroSnapshot } from './event-intro-renderer';
 
 function pathForShape(ctx: CanvasRenderingContext2D, node: Extract<StudioNode, { type: 'shape' }>) {
   const { width, height } = node.transform;
@@ -95,6 +96,7 @@ async function paintNode(
       documentValue.frameDefaults.background ??
       documentValue.theme[documentValue.theme.mode].background;
     ctx.fillRect(0, 0, width, height);
+    await paintIntroSnapshot(ctx, node, documentValue.theme, media);
     if (node.style.stroke && node.style.strokeWidth) ctx.strokeRect(0, 0, width, height);
     if (node.clipContent) {
       ctx.beginPath();
@@ -173,6 +175,7 @@ export async function paintStudioDocumentFrame(
     documentValue.frameDefaults.background ??
     documentValue.theme[documentValue.theme.mode].background;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await paintIntroSnapshot(ctx, frame, documentValue.theme, media);
   await document.fonts.ready;
   const master = documentValue.masterLayout.frameId
     ? documentValue.nodes.find(

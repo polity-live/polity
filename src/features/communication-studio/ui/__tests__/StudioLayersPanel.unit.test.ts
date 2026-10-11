@@ -28,6 +28,24 @@ function documentWith(nodes: StudioNode[], masterFrameId: string | null = null) 
 }
 
 describe('Studio Layers tree', () => {
+  it('hides whole collapsed branches and preserves nested collapse state and sibling order', () => {
+    const document = documentWith([
+      node('frame', 'Frame', 'frame', null, 0),
+      node('nested', 'Nested', 'frame', 'frame', 3),
+      node('child', 'Child', 'richText', 'nested', 0),
+      node('sibling', 'Sibling', 'shape', 'frame', 2),
+      node('free', 'Free', 'shape', null, 1),
+    ]);
+    const ids = (collapsed: ReadonlySet<string>, query = '') =>
+      buildStudioLayerTree(document, query, collapsed).map(entry => entry.node.id);
+    expect(ids(new Set())).toEqual(['frame', 'nested', 'child', 'sibling', 'free']);
+    expect(ids(new Set(['nested']))).toEqual(['frame', 'nested', 'sibling', 'free']);
+    expect(ids(new Set(['frame', 'nested']))).toEqual(['frame', 'free']);
+    expect(buildStudioLayerTree(document, '', new Set(['frame']))[0].hasChildren).toBe(true);
+    expect(ids(new Set(['frame', 'nested']), 'child')).toEqual(['frame', 'nested', 'child']);
+    expect(ids(new Set(['frame']), '   ')).toEqual(['frame', 'free']);
+    expect(ids(new Set(['missing']))).toEqual(ids(new Set()));
+  });
   it('orders equal-depth unframed layers with stable IDs and handles an empty document', () => {
     const document = documentWith([
       node('z', 'Last', 'shape', null, 1),

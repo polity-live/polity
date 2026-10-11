@@ -150,6 +150,7 @@ describe('mutate-with-server-check', () => {
       'features/todos/ui/CompactTodoRow.tsx',
       // Studio commands await acceptance and their authorized receipt before reporting success.
       'zero/communication-studio/useStudioClient.ts',
+      'zero/communication-studio/useEventPresentation.ts',
       'zero/preferences/useWorkspacePreferences.ts',
       'features/vote-cast/hooks/useVotePasswordConfirmation.ts',
       'features/vote-cast/ui/VoteCastDialog.tsx',

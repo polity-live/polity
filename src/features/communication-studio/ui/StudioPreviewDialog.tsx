@@ -10,6 +10,8 @@ import {
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import type { StudioDocumentV3 } from '../logic/document-v3';
+import { useLiveStudioState } from '@/zero/communication-studio/useLiveStudioState';
+import { StudioLoadingScreen } from './StudioLoadingScreen';
 
 const KonvaStudioCanvas = lazy(() => import('./KonvaStudioCanvas'));
 
@@ -30,6 +32,7 @@ export function StudioPreviewDialog({
   returnFocusRef?: RefObject<HTMLElement | null>;
   tr: (key: string) => string;
 }) {
+  const live = useLiveStudioState(document);
   const frames = useMemo(
     () => getStudioRootFramesInLayerOrder(document).filter(frame => frame.visible),
     [document]
@@ -132,10 +135,10 @@ export function StudioPreviewDialog({
               onClick={() => move(1)}
             >
               {frame ? (
-                <Suspense fallback={<p role="status">{tr('loading')}</p>}>
+                <Suspense fallback={<StudioLoadingScreen label={tr('loading')} />}>
                   <KonvaStudioCanvas
                     key={frame.id}
-                    document={document}
+                    document={live.projected ?? document}
                     activeFrameId={frame.id}
                     fit="contain"
                     assets={assets}

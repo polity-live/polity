@@ -370,6 +370,9 @@ function model(overrides: Record<string, unknown> = {}): TestDataViewDialogModel
     },
     save: vi.fn(),
     searchQuery: '',
+    searchFilters: {},
+    setSearchFilters: vi.fn(),
+    retrySearch: vi.fn(),
     searchResults: [result],
     searching: false,
     selectedResult: result,
@@ -569,7 +572,7 @@ describe('DataViewDialogView action contracts', () => {
     const finder = model({
       providerErrors: [{ provider: 'GOVDATA', error: 'offline' }],
       providers: ['EUROSTAT'],
-      searching: true,
+      searching: false,
       searchResults: [richResult, sparseResult, endOnlyResult],
       selectedResult: richResult,
     });
@@ -597,7 +600,10 @@ describe('DataViewDialogView action contracts', () => {
       selectedResult: { ...richResult, byteSize: 60 * 1024 * 1024 },
     });
     view.rerender(<DataViewDialogView model={details} />);
-    expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
+    expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+    expect(view.getByText('plateJs.dataView.loading')).toBeTruthy();
+    expect(view.container.querySelector('.polity-presentation-loading-arc')).toBeTruthy();
+    expect(view.queryByText('plateJs.dataView.tooLarge')).toBeNull();
     view.rerender(
       <DataViewDialogView
         model={model({
@@ -607,6 +613,7 @@ describe('DataViewDialogView action contracts', () => {
         })}
       />
     );
+    expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
 
     view.rerender(
       <DataViewDialogView

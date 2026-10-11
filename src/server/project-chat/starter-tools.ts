@@ -128,7 +128,7 @@ export function buildProjectStarterTools(
             conversationId = crypto.randomUUID(),
             now = Date.now();
           await sql.query(
-            'insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,$5,5,$6,$6)',
+            'insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,$3,$4,$5,6,$6,$6)',
             [projectId, actor, args.groupId, persisted.title, persisted.kind, now]
           );
           await sql.query(

@@ -13,6 +13,7 @@ import {
   arrangementReferenceBounds,
   arrangementUnits,
   moveByWorldDelta,
+  transformInFrame,
 } from './selection-geometry';
 
 const nodeIds = z.array(z.string().uuid()).min(1).max(1_000);
@@ -168,39 +169,29 @@ export function canMoveStudioLayer(
   return true;
 }
 
-function worldOrigin(
-  document: StudioDocumentV3,
-  node: StudioNode | null
-): { x: number; y: number } {
-  let x = 0,
-    y = 0,
-    current = node;
-  const visited = new Set<string>();
-  while (current) {
-    if (visited.has(current.id)) throw new Error('Circular frame hierarchy');
-    visited.add(current.id);
-    x += current.transform.x;
-    y += current.transform.y;
-    current = current.parentFrameId
-      ? (document.nodes.find(candidate => candidate.id === current?.parentFrameId) ?? null)
-      : null;
-  }
-  return { x, y };
-}
-
 function reparentNodes(
   document: StudioDocumentV3,
   nodes: StudioNode[],
   parentFrameId: string | null
 ) {
-  const positions = nodes.map(node => ({ node, origin: worldOrigin(document, node) }));
-  const target = document.nodes.find(node => node.id === parentFrameId) ?? null;
-  const targetOrigin = worldOrigin(document, target);
-  for (const { node, origin } of positions) {
+  const positions = nodes.map(node => ({
+    node,
+    transform: transformInFrame(document, node, parentFrameId),
+  }));
+  for (const { node, transform } of positions) {
     node.parentFrameId = parentFrameId;
-    node.transform.x = origin.x - targetOrigin.x;
-    node.transform.y = origin.y - targetOrigin.y;
+    node.transform = transform;
   }
+}
+
+/** Mutating variant for callers already inside a validated document transaction. */
+export function reparentStudioNodes(
+  document: StudioDocumentV3,
+  nodeIds: string[],
+  parentFrameId: string | null
+) {
+  assertCanReparent(document, nodeIds, parentFrameId);
+  reparentNodes(document, selectedNodes(document, nodeIds), parentFrameId);
 }
 
 function constrainAxis(
@@ -263,9 +254,7 @@ export function applyStudioCommandV3(
       break;
     }
     case 'reparentNodes': {
-      assertCanReparent(document, command.nodeIds, command.parentFrameId);
-      const nodes = selectedNodes(document, command.nodeIds);
-      reparentNodes(document, nodes, command.parentFrameId);
+      reparentStudioNodes(document, command.nodeIds, command.parentFrameId);
       break;
     }
     case 'moveNode': {
@@ -373,10 +362,16 @@ export function applyStudioCommandV3(
     case 'deleteNodes': {
       const nodes = selectedNodes(document, command.nodeIds);
       assertEditable(nodes);
+      if (nodes.some(n => n.type === 'frame' && n.eventSource))
+        throw new Error('Event frames are managed by the agenda. Hide the frame instead.');
       const deleted = new Set(command.nodeIds);
       for (const id of command.nodeIds)
         for (const child of descendantsOf(document, id)) deleted.add(child.id);
       document.nodes = document.nodes.filter(node => !deleted.has(node.id));
+      if (document.show)
+        document.show.cues = document.show.cues.filter(
+          cue => cue.scope === 'global' || !cue.frameId || !deleted.has(cue.frameId)
+        );
       document.deliverables = document.deliverables
         .map(deliverable => ({
           ...deliverable,
@@ -399,6 +394,7 @@ export function applyStudioCommandV3(
       const clones = copies.map(({ node, id }) => {
         const copy = structuredClone(node);
         copy.id = id;
+        if (copy.type === 'frame') delete copy.eventSource;
         copy.parentFrameId = node.parentFrameId
           ? (idMap.get(node.parentFrameId) ?? node.parentFrameId)
           : null;
@@ -429,6 +425,14 @@ export function applyStudioCommandV3(
         return copy;
       });
       document.nodes.push(...clones);
+      if (document.show) {
+        const copiedCues = document.show.cues.flatMap(cue => {
+          const frameId = cue.frameId ? idMap.get(cue.frameId) : undefined;
+          if (cue.scope === 'global' || !frameId) return [];
+          return [{ ...structuredClone(cue), id: crypto.randomUUID(), frameId }];
+        });
+        document.show.cues.push(...copiedCues);
+      }
       break;
     }
     case 'groupNodes': {

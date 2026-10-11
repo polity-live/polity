@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { PushProcessor } from '@rocicorp/zero/server';
+import { handleMutateRequest } from '@rocicorp/zero/server';
+import { mustGetMutator } from '@rocicorp/zero';
 import { serverMutators } from '@/zero/server-mutators';
 import { dbProvider } from '@/zero/db-provider';
 import { getAuthFromRequest } from '@/server/zero-auth';
@@ -18,10 +19,18 @@ export const Route = createFileRoute('/api/mutate')({
             const authAt = performance.now();
             const ctx = await getAuthFromRequest(request);
             mutationDiagnostic('auth', authAt);
-            const push = new PushProcessor(dbProvider, ctx);
             try {
               const result = await withNotificationDeliveryQueue(() =>
-                push.process(serverMutators, request)
+                handleMutateRequest({
+                  dbProvider,
+                  request,
+                  userID: ctx.userID === 'anon' ? null : ctx.userID,
+                  handler: transact =>
+                    transact(async (tx, name, args) => {
+                      const mutator = mustGetMutator(serverMutators, name);
+                      await mutator.fn({ args, tx, ctx });
+                    }),
+                })
               );
 
               return Response.json(sanitizeZeroMutationResult(result));

@@ -39,7 +39,10 @@ vi.mock('../storage', async importOriginal => {
     uploadSnapshotBytes: mocks.uploadBytes,
   };
 });
-vi.mock('../projection', () => ({ buildMultiMeasureProjectionPoints: mocks.multiPoints }));
+vi.mock('../projection', async importOriginal => ({
+  ...(await importOriginal<typeof import('../projection')>()),
+  buildMultiMeasureProjectionPoints: mocks.multiPoints,
+}));
 vi.mock('@/server/govdata/catalogue', () => ({ normalizeGovDataText: mocks.normalizeText }));
 
 import {
@@ -324,6 +327,29 @@ async function project(request: Record<string, unknown>, csv?: string) {
 }
 
 describe('dataset projections', () => {
+  it('filters annual, monthly, quarterly and reference-date rows by year while retaining equality filters', async () => {
+    const result = await project(
+      {
+        view: 'table',
+        columns: ['period', 'region', 'value'],
+        filters: { region: 'DE' },
+        timeRange: { column: 'period', startYear: 2025, endYear: 2025 },
+      },
+      'period,region,value\n2024,DE,1\n2025,DE,2\n2025-02,DE,3\n2025-Q3,DE,4\n31.12.2025,DE,5\n2025,FR,6\n2026,DE,7'
+    );
+    expect(result).toMatchObject({
+      rowCount: 4,
+      rows: [
+        { period: '2025', region: 'DE', value: '2' },
+        { period: '2025-02', region: 'DE', value: '3' },
+        { period: '2025-Q3', region: 'DE', value: '4' },
+        { period: '31.12.2025', region: 'DE', value: '5' },
+      ],
+    });
+    await expect(
+      project({ view: 'table', timeRange: { column: 'missing', startYear: 2025, endYear: 2025 } })
+    ).rejects.toThrow('Unknown dataset column');
+  });
   it('validates filters and supports legacy mappings with optional stats', async () => {
     await expect(project({ view: 'table', filters: { missing: 'x' } })).rejects.toThrow(
       'Unknown dataset column: missing'

@@ -18,6 +18,7 @@ export function StudioToolbarMenu({
   children,
   className,
   onCloseAutoFocus,
+  triggerRef,
   resetKey,
 }: {
   label: string;
@@ -29,6 +30,7 @@ export function StudioToolbarMenu({
   children: ReactNode;
   className?: string;
   onCloseAutoFocus?: ComponentProps<typeof DropdownMenuContent>['onCloseAutoFocus'];
+  triggerRef?: ComponentProps<typeof DropdownMenuTrigger>['ref'];
   resetKey?: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -46,7 +48,7 @@ export function StudioToolbarMenu({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild ref={triggerRef}>
         <ToolbarButton
           data-action-kind="interaction"
           type="button"
@@ -80,6 +82,7 @@ export function StudioMenuItem({
   iconOnly = false,
   disabled,
   onSelect,
+  tabIndex,
 }: {
   'data-action-id'?: string;
   label: string;
@@ -87,6 +90,7 @@ export function StudioMenuItem({
   iconOnly?: boolean;
   disabled?: boolean;
   onSelect: () => void;
+  tabIndex?: number;
 }) {
   return (
     <DropdownMenuItem
@@ -97,6 +101,7 @@ export function StudioMenuItem({
       disabled={disabled}
       className={cn('py-1', iconOnly && 'justify-center px-2')}
       onSelect={onSelect}
+      tabIndex={tabIndex}
     >
       {icon}
       {iconOnly ? <span className="sr-only">{label}</span> : <span>{label}</span>}

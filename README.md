@@ -179,6 +179,30 @@ change.
 
 ### 5. Start the app and Zero Cache
 
+The managed local stack starts Supabase, Vite in development mode, the pinned
+Zero Docker cache, and the Studio export worker:
+
+```bash
+pnpm dev:stack
+pnpm dev:stack:status
+```
+
+The app is available at `http://localhost:3000`, and Zero at
+`http://localhost:4848`. To apply a Zero dependency or Docker image upgrade,
+stop the stack, install the matching dependencies, and restart it:
+
+```bash
+pnpm dev:stack:stop
+pnpm install --frozen-lockfile
+pnpm dev:stack
+```
+
+This preserves local Supabase data; no database reset is required. Startup can
+wait up to ten minutes for initial sync. Keep the `@rocicorp/zero` version in
+`package.json` and the image tag in `tools/dev/compose.yaml` aligned.
+
+For manually managed services, start Vite and Zero in separate terminals:
+
 In one terminal:
 
 ```bash
@@ -260,6 +284,13 @@ pnpm run deploy --skip-vercel     # Skip Vercel deploy
 ```
 
 The script enforces that you are on the `master` or `deploy` branch.
+
+For Zero 1.10, deploy the cache before the app: 1.10 clients cannot connect to
+an older cache. The deploy script waits up to ten minutes for cache health and
+aborts before publishing the app if that check fails. The Fly configuration
+budgets six CVR connections and at least six ChangeDB connections for one sync
+worker; `ZERO_CHANGE_MAX_CONNS` no longer limits ChangeDB usage. Confirm actual
+Supabase pool usage and other consumers before a production deployment.
 
 > **Zero schema changes:** After applying migrations that add or change synced tables
 > (including the Eurostat snapshot and chart projection tables), restart or redeploy

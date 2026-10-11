@@ -18,10 +18,10 @@ export function drawStudioElement(ctx: CanvasRenderingContext2D, e: StudioElemen
     align: 'left' | 'center' = 'left',
     bold = e.bold
   ) => {
-    ctx.font = `${bold ? 'bold ' : ''}${size}px "${e.font}"`;
+    ctx.font = `${bold ? 'bold ' : ''}${size}px "${e.chart?.fontFamily ?? e.font}"`;
     ctx.fillStyle = color;
     ctx.textBaseline = 'top';
-    const tw = ctx.measureText(text).width;
+    const tw = Math.min(w, ctx.measureText(text).width);
     ctx.fillText(text, x + (align === 'center' ? (w - tw) / 2 : 0), y, w);
   };
   if (e.type === 'text') {
@@ -163,23 +163,25 @@ export function drawStudioElement(ctx: CanvasRenderingContext2D, e: StudioElemen
           ctx.lineTo(x + w, y + height);
         }
         ctx.stroke();
+        const inset = Math.min(6, Math.max(0, (height - 10) / 2), Math.max(0, (w - 10) / 2));
+        const clipInset = Math.min(4, inset);
         ctx.save();
         ctx.beginPath();
-        ctx.rect(x + 4, r * height + 4, w - 8, height - 8);
+        ctx.rect(x + clipInset, r * height + clipInset, w - clipInset * 2, height - clipInset * 2);
         ctx.clip();
-        ctx.translate(x + 6, r * height + 6);
+        ctx.translate(x + inset, r * height + inset);
         drawStudioElement(ctx, {
           ...e,
           type: 'text',
-          width: w - 12,
-          height: height - 12,
+          width: w - inset * 2,
+          height: height - inset * 2,
           text: cell.text,
           richText: [],
           bold: cell.bold,
           fill: cell.color,
           align: cell.align,
           verticalAlign: 'top',
-          fontSize: Math.max(8, Math.min(e.fontSize, height - 12)),
+          fontSize: Math.max(8, Math.min(e.fontSize, height - inset * 2)),
           flipX: false,
           flipY: false,
         });
@@ -188,87 +190,307 @@ export function drawStudioElement(ctx: CanvasRenderingContext2D, e: StudioElemen
       });
     });
   } else if (e.type === 'chart' && e.chart) {
-    const c = e.chart,
-      pad = 40,
-      legend = c.legend ? 32 : 0,
-      w = e.width - pad * 2,
-      h = e.height - pad * 2 - legend;
+    const c = e.chart;
+    const scale = Math.max(0.1, Math.min(e.width / 700, e.height / 380));
+    const fontSize = 12 * scale;
+    const fontFamily = c.fontFamily ?? e.font;
+    const measure = (label: string, size = fontSize) => {
+      ctx.font = `${e.bold ? 'bold ' : ''}${size}px "${fontFamily}"`;
+      return ctx.measureText(label).width;
+    };
+    const legendItems = c.legend ? (c.kind === 'pie' ? c.labels : c.series.map(s => s.name)) : [];
+    const legendRows: { index: number; width: number }[][] = [];
+    const legendGap = 16 * scale;
+    const legendMarker = 8 * scale;
+    const legendWidth = Math.max(1, e.width - 24 * scale);
+    for (const [index, name] of legendItems.entries()) {
+      const width = Math.min(legendWidth, measure(name) + legendMarker + 6 * scale);
+      const row = legendRows.at(-1);
+      if (
+        !row ||
+        row.reduce((total, item) => total + item.width + legendGap, 0) + width > legendWidth
+      )
+        legendRows.push([{ index, width }]);
+      else row.push({ index, width });
+    }
+    const legendHeight = legendRows.length ? (legendRows.length * 24 + 8) * scale : 0;
+    const xTitleHeight = c.kind !== 'pie' && c.xAxisLabel?.trim() ? 20 * scale : 0;
+    // Pie geometry is independent of the Cartesian axes, but shares the compact legend.
+    const pad = 24 * scale;
+    const w = Math.max(1, e.width - pad * 2);
+    const h = Math.max(1, e.height - pad * 2 - legendHeight);
     const palette = c.colors ?? ['#B88A3B', '#12362D', '#588DB2', '#9A597F', '#75965D', '#D46E48'];
-    if (c.kind === 'pie') {
-      const values = c.series[0].values,
+    if (c.layout === 'results' && c.kind === 'bar') {
+      const alpha = ctx.globalAlpha;
+      const rowHeight = (e.height - 56) / c.labels.length;
+      const font = Math.max(20, Math.min(36, rowHeight / 3));
+      const labelWidth = e.width * 0.32;
+      const countWidth = Math.max(150, e.width * 0.16);
+      const barWidth = e.width - labelWidth - countWidth - 30;
+      const maximum = Math.max(
+        1,
+        ...c.series.flatMap(s => s.values).filter((v): v is number => v !== null)
+      );
+      c.labels.forEach((label, i) => {
+        const y = i * rowHeight;
+        text(label, 0, y + 8, labelWidth - 24, font, e.fill, 'left');
+        c.series.forEach((series, j) => {
+          const value = series.values[i];
+          if (value === null) return;
+          const barY = y + 8 + (j * (rowHeight - 16)) / c.series.length;
+          const height = Math.max(8, (rowHeight - 28) / c.series.length);
+          ctx.globalAlpha = alpha * 0.12;
+          ctx.fillStyle = series.color;
+          ctx.fillRect(labelWidth, barY, barWidth, height);
+          ctx.globalAlpha = alpha;
+          ctx.fillRect(labelWidth, barY, (barWidth * value) / maximum, height);
+          text(
+            `${Math.round(value)}${c.eligible ? ` · ${Math.round((value / c.eligible) * 100)}%` : ''}`,
+            labelWidth + barWidth + 12,
+            barY,
+            countWidth,
+            font * 0.8,
+            e.fill,
+            'left'
+          );
+        });
+      });
+      if (c.legend)
+        c.series.forEach((series, i) => {
+          ctx.fillStyle = series.color;
+          ctx.fillRect((i * e.width) / 3, e.height - 30, 20, 20);
+          text(
+            series.name,
+            (i * e.width) / 3 + 32,
+            e.height - 34,
+            e.width / 3 - 40,
+            24,
+            e.fill,
+            'left'
+          );
+        });
+      if (c.pageLabel) text(c.pageLabel, e.width - 120, e.height - 34, 120, 24, e.fill, 'left');
+    } else if (c.kind === 'pie') {
+      const values = c.series[0].values.map(v => v ?? 0),
         total = values.reduce((a, b) => a + b, 0),
         radius = Math.max(1, Math.min(w, h) / 2);
       let a = -Math.PI / 2;
+      const sliceLabels: { label: string; x: number; y: number; width: number }[] = [];
       values.forEach((v, i) => {
+        if (v <= 0) return;
         const end = a + (v / total) * Math.PI * 2;
         ctx.beginPath();
-        ctx.moveTo(e.width / 2, pad + h / 2);
-        ctx.arc(e.width / 2, pad + h / 2, radius, a, end);
+        if (c.donut) {
+          ctx.arc(e.width / 2, pad + h / 2, radius, a, end);
+          ctx.arc(e.width / 2, pad + h / 2, radius * 0.52, end, a, true);
+        } else {
+          ctx.moveTo(e.width / 2, pad + h / 2);
+          ctx.arc(e.width / 2, pad + h / 2, radius, a, end);
+        }
         ctx.closePath();
         ctx.fillStyle = palette[i % palette.length];
         ctx.fill();
         const mid = (a + end) / 2;
-        text(
-          c.labels[i],
-          e.width / 2 + Math.cos(mid) * radius * 0.6 - 35,
-          pad + h / 2 + Math.sin(mid) * radius * 0.6 - 10,
-          70,
-          14,
-          '#FFFFFF',
-          'center'
-        );
+        const labelWidth = Math.min(120, radius * 0.65);
+        sliceLabels.push({
+          label: c.labels[i],
+          x: e.width / 2 + Math.cos(mid) * radius * (c.donut ? 0.76 : 0.6) - labelWidth / 2,
+          y: pad + h / 2 + Math.sin(mid) * radius * (c.donut ? 0.76 : 0.6) - 10,
+          width: labelWidth,
+        });
         a = end;
       });
+      // Paint labels after every slice, so neighboring slices cannot cover their text.
+      for (const label of sliceLabels)
+        text(label.label, label.x, label.y, label.width, 14, '#FFFFFF', 'center');
     } else {
-      const values = c.series.flatMap(s => s.values),
-        min = Math.min(0, ...values),
-        max = Math.max(1, ...values),
-        range = max - min,
-        yy = (v: number) => pad + h - ((v - min) / range) * h,
-        step = w / c.labels.length;
-      ctx.strokeStyle = e.fill;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(pad, pad);
-      ctx.lineTo(pad, pad + h);
-      ctx.lineTo(pad + w, pad + h);
-      ctx.stroke();
-      text(String(max), 0, pad, 35, 12);
-      text(String(min), 0, pad + h - 14, 35, 12);
-      c.labels.forEach((label, i) =>
-        text(label, pad + i * step, pad + h + 8, step, 12, e.fill, 'center')
+      const values = c.series.flatMap(s => s.values).filter((v): v is number => v !== null);
+      const minimum = Math.min(0, ...values);
+      const maximum = Math.max(0, ...values);
+      // Match Recharts' five-tick adaptive scale, including a zero baseline.
+      const roughStep = (maximum - minimum) / 4;
+      const digits = roughStep > 0 ? Math.floor(Math.log10(roughStep)) + 1 : 1;
+      const quantum = Math.pow(10, digits) * (digits === 1 ? 0.1 : 0.05);
+      let tickStep = roughStep > 0 ? Math.ceil(roughStep / quantum - 1e-10) * quantum : 1;
+      let below = Math.ceil(-minimum / tickStep - 1e-10);
+      let above = Math.ceil(maximum / tickStep - 1e-10);
+      while (below + above > 4) {
+        tickStep += quantum;
+        below = Math.ceil(-minimum / tickStep - 1e-10);
+        above = Math.ceil(maximum / tickStep - 1e-10);
+      }
+      if (maximum <= 0 && minimum < 0) below = 4 - above;
+      const ticks = Array.from({ length: 5 }, (_, i) =>
+        Number(((i - below) * tickStep).toPrecision(12))
       );
+      const min = ticks[0];
+      const max = ticks[4];
+      const tickWidth = Math.max(...ticks.map(value => measure(String(value))));
+      const left = tickWidth + (c.yAxisLabel?.trim() ? 26 : 8) * scale;
+      const right = Math.max(left + 1, e.width - 16 * scale);
+      const top = 12 * scale;
+      const bottom = Math.max(top + 1, e.height - legendHeight - xTitleHeight - 28 * scale);
+      const plotWidth = right - left;
+      const plotHeight = bottom - top;
+      const yy = (v: number) => bottom - ((v - min) / (max - min)) * plotHeight;
+      const step = plotWidth / c.labels.length;
+      const xx = (i: number) =>
+        c.kind === 'bar'
+          ? left + step * (i + 0.5)
+          : left +
+            (c.labels.length === 1 ? plotWidth / 2 : (plotWidth * i) / (c.labels.length - 1));
+      if (c.grid) {
+        ctx.save();
+        ctx.strokeStyle = e.fill;
+        ctx.globalAlpha *= 0.15;
+        ctx.lineWidth = scale;
+        for (const tick of ticks) {
+          const y = yy(tick);
+          ctx.beginPath();
+          ctx.moveTo(left, y);
+          ctx.lineTo(right, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      if (c.xAxisLabel?.trim())
+        text(c.xAxisLabel, left, e.height - 14 * scale, plotWidth, fontSize, e.fill, 'center');
+      if (c.yAxisLabel?.trim()) {
+        ctx.save();
+        ctx.translate(0, top + plotHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        text(c.yAxisLabel, -plotHeight / 2, 0, plotHeight, fontSize, e.fill, 'center');
+        ctx.restore();
+      }
+      for (const tick of ticks) {
+        const label = String(tick);
+        text(
+          label,
+          left - 8 * scale - measure(label),
+          yy(tick) - fontSize / 2,
+          tickWidth,
+          fontSize
+        );
+      }
+      // Keep end labels inside the element's clipping bounds and avoid overlaps.
+      let labelEnd = -Infinity;
+      c.labels.forEach((label, i) => {
+        const labelWidth = Math.min(e.width, measure(label));
+        const x = Math.max(0, Math.min(e.width - labelWidth, xx(i) - labelWidth / 2));
+        if (x < labelEnd + 10 * scale) return;
+        text(label, x, bottom + 8 * scale, labelWidth, fontSize);
+        labelEnd = x + labelWidth;
+      });
       c.series.forEach((s, j) => {
         ctx.fillStyle = s.color;
         ctx.strokeStyle = s.color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
+        ctx.lineWidth = 2 * scale;
+        let segment: [number, number][] = [];
+        const traceSegment = () => {
+          ctx.beginPath();
+          ctx.moveTo(segment[0][0], segment[0][1]);
+          if (segment.length === 2) ctx.lineTo(segment[1][0], segment[1][1]);
+          else if (segment.length > 2) {
+            // Shape-preserving cubic Hermite interpolation, like curveMonotoneX.
+            const slopes = segment
+              .slice(1)
+              .map(([x, y], i) => (y - segment[i][1]) / (x - segment[i][0]));
+            const tangents = segment.map((_, i) => {
+              if (i === 0 || i === segment.length - 1) return 0;
+              const before = slopes[i - 1];
+              const after = slopes[i];
+              const h0 = segment[i][0] - segment[i - 1][0];
+              const h1 = segment[i + 1][0] - segment[i][0];
+              const weighted = (before * h1 + after * h0) / (h0 + h1);
+              return (
+                (Math.sign(before) + Math.sign(after)) *
+                Math.min(Math.abs(before), Math.abs(after), Math.abs(weighted) / 2)
+              );
+            });
+            tangents[0] = (3 * slopes[0] - tangents[1]) / 2;
+            tangents[tangents.length - 1] =
+              (3 * slopes[slopes.length - 1] - tangents[tangents.length - 2]) / 2;
+            for (let i = 1; i < segment.length; i++) {
+              const [x0, y0] = segment[i - 1];
+              const [x1, y1] = segment[i];
+              const dx = (x1 - x0) / 3;
+              ctx.bezierCurveTo(
+                x0 + dx,
+                y0 + dx * tangents[i - 1],
+                x1 - dx,
+                y1 - dx * tangents[i],
+                x1,
+                y1
+              );
+            }
+          }
+        };
+        const finish = () => {
+          if (!segment.length) return;
+          traceSegment();
+          if (c.kind === 'area') {
+            ctx.save();
+            ctx.lineTo(segment[segment.length - 1][0], yy(0));
+            ctx.lineTo(segment[0][0], yy(0));
+            ctx.closePath();
+            ctx.globalAlpha *= 0.18;
+            ctx.fill();
+            ctx.restore();
+            // Stroke only the upper curve, not the baseline of the filled area.
+            traceSegment();
+          }
+          ctx.stroke();
+          if (c.kind === 'line' || segment.length === 1) {
+            for (const [x, y] of segment) {
+              ctx.beginPath();
+              ctx.arc(x, y, 2 * scale, 0, Math.PI * 2);
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fill();
+              ctx.stroke();
+            }
+            ctx.fillStyle = s.color;
+          }
+          segment = [];
+        };
         s.values.forEach((v, i) => {
-          const x = pad + step * (i + 0.5),
+          if (v === null) {
+            finish();
+            return;
+          }
+          const x = xx(i),
             y = yy(v);
           if (c.kind === 'bar') {
             const width = (step * 0.75) / c.series.length;
             ctx.fillRect(
-              pad + i * step + step * 0.125 + j * width,
+              left + i * step + step * 0.125 + j * width,
               Math.min(y, yy(0)),
-              width - 2,
+              Math.max(scale, width - 2 * scale),
               Math.abs(y - yy(0))
             );
-          } else {
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
+          } else segment.push([x, y]);
         });
-        if (c.kind === 'line') ctx.stroke();
+        finish();
       });
     }
-    if (c.legend) {
-      const items = c.kind === 'pie' ? c.labels : c.series.map(s => s.name);
-      items.forEach((name, i) => {
-        const width = e.width / items.length;
-        ctx.fillStyle = c.kind === 'pie' ? palette[i % palette.length] : c.series[i].color;
-        ctx.fillRect(i * width + 4, e.height - 20, 12, 12);
-        text(name, i * width + 22, e.height - 22, width - 26, 12);
+    if (c.layout !== 'results') {
+      legendRows.forEach((row, rowIndex) => {
+        const rowWidth =
+          row.reduce((total, item) => total + item.width, 0) + (row.length - 1) * legendGap;
+        let x = (e.width - rowWidth) / 2;
+        const y = e.height - legendHeight - xTitleHeight + (8 + rowIndex * 24) * scale;
+        for (const { index, width } of row) {
+          ctx.fillStyle =
+            c.kind === 'pie' ? palette[index % palette.length] : c.series[index].color;
+          ctx.fillRect(x, y + 2 * scale, legendMarker, legendMarker);
+          text(
+            legendItems[index],
+            x + legendMarker + 6 * scale,
+            y,
+            Math.max(1, width - legendMarker - 6 * scale),
+            fontSize
+          );
+          x += width + legendGap;
+        }
       });
     }
   } else {

@@ -9,6 +9,8 @@ import {
 } from '@/features/navigation/state/use-unread-counts.ts';
 import { hasGroupOperationAccess } from '@/features/groups/logic/hasGroupOperationAccess';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
+import { useQuery } from '@/zero/observed-query';
+import { queries } from '@/zero/queries';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { usePermissions } from '@/zero/rbac/usePermissions.ts';
 import { openStudioPanel } from '@/features/communication-studio/logic/panel-events';
@@ -79,6 +81,13 @@ export function useNavigation() {
 
   // Extract IDs from pathname
   const eventId = pathname.match(/^\/event\/([^/]+)/)?.[1];
+  const [eventStudioProject] = useQuery(
+    eventId ? queries.studio.eventProject({ eventId }) : undefined
+  );
+  const eventStudioHref =
+    eventStudioProject?.event_id === eventId && eventStudioProject
+      ? `${eventStudioProject.group_id ? `/group/${encodeURIComponent(eventStudioProject.group_id)}` : ''}/studio/${encodeURIComponent(eventStudioProject.id)}`
+      : undefined;
   const userId = pathname.match(/^\/user\/([^/]+)/)?.[1];
   const groupId = pathname.match(/^\/group\/([^/]+)/)?.[1];
   const amendmentId = pathname.match(/^\/amendment\/([^/]+)/)?.[1];
@@ -259,6 +268,23 @@ export function useNavigation() {
         canAccessGroupEditor
       );
       if (!baseSecondaryItems) return null;
+      const secondaryItems =
+        currentPrimaryRoute === 'event' && eventStudioHref
+          ? baseSecondaryItems.flatMap(item =>
+              item.id === 'agenda'
+                ? [
+                    item,
+                    {
+                      id: 'studio',
+                      label: t('navigation.primary.studio'),
+                      icon: 'Edit' as const,
+                      href: eventStudioHref,
+                      onClick: () => navigate({ to: eventStudioHref }),
+                    },
+                  ]
+                : [item]
+            )
+          : baseSecondaryItems;
 
       // Determine entity unread count based on current route
       const entityUnreadCount = getEntityNotificationUnreadCount(currentPrimaryRoute, {
@@ -270,7 +296,7 @@ export function useNavigation() {
 
       // Secondary items are already localized in the nav item factories.
       // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
-      return baseSecondaryItems.map(item => {
+      return secondaryItems.map(item => {
         const itemWithBadge = withEntityNotificationBadge(item, entityUnreadCount);
         const amendmentBranchTarget =
           currentPrimaryRoute === 'amendment'
@@ -305,6 +331,7 @@ export function useNavigation() {
       navigate,
       t,
       eventId,
+      eventStudioHref,
       userId,
       groupId,
       amendmentId,

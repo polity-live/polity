@@ -1,6 +1,46 @@
 import type { QueryCaseCatalog } from './catalog';
 
 export default {
+  'studio.eventProject': {
+    revision: 1,
+    reason: 'Event-linked project access.',
+    args: { eventId: '10000000-0000-4000-8000-000000000001' },
+    noArgs: false,
+    table: 'studio_project',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
+  'studio.eventPresentation': {
+    revision: 1,
+    reason: 'Event audience show state.',
+    args: { eventId: '10000000-0000-4000-8000-000000000001' },
+    noArgs: false,
+    table: 'event_presentation',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
+  'studio.eventManager': {
+    revision: 1,
+    reason: 'Regie authorization.',
+    args: { eventId: '10000000-0000-4000-8000-000000000001' },
+    noArgs: false,
+    table: 'event',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
+  'studio.presentationDevices': {
+    revision: 1,
+    reason: 'Manager-only device registry.',
+    args: { eventId: '10000000-0000-4000-8000-000000000001' },
+    noArgs: false,
+    table: 'event_presentation_device',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
+  'studio.liveSources': {
+    revision: 1,
+    reason: 'Audience-authorized aggregates.',
+    args: { refs: [], type: 'event' },
+    noArgs: false,
+    table: 'studio_live_source',
+    anchor: '10000000-0000-4000-8000-000000000001',
+  },
   'users.current': {
     revision: 1,
     reason: 'Initial minimal fixture; positive result and denied access are enforced at runtime.',

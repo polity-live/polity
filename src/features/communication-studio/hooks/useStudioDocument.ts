@@ -544,14 +544,14 @@ export function useStudioDocument(
   };
   const transactV3 = (fn: (d: StudioDocumentV3) => void, track = true) => {
     const d = draft.current;
-    if (!d || !canEdit) return;
+    if (!d || !canEdit) return false;
     try {
       const next = structuredClone(d.value);
       fn(next);
       trackElementInstanceOverrides(d.value, next);
       const parsed = studioDocumentV3Schema.parse(next),
         changes = diffStudio(d.value, parsed);
-      if (!changes.length) return;
+      if (!changes.length) return false;
       if (track) {
         history.current.push(changes);
         future.current = [];
@@ -568,8 +568,10 @@ export function useStudioDocument(
           }),
         400
       );
+      return true;
     } catch (e) {
       setError(studioErrorMessage(e));
+      return false;
     }
   };
   const undoRedo = (undo: boolean) => {

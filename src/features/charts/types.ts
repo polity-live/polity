@@ -64,6 +64,8 @@ export interface GovDataCatalogueEntry {
   publisher?: string | null;
   organizationTitle?: string | null;
   modified?: string | null;
+  timeCoverage?: DatasetSearchResult['timeCoverage'];
+  spatialCoverage?: DatasetSearchResult['spatialCoverage'];
   resources: GovDataResourceSummary[];
 }
 
@@ -98,6 +100,7 @@ export interface DataViewQuery {
   dimensionColumn?: string | null;
   seriesColumn?: string | null;
   filters: Record<string, string>;
+  timeRange?: { column: string; startYear: number; endYear: number } | null;
   aggregation: DataAggregation;
   layout?: 'long' | 'wide' | 'multi';
   valueColumns?: string[];
@@ -212,6 +215,7 @@ export interface EurostatDatasetDetails extends EurostatCatalogueEntry {
   sampleRowBytes: number;
   estimatedBytes: number;
   importAllowed: boolean;
+  coverageRegions?: { included: boolean; values: Record<string, string[]> }[];
 }
 
 export interface EurostatImportProgress {
@@ -266,11 +270,62 @@ export interface DatasetSearchResult {
   spatialCoverage?: string[] | Record<string, unknown> | null;
   metadata?: Record<string, unknown>;
   entry?: unknown;
+  searchMatch?: DatasetSearchMatch;
+}
+
+export interface DatasetSearchFilters {
+  period?: { start: number; end: number } | null;
+  area?: string | null;
+}
+
+export interface DatasetSearchIntent {
+  query: string;
+  topic: string;
+  period: { start: number; end: number } | null;
+  area: string | null;
+  isCode: boolean;
+}
+
+export interface DatasetSearchMatch {
+  group: 'matching' | 'other';
+  area: {
+    status: 'match' | 'unknown' | 'different';
+    label?: string;
+    source: 'metadata' | 'text' | 'unknown';
+  };
+  period: {
+    status: 'match' | 'unknown' | 'different';
+    start?: number;
+    end?: number;
+    source: 'metadata' | 'text' | 'unknown';
+  };
 }
 
 export interface DatasetProviderError {
   provider: DatasetProviderId;
   message: string;
+  code?: 'authentication' | 'timeout' | 'unavailable' | 'invalid_response' | 'incomplete_metadata';
+}
+
+export interface DatasetImportFilters {
+  area?: string | null;
+  period?: { start: number; end: number } | null;
+  dimensions?: Record<string, string>;
+}
+
+export interface DatasetPreparation {
+  provider: 'EUROSTAT' | 'GENESIS_DESTATIS';
+  code: string;
+  title: string;
+  dimensions: EurostatDimension[];
+  geoDimension?: string | null;
+  timeDimension?: string | null;
+  estimatedBytes: number | null;
+  importAllowed: boolean;
+  suggestedFilters: DatasetImportFilters;
+  spatialCoverage?: DatasetSearchResult['spatialCoverage'];
+  timeCoverage?: DatasetSearchResult['timeCoverage'];
+  coverageRegions?: EurostatDatasetDetails['coverageRegions'];
 }
 
 export interface DatasetProviderSearchResponse {
@@ -283,6 +338,7 @@ export interface DatasetSnapshotImportResult {
   snapshotId: string;
   snapshotKey: string;
   provider: DatasetProviderId;
+  providerResourceId?: string | null;
   title: string;
   publisher?: string | null;
   sourceUrl?: string | null;

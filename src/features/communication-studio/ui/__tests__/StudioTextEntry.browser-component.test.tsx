@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { page as browserPage, userEvent } from 'vitest/browser';
+import Konva from 'konva';
 import { defaultBrand } from '../../logic/document';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
 import { v3DocumentToLegacy } from '../../logic/v3-adapter';
@@ -28,6 +29,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
   useFixedToolbarController: () => ({ className: 'fixed' }),
 }));
+vi.mock('@/zero/communication-studio/useLiveStudioState', () => ({
+  useLiveStudioState: (document: StudioDocumentV3) => ({ projected: document, sources: [] }),
+}));
+vi.mock('../StudioLiveTools', () => ({ StudioLiveTools: () => null }));
 vi.mock('@/features/editor/ui/EditorSaveStatus', () => ({ EditorSaveStatus: () => null }));
 vi.mock('@/features/editor/ui/OnlineCollaboratorAvatars', () => ({
   OnlineCollaboratorAvatars: () => null,
@@ -121,21 +126,38 @@ async function textEntryHarness() {
 
   render(<Harness />, { wrapper: TestRouter });
   const host = await screen.findByTestId('studio-canvas', {}, { timeout: 15000 });
+  // This harness does not load Tailwind's app-shell layout. Keep the canvas in view
+  // below the unstyled toolbar so its context actions cannot overlap the drag target.
+  host.style.height = '500px';
   await waitFor(() =>
     expect(host.querySelectorAll('.konvajs-content canvas').length).toBeGreaterThan(0)
   );
   const surface = [...host.querySelectorAll<HTMLCanvasElement>('.konvajs-content canvas')].at(-1)!;
-  await waitFor(() => expect(surface.getBoundingClientRect().width).toBeGreaterThan(100));
+  await waitFor(() => {
+    expect(surface.getBoundingClientRect().width).toBeGreaterThan(100);
+    expect(surface.getBoundingClientRect().height).toBe(500);
+  });
   const bounds = surface.getBoundingClientRect();
   const start = { x: bounds.width / 2 - 40, y: bounds.height / 2 + 40 };
   const end = { x: start.x + 60, y: start.y + 40 };
   const textTool = screen.getByRole('button', { name: 'text' });
+  const textPosition = (id: string) => {
+    const stage = Konva.stages.find(candidate => candidate.findOne(`#${id}`));
+    const node = stage?.findOne(`#${id}`);
+    const value = savedDocument.nodes.find(candidate => candidate.id === id);
+    if (!stage || !node || !value) throw new Error('Expected rendered text node');
+    return node.getAbsoluteTransform().point({
+      x: Math.min(value.transform.width / 2, 40 / stage.scaleX()),
+      y: value.transform.height / 2,
+    });
+  };
   return {
     initial,
     surface,
     start,
     end,
     textTool,
+    textPosition,
     saved: () => savedDocument,
     transact: (change: (document: StudioDocumentV3) => void) => transactDocument?.(change),
   };
@@ -200,8 +222,9 @@ it.each([414, 1280])(
   }
 );
 
-it('types immediately after drawing with T and after one click on existing text in either tool', async () => {
-  const { initial, surface, start, end, textTool, saved, transact } = await textEntryHarness();
+it('types immediately with the text tool and selects before editing with the selection tool', async () => {
+  const { initial, surface, start, end, textTool, textPosition, saved, transact } =
+    await textEntryHarness();
   const initialTextCount = initial.nodes.filter(node => node.type === 'richText').length;
 
   await userEvent.click(textTool);
@@ -221,6 +244,11 @@ it('types immediately after drawing with T and after one click on existing text 
       initialTextCount + 1
     )
   );
+
+  const createdText = saved().nodes.find(
+    node => node.type === 'richText' && textOf(node) === 'Hallo'
+  )!;
+  const existingPosition = () => textPosition(createdText.id);
   await waitFor(() =>
     expect(saved().nodes.some(node => node.type === 'richText' && textOf(node) === 'Hallo')).toBe(
       true
@@ -231,9 +259,10 @@ it('types immediately after drawing with T and after one click on existing text 
   await userEvent.click(screen.getByRole('button', { name: 'collapseProperties' }));
   await userEvent.click(textTool);
   const count = saved().nodes.length;
-  await userEvent.click(surface, { position: { x: start.x + 12, y: start.y + 12 } } as never);
+  await userEvent.click(surface, { position: existingPosition() } as never);
   const existingEditor = await screen.findByLabelText('Text');
   const existingText = existingEditor.textContent;
+  expect(existingText).toBe('Hallo');
   await waitFor(() => expect(document.activeElement).toBe(existingEditor));
   await userEvent.keyboard('X');
   await waitFor(() => expect(screen.getByLabelText('Text').textContent).toBe(`${existingText}X`));
@@ -241,7 +270,9 @@ it('types immediately after drawing with T and after one click on existing text 
 
   await userEvent.keyboard('{Escape}');
   await userEvent.click(screen.getByRole('button', { name: 'selection' }));
-  await userEvent.click(surface, { position: { x: start.x + 12, y: start.y + 12 } } as never);
+  await userEvent.click(surface, { position: existingPosition() } as never);
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  await userEvent.dblClick(surface, { position: existingPosition() } as never);
   await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Text')));
   await userEvent.keyboard('Y');
   await waitFor(() => expect(screen.getByLabelText('Text').textContent).toBe(`${existingText}XY`));
@@ -254,7 +285,7 @@ it('types immediately after drawing with T and after one click on existing text 
 
   await userEvent.keyboard('{Escape}');
   await userEvent.keyboard('{Shift>}');
-  await userEvent.click(surface, { position: { x: start.x + 12, y: start.y + 12 } } as never);
+  await userEvent.click(surface, { position: existingPosition() } as never);
   await userEvent.keyboard('{/Shift}');
   expect(screen.queryByLabelText('Text')).toBeNull();
 
@@ -269,7 +300,7 @@ it('types immediately after drawing with T and after one click on existing text 
     });
   });
   await userEvent.click(textTool);
-  await userEvent.click(surface, { position: { x: start.x + 12, y: start.y + 12 } } as never);
+  await userEvent.click(surface, { position: existingPosition() } as never);
   expect(screen.queryByLabelText('Text')).toBeNull();
   expect(saved().nodes).toHaveLength(count);
 
@@ -280,9 +311,10 @@ it('types immediately after drawing with T and after one click on existing text 
     });
   });
   await userEvent.click(screen.getByRole('button', { name: 'selection' }));
+  const dragStart = existingPosition();
   await userEvent.dragAndDrop(surface, surface, {
-    sourcePosition: { x: start.x + 12, y: start.y + 12 },
-    targetPosition: { x: start.x + 34, y: start.y + 32 },
+    sourcePosition: dragStart,
+    targetPosition: { x: dragStart.x + 22, y: dragStart.y + 20 },
   } as never);
   expect(screen.queryByLabelText('Text')).toBeNull();
   expect(saved().nodes).toHaveLength(count);
@@ -291,7 +323,7 @@ it('types immediately after drawing with T and after one click on existing text 
 it.each(['inside', 'outside'] as const)(
   'creates and focuses one overlapping text field when dragging ends %s the existing field',
   async destination => {
-    const { surface, start, end, textTool, saved } = await textEntryHarness();
+    const { surface, start, end, textTool, textPosition, saved } = await textEntryHarness();
     await userEvent.click(textTool);
     await userEvent.dragAndDrop(surface, surface, {
       sourcePosition: start,
@@ -308,11 +340,11 @@ it.each(['inside', 'outside'] as const)(
     // Activating T must also close the current inline editor, which otherwise intercepts the drag.
     await userEvent.click(textTool);
     await waitFor(() => expect(screen.queryByLabelText('Text')).toBeNull());
-    const sourcePosition = { x: start.x + 12, y: start.y + 12 };
+    const sourcePosition = textPosition(original.id);
     const targetPosition =
       destination === 'inside'
-        ? { x: start.x + 60, y: start.y + 36 }
-        : { x: start.x - 30, y: start.y - 30 };
+        ? { x: sourcePosition.x + 48, y: sourcePosition.y + 24 }
+        : { x: sourcePosition.x - 80, y: sourcePosition.y - 80 };
     await userEvent.dragAndDrop(surface, surface, { sourcePosition, targetPosition } as never);
     await userEvent.keyboard('Overlay');
     await waitFor(() => expect(screen.getByLabelText('Text')).toHaveTextContent('Overlay'));

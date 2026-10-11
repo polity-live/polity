@@ -21,7 +21,8 @@ import {
   type DatasetTable,
 } from './csv';
 import { datasetSql as sql } from './db';
-import { buildMultiMeasureProjectionPoints } from './projection';
+import { buildMultiMeasureProjectionPoints, assertProviderProjectionScope } from './projection';
+import { datasetYear } from './importScope';
 import {
   DATASET_SNAPSHOT_BUCKET,
   createSnapshotStoragePath,
@@ -109,6 +110,7 @@ export interface PersistDatasetSnapshotInput {
   groupId?: string | null;
   createdById: string;
   table: DatasetTable;
+  columnProfiles?: DatasetColumnProfile[];
   snapshotTakenAt?: string | Date | null;
 }
 
@@ -167,7 +169,7 @@ async function findExistingDataset(input: PersistDatasetSnapshotInput) {
 async function upsertDataset(input: PersistDatasetSnapshotInput) {
   const existing = await findExistingDataset(input);
   const columns = input.table.columns;
-  const columnProfiles = profileDatasetColumns(input.table);
+  const columnProfiles = input.columnProfiles ?? profileDatasetColumns(input.table);
   const structureSummary = input.structureSummary || summarizeDatasetStructure(input.table);
 
   if (existing) {
@@ -235,6 +237,7 @@ function toImportResult(
     snapshotId: snapshot.id,
     snapshotKey: snapshot.snapshot_key,
     provider: dataset.provider,
+    providerResourceId: dataset.provider_resource_id,
     title: dataset.title,
     publisher: dataset.publisher,
     sourceUrl: dataset.source_url,
@@ -255,7 +258,7 @@ export async function persistDatasetSnapshot(input: PersistDatasetSnapshotInput)
   }
 
   const csvText = tableToCsv(input.table);
-  const columnProfiles = profileDatasetColumns(input.table);
+  const columnProfiles = input.columnProfiles ?? profileDatasetColumns(input.table);
   const bytes = textToBytes(csvText);
   const contentHash = hashBytes(bytes);
   const snapshotKey = stableHash({
@@ -377,7 +380,7 @@ export async function loadSnapshotTable(snapshotId: string, userId?: string | nu
   return {
     dataset: snapshot.dataset,
     snapshot,
-    table: parseDatasetCsv(text),
+    table: parseDatasetCsv(text, { maxRows: 1_000_000 }),
   };
 }
 
@@ -390,12 +393,22 @@ export async function createDatasetProjection(
   for (const column of Object.keys(request.filters ?? {})) {
     if (!columnSet.has(column)) throw new Error(`Unknown dataset column: ${column}`);
   }
-  const filteredRows = Object.entries(request.filters ?? {}).reduce(
+  let filteredRows = Object.entries(request.filters ?? {}).reduce(
     (rows, [column, value]) =>
       value ? rows.filter(row => String(row[column]) === String(value)) : rows,
     table.rows
   );
+  if ('view' in request && request.timeRange) {
+    const range = request.timeRange;
+    if (!columnSet.has(range.column)) throw new Error(`Unknown dataset column: ${range.column}`);
+    filteredRows = filteredRows.filter(row => {
+      const year = datasetYear(String(row[range.column] ?? ''));
+      return year !== null && year >= range.startYear && year <= range.endYear;
+    });
+  }
   const filteredTable = { ...table, rows: filteredRows };
+  if ('view' in request && request.view !== 'table')
+    assertProviderProjectionScope(filteredTable, request, snapshot.metadata);
 
   if ('mapping' in request) {
     const points = buildDatasetProjectionPoints(filteredTable, request.mapping);
@@ -649,6 +662,8 @@ export async function searchStoredDatasets({
               OR d.provider_dataset_id ILIKE ${like}
               OR d.structure_summary ILIKE ${like}
               OR d.metadata::text ILIKE ${like}
+              OR to_tsvector('simple', concat_ws(' ', d.title, d.description, d.provider_dataset_id, d.structure_summary))
+                @@ plainto_tsquery('simple', ${normalizedQuery})
             )`
           : sql``
       }

@@ -1,4 +1,5 @@
 import { NoObjectGeneratedError, Output } from 'ai';
+import { studioNodeAssetIds } from '@/features/communication-studio/logic/event-intro';
 import { generateText } from '@/server/ai-generation';
 import { linkAiStudioProject } from '@/server/ai-trace-store';
 import {
@@ -467,15 +468,10 @@ async function pruneUnusedProposalAssets(proposalId: string) {
   const [proposal] = await sql`select document from canvas_proposal where id=${proposalId}`;
   if (!proposal) return;
   const document = studioDocumentV5Schema.parse(proposal.document);
-  const used = new Set(
-    document.nodes.flatMap(node =>
-      node.type === 'media'
-        ? [node.assetId]
-        : node.type === 'chart' && node.sourceAssetId
-          ? [node.sourceAssetId]
-          : []
-    )
-  );
+  const used = new Set([
+    ...document.nodes.flatMap(studioNodeAssetIds),
+    ...(document.show?.cues.map(c => c.assetId) ?? []),
+  ]);
   const assets = await sql`select id from studio_asset where workspace_id=${proposalId}`;
   await cleanupAssets(assets.map(asset => asset.id).filter(id => !used.has(id)));
 }
@@ -693,15 +689,7 @@ async function generateStudioSuggestionImpl(
       const sourceAssets = await studioSql()`select id,name,mime_type,byte_size,storage_path
         from studio_asset where project_id=${snapshot.projectId}
         and workspace_id=${snapshot.sourceWorkspaceId} and ready=true`;
-      const referenced = new Set(
-        snapshot.working.nodes.flatMap(node =>
-          node.type === 'media'
-            ? [node.assetId]
-            : node.type === 'chart' && node.sourceAssetId
-              ? [node.sourceAssetId]
-              : []
-        )
-      );
+      const referenced = new Set(snapshot.working.nodes.flatMap(studioNodeAssetIds));
       const replacements = new Map<string, string>();
       for (const asset of sourceAssets.filter(asset => referenced.has(asset.id))) {
         const id = crypto.randomUUID();
@@ -723,6 +711,8 @@ async function generateStudioSuggestionImpl(
         if (node.type === 'media') node.assetId = replacements.get(node.assetId) ?? node.assetId;
         if (node.type === 'chart' && node.sourceAssetId)
           node.sourceAssetId = replacements.get(node.sourceAssetId) ?? node.sourceAssetId;
+        if (node.type === 'frame' && node.intro?.mode === 'video' && node.intro.assetId)
+          node.intro.assetId = replacements.get(node.intro.assetId) ?? node.intro.assetId;
       }
       for (const frame of plan.frames)
         for (const element of frame.elements)

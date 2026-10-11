@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { getInvitationOnboardingDestination } from '../logic/authRedirects';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -335,6 +336,7 @@ export function useOnboarding(): UseOnboardingReturn {
       const failures: string[] = [];
 
       for (const group of data.selectedGroups) {
+        if (getInvitationOnboardingDestination() === `/group/${group.id}`) continue;
         if (alreadySentIds.has(group.id)) {
           continue;
         }

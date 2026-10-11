@@ -116,7 +116,7 @@ export const studioCommandSchemas = {
     id: uuid,
     workspaceId: uuid.optional(),
     name: text,
-    mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'video/mp4']),
+    mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'video/mp4', 'audio/mpeg', 'audio/wav']),
     size: z
       .number()
       .int()

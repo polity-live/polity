@@ -69,7 +69,14 @@ export function useAuthCallbackPageController() {
               search: { tab: 'ai' },
             });
           } else {
-            navigate({ to: outcome.destination });
+            if (outcome.destination === '/' || outcome.destination === '/auth/reset-password') {
+              navigate({ to: outcome.destination });
+            } else {
+              navigate({
+                to: '/invite/$token',
+                params: { token: outcome.destination.slice('/invite/'.length) },
+              });
+            }
           }
         }
       } catch (error) {

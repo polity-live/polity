@@ -7,8 +7,9 @@ const mocks = vi.hoisted(() => ({
   getAuth: vi.fn(),
   handleQuery: vi.fn(),
   mustGetQuery: vi.fn(),
+  mustGetMutator: vi.fn(),
+  mutatorFn: vi.fn(),
   process: vi.fn(),
-  pushConstructor: vi.fn(),
   queries: { kind: 'queries' },
   queryFn: vi.fn(),
   queue: vi.fn(),
@@ -41,19 +42,12 @@ vi.mock('@/features/shared/errors/app-error', () => ({
 vi.mock('@/zero/queries', () => ({ queries: mocks.queries }));
 vi.mock('@/zero/schema', () => ({ schema: mocks.schema }));
 vi.mock('@rocicorp/zero/server', () => ({
-  PushProcessor: class {
-    constructor(provider: unknown, context: unknown) {
-      mocks.pushConstructor(provider, context);
-    }
-
-    process(...args: unknown[]) {
-      return mocks.process(...args);
-    }
-  },
+  handleMutateRequest: (...args: unknown[]) => mocks.process(...args),
   handleQueryRequest: (...args: unknown[]) => mocks.handleQuery(...args),
 }));
 vi.mock('@rocicorp/zero', () => ({
   mustGetQuery: (...args: unknown[]) => mocks.mustGetQuery(...args),
+  mustGetMutator: (...args: unknown[]) => mocks.mustGetMutator(...args),
 }));
 
 import { Route as CurrenciesRoute } from '../currency/currencies';
@@ -61,6 +55,7 @@ import { Route as MutateRoute } from '../mutate';
 import { Route as QueryRoute } from '../query';
 
 type Handler = (args: { request: Request }) => Promise<Response>;
+type MutationCallback = (tx: object, name: string, args: unknown) => Promise<void>;
 
 interface ApiRoute {
   readonly server: {
@@ -84,6 +79,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getAuth.mockResolvedValue({ userID: 'user-1' });
   mocks.mustGetQuery.mockReturnValue({ fn: mocks.queryFn });
+  mocks.mustGetMutator.mockReturnValue({ fn: mocks.mutatorFn });
   mocks.queryFn.mockReturnValue({ transformed: true });
   mocks.sanitize.mockImplementation(value => ({ sanitized: value }));
   mocks.appErrorBody.mockImplementation((_error, fallbackCode) => ({ code: fallbackCode }));
@@ -137,9 +133,13 @@ describe('R02 Zero mutation route accountability', () => {
     const response = await routeHandlers.POST({ request: mutationRequest });
 
     expect(mocks.getAuth).toHaveBeenCalledWith(mutationRequest);
-    expect(mocks.pushConstructor).toHaveBeenCalledWith(mocks.dbProvider, { userID: 'user-1' });
     expect(mocks.queue).toHaveBeenCalledOnce();
-    expect(mocks.process).toHaveBeenCalledWith(mocks.serverMutators, mutationRequest);
+    expect(mocks.process).toHaveBeenCalledExactlyOnceWith({
+      dbProvider: mocks.dbProvider,
+      handler: expect.any(Function),
+      request: mutationRequest,
+      userID: 'user-1',
+    });
     expect(mocks.sanitize).toHaveBeenCalledWith(rawResult);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ sanitized: rawResult });
@@ -156,15 +156,79 @@ describe('R02 Zero mutation route accountability', () => {
     await expect(response.json()).resolves.toEqual({ code: 'mutation_server_failed' });
   });
 
-  it('propagates authentication failures before constructing the mutation processor', async () => {
+  it('propagates authentication failures before processing mutations', async () => {
     const failure = new Error('authentication unavailable');
     mocks.getAuth.mockRejectedValueOnce(failure);
 
     await expect(handlers(MutateRoute).POST({ request: request('/api/mutate') })).rejects.toBe(
       failure
     );
-    expect(mocks.pushConstructor).not.toHaveBeenCalled();
     expect(mocks.process).not.toHaveBeenCalled();
+  });
+
+  it('dispatches the server override inside the Zero transaction with validated context', async () => {
+    const tx = { location: 'server' };
+    const args = { first_name: 'Updated' };
+    mocks.process.mockImplementationOnce(async ({ handler }) => {
+      const transact = vi.fn(async callback => callback(tx, 'users.updateProfile', args));
+      await handler(transact);
+      expect(transact).toHaveBeenCalledOnce();
+      return { mutations: [] };
+    });
+
+    await handlers(MutateRoute).POST({ request: request('/api/mutate') });
+
+    expect(mocks.mustGetMutator).toHaveBeenCalledExactlyOnceWith(
+      mocks.serverMutators,
+      'users.updateProfile'
+    );
+    expect(mocks.mutatorFn).toHaveBeenCalledExactlyOnceWith({
+      tx,
+      args,
+      ctx: { userID: 'user-1' },
+    });
+  });
+
+  it('binds mutations to server authentication rather than client claims', async () => {
+    const mutationRequest = new Request('http://localhost/api/mutate?userID=other-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'other-user' },
+      body: JSON.stringify({ userID: 'other-user' }),
+    });
+    mocks.process.mockResolvedValueOnce({ mutations: [] });
+    await handlers(MutateRoute).POST({ request: mutationRequest });
+    expect(mocks.process).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ request: mutationRequest, userID: 'user-1' })
+    );
+  });
+
+  it('reports anonymous mutation authentication as null and retains anonymous access checks', async () => {
+    const ctx = { userID: 'anon', email: '' };
+    mocks.getAuth.mockResolvedValueOnce(ctx);
+    mocks.process.mockImplementationOnce(async ({ handler, userID }) => {
+      expect(userID).toBeNull();
+      await handler(async (callback: MutationCallback) => callback({}, 'users.updateProfile', {}));
+      return { mutations: [] };
+    });
+    await handlers(MutateRoute).POST({ request: request('/api/mutate') });
+    expect(mocks.mutatorFn).toHaveBeenCalledWith(expect.objectContaining({ ctx }));
+  });
+
+  it('allows Zero to record unknown-mutator and transaction failures', async () => {
+    const failure = new Error('unknown mutator');
+    mocks.mustGetMutator.mockImplementationOnce(() => {
+      throw failure;
+    });
+    mocks.process.mockImplementationOnce(async ({ handler }) => {
+      await expect(
+        handler(async (callback: MutationCallback) => callback({}, 'missing', {}))
+      ).rejects.toBe(failure);
+      return { mutations: [{ result: { type: 'error' } }] };
+    });
+    const response = await handlers(MutateRoute).POST({ request: request('/api/mutate') });
+    expect(response.status).toBe(200);
+    expect(mocks.mutatorFn).not.toHaveBeenCalled();
+    expect(mocks.sanitize).toHaveBeenCalledOnce();
   });
 });
 

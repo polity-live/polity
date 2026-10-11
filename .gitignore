@@ -150,6 +150,7 @@ test-output.txt
 /e2e-results/
 /.playwright-cli/
 /output/
+/outputs/
 /.react-email/
 /emails/out/
 

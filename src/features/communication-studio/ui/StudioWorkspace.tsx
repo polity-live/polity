@@ -1,5 +1,6 @@
 import type { EditorPublication } from '@/features/project-chat/hooks/editor-bridge';
 import { StudioEditor } from './StudioEditor';
+import { StudioLoadingScreen } from './StudioLoadingScreen';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
@@ -238,8 +239,8 @@ function WorkspaceContent({
     );
   if (!c.value)
     return (
-      <main className="p-8" role={failure ? 'alert' : 'status'}>
-        {failure || tr('loading')}
+      <main className={failure ? 'p-8' : undefined} role={failure ? 'alert' : undefined}>
+        {failure || <StudioLoadingScreen label={tr('loading')} fullPage />}
       </main>
     );
   return (

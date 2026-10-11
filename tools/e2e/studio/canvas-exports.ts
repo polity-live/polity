@@ -64,7 +64,7 @@ for (const format of ['png', 'pdf', 'pptx', 'canva', 'zip'] as const) {
   }
   if (format === 'zip') {
     const archive = unzipSync(exported.bytes);
-    assert.equal(JSON.parse(strFromU8(archive['Polity-Projekt.json'])).schemaVersion, 5);
+    assert.equal(JSON.parse(strFromU8(archive['Polity-Projekt.json'])).schemaVersion, 6);
   }
   results.push({ format, bytes: exported.bytes.length, file: `${format}-${exported.name}` });
 }

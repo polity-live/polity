@@ -416,9 +416,9 @@ it('fails a bounded startup when services never become ready', async () => {
   });
   const failure = command('start').catch(error => error);
   await supervisorStarted;
-  await vi.advanceTimersByTimeAsync(90_000);
+  await vi.advanceTimersByTimeAsync(600_000);
   expect((await failure).message).toContain('Stack did not become ready');
-  expect(io.fetch).toHaveBeenCalledTimes(181);
+  expect(io.fetch).toHaveBeenCalledTimes(1201);
 });
 it('cancels a scheduled restart after shutdown begins', async () => {
   vi.useFakeTimers();

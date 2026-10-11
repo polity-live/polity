@@ -49,7 +49,7 @@ function parseRows(text: string, delimiter: (typeof CSV_DELIMITERS)[number]) {
   }) as string[][];
 }
 
-export function parseDatasetCsv(text: string): DatasetTable {
+export function parseDatasetCsv(text: string, options?: { maxRows?: number }): DatasetTable {
   const attempts = CSV_DELIMITERS.map(delimiter => {
     try {
       const rows = parseRows(text, delimiter);
@@ -83,13 +83,14 @@ export function parseDatasetCsv(text: string): DatasetTable {
   if (columns.length > MAX_MANUAL_CHART_COLUMNS) throw new Error('CSV_HAS_TOO_MANY_COLUMNS');
 
   const rows = dataRows
-    .slice(0, MAX_MANUAL_CHART_ROWS + 1)
+    .slice(0, (options?.maxRows ?? MAX_MANUAL_CHART_ROWS) + 1)
     .map(row =>
       Object.fromEntries(columns.map((column, index) => [column, String(row[index] ?? '').trim()]))
     )
     .filter(row => columns.some(column => row[column] !== ''));
 
-  if (rows.length > MAX_MANUAL_CHART_ROWS) throw new Error('CSV_HAS_TOO_MANY_ROWS');
+  if (rows.length > (options?.maxRows ?? MAX_MANUAL_CHART_ROWS))
+    throw new Error('CSV_HAS_TOO_MANY_ROWS');
   return { columns, rows };
 }
 

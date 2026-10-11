@@ -4,6 +4,16 @@ import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 import {
+  applyEventQueryAccess,
+  applyEventStudioManagerQueryAccess,
+  applyAmendmentQueryAccess,
+  applyGroupQueryAccess,
+  applyUserQueryAccess,
+  applyVoteQueryAccess,
+  applyElectionQueryAccess,
+} from '../rbac/query-access';
+import { politySourceTypes } from '@/features/communication-studio/logic/live-contract';
+import {
   groupProjectsAccess,
   studioProjectCollaborativeAccess,
   studioProjectReadAccess,
@@ -13,16 +23,16 @@ const requireQueryUser = (userID: string | undefined | null) =>
   userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
 
 function projects(actor: string | null) {
-  return studioProjectReadAccess(zql.studio_project.where('document_schema_version', 5), actor);
+  return studioProjectReadAccess(zql.studio_project.where('document_schema_version', 6), actor);
 }
 
 function relatedProject<T>(project: T, actor: string | null): T {
-  return studioProjectReadAccess((project as any).where('document_schema_version', 5), actor);
+  return studioProjectReadAccess((project as any).where('document_schema_version', 6), actor);
 }
 
 function collaborativeProject<T>(project: T, actor: string): T {
   return studioProjectCollaborativeAccess(
-    (project as any).where('document_schema_version', 5),
+    (project as any).where('document_schema_version', 6),
     actor
   );
 }
@@ -66,6 +76,87 @@ function elementSets(actor: string, groupId: string | null) {
     .orderBy('updated_at', 'desc');
 }
 export const studioQueries = {
+  eventProject: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    studioProjectReadAccess(
+      zql.studio_project.where('event_id', args.eventId),
+      ctx.userID ?? null
+    ).one()
+  ),
+  eventPresentation: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    zql.event_presentation
+      .where('event_id', args.eventId)
+      .whereExists('event', e => applyEventQueryAccess(e, ctx.userID))
+      .one()
+  ),
+  eventManager: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    applyEventStudioManagerQueryAccess(zql.event.where('id', args.eventId), ctx.userID).one()
+  ),
+  presentationDevices: defineQuery(
+    z.object({ eventId: z.string().uuid(), deviceId: z.string().uuid().optional() }),
+    ({ args, ctx }) =>
+      zql.event_presentation_device
+        .where('event_id', args.eventId)
+        .where(({ or, and, cmp, exists }) =>
+          or(
+            exists('event', e => applyEventStudioManagerQueryAccess(e, ctx.userID)),
+            and(
+              cmp('id', args.deviceId ?? '00000000-0000-0000-0000-000000000000'),
+              ctx.userID && ctx.userID !== 'anon'
+                ? cmp('user_id', ctx.userID)
+                : cmp('user_id', 'IS', null),
+              exists('event', e => applyEventQueryAccess(e, ctx.userID))
+            )
+          )
+        )
+        .orderBy('last_seen', 'desc')
+  ),
+  liveSources: defineQuery(
+    z.object({
+      refs: z.array(z.object({ type: z.enum(politySourceTypes), id: z.string().uuid() })).max(2000),
+      type: z.enum(politySourceTypes).optional(),
+      eventId: z.string().uuid().optional(),
+    }),
+    ({ args, ctx }) => {
+      let q: any = zql.studio_live_source.where(({ or, cmp, and }: any) =>
+        args.refs.length
+          ? or(...args.refs.map(ref => and(cmp('source_type', ref.type), cmp('source_id', ref.id))))
+          : args.type
+            ? cmp('source_type', args.type)
+            : args.eventId
+              ? cmp('event_id', args.eventId)
+              : cmp('source_id', '00000000-0000-0000-0000-000000000000')
+      );
+      q = q.where(({ or, and, cmp, exists }: any) =>
+        or(
+          and(
+            cmp('source_type', 'IN', ['event', 'agenda_item']),
+            exists('event', (e: any) => applyEventQueryAccess(e, ctx.userID))
+          ),
+          and(
+            cmp('source_type', 'vote'),
+            exists('vote', (v: any) => applyVoteQueryAccess(v, ctx.userID))
+          ),
+          and(
+            cmp('source_type', 'election'),
+            exists('election', (e: any) => applyElectionQueryAccess(e, ctx.userID))
+          ),
+          and(
+            cmp('source_type', 'amendment'),
+            exists('amendment', (a: any) => applyAmendmentQueryAccess(a, ctx.userID))
+          ),
+          and(
+            cmp('source_type', 'user'),
+            exists('user', (u: any) => applyUserQueryAccess(u, ctx.userID))
+          ),
+          and(
+            cmp('source_type', 'group'),
+            exists('group', (g: any) => applyGroupQueryAccess(g, ctx.userID))
+          )
+        )
+      );
+      return q.orderBy('source_type', 'asc').orderBy('source_id', 'asc');
+    }
+  ),
   commandReceipt: defineQuery(z.object({ operationId: z.string().uuid() }), ({ args, ctx }) =>
     zql.studio_command_receipt
       .where('id', args.operationId)
@@ -100,6 +191,7 @@ export const studioQueries = {
     collaborativeProject(zql.studio_project, requireQueryUser(ctx.userID))
       .where('id', args.projectId)
       .related('owner')
+      .related('event', e => applyEventStudioManagerQueryAccess(e, ctx.userID))
       .related('collaborators', c => c.where('status', 'active').related('user'))
       .related('group', g =>
         applyGroupDiscoveryQueryAccess(g, ctx.userID)
@@ -146,7 +238,7 @@ export const studioQueries = {
       .where('project_id', args.projectId)
       .whereExists('project', project =>
         project
-          .where('document_schema_version', 5)
+          .where('document_schema_version', 6)
           .where('group_id', 'IS', null)
           .where('owner_id', requireQueryUser(ctx.userID))
       )
@@ -158,7 +250,7 @@ export const studioQueries = {
       .where('user_id', requireQueryUser(ctx.userID))
       .where('status', 'invited')
       .whereExists('project', p =>
-        p.where('document_schema_version', 5).where('group_id', 'IS', null)
+        p.where('document_schema_version', 6).where('group_id', 'IS', null)
       )
       .related('project', p => p.related('owner'))
       .orderBy('updated_at', 'desc')

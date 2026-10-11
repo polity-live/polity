@@ -6,6 +6,15 @@ export const datasetProjectionRequestSchema = z.object({
   dimensionColumn: z.string().nullable().optional(),
   seriesColumn: z.string().nullable().optional(),
   filters: z.record(z.string(), z.string()).default({}),
+  timeRange: z
+    .object({
+      column: z.string().min(1),
+      startYear: z.number().int().min(1800).max(2199),
+      endYear: z.number().int().min(1800).max(2199),
+    })
+    .refine(value => value.startYear <= value.endYear)
+    .nullable()
+    .optional(),
   aggregation: z.enum(['sum', 'mean', 'median', 'min', 'max', 'count']).default('sum'),
   layout: z.enum(['long', 'wide', 'multi']).optional(),
   valueColumns: z.array(z.string()).max(50).optional(),

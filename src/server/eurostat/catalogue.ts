@@ -8,6 +8,7 @@ interface CatalogueCacheEntry {
 }
 
 const cache = new Map<string, CatalogueCacheEntry>();
+const pendingCatalogues = new Map<string, Promise<EurostatCatalogueEntry[]>>();
 
 function normalizeLanguage(language: string) {
   return ['en', 'de', 'fr'].includes(language) ? language : 'en';
@@ -18,14 +19,27 @@ function nullableText(value: unknown) {
   return text ? text : null;
 }
 
-export async function getEurostatCatalogue(language = 'en') {
+export async function getEurostatCatalogue(language = 'en', signal?: AbortSignal) {
   const normalizedLanguage = normalizeLanguage(language);
   const cached = cache.get(normalizedLanguage);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.entries;
   }
 
-  const response = await fetch(`${EUROSTAT_BASE_URL}/catalogue/toc/txt?lang=${normalizedLanguage}`);
+  const pending = pendingCatalogues.get(normalizedLanguage);
+  if (pending) return pending;
+  const request = loadEurostatCatalogue(normalizedLanguage, signal);
+  pendingCatalogues.set(normalizedLanguage, request);
+  try {
+    return await request;
+  } finally {
+    pendingCatalogues.delete(normalizedLanguage);
+  }
+}
+
+async function loadEurostatCatalogue(normalizedLanguage: string, signal?: AbortSignal) {
+  const url = `${EUROSTAT_BASE_URL}/catalogue/toc/txt?lang=${normalizedLanguage}`;
+  const response = signal ? await fetch(url, { signal }) : await fetch(url);
   if (!response.ok) {
     throw new Error(`Eurostat catalogue request failed with ${response.status}`);
   }
@@ -61,17 +75,23 @@ export async function getEurostatCatalogue(language = 'en') {
   return deduplicated;
 }
 
-export async function searchEurostatCatalogue(query: string, language = 'en', limit = 20) {
+export async function searchEurostatCatalogue(
+  query: string,
+  language = 'en',
+  limit = 20,
+  signal?: AbortSignal
+) {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   if (normalizedQuery.length < 2) {
     return [];
   }
 
-  const entries = await getEurostatCatalogue(language);
+  const entries = await getEurostatCatalogue(language, signal);
   return entries
     .map(entry => {
       const code = entry.code.toLocaleLowerCase();
       const title = entry.title.toLocaleLowerCase();
+      const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
       const score =
         code === normalizedQuery
           ? 0
@@ -83,7 +103,9 @@ export async function searchEurostatCatalogue(query: string, language = 'en', li
                 ? 3
                 : title.includes(normalizedQuery)
                   ? 4
-                  : 99;
+                  : tokens.every(token => title.includes(token) || code.includes(token))
+                    ? 5
+                    : 99;
       return { entry, score };
     })
     .filter(result => result.score < 99)
@@ -97,9 +119,15 @@ export async function searchEurostatCatalogue(query: string, language = 'en', li
     .map(result => result.entry);
 }
 
-export async function findEurostatCatalogueEntry(code: string, language = 'en') {
+export async function findEurostatCatalogueEntry(
+  code: string,
+  language = 'en',
+  signal?: AbortSignal
+) {
   const normalizedCode = code.trim().toUpperCase();
-  const entry = (await getEurostatCatalogue(language)).find(item => item.code === normalizedCode);
+  const entry = (await getEurostatCatalogue(language, signal)).find(
+    item => item.code === normalizedCode
+  );
   if (!entry) {
     throw new Error(`Eurostat dataset ${normalizedCode} was not found`);
   }

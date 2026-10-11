@@ -434,7 +434,7 @@ test('persists context-menu copy, paste, cut and flip actions without validation
   );
   const semanticBefore = seeded.nodes.find((node: any) => node.type === 'richText');
   if (!semanticBefore) throw new Error('Missing semantic text');
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${seed.title},${seed.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${seed.title},${seed.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(seeded)))},0)`;
   try {
     const pageErrors: string[] = [];

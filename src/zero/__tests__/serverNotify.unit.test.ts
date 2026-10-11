@@ -7,9 +7,29 @@ vi.mock('@/features/notifications/utils/notification-helpers.ts', () => ({
   testNotificationHelper: (...args: unknown[]) => notificationHelperMock(...args),
 }));
 
-import { fireNotification, withNotificationDeliveryQueue } from '../server-notify';
+import {
+  fireNotification,
+  withNotificationDeliveryQueue,
+  withDeferredNotifications,
+} from '../server-notify';
 
 describe('fireNotification', () => {
+  it('drops deferred notifications on rollback and publishes after successful completion', async () => {
+    notificationHelperMock.mockResolvedValue(undefined);
+    await expect(
+      withDeferredNotifications(async () => {
+        await fireNotification('testNotificationHelper', { recipientUserId: 'user' });
+        expect(notificationHelperMock).not.toHaveBeenCalled();
+        throw new Error('rollback');
+      })
+    ).rejects.toThrow('rollback');
+    expect(notificationHelperMock).not.toHaveBeenCalled();
+    await withDeferredNotifications(async () => {
+      await fireNotification('testNotificationHelper', { recipientUserId: 'user' });
+      expect(notificationHelperMock).not.toHaveBeenCalled();
+    });
+    expect(notificationHelperMock).toHaveBeenCalledTimes(1);
+  });
   beforeEach(() => {
     notificationHelperMock.mockReset();
   });

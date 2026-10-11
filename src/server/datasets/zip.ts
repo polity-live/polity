@@ -1,4 +1,5 @@
 import { inflateRawSync } from 'node:zlib';
+import { MAX_DATASET_SNAPSHOT_BYTES } from '@/features/charts/types';
 
 function readUInt32LE(bytes: Uint8Array, offset: number) {
   return (
@@ -31,6 +32,7 @@ export function unzipFirstTextFile(bytes: Uint8Array) {
   let compressionMethod: number;
   let compressedSize: number;
   let localHeaderOffset: number;
+  let uncompressedSize: number;
 
   while (true) {
     if (readUInt32LE(bytes, centralEntryOffset) !== 0x02014b50) {
@@ -39,6 +41,7 @@ export function unzipFirstTextFile(bytes: Uint8Array) {
 
     compressionMethod = readUInt16LE(bytes, centralEntryOffset + 10);
     compressedSize = readUInt32LE(bytes, centralEntryOffset + 20);
+    uncompressedSize = readUInt32LE(bytes, centralEntryOffset + 24);
     const fileNameLength = readUInt16LE(bytes, centralEntryOffset + 28);
     const extraLength = readUInt16LE(bytes, centralEntryOffset + 30);
     const commentLength = readUInt16LE(bytes, centralEntryOffset + 32);
@@ -62,12 +65,16 @@ export function unzipFirstTextFile(bytes: Uint8Array) {
   const localExtraLength = readUInt16LE(bytes, localHeaderOffset + 28);
   const dataOffset = localHeaderOffset + 30 + localNameLength + localExtraLength;
   const compressed = bytes.slice(dataOffset, dataOffset + compressedSize);
+  if (uncompressedSize > MAX_DATASET_SNAPSHOT_BYTES)
+    throw new Error('ZIP exceeds the 50 MiB snapshot limit');
 
   if (compressionMethod === 0) {
     return new TextDecoder().decode(compressed);
   }
   if (compressionMethod === 8) {
-    return new TextDecoder().decode(inflateRawSync(compressed));
+    return new TextDecoder().decode(
+      inflateRawSync(compressed, { maxOutputLength: MAX_DATASET_SNAPSHOT_BYTES })
+    );
   }
 
   throw new Error(`ZIP_UNSUPPORTED_COMPRESSION_${compressionMethod}`);

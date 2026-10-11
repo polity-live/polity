@@ -20,7 +20,10 @@ vi.mock('@/features/shared/ui/action-submission', () => ({
 vi.mock('@/features/shared/ui/ui/button', () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
-vi.mock('@/features/shared/hooks/use-translation', () => ({ translate: (key: string) => key }));
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
+  useTranslation: () => ({ t: (key: string) => key, language: 'en' }),
+}));
 
 import { InviteMembersDialog } from '../InviteMembersDialog';
 
@@ -43,6 +46,18 @@ const base = {
 };
 
 describe('InviteMembersDialog controller branches', () => {
+  it('offers email mode immediately for groups and keeps other invitation dialogs on user selection', () => {
+    const view = render(<InviteMembersDialog {...base} emailGroupId="group" />);
+    expect(mocks.viewProps.emailComposer.mode).toBe('users');
+    act(() => mocks.viewProps.emailComposer.setMode('email'));
+    expect(mocks.viewProps.emailComposer.mode).toBe('email');
+    expect(mocks.viewProps.inviteLabel).toBe('features.groups.emailInvitations.send');
+    expect(mocks.viewProps.inviteDisabled).toBe(true);
+    view.rerender(<InviteMembersDialog {...base} />);
+    expect(mocks.viewProps.emailComposer).toBeUndefined();
+    expect(mocks.viewProps.inviteLabel).toBe('Invite');
+  });
+
   it('selects each default-role fallback and skips initialization when closed or selected', () => {
     const change = vi.fn();
     const view = render(

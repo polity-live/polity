@@ -54,7 +54,7 @@ function response(overrides: Partial<Response> & { contentLength?: string | null
       ),
     },
     body: null,
-    text: vi.fn().mockResolvedValue('a,b\n1,2'),
+    arrayBuffer: vi.fn().mockResolvedValue(new TextEncoder().encode('a,b\n1,2').buffer),
     ...overrides,
   } as unknown as Response;
 }
@@ -69,6 +69,28 @@ beforeEach(() => {
 });
 
 describe('createGovDataCsvSnapshot', () => {
+  it.each([false, true])('decodes legacy CSV bytes before parsing, streamed=%s', streamed => {
+    const csv = 'Veränderung;Stadt\n42;Düsseldorf';
+    const bytes = Uint8Array.from(Buffer.from(csv, 'latin1'));
+    mocks.fetch.mockResolvedValue(new Response(streamed ? bytes : null));
+    if (!streamed)
+      mocks.fetch.mockResolvedValue(response({ arrayBuffer: async () => bytes.buffer }));
+    return createGovDataCsvSnapshot('pkg-1', 'res-1').then(() => {
+      expect(mocks.parse).toHaveBeenCalledWith(csv);
+    });
+  });
+
+  it('honors HTTP charset for a streamed CSV response', async () => {
+    const csv = 'Veränderung;Stadt\n42;Düsseldorf';
+    mocks.fetch.mockResolvedValue(
+      new Response(Buffer.from(csv, 'latin1'), {
+        headers: { 'Content-Type': 'text/csv; charset=iso-8859-1' },
+      })
+    );
+    await createGovDataCsvSnapshot('pkg-1', 'res-1');
+    expect(mocks.parse).toHaveBeenCalledWith(csv);
+  });
+
   it('rejects omitted, missing and non-CSV resources', async () => {
     mocks.loadPackage.mockResolvedValueOnce(pkg({ resources: undefined }));
     await expect(createGovDataCsvSnapshot('pkg-1', 'missing')).rejects.toThrow(
@@ -103,7 +125,7 @@ describe('createGovDataCsvSnapshot', () => {
     expect(mocks.safeUrl).toHaveBeenLastCalledWith('https://data.example/access.csv');
   });
 
-  it('rejects oversized declared and body-less text responses', async () => {
+  it('rejects oversized declared and body-less byte responses', async () => {
     mocks.fetch.mockResolvedValueOnce(
       response({ contentLength: String(MAX_MANUAL_CSV_BYTES + 1) })
     );
@@ -112,7 +134,7 @@ describe('createGovDataCsvSnapshot', () => {
     mocks.fetch.mockResolvedValueOnce(
       response({
         contentLength: 'unknown',
-        text: vi.fn().mockResolvedValue('x'.repeat(MAX_MANUAL_CSV_BYTES + 1)),
+        arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(MAX_MANUAL_CSV_BYTES + 1).buffer),
       })
     );
     await expect(createGovDataCsvSnapshot('pkg-1', 'res-1')).rejects.toThrow('CSV_FILE_TOO_LARGE');

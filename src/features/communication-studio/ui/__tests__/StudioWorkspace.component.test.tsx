@@ -52,6 +52,7 @@ const menuNames = new Set([
   'text',
   'font',
   'alignment',
+  'preview',
 ]);
 const panel = (name: string) => {
   if (menuNames.has(name)) {
@@ -1274,7 +1275,8 @@ describe('Studio toolbar workflows', () => {
     input.remove();
     click('Undo');
     expect(io.editor.undo).toHaveBeenCalled();
-    click('preview');
+    const previewMenu = panel('preview');
+    fireEvent.click(within(previewMenu).getByRole('menuitem', { name: 'startPreview' }));
     expect(screen.getByRole('dialog', { name: 'previewTitle' })).toBeTruthy();
     click('closePreview');
     expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull();
@@ -1479,7 +1481,11 @@ it('shows project loading before a document arrives and activates the editor aft
   Object.defineProperty(io.editor, 'v3Value', { get: () => null });
   io.loading = true;
   await show();
-  expect(screen.getByRole('status').textContent).toBe('loading');
+  expect(screen.getByRole('status').textContent).toBe('Polityloading');
+  expect(screen.getByRole('status').classList.contains('polity-presentation-loading-page')).toBe(
+    true
+  );
+  expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
   expect(screen.queryByTestId('canvas')).toBeNull();
   Object.defineProperty(io.editor, 'value', valueDescriptor);
   Object.defineProperty(io.editor, 'v3Value', canonicalDescriptor);

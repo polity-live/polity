@@ -24,6 +24,8 @@ export interface SessionProject {
   id: string;
   group_id: string | null;
   owner_id: string;
+  event_id?: string | null;
+  event?: { id: string };
   owner?: UserRow;
   collaborators?: readonly { user_id: string; user?: UserRow }[];
   group?: {
@@ -34,6 +36,17 @@ export interface SessionProject {
   };
 }
 export function studioCapabilities(project: SessionProject, actor: string, phase: string) {
+  if (project.event_id) {
+    const manage = Boolean(project.event);
+    return {
+      read: true,
+      edit: manage && phase === 'edit',
+      suggest: false,
+      comment: manage,
+      vote: false,
+      manage,
+    };
+  }
   const assigned =
     project.group?.memberships?.find(m => m.user_id === actor)?.membership_roles ?? [];
   const manager =

@@ -1,5 +1,36 @@
-import type { ChartPoint, DataAggregation } from '@/features/charts/types';
+import type {
+  ChartPoint,
+  DataAggregation,
+  DataViewQuery,
+  EurostatDimension,
+} from '@/features/charts/types';
 import { aggregateDatasetValues, parseDatasetNumber, type DatasetTable } from './csv';
+import { DatasetProviderFailure } from './providerError';
+
+export function assertProviderProjectionScope(
+  table: DatasetTable,
+  query: DataViewQuery,
+  metadata?: Record<string, unknown>
+) {
+  const dimensions = metadata?.providerDimensions;
+  if (!Array.isArray(dimensions)) return;
+  for (const dimension of dimensions as EurostatDimension[]) {
+    if (!table.columns.includes(dimension.id) || dimension.id === metadata?.timeDimension) continue;
+    const fixed = /^(unit|freq|value_unit|value_variable_code)$/i.test(dimension.id);
+    if (!fixed && [query.dimensionColumn, query.seriesColumn].includes(dimension.id)) continue;
+    let first: string | undefined;
+    for (const row of table.rows) {
+      const value = String(row[dimension.id] ?? '');
+      if (first === undefined) first = value;
+      else if (first !== value)
+        throw new DatasetProviderFailure(
+          `Choose one value for ${dimension.label} before combining observations`,
+          'invalid_scope',
+          422
+        );
+    }
+  }
+}
 
 export function buildMultiMeasureProjectionPoints({
   table,

@@ -43,6 +43,42 @@ function linked(nodes: StudioNode[]) {
   return { document, previous, created, root, instance: document.componentInstances[0] };
 }
 
+it('copies cover background video assets and preserves their local reference in linked revisions', () => {
+  const source = createFrameNode('square');
+  const asset = crypto.randomUUID(),
+    copied = crypto.randomUUID();
+  source.intro = { mode: 'video', scene: 'democracy-sculptural', assetId: asset, intensity: 0.6 };
+  const document = createStudioDocumentV3('Cover');
+  const root = createFrameNode('square');
+  source.parentFrameId = root.id;
+  document.nodes.push(root, source);
+  const snapshot = createElementSetSnapshot(
+    document,
+    [source.id],
+    [{ id: asset, name: 'Intro', mime: 'video/mp4' }]
+  );
+  expect(snapshot.assets).toEqual([{ sourceAssetId: asset, name: 'Intro', mime: 'video/mp4' }]);
+  const created = instantiateElementSet(snapshot, {
+    setId: crypto.randomUUID(),
+    revisionId: crypto.randomUUID(),
+    x: 0,
+    y: 0,
+    assetIds: { [asset]: copied },
+  });
+  const local = created.nodes[0];
+  expect(local.type === 'frame' && local.intro?.assetId).toBe(copied);
+  expect(local.type === 'frame' && local.intro?.scene).toBe('democracy-sculptural');
+  const target = createStudioDocumentV3('Copy');
+  target.nodes.push(...created.nodes);
+  target.componentInstances.push(created.instance);
+  const next = structuredClone(snapshot);
+  next.nodes[0].name = 'Revised cover';
+  mergeElementSetRevision(target, created.instance.id, snapshot, next, crypto.randomUUID());
+  expect(local.type === 'frame' && local.intro?.assetId).toBe(copied);
+  expect(local.name).toBe('Revised cover');
+  expect(local.type === 'frame' && local.intro?.scene).toBe('democracy-sculptural');
+});
+
 it('retains child local coordinates when saving and inserting a nested frame selection', () => {
   const document = createStudioDocumentV3('Nested');
   const root = createFrameNode('square');

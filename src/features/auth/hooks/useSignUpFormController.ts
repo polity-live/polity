@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { consumePendingSignInRedirect } from '../logic/authRedirects';
 import {
   isValidEmailAddress,
   isValidPassword,
@@ -91,7 +92,7 @@ export function useSignUpFormController() {
 
     if (result.status === 'authenticated') {
       sessionStorage.setItem('polity_onboarding', 'true');
-      navigate({ to: '/' });
+      navigate({ to: consumePendingSignInRedirect() });
     } else if (result.status === 'confirmation_required') {
       setPendingConfirmationEmail(trimmedEmail);
     } else {

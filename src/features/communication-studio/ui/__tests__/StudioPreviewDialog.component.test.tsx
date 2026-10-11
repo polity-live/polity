@@ -7,6 +7,9 @@ import { createDocument } from '../../logic/templates';
 import { getStudioRootFramesInLayerOrder } from '../../logic/frame-order';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import type { StudioDocumentV3 } from '../../logic/document-v3';
+vi.mock('@/zero/communication-studio/useLiveStudioState', () => ({
+  useLiveStudioState: (document: StudioDocumentV3) => ({ projected: document, sources: [] }),
+}));
 
 vi.mock('../KonvaStudioCanvas', () => ({
   default: (props: { document: StudioDocumentV3; activeFrameId: string; fit: string }) => (

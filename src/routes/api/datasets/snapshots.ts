@@ -7,12 +7,15 @@ import {
 } from '@/server/datasets/providers';
 import { importGenesisDatasetSnapshot } from '@/server/datasets/genesis';
 import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
+import { importFiltersSchema } from '@/server/datasets/importScope';
+import { datasetProviderErrorResponse } from '@/server/datasets/providerError';
 
 const requestSchema = z.discriminatedUnion('provider', [
   z.object({
     provider: z.literal('EUROSTAT'),
     code: z.string().trim().min(1).max(100),
     language: z.enum(['en', 'de', 'fr']).default('en'),
+    filters: importFiltersSchema.optional(),
   }),
   z.object({
     provider: z.literal('GOVDATA'),
@@ -23,6 +26,7 @@ const requestSchema = z.discriminatedUnion('provider', [
     provider: z.literal('GENESIS_DESTATIS'),
     code: z.string().trim().min(1).max(100),
     language: z.enum(['en', 'de']).default('de'),
+    filters: importFiltersSchema.optional(),
   }),
 ]);
 
@@ -43,6 +47,8 @@ export const Route = createFileRoute('/api/datasets/snapshots')({
                 code: body.code,
                 language: body.language,
                 userId: session.user.id,
+                filters: body.filters,
+                signal: AbortSignal.any([request.signal, AbortSignal.timeout(120_000)]),
               })
             );
           }
@@ -60,9 +66,13 @@ export const Route = createFileRoute('/api/datasets/snapshots')({
               code: body.code,
               language: body.language,
               userId: session.user.id,
+              filters: body.filters,
+              signal: AbortSignal.any([request.signal, AbortSignal.timeout(120_000)]),
             })
           );
         } catch (error) {
+          const providerResponse = datasetProviderErrorResponse(error);
+          if (providerResponse) return providerResponse;
           const status = error instanceof z.ZodError ? 400 : 500;
           return Response.json(
             error instanceof z.ZodError

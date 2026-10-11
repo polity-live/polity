@@ -1,23 +1,23 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 188,
-    "columns": 1941,
-    "primaryKeys": 189,
-    "checks": 178,
-    "foreignKeys": 455,
-    "uniqueConstraints": 72,
-    "uniqueIndexes": 30,
-    "uniqueRules": 102,
-    "indexes": 744,
+    "tables": 192,
+    "columns": 1973,
+    "primaryKeys": 193,
+    "checks": 186,
+    "foreignKeys": 464,
+    "uniqueConstraints": 75,
+    "uniqueIndexes": 31,
+    "uniqueRules": 106,
+    "indexes": 754,
     "functions": 128,
     "triggers": 117,
     "policies": 169,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 119,
-    "uniqueViolations": 88
+    "checkViolations": 123,
+    "uniqueViolations": 89
   },
   "globalTests": {
     "catalog": "schema_contract.sql",
@@ -399,6 +399,11 @@
       "source": "74_studio_zero_commands.sql",
       "behavior": ["studio_zero_commands.sql"],
       "securityBehavior": ["studio_zero_commands.sql"]
+    },
+    {
+      "source": "76_group_email_invitations.sql",
+      "behavior": ["group_email_invitations.sql"],
+      "securityBehavior": ["group_email_invitations.sql"]
     }
   ]
 }

@@ -9,6 +9,10 @@ import { studioDocumentV3Schema } from '../../logic/document-v3';
 import { applyStudioCommandV3 } from '../../logic/commands-v3';
 import { element } from '../../logic/document';
 import { makePage } from '../../logic/templates';
+import { insertStudioDataView } from '../../logic/data-view-import';
+import { configuration, projection } from '@/test/studio-data-view.fixture';
+import { assignDraggedStudioNodesToFrames } from '../../logic/canvas-frame-assignment';
+import { moveByWorldDelta } from '../../logic/selection-geometry';
 const io = vi.hoisted(() => ({
   authority: undefined as any,
   authorityError: undefined as any,
@@ -138,6 +142,73 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+});
+it('undoes and redoes a chart drag and its frame assignment as one edit', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  const frameId = hook.result.current.v3Value!.nodes.find(n => n.type === 'frame')!.id;
+  let ids: string[] = [];
+  act(() =>
+    hook.result.current.transactV3(document => {
+      document.nodes.find(n => n.id === frameId)!.transform.x = 4160;
+      ids = insertStudioDataView(document, frameId, configuration('line'), projection);
+    })
+  );
+  const original = structuredClone(hook.result.current.v3Value!);
+  act(() =>
+    hook.result.current.transactV3(document => {
+      const frame = document.nodes.find(n => n.id === frameId)!;
+      for (const node of document.nodes.filter(n => ids.includes(n.id)))
+        moveByWorldDelta(document, node, { x: frame.transform.width + 1, y: 0 });
+      assignDraggedStudioNodesToFrames(document, ids);
+    })
+  );
+  const moved = structuredClone(hook.result.current.v3Value!);
+  expect(moved.nodes.filter(n => ids.includes(n.id)).every(n => n.parentFrameId === null)).toBe(
+    true
+  );
+  expect(moved.nodes.filter(n => ids.includes(n.id)).every(n => n.transform.x > 4000)).toBe(true);
+  const nodes = (document: typeof original) =>
+    [...document.nodes].sort((a, b) => a.id.localeCompare(b.id));
+  act(() => expect(hook.result.current.undo()).toBe(true));
+  expect(nodes(hook.result.current.v3Value!)).toEqual(nodes(original));
+  act(() => expect(hook.result.current.redo()).toBe(true));
+  expect(nodes(hook.result.current.v3Value!)).toEqual(nodes(moved));
+});
+
+it('imports all data elements in one undo step, redoes, persists, and reloads resolved values', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  const original = structuredClone(hook.result.current.v3Value!);
+  const frameId = original.nodes.find(n => n.type === 'frame')!.id;
+  let ids: string[] = [];
+  act(() =>
+    expect(
+      hook.result.current.transactV3(document => {
+        ids = insertStudioDataView(document, frameId, configuration('area'), projection);
+      })
+    ).toBe(true)
+  );
+  expect(ids.length).toBeGreaterThan(1);
+  expect(hook.result.current.v3Value!.nodes.filter(n => ids.includes(n.id))).toHaveLength(
+    ids.length
+  );
+  act(() => expect(hook.result.current.undo()).toBe(true));
+  expect({
+    ...hook.result.current.v3Value,
+    nodes: [...hook.result.current.v3Value!.nodes].sort((a, b) => a.id.localeCompare(b.id)),
+  }).toEqual({ ...original, nodes: [...original.nodes].sort((a, b) => a.id.localeCompare(b.id)) });
+  expect(hook.result.current.canUndo).toBe(false);
+  act(() => expect(hook.result.current.redo()).toBe(true));
+  await act(() => hook.result.current.commit());
+  hook.unmount();
+  localStorage.clear();
+  const reloaded = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(reloaded.result.current.canEdit).toBe(true));
+  const imported = reloaded.result.current.v3Value!.nodes.filter(n => ids.includes(n.id));
+  expect(imported).toHaveLength(ids.length);
+  const chart = imported.find(n => n.type === 'chart');
+  expect(chart?.type === 'chart' && chart.data.series[0].values).toEqual([10, null, 30]);
 });
 it('keeps a server-authorized draft editable while its Zero workspace query is still empty', async () => {
   io.request.mockImplementation(async op =>

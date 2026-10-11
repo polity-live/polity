@@ -1,4 +1,5 @@
 import { whereAnyOf } from '../shared/query-conditions';
+import { applyEventStudioManagerQueryAccess, applyEventQueryAccess } from '../rbac/query-access';
 
 const activeMemberships = ['active', 'member', 'admin'];
 
@@ -34,22 +35,28 @@ export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T
 
 function collaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
   return or(
+    exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor)),
     and(
-      cmp('group_id', 'IS', null),
+      cmp('event_id', 'IS', null),
       or(
-        cmp('owner_id', actor),
-        exists(
-          'collaborators',
-          (collaborator: any) => collaborator.where('user_id', actor).where('status', 'active'),
-          { flip: false }
+        and(
+          cmp('group_id', 'IS', null),
+          or(
+            cmp('owner_id', actor),
+            exists(
+              'collaborators',
+              (collaborator: any) => collaborator.where('user_id', actor).where('status', 'active'),
+              { flip: false }
+            )
+          )
+        ),
+        and(
+          cmp('group_id', 'IS NOT', null),
+          or(
+            cmp('owner_id', actor),
+            exists('group', (group: any) => groupProjectsAccess(group, actor), { flip: false })
+          )
         )
-      )
-    ),
-    and(
-      cmp('group_id', 'IS NOT', null),
-      or(
-        cmp('owner_id', actor),
-        exists('group', (group: any) => groupProjectsAccess(group, actor), { flip: false })
       )
     )
   );
@@ -63,10 +70,16 @@ export function studioProjectCollaborativeAccess<T>(project: T, actor: string): 
 export function studioProjectReadAccess<T>(project: T, actor: string | null): T {
   return (project as any).where((helpers: any) =>
     helpers.or(
-      helpers.cmp('visibility', 'public'),
-      ...(actor
-        ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(actor, helpers)]
-        : [])
+      helpers.exists('event', (event: any) => applyEventQueryAccess(event, actor)),
+      helpers.and(
+        helpers.cmp('event_id', 'IS', null),
+        helpers.or(
+          helpers.cmp('visibility', 'public'),
+          ...(actor
+            ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(actor, helpers)]
+            : [])
+        )
+      )
     )
   ) as T;
 }

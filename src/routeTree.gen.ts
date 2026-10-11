@@ -44,6 +44,7 @@ import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as DocsTopicRouteImport } from './routes/docs/$topic'
 import { Route as DocsSearchRouteImport } from './routes/docs/search'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthedAmendmentIdRouteImport } from './routes/_authed/amendment/$id'
 import { Route as AuthedBlogIdRouteImport } from './routes/_authed/blog/$id'
 import { Route as AuthedCreateIndexRouteImport } from './routes/_authed/create/index'
@@ -73,6 +74,7 @@ import { Route as ApiAiTracesRouteImport } from './routes/api/ai/traces'
 import { Route as ApiCurrencyCurrenciesRouteImport } from './routes/api/currency/currencies'
 import { Route as ApiCurrencyRatesRouteImport } from './routes/api/currency/rates'
 import { Route as ApiDatasetsArchiveRouteImport } from './routes/api/datasets/archive'
+import { Route as ApiDatasetsPrepareRouteImport } from './routes/api/datasets/prepare'
 import { Route as ApiDatasetsSearchRouteImport } from './routes/api/datasets/search'
 import { Route as ApiDatasetsSnapshotsRouteImport } from './routes/api/datasets/snapshots'
 import { Route as ApiDatasetsUploadRouteImport } from './routes/api/datasets/upload'
@@ -84,6 +86,7 @@ import { Route as ApiEurostatImportStepRouteImport } from './routes/api/eurostat
 import { Route as ApiEurostatProjectionRouteImport } from './routes/api/eurostat/projection'
 import { Route as ApiGovdataCatalogueRouteImport } from './routes/api/govdata/catalogue'
 import { Route as ApiGovdataImportRouteImport } from './routes/api/govdata/import'
+import { Route as ApiInvitationsTokenRouteImport } from './routes/api/invitations/$token'
 import { Route as ApiNewsletterSyncRouteImport } from './routes/api/newsletter/sync'
 import { Route as ApiPushProcessRouteImport } from './routes/api/push/process'
 import { Route as ApiPushSubscriptionRouteImport } from './routes/api/push/subscription'
@@ -110,6 +113,7 @@ import { Route as AuthedEventIdAgendaRouteImport } from './routes/_authed/event/
 import { Route as AuthedEventIdNetworkRouteImport } from './routes/_authed/event/$id/network'
 import { Route as AuthedEventIdNotificationsRouteImport } from './routes/_authed/event/$id/notifications'
 import { Route as AuthedEventIdParticipantsRouteImport } from './routes/_authed/event/$id/participants'
+import { Route as AuthedEventIdPresentationRouteImport } from './routes/_authed/event/$id/presentation'
 import { Route as AuthedEventIdRolesRouteImport } from './routes/_authed/event/$id/roles'
 import { Route as AuthedEventIdSettingsRouteImport } from './routes/_authed/event/$id/settings'
 import { Route as AuthedEventIdStreamRouteImport } from './routes/_authed/event/$id/stream'
@@ -139,6 +143,7 @@ import { Route as AuthedUserIdSubscriptionsRouteImport } from './routes/_authed/
 import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/datasets/$datasetId/details'
 import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
 import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
+import { Route as ApiGroupsGroupIdEmailInvitationsRouteImport } from './routes/api/groups/$groupId/email-invitations'
 import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jobId'
 import { Route as ApiStudioExportsIdRouteImport } from './routes/api/studio/exports/$id'
 import { Route as ApiStudioMediaIdRouteImport } from './routes/api/studio/media/$id'
@@ -336,6 +341,11 @@ const DocsSearchRoute = DocsSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => DocsRoute,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedAmendmentIdRoute = AuthedAmendmentIdRouteImport.update({
   id: '/amendment/$id',
   path: '/amendment/$id',
@@ -483,6 +493,11 @@ const ApiDatasetsArchiveRoute = ApiDatasetsArchiveRouteImport.update({
   path: '/api/datasets/archive',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDatasetsPrepareRoute = ApiDatasetsPrepareRouteImport.update({
+  id: '/api/datasets/prepare',
+  path: '/api/datasets/prepare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDatasetsSearchRoute = ApiDatasetsSearchRouteImport.update({
   id: '/api/datasets/search',
   path: '/api/datasets/search',
@@ -537,6 +552,11 @@ const ApiGovdataCatalogueRoute = ApiGovdataCatalogueRouteImport.update({
 const ApiGovdataImportRoute = ApiGovdataImportRouteImport.update({
   id: '/api/govdata/import',
   path: '/api/govdata/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInvitationsTokenRoute = ApiInvitationsTokenRouteImport.update({
+  id: '/api/invitations/$token',
+  path: '/api/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNewsletterSyncRoute = ApiNewsletterSyncRouteImport.update({
@@ -677,6 +697,12 @@ const AuthedEventIdParticipantsRoute =
   AuthedEventIdParticipantsRouteImport.update({
     id: '/participants',
     path: '/participants',
+    getParentRoute: () => AuthedEventIdRoute,
+  } as any)
+const AuthedEventIdPresentationRoute =
+  AuthedEventIdPresentationRouteImport.update({
+    id: '/presentation',
+    path: '/presentation',
     getParentRoute: () => AuthedEventIdRoute,
   } as any)
 const AuthedEventIdRolesRoute = AuthedEventIdRolesRouteImport.update({
@@ -832,6 +858,12 @@ const ApiDatasetsSnapshotIdValuesRoute =
   ApiDatasetsSnapshotIdValuesRouteImport.update({
     id: '/api/datasets/$snapshotId/values',
     path: '/api/datasets/$snapshotId/values',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiGroupsGroupIdEmailInvitationsRoute =
+  ApiGroupsGroupIdEmailInvitationsRouteImport.update({
+    id: '/api/groups/$groupId/email-invitations',
+    path: '/api/groups/$groupId/email-invitations',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
@@ -994,6 +1026,7 @@ export interface FileRoutesByFullPath {
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/docs/search': typeof DocsSearchRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
@@ -1023,6 +1056,7 @@ export interface FileRoutesByFullPath {
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1034,6 +1068,7 @@ export interface FileRoutesByFullPath {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/invitations/$token': typeof ApiInvitationsTokenRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/push/process': typeof ApiPushProcessRoute
   '/api/push/subscription': typeof ApiPushSubscriptionRoute
@@ -1059,6 +1094,7 @@ export interface FileRoutesByFullPath {
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/event/$id/presentation': typeof AuthedEventIdPresentationRoute
   '/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
@@ -1086,6 +1122,7 @@ export interface FileRoutesByFullPath {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/groups/$groupId/email-invitations': typeof ApiGroupsGroupIdEmailInvitationsRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
@@ -1144,6 +1181,7 @@ export interface FileRoutesByTo {
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/docs/search': typeof DocsSearchRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/auth': typeof AuthIndexRoute
   '/docs': typeof DocsIndexRoute
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
@@ -1168,6 +1206,7 @@ export interface FileRoutesByTo {
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1179,6 +1218,7 @@ export interface FileRoutesByTo {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/invitations/$token': typeof ApiInvitationsTokenRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/push/process': typeof ApiPushProcessRoute
   '/api/push/subscription': typeof ApiPushSubscriptionRoute
@@ -1203,6 +1243,7 @@ export interface FileRoutesByTo {
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/event/$id/presentation': typeof AuthedEventIdPresentationRoute
   '/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
@@ -1227,6 +1268,7 @@ export interface FileRoutesByTo {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/groups/$groupId/email-invitations': typeof ApiGroupsGroupIdEmailInvitationsRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
@@ -1288,6 +1330,7 @@ export interface FileRoutesById {
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/docs/search': typeof DocsSearchRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
@@ -1317,6 +1360,7 @@ export interface FileRoutesById {
   '/api/currency/currencies': typeof ApiCurrencyCurrenciesRoute
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1328,6 +1372,7 @@ export interface FileRoutesById {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/invitations/$token': typeof ApiInvitationsTokenRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/push/process': typeof ApiPushProcessRoute
   '/api/push/subscription': typeof ApiPushSubscriptionRoute
@@ -1353,6 +1398,7 @@ export interface FileRoutesById {
   '/_authed/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/_authed/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/_authed/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/_authed/event/$id/presentation': typeof AuthedEventIdPresentationRoute
   '/_authed/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/_authed/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/_authed/event/$id/stream': typeof AuthedEventIdStreamRoute
@@ -1380,6 +1426,7 @@ export interface FileRoutesById {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/groups/$groupId/email-invitations': typeof ApiGroupsGroupIdEmailInvitationsRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
@@ -1443,6 +1490,7 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/docs/$topic'
     | '/docs/search'
+    | '/invite/$token'
     | '/auth/'
     | '/docs/'
     | '/amendment/$id'
@@ -1472,6 +1520,7 @@ export interface FileRouteTypes {
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
+    | '/api/datasets/prepare'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1483,6 +1532,7 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/invitations/$token'
     | '/api/newsletter/sync'
     | '/api/push/process'
     | '/api/push/subscription'
@@ -1508,6 +1558,7 @@ export interface FileRouteTypes {
     | '/event/$id/network'
     | '/event/$id/notifications'
     | '/event/$id/participants'
+    | '/event/$id/presentation'
     | '/event/$id/roles'
     | '/event/$id/settings'
     | '/event/$id/stream'
@@ -1535,6 +1586,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/groups/$groupId/email-invitations'
     | '/api/push/test/$jobId'
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
@@ -1593,6 +1645,7 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/docs/$topic'
     | '/docs/search'
+    | '/invite/$token'
     | '/auth'
     | '/docs'
     | '/create/agenda-item'
@@ -1617,6 +1670,7 @@ export interface FileRouteTypes {
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
+    | '/api/datasets/prepare'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1628,6 +1682,7 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/invitations/$token'
     | '/api/newsletter/sync'
     | '/api/push/process'
     | '/api/push/subscription'
@@ -1652,6 +1707,7 @@ export interface FileRouteTypes {
     | '/event/$id/network'
     | '/event/$id/notifications'
     | '/event/$id/participants'
+    | '/event/$id/presentation'
     | '/event/$id/roles'
     | '/event/$id/settings'
     | '/event/$id/stream'
@@ -1676,6 +1732,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/groups/$groupId/email-invitations'
     | '/api/push/test/$jobId'
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
@@ -1736,6 +1793,7 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/docs/$topic'
     | '/docs/search'
+    | '/invite/$token'
     | '/auth/'
     | '/docs/'
     | '/_authed/amendment/$id'
@@ -1765,6 +1823,7 @@ export interface FileRouteTypes {
     | '/api/currency/currencies'
     | '/api/currency/rates'
     | '/api/datasets/archive'
+    | '/api/datasets/prepare'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1776,6 +1835,7 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/invitations/$token'
     | '/api/newsletter/sync'
     | '/api/push/process'
     | '/api/push/subscription'
@@ -1801,6 +1861,7 @@ export interface FileRouteTypes {
     | '/_authed/event/$id/network'
     | '/_authed/event/$id/notifications'
     | '/_authed/event/$id/participants'
+    | '/_authed/event/$id/presentation'
     | '/_authed/event/$id/roles'
     | '/_authed/event/$id/settings'
     | '/_authed/event/$id/stream'
@@ -1828,6 +1889,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/groups/$groupId/email-invitations'
     | '/api/push/test/$jobId'
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
@@ -1875,6 +1937,7 @@ export interface RootRouteChildren {
   ApiMutateRoute: typeof ApiMutateRoute
   ApiQueryRoute: typeof ApiQueryRoute
   ApiTutorialRoute: typeof ApiTutorialRouteWithChildren
+  InviteTokenRoute: typeof InviteTokenRoute
   ApiAiCatalogRoute: typeof ApiAiCatalogRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
   ApiAiCommandRoute: typeof ApiAiCommandRoute
@@ -1884,6 +1947,7 @@ export interface RootRouteChildren {
   ApiCurrencyCurrenciesRoute: typeof ApiCurrencyCurrenciesRoute
   ApiCurrencyRatesRoute: typeof ApiCurrencyRatesRoute
   ApiDatasetsArchiveRoute: typeof ApiDatasetsArchiveRoute
+  ApiDatasetsPrepareRoute: typeof ApiDatasetsPrepareRoute
   ApiDatasetsSearchRoute: typeof ApiDatasetsSearchRoute
   ApiDatasetsSnapshotsRoute: typeof ApiDatasetsSnapshotsRoute
   ApiDatasetsUploadRoute: typeof ApiDatasetsUploadRoute
@@ -1895,6 +1959,7 @@ export interface RootRouteChildren {
   ApiEurostatProjectionRoute: typeof ApiEurostatProjectionRoute
   ApiGovdataCatalogueRoute: typeof ApiGovdataCatalogueRoute
   ApiGovdataImportRoute: typeof ApiGovdataImportRoute
+  ApiInvitationsTokenRoute: typeof ApiInvitationsTokenRoute
   ApiNewsletterSyncRoute: typeof ApiNewsletterSyncRoute
   ApiPushProcessRoute: typeof ApiPushProcessRoute
   ApiPushSubscriptionRoute: typeof ApiPushSubscriptionRoute
@@ -1904,6 +1969,7 @@ export interface RootRouteChildren {
   ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
   ApiDatasetsSnapshotIdProjectionRoute: typeof ApiDatasetsSnapshotIdProjectionRoute
   ApiDatasetsSnapshotIdValuesRoute: typeof ApiDatasetsSnapshotIdValuesRoute
+  ApiGroupsGroupIdEmailInvitationsRoute: typeof ApiGroupsGroupIdEmailInvitationsRoute
   ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
   ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
   ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
@@ -2156,6 +2222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsSearchRouteImport
       parentRoute: typeof DocsRoute
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/amendment/$id': {
       id: '/_authed/amendment/$id'
       path: '/amendment/$id'
@@ -2359,6 +2432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDatasetsArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/datasets/prepare': {
+      id: '/api/datasets/prepare'
+      path: '/api/datasets/prepare'
+      fullPath: '/api/datasets/prepare'
+      preLoaderRoute: typeof ApiDatasetsPrepareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/datasets/search': {
       id: '/api/datasets/search'
       path: '/api/datasets/search'
@@ -2434,6 +2514,13 @@ declare module '@tanstack/react-router' {
       path: '/api/govdata/import'
       fullPath: '/api/govdata/import'
       preLoaderRoute: typeof ApiGovdataImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/invitations/$token': {
+      id: '/api/invitations/$token'
+      path: '/api/invitations/$token'
+      fullPath: '/api/invitations/$token'
+      preLoaderRoute: typeof ApiInvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/newsletter/sync': {
@@ -2616,6 +2703,13 @@ declare module '@tanstack/react-router' {
       path: '/participants'
       fullPath: '/event/$id/participants'
       preLoaderRoute: typeof AuthedEventIdParticipantsRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/presentation': {
+      id: '/_authed/event/$id/presentation'
+      path: '/presentation'
+      fullPath: '/event/$id/presentation'
+      preLoaderRoute: typeof AuthedEventIdPresentationRouteImport
       parentRoute: typeof AuthedEventIdRoute
     }
     '/_authed/event/$id/roles': {
@@ -2819,6 +2913,13 @@ declare module '@tanstack/react-router' {
       path: '/api/datasets/$snapshotId/values'
       fullPath: '/api/datasets/$snapshotId/values'
       preLoaderRoute: typeof ApiDatasetsSnapshotIdValuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/groups/$groupId/email-invitations': {
+      id: '/api/groups/$groupId/email-invitations'
+      path: '/api/groups/$groupId/email-invitations'
+      fullPath: '/api/groups/$groupId/email-invitations'
+      preLoaderRoute: typeof ApiGroupsGroupIdEmailInvitationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/push/test/$jobId': {
@@ -3065,6 +3166,7 @@ interface AuthedEventIdRouteChildren {
   AuthedEventIdNetworkRoute: typeof AuthedEventIdNetworkRoute
   AuthedEventIdNotificationsRoute: typeof AuthedEventIdNotificationsRoute
   AuthedEventIdParticipantsRoute: typeof AuthedEventIdParticipantsRoute
+  AuthedEventIdPresentationRoute: typeof AuthedEventIdPresentationRoute
   AuthedEventIdRolesRoute: typeof AuthedEventIdRolesRoute
   AuthedEventIdSettingsRoute: typeof AuthedEventIdSettingsRoute
   AuthedEventIdStreamRoute: typeof AuthedEventIdStreamRoute
@@ -3076,6 +3178,7 @@ const AuthedEventIdRouteChildren: AuthedEventIdRouteChildren = {
   AuthedEventIdNetworkRoute: AuthedEventIdNetworkRoute,
   AuthedEventIdNotificationsRoute: AuthedEventIdNotificationsRoute,
   AuthedEventIdParticipantsRoute: AuthedEventIdParticipantsRoute,
+  AuthedEventIdPresentationRoute: AuthedEventIdPresentationRoute,
   AuthedEventIdRolesRoute: AuthedEventIdRolesRoute,
   AuthedEventIdSettingsRoute: AuthedEventIdSettingsRoute,
   AuthedEventIdStreamRoute: AuthedEventIdStreamRoute,
@@ -3396,6 +3499,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMutateRoute: ApiMutateRoute,
   ApiQueryRoute: ApiQueryRoute,
   ApiTutorialRoute: ApiTutorialRouteWithChildren,
+  InviteTokenRoute: InviteTokenRoute,
   ApiAiCatalogRoute: ApiAiCatalogRoute,
   ApiAiChatRoute: ApiAiChatRoute,
   ApiAiCommandRoute: ApiAiCommandRoute,
@@ -3405,6 +3509,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCurrencyCurrenciesRoute: ApiCurrencyCurrenciesRoute,
   ApiCurrencyRatesRoute: ApiCurrencyRatesRoute,
   ApiDatasetsArchiveRoute: ApiDatasetsArchiveRoute,
+  ApiDatasetsPrepareRoute: ApiDatasetsPrepareRoute,
   ApiDatasetsSearchRoute: ApiDatasetsSearchRoute,
   ApiDatasetsSnapshotsRoute: ApiDatasetsSnapshotsRoute,
   ApiDatasetsUploadRoute: ApiDatasetsUploadRoute,
@@ -3416,6 +3521,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiEurostatProjectionRoute: ApiEurostatProjectionRoute,
   ApiGovdataCatalogueRoute: ApiGovdataCatalogueRoute,
   ApiGovdataImportRoute: ApiGovdataImportRoute,
+  ApiInvitationsTokenRoute: ApiInvitationsTokenRoute,
   ApiNewsletterSyncRoute: ApiNewsletterSyncRoute,
   ApiPushProcessRoute: ApiPushProcessRoute,
   ApiPushSubscriptionRoute: ApiPushSubscriptionRoute,
@@ -3425,6 +3531,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,
   ApiDatasetsSnapshotIdProjectionRoute: ApiDatasetsSnapshotIdProjectionRoute,
   ApiDatasetsSnapshotIdValuesRoute: ApiDatasetsSnapshotIdValuesRoute,
+  ApiGroupsGroupIdEmailInvitationsRoute: ApiGroupsGroupIdEmailInvitationsRoute,
   ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
   ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
   ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,

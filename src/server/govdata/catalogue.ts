@@ -46,6 +46,10 @@ export interface CkanPackage {
   modified?: string | null;
   organization?: CkanOrganization | null;
   extras?: CkanExtra[] | null;
+  temporal_start?: string | null;
+  temporal_end?: string | null;
+  spatial_text?: string | null;
+  spatial?: string | Record<string, unknown> | null;
   resources?: CkanResource[] | null;
 }
 
@@ -217,6 +221,21 @@ export function normalizeGovDataPackage(pkg: CkanPackage): GovDataCatalogueEntry
   if (!id || !name || resources.length === 0) return null;
 
   const organizationTitle = nullableGovDataText(pkg.organization?.title ?? pkg.organization?.name);
+  const start = nullableText(pkg.temporal_start ?? extraValue(pkg, 'temporal_start'));
+  const end = nullableText(pkg.temporal_end ?? extraValue(pkg, 'temporal_end'));
+  const spatialText = nullableGovDataText(pkg.spatial_text ?? extraValue(pkg, 'spatial_text'));
+  let spatialCoverage: GovDataCatalogueEntry['spatialCoverage'];
+  if (spatialText) {
+    try {
+      const parsed: unknown = JSON.parse(spatialText);
+      spatialCoverage =
+        Array.isArray(parsed) && parsed.every(value => typeof value === 'string')
+          ? parsed
+          : [spatialText];
+    } catch {
+      spatialCoverage = [spatialText];
+    }
+  } else if (pkg.spatial && typeof pkg.spatial === 'object') spatialCoverage = pkg.spatial;
   return {
     id,
     name,
@@ -225,17 +244,23 @@ export function normalizeGovDataPackage(pkg: CkanPackage): GovDataCatalogueEntry
     publisher: nullableGovDataText(extraValue(pkg, 'publisher_name') ?? pkg.maintainer),
     organizationTitle,
     modified: nullableText(pkg.modified ?? pkg.metadata_modified),
+    ...(start || end ? { timeCoverage: { start, end } } : {}),
+    ...(spatialCoverage ? { spatialCoverage } : {}),
     resources,
   };
 }
 
-async function callGovDataAction<T>(action: string, params: Record<string, string | number>) {
+async function callGovDataAction<T>(
+  action: string,
+  params: Record<string, string | number>,
+  signal?: AbortSignal
+) {
   const url = new URL(`${GOVDATA_ACTION_BASE_URL}/${action}`);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, String(value));
   }
 
-  const response = await fetch(url);
+  const response = signal ? await fetch(url, { signal }) : await fetch(url);
   if (!response.ok) {
     throw new Error(`GovData ${action} request failed with ${response.status}`);
   }
@@ -247,14 +272,18 @@ async function callGovDataAction<T>(action: string, params: Record<string, strin
   return body.result;
 }
 
-export async function searchGovDataCatalogue(query: string, limit = 20) {
+export async function searchGovDataCatalogue(query: string, limit = 20, signal?: AbortSignal) {
   const normalizedQuery = query.trim();
   if (normalizedQuery.length < 2) return [];
 
-  const result = await callGovDataAction<PackageSearchResult>('package_search', {
-    q: normalizedQuery,
-    rows: 50,
-  });
+  const result = await callGovDataAction<PackageSearchResult>(
+    'package_search',
+    {
+      q: normalizedQuery,
+      rows: 50,
+    },
+    signal
+  );
 
   return result.results
     .map(normalizeGovDataPackage)

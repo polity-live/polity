@@ -11,6 +11,7 @@ import { setTableBorders } from '../../../src/features/communication-studio/logi
 import { defaultBrand } from '../../../src/features/communication-studio/logic/document';
 import { createStudioTemplateDocumentV5 } from '../../../src/features/communication-studio/logic/templates-v5';
 import { legacyDocumentToV3 } from '../../../src/features/communication-studio/logic/v3-adapter';
+import { createEventTemplate } from '../../../src/features/communication-studio/logic/event-templates';
 const io = vi.hoisted(() => ({
   launch: vi.fn(),
   spawn: vi.fn(),
@@ -37,6 +38,8 @@ vi.mock('node:fs/promises', async original => {
   };
 });
 import { ffmpeg, pageFile, render, selectStudioExportDocument } from '../exporters';
+import { insertStudioDataView } from '../../../src/features/communication-studio/logic/data-view-import';
+import { configuration, projection } from '../../../src/test/studio-data-view.fixture';
 import {
   createFrameNode,
   createStudioDocumentV5,
@@ -106,6 +109,53 @@ beforeEach(async () => {
     });
     return child;
   });
+});
+it('closes Chromium if the export tab fails during initialization', async () => {
+  io.launch.mockResolvedValueOnce({
+    newPage: vi.fn().mockRejectedValue(new Error('Target crashed')),
+    close: io.close,
+  });
+  await expect(
+    render(
+      createEventTemplate('cover', crypto.randomUUID()),
+      {},
+      'png',
+      [],
+      temp,
+      async () => undefined,
+      async () => false
+    )
+  ).rejects.toThrow('Target crashed');
+  expect(io.close).toHaveBeenCalledOnce();
+});
+it('exports intro backgrounds as static PowerPoint images while preserving editable live text', async () => {
+  const doc = createEventTemplate('cover', crypto.randomUUID());
+  const frame = doc.nodes[0];
+  if (frame.type !== 'frame') throw new Error('frame');
+  frame.intro = {
+    mode: 'video',
+    assetId: videoId,
+    intensity: 0.45,
+    epochMs: 1000,
+    snapshotAt: 46000,
+  };
+  const out = await render(
+    doc,
+    { [videoId]: { bytes: Buffer.from('video'), mime: 'video/mp4', name: 'intro' } },
+    'pptx',
+    [frame.id],
+    temp,
+    async () => undefined,
+    async () => false
+  );
+  const files = unzipSync(out.bytes);
+  const slide = strFromU8(files['ppt/slides/slide1.xml']);
+  expect(slide).toContain('<p:pic>');
+  expect(slide).toContain('<a:t>');
+  const rendered = io.paint.mock.calls.map(c => c[0]);
+  expect(
+    rendered.some((d: any) => d.nodes.length === 1 && d.nodes[0].intro.snapshotAt === 46000)
+  ).toBe(true);
 });
 afterEach(async () => {
   vi.unstubAllGlobals();
@@ -418,7 +468,7 @@ describe('Studio export artifacts', () => {
     expect(drawings.map(([, bytes]) => strFromU8(bytes)).join('\n')).toContain('#ff0000');
   });
 
-  it.each(['bar', 'line', 'pie'] as const)(
+  it.each(['bar', 'line', 'area', 'pie'] as const)(
     'exports native %s charts with labels, values, legends and colors',
     async kind => {
       const doc = createDocument('single', `Chart ${kind}`);
@@ -443,6 +493,70 @@ describe('Studio export artifacts', () => {
       expect(xml).toContain(kind === 'pie' ? '00FF00' : 'FF0000');
     }
   );
+  it.each(['area', 'pie'] as const)(
+    'exports imported %s options and gaps as saved chart values',
+    async kind => {
+      const document = createStudioTemplateDocumentV5('single', 'Imported chart', defaultBrand);
+      const frame = document.nodes.find(n => n.type === 'frame')!;
+      insertStudioDataView(document, frame.id, configuration(kind), projection, 'en');
+      const result = await render(
+        document,
+        {},
+        'pptx',
+        [],
+        temp,
+        async () => undefined,
+        async () => false
+      );
+      const files = unzipSync(result.bytes);
+      const entry = Object.entries(files).find(([file]) =>
+        /^ppt\/charts\/chart\d+\.xml$/.test(file)
+      )!;
+      const xml = strFromU8(entry[1]);
+      expect(xml).toContain(kind === 'pie' ? '<c:doughnutChart>' : '<c:areaChart>');
+      if (kind === 'pie') expect(xml).toContain('<c:holeSize val="52"/>');
+      else {
+        expect(xml).toContain('Year');
+        expect(xml).toContain('People');
+        expect(xml).toContain('<c:dispBlanksAs val="gap"/>');
+        expect(xml).toContain('<c:pt idx="1"><c:v></c:v></c:pt>');
+        const workbook = Object.entries(files).find(([file]) => file.endsWith('.xlsx'))!;
+        const sheets = unzipSync(workbook[1]);
+        const data = strFromU8(sheets['xl/worksheets/sheet1.xml']);
+        expect(data).toContain('<v></v>');
+      }
+      const slides = strFromU8(files['ppt/slides/slide1.xml']);
+      expect(slides).toContain('Population by year');
+      expect(slides).toContain('example.org/data');
+    }
+  );
+  it('fits a 50-row imported table inside its PowerPoint frame', async () => {
+    const document = createStudioTemplateDocumentV5('single', 'Large table', defaultBrand);
+    const frame = document.nodes.find(n => n.type === 'frame')!;
+    const tableConfig = { ...configuration(), view: 'table' as const };
+    const ids = insertStudioDataView(document, frame.id, tableConfig, {
+      view: 'table',
+      snapshotId: 'snapshot',
+      columns: ['Year', 'Value'],
+      rows: Array.from({ length: 49 }, (_, i) => ({ Year: String(i), Value: String(i * 2) })),
+      rowCount: 49,
+    });
+    const table = document.nodes.find(n => ids.includes(n.id) && n.type === 'table')!;
+    const result = await render(
+      document,
+      {},
+      'pptx',
+      [],
+      temp,
+      async () => undefined,
+      async () => false
+    );
+    const files = unzipSync(result.bytes);
+    const xml = strFromU8(files['ppt/slides/slide1.xml']);
+    const rows = [...xml.matchAll(/<a:tr h="(\d+)"/g)].map(m => Number(m[1]));
+    expect(rows).toHaveLength(50);
+    expect(rows.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(table.transform.height * 6350 + 50);
+  });
 
   it('exports rich-text marks, hyperlinks, numbered and bulleted paragraphs into editable slide text', async () => {
     const document = createStudioTemplateDocumentV5('single', 'Marks', defaultBrand);
@@ -817,7 +931,7 @@ describe('Studio export artifacts', () => {
     );
     expect(files[`Medien/${videoId}.mp4`]).toBeUndefined();
     expect(strFromU8(files['Kanaltexte.md'])).toContain('instagram');
-    expect(JSON.parse(strFromU8(files['Polity-Projekt.json']))).toMatchObject({ schemaVersion: 5 });
+    expect(JSON.parse(strFromU8(files['Polity-Projekt.json']))).toMatchObject({ schemaVersion: 6 });
     expect(Object.keys(unzipSync(files['Kampagnenplan.xlsx']))).toContain('xl/workbook.xml');
     const excel = await exportDoc(doc, 'xlsx');
     expect(excel.name).toBe('Campaign.xlsx');

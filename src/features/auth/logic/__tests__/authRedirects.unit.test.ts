@@ -34,6 +34,27 @@ describe('getAuthRedirectUrl', () => {
 });
 
 describe('getSafeAuthRedirect', () => {
+  it('allows exact invitation destinations and propagates them through email/OAuth callbacks', () => {
+    const token = 'a'.repeat(43);
+    expect(getSafeAuthRedirect(`/invite/${token}`)).toBe(`/invite/${token}`);
+    expect(getSafeAuthRedirect(`/invite/${token}?next=https://attacker.invalid`)).toBe('/');
+    expect(getSafeAuthRedirect(`/invite/${token}/other`)).toBe('/');
+    const values = new Map<string, string>();
+    vi.stubGlobal('window', {
+      location: { origin: 'https://www.polity.live' },
+      sessionStorage: {
+        getItem: (key: string) => values.get(key),
+        setItem: (key: string, value: string) => values.set(key, value),
+      },
+    });
+    storePendingSignInRedirect(`/invite/${token}`);
+    expect(new URL(getAuthRedirectUrl('/auth/callback')).searchParams.get('next')).toBe(
+      `/invite/${token}`
+    );
+    expect(getAuthRedirectUrl('/auth/reset-password')).toBe(
+      'https://www.polity.live/auth/reset-password'
+    );
+  });
   it('allows only known internal auth destinations', () => {
     expect(getSafeAuthRedirect('/auth/reset-password')).toBe('/auth/reset-password');
     expect(getSafeAuthRedirect('/')).toBe('/');

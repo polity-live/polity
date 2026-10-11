@@ -4,6 +4,7 @@ import {
   archiveDataset,
   createDataViewProjection,
   createProviderSnapshot,
+  prepareProviderDataset,
   loadDatasetColumnValues,
   loadDatasetDetails,
   searchDatasetCatalog,
@@ -25,6 +26,46 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('dataset client contracts', () => {
+  it('sends scope and cancellation through preparation and snapshot requests', async () => {
+    fetchMock.mockResolvedValue(response({ ok: true }));
+    const controller = new AbortController();
+    const request = {
+      provider: 'EUROSTAT' as const,
+      code: 'UNE_RT_A',
+      language: 'de' as const,
+      filters: {
+        area: 'Deutschland',
+        period: { start: 2024, end: 2025 },
+        dimensions: { unit: 'THS_PER' },
+      },
+    };
+    await prepareProviderDataset(request, 'token', controller.signal);
+    await createProviderSnapshot(request, 'token', controller.signal);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/datasets/prepare',
+      '/api/datasets/snapshots',
+    ]);
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(JSON.parse(init.body)).toEqual(request);
+      expect(init.signal).toBe(controller.signal);
+    }
+  });
+  it('preserves explicit disabled filters and forwards abort signals', async () => {
+    fetchMock.mockResolvedValue(response({ results: [], errors: [] }));
+    const controller = new AbortController();
+    const filters = { area: 'Recklinghausen', period: null };
+    await searchDatasetCatalog({
+      query: 'Arbeitslose 2025 Deutschland',
+      providers: ['GOVDATA'],
+      filters,
+      signal: controller.signal,
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(new URL(url, 'http://localhost').searchParams.get('filters')!)).toEqual(
+      filters
+    );
+    expect(init.signal).toBe(controller.signal);
+  });
   it('encodes search filters and authentication for result and catalog searches', async () => {
     fetchMock
       .mockResolvedValueOnce(response([{ id: 'dataset-1' }]))

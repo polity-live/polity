@@ -1,0 +1,188 @@
+import { configuration, projection } from '@/test/studio-data-view.fixture';
+import { describe, expect, it } from 'vitest';
+import type { DataViewProjection } from '@/features/charts/types';
+import { createFrameNode, createStudioDocumentV5, studioDocumentV3Schema } from '../document-v3';
+import {
+  createStudioDataViewNodes,
+  insertStudioDataView,
+  validateStudioDataProjection,
+} from '../data-view-import';
+
+const frame = createFrameNode('widescreen');
+
+describe('resolved Studio data import', () => {
+  it('keeps imported text readable on dark frames', () => {
+    const dark = createFrameNode('widescreen');
+    dark.style.fill = '#12362D';
+    const document = createStudioDocumentV5('Dark data');
+    document.nodes.push(dark);
+    const ids = insertStudioDataView(document, dark.id, configuration(), projection);
+    expect(
+      document.nodes
+        .filter(n => ids.includes(n.id) && n.type === 'richText')
+        .every(n => n.style.fill === '#FFFFFF')
+    ).toBe(true);
+  });
+  it.each(['bar', 'line', 'area'] as const)(
+    'preserves %s options, multiple series and value gaps',
+    kind => {
+      const nodes = createStudioDataViewNodes(configuration(kind), projection, frame);
+      const chart = nodes.find(n => n.type === 'chart');
+      expect(chart?.type).toBe('chart');
+      if (chart?.type !== 'chart') throw Error('missing chart');
+      expect(chart.data).toMatchObject({
+        kind,
+        grid: true,
+        legend: true,
+        xAxisLabel: 'Year',
+        yAxisLabel: 'People',
+        labels: ['2024', '2025', '2026'],
+      });
+      expect(chart.data.series.map(s => s.values)).toEqual([
+        [10, null, 30],
+        [null, 20, null],
+      ]);
+      expect(new Set(nodes.map(n => n.groupIds[0])).size).toBe(1);
+      for (const n of nodes) {
+        expect(n.parentFrameId).toBe(frame.id);
+        expect(n.liveBinding).toBeUndefined();
+        expect(n.transform.x + n.transform.width).toBeLessThanOrEqual(frame.transform.width);
+        expect(n.transform.y + n.transform.height).toBeLessThanOrEqual(frame.transform.height);
+      }
+      const text = nodes
+        .filter(n => n.type === 'richText')
+        .map(n =>
+          n.content.flatMap(p => p.children.map(c => ('text' in c ? c.text : ''))).join(' ')
+        )
+        .join(' ');
+      expect(text).toContain('Population by year');
+      expect(text).toContain('Selected regions');
+      expect(text).toContain('Eurostat');
+      expect(text).toContain('2026');
+      expect(text).toContain('https://example.org/data');
+    }
+  );
+  it.each([false, true])('imports pie slices with donut=%s', donut => {
+    const config = configuration('pie');
+    config.presentation.donut = donut;
+    const node = createStudioDataViewNodes(config, projection, frame).find(n => n.type === 'chart');
+    expect(node?.type === 'chart' && node.data).toMatchObject({
+      kind: 'pie',
+      donut,
+      labels: ['2024 · North', '2025 · South', '2026 · North'],
+    });
+  });
+  it('inserts editable table headers and the displayed rows without truncation', () => {
+    const table: DataViewProjection = {
+      view: 'table',
+      snapshotId: 'snapshot',
+      columns: ['Year', 'Value'],
+      rows: [
+        { Year: '2024', Value: '10' },
+        { Year: '2025', Value: '' },
+      ],
+      rowCount: 300,
+    };
+    const node = createStudioDataViewNodes(
+      { ...configuration(), view: 'table' },
+      table,
+      frame
+    ).find(n => n.type === 'table');
+    expect(
+      node?.type === 'table' &&
+        node.data.rows.map(r => r.cells.map(c => ('text' in c ? c.text : '')))
+    ).toEqual([
+      ['Year', 'Value'],
+      ['2024', '10'],
+      ['2025', ''],
+    ]);
+  });
+  it('inserts stat value and label as editable text', () => {
+    const stat: DataViewProjection = {
+      view: 'stat',
+      snapshotId: 'snapshot',
+      value: 1234,
+      label: 'Residents',
+      aggregation: 'sum',
+      rowCount: 1,
+    };
+    const nodes = createStudioDataViewNodes(
+      { ...configuration(), view: 'stat' },
+      stat,
+      frame,
+      0,
+      'en'
+    );
+    expect(nodes.every(n => n.type === 'richText')).toBe(true);
+    expect(JSON.stringify(nodes)).toContain('1,234');
+    expect(JSON.stringify(nodes)).toContain('Residents');
+  });
+  it('stores resolved nodes through schema roundtrips; repeated imports form new groups', () => {
+    const document = createStudioDocumentV5('Data preview');
+    document.nodes = [frame];
+    const ids = insertStudioDataView(document, frame.id, configuration('area'), projection);
+    const secondIds = insertStudioDataView(document, frame.id, configuration(), projection);
+    const restored = studioDocumentV3Schema.parse(JSON.parse(JSON.stringify(document)));
+    expect(ids.every(id => restored.nodes.some(n => n.id === id))).toBe(true);
+    expect(new Set([...ids, ...secondIds]).size).toBe(ids.length + secondIds.length);
+    expect(restored.nodes.find(n => n.id === ids[0])?.groupIds).not.toEqual(
+      restored.nodes.find(n => n.id === secondIds[0])?.groupIds
+    );
+    expect(JSON.stringify(restored)).not.toContain('snapshot');
+  });
+  it('accepts the exact table boundary and rejects additional rows or columns', () => {
+    const table: DataViewProjection = {
+      view: 'table',
+      snapshotId: 'snapshot',
+      columns: Array.from({ length: 20 }, (_, i) => String(i)),
+      rows: Array.from({ length: 49 }, () => ({})),
+      rowCount: 49,
+    };
+    expect(validateStudioDataProjection(table, 'bar')).toBeNull();
+    expect(
+      validateStudioDataProjection({ ...table, rows: [...table.rows, {}] }, 'bar')
+    ).not.toBeNull();
+    expect(
+      validateStudioDataProjection({ ...table, columns: [...table.columns, 'extra'] }, 'bar')
+    ).not.toBeNull();
+  });
+  it('accepts chart boundaries and rejects extra categories, series and pie slices', () => {
+    const chart: typeof projection = {
+      ...projection,
+      points: Array.from({ length: 100 }, (_, i) => ({ x: String(i), value: 1 })),
+    };
+    expect(validateStudioDataProjection(chart, 'line')).toBeNull();
+    expect(
+      validateStudioDataProjection(
+        { ...chart, points: [...chart.points, { x: 'extra', value: 1 }] },
+        'line'
+      )
+    ).not.toBeNull();
+    expect(
+      validateStudioDataProjection(
+        {
+          ...chart,
+          points: Array.from({ length: 11 }, (_, i) => ({ x: 'A', series: String(i), value: 1 })),
+        },
+        'bar'
+      )
+    ).not.toBeNull();
+    expect(
+      validateStudioDataProjection(
+        { ...chart, points: [...chart.points, { x: '0', series: 'extra', value: 1 }] },
+        'pie'
+      )
+    ).not.toBeNull();
+  });
+  it('rejects empty, invalid and negative pie projections without mutating the document', () => {
+    const document = createStudioDocumentV5('Data preview');
+    document.nodes = [frame];
+    const before = structuredClone(document);
+    for (const points of [[], [{ x: 'A', value: NaN }], [{ x: 'A', value: -1 }]]) {
+      expect(() =>
+        insertStudioDataView(document, frame.id, configuration('pie'), { ...projection, points })
+      ).toThrow();
+      expect(document).toEqual(before);
+    }
+  });
+});

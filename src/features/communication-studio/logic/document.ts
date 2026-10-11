@@ -2,6 +2,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { z } from 'zod';
 import { canvasSceneSchema } from './canvas-schema';
 import { createTableData } from './table-operations';
+import { studioTransformFields } from './transform-fields';
 import { themePaletteRoleSchema } from '@/features/shared/appearance-theme/contract';
 
 export const formats = {
@@ -81,20 +82,28 @@ export const tableDataSchema = z
   );
 export const chartDataSchema = z
   .object({
-    kind: z.enum(['bar', 'line', 'pie']),
-    labels: z.array(z.string().max(100)).min(1).max(100),
+    kind: z.enum(['bar', 'line', 'area', 'pie']),
+    layout: z.enum(['standard', 'results']).optional(),
+    fontFamily: z.enum(fontFamilies).optional(),
+    eligible: finite.nonnegative().optional(),
+    pageLabel: z.string().max(100).optional(),
+    labels: z.array(z.string().max(10000)).min(1).max(100),
     series: z
       .array(
         z.object({
           id: z.string().uuid(),
-          name: z.string().max(100),
+          name: z.string().max(10000),
           color,
-          values: z.array(finite).min(1).max(100),
+          values: z.array(finite.nullable()).min(1).max(100),
         })
       )
       .min(1)
       .max(10),
     legend: z.boolean().default(true),
+    donut: z.boolean().optional(),
+    grid: z.boolean().optional(),
+    xAxisLabel: z.string().max(10000).optional(),
+    yAxisLabel: z.string().max(10000).optional(),
     colors: z.array(color).min(1).max(100).optional(),
   })
   .refine(
@@ -105,8 +114,8 @@ export const chartDataSchema = z
     v =>
       v.kind !== 'pie' ||
       (v.series.length === 1 &&
-        v.series[0].values.every(n => n >= 0) &&
-        v.series[0].values.some(n => n > 0)),
+        v.series[0].values.every(n => n === null || n >= 0) &&
+        v.series[0].values.some(n => n !== null && n > 0)),
     'Pie chart needs one nonnegative series'
   );
 export const mediaCropSchema = z
@@ -123,13 +132,7 @@ export const mediaCropSchema = z
 export const elementSchema = z.object({
   id: z.string().uuid(),
   type: z.enum(['text', 'image', 'rect', 'ellipse', 'video', 'line', 'arrow', 'table', 'chart']),
-  x: finite.min(-4000).max(4000),
-  y: finite.min(-4000).max(4000),
-  width: finite.min(4).max(5000),
-  height: finite.min(4).max(5000),
-  rotation: finite.min(-360).max(360).default(0),
-  flipX: z.boolean().default(false),
-  flipY: z.boolean().default(false),
+  ...studioTransformFields,
   opacity: finite.min(0).max(1).default(1),
   order: finite.default(0),
   group: z.string().nullable().default(null),

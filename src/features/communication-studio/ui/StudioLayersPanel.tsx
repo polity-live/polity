@@ -10,6 +10,8 @@ import {
 } from 'react';
 import {
   ChartNoAxesColumn,
+  ChevronDown,
+  ChevronRight,
   Code2,
   Eye,
   EyeOff,
@@ -47,7 +49,8 @@ function searchText(node: StudioNode) {
 
 export function buildStudioLayerTree(
   document: StudioDocumentV3,
-  query = ''
+  query = '',
+  collapsedNodeIds: ReadonlySet<string> = new Set()
 ): StudioLayerTreeEntry[] {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const children = new Map<string | null, StudioNode[]>();
@@ -64,7 +67,9 @@ export function buildStudioLayerTree(
     depth: number,
     rootFrameId: string | null
   ): StudioLayerTreeEntry[] => {
-    const descendants = (children.get(node.id) ?? [])
+    const descendants = (
+      !normalizedQuery && collapsedNodeIds.has(node.id) ? [] : (children.get(node.id) ?? [])
+    )
       .sort(compareLayers)
       .flatMap(child => visit(child, depth + 1, rootFrameId));
     const matches = !normalizedQuery || searchText(node).includes(normalizedQuery);
@@ -120,6 +125,7 @@ export function StudioLayersPanel({
   disabled,
   tr,
   onSelect,
+  onFocus,
   onSetVisibility,
   onSetLocked,
   onMove,
@@ -129,13 +135,16 @@ export function StudioLayersPanel({
   selectedNodeIds: string[];
   disabled: boolean;
   tr: (key: string) => string;
-  onSelect: (node: StudioNode, rootFrameId: string | null) => void;
+  onSelect: (node: StudioNode, rootFrameId: string | null, additive?: boolean) => void;
+  onFocus?: (nodeId: string) => void;
   onSetVisibility: (node: StudioNode, visible: boolean) => void;
   onSetLocked: (node: StudioNode, locked: boolean) => void;
   onMove: (nodeId: string, targetId: string, position: StudioLayerMovePosition) => void;
   onRename: (nodeId: string, name: string) => void;
 }) {
   const [query, setQuery] = useState('');
+  const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(() => new Set());
+  const searching = query.trim().length > 0;
   interface RenameDraft {
     nodeId: string;
     originalName: string;
@@ -209,7 +218,10 @@ export function StudioLayersPanel({
     nodeId: string;
     position: StudioLayerMovePosition;
   } | null>(null);
-  const entries = useMemo(() => buildStudioLayerTree(document, query), [document, query]);
+  const entries = useMemo(
+    () => buildStudioLayerTree(document, query, collapsedNodeIds),
+    [document, query, collapsedNodeIds]
+  );
 
   const resolveDropPosition = (event: DragEvent<HTMLDivElement>, target: StudioNode) => {
     if (disabled || renameDraftRef.current?.nodeId === target.id) return null;
@@ -250,22 +262,28 @@ export function StudioLayersPanel({
           {tr('layerRenamedElsewhere')}
         </p>
       )}
-      <div className="max-h-[min(32rem,70dvh)] space-y-0.5 overflow-auto" role="tree">
+      <div
+        className="max-h-[min(32rem,70dvh)] space-y-0.5 overflow-auto"
+        role="tree"
+        aria-multiselectable="true"
+      >
         {entries.map(entry => {
           const { node } = entry;
           const Icon = layerIcon(node);
           const selected = selectedNodeIds.includes(node.id);
           const editing = renameDraft?.nodeId === node.id;
+          const expanded = searching || !collapsedNodeIds.has(node.id);
           return (
             <div
               key={node.id}
               role="treeitem"
               aria-level={entry.depth + 1}
-              aria-expanded={entry.hasChildren ? true : undefined}
+              aria-expanded={entry.hasChildren ? expanded : undefined}
               aria-selected={selected}
               draggable={!disabled && !node.locked && !editing}
               data-studio-layer-id={node.id}
               data-drop-position={dropTarget?.nodeId === node.id ? dropTarget.position : undefined}
+              style={{ paddingLeft: `${0.25 + entry.depth}rem` }}
               className={cn(
                 'relative flex min-h-8 items-center rounded-sm text-sm',
                 selected && 'bg-accent text-accent-foreground',
@@ -325,8 +343,34 @@ export function StudioLayersPanel({
                   )}
                 />
               )}
+              {entry.hasChildren ? (
+                <button
+                  type="button"
+                  className="hover:bg-muted focus-visible:ring-ring m-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-40"
+                  aria-label={`${tr(expanded ? 'collapseLayer' : 'expandLayer')}: ${node.name}`}
+                  aria-expanded={expanded}
+                  disabled={searching}
+                  onClick={event => {
+                    event.stopPropagation();
+                    setCollapsedNodeIds(current => {
+                      const next = new Set(current);
+                      if (next.has(node.id)) next.delete(node.id);
+                      else next.add(node.id);
+                      return next;
+                    });
+                  }}
+                >
+                  {expanded ? (
+                    <ChevronDown className="size-4" />
+                  ) : (
+                    <ChevronRight className="size-4" />
+                  )}
+                </button>
+              ) : (
+                <span aria-hidden="true" className="m-0.5 size-5 shrink-0" />
+              )}
               {editing ? (
-                <div className="min-w-0 flex-1" style={{ paddingLeft: `${0.5 + entry.depth}rem` }}>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Icon className="size-4 shrink-0" />
                     <input
@@ -368,9 +412,12 @@ export function StudioLayersPanel({
                 <button
                   type="button"
                   className="hover:bg-muted/60 flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-sm pr-1 text-left"
-                  style={{ paddingLeft: `${0.5 + entry.depth}rem` }}
-                  onClick={() => onSelect(node, entry.rootFrameId)}
-                  onDoubleClick={() => beginRename(entry)}
+                  onClick={event => onSelect(node, entry.rootFrameId, event.shiftKey)}
+                  onDoubleClick={event => {
+                    if (event.shiftKey) return;
+                    beginRename(entry);
+                    onFocus?.(node.id);
+                  }}
                 >
                   <Icon className="size-4 shrink-0" />
                   <span className="truncate">{node.name}</span>

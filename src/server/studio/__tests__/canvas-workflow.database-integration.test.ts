@@ -159,7 +159,7 @@ async function fixture(phase: 'edit' | 'suggest_internal' = 'edit') {
   projects.push(id);
   legacy.pages[0].canvas = { version: 1, elements: [], files: {} };
   const doc = legacyDocumentToV3(legacy);
-  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${owner},${group},${doc.title},${doc.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${owner},${group},${doc.title},${doc.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
   const session = await canvasCommand(owner, { action: 'session', projectId: id });
   if (phase !== 'edit') await sql`update canvas_control set phase=${phase} where project_id=${id}`;

@@ -1,6 +1,7 @@
 import { createRef, useState, type ComponentProps } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import { page as browserPage, userEvent } from 'vitest/browser';
 import { defaultBrand } from '../../logic/document';
 import { createStudioTemplateDocumentV5 } from '../../logic/templates-v5';
 import { worldBounds } from '../../logic/selection-geometry';
@@ -11,7 +12,14 @@ import KonvaStudioCanvas, {
 
 afterEach(cleanup);
 
-async function harness({ locked = false, toolLocked = false, editable = true } = {}) {
+async function harness({
+  locked = false,
+  toolLocked = false,
+  editable = true,
+  tool = 'text' as 'text' | 'selection',
+  multipleSelection = false,
+} = {}) {
+  await browserPage.viewport(1280, 1000);
   const document = createStudioTemplateDocumentV5('single', 'Text gestures', defaultBrand);
   const frame = document.nodes.find(node => node.type === 'frame')!;
   const text = document.nodes.find(node => node.type === 'richText')!;
@@ -23,8 +31,12 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
   const create = vi.fn<NonNullable<ComponentProps<typeof KonvaStudioCanvas>['onCreateNode']>>(
     () => null
   );
+  const changes = vi.fn();
+  const changeText = vi.fn();
   function Harness() {
-    const [selected, selectExact] = useState<string[]>([]);
+    const [selected, selectExact] = useState<string[]>(
+      multipleSelection ? [text.id, frame.id] : []
+    );
     const [value, setValue] = useState(document);
     return (
       <div style={{ width: 1000, height: 700 }}>
@@ -37,6 +49,16 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
           selectExact={selectExact}
           editable={editable}
           onCreateNode={create}
+          applyCanvasChanges={changes}
+          onTextChange={(id, content) => {
+            changeText(id, content);
+            setValue(current => ({
+              ...current,
+              nodes: current.nodes.map(node =>
+                node.id === id && node.type === 'richText' ? { ...node, content } : node
+              ),
+            }));
+          }}
           onCanvasStateChange={value => {
             state.current = value;
           }}
@@ -58,8 +80,8 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
   render(<Harness />);
   const host = screen.getByTestId('studio-canvas');
   await waitFor(() => expect(state.current?.zoom).toBeLessThan(1));
-  await act(() => ref.current!.execute({ type: 'setTool', tool: 'text', locked: toolLocked }));
-  const surface = host.querySelector<HTMLCanvasElement>('canvas')!;
+  await act(() => ref.current!.execute({ type: 'setTool', tool, locked: toolLocked }));
+  const surface = [...host.querySelectorAll<HTMLCanvasElement>('.konvajs-content canvas')].at(-1)!;
   const client = () => {
     const bounds = host.querySelector<HTMLElement>('.konvajs-content')!.getBoundingClientRect();
     const origin = ref.current!.scenePoint(bounds.left, bounds.top);
@@ -90,8 +112,174 @@ async function harness({ locked = false, toolLocked = false, editable = true } =
     if (type === 'up') fireEvent.pointerUp(surface, event);
     if (type === 'cancel') fireEvent.pointerCancel(surface, event);
   };
-  return { ref, state, surface, create, pointer, client, text, frame, document, host };
+  const position = () => {
+    const bounds = surface.getBoundingClientRect();
+    const point = client();
+    return { x: point.clientX - bounds.left, y: point.clientY - bounds.top };
+  };
+  const touch = (type: 'start' | 'move' | 'end', dx = 0, dy = 0) => {
+    const point = client();
+    const finger = new Touch({
+      identifier: 38,
+      target: surface,
+      clientX: point.clientX + dx,
+      clientY: point.clientY + dy,
+    });
+    fireEvent(
+      surface,
+      new TouchEvent(`touch${type}`, {
+        bubbles: true,
+        cancelable: true,
+        touches: type === 'end' ? [] : [finger],
+        changedTouches: [finger],
+      })
+    );
+  };
+  return {
+    ref,
+    state,
+    surface,
+    create,
+    changes,
+    changeText,
+    pointer,
+    touch,
+    position,
+    client,
+    text,
+    frame,
+    document,
+    host,
+  };
 }
+
+it.each(['mouse', 'touch'] as const)(
+  'selects text without editing, edits with the button, and keeps it movable after Done (%s)',
+  async input => {
+    const { surface, position, touch, text, host, changes, changeText, state } = await harness({
+      tool: 'selection',
+    });
+    if (input === 'mouse') await userEvent.click(surface, { position: position() } as never);
+    else {
+      touch('start');
+      touch('end');
+    }
+    expect(screen.getByTestId('selected-text')).toHaveTextContent(text.id);
+    expect(screen.queryByLabelText('Text')).toBeNull();
+    const edit = await screen.findByRole('button', { name: 'Edit text' });
+    expect(edit.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(edit.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
+    if (input === 'mouse') {
+      edit.focus();
+      await userEvent.keyboard('{Enter}');
+    } else await userEvent.click(edit);
+    const editor = screen.getByLabelText('Text');
+    expect(window.document.activeElement).toBe(editor);
+    await userEvent.keyboard('Added text');
+    expect(editor).toHaveTextContent('Added text');
+    expect(changeText).toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByLabelText('Text')).toBeNull();
+    expect(screen.getByTestId('selected-text')).toHaveTextContent(text.id);
+    expect(window.document.activeElement).toBe(host);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit text' }));
+    expect(screen.getByLabelText('Text')).toHaveTextContent('Added text');
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    if (input === 'mouse') {
+      const start = position();
+      await userEvent.dragAndDrop(surface, surface, {
+        sourcePosition: start,
+        targetPosition: { x: start.x + 50, y: start.y + 30 },
+      } as never);
+    } else {
+      touch('start');
+      touch('move', 20, 10);
+      touch('move', 50, 30);
+      touch('end', 50, 30);
+    }
+    expect(screen.queryByLabelText('Text')).toBeNull();
+    await waitFor(() => expect(changes).toHaveBeenCalledOnce());
+    const transform = changes.mock.calls[0][0][0].transform;
+    expect(Number.isFinite(transform.dx)).toBe(true);
+    expect(Number.isFinite(transform.dy)).toBe(true);
+    expect(transform.dx).toBeGreaterThan(0);
+    expect(transform.dy).toBeGreaterThan(0);
+    if (input === 'touch') {
+      expect(transform.dx).toBeCloseTo(50 / state.current!.zoom);
+      expect(transform.dy).toBeCloseTo(30 / state.current!.zoom);
+    }
+  }
+);
+
+it('focuses the editor synchronously on a double tap and keeps the selection after Escape', async () => {
+  const { touch, text } = await harness({ tool: 'selection' });
+  touch('start');
+  touch('end');
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  touch('start');
+  touch('end');
+  const editor = screen.getByLabelText('Text');
+  expect(window.document.activeElement).toBe(editor);
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  expect(screen.getByTestId('selected-text')).toHaveTextContent(text.id);
+});
+
+it.each([{ locked: true }, { editable: false }])(
+  'prevents button, double tap and Enter editing when %j',
+  async options => {
+    const { touch, host, text } = await harness({ ...options, tool: 'selection' });
+    touch('start');
+    touch('end');
+    touch('start');
+    touch('end');
+    expect(screen.getByTestId('selected-text')).toHaveTextContent(text.id);
+    expect(screen.queryByRole('button', { name: 'Edit text' })).toBeNull();
+    fireEvent.keyDown(host, { key: 'Enter' });
+    expect(screen.queryByLabelText('Text')).toBeNull();
+  }
+);
+
+it('opens single selected text with Enter and ends editing on an outside selection', async () => {
+  const { surface, position, host } = await harness({ tool: 'selection' });
+  await userEvent.click(surface, { position: position() } as never);
+  host.focus();
+  await userEvent.keyboard('{Enter}');
+  expect(window.document.activeElement).toBe(screen.getByLabelText('Text'));
+  const lowerSurface = host.querySelector<HTMLCanvasElement>('canvas')!;
+  await userEvent.click(lowerSurface, { position: { x: 5, y: 5 } } as never);
+  expect(screen.queryByLabelText('Text')).toBeNull();
+});
+
+it('does not offer or open the text editor for a multiple selection', async () => {
+  const { host, text, frame } = await harness({ tool: 'selection', multipleSelection: true });
+  expect(screen.getByTestId('selected-text')).toHaveTextContent(`${text.id},${frame.id}`);
+  expect(screen.queryByRole('button', { name: 'Edit text' })).toBeNull();
+  fireEvent.keyDown(host, { key: 'Enter' });
+  expect(screen.queryByLabelText('Text')).toBeNull();
+});
+
+it('does not edit text after a two-finger gesture or Shift double click', async () => {
+  const { surface, client, position } = await harness({ tool: 'selection' });
+  const point = client();
+  const fingers = [1, 2].map(identifier => new Touch({ identifier, target: surface, ...point }));
+  for (const type of ['touchstart', 'touchend']) {
+    fireEvent(
+      surface,
+      new TouchEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        touches: type === 'touchend' ? [] : fingers,
+        changedTouches: fingers,
+      })
+    );
+  }
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  await userEvent.keyboard('{Shift>}');
+  await userEvent.dblClick(surface, { position: position() } as never);
+  await userEvent.keyboard('{/Shift}');
+  expect(screen.queryByLabelText('Text')).toBeNull();
+});
 
 it('accepts a touch pointer without a mouse button and edits the actual text node', async () => {
   const { surface, client, text, create } = await harness();

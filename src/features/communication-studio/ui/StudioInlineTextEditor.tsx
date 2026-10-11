@@ -97,9 +97,13 @@ export function StudioInlineTextEditor({
     },
     [node.id]
   );
+  const editableRef = useRef<HTMLDivElement>(null);
   const published = useRef(stableJson(node.content));
   useLayoutEffect(() => {
     editor.tf.focus({ edge: 'endEditor' });
+    // Slate may defer its focus while applying selection operations. Focus the DOM now
+    // to preserve the user activation required for the mobile software keyboard.
+    editableRef.current?.focus({ preventScroll: true });
   }, [editor, node.id]);
   useEffect(() => {
     const incoming = stableJson(node.content);
@@ -152,6 +156,7 @@ export function StudioInlineTextEditor({
       }}
     >
       <PlateContent
+        ref={editableRef}
         aria-label={t('features.studio.editText')}
         style={{
           width: '100%',

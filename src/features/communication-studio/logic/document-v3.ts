@@ -3,12 +3,19 @@ import { z } from 'zod';
 import { chartDataSchema, fontFamilies, mediaCropSchema, tableDataSchema } from './document';
 import { themePaletteRoleSchema } from '@/features/shared/appearance-theme/contract';
 import { DEFAULT_STUDIO_THEME, studioThemeSnapshotSchema } from './theme';
+import { studioTransformFields } from './transform-fields';
+import {
+  liveBindingSchema,
+  responsiveOverrideSchema,
+  showCueSchema,
+  eventFrameSourceSchema,
+} from './live-contract';
 
 const finite = z.number().finite();
 const color = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i);
 const uuid = z.string().uuid();
 
-export const STUDIO_DOCUMENT_SCHEMA_VERSION = 5 as const;
+export const STUDIO_DOCUMENT_SCHEMA_VERSION = 6 as const;
 
 export const framePresetRegistry = {
   square: {
@@ -60,15 +67,7 @@ export const framePresetRegistry = {
 
 export type FramePresetId = keyof typeof framePresetRegistry;
 
-export const transformSchema = z.object({
-  x: finite.min(-1_000_000).max(1_000_000),
-  y: finite.min(-1_000_000).max(1_000_000),
-  width: finite.min(1).max(100_000),
-  height: finite.min(1).max(100_000),
-  rotation: finite.min(-360_000).max(360_000).default(0),
-  flipX: z.boolean().default(false),
-  flipY: z.boolean().default(false),
-});
+export const transformSchema = z.object(studioTransformFields);
 
 export const constraintsSchema = z.object({
   horizontal: z.enum(['left', 'right', 'left-right', 'center', 'scale']).default('left'),
@@ -101,11 +100,33 @@ const nodeBaseShape = {
   componentRef: z.string().max(200).nullable().default(null),
   overrides: z.array(z.string().min(1).max(120)).max(100).default([]),
   animation: z.enum(['none', 'fade']).default('none'),
+  liveBinding: liveBindingSchema.optional(),
+  eventTemplateSlot: z.string().max(80).optional(),
+  portrait: responsiveOverrideSchema.optional(),
+  showAnimation: z
+    .object({
+      preset: z.enum(['none', 'fade', 'slide', 'stagger', 'pulse', 'reveal']).default('fade'),
+      duration: finite.min(0.1).max(10).default(0.8),
+      intensity: finite.min(0).max(1).default(0.5),
+    })
+    .optional(),
 };
 
 export const frameNodeSchema = z.object({
   ...nodeBaseShape,
   type: z.literal('frame'),
+  eventSource: eventFrameSourceSchema.optional(),
+  intro: z
+    .object({
+      scene: z.enum(['architecture', 'democracy-illustrated', 'democracy-sculptural']).optional(),
+      mode: z.enum(['spatial', 'video', 'static']).default('spatial'),
+      assetId: uuid.nullable().default(null),
+      intensity: finite.min(0).max(1).default(0.45),
+      // Resolved by live projection; snapshotAt freezes the same scene for exports.
+      epochMs: finite.optional(),
+      snapshotAt: finite.optional(),
+    })
+    .optional(),
   preset: z.enum(['square', 'portrait', 'story', 'widescreen', 'standard', 'custom']),
   duration: finite.min(1).max(60).default(5),
   transition: z.enum(['none', 'fade']).default('none'),
@@ -271,7 +292,7 @@ export const deliverableSchema = z.object({
   code: z.string().max(100),
   title: z.string().max(200),
   kind: z.enum(['single', 'carousel', 'story', 'video', 'presentation']),
-  frameIds: z.array(uuid).min(1).max(100),
+  frameIds: z.array(uuid).min(1).max(1000),
   channel: z.enum(['instagram', 'linkedin', 'facebook', 'custom']).default('instagram'),
   order: z.number().int().nonnegative(),
   status: z.enum(['draft', 'ready', 'published']).default('draft'),
@@ -316,6 +337,12 @@ export const studioDocumentV3Schema = z
     campaign: z.object({ startDate: z.iso.date().or(z.literal('')) }).default({ startDate: '' }),
     componentInstances: z.array(componentInstanceSchema).max(10_000).default([]),
     files: z.record(z.string(), z.json()).default({}),
+    show: z
+      .object({
+        order: z.enum(['agenda', 'manual']).default('agenda'),
+        cues: z.array(showCueSchema).max(2000).default([]),
+      })
+      .optional(),
   })
   .superRefine((document, context) => {
     const nodeById = new Map(document.nodes.map(node => [node.id, node]));

@@ -218,7 +218,9 @@ vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({
     ) : null,
 }));
 vi.mock('@/features/shared/hooks/useFixedToolbarController', () => ({
-  useFixedToolbarController: () => ({ className: 'fixed' }),
+  useFixedToolbarController: (className?: string) => ({
+    className: `fixed top-0 left-0 z-50 w-full overflow-x-auto ${className ?? ''}`,
+  }),
 }));
 vi.mock('@/features/shared/ui/navigation/SmartLink', async importOriginal => {
   const { forwardRef: linkRef } = await import('react');

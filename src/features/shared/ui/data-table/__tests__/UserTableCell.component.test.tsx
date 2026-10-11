@@ -26,6 +26,20 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 afterEach(() => cleanup());
 
 describe('UserTableCell', () => {
+  it('shows an invitation email below the name without creating a profile link', () => {
+    render(<UserTableCell displayName="Ada Lovelace" secondaryLabel="ada@example.com" />);
+    expect(screen.getByText('Ada Lovelace')).toBeTruthy();
+    expect(screen.getByText('ada@example.com')).toBeTruthy();
+    expect(screen.getByTestId('initials').textContent).toBe('AL');
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('uses an explicit secondary label instead of the handle on a linked user', () => {
+    render(<UserTableCell user={{ id: 'ada', handle: 'ada' }} secondaryLabel="ada@example.com" />);
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/user/ada');
+    expect(screen.getByText('ada@example.com')).toBeTruthy();
+    expect(screen.queryByText('@ada')).toBeNull();
+  });
   it('prefers a trimmed display name and links identified users', () => {
     render(
       <UserTableCell

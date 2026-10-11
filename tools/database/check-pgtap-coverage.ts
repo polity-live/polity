@@ -36,7 +36,7 @@ function countMatches(sql: string, expression: RegExp): number {
 
 function countCreateTableColumns(sql: string): number {
   const tableExpression =
-    /\bCREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:public\.)?(?:"[^"]+"|\w+)\s*\(/gi;
+    /\bCREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+(?:(?:"[^"]+"|\w+)\.)?(?:"[^"]+"|\w+)\s*\(/gi;
   let columns = 0;
 
   for (const table of sql.matchAll(tableExpression)) {

@@ -18,6 +18,17 @@ type Params = Record<string, string | number | null | undefined>;
 // only passes primitive params from server mutators.
 type HelperFn = (...args: never[]) => Promise<unknown>;
 const pendingNotificationStorage = new AsyncLocalStorage<Set<Promise<void>>>();
+const deferredNotifications = new AsyncLocalStorage<
+  Map<string, { name: string; params: Params }>
+>();
+
+/** Publish only after a successful transaction; a rollback drops the entire set. */
+export async function withDeferredNotifications<T>(work: () => Promise<T>): Promise<T> {
+  const pending = new Map<string, { name: string; params: Params }>();
+  const result = await deferredNotifications.run(pending, work);
+  for (const entry of pending.values()) await fireNotification(entry.name, entry.params);
+  return result;
+}
 
 /**
  * Keeps fire-and-forget notification work alive until the enclosing mutation
@@ -45,6 +56,11 @@ export async function withNotificationDeliveryQueue<T>(callback: () => Promise<T
  * swallowed so notification failures never affect the mutation.
  */
 export function fireNotification(helperName: string, params: Params): Promise<void> {
+  const deferred = deferredNotifications.getStore();
+  if (deferred) {
+    deferred.set(JSON.stringify([helperName, params]), { name: helperName, params });
+    return Promise.resolve();
+  }
   const fn = (helpers as unknown as Record<string, HelperFn | undefined>)[helperName];
   if (typeof fn !== 'function') {
     console.error(LOG, `Unknown helper: ${helperName}`);

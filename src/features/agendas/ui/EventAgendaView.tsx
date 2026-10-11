@@ -42,7 +42,6 @@ import {
   ChevronUp,
   Info,
   GripVertical,
-  Maximize2,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -64,6 +63,7 @@ import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { isNamedBallot } from '@/zero/shared';
 import { EventLiveFocusDialog } from './EventLiveFocusDialog';
+import { EventPresentationLauncher } from './EventPresentationLauncher';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import { getAgendaDisplayType } from '../logic/agendaUiHelpers';
@@ -1197,22 +1197,11 @@ export function EventAgendaView({
                 }
                 action={
                   <>
-                    <Button
-                      data-action-id="agendas.event-agenda.live-focus.open"
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={event => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setLiveFocusOpen(true);
-                      }}
-                      aria-label={t('features.events.stream.openLiveFocus', 'Open live focus')}
-                      title={t('features.events.stream.openLiveFocus', 'Open live focus')}
-                    >
-                      <Maximize2 className="h-4 w-4" />
-                    </Button>
+                    <EventPresentationLauncher
+                      eventId={eventId}
+                      canManage={Boolean(canManageAgenda)}
+                      onOpenLiveFocus={() => setLiveFocusOpen(true)}
+                    />
                     <CollapsibleTrigger asChild aria-controls={streamPanelId}>
                       <Button
                         data-action-id="agendas.event-agenda.stream.toggle"

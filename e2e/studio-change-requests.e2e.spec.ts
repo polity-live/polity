@@ -43,7 +43,7 @@ for (const personal of [false, true]) {
       from group_membership_role membership_role
       where membership_role.group_membership_id = ${reviewerMembershipId}
     `;
-      await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${e2eRun.actorId},${personal ? null : seed.groupId},${document.title},${document.kind},5,${Date.now()},${Date.now()})`;
+      await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${e2eRun.actorId},${personal ? null : seed.groupId},${document.title},${document.kind},6,${Date.now()},${Date.now()})`;
       await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},${Date.now()})`;
       if (personal)
         await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)

@@ -17,6 +17,29 @@ describe('GovData utilities', () => {
     vi.unstubAllGlobals();
   });
 
+  it.each([
+    { temporal_start: '2023', temporal_end: '2025', spatial_text: '["Deutschland"]' },
+    {
+      extras: [
+        { key: 'temporal_start', value: '2023' },
+        { key: 'temporal_end', value: '2025' },
+        { key: 'spatial_text', value: 'Deutschland' },
+      ],
+    },
+  ])('preserves explicit coverage from root fields and CKAN extras', metadata => {
+    const entry = normalizeGovDataPackage({
+      id: 'coverage',
+      name: 'coverage',
+      title: 'Arbeitslose Berlin 2022',
+      ...metadata,
+      resources: [{ id: 'csv', format: 'CSV', url: 'https://example.com/data.csv' }],
+    });
+    expect(entry).toMatchObject({
+      timeCoverage: { start: '2023', end: '2025' },
+      spatialCoverage: ['Deutschland'],
+    });
+  });
+
   it('normalizes packages and keeps only importable CSV resources', () => {
     const entry = normalizeGovDataPackage({
       id: 'pkg-1',

@@ -1,4 +1,5 @@
 import { studioV5RenderBundle } from './studio-v5-render-bundle';
+import { studioNodeAssetIds } from '../../src/features/communication-studio/logic/event-intro';
 import { editableV5Layers } from './editable-v5-layers';
 import { chromium } from 'playwright';
 import PptxGenJS from 'pptxgenjs';
@@ -225,9 +226,8 @@ export async function render(
     executablePath: process.env.STUDIO_CHROMIUM_PATH || undefined,
     args: ['--no-sandbox'],
   });
-  const tab = await browser.newPage();
-  await tab.route('**/*', r => r.abort());
   const images: Record<string, Uint8Array> = {};
+  const introImages: Record<string, Uint8Array> = {};
   const data = Object.fromEntries(
     Object.entries(media).map(([id, m]) => [
       id,
@@ -235,6 +235,8 @@ export async function render(
     ])
   );
   try {
+    const tab = await browser.newPage();
+    await tab.route('**/*', r => r.abort());
     await tab.setContent(
       `<html><head><style>${await fonts()}body{margin:0}</style></head><body><canvas></canvas></body></html>`
     );
@@ -254,17 +256,29 @@ export async function render(
       ])
         for (const weight of [400, 700]) await document.fonts.load(`${weight} 40px "${font}"`);
     });
-    const frame = async (p: StudioPage, time = 1, _animateScene = false) => {
+    const frame = async (
+      p: StudioPage,
+      time = 1,
+      _animateScene = false,
+      documentValue = v5Document
+    ) => {
       const url = await tab.evaluate(
         async ({ p, data, time, v5Document }) =>
           (window as any).PolityStudioV5Renderer.renderFrame(v5Document, p.id, data, time),
-        { p: p as any, data, time, v5Document: v5Document as any }
+        { p: p as any, data, time, v5Document: documentValue as any }
       );
       return new Uint8Array(Buffer.from(url.split(',')[1], 'base64'));
     };
     for (let i = 0; i < pages.length; i++) {
       if (await cancelled()) throw new Error('Export cancelled');
       images[pages[i].id] = await frame(pages[i]);
+      const root = v5Document.nodes.find(n => n.type === 'frame' && n.id === pages[i].id);
+      if (root?.type === 'frame' && root.intro && root.intro.mode !== 'static')
+        introImages[root.id] = await frame(pages[i], 0, false, {
+          ...v5Document,
+          nodes: [root],
+          masterLayout: { frameId: null, placements: {} },
+        });
       await progress(Math.round(5 + (35 * (i + 1)) / pages.length));
     }
     const files: Record<string, Uint8Array> = {};
@@ -301,6 +315,14 @@ export async function render(
         const offsetY = (slideHeight - h * scale) / 2;
         const slide = ppt.addSlide();
         slide.background = { color: p.background.slice(1) };
+        if (introImages[p.id])
+          slide.addImage({
+            data: 'data:image/png;base64,' + Buffer.from(introImages[p.id]).toString('base64'),
+            x: offsetX / 144,
+            y: offsetY / 144,
+            w: (w * scale) / 144,
+            h: (h * scale) / 144,
+          });
         slide.addNotes(`Dauer: ${p.duration}s. Animationen: MP4. ${p.name}`);
         for (const layer of editableV5Layers(v5Document, p.id)) {
           if (layer.kind === 'drawing') {
@@ -410,22 +432,42 @@ export async function render(
                 rowH: box.h / table.rows.length,
                 fontFace: e.font,
                 fontSize: (e.fontSize * scale) / 2,
-                margin: 3 * scale,
+                margin: Math.max(
+                  0,
+                  Math.min(
+                    3 * scale,
+                    ((box.h * 72) / table.rows.length - (e.fontSize * scale * 1.2) / 2) / 2
+                  )
+                ),
                 autoPage: false,
               }
             );
           } else if (e.type === 'chart' && e.chart) {
             const chart = e.chart;
             slide.addChart(
-              chart.kind,
+              chart.kind === 'pie' && chart.donut ? 'doughnut' : chart.kind,
               chart.series.map(s => ({
                 name: s.name,
                 labels: chart.labels,
-                values: s.values,
+                // PptxGenJS supports blank cells at runtime; its public types only list numbers.
+                values: s.values as number[],
               })),
               {
                 ...box,
                 showLegend: chart.legend,
+                displayBlanksAs: 'gap',
+                holeSize: chart.donut ? 52 : 0,
+                catAxisTitle: chart.xAxisLabel,
+                valAxisTitle: chart.yAxisLabel,
+                showValAxisTitle: Boolean(chart.yAxisLabel),
+                showCatAxisTitle: Boolean(chart.xAxisLabel),
+                valGridLine:
+                  chart.grid === undefined
+                    ? undefined
+                    : { style: chart.grid ? 'solid' : 'none', color: 'DDDDDD' },
+                catAxisLabelFontFace: chart.fontFamily ?? e.font,
+                valAxisLabelFontFace: chart.fontFamily ?? e.font,
+                legendFontFace: chart.fontFamily ?? e.font,
                 showTitle: false,
                 chartColors:
                   chart.kind === 'pie'
@@ -673,15 +715,7 @@ export async function render(
       );
     if (format === 'zip') {
       files['Polity-Projekt.json'] = strToU8(JSON.stringify(v5Document));
-      const referencedMedia = new Set(
-        v5Document.nodes.flatMap(node =>
-          node.type === 'media'
-            ? [node.assetId]
-            : node.type === 'chart' && node.sourceAssetId
-              ? [node.sourceAssetId]
-              : []
-        )
-      );
+      const referencedMedia = new Set(v5Document.nodes.flatMap(studioNodeAssetIds));
       for (const [id, m] of Object.entries(media).filter(([id]) => referencedMedia.has(id)))
         files[
           `Medien/${id}.${m.mime === 'video/mp4' ? 'mp4' : m.mime === 'image/jpeg' ? 'jpg' : m.mime === 'image/webp' ? 'webp' : 'png'}`

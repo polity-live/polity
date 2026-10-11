@@ -41,7 +41,7 @@ import { AgendaDialogContent } from './AgendaUiSystem';
 interface EventLiveFocusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  t: (key: string, fallback?: string | Record<string, unknown>) => string;
+  t: typeof translateText;
   streamUrl?: string | null;
   currentAgendaItem: any;
   currentAgendaItemTopNumber?: number;
@@ -109,7 +109,7 @@ type AgendaVisualStatus = AgendaItemStatus | 'active';
 
 interface SpeakerFocusPanelProps {
   className?: string;
-  t: (key: string, fallback?: string | Record<string, unknown>) => string;
+  t: typeof translateText;
   speakerList: any[];
   showGender?: boolean;
   userId?: string;
@@ -136,10 +136,7 @@ function getSpeakerName(speaker: any, fallback: string) {
   return speaker.user?.name || speaker.user?.email || speaker.title || fallback;
 }
 
-function formatGenderBadgeLabel(
-  t: (key: string, fallback?: string | Record<string, unknown>) => string,
-  gender?: string | null
-) {
+function formatGenderBadgeLabel(t: typeof translateText, gender?: string | null) {
   const labelKey =
     gender === 'male'
       ? 'male'
@@ -344,7 +341,7 @@ function SpeakerFocusRail({
 }: {
   activeSpeakersCount: number;
   onExpand: () => void;
-  t: (key: string, fallback?: string | Record<string, unknown>) => string;
+  t: typeof translateText;
 }) {
   return (
     <aside className="bg-card hidden min-h-0 flex-col items-center gap-3 rounded-lg border p-2 shadow-sm lg:flex">
@@ -374,6 +371,155 @@ function SpeakerFocusRail({
         </span>
       </button>
     </aside>
+  );
+}
+
+export function EventLiveFocusContent({
+  t,
+  streamUrl,
+  currentAgendaItem,
+  currentAgendaItemTopNumber,
+  streamRuntimeStatus,
+  streamIsLive,
+  eventStartTimestamp,
+  speakerList,
+  showSpeakerGender,
+  userId,
+  canManageAgenda,
+  onMarkSpeakerCompleted,
+  votingWorkspace,
+  showLivestream = true,
+  showSpeakers = true,
+}: Pick<
+  EventLiveFocusDialogProps,
+  | 't'
+  | 'streamUrl'
+  | 'currentAgendaItem'
+  | 'currentAgendaItemTopNumber'
+  | 'streamRuntimeStatus'
+  | 'streamIsLive'
+  | 'eventStartTimestamp'
+  | 'speakerList'
+  | 'showSpeakerGender'
+  | 'userId'
+  | 'canManageAgenda'
+  | 'onMarkSpeakerCompleted'
+  | 'votingWorkspace'
+> & { showLivestream?: boolean; showSpeakers?: boolean }) {
+  const [desktopSpeakersOpen, setDesktopSpeakersOpen] = useState(true);
+  const agendaTitle = currentAgendaItem?.title || t('features.events.stream.noActiveItem');
+  const topLabel =
+    typeof currentAgendaItemTopNumber === 'number' ? `TOP-${currentAgendaItemTopNumber}` : null;
+  const visualStatus = getAgendaVisualStatus(streamRuntimeStatus, streamIsLive);
+  const activeSpeakersCount = speakerList.filter(speaker => !speaker.completed).length;
+  return (
+    <div className="bg-muted/10 min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
+      <div
+        className={cn(
+          'mx-auto grid min-h-full w-full max-w-[1600px] gap-4 p-4 lg:h-full lg:p-5',
+          showSpeakers &&
+            (desktopSpeakersOpen
+              ? 'lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'
+              : 'lg:grid-cols-[minmax(0,1fr)_72px]')
+        )}
+      >
+        <section className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          {!currentAgendaItem ? (
+            <div className="flex min-h-[45vh] items-center justify-center rounded-lg border border-dashed p-8 text-center">
+              <div className="space-y-3">
+                <Play className="text-muted-foreground mx-auto h-10 w-10" />
+                <h2 className="text-2xl font-semibold">
+                  {t('features.events.stream.noActiveItem')}
+                </h2>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="bg-card/80 border-border/70 rounded-xl border p-4 shadow-none md:p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {topLabel ? <BadgeControl variant="outline">{topLabel}</BadgeControl> : null}
+                      <AgendaStatusBadge status={visualStatus} />
+                      <AgendaTypeBadge type={getAgendaDisplayType(currentAgendaItem.type)} />
+                      {currentAgendaItem.duration ? (
+                        <BadgeControl variant="outline">
+                          <Clock className="mr-1 h-3 w-3" />
+                          {currentAgendaItem.duration}
+                          {translateText('generated.inline.0009_min_b6c935d4')}
+                        </BadgeControl>
+                      ) : null}
+                      {!streamIsLive && eventStartTimestamp != null ? (
+                        <AgendaCountdownPill
+                          label={t('features.events.stream.startsIn')}
+                          endsAt={new Date(eventStartTimestamp)}
+                          tone="start"
+                        />
+                      ) : null}
+                    </div>
+
+                    <h2 className="mt-4 text-2xl leading-tight font-semibold md:text-4xl">
+                      {agendaTitle}
+                    </h2>
+                  </div>
+                </div>
+
+                {currentAgendaItem.description ? (
+                  <p className="text-muted-foreground mt-4 whitespace-pre-wrap md:text-lg">
+                    {currentAgendaItem.description}
+                  </p>
+                ) : null}
+              </div>
+
+              {showSpeakers && (
+                <SpeakerFocusPanel
+                  className="lg:hidden"
+                  t={t}
+                  speakerList={speakerList}
+                  showGender={showSpeakerGender}
+                  userId={userId}
+                  canManageAgenda={canManageAgenda}
+                  onMarkSpeakerCompleted={onMarkSpeakerCompleted}
+                />
+              )}
+
+              {showLivestream && streamIsLive ? (
+                <EventLivestreamPlayer
+                  streamUrl={streamUrl}
+                  title={t('features.events.stream.liveStream')}
+                  containerClassName={featureThemeClassName('agendaEventAgendaContrastBackground')}
+                />
+              ) : null}
+
+              {votingWorkspace}
+            </>
+          )}
+        </section>
+
+        {showSpeakers && (
+          <SpeakerFocusPanel
+            className={cn(
+              'hidden lg:min-h-0 lg:overflow-y-auto',
+              desktopSpeakersOpen ? 'lg:block' : 'lg:hidden'
+            )}
+            t={t}
+            speakerList={speakerList}
+            showGender={showSpeakerGender}
+            userId={userId}
+            canManageAgenda={canManageAgenda}
+            onMarkSpeakerCompleted={onMarkSpeakerCompleted}
+            onCollapse={() => setDesktopSpeakersOpen(false)}
+          />
+        )}
+        {showSpeakers && !desktopSpeakersOpen ? (
+          <SpeakerFocusRail
+            activeSpeakersCount={activeSpeakersCount}
+            onExpand={() => setDesktopSpeakersOpen(true)}
+            t={t}
+          />
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -443,10 +589,7 @@ export function EventLiveFocusDialog({
   userSelectedChoiceIds,
   votingWorkspace,
 }: EventLiveFocusDialogProps) {
-  const [desktopSpeakersOpen, setDesktopSpeakersOpen] = useState(true);
   const agendaTitle = currentAgendaItem?.title || t('features.events.stream.noActiveItem');
-  const topLabel =
-    typeof currentAgendaItemTopNumber === 'number' ? `TOP-${currentAgendaItemTopNumber}` : null;
   const isElectionItem = currentAgendaItem?.type === 'election' || Boolean(streamElection);
   const isVoteItem =
     currentAgendaItem?.type === 'amendment' ||
@@ -467,8 +610,6 @@ export function EventLiveFocusDialog({
         'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792',
         'Offline votes are entered via tallies.'
       ));
-  const visualStatus = getAgendaVisualStatus(streamRuntimeStatus, streamIsLive);
-  const activeSpeakersCount = speakerList.filter(speaker => !speaker.completed).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -511,171 +652,85 @@ export function EventLiveFocusDialog({
           </Button>
         </header>
 
-        <div className="bg-muted/10 flex-1 overflow-y-auto lg:overflow-hidden">
-          <div
-            className={cn(
-              'mx-auto grid min-h-full w-full max-w-[1600px] gap-4 p-4 lg:h-full lg:p-5',
-              desktopSpeakersOpen
-                ? 'lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'
-                : 'lg:grid-cols-[minmax(0,1fr)_72px]'
-            )}
-          >
-            <section className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-              {!currentAgendaItem ? (
-                <div className="flex min-h-[45vh] items-center justify-center rounded-lg border border-dashed p-8 text-center">
-                  <div className="space-y-3">
-                    <Play className="text-muted-foreground mx-auto h-10 w-10" />
-                    <h2 className="text-2xl font-semibold">
-                      {t('features.events.stream.noActiveItem')}
-                    </h2>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="bg-card/80 border-border/70 rounded-xl border p-4 shadow-none md:p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {topLabel ? (
-                            <BadgeControl variant="outline">{topLabel}</BadgeControl>
-                          ) : null}
-                          <AgendaStatusBadge status={visualStatus} />
-                          <AgendaTypeBadge type={getAgendaDisplayType(currentAgendaItem.type)} />
-                          {currentAgendaItem.duration ? (
-                            <BadgeControl variant="outline">
-                              <Clock className="mr-1 h-3 w-3" />
-                              {currentAgendaItem.duration}
-                              {translateText('generated.inline.0009_min_b6c935d4')}
-                            </BadgeControl>
-                          ) : null}
-                          {!streamIsLive && eventStartTimestamp != null ? (
-                            <AgendaCountdownPill
-                              label={t('features.events.stream.startsIn')}
-                              endsAt={new Date(eventStartTimestamp)}
-                              tone="start"
-                            />
-                          ) : null}
-                        </div>
-
-                        <h2 className="mt-4 text-2xl leading-tight font-semibold md:text-4xl">
-                          {agendaTitle}
-                        </h2>
-                      </div>
-                    </div>
-
-                    {currentAgendaItem.description ? (
-                      <p className="text-muted-foreground mt-4 whitespace-pre-wrap md:text-lg">
-                        {currentAgendaItem.description}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <SpeakerFocusPanel
-                    className="lg:hidden"
-                    t={t}
-                    speakerList={speakerList}
-                    showGender={showSpeakerGender}
-                    userId={userId}
-                    canManageAgenda={canManageAgenda}
-                    onMarkSpeakerCompleted={onMarkSpeakerCompleted}
+        <EventLiveFocusContent
+          t={t}
+          streamUrl={streamUrl}
+          currentAgendaItem={currentAgendaItem}
+          currentAgendaItemTopNumber={currentAgendaItemTopNumber}
+          streamRuntimeStatus={streamRuntimeStatus}
+          streamIsLive={streamIsLive}
+          eventStartTimestamp={eventStartTimestamp}
+          speakerList={speakerList}
+          showSpeakerGender={showSpeakerGender}
+          userId={userId}
+          canManageAgenda={canManageAgenda}
+          onMarkSpeakerCompleted={onMarkSpeakerCompleted}
+          votingWorkspace={
+            votingWorkspace ?? (
+              <>
+                {streamElection ? (
+                  <AgendaElectionSection
+                    className="shadow-sm"
+                    roleName={streamElection.title ?? t('features.events.agenda.role')}
+                    electionMode={
+                      streamElection.election_mode
+                        ? normalizeElectionMode(streamElection.election_mode)
+                        : null
+                    }
+                    seatCount={streamElection.seat_count ?? null}
+                    candidates={streamElection.candidates ?? []}
+                    indicativeSelections={indicativeSelections}
+                    finalSelections={finalSelections}
+                    offlineTallies={streamElection.offline_tallies ?? []}
+                    attendanceMode={attendanceMode}
+                    delegateTargetEventId={
+                      streamDelegateTargetEvent?.id ??
+                      (
+                        streamElection as {
+                          delegate_assignment_meta?: { targetEventId?: string } | null;
+                        }
+                      ).delegate_assignment_meta?.targetEventId
+                    }
+                    delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
+                    showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
+                    userHasVoted={userHasElectionVoted}
+                    userSelectedCandidateIds={userSelectedCandidateIds}
+                    electionStatus={streamElection.status}
+                    canVote={false}
+                    canBeCandidate={false}
+                    isUserCandidate={false}
+                    onBecomeCandidate={ignoreCandidateAction}
                   />
+                ) : null}
 
-                  {streamIsLive ? (
-                    <EventLivestreamPlayer
-                      streamUrl={streamUrl}
-                      title={t('features.events.stream.liveStream')}
-                      containerClassName={featureThemeClassName(
-                        'agendaEventAgendaContrastBackground'
-                      )}
-                    />
-                  ) : null}
-
-                  {votingWorkspace ??
-                    (streamElection ? (
-                      <AgendaElectionSection
-                        className="shadow-sm"
-                        roleName={streamElection.title ?? t('features.events.agenda.role')}
-                        electionMode={
-                          streamElection.election_mode
-                            ? normalizeElectionMode(streamElection.election_mode)
-                            : null
-                        }
-                        seatCount={streamElection.seat_count ?? null}
-                        candidates={streamElection.candidates ?? []}
-                        indicativeSelections={indicativeSelections}
-                        finalSelections={finalSelections}
-                        offlineTallies={streamElection.offline_tallies ?? []}
-                        attendanceMode={attendanceMode}
-                        delegateTargetEventId={
-                          streamDelegateTargetEvent?.id ??
-                          (
-                            streamElection as {
-                              delegate_assignment_meta?: { targetEventId?: string } | null;
-                            }
-                          ).delegate_assignment_meta?.targetEventId
-                        }
-                        delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
-                        showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
-                        userHasVoted={userHasElectionVoted}
-                        userSelectedCandidateIds={userSelectedCandidateIds}
-                        electionStatus={streamElection.status}
-                        canVote={false}
-                        canBeCandidate={false}
-                        isUserCandidate={false}
-                        onBecomeCandidate={ignoreCandidateAction}
-                      />
-                    ) : null)}
-
-                  {!votingWorkspace && streamVote ? (
-                    <AgendaVoteSection
-                      className="shadow-sm"
-                      voteId={streamVote.id}
-                      voteTitle={
-                        streamVote.title ||
-                        currentAgendaItem.title ||
-                        t('features.events.agenda.vote')
-                      }
-                      choices={streamVote.choices ?? []}
-                      indicativeDecisions={indicativeDecisions}
-                      finalDecisions={finalDecisions}
-                      offlineTallies={streamVote.offline_tallies ?? []}
-                      attendanceMode={attendanceMode}
-                      userHasVoted={userHasVoteVoted}
-                      userSelectedChoiceIds={userSelectedChoiceIds}
-                      voteStatus={streamVote.status}
-                      majorityType={streamVote.majority_type}
-                      totalEligibleVoters={eligibleFinalVoterCount}
-                      canManageOfflineResults={canManageAgenda}
-                      offlineEligibleCount={confirmedOfflineParticipantCount}
-                      forwardingPreview={streamForwardingPreview}
-                    />
-                  ) : null}
-                </>
-              )}
-            </section>
-
-            <SpeakerFocusPanel
-              className={cn(
-                'hidden lg:min-h-0 lg:overflow-y-auto',
-                desktopSpeakersOpen ? 'lg:block' : 'lg:hidden'
-              )}
-              t={t}
-              speakerList={speakerList}
-              showGender={showSpeakerGender}
-              userId={userId}
-              canManageAgenda={canManageAgenda}
-              onMarkSpeakerCompleted={onMarkSpeakerCompleted}
-              onCollapse={() => setDesktopSpeakersOpen(false)}
-            />
-            {!desktopSpeakersOpen ? (
-              <SpeakerFocusRail
-                activeSpeakersCount={activeSpeakersCount}
-                onExpand={() => setDesktopSpeakersOpen(true)}
-                t={t}
-              />
-            ) : null}
-          </div>
-        </div>
+                {streamVote ? (
+                  <AgendaVoteSection
+                    className="shadow-sm"
+                    voteId={streamVote.id}
+                    voteTitle={
+                      streamVote.title ||
+                      currentAgendaItem.title ||
+                      t('features.events.agenda.vote')
+                    }
+                    choices={streamVote.choices ?? []}
+                    indicativeDecisions={indicativeDecisions}
+                    finalDecisions={finalDecisions}
+                    offlineTallies={streamVote.offline_tallies ?? []}
+                    attendanceMode={attendanceMode}
+                    userHasVoted={userHasVoteVoted}
+                    userSelectedChoiceIds={userSelectedChoiceIds}
+                    voteStatus={streamVote.status}
+                    majorityType={streamVote.majority_type}
+                    totalEligibleVoters={eligibleFinalVoterCount}
+                    canManageOfflineResults={canManageAgenda}
+                    offlineEligibleCount={confirmedOfflineParticipantCount}
+                    forwardingPreview={streamForwardingPreview}
+                  />
+                ) : null}
+              </>
+            )
+          }
+        />
 
         <footer className="bg-background/95 border-border/70 shrink-0 border-t p-3 backdrop-blur md:px-6">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

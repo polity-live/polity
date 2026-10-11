@@ -223,7 +223,9 @@ beforeEach(() => {
     unsafe: vi
       .fn()
       .mockImplementation(async (query, args) =>
-        query.startsWith('select id from studio_asset') ? args[1].map((id: string) => ({ id })) : []
+        query.startsWith('select id,mime_type from studio_asset')
+          ? args[1].map((id: string) => ({ id, mime_type: 'image/png' }))
+          : []
       ),
   });
   io.sql.mockImplementation((parts: TemplateStringsArray | string[], ...values: unknown[]) => {

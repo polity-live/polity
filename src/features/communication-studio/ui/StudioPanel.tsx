@@ -10,7 +10,11 @@ import {
 } from '@/features/shared/ui/ui/popover';
 import { ToolbarButton } from '@/features/shared/ui/layout';
 import { cn } from '@/features/shared/utils/utils';
-import { parseStudioOpenPanelRequest, STUDIO_OPEN_PANEL_EVENT } from '../logic/panel-events';
+import {
+  parseStudioOpenPanelRequest,
+  STUDIO_OPEN_PANEL_EVENT,
+  STUDIO_CLOSE_PANELS_EVENT,
+} from '../logic/panel-events';
 
 type PanelPlacement = 'toolbar' | 'sidebar' | 'mobile';
 
@@ -55,6 +59,8 @@ export function StudioPanel({
   panelKey,
   toolbarTrigger = true,
   keepOpenOnCanvasInteraction = false,
+  keepOpenOnDialogInteraction = false,
+  unmountWhenClosed = false,
 }: {
   label: string;
   icon?: ReactNode;
@@ -65,6 +71,8 @@ export function StudioPanel({
   panelKey?: string;
   toolbarTrigger?: boolean;
   keepOpenOnCanvasInteraction?: boolean;
+  keepOpenOnDialogInteraction?: boolean;
+  unmountWhenClosed?: boolean;
 }) {
   const mobile = useStudioMobile();
   const [open, setOpen] = useState(false);
@@ -134,8 +142,22 @@ export function StudioPanel({
     },
     [container]
   );
+
+  useEffect(() => {
+    const close = () => change(false);
+    window.addEventListener(STUDIO_CLOSE_PANELS_EVENT, close);
+    return () => window.removeEventListener(STUDIO_CLOSE_PANELS_EVENT, close);
+  }, [placement]);
   const restoreToolbarFocus = (event: Event) => {
     event.preventDefault();
+    // A newly opened toolbar menu owns focus when switching away from this panel.
+    if (document.activeElement?.closest('[data-slot="dropdown-menu-content"]')) return;
+    // Switching between toolbar panels must leave focus with the incoming trigger.
+    if (
+      document.activeElement !== trigger.current &&
+      document.activeElement?.closest('[role="toolbar"]')
+    )
+      return;
     trigger.current?.focus();
   };
   const restoreSidebarFocus = (event: Event) => {
@@ -149,6 +171,20 @@ export function StudioPanel({
       event.preventDefault();
   };
   const triggerContent = icon ?? label;
+  const preserveShowDialog = (event: Event) => {
+    if (
+      keepOpenOnDialogInteraction &&
+      event.target instanceof Element &&
+      event.target.closest('[data-studio-show-dialog], [data-studio-show-select]')
+    )
+      event.preventDefault();
+    if (
+      keepOpenOnCanvasInteraction &&
+      event.target instanceof Element &&
+      event.target.closest('[data-canvas-engine="konva"]')
+    )
+      event.preventDefault();
+  };
   const toolbarPopover = !mobile && !large;
   const toolbarOpen = open && placement === 'toolbar' && toolbarTrigger;
   const mobileOpen = open && placement === 'mobile';
@@ -156,7 +192,7 @@ export function StudioPanel({
 
   return (
     <>
-      {container && createPortal(children, container)}
+      {container && (!unmountWhenClosed || open) && createPortal(children, container)}
       {toolbarTrigger &&
         (toolbarPopover ? (
           <Popover
@@ -177,6 +213,7 @@ export function StudioPanel({
               className="z-[60] max-h-[75vh] w-[min(28rem,90vw)] overflow-auto"
               align="start"
               onCloseAutoFocus={restoreToolbarFocus}
+              onInteractOutside={preserveShowDialog}
             >
               {content}
             </PopoverContent>
@@ -211,6 +248,7 @@ export function StudioPanel({
           updatePositionStrategy="always"
           onCloseAutoFocus={restoreSidebarFocus}
           onInteractOutside={event => {
+            preserveShowDialog(event);
             if (
               keepOpenOnCanvasInteraction &&
               event.target instanceof Element &&

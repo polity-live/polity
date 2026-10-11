@@ -2050,7 +2050,7 @@ function studioCase(action: string, actor: 'owner' | 'outsider' | 'anon'): Mutat
           title: 'Fixture studio',
           kind: 'single',
           visibility: 'private',
-          document_schema_version: 5,
+          document_schema_version: 6,
           created_at: 0,
           updated_at: 0,
         });

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { MAX_DATASET_SNAPSHOT_BYTES } from '@/features/charts/types';
 import { createClient } from '@/lib/supabase/server';
+import { decodeDatasetText } from './text';
 
 export const DATASET_SNAPSHOT_BUCKET = 'dataset-snapshots';
 
@@ -47,8 +48,8 @@ export async function readLimitedResponseBytes(response: Response, label = 'Data
   return bytes;
 }
 
-export function bytesToText(bytes: Uint8Array) {
-  return new TextDecoder().decode(bytes);
+export function bytesToText(bytes: Uint8Array, contentType?: string | null) {
+  return decodeDatasetText(bytes, contentType);
 }
 
 export function textToBytes(text: string) {

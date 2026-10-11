@@ -495,6 +495,16 @@ export function applyEventManagerQueryAccess<T>(
   return applyEventRoleRightAccess(q, userID, actions);
 }
 
+/** Event presentation editing follows the event's agenda administration rights. */
+export function applyEventStudioManagerQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  return applyEventRoleRightAccess(
+    applyEventQueryAccess(q, userID),
+    userID,
+    ['manage'],
+    ['events', 'agendaItems']
+  );
+}
+
 export function applyEventParticipantOrManagerQueryAccess<T>(
   q: T,
   userID: string | undefined | null

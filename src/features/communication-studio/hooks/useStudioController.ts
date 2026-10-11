@@ -411,11 +411,15 @@ export function useStudioController(
     setSelected([e.id]);
     return e.id;
   };
-  const upload = (file: File) =>
+  const upload = (file: File, background = false) =>
     run(async () => {
       if (!id) return;
       if (!page) throw new Error('Select a frame to upload media.');
       const asset = await studioApi.upload(id, file, workspaceId);
+      if (background || asset.mime?.startsWith('audio/')) {
+        await editor.refreshAssets();
+        return { id: asset.id, name: file.name, mime: asset.mime };
+      }
       const e = element(asset.mime.startsWith('video') ? 'video' : 'image', {
         assetId: asset.id,
         x: 85,
@@ -615,7 +619,7 @@ export function useStudioController(
     });
     if (firstFrameId) setPageId(firstFrameId);
   };
-  const exportMedia = async () => {
+  const exportMedia = async (snapshot?: { portrait?: boolean; presentation?: boolean }) => {
     if (exportPreparing) return;
     setExportPreparing(true);
     setExportFailure('');
@@ -632,6 +636,7 @@ export function useStudioController(
         format: format as StudioCommandInput<'requestExport'>['format'],
         pageIds: exportFrameIds,
         revision: await editor.commit(),
+        ...(snapshot ? { snapshot } : {}),
       });
       autoDownloadIds.current.add(result.id);
       setTrackedExports(current => ({

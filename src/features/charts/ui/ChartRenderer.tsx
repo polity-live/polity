@@ -1,4 +1,3 @@
-import { featureThemeValue } from '@/features/shared/theme';
 import * as React from 'react';
 import {
   useChartRendererController,
@@ -29,16 +28,8 @@ import {
   type ChartConfig,
 } from '@/features/shared/ui/ui/chart';
 import { translate } from '@/features/shared/hooks/use-translation';
-export const CHART_PALETTE = [
-  featureThemeValue('chartChartRendererInfoColor'),
-  featureThemeValue('chartChartRendererInfoColorAlpha'),
-  featureThemeValue('chartChartRendererAccentColor'),
-  featureThemeValue('chartChartRendererThemeValue'),
-  featureThemeValue('chartChartRendererAccentColorAlpha'),
-  featureThemeValue('chartChartRendererThemeValueAlpha'),
-  featureThemeValue('chartChartRendererInfoColorBeta'),
-  featureThemeValue('chartChartRendererDangerColor'),
-] as const;
+export { CHART_PALETTE } from '../logic/chartPalette';
+import { CHART_PALETTE } from '../logic/chartPalette';
 
 interface ChartRendererProps {
   chartType: ChartType;

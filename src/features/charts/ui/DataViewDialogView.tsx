@@ -1,16 +1,12 @@
 import * as React from 'react';
 import {
-  AreaChartIcon,
   ArrowLeftIcon,
-  BarChart3Icon,
   ChartNoAxesCombinedIcon,
   ChevronDownIcon,
   DatabaseIcon,
   FileSpreadsheetIcon,
   FileUpIcon,
-  LineChartIcon,
   Loader2Icon,
-  PieChartIcon,
   SearchIcon,
   SigmaIcon,
   SlidersHorizontalIcon,
@@ -20,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { PolityLoadingScreen } from '@/features/shared/ui/feedback/PolityLoadingScreen';
 import {
   FormControlLabel,
   InlineCheckbox,
@@ -51,24 +48,27 @@ import {
   SheetTitle,
 } from '@/features/shared/ui/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { cn } from '@/features/shared/utils/utils';
 import { FileDropzone, type FileDropzoneRejection } from '@/features/file-upload/ui/FileDropzone';
-import type { DataViewDialogModel } from '../hooks/useDataViewDialogModel';
+import type { DataViewBuilderModel } from '../hooks/useDataViewBuilderModel';
 import { getDataViewTitle, getValueColumnLayout } from '../logic/dataView';
 import {
   MAX_DATASET_SNAPSHOT_BYTES,
-  type ChartType,
   type DataAggregation,
   type DatasetProviderId,
   type DatasetSearchResult,
+  type DatasetSearchIntent,
 } from '../types';
 import { ChartRenderer } from './ChartRenderer';
+import { ChartTypeSelector } from './ChartTypeSelector';
 import { DataViewAttribution } from './DataViewAttribution';
 import { ManualChartTableEditor } from './ManualChartTableEditor';
+import { DatasetSearchControls } from './DatasetSearchControls';
+import { datasetDescriptionText, interpretDatasetSearch } from '../logic/datasetSearch';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface DataViewDialogViewProps {
-  model: DataViewDialogModel;
+  model: DataViewBuilderModel;
 }
 
 const PROVIDERS: DatasetProviderId[] = ['EUROSTAT', 'GENESIS_DESTATIS', 'GOVDATA', 'UPLOAD'];
@@ -102,10 +102,12 @@ function coverageSummary(result: DatasetSearchResult) {
 
 function ResultRow({
   result,
+  intent,
   selected,
   onSelect,
 }: {
   result: DatasetSearchResult;
+  intent: DatasetSearchIntent;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -137,19 +139,71 @@ function ResultRow({
               </Badge>
             ) : null}
           </div>
-          <p className="mt-2 line-clamp-2 text-sm font-medium">{result.title}</p>
+          <p className="mt-2 line-clamp-2 text-sm font-medium">
+            {datasetDescriptionText(result.title).replaceAll('_', ' ')}
+          </p>
           {result.description ? (
             <p className="text-muted-foreground mt-1 line-clamp-2 text-xs whitespace-pre-line">
-              {result.description}
+              {datasetDescriptionText(result.description)}
             </p>
           ) : null}
           <p className="text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
             {result.publisher ? <span>{result.publisher}</span> : null}
             {result.structureSummary ? <span>{result.structureSummary}</span> : null}
             {result.valueSummary ? <span>{result.valueSummary}</span> : null}
-            {coverage ? <span>{coverage}</span> : null}
-            {snapshotDate ? <span>{snapshotDate.slice(0, 10)}</span> : null}
+            {coverage && !result.searchMatch ? <span>{coverage}</span> : null}
+            {snapshotDate ? (
+              <span>
+                {t('plateJs.dataView.updated')}: {snapshotDate.slice(0, 10)}
+              </span>
+            ) : null}
           </p>
+          {result.searchMatch && (
+            <div className="text-muted-foreground mt-2 space-y-1 text-xs">
+              <p>
+                {t('plateJs.dataView.searchArea')}:{' '}
+                {result.searchMatch.area.label || t('plateJs.dataView.coverageUnknown')}
+                {result.searchMatch.area.source === 'text'
+                  ? ` · ${t('plateJs.dataView.coverageFromText')}`
+                  : ''}
+                {result.searchMatch.area.status === 'different'
+                  ? ` · ${t('plateJs.dataView.areaDifferent')}`
+                  : ''}
+              </p>
+              <p>
+                {t('plateJs.dataView.searchPeriod')}:{' '}
+                {result.searchMatch.period.start !== undefined &&
+                result.searchMatch.period.end !== undefined
+                  ? `${result.searchMatch.period.start}–${result.searchMatch.period.end}`
+                  : (result.searchMatch.period.start ??
+                    result.searchMatch.period.end ??
+                    t('plateJs.dataView.coverageUnknown'))}
+                {result.searchMatch.period.source === 'text'
+                  ? ` · ${t('plateJs.dataView.coverageFromText')}`
+                  : ''}
+                {result.searchMatch.period.status === 'different'
+                  ? ` · ${t('plateJs.dataView.periodDifferent')}`
+                  : ''}
+              </p>
+              {result.searchMatch.group === 'matching' && (
+                <p className="text-foreground">
+                  {intent.area ? `${intent.area} · ` : ''}
+                  {intent.period
+                    ? t('plateJs.dataView.periodIncludes', {
+                        period:
+                          intent.period.start === intent.period.end
+                            ? intent.period.start
+                            : `${intent.period.start}–${intent.period.end}`,
+                      })
+                    : t('plateJs.dataView.matchingSearch')}
+                </p>
+              )}
+              {result.searchMatch.period.status === 'unknown' &&
+                result.searchMatch.period.source !== 'unknown' && (
+                  <p>{t('plateJs.dataView.periodUnconfirmed')}</p>
+                )}
+            </div>
+          )}
         </div>
         {formatBytes(result.byteSize) ? (
           <span className="text-muted-foreground shrink-0 text-xs">
@@ -265,17 +319,52 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
           ) : null}
         </div>
         <div>
-          <h3 className="text-base font-semibold">{result.title}</h3>
+          <h3 className="text-base font-semibold">
+            {datasetDescriptionText(result.title).replaceAll('_', ' ')}
+          </h3>
           {result.publisher ? (
             <p className="text-muted-foreground mt-1 text-sm">{result.publisher}</p>
           ) : null}
         </div>
         {result.description ? (
           <p className="text-muted-foreground text-sm leading-6 whitespace-pre-line">
-            {result.description}
+            {datasetDescriptionText(result.description)}
           </p>
         ) : null}
         <dl className="grid gap-4 border-y py-4 text-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          {result.searchMatch && (
+            <>
+              <div>
+                <dt className="text-muted-foreground text-xs">
+                  {t('plateJs.dataView.searchArea')}
+                </dt>
+                <dd className="mt-1">
+                  {result.searchMatch.area.label || t('plateJs.dataView.coverageUnknown')}
+                </dd>
+                {result.searchMatch.area.source === 'text' && (
+                  <dd className="text-muted-foreground mt-1 text-xs">
+                    {t('plateJs.dataView.coverageFromText')}
+                  </dd>
+                )}
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">
+                  {t('plateJs.dataView.searchPeriod')}
+                </dt>
+                <dd className="mt-1">
+                  {result.searchMatch.period.start !== undefined &&
+                  result.searchMatch.period.end !== undefined
+                    ? `${result.searchMatch.period.start}–${result.searchMatch.period.end}`
+                    : t('plateJs.dataView.coverageUnknown')}
+                </dd>
+                {result.searchMatch.period.source === 'text' && (
+                  <dd className="text-muted-foreground mt-1 text-xs">
+                    {t('plateJs.dataView.coverageFromText')}
+                  </dd>
+                )}
+              </div>
+            </>
+          )}
           {result.structureSummary ? (
             <div>
               <dt className="text-muted-foreground text-xs">{t('plateJs.dataView.structure')}</dt>
@@ -316,6 +405,182 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
         {(result.byteSize ?? 0) > 50 * 1024 * 1024 ? (
           <p className="text-destructive mt-2 text-xs">{t('plateJs.dataView.tooLarge')}</p>
         ) : null}
+        {!result.snapshotId && ['EUROSTAT', 'GENESIS_DESTATIS'].includes(result.provider) && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-2 w-full"
+            disabled={model.preparing}
+            onClick={() => void model.useSelectedDataset(true)}
+          >
+            {t('plateJs.dataView.restrictImport')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ImportPreparation({ model }: DataViewDialogViewProps) {
+  const { t } = useTranslation();
+  const prepared = model.preparation;
+  if (!prepared) return null;
+  const geo = prepared.dimensions.find(item => item.id === prepared.geoDimension);
+  const invalidPeriod =
+    model.importFilters.period &&
+    (model.importFilters.period.start > model.importFilters.period.end ||
+      model.importFilters.period.start < 1800 ||
+      model.importFilters.period.end > 2199);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex-1 space-y-5 overflow-y-auto p-5">
+        <h3 className="text-base font-semibold">{prepared.title}</h3>
+        <p className="text-muted-foreground text-sm">{t('plateJs.dataView.prepareHint')}</p>
+        <p className="text-muted-foreground text-sm">
+          {prepared.estimatedBytes === null
+            ? t('plateJs.dataView.sizeUnknown')
+            : t('plateJs.dataView.estimatedSize', {
+                size: formatBytes(prepared.estimatedBytes) ?? '0 MB',
+              })}
+        </p>
+        <SelectField
+          label={t('plateJs.dataView.prepareTitle')}
+          value={model.restrictImport ? 'scope' : 'full'}
+          onValueChange={value => model.setRestrictImport(value === 'scope')}
+          options={[
+            { value: 'scope', label: t('plateJs.dataView.restrictImport') },
+            ...(prepared.importAllowed
+              ? [{ value: 'full', label: t('plateJs.dataView.fullImport') }]
+              : []),
+          ]}
+        />
+        {model.restrictImport && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {geo && (
+              <div className="sm:col-span-2">
+                <label htmlFor="import-area" className="text-sm font-medium">
+                  {t('plateJs.dataView.searchArea')}
+                </label>
+                <Input
+                  id="import-area"
+                  list="import-area-options"
+                  value={model.importFilters.area ?? ''}
+                  placeholder={t('plateJs.dataView.allValues')}
+                  onChange={event =>
+                    model.setImportFilters(current => ({
+                      ...current,
+                      area: event.target.value || null,
+                    }))
+                  }
+                />
+                <datalist id="import-area-options">
+                  {geo.values.map(value => (
+                    <option key={value.id} value={value.label || value.id}>
+                      {value.id}
+                    </option>
+                  ))}
+                </datalist>
+              </div>
+            )}
+            {prepared.timeDimension && (
+              <>
+                <div>
+                  <label htmlFor="import-start" className="text-sm font-medium">
+                    {t('plateJs.dataView.periodStart')}
+                  </label>
+                  <Input
+                    id="import-start"
+                    type="number"
+                    min={1800}
+                    max={2199}
+                    placeholder={t('plateJs.dataView.allValues')}
+                    value={model.importFilters.period?.start ?? ''}
+                    onChange={event =>
+                      model.setImportFilters(current => ({
+                        ...current,
+                        period: event.target.value
+                          ? {
+                              start: Number(event.target.value),
+                              end: current.period?.end ?? Number(event.target.value),
+                            }
+                          : null,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label htmlFor="import-end" className="text-sm font-medium">
+                    {t('plateJs.dataView.periodEnd')}
+                  </label>
+                  <Input
+                    id="import-end"
+                    type="number"
+                    min={1800}
+                    max={2199}
+                    placeholder={t('plateJs.dataView.allValues')}
+                    value={model.importFilters.period?.end ?? ''}
+                    onChange={event =>
+                      model.setImportFilters(current => ({
+                        ...current,
+                        period: event.target.value
+                          ? {
+                              start: current.period?.start ?? Number(event.target.value),
+                              end: Number(event.target.value),
+                            }
+                          : null,
+                      }))
+                    }
+                  />
+                </div>
+              </>
+            )}
+            {prepared.dimensions
+              .filter(
+                item =>
+                  ![prepared.geoDimension, prepared.timeDimension].includes(item.id) &&
+                  item.values.length > 1
+              )
+              .map(dimension => (
+                <SelectField
+                  key={dimension.id}
+                  label={dimension.label}
+                  value={model.importFilters.dimensions?.[dimension.id] ?? '__all__'}
+                  onValueChange={value =>
+                    model.setImportFilters(current => {
+                      const dimensions =
+                        value === '__all__'
+                          ? Object.fromEntries(
+                              Object.entries(current.dimensions ?? {}).filter(
+                                ([id]) => id !== dimension.id
+                              )
+                            )
+                          : { ...current.dimensions, [dimension.id]: value };
+                      return { ...current, dimensions };
+                    })
+                  }
+                  options={[
+                    { value: '__all__', label: t('plateJs.dataView.allValues') },
+                    ...dimension.values.map(value => ({
+                      value: value.id,
+                      label: value.label || value.id,
+                    })),
+                  ]}
+                />
+              ))}
+          </div>
+        )}
+      </div>
+      <div className="flex justify-between gap-3 border-t p-4">
+        <Button type="button" variant="outline" onClick={model.cancelPreparation}>
+          {t('plateJs.dataView.backToResults')}
+        </Button>
+        <Button
+          type="button"
+          disabled={model.preparing || Boolean(invalidPeriod)}
+          onClick={() => void model.useSelectedDataset()}
+        >
+          {t('plateJs.dataView.importSelection')}
+        </Button>
       </div>
     </div>
   );
@@ -323,6 +588,23 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
 
 function Finder({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
+  const intent = model.searchIntent ?? interpretDatasetSearch(model.searchQuery);
+  const matching = model.searchResults.filter(result => result.searchMatch?.group !== 'other');
+  const other = model.searchResults.filter(result => result.searchMatch?.group === 'other');
+  const [otherOpen, setOtherOpen] = React.useState<boolean | null>(null);
+  React.useEffect(
+    () => setOtherOpen(null),
+    [model.searchQuery, model.searchFilters, model.searchResults]
+  );
+  const renderRow = (result: DatasetSearchResult) => (
+    <ResultRow
+      key={result.id}
+      result={result}
+      intent={intent}
+      selected={model.selectedResult?.id === result.id}
+      onSelect={() => model.setSelectedResult(result)}
+    />
+  );
   const suggestions = [
     t('plateJs.dataView.suggestion.gdp'),
     t('plateJs.dataView.suggestion.population'),
@@ -348,13 +630,17 @@ function Finder({ model }: DataViewDialogViewProps) {
               }}
             />
             {model.searching ? (
-              <Loader2Icon className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin" />
+              <Loader2Icon
+                className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             ) : null}
           </div>
           <div className="flex shrink-0 gap-2">
             <ProviderFilter model={model} />
           </div>
         </div>
+        <DatasetSearchControls intent={intent} setFilters={model.setSearchFilters} />
         {model.searchQuery.trim().length < 2 ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {suggestions.map(suggestion => (
@@ -372,11 +658,39 @@ function Finder({ model }: DataViewDialogViewProps) {
           </div>
         ) : null}
         {model.providerErrors.length > 0 ? (
-          <p className="text-muted-foreground mt-3 text-xs" role="status">
-            {t('plateJs.dataView.partialResults', {
-              sources: model.providerErrors.map(error => providerLabel(error.provider)).join(', '),
+          <div
+            className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-xs"
+            role="status"
+          >
+            {[true, false].map(incomplete => {
+              const errors = model.providerErrors.filter(
+                error => (error.code === 'incomplete_metadata') === incomplete
+              );
+              return errors.length ? (
+                <span key={String(incomplete)}>
+                  {t(
+                    incomplete
+                      ? 'plateJs.dataView.coverageIncomplete'
+                      : 'plateJs.dataView.partialResults',
+                    {
+                      sources: [
+                        ...new Set(errors.map(error => providerLabel(error.provider))),
+                      ].join(', '),
+                    }
+                  )}
+                </span>
+              ) : null;
             })}
-          </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={model.retrySearch}
+              data-action-id="charts.data-view.search.retry"
+            >
+              {t('plateJs.dataView.retrySearch')}
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -387,20 +701,106 @@ function Finder({ model }: DataViewDialogViewProps) {
             model.selectedResult ? 'hidden' : 'block'
           )}
         >
-          {model.searchResults.length > 0 ? (
-            <div>
-              {model.searchResults.map(result => (
-                <ResultRow
-                  key={result.id}
-                  result={result}
-                  selected={model.selectedResult?.id === result.id}
-                  onSelect={() => model.setSelectedResult(result)}
-                />
-              ))}
+          {model.providers.length === 0 ? (
+            <p className="text-muted-foreground p-8 text-center text-sm" role="status">
+              {t('plateJs.dataView.chooseSearchSource')}
+            </p>
+          ) : model.searching ? (
+            <div className="space-y-4 p-5" role="status" aria-live="polite" aria-busy="true">
+              <p className="text-muted-foreground text-sm">
+                {t('plateJs.dataView.searchingDatasets')}
+              </p>
+              <div aria-hidden="true" className="space-y-6">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <div key={index} className="space-y-2">
+                    <Skeleton className="h-5 w-3/4 motion-reduce:animate-none" />
+                    <Skeleton className="h-4 w-full motion-reduce:animate-none" />
+                    <Skeleton className="h-3 w-1/2 motion-reduce:animate-none" />
+                  </div>
+                ))}
+              </div>
             </div>
-          ) : model.searchQuery.trim().length >= 2 && !model.searching ? (
+          ) : model.searchResults.length > 0 ? (
+            <div>
+              <span className="sr-only" role="status">
+                {t('plateJs.dataView.matchingDatasets', { count: matching.length })}.{' '}
+                {t('plateJs.dataView.otherDatasets', { count: other.length })}
+              </span>
+              {matching.length > 0 && (
+                <>
+                  <h3 className="border-b px-4 py-3 text-sm font-semibold">
+                    {t('plateJs.dataView.matchingDatasets', { count: matching.length })}
+                  </h3>
+                  {matching.map(renderRow)}
+                </>
+              )}
+              {other.length > 0 && (
+                <Collapsible open={otherOpen ?? matching.length === 0} onOpenChange={setOtherOpen}>
+                  {matching.length === 0 && (
+                    <p className="text-muted-foreground px-4 py-3 text-sm" role="status">
+                      {t('plateJs.dataView.noConfirmedMatches')}
+                    </p>
+                  )}
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full justify-between rounded-none border-b px-4"
+                      data-action-id="charts.data-view.search.toggle-other"
+                    >
+                      {t('plateJs.dataView.otherDatasets', { count: other.length })}
+                      <ChevronDownIcon className="size-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>{other.map(renderRow)}</CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+          ) : intent.topic.length >= 2 ? (
             <div className="text-muted-foreground flex min-h-64 flex-col items-center justify-center gap-4 px-8 text-center text-sm">
-              <span>{t('plateJs.dataView.noResults')}</span>
+              <span role="status">{t('plateJs.dataView.noResults')}</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {intent.period && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-action-id="charts.data-view.search.relax-period"
+                    onClick={() =>
+                      model.setSearchFilters(current => ({ ...current, period: null }))
+                    }
+                  >
+                    {t('plateJs.dataView.removeSearchPeriod')}
+                  </Button>
+                )}
+                {intent.area && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-action-id="charts.data-view.search.relax-area"
+                    onClick={() => model.setSearchFilters(current => ({ ...current, area: null }))}
+                  >
+                    {t('plateJs.dataView.removeSearchArea')}
+                  </Button>
+                )}
+                {model.providers.length < PROVIDERS.length && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-action-id="charts.data-view.search.expand-sources"
+                    onClick={() => model.setProviders(PROVIDERS)}
+                  >
+                    {t('plateJs.dataView.allSources')}
+                  </Button>
+                )}
+                {model.error && (
+                  <Button type="button" variant="outline" size="sm" onClick={model.retrySearch}>
+                    {t('plateJs.dataView.retrySearch')}
+                  </Button>
+                )}
+              </div>
               {model.canUploadDatasets ? (
                 <Button
                   data-action-id="charts.data-view.upload.open.no-results"
@@ -416,7 +816,13 @@ function Finder({ model }: DataViewDialogViewProps) {
           ) : (
             <div className="text-muted-foreground flex min-h-64 flex-col items-center justify-center gap-4 px-8 text-center text-sm">
               <DatabaseIcon className="size-8 opacity-50" />
-              <span>{t('plateJs.dataView.searchHint')}</span>
+              <span>
+                {t(
+                  model.searchQuery.trim().length >= 2
+                    ? 'plateJs.dataView.addSearchTopic'
+                    : 'plateJs.dataView.searchHint'
+                )}
+              </span>
               {model.canUploadDatasets ? (
                 <div className="flex flex-col items-center gap-2">
                   <span>{t('plateJs.dataView.or')}</span>
@@ -549,6 +955,23 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
           {model.filterValuesLoading ? <Loader2Icon className="size-4 animate-spin" /> : null}
         </div>
         <div className="grid gap-3">
+          {model.query.timeRange && (
+            <div className="rounded border p-2 text-xs">
+              <span>
+                {t('plateJs.dataView.searchPeriod')}: {model.query.timeRange.startYear}–
+                {model.query.timeRange.endYear}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={t('plateJs.dataView.removeSearchPeriod')}
+                onClick={() => model.setQuery(current => ({ ...current, timeRange: null }))}
+              >
+                <XIcon className="size-3" />
+              </Button>
+            </div>
+          )}
           {model.filterableProfiles.map(profile => (
             <div key={profile.name}>
               <label htmlFor={`filter-${profile.name}`} className="text-xs font-medium">
@@ -563,6 +986,7 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
                 onChange={event =>
                   model.setQuery(current => ({
                     ...current,
+                    ...(profile.role === 'time' ? { timeRange: null } : {}),
                     filters: { ...current.filters, [profile.name]: event.target.value },
                   }))
                 }
@@ -582,7 +1006,9 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
             variant="ghost"
             size="sm"
             className="mt-4"
-            onClick={() => model.setQuery(current => ({ ...current, filters: {} }))}
+            onClick={() =>
+              model.setQuery(current => ({ ...current, filters: {}, timeRange: null }))
+            }
           >
             {t('plateJs.dataView.clearFilters')}
           </Button>
@@ -629,12 +1055,6 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
   );
   const usesValueColumns = model.numericProfiles.length > 1;
   const hasMultipleValues = usesValueColumns && selectedValueColumns.size > 1;
-  const chartTypes: { value: ChartType; icon: React.ReactNode; label: string }[] = [
-    { value: 'bar', icon: <BarChart3Icon />, label: t('plateJs.chart.bar') },
-    { value: 'line', icon: <LineChartIcon />, label: t('plateJs.chart.line') },
-    { value: 'area', icon: <AreaChartIcon />, label: t('plateJs.chart.area') },
-    { value: 'pie', icon: <PieChartIcon />, label: t('plateJs.chart.pie') },
-  ];
   const seriesOptions = [
     { value: NO_SERIES, label: t('plateJs.dataView.noSeries') },
     ...model.dimensionProfiles
@@ -727,29 +1147,11 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
           options={seriesOptions}
         />
       ) : null}
-      <div>
-        <p className="mb-2 text-sm font-medium">{t('plateJs.dataView.chartType')}</p>
-        <ToggleGroup
-          type="single"
-          value={model.chartType}
-          onValueChange={value => value && model.setChartType(value as ChartType)}
-          className="grid grid-cols-4"
-        >
-          {chartTypes.map(option => (
-            <ToggleGroupItem
-              data-action-id="charts.data-view.chart.select-type"
-              key={option.value}
-              value={option.value}
-              aria-label={option.label}
-              title={option.label}
-              disabled={option.value === 'pie' && hasMultipleValues}
-              className="h-9"
-            >
-              {option.icon}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
+      <ChartTypeSelector
+        value={model.chartType}
+        onValueChange={model.setChartType}
+        pieDisabled={hasMultipleValues}
+      />
     </div>
   );
 }
@@ -980,9 +1382,8 @@ function ProjectionPreview({ model }: DataViewDialogViewProps) {
   const projection = model.projection;
   if (model.projectionLoading) {
     return (
-      <div className="text-muted-foreground flex min-h-80 items-center justify-center gap-2 text-sm">
-        <Loader2Icon className="size-4 animate-spin" />
-        {t('plateJs.dataView.updatingPreview')}
+      <div className="flex min-h-80 items-center justify-center">
+        <PolityLoadingScreen label={t('plateJs.dataView.updatingPreview')} />
       </div>
     );
   }
@@ -1090,6 +1491,37 @@ function Builder({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {model.requiredSelections?.length > 0 && (
+        <div className="space-y-3 border-b p-4">
+          <p role="status" className="text-sm">
+            {t('plateJs.dataView.requiredDimensions')}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {model.requiredSelections.map(dimension => (
+              <SelectField
+                key={dimension.id}
+                label={dimension.label}
+                placeholder={t('plateJs.dataView.chooseDimension')}
+                value={model.query.filters[dimension.id] || undefined}
+                onValueChange={value =>
+                  model.setQuery(current => ({
+                    ...current,
+                    filters: { ...current.filters, [dimension.id]: value },
+                  }))
+                }
+                options={dimension.values.map(value => ({
+                  value: value.id,
+                  label: value.label || value.id,
+                }))}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {Boolean(
+        model.snapshot?.provenance?.importScope &&
+        Object.keys(model.snapshot.provenance.importScope as object).length > 0
+      ) && <p className="border-b px-5 py-2 text-xs">{t('plateJs.dataView.scopedSnapshot')}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
@@ -1384,7 +1816,17 @@ export function DataViewDialogView({ model }: DataViewDialogViewProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {model.stage === 'find' ? <Finder model={model} /> : <Builder model={model} />}
+        {model.preparing ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
+            <PolityLoadingScreen label={t('plateJs.dataView.loading')} />
+          </div>
+        ) : model.stage === 'prepare' ? (
+          <ImportPreparation model={model} />
+        ) : model.stage === 'find' ? (
+          <Finder model={model} />
+        ) : (
+          <Builder model={model} />
+        )}
 
         {model.error ? (
           <p className="border-destructive/30 bg-destructive/5 text-destructive mx-5 mb-3 border px-3 py-2 text-sm">

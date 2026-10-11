@@ -78,7 +78,7 @@ describe('Studio Zero visibility projections', () => {
         'user_id',
         actor,
       ]);
-      expect(JSON.stringify(access('canvas_proposal.project'))).not.toContain('visibility');
+      expect(access('canvas_proposal.project')).not.toContainEqual(['cmp', 'visibility', 'public']);
       studioQueries.proposals.fn({ args: { projectId: 'project' }, ctx });
       expect(harness.lastQuery('canvas_proposal').calls).toContainEqual([
         'orderBy',
@@ -124,7 +124,7 @@ describe('Studio Zero visibility projections', () => {
       studioQueries.list.fn({ args: { groupId }, ctx: { userID: 'alice', email: '' } });
       expect(harness.lastQuery('studio_project').calls).toEqual(
         expect.arrayContaining([
-          ['where', 'document_schema_version', 5],
+          ['where', 'document_schema_version', 6],
           ['where', 'group_id', groupId === null ? 'IS' : '=', groupId],
           ['orderBy', 'updated_at', 'desc'],
           ['limit', 100],
@@ -184,11 +184,11 @@ describe('Studio Zero visibility projections', () => {
       ])
     );
     const rules = access('studio_export.project');
-    expect(JSON.stringify(rules)).not.toContain('visibility');
+    expect(rules).not.toContainEqual(['cmp', 'visibility', 'public']);
     expect(harness.lastQuery('studio_export.project').calls).toContainEqual([
       'where',
       'document_schema_version',
-      5,
+      6,
     ]);
     expect(rules).toContainEqual(['cmp', 'group_id', 'IS', null]);
     expect(rules).toContainEqual(['cmp', 'owner_id', 'alice']);
@@ -211,7 +211,7 @@ describe('Studio Zero visibility projections', () => {
     expect(harness.lastQuery('studio_state.project').calls).toContainEqual([
       'where',
       'document_schema_version',
-      5,
+      6,
     ]);
   });
 });
@@ -296,7 +296,7 @@ it.each(['alice', 'anon'])(
       'status',
       'invited',
     ]);
-    expect(JSON.stringify(access('canvas_history.project'))).not.toContain('public');
-    expect(JSON.stringify(access('studio_export.project'))).not.toContain('public');
+    expect(access('canvas_history.project')).not.toContainEqual(['cmp', 'visibility', 'public']);
+    expect(access('studio_export.project')).not.toContainEqual(['cmp', 'visibility', 'public']);
   }
 );

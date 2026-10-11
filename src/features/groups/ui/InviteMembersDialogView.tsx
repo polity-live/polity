@@ -21,7 +21,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui
 import { RoleTag } from './RoleTag';
 import { GroupConflictDialog } from './GroupConflictPanel';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { EmailInvitationInput } from './EmailInvitationInput';
+import type { EmailInvitationComposer } from '../hooks/useEmailInvitationComposer';
 export interface InviteMembersDialogViewProps {
+  emailComposer?: EmailInvitationComposer;
   actionSubmission: ActionSubmissionController;
   isOpen: any;
   onOpenChange: any;
@@ -60,6 +63,7 @@ export interface InviteMembersDialogViewProps {
 }
 
 export function InviteMembersDialogView({
+  emailComposer,
   actionSubmission,
   isOpen,
   onOpenChange,
@@ -125,23 +129,48 @@ export function InviteMembersDialogView({
             </DialogHeader>
 
             <div className="space-y-5 py-4">
+              {emailComposer && (
+                <div
+                  className="flex gap-2"
+                  role="group"
+                  aria-label={emailComposer.t('features.groups.emailInvitations.title')}
+                >
+                  {(['users', 'email'] as const).map(mode => (
+                    <Button
+                      data-action-id="groups.email-invitations.mode"
+                      key={mode}
+                      type="button"
+                      variant={emailComposer.mode === mode ? 'default' : 'outline'}
+                      aria-pressed={emailComposer.mode === mode}
+                      disabled={isInviting}
+                      onClick={() => emailComposer.setMode(mode)}
+                    >
+                      {emailComposer.t(`features.groups.emailInvitations.${mode}`)}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <Panel>
                 <PanelHeader>
                   <PanelTitle>{translateText('generated.inline.0692_people_b37554f6')}</PanelTitle>
                   <p className="text-muted-foreground text-sm">{peopleSectionDescription}</p>
                 </PanelHeader>
                 <PanelContent>
-                  <UserSearchInput
-                    value={selectedUsers}
-                    onChange={onSelectedUsersChange}
-                    label={userSearchLabel}
-                    placeholder={userSearchPlaceholder}
-                    excludeUserId={excludeUserId}
-                    excludeUserIds={excludeUserIds}
-                    multi
-                    disablePortal
-                    showAllResults
-                  />
+                  {emailComposer?.mode === 'email' ? (
+                    <EmailInvitationInput composer={emailComposer} />
+                  ) : (
+                    <UserSearchInput
+                      value={selectedUsers}
+                      onChange={onSelectedUsersChange}
+                      label={userSearchLabel}
+                      placeholder={userSearchPlaceholder}
+                      excludeUserId={excludeUserId}
+                      excludeUserIds={excludeUserIds}
+                      multi
+                      disablePortal
+                      showAllResults
+                    />
+                  )}
                 </PanelContent>
               </Panel>
 
@@ -158,6 +187,7 @@ export function InviteMembersDialogView({
                           key={role.id}
                           id={`invite-role-${role.id}`}
                           checked={selectedRoleIds.includes(role.id)}
+                          disabled={isInviting}
                           onCheckedChange={checked => toggleRoleSelection(role.id, checked)}
                           label={
                             <span className="flex flex-wrap items-center gap-2">
@@ -214,7 +244,12 @@ export function InviteMembersDialogView({
                   disabled={inviteDisabled}
                   title={submitDisabledReason}
                 >
-                  {submitConflictLoading ? (
+                  {emailComposer?.sending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {emailComposer.t('features.groups.emailInvitations.sending')}
+                    </>
+                  ) : submitConflictLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       {translateText('generated.inline.0695_checking_494d0f68')}
@@ -222,7 +257,12 @@ export function InviteMembersDialogView({
                   ) : (
                     <>
                       <UserPlus className="mr-2 h-4 w-4" />
-                      {inviteLabel} {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
+                      {inviteLabel}{' '}
+                      {emailComposer?.mode === 'email'
+                        ? `(${emailComposer.readyCount})`
+                        : selectedUsers.length > 0
+                          ? `(${selectedUsers.length})`
+                          : ''}
                     </>
                   )}
                 </Button>

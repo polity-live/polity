@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
 import { OnboardingStepShell } from './OnboardingStepShell';
+import { getInvitationOnboardingDestination } from '../logic/authRedirects';
 
 interface SummaryStepProps {
   firstName: string;
@@ -45,6 +46,7 @@ export function SummaryStep({
   isLoading,
 }: SummaryStepProps) {
   const { t } = useTranslation();
+  const invitationDestination = getInvitationOnboardingDestination();
   const fullName = `${firstName} ${lastName}`;
   const selectedCount = selectedGroups.length;
   const requestedGroupIdSet = new Set(membershipRequestSentGroupIds);
@@ -74,6 +76,7 @@ export function SummaryStep({
       !event.altKey
     ) {
       onComplete();
+      sessionStorage.removeItem('polity_invitation_onboarding_destination');
     }
   };
 
@@ -83,7 +86,8 @@ export function SummaryStep({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-[repeat(3,minmax(0,1fr))]">
           <Button asChild className={destinationButtonClassName}>
             <a
-              href="/onboarding"
+              data-action-id="auth.summary-step.navigate.onboarding"
+              href={invitationDestination || '/onboarding'}
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}
               tabIndex={isLoading ? -1 : undefined}
@@ -99,7 +103,9 @@ export function SummaryStep({
                   {t('onboarding.summaryStep.recommended')}
                 </BadgeControl>
                 <span className={destinationLabelClassName}>
-                  {t('onboarding.summaryStep.explainApp')}
+                  {invitationDestination
+                    ? t('features.groups.emailInvitations.back')
+                    : t('onboarding.summaryStep.explainApp')}
                 </span>
               </span>
             </a>
@@ -107,6 +113,7 @@ export function SummaryStep({
 
           <Button asChild className={destinationButtonClassName} variant="outline">
             <a
+              data-action-id="auth.summary-step.navigate.messages-open-aria-kai-true"
               href="/messages?openAriaKai=true"
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}
@@ -121,6 +128,7 @@ export function SummaryStep({
 
           <Button asChild className={destinationButtonClassName} variant="outline">
             <a
+              data-action-id="auth.summary-step.navigate.search"
               href="/search"
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}

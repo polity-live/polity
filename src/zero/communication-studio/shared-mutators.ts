@@ -4,6 +4,7 @@ import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { z } from 'zod';
 import { defineMutator } from '@rocicorp/zero';
 import { studioOperationSchema } from '@/features/communication-studio/logic/operations';
+import { presentationCommandSchema } from './presentation-schema';
 function clientCommand<I extends ReadonlyJSONValue, O extends ReadonlyJSONValue>(
   schema: z.ZodType<O, I>
 ) {
@@ -14,6 +15,9 @@ function clientCommand<I extends ReadonlyJSONValue, O extends ReadonlyJSONValue>
 // The editor owns its recoverable optimistic draft. Only a server-confirmed
 // operation becomes canonical; conflicts are returned as durable receipts.
 export const studioSharedMutators = {
+  presentation: defineMutator(presentationCommandSchema, async () => {
+    /* Server-confirmed shared show state. */
+  }),
   create: clientCommand(studioCommandSchemas.create),
   duplicate: clientCommand(studioCommandSchemas.duplicate),
   setVisibility: clientCommand(studioCommandSchemas.setVisibility),

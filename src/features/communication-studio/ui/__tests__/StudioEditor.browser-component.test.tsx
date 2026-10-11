@@ -7,10 +7,12 @@ import {
   useCanonicalDocument,
   setup,
 } from './StudioWorkspace.fixture';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { element } from '../../logic/document';
+import { createFrameNode, type StudioDocumentV3 } from '../../logic/document-v3';
+import { createStudioNodeFromElement } from '../../logic/create-studio-node';
 import { openStudioPanel } from '../../logic/panel-events';
 import { applyStudioCommandV3 } from '../../logic/commands-v3';
 import { createStudioV3ClipboardPayload } from '../../logic/studio-clipboard';
@@ -23,6 +25,32 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { StudioWorkspace } from '../StudioWorkspace';
+
+it.each([undefined, 'transform'] as const)(
+  'keeps frame membership for non-drag canvas changes (%s)',
+  async source => {
+    useCanonicalDocument();
+    const document = io.editor.v3Value as StudioDocumentV3;
+    const node = document.nodes.find(n => n.type === 'shape')!;
+    const frameId = node.parentFrameId;
+    await show();
+    await screen.findByTestId('canvas');
+    await act(() =>
+      io.canvasProps.applyCanvasChanges(
+        [
+          {
+            nodeId: node.id,
+            transform: { ...node.transform, dx: 2000, dy: 0, width: node.transform.width + 10 },
+          },
+        ],
+        source ? { source } : undefined
+      )
+    );
+    const changed = (io.editor.v3Value as StudioDocumentV3).nodes.find(n => n.id === node.id)!;
+    expect(changed.parentFrameId).toBe(frameId);
+    expect(changed.transform.width).toBe(node.transform.width + 10);
+  }
+);
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
@@ -49,6 +77,94 @@ async function mount() {
   await screen.findByTestId('canvas', {}, { timeout: 10_000 });
   return view;
 }
+
+it('keeps the layer name draft editable when its canvas focus target is unavailable', async () => {
+  await mount();
+  const node = (io.editor.v3Value as StudioDocumentV3).nodes.find(n => n.type === 'shape')!;
+  io.canvasExecute.mockRejectedValueOnce(new Error('Canvas focus target unavailable'));
+  await userEvent.click(screen.getByRole('button', { name: 'layers' }));
+  const row = screen.getByRole('tree').querySelector(`[data-studio-layer-id="${node.id}"]`)!;
+  act(() =>
+    fireEvent.doubleClick(within(row as HTMLElement).getByRole('button', { name: node.name }))
+  );
+  expect(io.canvasExecute).toHaveBeenCalledExactlyOnceWith({ type: 'focus', nodeId: node.id });
+  const input = screen.getByRole('textbox', { name: `layerName: ${node.name}` });
+  expect(document.activeElement).toBe(input);
+  await userEvent.keyboard('New layer name{Enter}');
+  await waitFor(() =>
+    expect((io.editor.v3Value as StudioDocumentV3).nodes.find(n => n.id === node.id)?.name).toBe(
+      'New layer name'
+    )
+  );
+  expect(screen.getByRole('tree')).toBeTruthy();
+});
+
+it('toggles exact Layers selections across frames and retains collapse state until the project changes', async () => {
+  const view = await mount();
+  const firstFrame = io.editor.v3Value.nodes.find(
+    (node: any) => node.type === 'frame' && !node.parentFrameId
+  )!;
+  const first = io.editor.v3Value.nodes.find((node: any) => node.parentFrameId === firstFrame.id)!;
+  const otherFrame = createFrameNode('square', { name: 'Other frame', zIndex: 1 });
+  const other = createStudioNodeFromElement(element('rect'), otherFrame.id, 0);
+  other.name = 'Other element';
+  const groupId = crypto.randomUUID();
+  await act(async () =>
+    io.editor.transactV3((document: any) => {
+      const siblings = document.nodes.filter((node: any) => node.parentFrameId === firstFrame.id);
+      siblings.forEach((node: any) => {
+        node.groupIds = [groupId];
+      });
+      document.nodes.push(otherFrame, other);
+    })
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'layers' }));
+  const panel = () => within(screen.getByRole('tree'));
+  const row = (id: string) =>
+    screen.getByRole('tree').querySelector<HTMLElement>(`[data-studio-layer-id="${id}"]`)!;
+  const nameButton = (id: string) =>
+    within(row(id)).getByRole('button', {
+      name: io.editor.v3Value.nodes.find((node: any) => node.id === id).name,
+    });
+  await userEvent.click(nameButton(first.id));
+  expect(io.canvasProps.selected).toEqual([first.id]);
+  expect(row(first.id).getAttribute('aria-selected')).toBe('true');
+  await userEvent.click(nameButton(other.id), { modifiers: ['Shift'] });
+  expect(io.canvasProps.selected).toEqual([first.id, other.id]);
+  expect(io.canvasProps.activeFrameId).toBe(otherFrame.id);
+  expect(panel().getAllByRole('treeitem', { selected: true })).toHaveLength(2);
+  await userEvent.click(
+    within(row(firstFrame.id)).getByRole('button', { name: `collapseLayer: ${firstFrame.name}` })
+  );
+  expect(screen.getByRole('tree').querySelector(`[data-studio-layer-id="${first.id}"]`)).toBeNull();
+  expect(io.canvasProps.selected).toEqual([first.id, other.id]);
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('tree')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'layers' }));
+  expect(row(firstFrame.id).getAttribute('aria-expanded')).toBe('false');
+  expect(io.canvasProps.selected).toEqual([first.id, other.id]);
+  await userEvent.click(
+    within(row(firstFrame.id)).getByRole('button', { name: `expandLayer: ${firstFrame.name}` })
+  );
+  await userEvent.click(nameButton(other.id), { modifiers: ['Shift'] });
+  expect(io.canvasProps.selected).toEqual([first.id]);
+  await userEvent.click(nameButton(first.id), { modifiers: ['Shift'] });
+  expect(io.canvasProps.selected).toEqual([]);
+  expect(panel().queryAllByRole('treeitem', { selected: true })).toHaveLength(0);
+  await userEvent.click(nameButton(other.id), { modifiers: ['Shift'] });
+  await userEvent.click(nameButton(first.id), { modifiers: ['Shift'] });
+  await userEvent.click(nameButton(other.id));
+  expect(io.canvasProps.selected).toEqual([other.id]);
+  await userEvent.click(
+    within(row(firstFrame.id)).getByRole('button', { name: `collapseLayer: ${firstFrame.name}` })
+  );
+  await userEvent.keyboard('{Escape}');
+  view.rerender(<StudioWorkspace projectId="other-project" groupId="group" open={vi.fn()} />);
+  await waitFor(() => expect(io.canvasProps.selected).toEqual([]));
+  await userEvent.click(screen.getByRole('button', { name: 'layers' }));
+  expect(row(firstFrame.id).getAttribute('aria-expanded')).toBe('true');
+  expect(row(first.id)).toBeTruthy();
+});
 
 async function selectText() {
   const selected = value().pages[0].elements.find(item => item.type === 'text')!;
@@ -88,6 +204,50 @@ async function menu(name: string) {
   await activate(trigger);
   return { trigger, menu: within(await screen.findByRole('menu')) };
 }
+
+it.each([
+  { width: 1280, height: 900, name: 'desktop' },
+  { width: 390, height: 844, name: 'mobile' },
+])(
+  'places templates below the existing Frame actions on $name',
+  async ({ width, height, name }) => {
+    await page.viewport(width, height);
+    try {
+      await mount();
+      const opened = await menu('frame');
+      expect(opened.menu.getByRole('menuitem', { name: 'freeFrame' })).toBeVisible();
+      const input = opened.menu.getByRole('textbox', { name: 'features.studio.eventLive.entity' });
+      await userEvent.fill(input, 'Unlisted event');
+      expect(input).toHaveFocus();
+      const template = opened.menu.getByRole('combobox', {
+        name: 'features.studio.eventLive.template',
+      });
+      await userEvent.selectOptions(template, 'election');
+      expect(
+        opened.menu.getByRole('button', { name: 'features.studio.eventLive.addTemplate' })
+      ).toBeDisabled();
+      await page.screenshot({
+        path: `../../../../../output/playwright/studio-editor-frame-${name}.png`,
+      });
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() => expect(opened.trigger).toHaveFocus());
+      const reopened = await menu('frame');
+      expect(
+        reopened.menu.getByRole('combobox', { name: 'features.studio.eventLive.template' })
+      ).toHaveValue('election');
+      await userEvent.keyboard('{Escape}');
+      act(() => openStudioPanel('polity-data'));
+      expect(
+        await screen.findByRole('combobox', { name: 'features.studio.eventLive.source' })
+      ).toBeVisible();
+      expect(
+        screen.queryByRole('combobox', { name: 'features.studio.eventLive.template' })
+      ).toBeNull();
+    } finally {
+      await page.viewport(1280, 900);
+    }
+  }
+);
 
 async function editorRouter(
   groupId: string | null = 'group',
@@ -1224,34 +1384,112 @@ it('opens the actual visibility dialog through the native project menu and retai
   expect(attempts).toBe(2);
 });
 
-it('opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden', async () => {
+it.each([
+  { width: 1280, height: 900, name: 'desktop' },
+  { width: 390, height: 844, name: 'mobile' },
+])(
+  'edits presentation order and starts the actual preview from its dropdown on $name',
+  async ({ width, height, name }) => {
+    await page.viewport(width, height);
+    try {
+      io.realPreview = true;
+      await mount();
+      const preview = screen.getByRole('button', { name: 'preview' }) as HTMLButtonElement;
+      expect(preview).toHaveAttribute('aria-haspopup', 'menu');
+      await activate(preview);
+      let dropdown = within(await screen.findByRole('menu'));
+      const order = dropdown.getByRole('combobox', {
+        name: 'eventLive.order',
+      }) as HTMLSelectElement;
+      expect(order).toHaveFocus();
+      expect(order).toHaveValue('agenda');
+      expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull();
+      await selectOption(order, 'manual');
+      expect(io.editor.v3Value.show).toEqual({ order: 'manual', cues: [] });
+      const cue = {
+        id: crypto.randomUUID(),
+        frameId: io.editor.v3Value.nodes.find((node: any) => node.type === 'frame').id,
+        assetId: crypto.randomUUID(),
+        trigger: 'enter',
+        action: 'play',
+        volume: 0.65,
+        loop: false,
+        fadeSeconds: 1,
+      };
+      await act(async () => io.editor.transactV3((document: any) => document.show.cues.push(cue)));
+      await selectOption(order, 'agenda');
+      expect(io.editor.v3Value.show).toEqual({ order: 'agenda', cues: [cue] });
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() => expect(preview).toHaveFocus());
+      await activate(preview);
+      dropdown = within(await screen.findByRole('menu'));
+      expect(dropdown.getByRole('combobox', { name: 'eventLive.order' })).toHaveValue('agenda');
+      const start = dropdown.getByRole('menuitem', { name: 'startPreview' });
+      expect(start).toHaveAttribute('data-action-id', 'communication-studio.preview.open');
+      await Promise.all(
+        screen
+          .getByRole('menu')
+          .getAnimations({ subtree: true })
+          .map(animation => animation.finished)
+      );
+      await page.screenshot({
+        path: `../../../../../output/playwright/studio-preview-menu-${name}.png`,
+      });
+      await userEvent.keyboard('{Tab}');
+      expect(start).toHaveFocus();
+      await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+      expect(dropdown.getByRole('combobox', { name: 'eventLive.order' })).toHaveFocus();
+      await userEvent.keyboard('{Tab}');
+      expect(start).toHaveFocus();
+      await userEvent.keyboard('{Enter}');
+      const dialog = await screen.findByRole('dialog', { name: 'previewTitle' });
+      await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull()
+      );
+      await waitFor(() => expect(preview).toHaveFocus());
+      act(() => openStudioPanel('polity-data'));
+      await screen.findByRole('combobox', { name: 'features.studio.eventLive.source' });
+      expect(screen.queryByRole('combobox', { name: /eventLive.order/ })).toBeNull();
+      await userEvent.keyboard('{Escape}');
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('combobox', { name: 'features.studio.eventLive.source' })
+        ).toBeNull()
+      );
+      await act(async () =>
+        io.editor.transactV3((document: any) =>
+          document.nodes.forEach((node: any) => {
+            if (node.type === 'frame') node.visible = false;
+          })
+        )
+      );
+      const disabledPreview = screen.getByRole('button', { name: 'noVisibleFrames' });
+      expect(disabledPreview).toHaveAttribute('aria-disabled', 'true');
+      expect(disabledPreview.querySelector('button')).toBeDisabled();
+    } finally {
+      await page.viewport(1280, 900);
+    }
+  }
+);
+
+it('permits starting preview but disables presentation order for read-only documents', async () => {
   io.realPreview = true;
   await mount();
-  const preview = screen.getByRole('button', { name: 'preview' }) as HTMLButtonElement;
-  expect(preview.getAttribute('data-action-id')).toBe('communication-studio.preview.open');
+  await act(async () => {
+    io.editor.canEdit = false;
+    notifyAll();
+  });
+  const preview = screen.getByRole('button', { name: 'preview' });
   await activate(preview);
+  const dropdown = within(await screen.findByRole('menu'));
+  expect(dropdown.getByRole('combobox', { name: 'eventLive.order' })).toBeDisabled();
+  await activate(dropdown.getByRole('menuitem', { name: 'startPreview' }));
   const dialog = await screen.findByRole('dialog', { name: 'previewTitle' });
   await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   await userEvent.keyboard('{Escape}');
-  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull());
-  expect(document.activeElement).toBe(preview);
-  await act(async () =>
-    io.editor.transactV3((document: any) =>
-      document.nodes.forEach((node: any) => {
-        if (node.type === 'frame') node.visible = false;
-      })
-    )
-  );
-  expect(
-    (
-      document.querySelector(
-        '[data-action-id="communication-studio.preview.open"]'
-      ) as HTMLButtonElement
-    ).disabled
-  ).toBe(true);
-  expect(
-    screen.getByRole('button', { name: 'noVisibleFrames' }).getAttribute('aria-disabled')
-  ).toBe('true');
+  await waitFor(() => expect(preview).toHaveFocus());
 });
 
 it('opens shared collaboration tools from native comments activation and restores the comments button after Escape', async () => {

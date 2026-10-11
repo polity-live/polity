@@ -264,7 +264,7 @@ describe('shared project chat authority and atomic writes', () => {
         chat = crypto.randomUUID(),
         persisted = createStudioDocumentV5('Original', 'single');
       await tx.dbTransaction.query(
-        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Original','single',5,0,0)",
+        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Original','single',6,0,0)",
         [projectId, actor]
       );
       await tx.dbTransaction.query(
