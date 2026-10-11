@@ -230,13 +230,16 @@ export const studioQueries = {
             cmp('workspace_id', '=', args.workspaceId ?? '00000000-0000-0000-0000-000000000000')
           )
         )
-        .whereExists(
-          'project',
-          project =>
-            args.workspaceId
-              ? collaborativeProject(project, requireQueryUser(ctx.userID))
-              : relatedProject(project, ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null),
-          { flip: false }
+        .whereExists('project', project =>
+          args.workspaceId
+            ? collaborativeProject(
+                project.where('id', args.projectId),
+                requireQueryUser(ctx.userID)
+              )
+            : relatedProject(
+                project.where('id', args.projectId),
+                ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null
+              )
         )
         .where(({ or, cmp, exists }) =>
           or(
@@ -308,9 +311,7 @@ export const studioQueries = {
   comments: defineQuery(projectInput, ({ args, ctx }) =>
     zql.canvas_comment
       .where('project_id', args.projectId)
-      .whereExists('project', p => collaborativeProject(p, requireQueryUser(ctx.userID)), {
-        flip: false,
-      })
+      .whereExists('project', p => collaborativeProject(p, requireQueryUser(ctx.userID)))
       .where(({ or, cmp, exists }) =>
         or(
           cmp('proposal_id', 'IS', null),

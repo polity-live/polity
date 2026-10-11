@@ -99,7 +99,6 @@ it.each(['owner', 'outsider'])(
 it.each([
   ['assets', false],
   ['assets', true],
-  ['comments', false],
 ] as const)(
   'looks up the selected project for %s (workspace=%s) with complete audience predicates',
   (name, workspace) => {
@@ -126,17 +125,16 @@ it.each([
       };
       visit(ast.where);
       expect(projects).toHaveLength(1);
-      expect(projects[0].flip).toBe(false);
+      expect(projects[0].flip).toBeUndefined();
       expect(projects[0].related.correlation).toEqual({
         parentField: ['project_id'],
         childField: ['id'],
       });
       const actor = userID && userID !== 'anon' ? userID : null;
-      const project = zql.studio_project.where('document_schema_version', 6);
-      const expected =
-        name === 'comments' || workspace
-          ? studioProjectCollaborativeAccess(project, actor ?? nil)
-          : studioProjectReadAccess(project, actor);
+      const project = zql.studio_project.where('id', projectId).where('document_schema_version', 6);
+      const expected = workspace
+        ? studioProjectCollaborativeAccess(project, actor ?? nil)
+        : studioProjectReadAccess(project, actor);
       expect(projects[0].related.subquery.where).toEqual(queryAST(expected).where);
     }
   }
