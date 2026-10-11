@@ -71,6 +71,27 @@ it.each(['owner', 'outsider'])(
       expect(event.related.subquery.table).toBe('event');
       expect(event.flip).toBe(false);
       expect(event.related.subquery.where).toEqual(queryAST(eventAccess(zql.event, actor)).where);
+      if (access === studioProjectReadAccess) {
+        const rootEventParents: any[] = [];
+        const visit = (condition: any) => {
+          if (condition.type === 'correlatedSubquery') {
+            if (condition.related.subquery.table === 'event') rootEventParents.push(condition);
+          } else for (const child of condition.conditions ?? []) visit(child);
+        };
+        visit(ast.where);
+        expect(rootEventParents).toHaveLength(1);
+        const nonEvent = conditions.find((condition: any) => condition.type === 'or').conditions[1];
+        expect(nonEvent.conditions[0]).toMatchObject({
+          type: 'simple',
+          left: { name: 'event_id' },
+          op: 'IS',
+          right: { value: null },
+        });
+        const collaborative = queryAST(studioProjectCollaborativeAccess(zql.studio_project, actor));
+        expect(nonEvent.conditions[1].conditions.slice(2)).toEqual(
+          collaborative.where.conditions[1].conditions[1].conditions
+        );
+      }
     }
   }
 );

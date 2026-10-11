@@ -37,34 +37,35 @@ export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T
   ) as T;
 }
 
-function collaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
+function nonEventCollaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
   return or(
-    exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor), {
-      flip: false,
-    }),
     and(
-      cmp('event_id', 'IS', null),
+      cmp('group_id', 'IS', null),
       or(
-        and(
-          cmp('group_id', 'IS', null),
-          or(
-            cmp('owner_id', actor),
-            exists(
-              'collaborators',
-              (collaborator: any) => collaborator.where('user_id', actor).where('status', 'active'),
-              { flip: false }
-            )
-          )
-        ),
-        and(
-          cmp('group_id', 'IS NOT', null),
-          or(
-            cmp('owner_id', actor),
-            exists('group', (group: any) => groupProjectsAccess(group, actor), { flip: false })
-          )
+        cmp('owner_id', actor),
+        exists(
+          'collaborators',
+          (collaborator: any) => collaborator.where('user_id', actor).where('status', 'active'),
+          { flip: false }
         )
       )
+    ),
+    and(
+      cmp('group_id', 'IS NOT', null),
+      or(
+        cmp('owner_id', actor),
+        exists('group', (group: any) => groupProjectsAccess(group, actor), { flip: false })
+      )
     )
+  );
+}
+
+function collaborativePredicate(actor: string, helpers: any) {
+  return helpers.or(
+    helpers.exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor), {
+      flip: false,
+    }),
+    helpers.and(helpers.cmp('event_id', 'IS', null), nonEventCollaborativePredicate(actor, helpers))
   );
 }
 
@@ -85,7 +86,10 @@ export function studioProjectReadAccess<T>(project: T, actor: string | null): T 
         helpers.or(
           helpers.cmp('visibility', 'public'),
           ...(viewer
-            ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(viewer, helpers)]
+            ? [
+                helpers.cmp('visibility', 'authenticated'),
+                nonEventCollaborativePredicate(viewer, helpers),
+              ]
             : [])
         )
       )
