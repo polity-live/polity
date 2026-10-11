@@ -26,9 +26,10 @@ function createQuery(calls: Call[] = []): FakeQuery {
   const query: FakeQuery = {
     calls,
     where: (...args: unknown[]) => {
+      const index = calls.length;
       calls.push(['where', ...args]);
       if (typeof args[0] === 'function') {
-        args[0]({
+        const predicate = args[0]({
           cmp: (...values: unknown[]) => ['cmp', ...values],
           exists: (relation: string, fn: (child: FakeQuery) => unknown) => {
             const childCalls: Call[] = [];
@@ -38,6 +39,15 @@ function createQuery(calls: Call[] = []): FakeQuery {
           },
           or: (...values: unknown[]) => ['or', ...values],
         });
+        // Canonicalize only an exact disjunction of equalities on the same column.
+        const terms = predicate?.[0] === 'or' ? predicate.slice(1) : [predicate];
+        if (
+          terms.length &&
+          terms.every(
+            (term: any) => term?.[0] === 'cmp' && term[1] === terms[0][1] && term[2] === '='
+          )
+        )
+          calls[index] = ['where', terms[0][1], 'IN', terms.map((term: any) => term[3])];
       }
       return query;
     },
@@ -192,7 +202,8 @@ describe('public content query access', () => {
       exists: () => null,
       or: (...args: unknown[]) => args,
     });
-    expect(comparisons).toContainEqual(['visibility', 'IN', ['public', 'authenticated']]);
+    expect(comparisons).toContainEqual(['visibility', '=', 'public']);
+    expect(comparisons).toContainEqual(['visibility', '=', 'authenticated']);
   });
 
   it('carries active event and amendment relationships into private task access', () => {

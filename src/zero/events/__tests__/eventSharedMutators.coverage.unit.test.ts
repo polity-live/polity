@@ -136,6 +136,36 @@ describe('shared event policy helpers', () => {
     ).resolves.toMatchObject({ offlineParticipant: { id: 'offline' } });
   });
 
+  it.each([
+    'updateOfflineParticipant',
+    'deleteOfflineParticipant',
+    'addParticipantRole',
+    'removeParticipantRole',
+    'syncParticipantRoles',
+  ] as const)(
+    '%s leaves no optimistic writes when the target is evicted during rebase',
+    async name => {
+      const tx = createTx('client');
+      tx.reason = 'rebase';
+      tx.run.mockResolvedValue(null);
+      const args = {
+        id: 'evicted',
+        event_participant_id: 'evicted',
+        role_id: 'role',
+        role_ids: ['role'],
+      };
+      await mutators[name].fn({ tx, ctx, args } as never);
+      for (const table of Object.values(tx.mutate) as ReturnType<typeof mutationTable>[])
+        for (const method of Object.values(table)) expect(method).not.toHaveBeenCalled();
+      const optimistic = createTx('client');
+      optimistic.reason = 'optimistic';
+      optimistic.run.mockResolvedValue(null);
+      await expect(mutators[name].fn({ tx: optimistic, ctx, args } as never)).rejects.toThrow(
+        'not found'
+      );
+    }
+  );
+
   it('detects connected-user conflicts and manages participant role links', async () => {
     const noUser = createTx();
     await helpers.assertUniqueConnectedOfflineUserWithinEvent(noUser, {

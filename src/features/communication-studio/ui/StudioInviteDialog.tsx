@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';

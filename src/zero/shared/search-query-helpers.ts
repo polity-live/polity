@@ -27,6 +27,26 @@ export interface SearchListContext {
   bounds?: SearchBounds | null;
 }
 
+/** Keep the serialized request identical for visible pages and their preloads. */
+export function searchDocumentPageArgs(
+  context: SearchListContext,
+  page: { limit: number; start: SearchStart | null; dir: SearchDirection }
+) {
+  return {
+    query: context.query,
+    types: context.types,
+    topics: context.topics,
+    createdAfter: context.createdAfter,
+    engagement: context.engagement,
+    sort: context.sort,
+    snapshotAt: context.snapshotAt,
+    limit: page.limit,
+    start: page.start,
+    dir: page.dir,
+    bounds: context.bounds ?? null,
+  };
+}
+
 export function normalizeSearchQuery(input: string): string {
   return input
     .normalize('NFKC')

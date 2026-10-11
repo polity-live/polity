@@ -1,6 +1,7 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useMemo } from 'react';
 import { queries } from '../queries';
+import { conversationArgs, conversationsArgs, messagesWindowArgs } from './query-args';
 
 interface MessageStateOptions {
   conversationId?: string;
@@ -11,6 +12,7 @@ interface MessageStateOptions {
   userId?: string;
   limit?: number;
   messageLimit?: number;
+  includeConversationMetadata?: boolean;
 }
 
 /**
@@ -27,27 +29,31 @@ export function useMessageState(options: MessageStateOptions = {}) {
     userId,
     limit,
     messageLimit,
+    includeConversationMetadata = true,
   } = options;
 
   const [messages, messagesResult] = useQuery(
     conversationId
-      ? queries.messages.messagesWindow({
-          conversation_id: conversationId,
-          limit: messageLimit ?? 80,
-        })
+      ? queries.messages.messagesWindow(messagesWindowArgs(conversationId, messageLimit))
       : undefined
   );
 
   const [conversation, conversationResult] = useQuery(
-    conversationId ? queries.messages.conversationById({ id: conversationId }) : undefined
+    conversationId && includeConversationMetadata
+      ? queries.messages.conversationById(conversationArgs(conversationId))
+      : undefined
   );
 
   const [unread, unreadResult] = useQuery(
-    conversationId ? queries.messages.unreadCount({ conversation_id: conversationId }) : undefined
+    conversationId && includeConversationMetadata
+      ? queries.messages.unreadCount({ conversation_id: conversationId })
+      : undefined
   );
 
   const [conversationsWithRelations, conversationsWithRelationsResult] = useQuery(
-    includeRelations ? queries.messages.conversationsWithRelations({ limit }) : undefined
+    includeRelations
+      ? queries.messages.conversationsWithRelations(conversationsArgs(limit))
+      : undefined
   );
 
   const [conversationsForUnreadRows, conversationsForUnreadResult] = useQuery(
@@ -73,8 +79,8 @@ export function useMessageState(options: MessageStateOptions = {}) {
   const isLoading =
     (Boolean(conversationId) &&
       (messagesResult.type === 'unknown' ||
-        conversationResult.type === 'unknown' ||
-        unreadResult.type === 'unknown')) ||
+        (includeConversationMetadata &&
+          (conversationResult.type === 'unknown' || unreadResult.type === 'unknown')))) ||
     (includeRelations === true && conversationsWithRelationsResult.type === 'unknown') ||
     (includeForUnread === true && conversationsForUnreadResult.type === 'unknown') ||
     (includeConversationsByUser === true &&

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   rows: new Map<string, readonly Record<string, unknown>[]>(),
+  activeQueries: new Set<string>(),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
@@ -25,7 +26,10 @@ vi.mock('@/zero/queries', () => ({
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
-  useQuery: (query: string) => [mocks.rows.get(query) ?? [], { type: 'complete' }],
+  useQuery: (query: string) => {
+    if (query) mocks.activeQueries.add(query);
+    return [mocks.rows.get(query) ?? [], { type: 'complete' }];
+  },
 }));
 
 import { SearchCardStateProvider, useSearchCardState } from '../SearchCardStateProvider';
@@ -38,10 +42,22 @@ function requireCardState(state: ReturnType<typeof useSearchCardState>) {
 afterEach(() => {
   cleanup();
   mocks.rows.clear();
+  mocks.activeQueries.clear();
   vi.unstubAllGlobals();
 });
 
 describe('SearchCardStateProvider', () => {
+  it.each([
+    [['blog'], ['subscriptions']],
+    [['amendment'], ['collaborations', 'subscriptions']],
+  ])('activates only required viewer domains for %j', (contentTypes, expected) => {
+    render(
+      <SearchCardStateProvider contentTypes={contentTypes}>
+        <span>filtered cards</span>
+      </SearchCardStateProvider>
+    );
+    expect([...mocks.activeQueries].sort()).toEqual(expected);
+  });
   beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       callback(0);
@@ -53,6 +69,56 @@ describe('SearchCardStateProvider', () => {
       return 1;
     });
     vi.stubGlobal('cancelIdleCallback', vi.fn());
+  });
+
+  it('loads the selected card domains and activates newly selected domains on filter changes', () => {
+    let state: ReturnType<typeof useSearchCardState> = null;
+    function CaptureState() {
+      state = useSearchCardState();
+      return null;
+    }
+    const view = render(
+      <SearchCardStateProvider contentTypes={['group']}>
+        <CaptureState />
+      </SearchCardStateProvider>
+    );
+    expect([...mocks.activeQueries].sort()).toEqual([
+      'guest-accesses',
+      'memberships',
+      'subscriptions',
+    ]);
+    expect(requireCardState(state).getSubscriptionState('group', 'group-1', 0).isLoading).toBe(
+      false
+    );
+
+    mocks.activeQueries.clear();
+    view.rerender(
+      <SearchCardStateProvider contentTypes={['event', 'amendment']}>
+        <CaptureState />
+      </SearchCardStateProvider>
+    );
+    expect([...mocks.activeQueries].sort()).toEqual([
+      'collaborations',
+      'delegations',
+      'memberships',
+      'participations',
+      'subscriptions',
+    ]);
+
+    mocks.activeQueries.clear();
+    view.rerender(
+      <SearchCardStateProvider contentTypes={[]}>
+        <CaptureState />
+      </SearchCardStateProvider>
+    );
+    expect([...mocks.activeQueries].sort()).toEqual([
+      'collaborations',
+      'delegations',
+      'guest-accesses',
+      'memberships',
+      'participations',
+      'subscriptions',
+    ]);
   });
 
   it('projects viewer state from entity indexes without mixing unrelated rows', () => {
@@ -112,7 +178,6 @@ describe('SearchCardStateProvider', () => {
 
     const cardState = requireCardState(state);
 
-    expect(cardState.isReady).toBe(true);
     expect(cardState.getSubscriptionState('group', 'group-1', 7)).toEqual({
       subscriberCount: 7,
       subscriptions: [{ id: 'subscription-group', subscriber_id: 'viewer-1' }],

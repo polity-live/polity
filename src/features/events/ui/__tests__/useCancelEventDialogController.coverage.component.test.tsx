@@ -7,6 +7,8 @@ import { useCancelEventDialogController } from '../useCancelEventDialogControlle
 
 const mocks = vi.hoisted(() => ({
   cancelEvent: vi.fn(),
+  cancelQuery: vi.fn(),
+  eventsQuery: vi.fn(),
   agendaItems: [{ id: 'item-1' }, { id: 'item-2' }] as any[],
   availableEvents: [{ id: 'event-2' }] as any[],
 }));
@@ -15,14 +17,20 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 vi.mock('../../hooks/useCancelEvent', () => ({
-  useCancelEvent: () => ({
-    isLoading: false,
-    agendaItems: mocks.agendaItems,
-    cancelEvent: mocks.cancelEvent,
-  }),
+  useCancelEvent: (...args: unknown[]) => {
+    mocks.cancelQuery(...args);
+    return {
+      isLoading: false,
+      agendaItems: mocks.agendaItems,
+      cancelEvent: mocks.cancelEvent,
+    };
+  },
 }));
 vi.mock('@/zero/events/useEventState', () => ({
-  useEventsByGroup: () => ({ events: mocks.availableEvents }),
+  useEventsByGroup: (...args: unknown[]) => {
+    mocks.eventsQuery(...args);
+    return { events: mocks.availableEvents };
+  },
 }));
 
 beforeEach(() => {
@@ -45,6 +53,8 @@ describe('useCancelEventDialogController coverage', () => {
         }),
       { initialProps: { open: false } }
     );
+    expect(mocks.cancelQuery).toHaveBeenLastCalledWith('event-1', false);
+    expect(mocks.eventsQuery).toHaveBeenLastCalledWith(undefined, 'event-1');
     await act(async () => result.current.handleCancel());
     expect(mocks.cancelEvent).not.toHaveBeenCalled();
     act(() => result.current.handleItemToggle('item-1'));
@@ -80,6 +90,8 @@ describe('useCancelEventDialogController coverage', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
     rerender({ open: true });
+    expect(mocks.cancelQuery).toHaveBeenLastCalledWith('event-1', true);
+    expect(mocks.eventsQuery).toHaveBeenLastCalledWith('group-1', 'event-1');
     expect(result.current).toMatchObject({ reason: '', selectedItems: [], targetEventId: '' });
   });
 });

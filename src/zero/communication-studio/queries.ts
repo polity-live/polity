@@ -1,3 +1,5 @@
+import { whereAnyOf } from '../shared/query-conditions';
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -100,11 +102,10 @@ export const studioQueries = {
       .related('owner')
       .related('collaborators', c => c.where('status', 'active').related('user'))
       .related('group', g =>
-        g
+        applyGroupDiscoveryQueryAccess(g, ctx.userID)
           .related('owner')
           .related('memberships', m =>
-            m
-              .where('status', 'IN', ['active', 'member', 'admin'])
+            whereAnyOf(m, 'status', ['active', 'member', 'admin'])
               .related('user')
               .related('membership_roles', a =>
                 a

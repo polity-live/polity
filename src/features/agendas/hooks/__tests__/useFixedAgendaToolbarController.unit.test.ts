@@ -18,8 +18,11 @@ vi.mock('@/features/shared/global-state/screen.store', () => ({
   useScreenStore: () => ({ isMobileScreen: mocks.isMobileScreen }),
 }));
 
-vi.mock('@/features/navigation/state/useNavigation', () => ({
-  useNavigation: () => ({ secondaryNavItems: mocks.secondaryNavItems }),
+vi.mock('@/features/navigation/state/navigation-layout-context', () => ({
+  useSecondaryNavigationVisible: () =>
+    Boolean(
+      mocks.secondaryNavItems?.length && ['secondary', 'combined'].includes(mocks.navigationType)
+    ),
 }));
 
 vi.mock('@/features/shared/utils/utils', () => ({

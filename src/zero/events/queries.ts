@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -7,15 +8,19 @@ import {
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyElectionQueryAccess,
+  applyElectionQueryAccessFromAuthorizedAgendaItem,
   applyEventQueryAccess,
   applyEventManagerQueryAccess,
   applyEventParticipantOrManagerQueryAccess,
   applyGroupQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyRoleQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
+  applyVoteQueryAccessFromAuthorizedAgendaItem,
   applyVoteVoterOrManagerQueryAccess,
+  isAuthenticatedUserId,
   requireQueryUser,
   requireRequestedViewer,
 } from '../rbac/query-access';
@@ -52,7 +57,11 @@ function applyEventAccess<T>(q: T, userID: string | undefined): T {
   return applyEventQueryAccess(q, userID);
 }
 
-function applyEventParticipantEventAccess<T>(q: T, userID: string | undefined): T {
+function applyEventParticipantEventAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerEvent = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -62,12 +71,20 @@ function applyEventParticipantEventAccess<T>(q: T, userID: string | undefined): 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
-      exists('participants', (participant: any) => participant.where('user_id', userID))
+      exists(
+        'participants',
+        (participant: any) => participant.where('user_id', userID),
+        planPerEvent ? { flip: false } : undefined
+      )
     )
   ) as T;
 }
 
-function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | undefined): T {
+function applyEventDelegateSelfOrParticipantAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerEvent = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -77,9 +94,71 @@ function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | und
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('event', (event: any) => applyEventParticipantEventAccess(event, userID))
+      exists(
+        'event',
+        (event: any) => applyEventParticipantEventAccess(event, userID, planPerEvent),
+        planPerEvent ? { flip: false } : undefined
+      )
     )
   ) as T;
+}
+
+function buildEventDetailBase(id: string, userID: string | undefined) {
+  return applyEventAccess(zql.event.where('id', id), userID)
+    .related('creator')
+    .related('group', groupQuery =>
+      applyGroupDiscoveryQueryAccess(groupQuery, userID).related('memberships', membershipQuery =>
+        applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID)
+          .related('user')
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('origins', originQuery =>
+            originQuery
+              .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
+      )
+    )
+    .related('participants', participantQuery =>
+      applyEventParticipantOrManagerQueryAccess(participantQuery, userID)
+        .related('user')
+        .related('participant_roles', roleLinkQuery =>
+          roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
+        )
+    )
+    .related('offline_participants', offlineParticipantQuery =>
+      offlineParticipantQuery
+        .whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
+        )
+        .related('connected_user')
+        .related('group_offline_member', q =>
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('connected_user')
+        )
+    )
+    .related('assembly_scopes', scopeQuery =>
+      scopeQuery
+        .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('required_role')
+    )
+    .related('delegate_election_assignments', assignmentQuery =>
+      assignmentQuery
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('allocation')
+        .related('linked_event')
+    )
+    .related('delegates', delegateQuery =>
+      applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID, true)
+        .related('user')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+    );
 }
 
 export const eventQueries = {
@@ -97,9 +176,11 @@ export const eventQueries = {
           or(
             cmp('creator_id', userID),
             exists('participants', (participant: any) =>
-              participant
-                .where('user_id', userID)
-                .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+              whereAnyOf(
+                participant.where('user_id', userID),
+                'status',
+                WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES
+              )
             )
           )
         );
@@ -143,7 +224,7 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyEventParticipantOrManagerQueryAccess(zql.event_participant, userID)
         .where('event_id', eventId)
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .related('participant_roles', q => q.related('role'))
         .orderBy('created_at', 'asc')
   ),
@@ -167,13 +248,13 @@ export const eventQueries = {
     }) => {
       let q: any = applyEventParticipantOrManagerQueryAccess(zql.event_participant, userID)
         .where('event_id', eventId)
-        .whereExists('event', event => applyEventAccess(event, userID));
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false });
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId)
         q = q.whereExists('participant_roles', (role: any) => role.where('role_id', roleId));
       if ((roleIds?.length ?? 0) > 0)
-        q = q.whereExists('participant_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+        q = q.whereExists('participant_roles', (role: any) => whereAnyOf(role, 'role_id', roleIds));
       const term = query.trim();
       if (term) {
         q = q.whereExists('user', (user: any) =>
@@ -214,7 +295,7 @@ export const eventQueries = {
     ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
       let q = requireRequestedViewer(zql.event_participant, userId, userID);
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       const term = query.trim();
       if (term)
         q = q.whereExists('event', (event: any) => event.where('title', 'ILIKE', `%${term}%`));
@@ -222,7 +303,7 @@ export const eventQueries = {
         .related('event', event =>
           event
             .related('creator')
-            .related('group')
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('event_hashtags', link => link.related('hashtag'))
             .related('participants')
             .related('agenda_items', item => item.related('election').related('amendment'))
@@ -262,7 +343,7 @@ export const eventQueries = {
         order === 'ascending' ? (dir === 'forward' ? 'backward' : 'forward') : dir;
       return applyEventCursor(q, 'start_date', start, cursorDirection)
         .related('creator')
-        .related('group')
+        .related('group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
         .related('participants', (participant: any) =>
           applyEventParticipantOrManagerQueryAccess(participant, userID).related('user')
         )
@@ -277,11 +358,17 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       zql.event_offline_participant
         .where('event_id', eventId)
-        .whereExists('event', event =>
-          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        .whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
         )
         .related('event')
-        .related('group_offline_member', q => q.related('group').related('connected_user'))
+        .related('group_offline_member', q =>
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('connected_user')
+        )
         .related('connected_user')
         .orderBy('created_at', 'asc')
   ),
@@ -307,15 +394,17 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyEventDelegateSelfOrParticipantAccess(zql.event_delegate, userID)
         .where('event_id', eventId)
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .orderBy('created_at', 'asc')
   ),
 
   roles: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId }, ctx: { userID } }) =>
     zql.role
       .where('event_id', eventId)
-      .whereExists('event', event =>
-        applyEventManagerQueryAccess(event, userID, 'manage_participants')
+      .whereExists(
+        'event',
+        event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+        { flip: false }
       )
       .where('scope', 'event')
       .orderBy('sort_order', 'asc')
@@ -332,14 +421,16 @@ export const eventQueries = {
   ),
 
   currentUserActiveParticipationsWithEvents: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.event_participant
-      .where('user_id', userID)
-      .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
-      .whereExists('event', event => applyEventAccess(event, userID))
+    whereAnyOf(
+      zql.event_participant.where('user_id', userID),
+      'status',
+      DISCOVERY_EVENT_PARTICIPANT_STATUSES
+    )
+      .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
       .related('event', q =>
         q
           .related('creator')
-          .related('group')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('event_hashtags', hq => hq.related('hashtag'))
       )
       .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
@@ -348,53 +439,34 @@ export const eventQueries = {
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→votes+election, roles */
+  /** Event metadata and permitted attendance for the separate full agenda projection. */
+  forAgenda: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    buildEventDetailBase(id, userID).related('roles', roleQuery =>
+      roleQuery.whereExists(
+        'event',
+        event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+        { flip: false }
+      )
+    )
+  ),
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventAccess(zql.event.where('id', id), userID)
-      .related('creator')
-      .related('group', groupQuery =>
-        groupQuery.related('memberships', membershipQuery =>
-          applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID)
-            .related('user')
-            .related('source_group')
-            .related('part_group')
-            .related('base_group')
-            .related('origins', originQuery =>
-              originQuery.related('source_group').related('part_group').related('base_group')
-            )
-        )
-      )
-      .related('participants', participantQuery =>
-        applyEventParticipantOrManagerQueryAccess(participantQuery, userID)
-          .related('user')
-          .related('participant_roles', roleLinkQuery =>
-            roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
-          )
-      )
-      .related('offline_participants', offlineParticipantQuery =>
-        offlineParticipantQuery
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
-          )
-          .related('connected_user')
-          .related('group_offline_member', q => q.related('group').related('connected_user'))
-      )
-      .related('assembly_scopes', scopeQuery =>
-        scopeQuery.related('host_group').related('source_group').related('required_role')
-      )
-      .related('delegate_election_assignments', assignmentQuery =>
-        assignmentQuery.related('source_group').related('allocation').related('linked_event')
-      )
-      .related('delegates', delegateQuery =>
-        applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID)
-          .related('user')
-          .related('group')
-      )
+    buildEventDetailBase(id, userID)
       .related('agenda_items', agendaItemQuery =>
-        agendaItemQuery.related('votes').related('election')
+        // The parent passed applyEventAccess, and this relationship enforces
+        // agenda_item.event_id = event.id. That implies the agenda access
+        // predicate's event branch, including for anonymous public readers.
+        // Election/vote visibility remains independently enforced below.
+        agendaItemQuery
+          .related('votes', vote => applyVoteQueryAccessFromAuthorizedAgendaItem(vote, userID))
+          .related('election', election =>
+            applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID)
+          )
       )
       .related('roles', roleQuery =>
-        roleQuery.whereExists('event', event =>
-          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        roleQuery.whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
         )
       )
   ),
@@ -403,7 +475,14 @@ export const eventQueries = {
   forCancel: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyEventAccess(zql.event.where('id', id), userID)
       .related('agenda_items', q =>
-        q.related('amendment').related('election', q => q.related('role'))
+        applyAgendaItemQueryAccess(q, userID)
+          .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+          .related('election', election =>
+            applyElectionQueryAccessFromAuthorizedAgendaItem(election, userID).related(
+              'role',
+              role => applyRoleQueryAccess(role, userID, true)
+            )
+          )
       )
       .related('participants', q =>
         applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
@@ -420,30 +499,40 @@ export const eventQueries = {
       )
       .related('offline_participants', q =>
         q
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
+          .whereExists(
+            'event',
+            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+            { flip: false }
           )
           .related('connected_user')
-          .related('group_offline_member', gq => gq.related('group'))
+          .related('group_offline_member', gq =>
+            gq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
       )
       .related('agenda_items', q =>
-        q
+        applyAgendaItemQueryAccess(q, userID)
           .related('votes', vq =>
-            vq
+            applyVoteQueryAccessFromAuthorizedAgendaItem(vq, userID)
               .related('choices')
               .related('indicative_decisions', d =>
                 d
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('final_decisions', d =>
                 d
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('offline_tallies', oq =>
                 oq
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('voters', voter =>
@@ -451,12 +540,20 @@ export const eventQueries = {
               )
               .related('final_participations', participation =>
                 participation
-                  .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                  .whereExists(
+                    'voter',
+                    voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+                    { flip: false }
+                  )
                   .related('voter')
                   .related('decisions', decision => decision.related('choice'))
               )
           )
-          .related('amendment', aq => aq.related('group').related('event'))
+          .related('amendment', aq =>
+            applyAmendmentQueryAccess(aq, userID)
+              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('event', event => applyEventAccess(event, userID))
+          )
       )
   ),
 
@@ -466,67 +563,83 @@ export const eventQueries = {
       .related('creator')
       .related('offline_participants', q =>
         q
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
+          .whereExists(
+            'event',
+            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+            { flip: false }
           )
           .related('connected_user')
-          .related('group_offline_member', gq => gq.related('group'))
+          .related('group_offline_member', gq =>
+            gq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
       )
       .related('agenda_items', q =>
-        q
+        applyAgendaItemQueryAccess(q, userID)
           .related('creator')
           .related('speaker_list', q => q.related('user'))
           .related('election', q =>
-            q
+            applyElectionQueryAccessFromAuthorizedAgendaItem(q, userID)
               .related('candidates', c => c.related('user'))
               .related('indicative_selections', s =>
                 s
-                  .whereExists('election', election =>
-                    applyElectionManagerQueryAccess(election, userID)
+                  .whereExists(
+                    'election',
+                    election => applyElectionManagerQueryAccess(election, userID),
+                    { flip: false }
                   )
                   .related('candidate')
               )
               .related('final_selections', s =>
                 s
-                  .whereExists('election', election =>
-                    applyElectionManagerQueryAccess(election, userID)
+                  .whereExists(
+                    'election',
+                    election => applyElectionManagerQueryAccess(election, userID),
+                    { flip: false }
                   )
                   .related('candidate')
               )
               .related('offline_tallies', oq =>
                 oq
-                  .whereExists('election', election =>
-                    applyElectionManagerQueryAccess(election, userID)
+                  .whereExists(
+                    'election',
+                    election => applyElectionManagerQueryAccess(election, userID),
+                    { flip: false }
                   )
                   .related('candidate')
               )
               .related('electors', elector =>
                 applyElectionElectorOrManagerQueryAccess(elector, userID)
               )
-              .related('role')
+              .related('role', role => applyRoleQueryAccess(role, userID, true))
           )
           .related('votes', q =>
-            q
+            applyVoteQueryAccessFromAuthorizedAgendaItem(q, userID)
               .related('choices')
               .related('indicative_decisions', d =>
                 d
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('final_decisions', d =>
                 d
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('offline_tallies', oq =>
                 oq
-                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                  .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                    flip: false,
+                  })
                   .related('choice')
               )
               .related('voters', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
           )
           .related('amendment', q =>
-            q.related('change_requests', changeRequest =>
+            applyAmendmentQueryAccess(q, userID).related('change_requests', changeRequest =>
               changeRequest.where('user_id', userID ?? '__anon__')
             )
           )
@@ -539,7 +652,7 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       zql.event_participant
         .where('event_id', eventId)
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .where(({ or, cmp, exists }: any) =>
           or(
             cmp('user_id', userID),
@@ -556,18 +669,24 @@ export const eventQueries = {
   forParticipation: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyEventAccess(zql.event.where('id', id), userID)
       .related('group', q =>
-        q.related('memberships', q =>
+        applyGroupDiscoveryQueryAccess(q, userID).related('memberships', q =>
           applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
             .related('user')
-            .related('part_group')
-            .related('base_group')
+            .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('origins', oq =>
-              oq.related('source_group').related('part_group').related('base_group')
+              oq
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('part_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('base_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             )
         )
       )
       .related('assembly_scopes', scopeQuery =>
-        scopeQuery.related('host_group').related('source_group').related('required_role')
+        scopeQuery
+          .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('required_role')
       )
       .related('delegates', q =>
         applyEventDelegateSelfOrParticipantAccess(q, userID).related('user')
@@ -591,13 +710,15 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyEventParticipantOrManagerQueryAccess(zql.event_participant, userID)
         .where('event_id', eventId)
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .related('participant_roles', q => q.related('role'))
   ),
 
   /** Event with creator and group (for roles page) */
   forRoles: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventAccess(zql.event.where('id', id), userID).related('creator').related('group')
+    applyEventAccess(zql.event.where('id', id), userID)
+      .related('creator')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   /** Event roles with holder→user relations */
@@ -606,8 +727,10 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       zql.role
         .where('event_id', eventId)
-        .whereExists('event', event =>
-          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        .whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
         )
         .where('scope', 'event')
         .related('holders', q => q.related('user'))
@@ -621,8 +744,12 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyAgendaItemQueryAccess(zql.agenda_item, userID)
         .where('event_id', eventId)
-        .related('election', q => q.related('candidates').related('role'))
-        .related('amendment')
+        .related('election', q =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(q, userID)
+            .related('candidates')
+            .related('role', role => applyRoleQueryAccess(role, userID, true))
+        )
+        .related('amendment', q => applyAmendmentQueryAccess(q, userID))
   ),
 
   /** Full agenda items with all nested relations (for agenda view) */
@@ -632,28 +759,34 @@ export const eventQueries = {
       applyAgendaItemQueryAccess(zql.agenda_item, userID)
         .where('event_id', eventId)
         .related('creator')
-        .related('event')
+        .related('event', event => applyEventAccess(event, userID))
         .related('election', q =>
-          q
+          applyElectionQueryAccessFromAuthorizedAgendaItem(q, userID)
             .related('candidates', c => c.related('user'))
             .related('indicative_selections', s =>
               s
-                .whereExists('election', election =>
-                  applyElectionManagerQueryAccess(election, userID)
+                .whereExists(
+                  'election',
+                  election => applyElectionManagerQueryAccess(election, userID),
+                  { flip: false }
                 )
                 .related('candidate')
             )
             .related('final_selections', s =>
               s
-                .whereExists('election', election =>
-                  applyElectionManagerQueryAccess(election, userID)
+                .whereExists(
+                  'election',
+                  election => applyElectionManagerQueryAccess(election, userID),
+                  { flip: false }
                 )
                 .related('candidate')
             )
             .related('offline_tallies', oq =>
               oq
-                .whereExists('election', election =>
-                  applyElectionManagerQueryAccess(election, userID)
+                .whereExists(
+                  'election',
+                  election => applyElectionManagerQueryAccess(election, userID),
+                  { flip: false }
                 )
                 .related('candidate')
             )
@@ -662,60 +795,78 @@ export const eventQueries = {
             )
             .related('indicative_participations', p =>
               p
-                .whereExists('elector', elector =>
-                  applyElectionElectorOrManagerQueryAccess(elector, userID)
+                .whereExists(
+                  'elector',
+                  elector => applyElectionElectorOrManagerQueryAccess(elector, userID),
+                  { flip: false }
                 )
                 .related('elector')
                 .related('selections', s => s.related('candidate'))
             )
             .related('final_participations', p =>
               p
-                .whereExists('elector', elector =>
-                  applyElectionElectorOrManagerQueryAccess(elector, userID)
+                .whereExists(
+                  'elector',
+                  elector => applyElectionElectorOrManagerQueryAccess(elector, userID),
+                  { flip: false }
                 )
                 .related('elector')
                 .related('selections', s => s.related('candidate'))
             )
-            .related('role', q => q.related('group'))
+            .related('role', q =>
+              applyRoleQueryAccess(q, userID, true).related('group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .related('votes', q =>
-          q
+          applyVoteQueryAccessFromAuthorizedAgendaItem(q, userID)
             .related('choices')
             .related('indicative_decisions', d =>
               d
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('final_decisions', d =>
               d
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('offline_tallies', oq =>
               oq
-                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+                .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                  flip: false,
+                })
                 .related('choice')
             )
             .related('voters', v => applyVoteVoterOrManagerQueryAccess(v, userID).related('user'))
             .related('indicative_participations', p =>
               p
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('voter')
                 .related('decisions', d => d.related('choice'))
             )
             .related('final_participations', p =>
               p
-                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID), {
+                  flip: false,
+                })
                 .related('voter')
                 .related('decisions', d => d.related('choice'))
             )
         )
         .related('amendment', q =>
-          q
+          applyAmendmentQueryAccess(q, userID)
             .related('change_requests', changeRequest =>
-              applyChangeRequestVisibilityAccess(changeRequest, userID)
+              applyChangeRequestVisibilityAccess(changeRequest, userID, true)
             )
-            .related('group')
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('document')
             .related('current_process_run', rq =>
               rq.related('branches', bq =>
@@ -723,7 +874,7 @@ export const eventQueries = {
                   .related('document')
                   .related('document_version')
                   .related('change_requests', changeRequest =>
-                    applyChangeRequestVisibilityAccess(changeRequest, userID)
+                    applyChangeRequestVisibilityAccess(changeRequest, userID, true)
                   )
                   .orderBy('created_at', 'asc')
               )
@@ -738,62 +889,74 @@ export const eventQueries = {
     applyAgendaItemQueryAccess(zql.agenda_item, userID)
       .where('id', id)
       .related('creator')
-      .related('event', q => q.related('creator'))
+      .related('event', q => applyEventAccess(q, userID).related('creator'))
       .related('election', q =>
-        q
+        applyElectionQueryAccessFromAuthorizedAgendaItem(q, userID)
           .related('candidates', c => c.related('user'))
           .related('indicative_selections', s =>
             s
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
           .related('final_selections', s =>
             s
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
           .related('offline_tallies', oq =>
             oq
-              .whereExists('election', election =>
-                applyElectionManagerQueryAccess(election, userID)
+              .whereExists(
+                'election',
+                election => applyElectionManagerQueryAccess(election, userID),
+                { flip: false }
               )
               .related('candidate')
           )
           .related('electors', e =>
             applyElectionElectorOrManagerQueryAccess(e, userID).related('user')
           )
-          .related('role')
+          .related('role', role => applyRoleQueryAccess(role, userID, true))
       )
       .related('votes', q =>
-        q
+        applyVoteQueryAccessFromAuthorizedAgendaItem(q, userID)
           .related('choices')
           .related('indicative_decisions', d =>
             d
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('final_decisions', d =>
             d
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('offline_tallies', oq =>
             oq
-              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
+              .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID), {
+                flip: false,
+              })
               .related('choice')
           )
           .related('voters', v => applyVoteVoterOrManagerQueryAccess(v, userID).related('user'))
       )
       .related('amendment', q =>
-        q
+        applyAmendmentQueryAccess(q, userID)
           .related('change_requests', changeRequest =>
-            applyChangeRequestVisibilityAccess(changeRequest, userID)
+            applyChangeRequestVisibilityAccess(changeRequest, userID, true)
           )
-          .related('group')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('document')
           .related('current_process_run', rq =>
             rq.related('branches', bq =>
@@ -801,12 +964,12 @@ export const eventQueries = {
                 .related('document')
                 .related('document_version')
                 .related('change_requests', changeRequest =>
-                  applyChangeRequestVisibilityAccess(changeRequest, userID)
+                  applyChangeRequestVisibilityAccess(changeRequest, userID, true)
                 )
                 .related('step_runs', sq =>
                   sq
-                    .related('source_group')
-                    .related('target_group')
+                    .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                     .related('workflow_step')
                     .related('event')
                     .related('agenda_item')
@@ -821,20 +984,30 @@ export const eventQueries = {
 
   /** Event with delegates→user and delegate_allocations */
   delegatesFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventParticipantEventAccess(zql.event, userID)
+    applyEventParticipantEventAccess(zql.event, userID, true)
       .where('id', id)
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('delegates', q =>
-        applyEventDelegateSelfOrParticipantAccess(q, userID).related('user').related('group')
+        applyEventDelegateSelfOrParticipantAccess(q, userID, true)
+          .related('user')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       )
       .related('delegate_allocations', q =>
-        q.related('group').related('delegate_election_assignments')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('delegate_election_assignments')
       )
       .related('assembly_scopes', q =>
-        q.related('host_group').related('source_group').related('required_role')
+        q
+          .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('required_role')
       )
       .related('delegate_election_assignments', q =>
-        q.related('source_group').related('allocation').related('linked_event')
+        q
+          .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('allocation')
+          .related('linked_event')
       )
   ),
 
@@ -843,23 +1016,36 @@ export const eventQueries = {
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
       applyEventManagerQueryAccess(zql.event.where('id', id), userID, 'manage_participants')
-        .related('group')
+        // Anonymous viewers cannot manage an event. Express that as a constant
+        // empty result so the planner need not expand the denied relation tree.
+        .where(({ and, or }) => (isAuthenticatedUserId(userID) ? and() : or()))
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('delegates', q =>
-          applyEventDelegateSelfOrParticipantAccess(q, userID).related('group')
+          applyEventDelegateSelfOrParticipantAccess(q, userID, true).related('group', group =>
+            applyGroupDiscoveryQueryAccess(group, userID)
+          )
         )
         .related('assembly_scopes', q =>
-          q.related('host_group').related('source_group').related('required_role')
+          q
+            .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('required_role')
         )
         .related('delegate_election_assignments', q =>
-          q.related('source_group').related('allocation').related('linked_event')
+          q
+            .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('allocation')
+            .related('linked_event')
         )
         .related('delegate_allocations', allocationQuery =>
           allocationQuery.related('group', groupQuery =>
-            groupQuery.related('roles', roleQuery =>
+            applyGroupDiscoveryQueryAccess(groupQuery, userID).related('roles', roleQuery =>
               roleQuery
                 .where('scope', 'group')
                 .where('assignment_mode', 'elected')
                 .related('elections', electionQuery =>
+                  // This election is already scoped to one allocation's role.
+                  // Keep access joins correlated instead of expanding 64 plans.
                   applyElectionQueryAccess(electionQuery, userID).related(
                     'agenda_item',
                     agendaItemQuery => agendaItemQuery.related('event')
@@ -876,10 +1062,10 @@ export const eventQueries = {
       zql.event_assembly_scope
         .where('event_id', eventId)
         .where('status', 'active')
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .related('event')
-        .related('host_group')
-        .related('source_group')
+        .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('required_role')
         .orderBy('created_at', 'asc')
   ),
@@ -893,7 +1079,7 @@ export const eventQueries = {
           applyEventManagerQueryAccess(event, userID, 'manage_participants')
         )
         .related('target_event')
-        .related('source_group')
+        .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('allocation')
         .related('linked_event')
         .orderBy('created_at', 'asc')
@@ -908,18 +1094,26 @@ export const eventQueries = {
         .whereExists('group', group => applyGroupQueryAccess(group, userID))
         .related('event', q =>
           q
-            .related('group')
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('delegates', dq =>
-              applyEventDelegateSelfOrParticipantAccess(dq, userID).related('user').related('group')
+              applyEventDelegateSelfOrParticipantAccess(dq, userID)
+                .related('user')
+                .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             )
             .related('assembly_scopes', sq =>
-              sq.related('host_group').related('source_group').related('required_role')
+              sq
+                .related('host_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('required_role')
             )
             .related('delegate_election_assignments', aq =>
-              aq.related('source_group').related('allocation').related('linked_event')
+              aq
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('allocation')
+                .related('linked_event')
             )
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('delegate_election_assignments')
   ),
 
@@ -938,26 +1132,30 @@ export const eventQueries = {
             exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
           )
         )
-        .related('group_a')
-        .related('group_b')
-        .related('parent_group')
-        .related('child_group')
-        .related('from_group')
-        .related('to_group')
+        .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('from_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('to_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('created_by')
         .related('grants', grantQuery =>
           grantQuery
-            .related('holder_group')
-            .related('scope_group')
-            .related('initiator_group')
+            .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .orderBy('right_key', 'asc')
         )
         .related('membership_rule', membershipRuleQuery =>
           membershipRuleQuery
-            .related('member_source_group')
-            .related('member_target_group')
+            .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('required_source_role')
-            .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+            .related('origins', originQuery =>
+              originQuery.related('eligible_origin_group', group =>
+                applyGroupDiscoveryQueryAccess(group, userID)
+              )
+            )
         )
         .orderBy('updated_at', 'desc');
       if (groupId) {
@@ -988,7 +1186,7 @@ export const eventQueries = {
             )
           )
         )
-        .whereExists('event', event => applyEventAccess(event, userID))
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
         .related('subscriber_user')
         .related('event')
   ),
@@ -998,31 +1196,38 @@ export const eventQueries = {
     applyEventAccess(zql.event, userID)
       .where('id', id)
       .related('creator')
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('event_hashtags', q => q.related('hashtag'))
       .related('roles', q =>
         q
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
+          .whereExists(
+            'event',
+            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+            { flip: false }
           )
           .related('holders', q => q.related('user'))
       )
       .related('delegates', q =>
-        applyEventDelegateSelfOrParticipantAccess(q, userID).related('user').related('group')
+        applyEventDelegateSelfOrParticipantAccess(q, userID)
+          .related('user')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       )
       .related('participants', q =>
-        q
-          .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+        whereAnyOf(q, 'status', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
           .related('user')
           .related('participant_roles', pq => pq.related('role'))
       )
       .related('offline_participants', q =>
         q
-          .whereExists('event', event =>
-            applyEventManagerQueryAccess(event, userID, 'manage_participants')
+          .whereExists(
+            'event',
+            event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+            { flip: false }
           )
           .related('connected_user')
-          .related('group_offline_member', gq => gq.related('group'))
+          .related('group_offline_member', gq =>
+            gq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          )
       )
   ),
 
@@ -1032,8 +1237,12 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyAgendaItemQueryAccess(zql.agenda_item, userID)
         .where('event_id', eventId)
-        .related('event')
-        .related('election', q => q.related('candidates', q => q.related('user')).related('role'))
+        .related('event', q => applyEventAccess(q, userID))
+        .related('election', q =>
+          applyElectionQueryAccessFromAuthorizedAgendaItem(q, userID)
+            .related('candidates', q => q.related('user'))
+            .related('role', role => applyRoleQueryAccess(role, userID, true))
+        )
         .related('amendment', q =>
           applyAmendmentQueryAccess(q, userID).related('change_requests', changeRequests =>
             applyChangeRequestVisibilityAccess(changeRequests, userID)
@@ -1048,8 +1257,10 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       zql.role
         .where('event_id', eventId)
-        .whereExists('event', event =>
-          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        .whereExists(
+          'event',
+          event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+          { flip: false }
         )
         .where('scope', 'event')
         .related('action_rights')
@@ -1085,12 +1296,17 @@ export const eventQueries = {
   userParticipationsWithEvent: defineQuery(
     z.object({ userId: z.string() }),
     ({ args: { userId }, ctx: { userID } }) =>
-      zql.event_participant
-        .where('user_id', userId)
-        .where('user_id', userID)
-        .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
-        .whereExists('event', event => applyEventAccess(event, userID))
-        .related('event', q => applyEventAccess(q, userID).related('group'))
+      whereAnyOf(
+        zql.event_participant.where('user_id', userId).where('user_id', userID),
+        'status',
+        DISCOVERY_EVENT_PARTICIPANT_STATUSES
+      )
+        .whereExists('event', event => applyEventAccess(event, userID), { flip: false })
+        .related('event', q =>
+          applyEventAccess(q, userID).related('group', group =>
+            applyGroupDiscoveryQueryAccess(group, userID)
+          )
+        )
         .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
@@ -1098,9 +1314,12 @@ export const eventQueries = {
   participantsByParticipatedEventIds: defineQuery(
     z.object({ eventIds: z.array(z.string()) }),
     ({ args: { eventIds }, ctx: { userID } }) =>
-      zql.event_participant
-        .where('event_id', 'IN', eventIds)
-        .where('status', 'IN', ['active', 'admin', 'member', 'confirmed'])
+      whereAnyOf(whereAnyOf(zql.event_participant, 'event_id', eventIds), 'status', [
+        'active',
+        'admin',
+        'member',
+        'confirmed',
+      ])
         .whereExists('event', event => applyEventParticipantEventAccess(event, userID))
         .related('user')
         .related('participant_roles', roleLinkQuery =>
@@ -1110,26 +1329,39 @@ export const eventQueries = {
 
   /** Event with group relation (simple) */
   withGroup: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyEventAccess(zql.event, userID).where('id', id).related('group')
+    applyEventAccess(zql.event, userID)
+      .where('id', id)
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   /** Election by ID with full relations (role→group, candidates→user, indicative/final selections) */
   electionWithVotes: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
-      applyElectionQueryAccess(zql.election, userID)
-        .where('id', id)
-        .related('role', q => q.related('group'))
+      applyElectionQueryAccess(zql.election.where('id', id), userID)
+        .related('role', q =>
+          applyRoleQueryAccess(q, userID, true).related('group', group =>
+            applyGroupDiscoveryQueryAccess(group, userID)
+          )
+        )
         .related('candidates', q => q.related('user'))
         .related('electors', q => applyElectionElectorOrManagerQueryAccess(q, userID))
         .related('indicative_selections', q =>
           q
-            .whereExists('election', election => applyElectionManagerQueryAccess(election, userID))
+            .whereExists(
+              'election',
+              election => applyElectionManagerQueryAccess(election, userID),
+              { flip: false }
+            )
             .related('candidate')
         )
         .related('final_selections', q =>
           q
-            .whereExists('election', election => applyElectionManagerQueryAccess(election, userID))
+            .whereExists(
+              'election',
+              election => applyElectionManagerQueryAccess(election, userID),
+              { flip: false }
+            )
             .related('candidate')
         )
   ),
@@ -1148,7 +1380,7 @@ export const eventQueries = {
   forCalendar: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyEventAccess(zql.event, userID)
       .related('creator')
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('participants', q =>
         applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
       )
@@ -1166,11 +1398,15 @@ export const eventQueries = {
         )
         .related('offline_participants', q =>
           q
-            .whereExists('event', event =>
-              applyEventManagerQueryAccess(event, userID, 'manage_participants')
+            .whereExists(
+              'event',
+              event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+              { flip: false }
             )
             .related('connected_user')
-            .related('group_offline_member', gq => gq.related('group'))
+            .related('group_offline_member', gq =>
+              gq.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            )
         )
   ),
 
@@ -1186,8 +1422,10 @@ export const eventQueries = {
             .related('event_hashtags', q => q.related('hashtag'))
             .related('participants', q => applyEventParticipantOrManagerQueryAccess(q, userID))
             .related('roles', q =>
-              q.whereExists('event', event =>
-                applyEventManagerQueryAccess(event, userID, 'manage_participants')
+              q.whereExists(
+                'event',
+                event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
+                { flip: false }
               )
             )
             .related('agenda_items', q => q.related('election').related('amendment'))
@@ -1210,7 +1448,7 @@ export const eventQueries = {
   forCalendarWithExceptions: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyEventAccess(zql.event, userID)
       .related('creator')
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('participants', q =>
         applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
       )
@@ -1225,7 +1463,7 @@ export const eventQueries = {
       applyEventAccess(zql.event, userID)
         .where('group_id', groupId)
         .related('creator')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('participants', q =>
           applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
         )
@@ -1240,7 +1478,7 @@ export const eventQueries = {
       applyEventAccess(zql.event, userID)
         .where('creator_id', userId)
         .related('creator')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('participants', q =>
           applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
         )

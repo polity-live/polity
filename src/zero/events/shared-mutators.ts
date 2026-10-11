@@ -140,6 +140,7 @@ async function loadParticipantForRoleMutation(
 ) {
   const participant = await tx.run(zql.event_participant.where('id', eventParticipantId).one());
   if (!participant) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Participant not found');
   }
 
@@ -184,6 +185,7 @@ async function loadOfflineParticipantForMutation(
     zql.event_offline_participant.where('id', offlineParticipantId).one()
   );
   if (!offlineParticipant) {
+    if (tx.location === 'client' && tx.reason === 'rebase') return;
     throw new Error('Offline participant not found');
   }
 
@@ -729,11 +731,9 @@ export const eventSharedMutators = {
   updateOfflineParticipant: defineMutator(
     eventOfflineParticipantUpdateSchema,
     async ({ tx, ctx, args }) => {
-      const { event, offlineParticipant } = await loadOfflineParticipantForMutation(
-        tx,
-        ctx,
-        args.id
-      );
+      const loaded = await loadOfflineParticipantForMutation(tx, ctx, args.id);
+      if (!loaded) return;
+      const { event, offlineParticipant } = loaded;
       const attendanceMode = resolveAttendanceMode(event);
 
       if (offlineParticipant.source_type === 'group_member') {
@@ -813,7 +813,9 @@ export const eventSharedMutators = {
   deleteOfflineParticipant: defineMutator(
     eventOfflineParticipantDeleteSchema,
     async ({ tx, ctx, args }) => {
-      const { offlineParticipant } = await loadOfflineParticipantForMutation(tx, ctx, args.id);
+      const loaded = await loadOfflineParticipantForMutation(tx, ctx, args.id);
+      if (!loaded) return;
+      const { offlineParticipant } = loaded;
       if (offlineParticipant.source_type === 'group_member') {
         throw new Error('Inherited group offline participants cannot be deleted from the event.');
       }
@@ -1058,6 +1060,7 @@ export const eventSharedMutators = {
   // Event Participant update
   addParticipantRole: defineMutator(eventParticipantRoleAssignSchema, async ({ tx, ctx, args }) => {
     const participant = await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
+    if (!participant) return;
     await addEventParticipantRole(tx, args);
     await appendEntityActivity(tx, ctx, {
       table: 'event_activity',
@@ -1074,6 +1077,7 @@ export const eventSharedMutators = {
     eventParticipantRoleUnassignSchema,
     async ({ tx, ctx, args }) => {
       const participant = await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
+      if (!participant) return;
       await removeEventParticipantRole(tx, args);
       await appendEntityActivity(tx, ctx, {
         table: 'event_activity',
@@ -1090,7 +1094,7 @@ export const eventSharedMutators = {
   syncParticipantRoles: defineMutator(
     eventParticipantRolesSyncSchema,
     async ({ tx, ctx, args }) => {
-      await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
+      if (!(await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id))) return;
       await syncEventParticipantRoles(tx, args);
     }
   ),

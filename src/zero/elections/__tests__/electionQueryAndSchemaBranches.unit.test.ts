@@ -10,15 +10,21 @@ describe('election query and schema branches', () => {
       defineQuery: (_schema: unknown, fn: unknown) => ({ fn }),
     }));
     vi.doMock('../../schema', () => ({ zql: harness.zql }));
-    vi.doMock('../../rbac/query-access', () => ({
-      applyAgendaItemQueryAccess: (query: unknown) => query,
-      applyElectionElectorOrManagerQueryAccess: (query: unknown) => query,
-      applyElectionManagerQueryAccess: (query: unknown) => query,
-      applyElectionQueryAccess: (query: unknown) => query,
-      applyEventQueryAccess: (query: unknown) => query,
-      applyGroupQueryAccess: (query: unknown) => query,
-      applyRoleQueryAccess: (query: unknown) => query,
-    }));
+    vi.doMock('../../rbac/query-access', async () => {
+      const actual =
+        await vi.importActual<typeof import('../../rbac/query-access')>('../../rbac/query-access');
+      return {
+        isAuthenticatedUserId: actual.isAuthenticatedUserId,
+        applyGroupDiscoveryQueryAccess: (query: unknown) => query,
+        applyAgendaItemQueryAccess: (query: unknown) => query,
+        applyElectionElectorOrManagerQueryAccess: (query: unknown) => query,
+        applyElectionManagerQueryAccess: (query: unknown) => query,
+        applyElectionQueryAccess: (query: unknown) => query,
+        applyEventQueryAccess: (query: unknown) => query,
+        applyGroupQueryAccess: (query: unknown) => query,
+        applyRoleQueryAccess: (query: unknown) => query,
+      };
+    });
     const { electionQueries } = await import('../queries');
     const empty = {
       status: undefined,

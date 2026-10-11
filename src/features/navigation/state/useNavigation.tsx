@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { navItemsAuthenticated } from '@/features/navigation/nav-items/nav-items-authenticated.tsx';
 import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
 import { useNavigate, useLocation } from '@tanstack/react-router';
@@ -28,12 +28,15 @@ import { getPrimaryRouteFromPathname } from '@/features/navigation/nav-items/nav
 export function useNavigation() {
   // Get router instance and pathname for TanStack Router
   const navigate = useNavigate();
-  const location = useLocation();
-  const pathname = location.pathname;
-  const currentBranchId =
-    typeof (location.search as Record<string, unknown> | undefined)?.branch === 'string'
-      ? ((location.search as Record<string, unknown>).branch as string)
-      : null;
+  // Compose intents and unrelated URL filters do not change navigation items.
+  // Keep the amendment branch subscribed so its targets still update immediately.
+  const [pathname, currentBranchId] = useLocation({
+    select: location => {
+      const branch = (location.search as Record<string, unknown> | undefined)?.branch;
+      return [location.pathname, typeof branch === 'string' ? branch : null] as const;
+    },
+    structuralSharing: true,
+  });
   const currentPrimaryRoute = getPrimaryRouteFromPathname(pathname);
   const { t } = useTranslation();
 
@@ -158,144 +161,176 @@ export function useNavigation() {
     amendment,
   });
 
-  const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
-    const studioProjectOpen =
-      /^\/studio\/[^/]+$/.test(pathname) || /^\/group\/[^/]+\/studio\/[^/]+$/.test(pathname);
-    if (studioProjectOpen) {
-      const panel = (panelKey: string, navigationItemId: string) => () =>
-        openStudioPanel({ panelKey, origin: 'secondary-navigation', navigationItemId });
-      return [
-        {
-          id: 'studio-frames',
-          label: t('features.studio.layers'),
-          icon: 'Layers3' as const,
-          onClick: panel('pages', 'studio-frames'),
-        },
-        {
-          id: 'studio-assets',
-          label: t('features.studio.theme'),
-          icon: 'Palette' as const,
-          onClick: panel('theme', 'studio-assets'),
-        },
-        {
-          id: 'studio-elements',
-          label: t('features.studio.elements'),
-          icon: 'Library' as const,
-          onClick: panel('elements', 'studio-elements'),
-        },
-        {
-          id: 'studio-campaign',
-          label: t('features.studio.campaign'),
-          icon: 'Calendar' as const,
-          onClick: panel('captions', 'studio-campaign'),
-        },
-      ] satisfies NavigationItem[];
-    }
-    // Determine permissions based on the hook results
-    const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
-    const isGroupMember = isMember();
-    const canEditGroup = isGroupMember && canManage('groups');
-    const canAccessGroupEditor = isGroupMember && canView('groupDocuments');
-    const canAccessGroupOperation =
-      isGroupMember &&
-      hasGroupOperationAccess({
-        canViewDocuments: canView('groupDocuments'),
-        canViewLinks: canView('groupLinks'),
-        canViewPayments: canView('groupPayments'),
-        canViewTodos: canView('groupTodos'),
+  const getSecondaryNavItems = useCallback(
+    (currentPrimaryRoute: string | null) => {
+      const studioProjectOpen =
+        /^\/studio\/[^/]+$/.test(pathname) || /^\/group\/[^/]+\/studio\/[^/]+$/.test(pathname);
+      if (studioProjectOpen) {
+        const panel = (panelKey: string, navigationItemId: string) => () =>
+          openStudioPanel({ panelKey, origin: 'secondary-navigation', navigationItemId });
+        return [
+          {
+            id: 'studio-frames',
+            label: t('features.studio.layers'),
+            icon: 'Layers3' as const,
+            onClick: panel('pages', 'studio-frames'),
+          },
+          {
+            id: 'studio-assets',
+            label: t('features.studio.theme'),
+            icon: 'Palette' as const,
+            onClick: panel('theme', 'studio-assets'),
+          },
+          {
+            id: 'studio-elements',
+            label: t('features.studio.elements'),
+            icon: 'Library' as const,
+            onClick: panel('elements', 'studio-elements'),
+          },
+          {
+            id: 'studio-campaign',
+            label: t('features.studio.campaign'),
+            icon: 'Calendar' as const,
+            onClick: panel('captions', 'studio-campaign'),
+          },
+        ] satisfies NavigationItem[];
+      }
+      // Determine permissions based on the hook results
+      const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
+      const isGroupMember = isMember();
+      const canEditGroup = isGroupMember && canManage('groups');
+      const canAccessGroupEditor = isGroupMember && canView('groupDocuments');
+      const canAccessGroupOperation =
+        isGroupMember &&
+        hasGroupOperationAccess({
+          canViewDocuments: canView('groupDocuments'),
+          canViewLinks: canView('groupLinks'),
+          canViewPayments: canView('groupPayments'),
+          canViewTodos: canView('groupTodos'),
+        });
+
+      // Reading public/authenticated amendment content is distinct from mutation action rights.
+      const canViewAmendment =
+        amendmentData?.visibility === 'public' ||
+        amendmentData?.visibility === 'authenticated' ||
+        canView('amendments');
+      const canUpdateAmendment = canUpdate('amendments');
+      const canManageAmendment = canManage('amendments');
+
+      // For blog, we check if user can manage bloggers (which is the Owner permission)
+      // The blog creator gets the Owner role with 'manage' permission for 'blogBloggers'
+      const isBlogOwner = blogId ? canManage('blogBloggers') : false;
+
+      const isOwnUser = isMe(userId);
+
+      // Check if user can manage group memberships (for Members nav item)
+      const canManageMembers = isGroupMember && canManage('groupMemberships');
+
+      // Notification rights are scoped differently by entity type.
+      const canViewNotifications =
+        currentPrimaryRoute === 'group'
+          ? isGroupMember && can('viewNotifications', 'groupNotifications')
+          : currentPrimaryRoute === 'event'
+            ? isParticipant() && can('viewNotifications', 'notifications')
+            : currentPrimaryRoute === 'amendment'
+              ? (isCollaborator() || isAuthor()) && can('viewNotifications', 'notifications')
+              : currentPrimaryRoute === 'blog'
+                ? isABlogger() && can('viewNotifications', 'notifications')
+                : false;
+
+      const baseSecondaryItems = baseGetSecondaryNavItems(
+        currentPrimaryRoute,
+        eventId,
+        userId,
+        isOwnUser,
+        groupId,
+        amendmentId,
+        canEditGroup,
+        isEventAdmin,
+        canViewAmendment,
+        canUpdateAmendment,
+        canManageAmendment,
+        blogId,
+        isBlogOwner,
+        isGroupMember,
+        canManageMembers,
+        canViewNotifications,
+        canAccessGroupOperation,
+        canAccessGroupEditor
+      );
+      if (!baseSecondaryItems) return null;
+
+      // Determine entity unread count based on current route
+      const entityUnreadCount = getEntityNotificationUnreadCount(currentPrimaryRoute, {
+        group: groupUnread,
+        event: eventUnread,
+        amendment: amendmentUnread,
+        blog: blogUnread,
       });
 
-    // Reading public/authenticated amendment content is distinct from mutation action rights.
-    const canViewAmendment =
-      amendmentData?.visibility === 'public' ||
-      amendmentData?.visibility === 'authenticated' ||
-      canView('amendments');
-    const canUpdateAmendment = canUpdate('amendments');
-    const canManageAmendment = canManage('amendments');
+      // Secondary items are already localized in the nav item factories.
+      // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
+      return baseSecondaryItems.map(item => {
+        const itemWithBadge = withEntityNotificationBadge(item, entityUnreadCount);
+        const amendmentBranchTarget =
+          currentPrimaryRoute === 'amendment'
+            ? getBranchPreservingAmendmentNavTarget({
+                itemId: item.id,
+                amendmentId,
+                branchId: currentBranchId,
+              })
+            : null;
 
-    // For blog, we check if user can manage bloggers (which is the Owner permission)
-    // The blog creator gets the Owner role with 'manage' permission for 'blogBloggers'
-    const isBlogOwner = blogId ? canManage('blogBloggers') : false;
-
-    const isOwnUser = isMe(userId);
-
-    // Check if user can manage group memberships (for Members nav item)
-    const canManageMembers = isGroupMember && canManage('groupMemberships');
-
-    // Notification rights are scoped differently by entity type.
-    const canViewNotifications =
-      currentPrimaryRoute === 'group'
-        ? isGroupMember && can('viewNotifications', 'groupNotifications')
-        : currentPrimaryRoute === 'event'
-          ? isParticipant() && can('viewNotifications', 'notifications')
-          : currentPrimaryRoute === 'amendment'
-            ? (isCollaborator() || isAuthor()) && can('viewNotifications', 'notifications')
-            : currentPrimaryRoute === 'blog'
-              ? isABlogger() && can('viewNotifications', 'notifications')
-              : false;
-
-    const baseSecondaryItems = baseGetSecondaryNavItems(
-      currentPrimaryRoute,
+        return {
+          ...itemWithBadge,
+          ...(amendmentBranchTarget
+            ? {
+                href: amendmentBranchTarget.href,
+                onClick: () =>
+                  navigate({
+                    to: amendmentBranchTarget.to,
+                    params: amendmentBranchTarget.params,
+                    search: amendmentBranchTarget.search,
+                  } as never),
+              }
+            : {}),
+          ...(item.href ? { preloadTarget: { href: item.href } } : {}),
+        };
+      });
+    },
+    [
+      pathname,
+      currentBranchId,
+      baseGetSecondaryNavItems,
+      navigate,
+      t,
       eventId,
       userId,
-      isOwnUser,
       groupId,
       amendmentId,
-      canEditGroup,
-      isEventAdmin,
-      canViewAmendment,
-      canUpdateAmendment,
-      canManageAmendment,
       blogId,
-      isBlogOwner,
-      isGroupMember,
-      canManageMembers,
-      canViewNotifications,
-      canAccessGroupOperation,
-      canAccessGroupEditor
-    );
-    if (!baseSecondaryItems) return null;
+      amendmentData,
+      canManage,
+      canView,
+      canUpdate,
+      can,
+      isMe,
+      isMember,
+      isParticipant,
+      isABlogger,
+      isCollaborator,
+      isAuthor,
+      groupUnread,
+      eventUnread,
+      amendmentUnread,
+      blogUnread,
+    ]
+  );
 
-    // Determine entity unread count based on current route
-    const entityUnreadCount = getEntityNotificationUnreadCount(currentPrimaryRoute, {
-      group: groupUnread,
-      event: eventUnread,
-      amendment: amendmentUnread,
-      blog: blogUnread,
-    });
-
-    // Secondary items are already localized in the nav item factories.
-    // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
-    return baseSecondaryItems.map(item => {
-      const itemWithBadge = withEntityNotificationBadge(item, entityUnreadCount);
-      const amendmentBranchTarget =
-        currentPrimaryRoute === 'amendment'
-          ? getBranchPreservingAmendmentNavTarget({
-              itemId: item.id,
-              amendmentId,
-              branchId: currentBranchId,
-            })
-          : null;
-
-      return {
-        ...itemWithBadge,
-        ...(amendmentBranchTarget
-          ? {
-              href: amendmentBranchTarget.href,
-              onClick: () =>
-                navigate({
-                  to: amendmentBranchTarget.to,
-                  params: amendmentBranchTarget.params,
-                  search: amendmentBranchTarget.search,
-                } as never),
-            }
-          : {}),
-        ...(item.href ? { preloadTarget: { href: item.href } } : {}),
-      };
-    });
-  };
-
-  const secondaryNavItems = getSecondaryNavItems(currentPrimaryRoute);
+  const secondaryNavItems = useMemo(
+    () => getSecondaryNavItems(currentPrimaryRoute),
+    [getSecondaryNavItems, currentPrimaryRoute]
+  );
 
   return {
     primaryNavItems,

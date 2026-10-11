@@ -15,8 +15,8 @@
  * ```
  */
 
-import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { createContext, createElement, useContext, useMemo, type ReactNode } from 'react';
+import { useQuery } from '@/zero/observed-query';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '../queries';
 import {
@@ -59,6 +59,18 @@ interface UsePermissionsData {
   bloggerRelations: BloggerRelation[] | undefined;
   ownedGroupIds: string[] | undefined;
   isLoading: boolean;
+}
+
+const PermissionsDataContext = createContext<
+  { userId: string | undefined; data: UsePermissionsData } | undefined
+>(undefined);
+
+/** One reactive viewer snapshot shared by all mounted permission consumers. */
+export function PermissionsDataProvider({ children }: { children: ReactNode }) {
+  const userId = useAuthUserId();
+  const data = useLocalPermissionsData(userId);
+  const value = useMemo(() => ({ userId, data }), [userId, data]);
+  return createElement(PermissionsDataContext.Provider, { value }, children);
 }
 
 export interface PermissionEvaluator {
@@ -122,6 +134,14 @@ function mapRolesFromLinks<T extends PermissionRoleLinkLike>(
 }
 
 function usePermissionsData(userId: string | undefined): UsePermissionsData {
+  const shared = useContext(PermissionsDataContext);
+  // Keep hook ordering stable, including standalone consumers without a provider.
+  // Undefined queries create no additional subscriptions under the provider.
+  const local = useLocalPermissionsData(shared?.userId === userId && shared ? undefined : userId);
+  return shared?.userId === userId && shared ? shared.data : local;
+}
+
+function useLocalPermissionsData(userId: string | undefined): UsePermissionsData {
   const [membershipsRaw, membershipsResult] = useQuery(
     userId ? queries.rbac.viewerMemberships({}) : undefined
   );
@@ -218,7 +238,17 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
     [ownedGroupsRaw]
   );
 
-  return { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading };
+  return useMemo(
+    () => ({
+      memberships,
+      guestAccesses,
+      participations,
+      bloggerRelations,
+      ownedGroupIds,
+      isLoading,
+    }),
+    [memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading]
+  );
 }
 
 /**
@@ -353,7 +383,10 @@ export function usePermissions(context: PermissionContext) {
     bloggerRelations,
     ownedGroupIds,
     userId,
-    context,
+    context.groupId,
+    context.eventId,
+    context.blogId,
+    context.amendment,
     isLoading,
   ]);
 }

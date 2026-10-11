@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
     'byGroup',
     'participantsByUser',
     'byIdFull',
+    'forAgenda',
     'forCancel',
     'withVoting',
     'streamEvent',
@@ -103,6 +104,7 @@ import {
   useElectionWithVotes,
   useEventAccessRoles,
   useEventAgenda,
+  useEventAgendaShell,
   useEventAssemblyScopes,
   useEventById,
   useEventDelegates,
@@ -112,6 +114,7 @@ import {
   useEventParticipantsByParticipatedEventIds,
   useEventParticipantsQuery,
   useEventParticipationData,
+  useEventForParticipation,
   useEventRolesData,
   useEventsByGroup,
   useEventsForCalendar,
@@ -263,7 +266,16 @@ beforeEach(() => {
   setResponse('rolesWithHolders', roles);
   setResponse('agendaWithElections', [{ id: 'agenda-1', election: elections }]);
   setResponse('agendaItemsFull', [
-    { id: 'agenda-2', event: { id: 'event-1' }, order_index: 2, election: [], votes: [] },
+    {
+      id: 'agenda-2',
+      event: { id: 'event-1' },
+      order_index: 2,
+      election: [],
+      votes: [
+        { id: 'vote-1', agenda_item_id: 'agenda-2' },
+        { id: 'vote-2', agenda_item_id: 'agenda-2' },
+      ],
+    },
     {
       id: 'agenda-1',
       event: { id: 'event-1' },
@@ -324,6 +336,66 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('useEventState complete query contracts', () => {
+  it('loads permitted agenda metadata without the duplicate agenda tree and clears revoked data', () => {
+    const row = {
+      id: 'event-1',
+      current_agenda_item_id: 'agenda-1',
+      roles: [role('role-1')],
+      group: { id: 'group-1', memberships: [{ id: 'membership-1' }] },
+      assembly_scopes: [{ id: 'scope-1' }],
+      delegate_election_assignments: [{ id: 'assignment-1' }],
+      delegates: [{ id: 'delegate-1' }],
+      offline_participants: [{ id: 'offline-1' }],
+      participants: [participant('participant-1', 'active')],
+    };
+    setResponse('forAgenda', [row]);
+    const { result, rerender } = renderHook(
+      ({ eventId }: { eventId?: string }) => useEventAgendaShell(eventId),
+      { initialProps: { eventId: 'event-1' as string | undefined } }
+    );
+    expect(mocks.events.forAgenda).toHaveBeenCalledWith({ id: 'event-1' });
+    expect(mocks.events.byIdFull).not.toHaveBeenCalled();
+    expect(result.current.event).toMatchObject({
+      id: row.id,
+      current_agenda_item_id: row.current_agenda_item_id,
+      roles: [{ id: 'role-1', title: row.roles[0].name }],
+      participants: [{ id: 'participant-1', status: 'active', roles: [], role: null }],
+    });
+    for (const field of [
+      'group',
+      'assembly_scopes',
+      'delegate_election_assignments',
+      'delegates',
+      'offline_participants',
+    ] as const)
+      expect(result.current.event?.[field]).toBe(row[field]);
+    expect(result.current.event).not.toHaveProperty('agenda_items');
+    expect(result.current.isLoading).toBe(false);
+    setResponse('forAgenda', [], 'unknown');
+    rerender({ eventId: 'event-1' });
+    expect(result.current.isLoading).toBe(true);
+    setResponse('forAgenda', [], 'complete');
+    rerender({ eventId: 'event-1' });
+    expect(result.current.event).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+    rerender({ eventId: undefined });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('loads only participation data and disables it for projected cards', () => {
+    const { result, rerender } = renderHook(
+      ({ eventId }: { eventId?: string }) => useEventForParticipation(eventId),
+      { initialProps: { eventId: 'event-1' as string | undefined } }
+    );
+    expect(result.current.event?.id).toBe('event-1');
+    expect(mocks.events.forParticipation).toHaveBeenCalledWith({ id: 'event-1' });
+    expect(mocks.events.byIdFull).not.toHaveBeenCalled();
+    expect(mocks.events.userParticipation).not.toHaveBeenCalled();
+    rerender({ eventId: undefined });
+    expect(mocks.useQuery).toHaveBeenLastCalledWith(undefined);
+    expect(result.current.event).toBeNull();
+  });
+
   it('normalizes every event data facade with rich relation data', () => {
     const { result } = renderHook(() => useAllEventHooks());
 
@@ -369,6 +441,8 @@ describe('useEventState complete query contracts', () => {
     const defaults = renderHook(() => ({
       state: useEventState(),
       byId: useEventById(),
+      cancel: useEventForCancel(undefined),
+      withAgenda: useEventWithAgendaAndParticipants(undefined),
       participants: useEventParticipantsQuery(),
       offline: useEventOfflineParticipants(),
       agenda: useEventAgenda(),
@@ -385,6 +459,8 @@ describe('useEventState complete query contracts', () => {
 
     expect(defaults.state.eventsByGroup).toEqual([]);
     expect(defaults.byId.event).toBeNull();
+    expect(defaults.cancel.event).toBeNull();
+    expect(defaults.withAgenda.event).toBeNull();
     expect(defaults.offline.isLoading).toBe(false);
     expect(defaults.participations.isLoading).toBe(false);
     expect(defaults.participated.isLoading).toBe(false);
@@ -447,7 +523,7 @@ describe('useEventState complete query contracts', () => {
     expect(data.composition.scheduledElections).toEqual([]);
   });
 
-  it('falls back from grouped votes to item votes and then an empty list', () => {
+  it('uses the authorized nested vote projection without a dependent query', () => {
     setResponse('agendaItemsFull', [
       { id: 'agenda-fallback', event: { id: 'event-1' }, votes: [{ id: 'stored' }] },
       { id: 'agenda-empty', event: { id: 'event-1' } },
@@ -457,6 +533,66 @@ describe('useEventState complete query contracts', () => {
     const state = renderHook(() => useAgendaItemsByEvent('event-1')).result.current;
     expect(state.agendaItems[0]?.votes).toEqual([{ id: 'stored' }]);
     expect(state.agendaItems[1]?.votes).toEqual([]);
+    expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
+  });
+
+  it('sorts projected choices without mutating votes and keeps unrelated agenda items out', () => {
+    const choices = [
+      { id: 'later', order_index: 2 },
+      { id: 'first' },
+      { id: 'middle', order_index: 1 },
+      { id: 'null-order', order_index: null },
+    ];
+    setResponse('agendaItemsFull', [
+      {
+        id: 'later-item',
+        event: { id: 'event-1' },
+        order_index: 2,
+        votes: [{ id: 'vote', choices }],
+      },
+      { id: 'first-item', event: { id: 'event-1' }, order_index: null, votes: [] },
+      { id: 'missing-order', event: { id: 'event-1' }, votes: [{ id: 'empty', choices: [] }] },
+      { id: 'unrelated', event: { id: 'event-2' }, votes: [] },
+      { id: 'missing-event', votes: [] },
+    ]);
+    const state = renderHook(() => useAgendaItemsByEvent('event-1')).result.current;
+    expect(state.agendaItems.map(item => item.id)).toEqual([
+      'first-item',
+      'missing-order',
+      'later-item',
+    ]);
+    expect(state.agendaItems[2]?.votes[0]?.choices?.map(choice => choice.id)).toEqual([
+      'first',
+      'null-order',
+      'middle',
+      'later',
+    ]);
+    expect(choices.map(choice => choice.id)).toEqual(['later', 'first', 'middle', 'null-order']);
+    expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
+  });
+
+  it('normalizes an agenda shell whose optional roles are absent', () => {
+    setResponse('forAgenda', [{ id: 'event-1', participants: [] }]);
+    const { event } = renderHook(() => useEventAgendaShell('event-1')).result.current;
+    expect(event?.roles).toEqual([]);
+    expect(event?.participants).toEqual([]);
+  });
+
+  it('disables optional collection queries when their sections are hidden', () => {
+    const data = renderHook(() => ({
+      events: useAllEvents(false),
+      amendments: useAllAmendments(false),
+      roles: useRolesWithGroups(false),
+      groupCalendar: useGroupEventsForCalendar(),
+    })).result.current;
+    expect(data.events.events).toEqual([]);
+    expect(data.amendments.amendments).toEqual([]);
+    expect(data.roles.roles).toEqual([]);
+    expect(data.groupCalendar.events).toEqual([]);
+    expect(mocks.events.all).not.toHaveBeenCalled();
+    expect(mocks.events.allAmendments).not.toHaveBeenCalled();
+    expect(mocks.events.rolesWithGroups).not.toHaveBeenCalled();
+    expect(mocks.events.byGroupForCalendar).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -475,8 +611,11 @@ describe('useEventState complete query contracts', () => {
     ).toBe(true);
   });
 
-  it('reports dependent agenda loading only when vote loading is relevant', () => {
+  it('does not wait on a duplicate vote query and follows authoritative agenda loading', () => {
     setResponse('votesByAgendaItems', [], 'unknown');
+    expect(renderHook(() => useAgendaItemsByEvent('event-1')).result.current.isLoading).toBe(false);
+
+    setResponse('agendaItemsFull', [], 'unknown');
     expect(renderHook(() => useAgendaItemsByEvent('event-1')).result.current.isLoading).toBe(true);
 
     setResponse('agendaItemsFull', []);

@@ -220,6 +220,11 @@
     ],
     "src/features/blogs/hooks/useSubscribeBlog.ts": [
       {
+        "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+        "project": "component",
+        "caseId": "normalizes missing projection data and preserves the persisted count fallback"
+      },
+      {
         "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
         "project": "component",
         "caseId": "optimistically subscribes, reconciles persisted rows, and unsubscribes exact duplicates"
@@ -15427,20 +15432,6 @@
           "report": "coverage/coverage-final.json",
           "coveredStatements": 12,
           "totalStatements": 12
-        }
-      }
-    ],
-    "src/features/search/hooks/useProgressiveSearchCards.ts": [
-      {
-        "file": "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "project": "component",
-        "caseId": "does not schedule batches for an empty document list",
-        "evidence": {
-          "kind": "instrumented-full-suite",
-          "relation": "direct",
-          "report": "coverage/coverage-final.json",
-          "coveredStatements": 55,
-          "totalStatements": 60
         }
       }
     ],
@@ -37678,14 +37669,6 @@
         "project": "component",
         "caseId": "exposes stable selectable view, filter, and personal-topic actions",
         "scenarios": ["idle", "success", "keyboard", "focus"]
-      }
-    ],
-    "src/features/search/ui/SearchResultCard.tsx#search.result.preview.open": [
-      {
-        "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
-        "project": "component",
-        "caseId": "renders an immediately navigable, fixed-cell preview without loading the dynamic card",
-        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
       }
     ],
     "src/features/search/ui/SpatialSearchResultsList.tsx#search.spatial-result.select": [

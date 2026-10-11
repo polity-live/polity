@@ -21,8 +21,8 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: state.user }),
 }));
 
-vi.mock('@/zero/amendments/useAmendmentState', () => ({
-  useAmendmentState: () => ({
+vi.mock('@/zero/amendments/useAmendmentActionState', () => ({
+  useAmendmentSubscriptionState: () => ({
     subscriberCount: state.subscriberCount,
     subscribers: state.subscribers,
     isLoading: state.isLoading,
@@ -48,6 +48,19 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 import { useSubscribeAmendment } from '../useSubscribeAmendment';
 
 describe('useSubscribeAmendment A04 branches', () => {
+  it('recognizes nested subscribers in a projection with an absent aggregate count', async () => {
+    state.subscriberCount = undefined;
+    const projected = {
+      subscriptions: [{ id: 'nested', subscriber_id: null, subscriber_user: { id: 'user' } }],
+      subscriberCount: undefined,
+      isLoading: false,
+    } as any;
+    const { result } = renderHook(() => useSubscribeAmendment('amendment', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    expect(result.current.subscriberCount).toBe(1);
+    await act(() => result.current.subscribe());
+    expect(mocks.subscribe).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     state.user = { id: 'user' };
     state.subscriberCount = 0;

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import postgres from 'postgres';
+import { isLocalTestDatabase } from '@/test/local-database';
 const auth = vi.hoisted(() => ({ actor: '' }));
 vi.mock('@/lib/supabase/server', () => ({
   getSession: async () => (auth.actor ? { user: { id: auth.actor } } : null),
@@ -11,11 +12,7 @@ import { studioSql } from '../studio/db';
 
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
-if (
-  !['localhost', '127.0.0.1'].includes(new URL(database).hostname) ||
-  new URL(database).port !== '54322'
-)
-  throw new Error('Diagnostics tests require local database');
+if (!isLocalTestDatabase(database)) throw new Error('Diagnostics tests require local database');
 process.env.STUDIO_DATABASE_URL = database;
 const sql = postgres(database, { max: 3 });
 const actor = crypto.randomUUID(),

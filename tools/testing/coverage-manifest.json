@@ -40,6 +40,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".gitattributes",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "asset",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
       "domain": "platform",
       "owner": "polity/platform",
@@ -161,6 +171,16 @@
     },
     {
       "path": ".github/agents/test-planner.agent.md",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": ".github/ci-tests.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
@@ -1343,6 +1363,16 @@
     },
     {
       "path": "e2e/role-assignment.e2e.spec.ts",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "e2e/search-card-lifecycle.e2e.spec.ts",
       "domain": "e2e",
       "owner": "polity/e2e",
       "kind": "test-infrastructure",
@@ -2643,6 +2673,11 @@
             "coveredStatements": 10,
             "totalStatements": 10
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
         }
       ],
       "suggestedTestRefs": [
@@ -2679,6 +2714,11 @@
             "coveredStatements": 118,
             "totalStatements": 118
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/useAgendaNavigation.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the fallback query disabled when an authorized projection has no event"
         }
       ],
       "suggestedTestRefs": [
@@ -2787,6 +2827,11 @@
             "coveredStatements": 81,
             "totalStatements": 81
           }
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/useEventAgendaItem.component.test.tsx",
+          "project": "component",
+          "caseId": "uses stable protected timing demand and clears the estimate after revocation"
         }
       ],
       "suggestedTestRefs": [
@@ -4564,6 +4609,16 @@
             "coveredStatements": 12,
             "totalStatements": 12
           }
+        },
+        {
+          "file": "src/features/agendas/ui/__tests__/AgendaUiSystem.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves page and dialog-body content with caller layout classes"
+        },
+        {
+          "file": "src/features/agendas/ui/__tests__/AgendaUiSystem.component.test.tsx",
+          "project": "component",
+          "caseId": "switches between details and speaker list without rendering both as active"
         }
       ],
       "suggestedTestRefs": [
@@ -10183,6 +10238,11 @@
             "coveredStatements": 82,
             "totalStatements": 82
           }
+        },
+        {
+          "file": "src/features/amendments/hooks/__tests__/useSubscribeAmendment.a04.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes nested subscribers in a projection with an absent aggregate count"
         }
       ],
       "suggestedTestRefs": [
@@ -16851,6 +16911,11 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes missing projection data and preserves the persisted count fallback"
+        },
+        {
           "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
           "project": "component",
           "caseId": "optimistically subscribes, reconciles persisted rows, and unsubscribes exact duplicates"
@@ -16859,6 +16924,16 @@
           "file": "src/features/blogs/hooks/__tests__/blog-hooks.contract.component.test.tsx",
           "project": "component",
           "caseId": "rolls back failed subscription mutations and guards missing users, targets, and duplicate rows"
+        },
+        {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "uses projected subscriber rows when both aggregate counts are absent"
+        },
+        {
+          "file": "src/features/blogs/hooks/__tests__/blog-rest-hooks.branch-a10.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes projected nested subscriber identities and prevents duplicate writes"
         }
       ],
       "suggestedTestRefs": [
@@ -19544,7 +19619,8 @@
         "src/features/charts/__tests__/dataset-workflow.component-flow.test.tsx",
         "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
         "src/features/network/types/__tests__/network.types.unit.test.ts",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts"
+        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
+        "tools/e2e/zero-performance/mutation-case-types.ts"
       ]
     },
     {
@@ -35152,7 +35228,8 @@
         "src/features/decision-terminal/ui/__tests__/MobileDecisionCard.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
         "src/features/network/types/__tests__/network.types.unit.test.ts",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts"
+        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
+        "tools/e2e/zero-performance/mutation-case-types.ts"
       ]
     },
     {
@@ -39482,6 +39559,11 @@
             "coveredStatements": 41,
             "totalStatements": 41
           }
+        },
+        {
+          "file": "src/features/events/hooks/__tests__/useCancelEvent.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "disables cancellation detail demand when the action is hidden"
         }
       ],
       "suggestedTestRefs": [
@@ -39914,6 +39996,11 @@
             "coveredStatements": 82,
             "totalStatements": 82
           }
+        },
+        {
+          "file": "src/features/events/hooks/__tests__/useSubscribeEvent.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes nested projected subscribers when an aggregate is missing"
         }
       ],
       "suggestedTestRefs": [
@@ -43860,6 +43947,11 @@
             "coveredStatements": 86,
             "totalStatements": 86
           }
+        },
+        {
+          "file": "src/features/groups/hooks/__tests__/useSubscribeGroup.component.test.tsx",
+          "project": "component",
+          "caseId": "uses projected subscriber rows when both aggregate counts are absent"
         }
       ],
       "suggestedTestRefs": [
@@ -49448,6 +49540,11 @@
             "coveredStatements": 24,
             "totalStatements": 24
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "persists assistant deep-link selection for the current viewer"
         }
       ],
       "suggestedTestRefs": [
@@ -49603,6 +49700,16 @@
             "coveredStatements": 183,
             "totalStatements": 183
           }
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "preserves history when clearing a signed-out compose intent without a selection"
+        },
+        {
+          "file": "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
+          "project": "component",
+          "caseId": "persists the current selection when clearing a compose intent without an explicit target"
         }
       ],
       "suggestedTestRefs": [
@@ -53500,6 +53607,25 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/navigation/state/navigation-layout-context.ts",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "shares actual secondary navigation visibility with toolbars without another navigation query"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/state/__tests__/use-unread-counts.component.test.tsx",
+        "src/features/navigation/state/__tests__/useNavigation.component.test.tsx"
+      ]
     },
     {
       "path": "src/features/navigation/state/navigation.store.tsx",
@@ -59317,6 +59443,11 @@
             "coveredStatements": 79,
             "totalStatements": 79
           }
+        },
+        {
+          "file": "src/features/payments/hooks/__tests__/useSubscribeUser.branch-a08.component.test.tsx",
+          "project": "component",
+          "caseId": "recognizes a projected subscriber through its related user identity"
         }
       ],
       "suggestedTestRefs": [
@@ -63641,7 +63772,8 @@
         "src/features/search/__tests__/SearchCardStateProvider.branch-a06.component.test.tsx",
         "src/features/search/__tests__/SearchCardStateProvider.component.test.tsx",
         "src/features/search/__tests__/SearchPage-rest.branch-a06.component.test.tsx",
-        "src/features/search/__tests__/global-search.component-flow.test.tsx"
+        "src/features/search/__tests__/global-search.component-flow.test.tsx",
+        "src/features/search/__tests__/projectedSearchActions.component.test.tsx"
       ]
     },
     {
@@ -63670,6 +63802,7 @@
         "src/features/search/__tests__/SearchCardStateProvider.component.test.tsx",
         "src/features/search/__tests__/SearchPage-rest.branch-a06.component.test.tsx",
         "src/features/search/__tests__/global-search.component-flow.test.tsx",
+        "src/features/search/__tests__/projectedSearchActions.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
       ]
@@ -63706,6 +63839,16 @@
     },
     {
       "path": "src/features/search/__tests__/global-search.component-flow.test.tsx",
+      "domain": "features:search",
+      "owner": "polity/features:search",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/search/__tests__/projectedSearchActions.component.test.tsx",
       "domain": "features:search",
       "owner": "polity/features:search",
       "kind": "test-infrastructure",
@@ -63756,36 +63899,6 @@
     },
     {
       "path": "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-      "domain": "features:search",
-      "owner": "polity/features:search",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-      "domain": "features:search",
-      "owner": "polity/features:search",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-      "domain": "features:search",
-      "owner": "polity/features:search",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
       "domain": "features:search",
       "owner": "polity/features:search",
       "kind": "test-infrastructure",
@@ -63881,13 +63994,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -63917,49 +64029,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
-      ]
-    },
-    {
-      "path": "src/features/search/hooks/useProgressiveSearchCards.ts",
-      "domain": "features:search",
-      "owner": "polity/features:search",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-          "project": "component",
-          "caseId": "does not schedule batches for an empty document list",
-          "evidence": {
-            "kind": "instrumented-full-suite",
-            "relation": "direct",
-            "report": "coverage/coverage-final.json",
-            "coveredStatements": 55,
-            "totalStatements": 60
-          }
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/search/hooks/__tests__/searchVirtualizerControllers.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/searchVirtualizerControllers.component.test.tsx",
-        "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
-        "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -63989,13 +64064,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64025,13 +64099,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64061,13 +64134,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64097,13 +64169,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64133,13 +64204,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64169,13 +64239,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64205,13 +64274,12 @@
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useAmendmentSearchCardController.component.test.tsx",
         "src/features/search/hooks/__tests__/useGroupSearchCardController.unit.test.ts",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchData.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
     },
     {
@@ -64598,10 +64666,10 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx"
       ]
     },
     {
@@ -64632,12 +64700,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64668,12 +64736,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64697,12 +64765,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64733,12 +64801,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64770,11 +64838,11 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx"
       ]
     },
     {
@@ -64805,12 +64873,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64834,12 +64902,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64870,12 +64938,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64906,12 +64974,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -64942,7 +65010,7 @@
         {
           "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
           "project": "component",
-          "caseId": "renders an immediately navigable, fixed-cell preview without loading the dynamic card"
+          "caseId": "renders the final card immediately from indexed content"
         },
         {
           "file": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
@@ -64987,12 +65055,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65023,12 +65091,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65059,12 +65127,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65095,12 +65163,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65131,12 +65199,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65167,12 +65235,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65203,12 +65271,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65239,12 +65307,12 @@
         "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
         "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
-        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
-        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx"
       ]
     },
     {
@@ -65299,6 +65367,16 @@
     },
     {
       "path": "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+      "domain": "features:search",
+      "owner": "polity/features:search",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/search/ui/__tests__/SearchResultCardState.component.test.tsx",
       "domain": "features:search",
       "owner": "polity/features:search",
       "kind": "test-infrastructure",
@@ -87118,16 +87196,16 @@
       "suggestedTestRefs": [
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCards.component.test.tsx",
-        "src/features/search/hooks/__tests__/useProgressiveSearchCardsTransition.branch-a06.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/LoadingProgressBar.typefix.branch-a02.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx",
+        "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
+        "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
+        "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx"
       ]
     },
     {
@@ -88655,6 +88733,11 @@
             "coveredStatements": 35,
             "totalStatements": 35
           }
+        },
+        {
+          "file": "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "renders nothing without any content"
         }
       ],
       "suggestedTestRefs": [
@@ -99707,6 +99790,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/e2e/zero-performance/project-chat-security.ts",
         "tools/testing/accountability/project-chat.json"
       ]
     },
@@ -101608,6 +101692,7 @@
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.browser-component.test.tsx",
         "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/e2e/zero-performance/project-chat-security.ts",
         "tools/testing/accountability/project-chat.json"
       ]
     },
@@ -102901,6 +102986,11 @@
           "file": "src/layout/__tests__/app-shell.component.test.tsx",
           "project": "component",
           "caseId": "contains mobile navigation margins on the City Design canvas route"
+        },
+        {
+          "file": "src/layout/__tests__/app-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the public frame available when authenticated frame prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -102925,6 +103015,11 @@
           "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
           "project": "component",
           "caseId": "contains mobile navigation margins on the City Design canvas route"
+        },
+        {
+          "file": "src/layout/__tests__/authenticated-shell.component.test.tsx",
+          "project": "component",
+          "caseId": "registers search demand on the search route"
         }
       ],
       "suggestedTestRefs": ["src/layout/__tests__/authenticated-shell.component.test.tsx"]
@@ -103898,6 +103993,41 @@
             "coveredStatements": 1,
             "totalStatements": 95
           }
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a fresh stored session through a temporary validation failure"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "clears a revoked fresh token without attempting token rotation"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "opens the signed-out loading gate when stored-session initialization rejects"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores session storage completion after unmount"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a newer account when a nearly expired startup session refresh resolves"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "ignores a stored session that arrives after a newer sign-in"
+        },
+        {
+          "file": "src/providers/__tests__/auth-provider.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the server-side provider without opening browser session I/O"
         }
       ],
       "suggestedTestRefs": ["src/providers/__tests__/auth-provider.component.test.tsx"]
@@ -104000,6 +104130,11 @@
             "coveredStatements": 1,
             "totalStatements": 1
           }
+        },
+        {
+          "file": "src/__tests__/router.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates the router when optional frame code prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -107894,6 +108029,16 @@
           "evidence": {
             "relation": "direct"
           }
+        },
+        {
+          "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports query identities and structural counts without logging predicate values"
+        },
+        {
+          "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves a query error response while diagnostics are enabled"
         }
       ],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
@@ -108834,6 +108979,11 @@
             "coveredStatements": 9,
             "totalStatements": 9
           }
+        },
+        {
+          "file": "src/runtime/__tests__/app-runtime.component.test.tsx",
+          "project": "component",
+          "caseId": "retains the authentication loading shell if optional runtime prefetch fails"
         }
       ],
       "suggestedTestRefs": [
@@ -109297,6 +109447,36 @@
     },
     {
       "path": "src/server/__tests__/zero-mutate.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/__tests__/zero-mutation-delivery.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/__tests__/zero-mutation-diagnostics.unit.test.ts",
+      "domain": "server:__tests__",
+      "owner": "polity/server:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
       "domain": "server:__tests__",
       "owner": "polity/server:__tests__",
       "kind": "test-infrastructure",
@@ -111168,7 +111348,8 @@
         "src/server/eurostat/__tests__/eurostat.unit.test.ts",
         "src/server/eurostat/__tests__/importer.contract.unit.test.ts",
         "src/server/eurostat/__tests__/metadata.contract.unit.test.ts",
-        "src/server/eurostat/__tests__/projection.contract.unit.test.ts"
+        "src/server/eurostat/__tests__/projection.contract.unit.test.ts",
+        "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts"
       ]
     },
     {
@@ -115497,6 +115678,54 @@
       ]
     },
     {
+      "path": "src/server/zero-mutation-delivery.ts",
+      "domain": "server:zero-mutation-delivery.ts",
+      "owner": "polity/server:zero-mutation-delivery.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-mutation-delivery.unit.test.ts",
+          "project": "unit",
+          "caseId": "sends only the provider identity to the owned local endpoint"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-mutation-delivery.unit.test.ts"]
+    },
+    {
+      "path": "src/server/zero-mutation-diagnostics.ts",
+      "domain": "server:zero-mutation-diagnostics.ts",
+      "owner": "polity/server:zero-mutation-diagnostics.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-mutation-diagnostics.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not confirm a request before slow after-commit work finishes"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-mutation-diagnostics.unit.test.ts"]
+    },
+    {
+      "path": "src/server/zero-query-diagnostics.ts",
+      "domain": "server:zero-query-diagnostics.ts",
+      "owner": "polity/server:zero-query-diagnostics.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/__tests__/zero-query-diagnostics.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps interleaved request phases correlated and is inert outside the benchmark"
+        }
+      ],
+      "suggestedTestRefs": ["src/server/__tests__/zero-query-diagnostics.unit.test.ts"]
+    },
+    {
       "path": "src/styles.css",
       "domain": "src:styles.css",
       "owner": "polity/src:styles.css",
@@ -115547,6 +115776,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/test/__tests__/local-database.unit.test.ts",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/test/__tests__/uiActionScope.unit.test.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
@@ -115578,6 +115817,16 @@
     },
     {
       "path": "src/test/empty-style.ts",
+      "domain": "src:test",
+      "owner": "polity/src:test",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/test/local-database.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
       "kind": "test-infrastructure",
@@ -115687,6 +115936,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/__tests__/connection-recovery.unit.test.ts",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
@@ -115737,6 +115996,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/__tests__/observed-query.component.test.tsx",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/__tests__/offlineRosterHelpers.contract.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
@@ -115758,6 +116027,16 @@
     },
     {
       "path": "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
+      "domain": "zero:__tests__",
+      "owner": "polity/zero:__tests__",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/__tests__/query-definitions.unit.test.ts",
       "domain": "zero:__tests__",
       "owner": "polity/zero:__tests__",
       "kind": "test-infrastructure",
@@ -115941,7 +116220,7 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts"
       ]
     },
     {
@@ -116214,8 +116493,8 @@
         "src/zero/activity/__tests__/shared.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/communication-studio/__tests__/queries.unit.test.ts"
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
       ]
     },
     {
@@ -116361,6 +116640,38 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/agendas/agenda-times.ts",
+      "domain": "zero:agendas",
+      "owner": "polity/zero:agendas",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates ordered event times and respects actual completion boundaries"
+        },
+        {
+          "file": "src/features/agendas/hooks/__tests__/agendaSmallControllers.branch.component.test.tsx",
+          "project": "component",
+          "caseId": "calculates live agenda times from the authorized detail snapshot and retains ballot data"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
+        "src/zero/agendas/__tests__/changeRequestVoteOrdering.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/useAgendaActions.lsf-a03.component.test.tsx",
+        "src/zero/agendas/__tests__/useAgendaState.component.test.tsx",
+        "src/zero/agendas/__tests__/voteStepKind.unit.test.ts"
+      ]
     },
     {
       "path": "src/zero/agendas/change-request-vote-ordering.ts",
@@ -116769,11 +117080,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -117214,6 +117525,16 @@
     },
     {
       "path": "src/zero/amendments/__tests__/shared-mutator-adapters.lsf-a04.unit.test.ts",
+      "domain": "zero:amendments",
+      "owner": "polity/zero:amendments",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
       "domain": "zero:amendments",
       "owner": "polity/zero:amendments",
       "kind": "test-infrastructure",
@@ -117892,6 +118213,45 @@
       ]
     },
     {
+      "path": "src/zero/amendments/useAmendmentActionState.ts",
+      "domain": "zero:amendments",
+      "owner": "polity/zero:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "uses protected subscribers and preserves count fallback while their result is pending"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "removes status and counts when the protected queries revoke their results"
+        },
+        {
+          "file": "src/zero/amendments/__tests__/useAmendmentActionState.component.test.tsx",
+          "project": "component",
+          "caseId": "falls back to the aggregate then zero when a complete subscriber result is absent"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
+        "src/zero/amendments/__tests__/changeRequestVoting.unit.test.ts",
+        "src/zero/amendments/__tests__/content-revisions.database-integration.test.ts",
+        "src/zero/amendments/__tests__/editingModePolicy.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/zero/amendments/useAmendmentActions.ts",
       "domain": "zero:amendments",
       "owner": "polity/zero:amendments",
@@ -118010,6 +118370,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+      "domain": "zero:appearance-themes",
+      "owner": "polity/zero:appearance-themes",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
       "domain": "zero:appearance-themes",
       "owner": "polity/zero:appearance-themes",
@@ -118091,6 +118461,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "tools/testing/performance/city-design/index.html"
@@ -118115,6 +118486,11 @@
             "coveredStatements": 2,
             "totalStatements": 18
           }
+        },
+        {
+          "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
+          "project": "unit",
+          "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
         }
       ],
       "suggestedTestRefs": [
@@ -118125,11 +118501,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/communication-studio/__tests__/queries.unit.test.ts"
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts"
       ]
     },
     {
@@ -118158,14 +118534,14 @@
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.streamUrl.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
-        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
-        "src/zero/users/__tests__/contact-email-schema.unit.test.ts"
+        "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts"
       ]
     },
     {
@@ -118234,9 +118610,9 @@
         "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
+        "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
-        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
-        "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts"
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts"
       ]
     },
     {
@@ -118300,6 +118676,16 @@
     },
     {
       "path": "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+      "domain": "zero:blogs",
+      "owner": "polity/zero:blogs",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
       "domain": "zero:blogs",
       "owner": "polity/zero:blogs",
       "kind": "test-infrastructure",
@@ -118374,6 +118760,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
@@ -118410,11 +118797,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
-        "src/zero/blogs/__tests__/useBlogState.component.test.tsx",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
+        "src/zero/blogs/__tests__/useBlogState.component.test.tsx"
       ]
     },
     {
@@ -118443,14 +118830,14 @@
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
         "src/zero/blogs/__tests__/useBlogState.component.test.tsx",
         "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
         "src/zero/events/__tests__/eventSchema.streamUrl.unit.test.ts",
-        "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
-        "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts"
+        "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts"
       ]
     },
     {
@@ -118482,11 +118869,11 @@
         "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
-        "src/zero/blogs/__tests__/useBlogState.component.test.tsx",
-        "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts"
+        "src/zero/blogs/__tests__/useBlogState.component.test.tsx"
       ]
     },
     {
@@ -118522,7 +118909,7 @@
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts"
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts"
       ]
     },
     {
@@ -118584,6 +118971,7 @@
       ],
       "suggestedTestRefs": [
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
@@ -118613,6 +119001,7 @@
       ],
       "suggestedTestRefs": [
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
@@ -118687,11 +119076,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
-        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
+        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts"
       ]
     },
     {
@@ -119372,7 +119761,37 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
+      "domain": "zero:common",
+      "owner": "polity/zero:common",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+      "domain": "zero:common",
+      "owner": "polity/zero:common",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/common/__tests__/query-result-harness.ts",
+      "domain": "zero:common",
+      "owner": "polity/zero:common",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/common/__tests__/query-result-harness.unit.test.ts",
       "domain": "zero:common",
       "owner": "polity/zero:common",
       "kind": "test-infrastructure",
@@ -119448,11 +119867,13 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
-        "src/zero/common/__tests__/useCommonState.component.test.tsx",
-        "src/zero/common/__tests__/zeroActionHooks.component.test.tsx"
+        "src/zero/common/__tests__/useCommonState.component.test.tsx"
       ]
     },
     {
@@ -119484,9 +119905,9 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
-        "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
-        "src/zero/common/__tests__/serverHashtags.update.unit.test.ts"
+        "src/zero/common/__tests__/query-result-harness.ts"
       ]
     },
     {
@@ -119518,11 +119939,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
-        "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
-        "src/zero/common/__tests__/hashtagHelpers.unit.test.ts"
+        "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts"
       ]
     },
     {
@@ -119554,11 +119975,11 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
-        "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
-        "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
-        "src/zero/common/__tests__/useCommonState.component.test.tsx",
-        "src/zero/common/__tests__/zeroActionHooks.component.test.tsx"
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
+        "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts"
       ]
     },
     {
@@ -119587,7 +120008,10 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
         "src/zero/common/__tests__/useCommonState.component.test.tsx",
@@ -119627,7 +120051,7 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
-        "src/zero/common/__tests__/hashtagHelpers.unit.test.ts"
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts"
       ]
     },
     {
@@ -119728,7 +120152,10 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
         "src/zero/common/__tests__/useCommonState.component.test.tsx",
@@ -119761,7 +120188,10 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
         "src/zero/common/__tests__/useCommonState.component.test.tsx",
@@ -119794,7 +120224,10 @@
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
+        "src/zero/common/__tests__/correlated-query-results.unit.test.ts",
         "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
+        "src/zero/common/__tests__/query-result-harness.ts",
+        "src/zero/common/__tests__/query-result-harness.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts",
         "src/zero/common/__tests__/serverHashtags.update.unit.test.ts",
         "src/zero/common/__tests__/useCommonState.component.test.tsx",
@@ -119974,6 +120407,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/__tests__/observed-query.component.test.tsx",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/observe.unit.test.ts",
         "src/zero/communication-studio/__tests__/projections.unit.test.ts",
@@ -120078,11 +120512,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/client.component.test.tsx",
         "src/zero/communication-studio/__tests__/observe.unit.test.ts",
-        "src/zero/communication-studio/__tests__/projections.unit.test.ts",
-        "src/zero/communication-studio/__tests__/queries.unit.test.ts"
+        "src/zero/communication-studio/__tests__/projections.unit.test.ts"
       ]
     },
     {
@@ -120463,6 +120897,30 @@
       ]
     },
     {
+      "path": "src/zero/connection-recovery.ts",
+      "domain": "zero:connection-recovery.ts",
+      "owner": "polity/zero:connection-recovery.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+          "project": "unit",
+          "caseId": "resumes the exact reload race with the existing token and bounds repeated failures"
+        },
+        {
+          "file": "src/zero/__tests__/connection-recovery.unit.test.ts",
+          "project": "unit",
+          "caseId": "contains a failed reconnect and releases a disposed subscription"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/zero/__tests__/connection-recovery.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/zero/context.ts",
       "domain": "zero:context.ts",
       "owner": "polity/zero:context.ts",
@@ -120501,11 +120959,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -120563,6 +121021,11 @@
             "coveredStatements": 2,
             "totalStatements": 2
           }
+        },
+        {
+          "file": "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
+          "project": "unit",
+          "caseId": "forwards mutation identity while preserving authority, commit and delivery ordering"
         }
       ],
       "suggestedTestRefs": ["src/zero/__tests__/db-provider.collaboration.unit.test.ts"]
@@ -120898,11 +121361,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/documents/__tests__/documentServerMutators.statementComments.unit.test.ts",
-        "src/zero/documents/__tests__/documentSharedMutators.branch-a03.unit.test.ts"
+        "src/zero/documents/__tests__/documentServerMutators.statementComments.unit.test.ts"
       ]
     },
     {
@@ -121304,11 +121767,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
-        "src/zero/elections/__tests__/electionServerMutators.internalBranches.unit.test.ts"
+        "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts"
       ]
     },
     {
@@ -121856,6 +122319,11 @@
             "coveredStatements": 363,
             "totalStatements": 363
           }
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
         }
       ],
       "suggestedTestRefs": [
@@ -121866,11 +122334,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/assembly-reconcile.typefix.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/assemblyReconcile.coverage.unit.test.ts"
+        "src/zero/events/__tests__/assembly-reconcile.typefix.branch-a03.unit.test.ts"
       ]
     },
     {
@@ -122072,6 +122540,31 @@
             "coveredStatements": 192,
             "totalStatements": 192
           }
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "sorts projected choices without mutating votes and keeps unrelated agenda items out"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes an agenda shell whose optional roles are absent"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "disables optional collection queries when their sections are hidden"
+        },
+        {
+          "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
+          "project": "component",
+          "caseId": "normalizes absent query data and disables every optional query"
         }
       ],
       "suggestedTestRefs": [
@@ -122552,11 +123045,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -122854,6 +123347,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/messages/__tests__/query-args.component.test.tsx",
+      "domain": "zero:messages",
+      "owner": "polity/zero:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
       "domain": "zero:messages",
       "owner": "polity/zero:messages",
@@ -122923,8 +123426,8 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts"
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
+        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts"
       ]
     },
     {
@@ -122956,11 +123459,38 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/messages/query-args.ts",
+      "domain": "zero:messages",
+      "owner": "polity/zero:messages",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/messages/__tests__/query-args.component.test.tsx",
+          "project": "component",
+          "caseId": "uses identical query requests for the initial visible page and its background preload"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/messages/__tests__/messageQueries.aiFilter.unit.test.ts",
+        "src/zero/messages/__tests__/messageServerMutators.notifications.unit.test.ts",
+        "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
+        "src/zero/messages/__tests__/project-access.database-integration.test.ts",
+        "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
+        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
+        "src/zero/messages/__tests__/useMessageState.component.test.tsx"
       ]
     },
     {
@@ -122996,7 +123526,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
-        "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts"
+        "src/zero/messages/__tests__/query-args.component.test.tsx"
       ]
     },
     {
@@ -123169,6 +123699,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
@@ -123202,6 +123733,7 @@
         "src/zero/messages/__tests__/messageSharedMutators.authorization.unit.test.ts",
         "src/zero/messages/__tests__/project-access.database-integration.test.ts",
         "src/zero/messages/__tests__/queries.branch-a05.unit.test.ts",
+        "src/zero/messages/__tests__/query-args.component.test.tsx",
         "src/zero/messages/__tests__/server-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/shared-mutators.branch-a05.unit.test.ts",
         "src/zero/messages/__tests__/useMessageActions.lsf-a05.component.test.tsx",
@@ -123311,6 +123843,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+      "domain": "zero:network",
+      "owner": "polity/zero:network",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
       "domain": "zero:network",
       "owner": "polity/zero:network",
@@ -123322,6 +123864,16 @@
     },
     {
       "path": "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+      "domain": "zero:network",
+      "owner": "polity/zero:network",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
       "domain": "zero:network",
       "owner": "polity/zero:network",
       "kind": "test-infrastructure",
@@ -123436,14 +123988,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123473,13 +124025,13 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts"
       ]
     },
     {
@@ -123508,14 +124060,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123547,9 +124099,9 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
-        "src/zero/network/__tests__/networkQueries.branches.unit.test.ts"
+        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts"
       ]
     },
     {
@@ -123578,14 +124130,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123614,14 +124166,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123643,6 +124195,11 @@
             "coveredStatements": 136,
             "totalStatements": 136
           }
+        },
+        {
+          "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires validated group foreign keys for every equivalent PK lookup"
         }
       ],
       "suggestedTestRefs": [
@@ -123653,11 +124210,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -123696,14 +124253,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123738,8 +124295,8 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
-        "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts"
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+        "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts"
       ]
     },
     {
@@ -123876,14 +124433,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123912,14 +124469,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123948,14 +124505,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -123984,14 +124541,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124020,14 +124577,14 @@
         "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts",
         "src/zero/network/__tests__/membershipRules.unit.test.ts",
         "src/zero/network/__tests__/networkDerived.unit.test.ts",
+        "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.branches.unit.test.ts",
         "src/zero/network/__tests__/networkMutatorHelpers.changeRequests.unit.test.ts",
+        "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
         "src/zero/network/__tests__/networkQueries.branches.unit.test.ts",
         "src/zero/network/__tests__/networkServerMutators.authorization.unit.test.ts",
         "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
-        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.typefix.branch-a03.unit.test.ts",
-        "src/zero/network/__tests__/rightTraversal.unit.test.ts"
+        "src/zero/network/__tests__/networkSharedMutators.branches.unit.test.ts"
       ]
     },
     {
@@ -124285,11 +124842,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -124617,6 +125174,27 @@
       ]
     },
     {
+      "path": "src/zero/observed-query.ts",
+      "domain": "zero:observed-query.ts",
+      "owner": "polity/zero:observed-query.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/observed-query.component.test.tsx",
+          "project": "component",
+          "caseId": "forwards the public hook arguments and reports real partial/complete results without changing them"
+        },
+        {
+          "file": "src/zero/__tests__/observed-query.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps the mounted hook valid after its benchmark sink is removed"
+        }
+      ],
+      "suggestedTestRefs": ["src/zero/__tests__/observed-query.component.test.tsx"]
+    },
+    {
       "path": "src/zero/offline-roster-helpers.ts",
       "domain": "zero:offline-roster-helpers.ts",
       "owner": "polity/zero:offline-roster-helpers.ts",
@@ -124754,11 +125332,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -125031,11 +125609,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -125293,11 +125871,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -125611,6 +126189,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
       "domain": "zero:preloads",
       "owner": "polity/zero:preloads",
@@ -125642,6 +126230,16 @@
     },
     {
       "path": "src/zero/preloads/__tests__/search-context.contract.unit.test.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/preloads/__tests__/startup.unit.test.ts",
       "domain": "zero:preloads",
       "owner": "polity/zero:preloads",
       "kind": "test-infrastructure",
@@ -125691,9 +126289,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125833,9 +126431,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125857,6 +126455,16 @@
             "coveredStatements": 271,
             "totalStatements": 271
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports a synchronous route preload failure and releases its query after settlement"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not start later background entries after foreground demand preempts the task"
         }
       ],
       "suggestedTestRefs": [
@@ -125869,9 +126477,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125893,6 +126501,16 @@
             "coveredStatements": 53,
             "totalStatements": 53
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows a retry after the SDK rejects preload creation synchronously"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds abandoned work when completion never arrives and permits fresh demand"
         }
       ],
       "suggestedTestRefs": [
@@ -125905,9 +126523,43 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/preloads/query-lifecycle.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "observes completion and delayed release for abandoned in-flight work without inventing materialization"
+        },
+        {
+          "file": "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports missing client identity as an empty string"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preloads/__tests__/entity-families.component.test.tsx",
+        "src/zero/preloads/__tests__/event-agenda.unit.test.ts",
+        "src/zero/preloads/__tests__/global-routes.contract.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent-component.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-coordinator-component.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+        "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125941,9 +126593,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -125965,6 +126617,11 @@
             "coveredStatements": 96,
             "totalStatements": 96
           }
+        },
+        {
+          "file": "src/zero/preloads/__tests__/route-manifests.unit.test.ts",
+          "project": "unit",
+          "caseId": "preloads the agenda metadata and full agenda separately while retaining other full event consumers"
         }
       ],
       "suggestedTestRefs": [
@@ -125977,9 +126634,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126049,9 +126706,38 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/preloads/startup.ts",
+      "domain": "zero:preloads",
+      "owner": "polity/zero:preloads",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/preloads/__tests__/startup.unit.test.ts",
+          "project": "unit",
+          "caseId": "registers the exact initial search before child effects and keeps background routes out"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preloads/__tests__/entity-families.component.test.tsx",
+        "src/zero/preloads/__tests__/event-agenda.unit.test.ts",
+        "src/zero/preloads/__tests__/global-routes.contract.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent-component.component.test.tsx",
+        "src/zero/preloads/__tests__/link-intent.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-coordinator-component.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
+        "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
+        "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
+        "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126085,9 +126771,9 @@
         "src/zero/preloads/__tests__/preload-coordinator.unit.test.ts",
         "src/zero/preloads/__tests__/preload-registry-hooks.component.test.tsx",
         "src/zero/preloads/__tests__/preload-registry.unit.test.ts",
+        "src/zero/preloads/__tests__/query-lifecycle.unit.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
-        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx",
-        "src/zero/preloads/__tests__/route-manifests.unit.test.ts"
+        "src/zero/preloads/__tests__/route-link-intent-preloader.component.test.tsx"
       ]
     },
     {
@@ -126196,11 +126882,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -126484,12 +127170,33 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
+    },
+    {
+      "path": "src/zero/query-definitions.ts",
+      "domain": "zero:query-definitions.ts",
+      "owner": "polity/zero:query-definitions.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/__tests__/query-definitions.unit.test.ts",
+          "project": "unit",
+          "caseId": "reuses only equal validated arguments in the same context and leaves original definitions intact"
+        },
+        {
+          "file": "src/zero/__tests__/query-definitions.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds retained argument variants and rebuilds evicted entries"
+        }
+      ],
+      "suggestedTestRefs": ["src/zero/__tests__/query-definitions.unit.test.ts"]
     },
     {
       "path": "src/zero/rbac/README.md",
@@ -126583,6 +127290,16 @@
     },
     {
       "path": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+      "domain": "zero:rbac",
+      "owner": "polity/zero:rbac",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
       "domain": "zero:rbac",
       "owner": "polity/zero:rbac",
       "kind": "test-infrastructure",
@@ -126692,9 +127409,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -126729,8 +127446,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -126764,9 +127481,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -126837,8 +127554,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -126890,9 +127607,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -126927,8 +127644,8 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
-        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts"
       ]
     },
     {
@@ -126962,9 +127679,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127030,11 +127747,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127068,9 +127785,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127114,9 +127831,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127150,9 +127867,9 @@
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
         "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/eventManagerEndpointPlanning.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127376,6 +128093,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+      "domain": "zero:shared",
+      "owner": "polity/zero:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
       "domain": "zero:shared",
       "owner": "polity/zero:shared",
@@ -127432,6 +128159,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx",
@@ -127503,9 +128231,9 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
-        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
-        "src/zero/shared/__tests__/useSearchState.component.test.tsx"
+        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -127535,6 +128263,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -127569,11 +128298,36 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/shared/query-conditions.ts",
+      "domain": "zero:shared",
+      "owner": "polity/zero:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves set membership for one/multiple values, duplicates and unrelated values"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/shared/__tests__/ballotVisibility.unit.test.ts",
+        "src/zero/shared/__tests__/helpers.unit.test.ts",
+        "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
+        "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
+        "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
+        "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
+        "src/zero/shared/__tests__/useSearchState.component.test.tsx"
       ]
     },
     {
@@ -127602,6 +128356,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -127633,6 +128388,7 @@
         "src/zero/shared/__tests__/helpers.unit.test.ts",
         "src/zero/shared/__tests__/primaryMedia.unit.test.ts",
         "src/zero/shared/__tests__/queries.branches.unit.test.ts",
+        "src/zero/shared/__tests__/query-conditions.unit.test.ts",
         "src/zero/shared/__tests__/search-query-helpers.unit.test.ts",
         "src/zero/shared/__tests__/sharedQueries.authorization.unit.test.ts",
         "src/zero/shared/__tests__/useSearchState.component.test.tsx"
@@ -127786,11 +128542,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -128159,11 +128915,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -128484,11 +129240,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -128746,6 +129502,16 @@
       "suggestedTestRefs": ["e2e/virtualization-routes.e2e.spec.ts"]
     },
     {
+      "path": "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
+      "domain": "zero:votes",
+      "owner": "polity/zero:votes",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
       "domain": "zero:votes",
       "owner": "polity/zero:votes",
@@ -128870,13 +129636,13 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
         "src/zero/votes/__tests__/vote-workflow.unit.test.ts",
         "src/zero/votes/__tests__/voteQueryBranches.unit.test.ts",
-        "src/zero/votes/__tests__/voteServerMutators.internalBranches.unit.test.ts",
-        "src/zero/votes/__tests__/voteServerMutators.process-engine.unit.test.ts"
+        "src/zero/votes/__tests__/voteServerMutators.internalBranches.unit.test.ts"
       ]
     },
     {
@@ -128908,11 +129674,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -128946,9 +129712,9 @@
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
         "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
-        "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
-        "src/zero/votes/__tests__/useVoteState.component.test.tsx"
+        "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx"
       ]
     },
     {
@@ -129081,6 +129847,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
@@ -129115,6 +129882,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
@@ -129149,6 +129917,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/votes/__tests__/indicativeParticipation.authorization.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
         "src/zero/votes/__tests__/useVoteState.component.test.tsx",
@@ -129240,11 +130009,11 @@
         "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.results.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
       ]
     },
     {
@@ -131408,6 +132177,1157 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/README.md",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/atomic-report.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/batches.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/browser-navigation.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/distributed-merge.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/distributed-report.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/distributed-timing.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-browser-metrics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-browser.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-amendments.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-core.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-error-diagnostics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-measure.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-observation.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-runtime.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-scheduling-weights.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/sharding.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/stage-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/analyze.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/api-timing.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/atomic-report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/audit-ci.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/batches.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/browser-navigation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/cases.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/catalog-generation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/catalog.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/check.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/cleanup.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/collect.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/delivery-endpoint.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts only an inert provider marker and rejects secrets unknown routes and oversized payloads"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/discussion-security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed-io.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed-merge.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed-report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed-runner.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed-timing.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/distributed.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/execution.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+          "project": "unit",
+          "caseId": "matches collector and worker fingerprints and detects changed revision dependencies"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/fixture-check.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/fixtures.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds an unassigned parent FK to the actual constrained child identity"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/gate.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/inventory.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/isolation.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects mistyped selections and incomplete or duplicate options before starting a stack"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "locates the installed Corepack in Windows and Linux Node layouts"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/journey-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/journeys.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/linux-browser.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/linux-runtime.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/measure.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mechanics.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-browser-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-browser-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires all actions and a real denied server operation"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-browser.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-browser.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires a visible response and observes committed SQL independently of UI completion"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-case-types.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads the exact public mutation registry and fails closed on missing duplicate or unknown cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-amendments.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-amendments.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers the exact runtime registry; public orchestrators have substantive success cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-canvas.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every actual canvas discriminator with success, authentication, access and generation branches"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-content.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-content.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every owned domain mutation, including nested canvas command, with success and anonymous rejection"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-core.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-core.unit.test.ts",
+          "project": "unit",
+          "caseId": "authorized skill creation accepts the real empty-list baseline and only its own created row"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-governance-revocation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers grouped event creation ownership, delegation, denial and authority revoked after preload"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-governance.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-cases-governance.unit.test.ts",
+          "project": "unit",
+          "caseId": "covers every registered governance entry point with authorized behavior or an explicit immutable/server-only rejection"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-catalog.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "loads the exact public mutation registry and fails closed on missing duplicate or unknown cases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-error-diagnostics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-fixtures.unit.test.ts",
+          "project": "unit",
+          "caseId": "seals prepared rollback state but proves fixture-owned scoped rows absent after restoration"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-governance-fixtures.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-catalog.unit.test.ts",
+          "project": "unit",
+          "caseId": "builds SQL-only owned group and event rights scoped to fresh fixture identities"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-measure.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-measure.unit.test.ts",
+          "project": "unit",
+          "caseId": "stops after an unsettled server deadline and never guesses a client rejection or proves restoration"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-metrics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires both relative and absolute user-time increases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-observation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-metrics.unit.test.ts",
+          "project": "unit",
+          "caseId": "attributes another named mutation in the same client batch only to its own phases"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-request-completion.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-request-completion.unit.test.ts",
+          "project": "unit",
+          "caseId": "waits for a late partial response and returns only observed client time"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-runtime.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-runtime.unit.test.ts",
+          "project": "unit",
+          "caseId": "bootstraps only absent revision catalogs and propagates genuine filesystem failures"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-scheduling-weights.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-scheduling-weights.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves query/security weights and uses full elapsed duration instead of fast user latency"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-snapshot.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires a replicated response for the writing client, not an HTTP ACK"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-timestamp.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves the documented one-ULP binary versus text decoder difference for modern dates"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-update-weights.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-endpoint-boundary.unit.test.ts",
+          "project": "unit",
+          "caseId": "writes only an explicit scheduling review output and retains source weight files"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/oracle.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/plan-artifacts.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/project-chat-security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/report.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/required.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/results.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/run.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/security.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/shard-weights.json",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/sharding.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+          "project": "unit",
+          "caseId": "weights each revision actually measured, including a mutation-only bootstrap"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/stage-artifacts.mjs",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/email/__tests__/deploy-auth-templates.unit.test.ts",
       "domain": "tools:email",
       "owner": "polity/tools:email",
@@ -131587,6 +133507,7 @@
       "suggestedTestRefs": [
         "src/features/shared/ui/ui/__tests__/tooltip-audit.static-contract.test.ts",
         "src/zero/preloads/__tests__/route-audit.static-contract.test.ts",
+        "tools/e2e/zero-performance/audit-ci.ts",
         "tools/i18n/__tests__/audit-allowlist.unit.test.ts",
         "tools/i18n/__tests__/audit.unit.test.ts",
         "tools/testing/__tests__/check-security-audit.unit.test.ts",
@@ -132429,6 +134350,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/__tests__/ci-test-selection.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/compare-coverage-reports.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -132959,6 +134890,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/accountability/zero-performance.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/zero-static-coverage.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/action-catalog.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -133176,6 +135127,16 @@
     },
     {
       "path": "tools/testing/check-ui-action-accountability.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/ci-test-selection.mjs",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",
@@ -133849,6 +135810,56 @@
     },
     {
       "path": "vitest.studio-coverage.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "work/browser-slow-query-selection.json",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "work/event-election-selection.json",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "work/oracle-cursors.sql",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "asset",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "work/registry-slow-selection.json",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "work/scoped-query-selection.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",

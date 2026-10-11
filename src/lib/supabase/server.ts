@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getRequiredEnvVar } from '@/lib/env';
+import { getValidatedRequestUser } from '@/server/zero-auth';
 
 /**
  * Create a Supabase server client for use in TanStack Start server functions.
@@ -16,19 +17,6 @@ export function createClient() {
  * Get session from request headers (for TanStack Start server functions).
  */
 export async function getSession(request: Request) {
-  const supabase = createSupabaseClient(
-    getRequiredEnvVar(process.env.SUPABASE_URL, 'SUPABASE_URL'),
-    getRequiredEnvVar(process.env.SUPABASE_ANON_KEY, 'SUPABASE_ANON_KEY')
-  );
-
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice(7);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser(token);
-    return user ? { user } : null;
-  }
-
-  return null;
+  const user = await getValidatedRequestUser(request);
+  return user ? { user } : null;
 }

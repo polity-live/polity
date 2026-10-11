@@ -28,9 +28,9 @@ export function useEventWikiPage(eventId: string) {
   const participationData = useEventParticipation(eventId);
 
   const { event, agendaItems: agendaItemRows, isLoading: eventLoading } = useEventWikiData(eventId);
-  const { allUsers } = useUserState({ includeAllUsers: true });
+  const { currentUser } = useUserState();
 
-  const currentUserProfile = user ? (allUsers || []).find(u => u.id === user.id) : null;
+  const currentUserProfile = currentUser?.id === user?.id ? currentUser : null;
 
   // Calculate agenda statistics
   const agendaItems = useMemo(

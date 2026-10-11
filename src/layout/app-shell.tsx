@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode, useMemo } from 'react';
+import { lazy, Suspense, type ReactNode, useEffect, useMemo } from 'react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { Toaster } from '@/features/shared/ui/ui/sonner.tsx';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
@@ -7,6 +7,7 @@ import {
   useScreenStore,
 } from '@/features/shared/global-state/screen.store.tsx';
 import { useNavigationStore } from '@/features/navigation/state/navigation.store.tsx';
+import { SecondaryNavigationVisibleContext } from '@/features/navigation/state/navigation-layout-context';
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import { PwaInstallProvider } from '@/features/pwa/hooks/usePwaInstallPrompt.ts';
@@ -30,7 +31,8 @@ import {
 } from './app-shell-layout';
 import { PageFrame } from './page-frame';
 
-const AuthenticatedShell = lazy(() => import('./authenticated-shell'));
+export const loadAuthenticatedShell = () => import('./authenticated-shell');
+const AuthenticatedShell = lazy(loadAuthenticatedShell);
 const NavigationCommandDialog = lazy(() =>
   import('@/features/navigation/command-dialog.tsx').then(module => ({
     default: module.NavigationCommandDialog,
@@ -53,6 +55,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
   useScreenResponsiveDetector();
   const { user } = useAuth();
   const zeroReady = useZeroReady();
+
+  useEffect(() => {
+    // Load the authenticated frame while its Zero connection is being prepared.
+    // Rendering and query activation still wait for the normal readiness gate.
+    if (user) void loadAuthenticatedShell().catch(() => undefined);
+  }, [user?.id]);
 
   if (user && zeroReady) {
     return (
@@ -89,48 +97,53 @@ function UnauthenticatedShell({
   }, [navigate, pathname, t]);
   const isSecondaryNavVisible =
     Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
+  const secondaryNavCount = secondaryNavItems?.length ?? 0;
   const pageFrame = getUnauthenticatedPageFrame(pathname);
 
   return (
     <I18nSyncProvider>
-      <div
-        className={`bg-background min-h-screen ${isCityDesignCanvasPath(pathname) ? 'flow-root' : ''}`}
+      <SecondaryNavigationVisibleContext.Provider
+        value={isSecondaryNavVisible && secondaryNavCount > 0}
       >
-        {['primary', 'combined'].includes(navigationType) && (
-          <DynamicNavigation
-            navigationType="primary"
-            navigationView={navigationView}
-            navigationItems={navigationItems}
-            screenType={screenType}
-          />
-        )}
-        {secondaryNavItems && ['secondary', 'combined'].includes(navigationType) && (
-          <DynamicNavigation
-            navigationType="secondary"
-            navigationView={navigationView}
-            navigationItems={secondaryNavItems}
-            screenType={screenType}
-          />
-        )}
-        <main
-          className={`transition-[margin,transform,opacity] duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-soft)] ${getAppShellResponsiveClasses(
-            { screenType, navigationView, isSecondaryNavVisible }
-          )}`}
+        <div
+          className={`bg-background min-h-screen ${isCityDesignCanvasPath(pathname) ? 'flow-root' : ''}`}
         >
-          <PageFrame frame={pageFrame}>
-            <MotionPage>{children}</MotionPage>
-          </PageFrame>
-        </main>
-        {showCommandDialog && (
-          <Suspense fallback={null}>
-            <NavigationCommandDialog
-              primaryNavItems={navigationItems}
-              secondaryNavItems={secondaryNavItems}
+          {['primary', 'combined'].includes(navigationType) && (
+            <DynamicNavigation
+              navigationType="primary"
+              navigationView={navigationView}
+              navigationItems={navigationItems}
+              screenType={screenType}
             />
-          </Suspense>
-        )}
-        <AlphaWarningDialog />
-      </div>
+          )}
+          {secondaryNavItems && ['secondary', 'combined'].includes(navigationType) && (
+            <DynamicNavigation
+              navigationType="secondary"
+              navigationView={navigationView}
+              navigationItems={secondaryNavItems}
+              screenType={screenType}
+            />
+          )}
+          <main
+            className={`transition-[margin,transform,opacity] duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-soft)] ${getAppShellResponsiveClasses(
+              { screenType, navigationView, isSecondaryNavVisible }
+            )}`}
+          >
+            <PageFrame frame={pageFrame}>
+              <MotionPage>{children}</MotionPage>
+            </PageFrame>
+          </main>
+          {showCommandDialog && (
+            <Suspense fallback={null}>
+              <NavigationCommandDialog
+                primaryNavItems={navigationItems}
+                secondaryNavItems={secondaryNavItems}
+              />
+            </Suspense>
+          )}
+          <AlphaWarningDialog />
+        </div>
+      </SecondaryNavigationVisibleContext.Provider>
     </I18nSyncProvider>
   );
 }

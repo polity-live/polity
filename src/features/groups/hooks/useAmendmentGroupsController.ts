@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';

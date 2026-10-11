@@ -31,9 +31,17 @@ export function ChatComposer({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    // An empty composer has its known minimum height. Measuring it during a
+    // conversation remount would force layout before the cached messages paint.
+    if (!value) {
+      textarea.style.height = `${minTextareaHeight}px`;
+      textarea.style.overflowY = 'hidden';
+      return;
+    }
     textarea.style.height = '0px';
-    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minTextareaHeight), 176)}px`;
-    textarea.style.overflowY = textarea.scrollHeight > 176 ? 'auto' : 'hidden';
+    const contentHeight = textarea.scrollHeight;
+    textarea.style.height = `${Math.min(Math.max(contentHeight, minTextareaHeight), 176)}px`;
+    textarea.style.overflowY = contentHeight > 176 ? 'auto' : 'hidden';
   }, [minTextareaHeight, textareaRef, value]);
 
   return (

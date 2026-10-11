@@ -1,3 +1,4 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { studioChatAccess, amendmentChatAccess } from '../project-chat/access';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
@@ -26,7 +27,11 @@ function isUnsetTimestamp({ or, cmp }: any, field: string) {
   return or(cmp(field, 'IS', null), cmp(field, 0));
 }
 
-export function conversationAccessFilter<T>(q: T, userID: string | undefined): T {
+export function conversationAccessFilter<T>(
+  q: T,
+  userID: string | undefined,
+  planPerConversation = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -38,8 +43,12 @@ export function conversationAccessFilter<T>(q: T, userID: string | undefined): T
       and(
         cmp('type', 'project_ai'),
         or(
-          exists('studio_project', (p: any) => studioChatAccess(p, userID)),
-          exists('amendment', (a: any) => amendmentChatAccess(a, userID))
+          exists('studio_project', (p: any) => studioChatAccess(p, userID), {
+            flip: planPerConversation ? false : undefined,
+          }),
+          exists('amendment', (a: any) => amendmentChatAccess(a, userID, planPerConversation), {
+            flip: planPerConversation ? false : undefined,
+          })
         )
       ),
       and(
@@ -47,10 +56,13 @@ export function conversationAccessFilter<T>(q: T, userID: string | undefined): T
         or(
           cmp('assistant_for_user_id', userID),
           cmp('requested_by_id', userID),
-          exists('participants', (participant: any) =>
-            participant
-              .where('user_id', userID)
-              .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
+          exists(
+            'participants',
+            (participant: any) =>
+              participant
+                .where('user_id', userID)
+                .where((operators: any) => isUnsetTimestamp(operators, 'left_at')),
+            { flip: planPerConversation ? false : undefined }
           )
         )
       )
@@ -67,14 +79,16 @@ export const messageQueries = {
   // Shell badge projection: persisted unread state plus pending-request timing only.
   unreadSummary: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     requireQueryUser(zql.conversation_participant, userID)
-      .whereExists('conversation', q => conversationAccessFilter(q, userID))
+      .whereExists('conversation', q => conversationAccessFilter(q, userID, true), {
+        flip: false,
+      })
       .related('conversation')
   ),
 
   // Single conversation by ID
   conversationById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    conversationAccessFilter(zql.conversation.where('id', id), userID)
-      .related('group')
+    conversationAccessFilter(zql.conversation.where('id', id), userID, true)
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('event')
       .related('requested_by')
       .related('participants', q => q.related('user'))
@@ -91,7 +105,9 @@ export const messageQueries = {
       zql.message
         .where('conversation_id', conversation_id)
         .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
-        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID))
+        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID, true), {
+          flip: false,
+        })
         .related('sender')
         .orderBy('created_at', 'asc')
   ),
@@ -108,8 +124,10 @@ export const messageQueries = {
       let q: any = zql.message
         .where('conversation_id', conversationId)
         .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
-        .whereExists('conversation', (conversationQuery: any) =>
-          conversationAccessFilter(conversationQuery, userID)
+        .whereExists(
+          'conversation',
+          (conversationQuery: any) => conversationAccessFilter(conversationQuery, userID, true),
+          { flip: false }
         )
         .related('sender')
         .orderBy('created_at', direction)
@@ -126,7 +144,9 @@ export const messageQueries = {
   messageById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     zql.message
       .where('id', id)
-      .whereExists('conversation', q => conversationAccessFilter(q, userID))
+      .whereExists('conversation', q => conversationAccessFilter(q, userID, true), {
+        flip: false,
+      })
       .related('sender')
       .one()
   ),
@@ -137,7 +157,9 @@ export const messageQueries = {
       zql.message
         .where('conversation_id', conversation_id)
         .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
-        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID))
+        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID, true), {
+          flip: false,
+        })
         .related('sender')
         .orderBy('created_at', 'desc')
         .orderBy('id', 'desc')
@@ -152,15 +174,17 @@ export const messageQueries = {
         .where('conversation_id', conversation_id)
         .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
         .where('is_read', false)
-        .whereExists('conversation', q => conversationAccessFilter(q, userID))
+        .whereExists('conversation', q => conversationAccessFilter(q, userID, true), {
+          flip: false,
+        })
   ),
 
   // Conversations with full relations (group, requested_by, participants→user, messages→sender)
   conversationsWithRelations: defineQuery(
     z.object({ limit: z.number().optional() }),
     ({ args: { limit }, ctx: { userID } }) => {
-      let q = conversationAccessFilter(zql.conversation, userID)
-        .related('group')
+      let q = conversationAccessFilter(zql.conversation, userID, true)
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('requested_by')
         .related('participants', q => q.related('user'))
@@ -184,8 +208,8 @@ export const messageQueries = {
     ({ args: { filter, query, limit, start, dir }, ctx: { userID } }) => {
       const direction = dir === 'forward' ? 'desc' : 'asc';
       const normalizedQuery = query.trim();
-      let q: any = conversationAccessFilter(zql.conversation, userID)
-        .related('group')
+      let q: any = conversationAccessFilter(zql.conversation, userID, true)
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('requested_by')
         .related('participants', (participant: any) => participant.related('user'))
@@ -207,10 +231,13 @@ export const messageQueries = {
           or(
             cmp('type', 'project_ai'),
             cmp('assistant_for_user_id', userID),
-            exists('participants', (participant: any) =>
-              participant
-                .where('user_id', ASSISTANT_SYSTEM_USER_ID)
-                .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
+            exists(
+              'participants',
+              (participant: any) =>
+                participant
+                  .where('user_id', ASSISTANT_SYSTEM_USER_ID)
+                  .where((operators: any) => isUnsetTimestamp(operators, 'left_at')),
+              { flip: false }
             )
           )
         );
@@ -221,21 +248,30 @@ export const messageQueries = {
           or(
             cmp('name', 'ILIKE', `%${normalizedQuery}%`),
             cmp('last_message_preview', 'ILIKE', `%${normalizedQuery}%`),
-            exists('participants', (participant: any) =>
-              participant.whereExists('user', (user: any) =>
-                user.where(({ or, cmp }: any) =>
-                  or(
-                    cmp('handle', 'ILIKE', `%${normalizedQuery}%`),
-                    cmp('first_name', 'ILIKE', `%${normalizedQuery}%`),
-                    cmp('last_name', 'ILIKE', `%${normalizedQuery}%`)
-                  )
-                )
-              )
+            exists(
+              'participants',
+              (participant: any) =>
+                participant.whereExists(
+                  'user',
+                  (user: any) =>
+                    user.where(({ or, cmp }: any) =>
+                      or(
+                        cmp('handle', 'ILIKE', `%${normalizedQuery}%`),
+                        cmp('first_name', 'ILIKE', `%${normalizedQuery}%`),
+                        cmp('last_name', 'ILIKE', `%${normalizedQuery}%`)
+                      )
+                    ),
+                  { flip: false }
+                ),
+              { flip: false }
             ),
-            exists('messages', (message: any) =>
-              message
-                .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
-                .where('content', 'ILIKE', `%${normalizedQuery}%`)
+            exists(
+              'messages',
+              (message: any) =>
+                message
+                  .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
+                  .where('content', 'ILIKE', `%${normalizedQuery}%`),
+              { flip: false }
             )
           )
         );
@@ -257,7 +293,7 @@ export const messageQueries = {
   // Lighter conversation query for unread counting (participants + messages→sender)
   conversationsForUnread: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.conversation_participant.where('user_id', userID).related('conversation', q =>
-      conversationAccessFilter(q, userID)
+      conversationAccessFilter(q, userID, true)
         .related('participants', pq => pq.related('user'))
         .related('messages', mq =>
           mq.orderBy('created_at', 'desc').orderBy('id', 'desc').limit(1).related('sender')
@@ -273,8 +309,8 @@ export const messageQueries = {
         .where('user_id', user_id)
         .where('user_id', userID)
         .related('conversation', q =>
-          conversationAccessFilter(q, userID)
-            .related('group')
+          conversationAccessFilter(q, userID, true)
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('event')
             .related('participants', pq => pq.related('user'))
             .related('messages')
@@ -285,7 +321,7 @@ export const messageQueries = {
   conversationByGroupId: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
-      conversationAccessFilter(zql.conversation.where('group_id', group_id), userID)
+      conversationAccessFilter(zql.conversation.where('group_id', group_id), userID, true)
         .where('type', 'group')
         .one()
   ),
@@ -293,7 +329,7 @@ export const messageQueries = {
   conversationByEventId: defineQuery(
     z.object({ event_id: z.string() }),
     ({ args: { event_id }, ctx: { userID } }) =>
-      conversationAccessFilter(zql.conversation.where('event_id', event_id), userID)
+      conversationAccessFilter(zql.conversation.where('event_id', event_id), userID, true)
         .where('type', 'event')
         .one()
   ),

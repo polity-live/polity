@@ -1,3 +1,5 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -7,26 +9,31 @@ const ACTIVE_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 export const appearanceThemeQueries = {
   catalog: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.appearance_theme
+    // The small literal candidate set avoids a JSON list subquery. Each
+    // protected kind retains its separate creator or group-membership gate.
+    whereAnyOf(zql.appearance_theme, 'kind', ['builtin', 'personal', 'group'])
       .where(({ and, cmp, exists, or }: any) =>
-        or(
-          cmp('kind', 'builtin'),
-          and(cmp('kind', 'personal'), cmp('created_by_id', userID)),
-          and(
-            cmp('kind', 'group'),
-            cmp('current_revision_id', 'IS NOT', null),
-            exists('current_revision', (revision: any) => revision.where('status', 'published')),
-            exists('group', (group: any) =>
-              group.whereExists('memberships', (membership: any) =>
-                membership
-                  .where('user_id', userID)
-                  .where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+        and(
+          or(cmp('kind', '!=', 'personal'), cmp('created_by_id', userID)),
+          or(
+            cmp('kind', '!=', 'group'),
+            and(
+              cmp('current_revision_id', 'IS NOT', null),
+              exists('current_revision', (revision: any) => revision.where('status', 'published')),
+              exists('group', (group: any) =>
+                group.whereExists('memberships', (membership: any) =>
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_MEMBERSHIP_STATUSES
+                  )
+                )
               )
             )
           )
         )
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('current_revision')
       .orderBy('name', 'asc')
   ),
@@ -47,10 +54,10 @@ export const appearanceThemeQueries = {
       .whereExists('current_revision', revision => revision.where('status', 'published'))
       .whereExists('group', group =>
         group.whereExists('memberships', membership =>
-          membership.where('user_id', userID).where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+          whereAnyOf(membership.where('user_id', userID), 'status', ACTIVE_MEMBERSHIP_STATUSES)
         )
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('current_revision')
       .orderBy('name', 'asc')
   ),
@@ -69,15 +76,17 @@ export const appearanceThemeQueries = {
               cmp('kind', 'group'),
               exists('group', (group: any) =>
                 group.whereExists('memberships', (membership: any) =>
-                  membership
-                    .where('user_id', userID)
-                    .where('status', 'IN', ACTIVE_MEMBERSHIP_STATUSES)
+                  whereAnyOf(
+                    membership.where('user_id', userID),
+                    'status',
+                    ACTIVE_MEMBERSHIP_STATUSES
+                  )
                 )
               )
             )
           )
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('current_revision')
         .one()
   ),
@@ -91,7 +100,7 @@ export const appearanceThemeQueries = {
         .whereExists('group', group =>
           applyGroupManagerQueryAccess(group, userID, 'manage', ['groups', 'groupThemes'])
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('current_revision')
         .related('revisions', revision => revision.orderBy('version', 'desc'))
         .orderBy('updated_at', 'desc')

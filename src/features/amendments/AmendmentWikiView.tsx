@@ -771,20 +771,22 @@ export function AmendmentWikiView({
       )}
 
       {/* Clone Dialog */}
-      <TargetSelectionDialog
-        open={cloneDialogOpen}
-        onOpenChange={setCloneDialogOpen}
-        currentUserId={user?.id || ''}
-        allUsers={[]}
-        onConfirm={handleConfirmClone}
-        isSaving={isCloning}
-        showCollaboratorSelection={false}
-        title={translateText('generated.inline.0085_clone_amendment_select_target_8fa1e50c')}
-        description={translateText(
-          'generated.inline.0086_optionally_link_the_clone_to_a_group_and_even_9a83e8d9'
-        )}
-        confirmButtonText={translateText('generated.inline.0009_clone_amendment_71d1877f')}
-      />
+      {cloneDialogOpen && (
+        <TargetSelectionDialog
+          open={cloneDialogOpen}
+          onOpenChange={setCloneDialogOpen}
+          currentUserId={user?.id || ''}
+          allUsers={[]}
+          onConfirm={handleConfirmClone}
+          isSaving={isCloning}
+          showCollaboratorSelection={false}
+          title={translateText('generated.inline.0085_clone_amendment_select_target_8fa1e50c')}
+          description={translateText(
+            'generated.inline.0086_optionally_link_the_clone_to_a_group_and_even_9a83e8d9'
+          )}
+          confirmButtonText={translateText('generated.inline.0009_clone_amendment_71d1877f')}
+        />
+      )}
     </>
   );
 }

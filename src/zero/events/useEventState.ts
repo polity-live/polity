@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { type QueryRowType } from '@rocicorp/zero';
 import {
   parseDelegateElectionMetadata,
@@ -16,6 +16,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 /** A single event row from the byGroup query (flat, no relations) */
 export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>;
 type EventByIdFullRow = QueryRowType<typeof queries.events.byIdFull>;
+type EventForAgendaRow = QueryRowType<typeof queries.events.forAgenda>;
 type EventAgendaWithElectionsRow = QueryRowType<typeof queries.events.agendaWithElections>;
 type EventAgendaItemsFullRow = QueryRowType<typeof queries.events.agendaItemsFull>;
 type EventAgendaItemDetailRow = QueryRowType<typeof queries.events.agendaItemDetail>;
@@ -289,6 +290,20 @@ export function useEventState(options: EventStateOptions = {}) {
 
 // ── Event Data ──────────────────────────────────────────────────────
 
+export function useEventAgendaShell(eventId?: string) {
+  const [rows, result] = useQuery(eventId ? queries.events.forAgenda({ id: eventId }) : undefined);
+  const event = useMemo(() => {
+    const current = rows?.[0] as EventForAgendaRow | undefined;
+    if (!current) return null;
+    return {
+      ...current,
+      roles: (current.roles ?? []).map(mapRoleForDisplay),
+      participants: normalizeParticipants(current.participants),
+    };
+  }, [rows]);
+  return { event, isLoading: result.type === 'unknown' };
+}
+
 export function useEventById(eventId?: string) {
   const [eventsData, eventsResult] = useQuery(
     eventId ? queries.events.byIdFull({ id: eventId }) : undefined
@@ -335,8 +350,10 @@ export function useEventById(eventId?: string) {
 
 // ── Event with cancellation relations ───────────────────────────────
 
-export function useEventForCancel(eventId: string) {
-  const [eventsData, eventsResult] = useQuery(queries.events.forCancel({ id: eventId }));
+export function useEventForCancel(eventId: string | undefined) {
+  const [eventsData, eventsResult] = useQuery(
+    eventId ? queries.events.forCancel({ id: eventId }) : undefined
+  );
 
   return {
     event: eventsData?.[0] || null,
@@ -419,6 +436,17 @@ export function useEventOfflineParticipants(eventId?: string) {
 
 // ── Event Participation (user-specific) ─────────────────────────────
 
+export function useEventForParticipation(eventId?: string) {
+  const [eventData, eventResult] = useQuery(
+    eventId ? queries.events.forParticipation({ id: eventId }) : undefined
+  );
+
+  return {
+    event: eventData?.[0] ?? null,
+    isLoading: eventResult.type === 'unknown',
+  };
+}
+
 export function useEventParticipationData(eventId: string, userId: string) {
   const [eventData, eventResult] = useQuery(queries.events.forParticipation({ id: eventId }));
 
@@ -491,43 +519,33 @@ export function useAgendaItemsByEvent(eventId: string) {
     queries.events.agendaItemsFull({ eventId })
   );
 
-  const agendaItemIds = useMemo(
-    () => (agendaItemsData || []).map(item => item.id),
-    [agendaItemsData]
+  // The authoritative agenda already contains authorized votes, voters, choices,
+  // decisions and participation records. A second query delayed the whole page
+  // and could overwrite this complete projection during synchronization.
+  const agendaItems = useMemo(
+    () =>
+      (agendaItemsData || [])
+        .filter(item => item.event?.id === eventId)
+        .map(item => ({
+          ...mapAgendaItemRoles<EventAgendaItemsFullRow>(item),
+          votes: (item.votes ?? []).map(vote => ({
+            ...vote,
+            ...(vote.choices
+              ? {
+                  choices: [...vote.choices].sort(
+                    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+                  ),
+                }
+              : {}),
+          })),
+        }))
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
+    [agendaItemsData, eventId]
   );
-
-  const [votesByAgendaItems, votesByAgendaItemsResult] = useQuery(
-    agendaItemIds.length > 0
-      ? queries.votes.byAgendaItems({ agenda_item_ids: agendaItemIds })
-      : undefined
-  );
-
-  const votesByAgendaItemId = useMemo(() => {
-    const grouped = new Map<string, NonNullable<typeof votesByAgendaItems>[number][]>();
-
-    for (const vote of votesByAgendaItems || []) {
-      if (!vote.agenda_item_id) continue;
-
-      const existingVotes = grouped.get(vote.agenda_item_id) ?? [];
-      grouped.set(vote.agenda_item_id, [...existingVotes, vote]);
-    }
-
-    return grouped;
-  }, [votesByAgendaItems]);
-
-  const agendaItems = (agendaItemsData || [])
-    .filter(item => item.event?.id === eventId)
-    .map(item => ({
-      ...mapAgendaItemRoles<EventAgendaItemsFullRow>(item),
-      votes: votesByAgendaItemId.get(item.id) ?? item.votes ?? [],
-    }))
-    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
   return {
     agendaItems,
-    isLoading:
-      agendaItemsResult.type === 'unknown' ||
-      (agendaItemIds.length > 0 && votesByAgendaItemsResult.type === 'unknown'),
+    isLoading: agendaItemsResult.type === 'unknown',
   };
 }
 
@@ -681,18 +699,18 @@ export function useEventsByGroup(
   };
 }
 
-export function useAllEvents() {
-  const [events] = useQuery(queries.events.all({}));
+export function useAllEvents(enabled = true) {
+  const [events] = useQuery(enabled ? queries.events.all({}) : undefined);
   return { events: events || [] };
 }
 
-export function useAllAmendments() {
-  const [amendments] = useQuery(queries.events.allAmendments({}));
+export function useAllAmendments(enabled = true) {
+  const [amendments] = useQuery(enabled ? queries.events.allAmendments({}) : undefined);
   return { amendments: amendments || [] };
 }
 
-export function useRolesWithGroups() {
-  const [roles] = useQuery(queries.events.rolesWithGroups({}));
+export function useRolesWithGroups(enabled = true) {
+  const [roles] = useQuery(enabled ? queries.events.rolesWithGroups({}) : undefined);
   const mappedRoles = useMemo(
     () => (roles || []).map(role => mapRoleForDisplay(role as RoleDisplayLike)),
     [roles]
@@ -791,9 +809,9 @@ export function useEventExceptions(eventId?: string) {
   return { exceptions: exceptions ?? [] };
 }
 
-export function useEventWithAgendaAndParticipants(eventId: string) {
+export function useEventWithAgendaAndParticipants(eventId: string | undefined) {
   const [eventsData, eventsResult] = useQuery(
-    queries.events.withAgendaAndParticipants({ id: eventId })
+    eventId ? queries.events.withAgendaAndParticipants({ id: eventId }) : undefined
   );
 
   return {

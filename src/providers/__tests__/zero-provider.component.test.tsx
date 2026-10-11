@@ -13,10 +13,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../auth-provider', () => ({
-  useAuth: () => ({ session: mocks.session, loading: mocks.loading }),
+  useAuth: () => ({ session: mocks.session, user: mocks.session?.user, loading: mocks.loading }),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
+  useQuery: () => [[], { type: 'complete' }],
   ZeroProvider: (props: Record<string, unknown> & { children?: React.ReactNode }) => {
     mocks.zeroProps = props;
     return props.children;
@@ -81,6 +82,17 @@ describe('ZeroAppProvider identity', () => {
       email: 'person@example.test',
     });
     expect(mocks.zeroProps?.auth).toBe('access-token');
+  });
+
+  it('keeps query initialization stable across token refresh and provider rerenders', () => {
+    mocks.session = { access_token: 'old-token', user: { id: 'user-1' } };
+    const { rerender } = render(<ZeroAppProvider>content</ZeroAppProvider>);
+    const init = mocks.zeroProps?.init;
+    expect(init).toBeTypeOf('function');
+    mocks.session = { ...mocks.session, access_token: 'fresh-token' };
+    rerender(<ZeroAppProvider>changed content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.init).toBe(init);
+    expect(mocks.zeroProps?.auth).toBe('fresh-token');
   });
 
   it('opens sync only after the initial session refresh has completed', () => {

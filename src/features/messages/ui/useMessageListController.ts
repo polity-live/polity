@@ -5,6 +5,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 import { queries } from '@/zero/queries';
+import { observeRouteReadiness } from '@/zero/observed-query';
 import { getOtherParticipant } from '../logic/messageUtils';
 import type { Conversation, Message } from '../types/message.types';
 import type { MessageTimelineItem } from './MessageList';
@@ -25,6 +26,8 @@ interface MessageStart {
   created_at: number;
   id: string;
 }
+
+const MESSAGE_PAGE_SIZE = 50;
 
 export type VirtualMessageRow =
   | {
@@ -60,6 +63,7 @@ function isNearBottom(element: HTMLElement, threshold = 96) {
 export function useMessageListController({
   conversation,
   messages,
+  hasMoreOlderMessages,
   onAtEndChange,
   currentUserId,
   onAcceptConversation,
@@ -78,9 +82,16 @@ export function useMessageListController({
   const displayMessages = messages ?? conversation.messages;
 
   if (initialAnchorRef.current.conversationId !== conversation.id) {
+    // A complete short thread fits in one page. Starting around its last row
+    // would create two cursor views and a single-row lookup before displaying
+    // the same messages. Longer or incomplete threads still need that anchor.
+    const fitsFirstPage =
+      messages !== undefined &&
+      hasMoreOlderMessages === false &&
+      messages.length < MESSAGE_PAGE_SIZE;
     initialAnchorRef.current = {
       conversationId: conversation.id,
-      messageId: displayMessages.at(-1)?.id ?? null,
+      messageId: fitsFirstPage ? null : (displayMessages.at(-1)?.id ?? null),
     };
   }
 
@@ -93,6 +104,7 @@ export function useMessageListController({
     getScrollElement: useCallback(() => (active ? scrollRef.current : null), [active]),
     estimateSize: useCallback(() => 92, []),
     overscan: 10,
+    minPageSize: MESSAGE_PAGE_SIZE,
     getRowKey: message => message.id,
     toStartRow: message => ({ created_at: Number(message.created_at), id: message.id }),
     getPageQuery: useCallback(
@@ -117,6 +129,15 @@ export function useMessageListController({
     permalinkID: initialAnchorRef.current.messageId ?? undefined,
   });
   useStickToBottom(virtualList, { enabled: active });
+  useEffect(() => {
+    // The public virtualizer snapshot describes the real rendered message page.
+    // A preload of messagesWindow does not establish this page's readiness.
+    if (active)
+      observeRouteReadiness('messages.messagePage', virtualList.complete, {
+        args: { conversationId: conversation.id },
+        ids: virtualList.items.flatMap(item => (item.row ? [item.row.id] : [])),
+      });
+  }, [active, conversation.id, virtualList.complete, virtualList.items]);
 
   const otherUser =
     conversation.type === 'project_ai'

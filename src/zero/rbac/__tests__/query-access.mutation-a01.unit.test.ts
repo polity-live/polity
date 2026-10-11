@@ -70,7 +70,15 @@ function createQueryAst(): QueryAst {
         const predicate = (args[0] as (helpers: ReturnType<typeof predicateHelpers>) => unknown)(
           predicateHelpers()
         );
-        calls.push({ method: 'where', predicate: normalize(predicate) });
+        const canonical = canonicalPredicate(predicate) as { operator?: string; args?: AstValue[] };
+        if (canonical.operator === 'cmp' && canonical.args?.[1] === 'IN')
+          calls.push({ method: 'where', args: normalize(canonical.args) });
+        else if (canonical.operator === 'cmp' && canonical.args?.[1] === '=')
+          calls.push({
+            method: 'where',
+            args: normalize([canonical.args[0], 'IN', [canonical.args[2]]]),
+          });
+        else calls.push({ method: 'where', predicate: normalize(canonical) });
       } else {
         calls.push({ method: 'where', args: normalize(args) });
       }
@@ -90,6 +98,24 @@ function createQueryAst(): QueryAst {
     },
   };
   return query;
+}
+
+function canonicalPredicate(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalPredicate);
+  if (!value || typeof value !== 'object') return value;
+  const node = Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, canonicalPredicate(item)])
+  );
+  const values = node.values as { operator: string; args: unknown[] }[] | undefined;
+  if (
+    node.operator === 'or' &&
+    values?.length &&
+    values.every(
+      term => term.operator === 'cmp' && term.args[1] === '=' && term.args[0] === values[0].args[0]
+    )
+  )
+    return { operator: 'cmp', args: [values[0].args[0], 'IN', values.map(term => term.args[2])] };
+  return node;
 }
 
 function predicateHelpers() {
@@ -252,18 +278,18 @@ const expectedDigests = {
   'group anonymous': PUBLIC_ROOT,
   'group viewer': 'df2c473435d3bc51ee3392881023597fe878f1d13d801a2211a93107b5480d6d',
   'group manager anonymous': DENIED,
-  'group manager default': 'f28996a1673cd835598dda95d4efdd27cb01e3f24679d5f0a3750a74987132e8',
+  'group manager default': '68746cb31ac12aab89f7c8c7ccbbc3e5b88e8a96969391d0d0254fa719bc7d86',
   'group manager member resources':
-    'bbe13783e3d00081ab3cae09e3186b9e838cc99c519cdb17cfbaf8b847da799b',
+    '17fadcb77ffcec3157626cd7e9fff02bbe8c9e115bac833e10e23b700e185428',
   'group membership anonymous': DENIED,
-  'group membership viewer': '218bbe8fe3e9259a04cd4b5fdd82d3490e2abd4758d3426caf4ca35d85f7a1e1',
+  'group membership viewer': '352f41355a0e001322adee079c8951752f4d444ac835d1b869fb192c7ac06fc1',
   'event anonymous': PUBLIC_ROOT,
   'event viewer': '1dc2f963c5124158cfafef5ffa7a955a4b642249d5c089bff53b69e9c8287a86',
   'event manager anonymous': DENIED,
-  'event manager default': 'aa557acc69d605c858715b3f68727f116883be46104e5fe413c8ff55fe7fffe8',
-  'event manager votes': '166c725a560ce4fd4be2b67a5d11ab0ce0a912f88c5563f7579cb925d22b4550',
+  'event manager default': '2e61c8d5c354b2a40e52c5cdbdbf8f064154d1be2211e85d5aac2a973ea53810',
+  'event manager votes': 'e4f6d95ec72353ab720caa661fbc06acc9b081c08050b9cf2330aac228a2df49',
   'event participant anonymous': DENIED,
-  'event participant viewer': '458f41844db5fc7c5483adaa0d969d33f1580798722d63352a70b60af4bed7c1',
+  'event participant viewer': 'a9c71be702573bd3b7b7ab2f994783c1a8c76d64b646ce1c187a7aa13b705627',
   'amendment anonymous': PUBLIC_ROOT,
   'amendment viewer': '44f36ef6a2bd23e6e3ebb13b30ab14ed456ec7f2da668714788bd6d8690ab95b',
   'change request anonymous': 'c732c233eec47039930b50efae92e4c462707219203ac8b8224fb74ca4ab8f49',
@@ -277,23 +303,24 @@ const expectedDigests = {
   'agenda anonymous': '5cbe59a4499ea8f10f8dad3e00ca5bac4ea2d465ca722e470455f9a46d16d4cf',
   'agenda viewer': '0069dad9634d723c03485e65d485e9811cc87985d6deb837b33645f663a8cfa4',
   'election anonymous': '06c777eec7fa7b88217bfb5780b2643f1d13c102254204ad70580d366f3e492f',
-  'election viewer': '5649be2e3a47543e31d9efb9f17d132abbe5ea76b3e2f8e631a61e8b9703eb01',
+  // Nested group/blog joins follow the correlated election plan; access predicates remain intact.
+  'election viewer': 'cdf19d284af3e198e99a802800d99fc34c45c6f504cb57992be99b1e762e5f97',
   'dataset anonymous': 'acf5072c677034a2c8923170e248ab962a76d2935b462bdbde1ea8df9bc66e28',
   'dataset viewer': 'bb6cfdc7a326bffac89738a068a938b7f8825b5681331a4961aea4c2d413ebd4',
   'election manager anonymous': DENIED,
-  'election manager viewer': '36ce01129696c0521e69ab599ee7db2a0a402b166653cf5b2a5ab9be1be4adc2',
+  'election manager viewer': 'cecb2a92619d12302cab6351ad871f2d9cb6d949139064e36ea844f4503537f2',
   'election elector anonymous': DENIED,
-  'election elector viewer': 'a5344666b45a22ed9e62fa5eb16229ecac4a76bffa40dd19aaf4785e60963935',
+  'election elector viewer': '2ec48fbc7abf2b84184fc396510b1f05f4ad4fa632040db3e941b5910fbfb4a7',
   'vote anonymous': '873d3b699efa4fd34b8e7b4c0b1ad7a270495e54d04522120471ac6bebf6faac',
   'vote viewer': 'ceff3debfc009f6963ce5f2d4d55ac9f9f86f6fa3c868aa45be15bb477ce0dd4',
   'role anonymous': 'acf5072c677034a2c8923170e248ab962a76d2935b462bdbde1ea8df9bc66e28',
   'role viewer': 'ba7b9777cf9eb9a382ed7571f0289c14d8995bbce5cb8fb4741d543fb0a5b0c3',
   'vote manager anonymous': DENIED,
-  'vote manager viewer': '100208e4c439ff5ca84126e1bb0f1accd126c92c75d5492766bc42a8fc941b77',
+  'vote manager viewer': '66e4910caa988585449c6dc46c32abcd2fd66f7a31107f12fb27ab603f92ddfc',
   'vote voter anonymous': DENIED,
-  'vote voter viewer': '4bd46a1e65407140bc327e404efaa0ae2ee35da8e056561654d8efde3ce217fb',
+  'vote voter viewer': 'addf8026ead6485e2167137eabc49744d174ddee63f77aaf1d7ca0caa5c632d0',
   'accreditation anonymous': DENIED,
-  'accreditation viewer': '43eee69d96469ce7edab967674585685e670a5dabd0c540b7cd0b99b0275b721',
+  'accreditation viewer': 'fb2781c9b466b3f7fefbbffdf71931504e9e052f667f4438bc7a6c1f9e252c9d',
   'document anonymous default': 'cd3b7ad39b5082666eef3bf93e46ffe29e69d18ed3ed4dc6cda18166d74a7904',
   'document anonymous false flip':
     '08903444cf7d0472707ff6b79533ca952a03318821aa7f447d8f3d49d64fdbcf',

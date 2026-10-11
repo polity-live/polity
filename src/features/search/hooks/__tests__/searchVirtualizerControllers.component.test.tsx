@@ -33,6 +33,12 @@ vi.mock('@/zero/queries', () => ({
   },
 }));
 
+import {
+  SEARCH_GRID_PAGE_SIZE,
+  SEARCH_INITIAL_PAGE_LIMIT,
+  createSearchDocumentPageArgs,
+} from '@/zero/preloads/search-context';
+import { queries } from '@/zero/queries';
 import { useSpatialSearchController } from '../useSpatialSearchController';
 import { useStableSearchListContext } from '../useStableSearchListContext';
 import {
@@ -93,6 +99,26 @@ describe('search virtualizer controller contracts', () => {
     expect(result.current).toBe(initial);
   });
 
+  it('uses one bounded initial window matching the preload before responsive layout', () => {
+    renderHook(() => useVirtualSearchGridController({ context }));
+    const options = mocks.usePolityZeroGrid.mock.calls.at(-1)![0];
+    expect(options.minPageSize).toBe(SEARCH_GRID_PAGE_SIZE);
+    expect(options.maxPageSize).toBe(SEARCH_GRID_PAGE_SIZE);
+    options.getPageQuery({
+      limit: SEARCH_INITIAL_PAGE_LIMIT,
+      start: null,
+      dir: 'forward',
+      settled: false,
+    });
+    expect(queries.search.searchDocumentPage).toHaveBeenLastCalledWith(
+      createSearchDocumentPageArgs({})
+    );
+    // Object equality ignores key order, but the wire request must reuse the
+    // preload's actual serialized arguments instead of registering another ID.
+    expect(
+      JSON.stringify(vi.mocked(queries.search.searchDocumentPage).mock.calls.at(-1)?.[0])
+    ).toBe(JSON.stringify(createSearchDocumentPageArgs({})));
+  });
   it('keeps compact and card scroll positions separate across view changes', () => {
     const virtualizer = {
       getVirtualItems: () => [{ key: 'row', index: 4, start: 400, end: 500, size: 100, lane: 0 }],
@@ -157,8 +183,8 @@ describe('search virtualizer controller contracts', () => {
     expect(mocks.usePolityZeroGrid).toHaveBeenCalled();
     const options = mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0];
     expect(options.overscan).toBe(2);
-    expect(options.minPageSize).toBe(18);
-    expect(options.maxPageSize).toBe(48);
+    expect(options.minPageSize).toBe(SEARCH_GRID_PAGE_SIZE);
+    expect(options.maxPageSize).toBe(SEARCH_GRID_PAGE_SIZE);
     expect(options.useFlushSync).toBe(false);
     expect(options.estimateSize()).toBe(376);
     expect(result.current.cells).toEqual([]);

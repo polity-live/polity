@@ -52,7 +52,7 @@ interface CancelEventParams {
   itemsToReassign?: string[];
 }
 
-export function useCancelEvent(eventId: string): UseCancelEventResult {
+export function useCancelEvent(eventId: string, enabled = true): UseCancelEventResult {
   const { user } = useAuth();
   const { cancelEvent: doCancelEvent } = useEventActions();
   const { updateAgendaItem } = useAgendaActions();
@@ -60,7 +60,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event data with agenda items
-  const { event } = useEventForCancel(eventId);
+  const { event } = useEventForCancel(enabled ? eventId : undefined);
   const agendaItems = useMemo((): AgendaItem[] => {
     if (!event?.agenda_items) return [];
     return event.agenda_items

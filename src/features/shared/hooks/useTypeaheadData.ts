@@ -89,9 +89,9 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
     includeSearch: includeGroups,
   });
 
-  const { events } = useAllEvents();
-  const { amendments } = useAllAmendments();
-  const { roles } = useRolesWithGroups();
+  const { events } = useAllEvents(includeEvents);
+  const { amendments } = useAllAmendments(includeAmendments);
+  const { roles } = useRolesWithGroups(includeRoles);
   const { electionsForSearch } = useElectionState({
     includeElectionsForSearch: includeElections,
   });
@@ -101,6 +101,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
   const searchState = useSearchState(
     includeSearchBackedEntities
       ? {
+          enabled: true,
           userId: user?.id,
           limits: {
             users: 1,
@@ -113,6 +114,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           },
         }
       : {
+          enabled: false,
           userId: user?.id,
           limits: {
             users: 1,

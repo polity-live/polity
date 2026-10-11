@@ -31,9 +31,8 @@ export function useSubscribeBlog(
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
   const subscriptionData = {
-    subscribers: (projectedState
-      ? projectedState.subscriptions
-      : (subscribers ?? [])) as readonly SubscriptionRowState[],
+    subscribers: ((projectedState ? projectedState.subscriptions : subscribers) ??
+      []) as readonly SubscriptionRowState[],
   };
   const resolvedPersistedSubscriberCount =
     projectedState?.subscriberCount ?? persistedSubscriberCount;
@@ -41,7 +40,7 @@ export function useSubscribeBlog(
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subs = subscriptionData?.subscribers || [];
+    const subs = subscriptionData.subscribers;
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
@@ -66,12 +65,13 @@ export function useSubscribeBlog(
 
   // Subscribe to a blog
   const subscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetBlogId) {
       return;
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionData?.subscribers || []).find(
+    const existing = subscriptionData.subscribers.find(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
@@ -115,11 +115,12 @@ export function useSubscribeBlog(
 
   // Unsubscribe from a blog
   const unsubscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetBlogId) {
       return;
     }
 
-    const subs = subscriptionData?.subscribers || [];
+    const subs = subscriptionData.subscribers;
     let subsToDelete = subs.filter(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
@@ -162,7 +163,7 @@ export function useSubscribeBlog(
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    if (isLoading) return;
+    if (projectedState?.isLoading || isLoading) return;
     if (isSubscribed) {
       await unsubscribe();
     } else {
@@ -171,9 +172,20 @@ export function useSubscribeBlog(
   };
 
   return {
-    isSubscribed,
-    subscriberCount,
-    isLoading,
+    isSubscribed:
+      projectedState && optimisticTargetRef.current === null
+        ? Boolean(
+            authUser?.id &&
+            subscriptionData.subscribers.some(
+              sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+            )
+          )
+        : isSubscribed,
+    subscriberCount:
+      projectedState && optimisticTargetRef.current === null
+        ? (resolvedPersistedSubscriberCount ?? subscriptionData.subscribers.length)
+        : subscriberCount,
+    isLoading: Boolean(projectedState?.isLoading) || isLoading,
     subscribe,
     unsubscribe,
     toggleSubscribe,

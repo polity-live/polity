@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -54,7 +54,7 @@ vi.mock('motion/react', () => {
 afterEach(() => cleanup());
 
 describe('MotionPrimitives', () => {
-  it('uses pathname and explicit route keys for page transitions', () => {
+  it('renders pages immediately and supports explicit transition keys', () => {
     const current = render(<MotionPage className="page">Current page</MotionPage>);
     expect(screen.getByText('Current page').className).toContain('min-w-0');
     current.unmount();
@@ -64,7 +64,24 @@ describe('MotionPrimitives', () => {
         Custom page
       </MotionPage>
     );
-    expect(screen.getByTestId('custom-page').getAttribute('data-initial')).toBe('initial');
+    expect(screen.getByTestId('custom-page').getAttribute('data-initial')).toBeNull();
+    expect(screen.getByTestId('custom-page').getAttribute('data-animate')).toBe('animate');
+    expect(screen.getByTestId('custom-page').getAttribute('data-exit')).toBeNull();
+  });
+
+  it('retains shared layout state across pathname changes and resets only for an explicit key', () => {
+    const page = (routeKey?: string) => (
+      <MotionPage routeKey={routeKey}>
+        <input aria-label="Shared draft" defaultValue="" />
+      </MotionPage>
+    );
+    const view = render(page());
+    fireEvent.change(screen.getByLabelText('Shared draft'), { target: { value: 'Draft' } });
+    mocks.pathname = '/current/agenda';
+    view.rerender(page());
+    expect((screen.getByLabelText('Shared draft') as HTMLInputElement).value).toBe('Draft');
+    view.rerender(page('another-entity'));
+    expect((screen.getByLabelText('Shared draft') as HTMLInputElement).value).toBe('');
   });
 
   it('renders group, item, presence, and success wrappers', () => {

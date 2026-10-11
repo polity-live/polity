@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { Plus } from 'lucide-react';
 import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';

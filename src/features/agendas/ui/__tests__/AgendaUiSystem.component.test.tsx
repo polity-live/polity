@@ -9,6 +9,8 @@ import {
   AgendaContentHeader,
   AgendaContextTabs,
   AgendaDialogContent,
+  AgendaDialogBody,
+  AgendaPageShell,
   AgendaSection,
   AgendaSectionHeading,
   AgendaSurface,
@@ -18,6 +20,15 @@ import {
 afterEach(cleanup);
 
 describe('AgendaUiSystem', () => {
+  it('preserves page and dialog-body content with caller layout classes', () => {
+    render(
+      <AgendaPageShell className="page-layout">
+        <AgendaDialogBody className="body-layout">Agenda body</AgendaDialogBody>
+      </AgendaPageShell>
+    );
+    expect(screen.getByText('Agenda body').className).toContain('body-layout');
+    expect(screen.getByText('Agenda body').parentElement?.className).toContain('page-layout');
+  });
   it('renders reusable agenda surfaces and composed sections', () => {
     const { rerender } = render(<AgendaSurface className="surface">Standalone</AgendaSurface>);
     expect(screen.getByText('Standalone').className).toContain('surface');
@@ -147,5 +158,37 @@ describe('AgendaUiSystem', () => {
     expect(document.activeElement).toBe(speakerTab);
     fireEvent.mouseDown(speakerTab, { button: 0 });
     expect(screen.getByText('Speaker queue')).toBeTruthy();
+    expect(speakerTab.getAttribute('aria-selected')).toBe('true');
+    expect(
+      document
+        .getElementById(speakerTab.getAttribute('aria-controls')!)
+        ?.getAttribute('aria-labelledby')
+    ).toBe(speakerTab.id);
+    fireEvent.keyDown(speakerTab, { key: 'Home' });
+    expect(document.activeElement).toBe(detailsTab);
+    expect(screen.getByText('Amendment context')).toBeTruthy();
+    fireEvent.keyDown(detailsTab, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(speakerTab);
+    fireEvent.keyDown(speakerTab, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(detailsTab);
+    fireEvent.keyDown(detailsTab, { key: 'End' });
+    expect(document.activeElement).toBe(speakerTab);
+    fireEvent.keyDown(speakerTab, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(detailsTab);
+    expect(screen.queryByText('Speaker queue')).toBeNull();
+    fireEvent.click(speakerTab);
+    expect(screen.getByText('Speaker queue')).toBeTruthy();
+    fireEvent.mouseDown(detailsTab, { button: 2 });
+    expect(screen.getByText('Speaker queue')).toBeTruthy();
+    fireEvent.mouseDown(detailsTab, { button: 0, ctrlKey: true });
+    expect(screen.getByText('Speaker queue')).toBeTruthy();
+    fireEvent.mouseDown(detailsTab, { button: 0 });
+    expect(screen.getByText('Amendment context')).toBeTruthy();
+    fireEvent.mouseDown(speakerTab, { button: 2 });
+    expect(screen.getByText('Amendment context')).toBeTruthy();
+    fireEvent.click(detailsTab);
+    expect(screen.getByText('Amendment context')).toBeTruthy();
+    fireEvent.keyDown(detailsTab, { key: 'Tab' });
+    expect(screen.getByText('Amendment context')).toBeTruthy();
   });
 });

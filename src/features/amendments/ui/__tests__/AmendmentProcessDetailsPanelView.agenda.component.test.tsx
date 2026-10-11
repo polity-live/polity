@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AmendmentProcessDetailsPanelView } from '../AmendmentProcessDetailsPanelView';
+import { ElectionDetailsSectionView } from '@/features/agendas/ui/ElectionDetailsSectionView';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="#test">{children}</a>,
@@ -13,6 +15,58 @@ vi.mock('@tanstack/react-router', () => ({
 afterEach(cleanup);
 
 describe('AmendmentProcessDetailsPanelView agenda variant', () => {
+  it.each(['amendment', 'election'])(
+    'keeps the %s details panel linked and keyboard operable while closed content is unmounted',
+    async kind => {
+      const onOpenChange = vi.fn();
+      const labels = {
+        amendmentDetails: 'Context',
+        viewAmendment: 'View',
+        title: 'Title',
+        reason: 'Reason',
+        preamble: 'Preamble',
+        pathVisualization: 'Flow',
+        roleDetails: 'Context',
+        viewGroup: 'Group',
+        role: 'Role',
+        description: 'Description',
+        term: 'Term',
+      };
+      const content = (open: boolean) =>
+        kind === 'amendment' ? (
+          <AmendmentProcessDetailsPanelView
+            amendment={{ id: 'amendment', preamble: 'Details content' }}
+            labels={labels}
+            open={open}
+            onOpenChange={onOpenChange}
+            variant="agenda"
+          />
+        ) : (
+          <ElectionDetailsSectionView
+            election={{ role: { id: 'role', description: 'Details content' } }}
+            labels={labels}
+            open={open}
+            onOpenChange={onOpenChange}
+          />
+        );
+      const view = render(content(false));
+      const trigger = screen.getByRole('button', { name: 'Context' });
+      const panelId = trigger.getAttribute('aria-controls');
+      expect(panelId).toBeTruthy();
+      expect(document.getElementById(String(panelId))?.hidden).toBe(true);
+      expect(screen.queryByText('Details content')).toBeNull();
+      trigger.focus();
+      await userEvent.setup().keyboard(' ');
+      expect(onOpenChange).toHaveBeenCalledWith(true);
+      view.rerender(content(true));
+      expect(trigger.getAttribute('aria-expanded')).toBe('true');
+      expect(document.getElementById(String(panelId))?.hidden).toBe(false);
+      expect(screen.getByText('Details content')).toBeTruthy();
+      view.rerender(content(false));
+      expect(screen.queryByText('Details content')).toBeNull();
+      expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    }
+  );
   it('keeps process content while hiding identity fields already shown in the agenda header', () => {
     const onOpenChange = vi.fn();
     render(

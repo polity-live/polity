@@ -1,3 +1,4 @@
+import { canonicalWhereArgs } from '../../__tests__/test-utils/zeroHarness';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type QueryCall = readonly [string, ...unknown[]];
@@ -26,7 +27,7 @@ vi.mock('../../schema', () => {
       table,
       calls: [],
       where: (...args: unknown[]) => {
-        query.calls.push(['where', ...args]);
+        query.calls.push(['where', ...canonicalWhereArgs(args)]);
         return query;
       },
       whereExists: (relation: string, fn: (q: FakeQuery) => unknown) => {

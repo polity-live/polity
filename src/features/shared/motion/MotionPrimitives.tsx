@@ -2,7 +2,6 @@
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useRouterState } from '@tanstack/react-router';
 
 import { cn } from '@/features/shared/utils/utils';
 import { listItem, pageEnter, scrollReveal, staggerContainer, successSettle } from './variants';
@@ -15,23 +14,19 @@ interface MotionPageProps extends Omit<MotionDivProps, 'variants'> {
 }
 
 export function MotionPage({ routeKey, className, children, ...props }: MotionPageProps) {
-  const pathname = useRouterState({ select: state => state.location.pathname });
-  const key = routeKey ?? pathname;
-
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={key}
-        variants={pageEnter}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className={cn('min-w-0', className)}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      // The router retains shared layouts between child routes. A pathname key
+      // would discard their views, access checks and form state on every navigation.
+      key={routeKey}
+      variants={pageEnter}
+      initial={false}
+      animate="animate"
+      className={cn('min-w-0', className)}
+      {...props}
+    >
+      {children}
+    </motion.div>
   );
 }
 

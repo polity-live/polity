@@ -1,3 +1,5 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -22,8 +24,11 @@ const ACTIVE_EVENT_NOTIFICATION_STATUSES = ['active', 'confirmed', 'member', 'ad
 const NOTIFICATION_VIEW_ACTIONS = ['viewNotifications', 'manageNotifications'];
 
 function roleHasNotificationRight(role: any, resource: 'groupNotifications' | 'notifications') {
-  return role.whereExists('action_rights', (right: any) =>
-    right.where('resource', resource).where('action', 'IN', NOTIFICATION_VIEW_ACTIONS)
+  return role.whereExists(
+    'action_rights',
+    (right: any) =>
+      whereAnyOf(right.where('resource', resource), 'action', NOTIFICATION_VIEW_ACTIONS),
+    { flip: false }
   );
 }
 
@@ -31,40 +36,67 @@ function applyGroupNotificationViewAccess(q: any, userID: string) {
   return q.where(({ or, cmp, exists }: any) =>
     or(
       cmp('owner_id', userID),
-      exists('memberships', (membership: any) =>
-        membership
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_GROUP_NOTIFICATION_STATUSES)
-          .whereExists('membership_roles', (membershipRole: any) =>
-            membershipRole.whereExists('role', (role: any) =>
-              roleHasNotificationRight(role, 'groupNotifications')
-            )
-          )
+      exists(
+        'memberships',
+        (membership: any) =>
+          whereAnyOf(
+            membership.where('user_id', userID),
+            'status',
+            ACTIVE_GROUP_NOTIFICATION_STATUSES
+          ).whereExists(
+            'membership_roles',
+            (membershipRole: any) =>
+              membershipRole.whereExists(
+                'role',
+                (role: any) => roleHasNotificationRight(role, 'groupNotifications'),
+                { flip: false }
+              ),
+            { flip: false }
+          ),
+        { flip: false }
       ),
-      exists('guest_accesses', (guestAccess: any) =>
-        guestAccess
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES)
-          .whereExists('guest_roles', (guestRole: any) =>
-            guestRole.whereExists('role', (role: any) =>
-              roleHasNotificationRight(role, 'groupNotifications')
-            )
-          )
+      exists(
+        'guest_accesses',
+        (guestAccess: any) =>
+          whereAnyOf(
+            guestAccess.where('user_id', userID),
+            'status',
+            ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES
+          ).whereExists(
+            'guest_roles',
+            (guestRole: any) =>
+              guestRole.whereExists(
+                'role',
+                (role: any) => roleHasNotificationRight(role, 'groupNotifications'),
+                { flip: false }
+              ),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   );
 }
 
 function applyEventNotificationViewAccess(q: any, userID: string) {
-  return q.whereExists('participants', (participant: any) =>
-    participant
-      .where('user_id', userID)
-      .where('status', 'IN', ACTIVE_EVENT_NOTIFICATION_STATUSES)
-      .whereExists('participant_roles', (participantRole: any) =>
-        participantRole.whereExists('role', (role: any) =>
-          roleHasNotificationRight(role, 'notifications')
-        )
-      )
+  return q.whereExists(
+    'participants',
+    (participant: any) =>
+      whereAnyOf(
+        participant.where('user_id', userID),
+        'status',
+        ACTIVE_EVENT_NOTIFICATION_STATUSES
+      ).whereExists(
+        'participant_roles',
+        (participantRole: any) =>
+          participantRole.whereExists(
+            'role',
+            (role: any) => roleHasNotificationRight(role, 'notifications'),
+            { flip: false }
+          ),
+        { flip: false }
+      ),
+    { flip: false }
   );
 }
 
@@ -72,21 +104,32 @@ function applyAmendmentNotificationViewAccess(q: any, userID: string) {
   return q.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) =>
-        collaborator
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
-          .whereExists('role', (role: any) => roleHasNotificationRight(role, 'notifications'))
+      exists(
+        'collaborators',
+        (collaborator: any) =>
+          whereAnyOf(
+            collaborator.where('user_id', userID),
+            'status',
+            ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES
+          ).whereExists('role', (role: any) => roleHasNotificationRight(role, 'notifications'), {
+            flip: false,
+          }),
+        { flip: false }
       )
     )
   );
 }
 
 function applyBlogNotificationViewAccess(q: any, userID: string) {
-  return q.whereExists('bloggers', (blogger: any) =>
-    blogger
-      .where('user_id', userID)
-      .whereExists('role', (role: any) => roleHasNotificationRight(role, 'notifications'))
+  return q.whereExists(
+    'bloggers',
+    (blogger: any) =>
+      blogger
+        .where('user_id', userID)
+        .whereExists('role', (role: any) => roleHasNotificationRight(role, 'notifications'), {
+          flip: false,
+        }),
+    { flip: false }
   );
 }
 
@@ -100,12 +143,20 @@ export function applyNotificationViewAccess<T>(q: T, userID: string | undefined)
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('recipient_id', userID),
-      exists('recipient_group', (group: any) => applyGroupNotificationViewAccess(group, userID)),
-      exists('recipient_event', (event: any) => applyEventNotificationViewAccess(event, userID)),
-      exists('recipient_amendment', (amendment: any) =>
-        applyAmendmentNotificationViewAccess(amendment, userID)
+      exists('recipient_group', (group: any) => applyGroupNotificationViewAccess(group, userID), {
+        flip: false,
+      }),
+      exists('recipient_event', (event: any) => applyEventNotificationViewAccess(event, userID), {
+        flip: false,
+      }),
+      exists(
+        'recipient_amendment',
+        (amendment: any) => applyAmendmentNotificationViewAccess(amendment, userID),
+        { flip: false }
       ),
-      exists('recipient_blog', (blog: any) => applyBlogNotificationViewAccess(blog, userID))
+      exists('recipient_blog', (blog: any) => applyBlogNotificationViewAccess(blog, userID), {
+        flip: false,
+      })
     )
   ) as T;
 }
@@ -142,24 +193,36 @@ function applyTypedNotificationAccess(
       case 'group':
         return or(
           personalRecipient,
-          exists('recipient_group', (group: any) => applyGroupNotificationViewAccess(group, userID))
+          exists(
+            'recipient_group',
+            (group: any) => applyGroupNotificationViewAccess(group, userID),
+            { flip: false }
+          )
         );
       case 'event':
         return or(
           personalRecipient,
-          exists('recipient_event', (event: any) => applyEventNotificationViewAccess(event, userID))
+          exists(
+            'recipient_event',
+            (event: any) => applyEventNotificationViewAccess(event, userID),
+            { flip: false }
+          )
         );
       case 'amendment':
         return or(
           personalRecipient,
-          exists('recipient_amendment', (amendment: any) =>
-            applyAmendmentNotificationViewAccess(amendment, userID)
+          exists(
+            'recipient_amendment',
+            (amendment: any) => applyAmendmentNotificationViewAccess(amendment, userID),
+            { flip: false }
           )
         );
       case 'blog':
         return or(
           personalRecipient,
-          exists('recipient_blog', (blog: any) => applyBlogNotificationViewAccess(blog, userID))
+          exists('recipient_blog', (blog: any) => applyBlogNotificationViewAccess(blog, userID), {
+            flip: false,
+          })
         );
     }
   }) as NotificationBaseQuery;
@@ -170,11 +233,11 @@ function withCommonNotificationRelations(q: NotificationBaseQuery, userID: strin
     .related('sender')
     .related('recipient')
     .related('related_user')
-    .related('related_group')
+    .related('related_group', group => applyGroupDiscoveryQueryAccess(group, userID))
     .related('related_event')
     .related('related_amendment')
     .related('related_blog')
-    .related('on_behalf_of_group')
+    .related('on_behalf_of_group', group => applyGroupDiscoveryQueryAccess(group, userID))
     .related('on_behalf_of_event')
     .related('on_behalf_of_amendment')
     .related('on_behalf_of_blog')
@@ -200,7 +263,7 @@ function roleHasPinnedNotificationRight(
   return role.whereExists(
     'action_rights',
     (right: any) =>
-      right.where('resource', resource).where('action', 'IN', NOTIFICATION_VIEW_ACTIONS),
+      whereAnyOf(right.where('resource', resource), 'action', NOTIFICATION_VIEW_ACTIONS),
     { flip: false }
   );
 }
@@ -264,7 +327,7 @@ function withGenericRecipientRelations(
 ) {
   return q
     .related('recipient_group', group =>
-      group
+      applyGroupDiscoveryQueryAccess(group, userID)
         .related('memberships', membership =>
           membership
             .where('user_id', userID)
@@ -273,12 +336,13 @@ function withGenericRecipientRelations(
             )
         )
         .related('guest_accesses', guestAccess =>
-          guestAccess
-            .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES)
-            .related('guest_roles', guestRole =>
-              guestRole.related('role', role => role.related('action_rights'))
-            )
+          whereAnyOf(
+            guestAccess.where('user_id', userID),
+            'status',
+            ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES
+          ).related('guest_roles', guestRole =>
+            guestRole.related('role', role => role.related('action_rights'))
+          )
         )
     )
     .related('recipient_event', event =>
@@ -292,10 +356,11 @@ function withGenericRecipientRelations(
     )
     .related('recipient_amendment', amendment =>
       amendment.related('collaborators', collaborator =>
-        collaborator
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
-          .related('role', role => role.related('action_rights'))
+        whereAnyOf(
+          collaborator.where('user_id', userID),
+          'status',
+          ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES
+        ).related('role', role => role.related('action_rights'))
       )
     )
     .related('recipient_blog', blog =>
@@ -317,7 +382,7 @@ function buildGroupNotificationQuery(q: NotificationBaseQuery, userID: string | 
     applyTypedNotificationAccess(q, userID, 'group'),
     userID
   ).related('recipient_group', group =>
-    group
+    applyGroupDiscoveryQueryAccess(group, userID)
       .related('memberships', membership =>
         membership
           .where('user_id', userID)
@@ -326,12 +391,13 @@ function buildGroupNotificationQuery(q: NotificationBaseQuery, userID: string | 
           )
       )
       .related('guest_accesses', guestAccess =>
-        guestAccess
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES)
-          .related('guest_roles', guestRole =>
-            guestRole.related('role', role => role.related('action_rights'))
-          )
+        whereAnyOf(
+          guestAccess.where('user_id', userID),
+          'status',
+          ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES
+        ).related('guest_roles', guestRole =>
+          guestRole.related('role', role => role.related('action_rights'))
+        )
       )
   );
 }
@@ -357,10 +423,11 @@ function buildAmendmentNotificationQuery(q: NotificationBaseQuery, userID: strin
     userID
   ).related('recipient_amendment', amendment =>
     amendment.related('collaborators', collaborator =>
-      collaborator
-        .where('user_id', userID)
-        .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
-        .related('role', role => role.related('action_rights'))
+      whereAnyOf(
+        collaborator.where('user_id', userID),
+        'status',
+        ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES
+      ).related('role', role => role.related('action_rights'))
     )
   );
 }
@@ -479,7 +546,7 @@ export const notificationQueries = {
 
       if (tab === 'personal' && (entityId || entityType)) q = q.where('recipient_id', userID);
       if (tab === 'entity') {
-        q = q.where('recipient_entity_type', 'IN', ['group', 'event', 'amendment', 'blog']);
+        q = whereAnyOf(q, 'recipient_entity_type', ['group', 'event', 'amendment', 'blog']);
       }
 
       const normalizedQuery = query.trim();
@@ -512,7 +579,7 @@ export const notificationQueries = {
       }
       if (tab === 'personal') q = q.where('recipient_id', userID);
       if (tab === 'entity') {
-        q = q.where('recipient_entity_type', 'IN', ['group', 'event', 'amendment', 'blog']);
+        q = whereAnyOf(q, 'recipient_entity_type', ['group', 'event', 'amendment', 'blog']);
       }
       q = applyNotificationTabState(q, tab, userID);
       const normalizedQuery = query.trim();
@@ -582,10 +649,11 @@ export const notificationQueries = {
     entityNotificationCountArgsSchema,
     ({ args: { entityId, query }, ctx: { userID } }) =>
       denyAnonymousEntityCounterAccess(
-        zql.group_membership
-          .where('user_id', userID)
-          .where('group_id', entityId)
-          .where('status', 'IN', ACTIVE_GROUP_NOTIFICATION_STATUSES),
+        whereAnyOf(
+          zql.group_membership.where('user_id', userID).where('group_id', entityId),
+          'status',
+          ACTIVE_GROUP_NOTIFICATION_STATUSES
+        ),
         userID
       )
         .whereExists(
@@ -599,7 +667,13 @@ export const notificationQueries = {
           { flip: false }
         )
         .related('group', (group: any) =>
-          withScopedNotificationsOnEntity(group, userID, entityId, 'group', query)
+          withScopedNotificationsOnEntity(
+            applyGroupDiscoveryQueryAccess(group, userID),
+            userID,
+            entityId,
+            'group',
+            query
+          )
         )
   ),
 
@@ -607,10 +681,11 @@ export const notificationQueries = {
     entityNotificationCountArgsSchema,
     ({ args: { entityId, query }, ctx: { userID } }) =>
       denyAnonymousEntityCounterAccess(
-        zql.group_guest_access
-          .where('user_id', userID)
-          .where('group_id', entityId)
-          .where('status', 'IN', ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES),
+        whereAnyOf(
+          zql.group_guest_access.where('user_id', userID).where('group_id', entityId),
+          'status',
+          ACTIVE_GROUP_GUEST_NOTIFICATION_STATUSES
+        ),
         userID
       )
         .whereExists(
@@ -624,7 +699,13 @@ export const notificationQueries = {
           { flip: false }
         )
         .related('group', (group: any) =>
-          withScopedNotificationsOnEntity(group, userID, entityId, 'group', query)
+          withScopedNotificationsOnEntity(
+            applyGroupDiscoveryQueryAccess(group, userID),
+            userID,
+            entityId,
+            'group',
+            query
+          )
         )
   ),
 
@@ -632,10 +713,11 @@ export const notificationQueries = {
     entityNotificationCountArgsSchema,
     ({ args: { entityId, query }, ctx: { userID } }) =>
       denyAnonymousEntityCounterAccess(
-        zql.event_participant
-          .where('user_id', userID)
-          .where('event_id', entityId)
-          .where('status', 'IN', ACTIVE_EVENT_NOTIFICATION_STATUSES),
+        whereAnyOf(
+          zql.event_participant.where('user_id', userID).where('event_id', entityId),
+          'status',
+          ACTIVE_EVENT_NOTIFICATION_STATUSES
+        ),
         userID
       )
         .whereExists(
@@ -672,10 +754,11 @@ export const notificationQueries = {
     entityNotificationCountArgsSchema,
     ({ args: { entityId, query }, ctx: { userID } }) =>
       denyAnonymousEntityCounterAccess(
-        zql.amendment_collaborator
-          .where('user_id', userID)
-          .where('amendment_id', entityId)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES),
+        whereAnyOf(
+          zql.amendment_collaborator.where('user_id', userID).where('amendment_id', entityId),
+          'status',
+          ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES
+        ),
         userID
       )
         .whereExists('role', (role: any) => roleHasPinnedNotificationRight(role, 'notifications'), {
@@ -709,7 +792,7 @@ export const notificationQueries = {
       ),
       userID
     )
-      .related('recipient_group')
+      .related('recipient_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .one()
   ),
 
@@ -724,7 +807,7 @@ export const notificationQueries = {
         ),
         userID
       )
-        .related('recipient_group')
+        .related('recipient_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .one()
   ),
 
@@ -792,7 +875,7 @@ export const notificationQueries = {
     ({ ctx: { userID }, args: { groupIds } }) =>
       applyActiveNotificationState(
         buildGroupNotificationQuery(
-          zql.notification.where('recipient_group_id', 'IN', groupIds),
+          whereAnyOf(zql.notification, 'recipient_group_id', groupIds),
           userID
         ),
         userID
@@ -807,7 +890,7 @@ export const notificationQueries = {
     ({ ctx: { userID }, args: { eventIds } }) =>
       applyActiveNotificationState(
         buildEventNotificationQuery(
-          zql.notification.where('recipient_event_id', 'IN', eventIds),
+          whereAnyOf(zql.notification, 'recipient_event_id', eventIds),
           userID
         ),
         userID
@@ -822,7 +905,7 @@ export const notificationQueries = {
     ({ ctx: { userID }, args: { amendmentIds } }) =>
       applyActiveNotificationState(
         buildAmendmentNotificationQuery(
-          zql.notification.where('recipient_amendment_id', 'IN', amendmentIds),
+          whereAnyOf(zql.notification, 'recipient_amendment_id', amendmentIds),
           userID
         ),
         userID
@@ -837,7 +920,7 @@ export const notificationQueries = {
     ({ ctx: { userID }, args: { blogIds } }) =>
       applyActiveNotificationState(
         buildBlogNotificationQuery(
-          zql.notification.where('recipient_blog_id', 'IN', blogIds),
+          whereAnyOf(zql.notification, 'recipient_blog_id', blogIds),
           userID
         ),
         userID
@@ -855,7 +938,9 @@ export const notificationQueries = {
 
   // User's group memberships (for entity ID collection)
   userGroupMemberships: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.group_membership.where('user_id', userID).related('group')
+    zql.group_membership
+      .where('user_id', userID)
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   // User's event participations
@@ -865,9 +950,11 @@ export const notificationQueries = {
 
   // User's amendment collaborations
   userAmendmentCollaborations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.amendment_collaborator
-      .where('user_id', userID)
-      .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+    whereAnyOf(
+      zql.amendment_collaborator.where('user_id', userID),
+      'status',
+      ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES
+    )
       .related('amendment')
       .related('role', q => q.related('action_rights'))
   ),

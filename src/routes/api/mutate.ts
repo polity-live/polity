@@ -6,25 +6,33 @@ import { getAuthFromRequest } from '@/server/zero-auth';
 import { withNotificationDeliveryQueue } from '@/zero/server-notify';
 import { sanitizeZeroMutationResult } from '@/server/zero-mutate';
 import { appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
+import { mutationDiagnostic, withMutationDiagnostics } from '@/server/zero-mutation-diagnostics';
 
 export const Route = createFileRoute('/api/mutate')({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const ctx = await getAuthFromRequest(request);
-        const push = new PushProcessor(dbProvider, ctx);
-        try {
-          const result = await withNotificationDeliveryQueue(() =>
-            push.process(serverMutators, request)
-          );
+      POST: async ({ request }) =>
+        withMutationDiagnostics(
+          request,
+          async () => {
+            const authAt = performance.now();
+            const ctx = await getAuthFromRequest(request);
+            mutationDiagnostic('auth', authAt);
+            const push = new PushProcessor(dbProvider, ctx);
+            try {
+              const result = await withNotificationDeliveryQueue(() =>
+                push.process(serverMutators, request)
+              );
 
-          return Response.json(sanitizeZeroMutationResult(result));
-        } catch (error) {
-          return Response.json(appErrorHttpBodyFrom(error, 'mutation_server_failed'), {
-            status: 500,
-          });
-        }
-      },
+              return Response.json(sanitizeZeroMutationResult(result));
+            } catch (error) {
+              return Response.json(appErrorHttpBodyFrom(error, 'mutation_server_failed'), {
+                status: 500,
+              });
+            }
+          },
+          serverMutators
+        ),
     },
   },
 });
