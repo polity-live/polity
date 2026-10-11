@@ -78,5 +78,9 @@ it.each(['', 'anon'])('denies project conversation replication for identity %s',
     args: { kind: 'studio', projectId: crypto.randomUUID() },
     ctx: { userID, email: '' },
   });
-  expect(harness.lastQuery('conversation').calls).toContainEqual(['where', 'id', 'IS', null]);
+  expect(harness.lastQuery('conversation').calls).toContainEqual([
+    'where',
+    'id',
+    '00000000-0000-0000-0000-000000000000',
+  ]);
 });

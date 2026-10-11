@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { resultQuery } from '../../common/__tests__/query-result-harness';
+import { zql } from '../../schema';
 
 import {
   applyAccreditationQueryAccess,
@@ -86,6 +88,30 @@ function expectQueryMutation(callback: (query: EagerQuery) => unknown) {
 }
 
 describe('query access authentication decision table', () => {
+  it('denies every row including the nil UUID while retaining contradictory primary-key predicates', () => {
+    const nilID = '00000000-0000-0000-0000-000000000000';
+    const query = denyAllRows(resultQuery());
+    expect(query.run([{ id: nilID }, { id: '00000000-0000-4000-8000-000000000001' }])).toEqual([]);
+    const ast = (denyAllRows(zql.event) as any).ast;
+    expect(ast.where).toEqual({
+      type: 'and',
+      conditions: [
+        {
+          type: 'simple',
+          left: { type: 'column', name: 'id' },
+          op: '=',
+          right: { type: 'literal', value: nilID },
+        },
+        {
+          type: 'simple',
+          left: { type: 'column', name: 'id' },
+          op: '!=',
+          right: { type: 'literal', value: nilID },
+        },
+      ],
+    });
+  });
+
   it('classifies viewer identities and basic requested-user constraints', () => {
     expect(isAuthenticatedUserId(undefined)).toBe(false);
     expect(isAuthenticatedUserId(null)).toBe(false);
@@ -96,14 +122,12 @@ describe('query access authentication decision table', () => {
     expect(expectQueryMutation(query => denyAllRows(query)).calls).toContainEqual([
       'where',
       'id',
-      'IS',
-      null,
+      '00000000-0000-0000-0000-000000000000',
     ]);
     expect(expectQueryMutation(query => requireQueryUser(query, undefined)).calls).toContainEqual([
       'where',
       'id',
-      'IS',
-      null,
+      '00000000-0000-0000-0000-000000000000',
     ]);
     expect(expectQueryMutation(query => requireQueryUser(query, 'viewer')).calls).toContainEqual([
       'where',
@@ -116,10 +140,10 @@ describe('query access authentication decision table', () => {
 
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'viewer', undefined)).calls
-    ).toContainEqual(['where', 'id', 'IS', null]);
+    ).toContainEqual(['where', 'id', '00000000-0000-0000-0000-000000000000']);
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'other', 'viewer')).calls
-    ).toContainEqual(['where', 'id', 'IS', null]);
+    ).toContainEqual(['where', 'id', '00000000-0000-0000-0000-000000000000']);
     expect(
       expectQueryMutation(query => requireRequestedViewer(query, 'viewer', 'viewer')).calls
     ).toContainEqual(['where', 'user_id', 'viewer']);

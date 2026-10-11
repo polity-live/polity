@@ -256,7 +256,7 @@ const cases = {
 } satisfies Record<string, () => string>;
 
 // Unconditional denial uses a null primary key predicate, valid for SQL UUIDs.
-const DENIED = '4589fcd36d2a09e349d876376338cf8d05ddad3171c3d9b923ff684354fe0490';
+const DENIED = '40e89689a682ade59eaea5f5ab45fa6b7421e5f976d5feefefefac0ff4d5ab2b';
 const PUBLIC_ROOT = '899103a72c1a4bf2f6cb518ff852366d3563cc6e601cf15a6a0180db6d27229a';
 
 const expectedDigests = {

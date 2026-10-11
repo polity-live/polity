@@ -67,7 +67,7 @@ describe('Studio event presentation projections', () => {
       expect(viewing).toContainEqual(
         userID === 'alice' ? ['cmp', 'creator_id', userID] : ['where', 'visibility', 'public']
       );
-      expect(viewing).not.toContainEqual(['where', 'id', 'IS', null]);
+      expect(viewing).not.toContainEqual(['where', 'id', '00000000-0000-0000-0000-000000000000']);
 
       studioQueries.eventManager.fn({ args: { eventId }, ctx });
       expect(harness.lastQuery('event').calls).toEqual(
@@ -91,7 +91,7 @@ describe('Studio event presentation projections', () => {
           ['manage'],
         ]);
       } else {
-        expect(managing).toContainEqual(['where', 'id', 'IS', null]);
+        expect(managing).toContainEqual(['where', 'id', '00000000-0000-0000-0000-000000000000']);
       }
     }
   );
@@ -136,7 +136,12 @@ describe('Studio event presentation projections', () => {
             ['events', 'agendaItems'],
           ]);
         } else {
-          expect(deviceRules).toContainEqual(['where', 'event', 'id', 'IS', null]);
+          expect(deviceRules).toContainEqual([
+            'where',
+            'event',
+            'id',
+            '00000000-0000-0000-0000-000000000000',
+          ]);
           expect(deviceRules).toContainEqual(['where', 'event', 'visibility', 'public']);
         }
       }

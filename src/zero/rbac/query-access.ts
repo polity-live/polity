@@ -6,8 +6,10 @@ export function isAuthenticatedUserId(userID: string | undefined | null): userID
 }
 
 export function denyAllRows<T>(q: T): T {
-  // Primary keys cannot be null. This also compiles safely for UUID columns.
-  return (q as any).where('id', 'IS', null) as T;
+  // Keep denial on the primary-key lookup with valid UUID operands. The
+  // contradiction excludes every row, including a row whose ID is the nil UUID.
+  const nilID = '00000000-0000-0000-0000-000000000000';
+  return (q as any).where('id', nilID).where('id', '!=', nilID) as T;
 }
 
 export function requireQueryUser<T>(q: T, userID: string | undefined | null, field = 'user_id'): T {
