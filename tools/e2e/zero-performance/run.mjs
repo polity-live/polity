@@ -782,12 +782,7 @@ ${storageBuckets}
           '--mount',
           `type=bind,source=${path.join(sandbox, 'tools/e2e/zero-performance')},target=/scan-adapter,readonly`,
         ];
-        const zeroEnvironment = linuxEnvironment(environment);
-        Object.assign(zeroEnvironment, {
-          ZERO_PERFORMANCE_SCAN_STATUS: '1',
-          ZERO_PERFORMANCE_SCAN_STATUS_LOG: '/benchmark/sqlite-scan-status.ndjson',
-          NODE_OPTIONS: '--import=/scan-adapter/sqlite-scan-preload.mjs',
-        });
+        const zeroEnvironment = linuxEnvironment(environment, { scanStatus: true });
         if (appContainer) {
           dockerArgs.push('--network', `supabase_network_polity-zero-performance-${runID}`);
           zeroEnvironment.ZERO_QUERY_URL = `http://${appContainer}:${start}/api/query`;

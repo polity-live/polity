@@ -169,7 +169,7 @@ export function javascriptFingerprint(root) {
   return hash.digest('hex');
 }
 
-export function linuxEnvironment(environment) {
+export function linuxEnvironment(environment, { scanStatus = false } = {}) {
   const result = Object.fromEntries(
     Object.entries(environment).filter(
       ([key]) => key.startsWith('ZERO_') && !key.startsWith('ZERO_PERFORMANCE_')
@@ -190,5 +190,18 @@ export function linuxEnvironment(environment) {
   }
   result.ZERO_REPLICA_FILE = '/replica/zero.db';
   result.NODE_ENV = 'production';
+  if (scanStatus) {
+    const runtimeID = environment.ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID;
+    if (
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(runtimeID ?? '')
+    )
+      throw new Error('Missing owned SQLite benchmark runtime identity');
+    Object.assign(result, {
+      ZERO_PERFORMANCE_SCAN_STATUS: '1',
+      ZERO_PERFORMANCE_SCAN_STATUS_LOG: '/benchmark/sqlite-scan-status.ndjson',
+      ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID: runtimeID,
+      NODE_OPTIONS: '--import=/scan-adapter/sqlite-scan-preload.mjs',
+    });
+  }
   return result;
 }
