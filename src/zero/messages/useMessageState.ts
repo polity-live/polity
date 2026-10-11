@@ -12,6 +12,7 @@ interface MessageStateOptions {
   userId?: string;
   limit?: number;
   messageLimit?: number;
+  includeConversationMetadata?: boolean;
 }
 
 /**
@@ -28,6 +29,7 @@ export function useMessageState(options: MessageStateOptions = {}) {
     userId,
     limit,
     messageLimit,
+    includeConversationMetadata = true,
   } = options;
 
   const [messages, messagesResult] = useQuery(
@@ -37,11 +39,15 @@ export function useMessageState(options: MessageStateOptions = {}) {
   );
 
   const [conversation, conversationResult] = useQuery(
-    conversationId ? queries.messages.conversationById(conversationArgs(conversationId)) : undefined
+    conversationId && includeConversationMetadata
+      ? queries.messages.conversationById(conversationArgs(conversationId))
+      : undefined
   );
 
   const [unread, unreadResult] = useQuery(
-    conversationId ? queries.messages.unreadCount({ conversation_id: conversationId }) : undefined
+    conversationId && includeConversationMetadata
+      ? queries.messages.unreadCount({ conversation_id: conversationId })
+      : undefined
   );
 
   const [conversationsWithRelations, conversationsWithRelationsResult] = useQuery(
@@ -73,8 +79,8 @@ export function useMessageState(options: MessageStateOptions = {}) {
   const isLoading =
     (Boolean(conversationId) &&
       (messagesResult.type === 'unknown' ||
-        conversationResult.type === 'unknown' ||
-        unreadResult.type === 'unknown')) ||
+        (includeConversationMetadata &&
+          (conversationResult.type === 'unknown' || unreadResult.type === 'unknown')))) ||
     (includeRelations === true && conversationsWithRelationsResult.type === 'unknown') ||
     (includeForUnread === true && conversationsForUnreadResult.type === 'unknown') ||
     (includeConversationsByUser === true &&

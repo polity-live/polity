@@ -329,6 +329,10 @@ describe('useMessagesPage branch contract', () => {
     setup({ search: { conversationId: target.id }, conversations: [target] });
     renderHook(() => useMessagesPage());
 
+    expect(mocks.useMessageState).toHaveBeenCalledWith(
+      expect.objectContaining({ includeConversationMetadata: false })
+    );
+
     expect(mocks.setSelectedConversationId).toHaveBeenCalledWith(target.id);
     expect(mocks.setSearchQuery).toHaveBeenCalledWith('');
     expect(mocks.navigate).toHaveBeenCalled();

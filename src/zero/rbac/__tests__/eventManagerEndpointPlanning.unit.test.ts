@@ -2,7 +2,14 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { queryAST } from '../../../../tools/e2e/zero-performance/oracle';
 import {
+  buildQuery,
+  loadCases,
+  OWNER,
+  OUTSIDER,
+} from '../../../../tools/e2e/zero-performance/catalog';
+import {
   applyAmendmentQueryAccess,
+  applyDocumentQueryAccess,
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyEventManagerQueryAccess,
@@ -26,6 +33,36 @@ const canonical = (value: any): any =>
             .map(([key, child]) => [key, canonical(child)])
         )
       : value;
+
+describe('single amendment document access planning', () => {
+  it.each([OWNER, OUTSIDER, { userID: 'anon', email: '' }])(
+    'keeps the singular document and all access predicates while starting from its primary key for $userID',
+    ctx => {
+      const entry = loadCases().find(
+        entry => entry.name === 'amendments.documentById' && entry.variant === 'default'
+      )!;
+      const query = buildQuery(entry, ctx);
+      const actual = queryAST(query);
+      const original = queryAST(
+        applyDocumentQueryAccess(
+          zql.document.where('id', (entry.args as { id: string }).id),
+          ctx.userID
+        ).one()
+      );
+      expect(canonical(actual)).toEqual(canonical(original));
+      expect(actual).toMatchObject({ table: 'document', limit: 1 });
+      expect((query as any).format.singular).toBe(true);
+      const rootPermissions: any[] = [];
+      const visit = (condition: any) => {
+        if (condition.type === 'correlatedSubquery') rootPermissions.push(condition);
+        else condition.conditions?.forEach(visit);
+      };
+      visit(actual.where);
+      expect(rootPermissions).toHaveLength(ctx.userID === 'anon' ? 1 : 3);
+      for (const permission of rootPermissions) expect(permission.flip).toBe(false);
+    }
+  );
+});
 
 function originalGroupRights(q: any, userID: string, discovery: boolean) {
   const actions = discovery ? ['view', 'manage'] : ['manage'];

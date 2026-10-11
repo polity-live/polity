@@ -1372,7 +1372,12 @@ const amendmentQueriesBase = {
 
   // Single document by id
   documentById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyDocumentQueryAccess(zql.document.where('id', id), userID).one()
+    // Start permission checks from the one document selected by its primary key.
+    // Flipped permission unions can invalidate Zero 1.9's Take bound during edits.
+    applyDocumentQueryAccess(zql.document.where('id', id), userID, {
+      collaboratorFlip: false,
+      amendmentFlip: false,
+    }).one()
   ),
 
   // Roles for amendment collaborators

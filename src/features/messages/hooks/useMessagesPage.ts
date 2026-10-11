@@ -62,6 +62,8 @@ export function useMessagesPage() {
   const { messages: selectedMessages, isLoading: isSelectedMessagesLoading } = useMessageState({
     conversationId: selectedConversationId ?? undefined,
     messageLimit,
+    // The conversation list already supplies metadata; this caller only uses messages.
+    includeConversationMetadata: false,
   });
 
   const conversationOnlineStatus = useMemo<Record<string, boolean>>(() => {
