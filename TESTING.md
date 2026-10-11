@@ -1,6 +1,6 @@
 # Polity test strategy
 
-Every user action belongs on the lowest test level that can reproduce a failure reliably. The executable mapping for the nine critical business processes lives in `tools/testing/action-catalog.json` and is checked by `pnpm run test:action-catalog`. The separate flow campaign and its ten canonical cross-boundary acceptance journeys live in `tools/testing/flow-test-campaign.json` and are checked by `pnpm run test:flow-campaign`.
+Every user action belongs on the lowest test level that can reproduce a failure reliably. The executable mapping for the nine critical business processes lives in `tools/testing/action-catalog.json` and is checked by `pnpm run test:action-catalog`. The separate flow campaign and its eleven canonical cross-boundary acceptance journeys live in `tools/testing/flow-test-campaign.json` and are checked by `pnpm run test:flow-campaign`.
 
 The campaign audit currently locks 87 component-flow, 13 service-integration, 9 database-integration, 20 PR E2E and 10 nightly E2E cases: 139 promoted cases in total. It separately asserts that exactly ten E2E journeys carry the `@acceptance` contract.
 

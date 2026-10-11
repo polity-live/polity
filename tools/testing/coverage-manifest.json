@@ -1824,156 +1824,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/build-workbook.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/export-validation.json",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/extract-inventory.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-0.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-1.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-2.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-3.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-4.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/preview-5.png",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "asset-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/review-inventory.mjs",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/validate-exports.py",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/workbook-inspect.ndjson",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/_support/workbook-validation.json",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/polity-command-migration-inventory.json",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "outputs/01a12be1-a2bc-7e11-ab81-6267b6a9910a/polity-command-migration-inventory.xlsx",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "asset",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "package.json",
       "domain": "platform",
       "owner": "polity/platform",
@@ -2079,6 +1929,16 @@
       "owner": "polity/pwa",
       "kind": "asset",
       "verification": "asset-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "public/audio/cinematic/LICENSE-CC-BY-4.0.txt",
+      "domain": "pwa",
+      "owner": "polity/pwa",
+      "kind": "documentation",
+      "verification": "static-contract",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
@@ -135454,6 +135314,16 @@
           "caseId": "covers every registered governance entry point with authorized behavior or an explicit immutable/server-only rejection"
         }
       ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/mutation-cases-presentation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
       "suggestedTestRefs": []
     },
     {

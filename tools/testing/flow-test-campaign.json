@@ -40,7 +40,7 @@
     "src/server/__tests__/external-delivery.service-integration.test.ts": 3
   },
   "databaseIntegration": {
-    "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts": 3,
+    "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts": 6,
     "tools/database/__tests__/membership-event-invariants.database-integration.test.ts": 2,
     "src/zero/amendments/__tests__/governance-concurrency.database-integration.test.ts": 2,
     "src/server/__tests__/outbox-dataset.database-integration.test.ts": 2
@@ -78,6 +78,7 @@
     "e2e/assistant-tool-confirmation.e2e.spec.ts": "nightly"
   },
   "acceptance": [
+    "e2e/group-email-invitations.e2e.spec.ts",
     "e2e/auth-session.e2e.spec.ts",
     "e2e/create/group.e2e.spec.ts",
     "e2e/membership-approval.e2e.spec.ts",

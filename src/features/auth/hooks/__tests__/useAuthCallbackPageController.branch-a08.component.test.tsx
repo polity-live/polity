@@ -29,9 +29,6 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: { error: mocks.toastError },
 }));
-vi.mock('@/features/auth/logic/authRedirects', () => ({
-  getSafeAuthRedirect: (next: string | null) => next || '/',
-}));
 vi.mock('@/features/auth/logic/authLanguage', () => ({
   consumePendingGoogleLanguage: mocks.consumePendingGoogleLanguage,
   normalizeAuthLanguage: (language: unknown) => (language === 'de' ? 'de' : 'en'),
@@ -95,12 +92,21 @@ describe('useAuthCallbackPageController', () => {
     expect(mocks.toastError).not.toHaveBeenCalled();
   });
   it('exchanges an authorization code and respects the validated destination', async () => {
-    window.history.replaceState({}, '', '/auth/callback?code=oauth-code&next=%2Fgroups%2Fg-1');
+    const token = 'a'.repeat(43);
+    window.history.replaceState({}, '', `/auth/callback?code=oauth-code&next=%2Finvite%2F${token}`);
     renderHook(() => useAuthCallbackPageController());
 
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: '/groups/g-1' }));
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: '/invite/$token', params: { token } })
+    );
     expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith('oauth-code');
     expect(mocks.getUser).toHaveBeenCalledOnce();
+  });
+
+  it('falls back to the home page for a destination outside the callback allowlist', async () => {
+    window.history.replaceState({}, '', '/auth/callback?code=oauth-code&next=%2Fgroups%2Fg-1');
+    renderHook(() => useAuthCallbackPageController());
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: '/' }));
   });
 
   it('uses an existing session when no authorization code is present', async () => {
