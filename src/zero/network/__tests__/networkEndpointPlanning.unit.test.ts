@@ -66,6 +66,22 @@ const canonical = (value: any): any =>
       : value;
 
 describe('indexed network endpoint selection', () => {
+  it('requires the validated canonical request pair and its composite unique index for a single pair lookup', () => {
+    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    expect(migration).toContain(
+      'add constraint "group_connection_request_canonical_pair_check" CHECK ((group_a_id < group_b_id)) not valid;'
+    );
+    expect(migration).toContain(
+      'alter table "public"."group_connection_request" validate constraint "group_connection_request_canonical_pair_check";'
+    );
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX group_connection_request_group_a_id_group_b_id_key ON public.group_connection_request USING btree (group_a_id, group_b_id);'
+    );
+    expect(migration).toContain(
+      'add constraint "group_connection_request_group_a_id_group_b_id_key" UNIQUE using index "group_connection_request_group_a_id_group_b_id_key";'
+    );
+  });
+
   for (const name of ['wikiNetwork', 'groupConnectionsByGroup', 'groupConnectionsByPair']) {
     it.each([OWNER, OUTSIDER, { userID: 'anon', email: '' }])(
       `${name} preserves all connection endpoints and access predicates for $userID`,

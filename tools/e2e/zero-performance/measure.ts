@@ -490,7 +490,9 @@ try {
       let anchor: string | undefined;
       try {
         if (profile === 'minimal') anchor = await fixtures.seed(queryAST(buildQuery(entry)));
-        await waitForZeroReady();
+        // The WAL barrier is unchanged; poll fixture replication more frequently
+        // before timing so runner time is spent measuring rather than sleeping.
+        await waitForZeroReady({ pollIntervalMs: 100 });
         await measure(entry, profile, 'owner', anchor);
         if (profile === 'minimal') {
           await measure(entry, profile, 'outsider');
