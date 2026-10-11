@@ -4,7 +4,7 @@ import { cp, mkdir, readFile, writeFile, symlink, access, open, unlink } from 'n
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { randomUUID, createECDH } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYAML } from 'yaml';
 import { mechanics, applicationMechanics } from './mechanics.mjs';
 import {
@@ -79,7 +79,7 @@ function run(command, argv, options = {}) {
   const log = createWriteStream(path.join(artifactRoot, `${label}.log`), { flags: 'a' });
   const child = spawn(command, argv, {
     cwd: sandbox,
-    env: environment,
+    env: options.env ?? environment,
     shell: false,
     windowsHide: true,
   });
@@ -743,6 +743,16 @@ ${storageBuckets}
         process.platform === 'linux'
           ? ['tools/zero/run-e2e-cache.mjs']
           : [path.join(sandbox, 'node_modules/@rocicorp/zero/out/zero/src/cli.js')];
+      environment.ZERO_PERFORMANCE_SCAN_STATUS_LOG = path.join(
+        artifactRoot,
+        'sqlite-scan-status.ndjson'
+      );
+      const zeroEnvironmentOverrides = {
+        ZERO_PERFORMANCE_SCAN_STATUS: '1',
+        ZERO_PERFORMANCE_SCAN_STATUS_LOG: environment.ZERO_PERFORMANCE_SCAN_STATUS_LOG,
+        NODE_OPTIONS: `--import=${pathToFileURL(path.join(sandbox, 'tools/e2e/zero-performance/sqlite-scan-preload.mjs')).href}`,
+      };
+      environment.ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID = randomUUID();
       let zero;
       if (image) {
         runtimeContainer = `polity-zero-performance-runtime-${runID}`;
@@ -767,8 +777,17 @@ ${storageBuckets}
           `127.0.0.1:${start + 1}:${start + 1}`,
           '--tmpfs',
           '/replica',
+          '--mount',
+          `type=bind,source=${artifactRoot},target=/benchmark`,
+          '--mount',
+          `type=bind,source=${path.join(sandbox, 'tools/e2e/zero-performance')},target=/scan-adapter,readonly`,
         ];
         const zeroEnvironment = linuxEnvironment(environment);
+        Object.assign(zeroEnvironment, {
+          ZERO_PERFORMANCE_SCAN_STATUS: '1',
+          ZERO_PERFORMANCE_SCAN_STATUS_LOG: '/benchmark/sqlite-scan-status.ndjson',
+          NODE_OPTIONS: '--import=/scan-adapter/sqlite-scan-preload.mjs',
+        });
         if (appContainer) {
           dockerArgs.push('--network', `supabase_network_polity-zero-performance-${runID}`);
           zeroEnvironment.ZERO_QUERY_URL = `http://${appContainer}:${start}/api/query`;
@@ -784,7 +803,11 @@ ${storageBuckets}
           dockerArgs.push('--env', `${key}=${value}`);
         dockerArgs.push(image, 'node', '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js');
         zero = run('docker', dockerArgs, { label: 'zero' });
-      } else zero = run(process.execPath, zeroArgs, { label: 'zero' });
+      } else
+        zero = run(process.execPath, zeroArgs, {
+          label: 'zero',
+          env: { ...environment, ...zeroEnvironmentOverrides },
+        });
       zero.done.catch(() => {
         /* Readiness and child exit checks report service failures. */
       });

@@ -29,6 +29,11 @@ import {
   measuredServerWarnings,
 } from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
+import {
+  scanStatusCursor,
+  writeScanStatusArtifact,
+  type ScanStatusArtifact,
+} from './scan-status-artifacts';
 import { measurementSummary, resultsCSV } from './results';
 import { executionMetadata, runtimeMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
@@ -293,7 +298,9 @@ async function measure(
           releaseAnalysisView = view.destroy.bind(view);
           view = undefined;
           analyze = async () => {
+            const scanStatusArtifacts: ScanStatusArtifact[] = [];
             for (let repeat = 0; repeat < REPETITIONS.warmup + REPETITIONS.analyze; repeat++) {
+              const cursor = await scanStatusCursor();
               const analyzed = await deadline(
                 stats.analyze({ joinPlans: false }),
                 'Query analyzer'
@@ -305,6 +312,15 @@ async function measure(
                 analyzed.sqlitePlans == null
               )
                 throw new Error('Incomplete analyzer result');
+              scanStatusArtifacts.push(
+                await writeScanStatusArtifact(
+                  planOutput,
+                  `${measurement.key}/analyze/${repeat}`,
+                  cursor,
+                  analyzed.dbScansByQuery,
+                  analyzed.sqlitePlans
+                )
+              );
               if (repeat >= REPETITIONS.warmup) measurement.analyzeMs.push(analyzed.elapsed);
               measurement.readRows = analyzed.readRowCount;
               const scanCounts = Object.values(analyzed.dbScansByQuery).flatMap(counts =>
@@ -324,24 +340,39 @@ async function measure(
                 readsByQuery: analyzed.readRowCountsByQuery,
                 serverZQL: stats.serverZQL,
                 clientZQL: stats.clientZQL,
+                scanStatusArtifacts: [...scanStatusArtifacts],
               };
               measurement.warnings.push(...analyzed.warnings.filter(w => /Slow query/i.test(w)));
             }
             // Export the expensive join trace once, after the diagnostic analysis.
             // Timings remain the unmodified elapsed values from Zero's analyzer.
+            const exportCursor = await scanStatusCursor();
             const exportAt = performance.now();
             const exported = await deadline(
               stats.analyze({ joinPlans: true }),
               'Query plan export'
             );
-            if (exported.joinPlans == null || exported.sqlitePlans == null)
+            if (
+              exported.joinPlans == null ||
+              exported.sqlitePlans == null ||
+              exported.dbScansByQuery == null
+            )
               throw new Error('Incomplete query plan export');
+            const exportMs = performance.now() - exportAt;
+            const scanStatusExportArtifact = await writeScanStatusArtifact(
+              planOutput,
+              `${measurement.key}/export`,
+              exportCursor,
+              exported.dbScansByQuery,
+              exported.sqlitePlans
+            );
             measurement.plans = {
               ...(measurement.plans as Record<string, unknown>),
               sqlite: exported.sqlitePlans,
               joins: exported.joinPlans,
-              exportMs: performance.now() - exportAt,
+              exportMs,
               exportMode: 'separate',
+              scanStatusExportArtifact,
             };
             measurement.warnings.push(...exported.warnings.filter(w => /Slow query/i.test(w)));
           };
