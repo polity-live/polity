@@ -1612,7 +1612,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               (node.type === 'richText' &&
                 flattenText(node).toLowerCase().includes(command.query.toLowerCase()))
           );
-          if (found) props.selectExact?.([found.id]);
+          if (found) {
+            props.selectExact?.([found.id]);
+          }
         },
       }),
       [
@@ -1655,8 +1657,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         props.editable &&
         !node.locked &&
         (node.mediaType === 'image' || node.mediaType === 'video')
-      )
+      ) {
         void startCrop(node.id);
+      }
     };
     const selectNode = (id: string, shift: boolean) => {
       props.selectExact?.(canvasSelectionIds(props.document, props.selected, id, shift));
@@ -1716,7 +1719,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       const cancel = (event: Event) => {
         if (event instanceof KeyboardEvent && event.key !== 'Escape') return;
         const preview = dragPreview.current;
-        if (!preview) return;
+        if (!preview) {
+          return;
+        }
         event.preventDefault();
         ignoredFollowerDrags.current.add(preview.driverId);
         stage.current?.findOne(`#${preview.driverId}`)?.stopDrag();
@@ -2007,7 +2012,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               onDragMove={event => {
                 if (event.target !== event.currentTarget) return;
                 if (ignoredFollowerDrags.current.has(node.id)) return;
-                if (touchSuppressed.current) return;
+                if (touchSuppressed.current) {
+                  return;
+                }
                 const point = dragClientPoint(event.evt);
                 const preview = updateDragPreview(node.id, point.clientX, point.clientY);
                 props.onNodeDragMove?.(node.id, preview.selectedIds, point.clientX, point.clientY);

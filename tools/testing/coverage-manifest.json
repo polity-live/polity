@@ -26982,6 +26982,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -26989,8 +26990,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27011,6 +27011,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27018,8 +27019,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27090,6 +27090,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27097,8 +27098,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27164,6 +27164,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27171,8 +27172,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27218,6 +27218,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27225,8 +27226,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27247,6 +27247,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27254,8 +27255,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27772,14 +27772,14 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx"
       ]
     },
     {
@@ -27810,6 +27810,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27817,8 +27818,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27909,6 +27909,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27916,8 +27917,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27938,6 +27938,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27945,8 +27946,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -27987,6 +27987,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -27994,8 +27995,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28051,6 +28051,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28058,8 +28059,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28190,6 +28190,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28197,8 +28198,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28224,6 +28224,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28231,8 +28232,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28253,6 +28253,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28260,8 +28261,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28397,6 +28397,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28404,8 +28405,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28516,6 +28516,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28523,8 +28524,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28565,6 +28565,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28572,8 +28573,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28779,6 +28779,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28786,8 +28787,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28883,6 +28883,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28890,8 +28891,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28917,6 +28917,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -28924,8 +28925,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -28996,6 +28996,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29003,8 +29004,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29025,6 +29025,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29032,8 +29033,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29124,6 +29124,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29131,8 +29132,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29208,6 +29208,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29215,8 +29216,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29492,6 +29492,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29499,8 +29500,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29541,6 +29541,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29548,8 +29549,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29830,6 +29830,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -29837,8 +29838,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {
@@ -29863,6 +29863,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -30689,6 +30699,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
@@ -30696,8 +30707,7 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
       ]
     },
     {

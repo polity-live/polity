@@ -205,6 +205,47 @@ async function menu(name: string) {
   return { trigger, menu: within(await screen.findByRole('menu')) };
 }
 
+it('keeps the presentation-order DOM keyboard contract while allowing Escape to dismiss its menu', async () => {
+  await mount();
+  const preview = screen.getByRole('button', { name: 'preview' });
+  await activate(preview);
+  const order = within(await screen.findByRole('menu')).getByRole('combobox', {
+    name: 'eventLive.order',
+  });
+  order.focus();
+  expect(order).toHaveFocus();
+  const propagated = vi.fn();
+  window.addEventListener('keydown', propagated);
+  try {
+    const ordinary = new KeyboardEvent('keydown', {
+      key: 'Home',
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      order.dispatchEvent(ordinary);
+    });
+    expect(ordinary.defaultPrevented).toBe(false);
+    expect(propagated).not.toHaveBeenCalled();
+    expect(order).toHaveFocus();
+
+    // This explicitly tests DOM propagation; native keyboard dismissal is covered below.
+    const escape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      order.dispatchEvent(escape);
+    });
+    expect(propagated).toHaveBeenCalledExactlyOnceWith(escape);
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+    await waitFor(() => expect(preview).toHaveFocus());
+  } finally {
+    window.removeEventListener('keydown', propagated);
+  }
+});
+
 it.each([
   { width: 1280, height: 900, name: 'desktop' },
   { width: 390, height: 844, name: 'mobile' },
@@ -1419,6 +1460,8 @@ it.each([
       await act(async () => io.editor.transactV3((document: any) => document.show.cues.push(cue)));
       await selectOption(order, 'agenda');
       expect(io.editor.v3Value.show).toEqual({ order: 'agenda', cues: [cue] });
+      order.focus();
+      expect(order).toHaveFocus();
       await userEvent.keyboard('{Escape}');
       await waitFor(() => expect(preview).toHaveFocus());
       await activate(preview);

@@ -2314,7 +2314,9 @@ function StudioEditorReady({
                     className={input + ' w-full'}
                     value={c.v3Value?.show?.order ?? 'agenda'}
                     onKeyDown={event => {
-                      if (event.key !== 'Escape') event.stopPropagation();
+                      if (event.key !== 'Escape') {
+                        event.stopPropagation();
+                      }
                     }}
                     onChange={event => {
                       const order = event.target.value as 'agenda' | 'manual';
