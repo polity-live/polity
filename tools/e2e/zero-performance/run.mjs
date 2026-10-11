@@ -742,8 +742,17 @@ ${storageBuckets}
       startup.verifiedAssets = await verifyBuildAssets(appURL);
       startup.appMs = Date.now() - appAt;
       const zeroAt = Date.now();
-      const zeroArgs =
-        process.platform === 'linux'
+      const maintenanceStartup = path.join(sandbox, 'tools/zero/run-cache.mjs');
+      let hasMaintenanceStartup = true;
+      try {
+        await access(maintenanceStartup);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        hasMaintenanceStartup = false;
+      }
+      const zeroArgs = hasMaintenanceStartup
+        ? [maintenanceStartup]
+        : process.platform === 'linux'
           ? ['tools/zero/run-e2e-cache.mjs']
           : [path.join(sandbox, 'node_modules/@rocicorp/zero/out/zero/src/cli.js')];
       environment.ZERO_PERFORMANCE_SCAN_STATUS_LOG = path.join(
@@ -786,6 +795,15 @@ ${storageBuckets}
           `type=bind,source=${path.join(sandbox, 'tools/e2e/zero-performance')},target=/scan-adapter,readonly`,
         ];
         const zeroEnvironment = linuxEnvironment(environment, { scanStatus: true });
+        if (hasMaintenanceStartup) {
+          dockerArgs.push(
+            '--mount',
+            `type=bind,source=${path.join(sandbox, 'tools/zero')},target=/app/tools/zero,readonly`,
+            '--mount',
+            `type=bind,source=${path.join(sandbox, 'tools/shared/run-cli-if-main.mjs')},target=/app/tools/shared/run-cli-if-main.mjs,readonly`
+          );
+          zeroEnvironment.POLITY_ZERO_CLI = '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js';
+        }
         if (appContainer) {
           dockerArgs.push('--network', `supabase_network_polity-zero-performance-${runID}`);
           zeroEnvironment.ZERO_QUERY_URL = `http://${appContainer}:${start}/api/query`;
@@ -799,7 +817,13 @@ ${storageBuckets}
         }
         for (const [key, value] of Object.entries(zeroEnvironment))
           dockerArgs.push('--env', `${key}=${value}`);
-        dockerArgs.push(image, 'node', '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js');
+        dockerArgs.push(
+          image,
+          'node',
+          hasMaintenanceStartup
+            ? '/app/tools/zero/run-cache.mjs'
+            : '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js'
+        );
         zero = run('docker', dockerArgs, { label: 'zero' });
       } else
         zero = run(process.execPath, zeroArgs, {

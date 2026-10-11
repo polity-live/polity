@@ -1,6 +1,20 @@
 {
   "version": 1,
   "sourceReferences": {
+    "tools/zero/run-cache.mjs": [
+      {
+        "file": "tools/zero/__tests__/run-cache.unit.test.ts",
+        "project": "unit",
+        "caseId": "starts serving only after native ready, complete bootstrap shutdown and bounded offline maintenance"
+      }
+    ],
+    "tools/zero/search-replica-statistics.mjs": [
+      {
+        "file": "tools/zero/__tests__/search-replica-statistics.unit.test.ts",
+        "project": "unit",
+        "caseId": "restores exact type-index plans before serving a small replica of %s rows"
+      }
+    ],
     "src/features/charts/hooks/useDataViewBuilderModel.ts": [
       {
         "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",

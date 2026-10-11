@@ -13,4 +13,8 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
 
 EXPOSE 4848
 
-CMD ["./node_modules/.bin/zero-cache"]
+COPY tools/zero ./tools/zero
+COPY tools/shared/run-cli-if-main.mjs ./tools/shared/run-cli-if-main.mjs
+RUN chmod +x tools/zero/bin/zero-cache
+
+CMD ["node", "tools/zero/run-cache.mjs"]

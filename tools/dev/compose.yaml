@@ -1,6 +1,9 @@
 services:
   zero:
-    image: rocicorp/zero:1.10.0
+    image: polity-zero:local
+    build:
+      context: ../..
+      dockerfile: Dockerfile.zero
     ports:
       - '127.0.0.1:4848:4848'
     environment:

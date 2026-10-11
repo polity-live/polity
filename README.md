@@ -136,6 +136,15 @@ in the customer portal are reconciled after the browser returns to the app.
 - Env source: `.env.production.local` locally, or platform env vars on Vercel/Fly.io
 - Fly.io Zero deployments also set `ZERO_QUERY_URL` and `ZERO_MUTATE_URL` to the deployed app's `/api/query` and `/api/mutate` handlers.
 
+Zero's shared startup wrapper first finishes replication on private ports and stops
+every bootstrap worker. Before opening the public port, it restores full SQLite
+statistics for `search_document` when the table has at most 1,000 rows. The probe
+reads at most 1,001 rows; larger replicas retain the SDK's normal maintenance.
+This preserves the existing type/date index plan on small replicas under Zero 1.10.
+The same startup path serves Fly.io, local development, Playwright, and performance
+tests. Development retains the SDK's permission deployment and file watcher.
+Startup failures stop serving; an unpublished Search table is skipped.
+
 ### 1. Install dependencies
 
 ```bash

@@ -9,6 +9,8 @@ import {
   discoverDescendants,
   livingDescendants,
   readProcesses,
+  readWindowsProcesses,
+  terminateWindowsTree,
   runCacheCli,
   superviseCache,
 } from '../run-e2e-cache.mjs';
@@ -27,6 +29,42 @@ afterEach(() => {
 });
 
 describe('isolated Linux Zero lifecycle', () => {
+  it('binds bootstrap environment and stops only on the SDK native ready payload', async () => {
+    vi.useFakeTimers();
+    const child = Object.assign(new EventEmitter(), { pid: 10 });
+    const processes = new Map([[10, processInfo(1, 'a')]]);
+    const spawnChild = vi.fn(() => child);
+    const ready = vi.fn(stop => stop());
+    const result = superviseCache({
+      env: { ZERO_NUM_SYNC_WORKERS: '0' },
+      spawnChild: spawnChild as never,
+      processState: new EventEmitter() as never,
+      snapshot: () => processes,
+      onReady: ready,
+      signal: () => {
+        processes.clear();
+        child.emit('exit', 0, null);
+      },
+    });
+    for (const payload of [
+      null,
+      'ready',
+      ['other', { ready: true }],
+      ['ready', null],
+      ['ready', { ready: false }],
+    ])
+      child.emit('message', payload);
+    expect(ready).not.toHaveBeenCalled();
+    child.emit('message', ['ready', { ready: true }]);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(await result).toBe(0);
+    expect(spawnChild).toHaveBeenCalledWith(process.execPath, expect.any(Array), {
+      detached: true,
+      windowsHide: true,
+      stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+      env: { ZERO_NUM_SYNC_WORKERS: '0' },
+    });
+  });
   it('waits for the child exit notification without signaling an already reaped process', async () => {
     vi.useFakeTimers();
     const child = Object.assign(new EventEmitter(), { pid: 10 });
@@ -89,6 +127,7 @@ describe('isolated Linux Zero lifecycle', () => {
     });
     const existing = process.listeners('SIGINT');
     const result = superviseCache();
+    child.emit('message', ['ready', { ready: true }]);
     const stop = process.listeners('SIGINT').find(listener => !existing.includes(listener))!;
     stop('SIGINT');
     await vi.advanceTimersByTimeAsync(100);
@@ -96,7 +135,7 @@ describe('isolated Linux Zero lifecycle', () => {
     expect(spawn).toHaveBeenCalledWith(
       process.execPath,
       [expect.stringMatching(/zero[\\/]out[\\/]zero[\\/]src[\\/]cli.js$/)],
-      { detached: true, stdio: 'inherit' }
+      { detached: true, windowsHide: true, stdio: 'inherit' }
     );
     expect(kill).toHaveBeenCalledWith(10, 'SIGTERM');
   });
@@ -222,6 +261,7 @@ describe('isolated Linux Zero lifecycle', () => {
     });
     parent.emit('SIGTERM');
     parent.emit('SIGTERM');
+    parent.emit('SIGQUIT');
     await vi.advanceTimersByTimeAsync(700);
     await expect(result).resolves.toBe(0);
     expect(signal.mock.calls).toEqual([
@@ -266,5 +306,60 @@ describe('isolated Linux Zero lifecycle', () => {
     });
     child.emit('error', new Error('spawn failed'));
     await expect(result).resolves.toBe(1);
+  });
+});
+
+describe('owned Windows Zero lifecycle', () => {
+  it('reads process parentage and exact native creation ticks without a visible helper window', () => {
+    const execute = vi.fn(() => JSON.stringify([{ pid: 10, parent: 1, born: '12345' }]));
+    expect(readWindowsProcesses(execute as never)).toEqual(
+      new Map([[10, { parent: 1, born: '12345', state: 'R' }]])
+    );
+    expect(execute.mock.calls[0]).toEqual([
+      'powershell.exe',
+      expect.any(Array),
+      expect.objectContaining({ windowsHide: true }),
+    ]);
+    expect(readWindowsProcesses((() => '[]') as never).size).toBe(0);
+  });
+  it.each([
+    '{}',
+    '[{"pid":null,"parent":1,"born":"1"}]',
+    '[{"pid":1,"parent":-1,"born":"1"}]',
+    '[{"pid":1,"parent":1,"born":null}]',
+    '[{"pid":1,"parent":1,"born":"invalid"}]',
+  ])('rejects unavailable/malformed process identities %s', output => {
+    expect(() => readWindowsProcesses((() => output) as never)).toThrow(/Windows process/);
+  });
+  it.each([
+    [0, '1'],
+    [1, undefined],
+    [1, 'invalid'],
+  ])('rejects unavailable owned identities %j', (pid, born) => {
+    expect(() => terminateWindowsTree(pid, born, vi.fn(), vi.fn() as never)).toThrow(
+      'owned Windows process identity'
+    );
+  });
+  it('terminates only the matched owned tree and rejects PID reuse', () => {
+    const execute = vi.fn(),
+      snapshot = vi.fn(() => new Map([[10, { parent: 1, born: '100', state: 'R' }]]));
+    terminateWindowsTree(10, '100', snapshot, execute as never);
+    expect(execute).toHaveBeenCalledWith('taskkill.exe', ['/PID', '10', '/T', '/F'], {
+      windowsHide: true,
+      stdio: 'pipe',
+    });
+    terminateWindowsTree(10, '200', snapshot, execute as never);
+    terminateWindowsTree(11, '100', snapshot, execute as never);
+    expect(execute).toHaveBeenCalledOnce();
+  });
+  it('tolerates an independently exited process but fails closed when tree termination fails', () => {
+    const error = new Error('taskkill failed'),
+      execute = vi.fn(() => {
+        throw error;
+      });
+    const live = new Map([[10, { parent: 1, born: '100', state: 'R' }]]);
+    const exited = vi.fn().mockReturnValueOnce(live).mockReturnValueOnce(new Map());
+    expect(() => terminateWindowsTree(10, '100', exited, execute as never)).not.toThrow();
+    expect(() => terminateWindowsTree(10, '100', () => live, execute as never)).toThrow(error);
   });
 });
