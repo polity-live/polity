@@ -305,9 +305,7 @@ export const studioQueries = {
   comments: defineQuery(projectInput, ({ args, ctx }) =>
     zql.canvas_comment
       .where('project_id', args.projectId)
-      .whereExists('project', p =>
-        collaborativeProject(p.where('id', args.projectId), requireQueryUser(ctx.userID))
-      )
+      .whereExists('project', p => collaborativeProject(p, requireQueryUser(ctx.userID)))
       .where(({ or, cmp, exists }) =>
         or(
           cmp('proposal_id', 'IS', null),
