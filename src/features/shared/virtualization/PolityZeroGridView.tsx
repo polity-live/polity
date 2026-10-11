@@ -96,7 +96,9 @@ export function PolityZeroGridView<TRow, TStart, TContext>({
     if (anchor.current !== null)
       result.virtualizer.scrollToIndex(anchor.current, { align: 'start' });
     return () => {
-      const offset = parentRef.current?.scrollTop ?? 0;
+      // The virtualizer observes the scroll position; reading the outgoing DOM
+      // here can force layout while React is removing or rearranging the grid.
+      const offset = result.virtualizer.scrollOffset ?? 0;
       anchor.current =
         result.virtualizer.getVirtualItems().find(item => item.end > offset)?.index ?? null;
     };
