@@ -52,11 +52,53 @@ describe('useAuthGuardController', () => {
 
   it('initializes immediately for a user and allows an authenticated route', () => {
     mocks.user = { id: 'user-1' };
-    const { result } = renderHook(() => useAuthGuardController({ requireAuth: true }));
+    const renders: ReturnType<typeof useAuthGuardController>[] = [];
+    const { result } = renderHook(() => {
+      const state = useAuthGuardController({ requireAuth: true });
+      renders.push(state);
+      return state;
+    });
 
+    // renderHook flushes effects; its final result alone cannot detect the
+    // unnecessary loading commit on a cached authenticated navigation.
+    expect(renders[0]).toEqual({ isReady: true, isAllowed: true });
     expect(result.current.isReady).toBe(true);
     expect(result.current.isAllowed).toBe(true);
     expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps a present user behind the loading gate until the provider finishes initialization', () => {
+    mocks.user = { id: 'user-1' };
+    mocks.loading = true;
+    const renders: ReturnType<typeof useAuthGuardController>[] = [];
+    const { result, rerender } = renderHook(() => {
+      const state = useAuthGuardController({ requireAuth: true });
+      renders.push(state);
+      return state;
+    });
+    expect(renders[0]).toEqual({ isReady: false, isAllowed: true });
+    expect(result.current.isReady).toBe(false);
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    mocks.loading = false;
+    rerender();
+    expect(result.current).toEqual({ isReady: true, isAllowed: true });
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it('preserves the anonymous initialization delay before redirecting', () => {
+    const renders: ReturnType<typeof useAuthGuardController>[] = [];
+    const { result } = renderHook(() => {
+      const state = useAuthGuardController({ requireAuth: true });
+      renders.push(state);
+      return state;
+    });
+    expect(renders[0]).toEqual({ isReady: false, isAllowed: false });
+    act(() => vi.advanceTimersByTime(99));
+    expect(result.current.isReady).toBe(false);
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(result.current).toEqual({ isReady: true, isAllowed: false });
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
   });
 
   it('redirects an anonymous user to an encoded auth return path after initialization', () => {
