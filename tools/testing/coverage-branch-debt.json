@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baseline": {
-    "totalAlternatives": 92281,
-    "coveredAlternatives": 92281,
+    "totalAlternatives": 92278,
+    "coveredAlternatives": 92278,
     "uncoveredAlternatives": 0,
     "exceptionAlternatives": 0
   },

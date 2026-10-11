@@ -17,7 +17,7 @@ import { agendaItemTextMatchesSearch } from '../logic/agendaItemTextSearch';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
-import { normalizeElectionRow, useElectionCandidates } from '@/zero/elections/useElectionState';
+import { normalizeElectionRow } from '@/zero/elections/useElectionState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -532,7 +532,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { event: streamDelegateTargetEvent } = useEventById(
     streamDelegateAssignmentMeta?.targetEventId
   );
-  const streamForwardingContext = useAgendaItemForwardingContext(streamAgendaItem?.id);
+  const streamForwardingContext = useAgendaItemForwardingContext(
+    streamAgendaItem?.amendment_id ? streamAgendaItem.id : undefined
+  );
   const crVoting = useAgendaItemCRVoting(streamAgendaItem?.id ?? '', user?.id);
   const votingRepairAttemptedAgendaIdsRef = useRef(new Set<string>());
   useEffect(() => {
@@ -579,24 +581,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     streamForwardingContext.currentStepRun,
     streamVariantVote,
   ]);
-  // The authorized agenda already projects election metadata and electors.
-  // Candidates retain their separate projection with manager-filtered selections.
-  const actionBarElection = useMemo(() => normalizeElectionRow(streamElection), [streamElection]);
-  const { candidates: actionBarCandidates } = useElectionCandidates(streamElection?.id);
-  const toolbarElection = useMemo(() => {
-    if (!actionBarElection) {
-      return streamElection;
-    }
-
-    return {
-      ...streamElection,
-      ...actionBarElection,
-      candidates:
-        actionBarCandidates.length > 0
-          ? actionBarCandidates
-          : (actionBarElection.candidates ?? streamElection?.candidates ?? []),
-    };
-  }, [actionBarCandidates, actionBarElection, streamElection]);
+  // The authorized agenda projects candidates and participation selections together.
+  const toolbarElection = useMemo(() => normalizeElectionRow(streamElection), [streamElection]);
+  const actionBarCandidates = toolbarElection?.candidates ?? [];
   const namedElectionResults = useMemo(
     () =>
       toolbarElection
@@ -1770,7 +1757,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       streamAgendaItemAmendmentEditingMode={streamAgendaItemAmendmentEditingMode}
       streamDocumentContent={streamDocumentContent}
       streamAmendmentDiscussions={streamAmendmentDiscussions}
-      actionBarElection={actionBarElection}
+      actionBarElection={toolbarElection}
       actionBarCandidates={actionBarCandidates}
       toolbarElection={toolbarElection}
       streamVotingPhase={streamVotingPhase}
