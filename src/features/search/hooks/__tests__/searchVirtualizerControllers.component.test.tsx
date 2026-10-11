@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, renderHook } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchListContext } from '../../types/search-document.types';
@@ -144,6 +144,72 @@ describe('search virtualizer controller contracts', () => {
     expect(virtualizer.scrollToIndex).toHaveBeenLastCalledWith(4, { align: 'start' });
     rerender({ compact: false });
     expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-grid');
+  });
+
+  it('preserves the observed scroll anchor across lane and compact changes without reading outgoing DOM geometry', () => {
+    let resized: ResizeObserverCallback | undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resized = callback;
+        }
+        observe() {
+          return undefined;
+        }
+        disconnect() {
+          return undefined;
+        }
+      }
+    );
+    const virtualizer = {
+      scrollOffset: 0,
+      getVirtualItems: () => [
+        { key: 'top', index: 0, start: 0, end: 100, size: 100, lane: 0 },
+        { key: 'middle', index: 1, start: 100, end: 300, size: 200, lane: 0 },
+        { key: 'bottom', index: 2, start: 300, end: 600, size: 300, lane: 0 },
+      ],
+      measure: vi.fn(),
+      getTotalSize: () => 600,
+      scrollToIndex: vi.fn(),
+    };
+    mocks.usePolityZeroGrid.mockReturnValue({
+      virtualizer,
+      rowAt: vi.fn(),
+      complete: true,
+      rowsEmpty: false,
+      total: 3,
+    });
+    function Probe({ compact = false }: { compact?: boolean }) {
+      const controller = useVirtualSearchGridController({ context, compact });
+      return <div ref={controller.parentRef} data-testid="observed-grid-parent" />;
+    }
+    const view = render(<Probe />);
+    act(() =>
+      resized?.([{ contentRect: { width: 1500 } } as ResizeObserverEntry], {} as ResizeObserver)
+    );
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(4);
+    const readScrollTop = vi.fn(() => {
+      throw new Error('Outgoing layout must not be read');
+    });
+    Object.defineProperty(screen.getByTestId('observed-grid-parent'), 'scrollTop', {
+      get: readScrollTop,
+    });
+    virtualizer.scrollOffset = 350;
+    act(() =>
+      resized?.([{ contentRect: { width: 900 } } as ResizeObserverEntry], {} as ResizeObserver)
+    );
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(2);
+    expect(virtualizer.scrollToIndex).toHaveBeenLastCalledWith(2, { align: 'start' });
+    // A later observed scroll must replace the previous anchor, even when the
+    // next layout switches the independent compact history lane.
+    virtualizer.scrollOffset = 125;
+    view.rerender(<Probe compact />);
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
+    expect(virtualizer.scrollToIndex).toHaveBeenLastCalledWith(1, { align: 'start' });
+    expect(readScrollTop).not.toHaveBeenCalled();
+    view.unmount();
+    expect(readScrollTop).not.toHaveBeenCalled();
   });
 
   it('consumes the zero-virtual 0.6 snapshot without a virtualizer property', () => {

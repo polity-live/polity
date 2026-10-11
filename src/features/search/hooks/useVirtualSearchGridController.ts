@@ -199,7 +199,9 @@ export function useVirtualSearchGridController({
     }
     layoutInitialized.current = true;
     return () => {
-      const offset = parentRef.current?.scrollTop ?? 0;
+      // The virtualizer observes the live offset. Reading the outgoing DOM here
+      // would force layout while React is replacing the route or grid geometry.
+      const offset = virtualizer.scrollOffset ?? 0;
       layoutAnchor.current =
         virtualizer.getVirtualItems().find(item => item.end > offset)?.index ?? null;
     };
