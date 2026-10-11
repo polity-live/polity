@@ -274,7 +274,7 @@
       {
         "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
         "project": "unit",
-        "caseId": "covers queries and mutations on thirty-two catalog jobs while distributing independent nested variants"
+        "caseId": "covers queries and mutations on sixty-four catalog jobs while distributing independent nested variants"
       },
       {
         "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
