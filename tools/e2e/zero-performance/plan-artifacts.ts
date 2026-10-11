@@ -44,7 +44,7 @@ export async function writeJoinPlanArtifact(output: string, key: string, joins: 
 
 /** Worker reports retain all hash-bound diagnostics when the collector publishes its report. */
 export async function retainMeasurementArtifacts(source: string, output: string, plans: any) {
-  const references: Array<{ path: string }> = [];
+  const references: { path: string }[] = [];
   if (plans?.joinsArtifact) {
     if (!isJoinPlanArtifact(plans.joinsArtifact))
       throw new Error('Invalid worker join-plan reference');

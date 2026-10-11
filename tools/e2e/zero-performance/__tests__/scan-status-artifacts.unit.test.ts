@@ -107,7 +107,9 @@ describe('SQLite scan-status evidence integrity', () => {
     'rejects missing report evidence %s',
     async field => {
       const { report, file } = await fixture();
-      delete report.measurements[0].plans[field];
+      report.measurements[0].plans = Object.fromEntries(
+        Object.entries(report.measurements[0].plans).filter(([key]) => key !== field)
+      );
       await writeFile(file, JSON.stringify(report));
       expect((await readPerformanceReport(file)).infrastructure).not.toEqual([]);
     }

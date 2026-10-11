@@ -9,6 +9,10 @@ import { writeJoinPlanArtifact } from '../plan-artifacts';
 import { writeJSON } from '../distributed-io';
 import { mergeShards } from '../distributed-merge';
 import type { ShardResult } from '../distributed-runner';
+import { randomUUID } from 'node:crypto';
+import { writeScanStatusArtifact } from '../scan-status-artifacts';
+import { SCAN_STATUS_PROTOCOL } from '../sqlite-scan-status.mjs';
+import { REPETITIONS } from '../metrics';
 
 const context = vi.hoisted(() => ({ manifestPath: '' }));
 vi.mock('../distributed-io', async importOriginal => ({
@@ -55,6 +59,13 @@ async function partial(
     phase,
   };
   const apiDiagnostics: any[] = [];
+  const runtime = {
+    zero: '1.10.0',
+    node: 'v24.18.0',
+    sqliteDriver: 'fixture-driver',
+    scanStatusSourceSHA256: 'a'.repeat(64),
+    scanStatusRuntimeID: randomUUID(),
+  };
   const measurements = await Promise.all(
     shardMeasurementKeys(shard, 'head').map(async (key, row) => {
       const samples = Array.from({ length: 5 }, (_, index) => {
@@ -90,6 +101,48 @@ async function partial(
         };
       });
       const joinsArtifact = await writeJoinPlanArtifact(destination, key, []);
+      const querySQL = 'SELECT id FROM user WHERE id = ?';
+      const sqlite = { [querySQL]: ['SEARCH user USING INDEX user_pkey (id=?)'] };
+      const scansByQuery = { user: { [querySQL]: 0 } };
+      const node = {
+        index: 0,
+        name: 'user_pkey',
+        nativeNameType: 'string',
+        explain: sqlite[querySQL][0],
+        selectID: 1,
+        parentID: 0,
+      };
+      const log = path.join(destination, `scan-fixture-${row}.ndjson`);
+      const artifacts = [];
+      for (let epoch = 0; epoch <= REPETITIONS.analyze + REPETITIONS.warmup; epoch++) {
+        const record = {
+          kind: 'statement',
+          protocol: SCAN_STATUS_PROTOCOL,
+          runtimeID: runtime.scanStatusRuntimeID,
+          sdkVersion: runtime.zero,
+          driverVersion: runtime.sqliteDriver,
+          nodeVersion: runtime.node,
+          tableSourceSHA256: runtime.scanStatusSourceSHA256,
+          pid: 1,
+          statementID: row,
+          epoch,
+          sql: querySQL,
+          rawTotal: 0,
+          total: 0,
+          nodes: [{ ...node, rawVisits: 0, correctedVisits: 0, loopIndex: 0 }],
+          loops: [{ ...node, visits: 0 }],
+        };
+        await writeFile(log, JSON.stringify(record) + '\n');
+        artifacts.push(
+          await writeScanStatusArtifact(
+            destination,
+            `${key}/scan/${epoch}`,
+            { file: log, offset: 0 },
+            scansByQuery,
+            sqlite
+          )
+        );
+      }
       return {
         key,
         execution,
@@ -108,9 +161,11 @@ async function partial(
         scannedRows: 0,
         syncedRows: 0,
         plans: {
-          sqlite: {},
+          sqlite,
           joinsArtifact,
-          scansByQuery: {},
+          scansByQuery,
+          scanStatusArtifacts: artifacts.slice(0, -1),
+          scanStatusExportArtifact: artifacts.at(-1),
           readsByQuery: {},
           exportMode: 'separate',
           exportMs: 1,
@@ -122,6 +177,7 @@ async function partial(
   );
   correlateQueryAPI(measurements, apiDiagnostics);
   return {
+    runtime,
     format: 12,
     expectedMutations: [],
     mutations: [],
@@ -140,7 +196,7 @@ async function partial(
     serverWarnings: [],
     apiDiagnostics,
     journeys: [],
-  };
+  } as Report;
 }
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), 'zero-distributed-test-'));
