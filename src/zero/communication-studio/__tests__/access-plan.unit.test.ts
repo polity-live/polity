@@ -96,6 +96,52 @@ it.each(['owner', 'outsider'])(
   }
 );
 
+it.each([
+  ['assets', false],
+  ['assets', true],
+  ['comments', false],
+] as const)(
+  'looks up the selected project for %s (workspace=%s) with complete audience predicates',
+  (name, workspace) => {
+    const nil = '00000000-0000-0000-0000-000000000000';
+    const projectId = '00000000-0000-4000-8000-000000000010';
+    const workspaceId = '00000000-0000-4000-8000-000000000011';
+    for (const userID of [
+      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000002',
+      'anon',
+      null,
+    ]) {
+      const ast = queryAST(
+        studioQueries[name].fn({
+          args: { projectId, ...(workspace ? { workspaceId } : {}) },
+          ctx: { userID },
+        } as never)
+      );
+      const projects: any[] = [];
+      const visit = (condition: any) => {
+        if (condition.type === 'correlatedSubquery') {
+          if (condition.related.subquery.table === 'studio_project') projects.push(condition);
+        } else for (const child of condition.conditions ?? []) visit(child);
+      };
+      visit(ast.where);
+      expect(projects).toHaveLength(1);
+      expect(projects[0].flip).toBe(false);
+      expect(projects[0].related.correlation).toEqual({
+        parentField: ['project_id'],
+        childField: ['id'],
+      });
+      const actor = userID && userID !== 'anon' ? userID : null;
+      const project = zql.studio_project.where('document_schema_version', 6);
+      const expected =
+        name === 'comments' || workspace
+          ? studioProjectCollaborativeAccess(project, actor ?? nil)
+          : studioProjectReadAccess(project, actor);
+      expect(projects[0].related.subquery.where).toEqual(queryAST(expected).where);
+    }
+  }
+);
+
 it.each(['owner', 'outsider'])(
   'skips absent chat scopes while retaining every authorization predicate for %s',
   actor => {
