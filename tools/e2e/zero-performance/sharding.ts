@@ -3,7 +3,7 @@ import type { SecurityCaseExpectation } from './security';
 import type { MutationExpectation } from './mutation-metrics';
 
 export const SHARD_FORMAT = 2;
-export const QUERY_SHARD_COUNT = 32;
+export const QUERY_SHARD_COUNT = 64;
 export const SECURITY_SHARD_COUNT = 2;
 export const TOTAL_SHARD_COUNT = QUERY_SHARD_COUNT + SECURITY_SHARD_COUNT + 2;
 export const ACTIVE_BUDGET_MS = { prepare: 180_000, runner: 900_000, merge: 120_000 };

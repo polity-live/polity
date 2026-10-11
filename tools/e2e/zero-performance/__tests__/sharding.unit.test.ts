@@ -56,12 +56,12 @@ describe('distributed Zero workload planning', () => {
   });
   it('covers every query variant, keeps all variants of a query together, and covers security once', () => {
     const result = manifest();
-    expect(QUERY_SHARD_COUNT).toBe(32);
+    expect(QUERY_SHARD_COUNT).toBe(64);
     expect(SECURITY_SHARD_COUNT).toBe(2);
-    expect(TOTAL_SHARD_COUNT).toBe(36);
-    expect(result.shards).toHaveLength(36);
+    expect(TOTAL_SHARD_COUNT).toBe(68);
+    expect(result.shards).toHaveLength(68);
     expect(result.shards.filter(shard => shard.layer === 'queries').map(shard => shard.id)).toEqual(
-      Array.from({ length: 32 }, (_, index) => `queries-${index + 1}`)
+      Array.from({ length: 64 }, (_, index) => `queries-${index + 1}`)
     );
     for (const revision of ['head', 'base'] as const) {
       expect(
@@ -102,16 +102,16 @@ describe('distributed Zero workload planning', () => {
       value.digest = digest(unsigned);
     };
     const omitted = manifest();
-    omitted.shards = omitted.shards.filter(shard => shard.id !== 'queries-32');
+    omitted.shards = omitted.shards.filter(shard => shard.id !== 'queries-64');
     resign(omitted);
     expect(() => validateManifest(omitted)).toThrow('Incomplete shard matrix');
     const repeated = manifest();
-    repeated.shards.find(shard => shard.id === 'queries-32')!.id = 'queries-31';
+    repeated.shards.find(shard => shard.id === 'queries-64')!.id = 'queries-63';
     resign(repeated);
     expect(() => validateManifest(repeated)).toThrow('Incomplete shard matrix');
     for (const [valid, invalid] of [
-      ['queries-32', 'queries-33'],
-      ['queries-32', 'queries-032'],
+      ['queries-64', 'queries-65'],
+      ['queries-64', 'queries-064'],
       ['security-2', 'security-3'],
     ]) {
       const value = manifest();

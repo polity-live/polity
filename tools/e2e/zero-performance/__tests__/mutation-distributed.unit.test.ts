@@ -155,10 +155,10 @@ describe('mutation CI scheduling and confirmation', () => {
       externalFailures(partialReportFailures(partial, plan, shard, 'head', 'initial', 'runner'))
     ).toContain('Mutation external delivery failed');
   });
-  it('covers queries and mutations on thirty-two catalog jobs while distributing independent nested variants', () => {
+  it('covers queries and mutations on sixty-four catalog jobs while distributing independent nested variants', () => {
     const plan = manifest();
-    expect(plan.shards).toHaveLength(36);
-    expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(32);
+    expect(plan.shards).toHaveLength(68);
+    expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(64);
     for (const revision of ['head', 'base'] as const) {
       const assigned = plan.shards
         .flatMap(shard => (shard.layer === 'queries' ? shard[revision] : []))
