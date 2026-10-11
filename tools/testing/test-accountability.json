@@ -30363,6 +30363,11 @@
       {
         "file": "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
         "project": "unit",
+        "caseId": "denies every row including the nil UUID while retaining contradictory primary-key predicates"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
+        "project": "unit",
         "caseId": "builds document access for anonymous/authenticated viewers and flip profiles",
         "evidence": {
           "kind": "instrumented-full-suite",

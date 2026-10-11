@@ -108,7 +108,7 @@ describe('active Zero CI budget', () => {
       true
     );
   });
-  it('keeps the required gate name, 20 isolated standard runners and independent CI jobs', () => {
+  it('keeps the required gate name, twenty-runner concurrency cap and independent CI jobs', () => {
     const workflow = parse(readFileSync('.github/workflows/ci.yml', 'utf8'));
     const prepare = workflow.jobs['zero-performance-prepare'],
       runners = workflow.jobs['zero-performance-shards'],
