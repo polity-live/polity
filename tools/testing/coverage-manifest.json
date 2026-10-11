@@ -122876,6 +122876,26 @@
         {
           "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
           "project": "unit",
+          "caseId": "denies an empty source selection even when a visible source has a nil UUID"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains parent authorization and exact source pairs for mixed event and group references"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps a null group scope personal, including when an authorized nil UUID group exists"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains authorized group themes when that exact group is explicitly requested"
+        },
+        {
+          "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+          "project": "unit",
           "caseId": "separates presentation viewing from agenda administration for identity %s"
         },
         {
