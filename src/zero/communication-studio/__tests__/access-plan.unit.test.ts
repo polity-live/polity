@@ -129,3 +129,55 @@ it.each(['owner', 'outsider'])(
     expect(JSON.stringify(actual)).toContain('"name":"amendment_id"');
   }
 );
+
+it.each(['owner', 'outsider', 'anon'])(
+  'checks comment project access through the requested identity with every existing right for %s',
+  userID => {
+    const projectId = '00000000-0000-4000-8000-000000000001';
+    const ast = queryAST(
+      studioQueries.comments.fn({ args: { projectId }, ctx: { userID } } as never)
+    );
+    const actor = userID === 'anon' ? '00000000-0000-0000-0000-000000000000' : userID;
+    const parent = ast.where.conditions.find(
+      (condition: any) =>
+        condition.type === 'correlatedSubquery' &&
+        condition.related.subquery.table === 'studio_project'
+    );
+    expect(parent.flip).toBeUndefined();
+    const conditions = parent.related.subquery.where.conditions;
+    expect(conditions[0]).toMatchObject({
+      type: 'simple',
+      left: { name: 'id' },
+      op: '=',
+      right: { value: projectId },
+    });
+    // Identity bounds the existing foreign-key relation; audience, membership,
+    // collaborator and Event manager predicates remain exactly intact.
+    expect(conditions.slice(1)).toEqual(
+      queryAST(
+        studioProjectCollaborativeAccess(
+          zql.studio_project.where('document_schema_version', 6),
+          actor
+        )
+      ).where.conditions
+    );
+    expect(ast.where.conditions.find((condition: any) => condition.type === 'or')).toEqual(
+      queryAST(
+        zql.canvas_comment.where(({ or, cmp, exists }) =>
+          or(
+            cmp('proposal_id', 'IS', null),
+            exists('proposal', p =>
+              p.where(({ or, cmp, exists }) =>
+                or(
+                  cmp('checksum', 'IS NOT', null),
+                  cmp('owner_id', actor),
+                  exists('readers', reader => reader.where('user_id', actor))
+                )
+              )
+            )
+          )
+        )
+      ).where
+    );
+  }
+);
