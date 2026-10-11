@@ -2,6 +2,8 @@ import { gzipSync } from 'node:zlib';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { decodeDatasetText } from '../text';
 import { clearDatasetSearchCache } from '../searchRuntime';
+import type { PersistDatasetSnapshotInput } from '../service';
+import type { EurostatDimension } from '@/features/charts/types';
 
 const mocks = vi.hoisted(() => ({
   searchEurostat: vi.fn(),
@@ -58,6 +60,7 @@ import {
   importEurostatDatasetSnapshot,
   importGovDataDatasetSnapshot,
   searchDatasetProviders,
+  prepareEurostatDataset,
 } from '../providers';
 
 const table = { columns: ['time', 'value'], rows: [{ time: '2024', value: '1' }] };
@@ -292,6 +295,138 @@ describe('GovData snapshot import', () => {
 });
 
 describe('Eurostat snapshot import', () => {
+  it('prepares labelled geography, code fallbacks and selectors without downloading observations', async () => {
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({
+        dimensions: [
+          { id: 'geo', label: 'Countries', values: [{ id: 'DE', label: 'Germany' }, { id: 'FR' }] },
+          { id: 'TIME_PERIOD', label: 'Year', values: [{ id: '2025' }] },
+        ],
+      })
+    );
+    expect(await prepareEurostatDataset('POP', 'en')).toMatchObject({
+      geoDimension: 'geo',
+      timeDimension: 'TIME_PERIOD',
+      spatialCoverage: ['Germany', 'FR'],
+    });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+  it('imports scoped SDMX observations with the correct column roles and actual dimensions', async () => {
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({
+        dimensions: [
+          { id: 'geo', label: 'Countries', values: [{ id: 'DE', label: 'Germany' }, { id: 'FR' }] },
+          { id: 'TIME_PERIOD', label: 'Year', values: [{ id: '2025' }, { id: '2024' }] },
+          { id: 'unit', label: 'Unit', values: [{ id: 'NR' }] },
+          { id: 'missing', label: 'Absent', values: [{ id: 'X' }] },
+        ],
+      })
+    );
+    mocks.parseCsv.mockReturnValue({
+      columns: ['geo', 'TIME_PERIOD', 'unit', 'OBS_VALUE', 'OBS_FLAG'],
+      rows: [{ geo: 'DE', TIME_PERIOD: '2025', unit: 'NR', OBS_VALUE: '42', OBS_FLAG: 'p' }],
+    });
+    const result = await importEurostatDatasetSnapshot({
+      code: 'POP',
+      language: 'en',
+      userId: 'u1',
+      filters: { area: 'Germany', period: { start: 2025, end: 2025 } },
+    });
+    expect(result.columnProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'geo', role: 'geo', label: 'Countries' }),
+        expect.objectContaining({ name: 'TIME_PERIOD', role: 'time', type: 'date' }),
+        expect.objectContaining({ name: 'unit', role: 'dimension', type: 'category' }),
+        expect.objectContaining({ name: 'OBS_VALUE', role: 'measure', type: 'number' }),
+        expect.objectContaining({ name: 'OBS_FLAG', role: 'label' }),
+      ])
+    );
+    const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+    expect((saved.dimensions as EurostatDimension[]).map(item => item.id)).toEqual([
+      'geo',
+      'TIME_PERIOD',
+      'unit',
+    ]);
+    expect(saved.spatialCoverage).toEqual(['Germany']);
+    expect(saved.timeCoverage).toEqual({ start: '2025', end: '2025' });
+    expect((saved.dimensions as EurostatDimension[])[0].values).toEqual([
+      { id: 'DE', label: 'Germany' },
+    ]);
+  });
+  it('falls back to geography codes when labels are absent', async () => {
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({ estimatedBytes: null, dimensions: [{ id: 'geo', values: [{ id: 'FR' }] }] })
+    );
+    mocks.parseCsv.mockReturnValue({
+      columns: ['geo', 'OBS_VALUE'],
+      rows: [{ geo: 'FR', OBS_VALUE: '2' }],
+    });
+    await importEurostatDatasetSnapshot({ code: 'POP', language: 'en', userId: 'u1' });
+    const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+    expect(saved.spatialCoverage).toEqual(['FR']);
+  });
+  it('rejects empty observations and provider responses that ignore selected dimension filters', async () => {
+    mocks.parseCsv.mockReturnValueOnce({ columns: ['OBS_VALUE'], rows: [] });
+    await expect(
+      importEurostatDatasetSnapshot({ code: 'POP', language: 'en', userId: 'u1' })
+    ).rejects.toMatchObject({ code: 'invalid_scope', httpStatus: 422 });
+    clearDatasetSearchCache();
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({ dimensions: [{ id: 'geo', values: [{ id: 'DE' }] }] })
+    );
+    mocks.parseCsv.mockReturnValue({
+      columns: ['geo', 'OBS_VALUE'],
+      rows: [{ geo: 'FR', OBS_VALUE: '2' }],
+    });
+    await expect(
+      importEurostatDatasetSnapshot({
+        code: 'POP',
+        language: 'en',
+        userId: 'u1',
+        filters: { dimensions: { geo: 'DE' } },
+      })
+    ).rejects.toMatchObject({ code: 'invalid_scope', httpStatus: 422 });
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
+  it.each(['metadata', 'fetch', 'body'])(
+    'preserves cancellation during the %s import phase',
+    async phase => {
+      const controller = new AbortController();
+      const reason = new Error('caller cancelled');
+      if (phase === 'metadata')
+        mocks.eurostatDetails.mockImplementation(async (_code, _language, innerSignal) => {
+          controller.abort(reason);
+          throw innerSignal.reason;
+        });
+      else if (phase === 'fetch')
+        mocks.fetch.mockImplementation(async () => {
+          controller.abort(reason);
+          throw new TypeError('fetch aborted');
+        });
+      else
+        mocks.readBytes.mockImplementation(async () => {
+          controller.abort(reason);
+          throw new TypeError('stream aborted');
+        });
+      await expect(
+        importEurostatDatasetSnapshot({
+          code: 'POP',
+          language: 'en',
+          userId: 'u1',
+          signal: controller.signal,
+        })
+      ).rejects.toBe(reason);
+      expect(mocks.persist).not.toHaveBeenCalled();
+    }
+  );
+  it('rejects a response that expands beyond the limit after legacy text decoding', async () => {
+    mocks.readBytes.mockResolvedValue(new Uint8Array(30 * 1024 * 1024).fill(0xe9));
+    mocks.fetch.mockResolvedValue(response({ contentType: 'text/csv; charset=windows-1252' }));
+    await expect(
+      importEurostatDatasetSnapshot({ code: 'POP', language: 'en', userId: 'u1' })
+    ).rejects.toMatchObject({ code: 'too_large', httpStatus: 413 });
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
   beforeEach(() =>
     mocks.parseCsv.mockReturnValue({
       columns: ['TIME_PERIOD', 'OBS_VALUE'],
@@ -391,6 +526,174 @@ describe('Eurostat snapshot import', () => {
 });
 
 describe('provider search aggregation', () => {
+  it.each([new Error('synchronous stored failure'), 'synchronous rejection'])(
+    'captures synchronous provider invocation errors %s',
+    failure => {
+      mocks.searchStored.mockImplementation(() => {
+        throw failure;
+      });
+      return expect(
+        searchDatasetProviders({ query: 'custom', providers: ['UPLOAD'] })
+      ).resolves.toMatchObject({
+        errors: [
+          {
+            provider: 'UPLOAD',
+            message: failure instanceof Error ? failure.message : 'Provider search failed',
+          },
+        ],
+      });
+    }
+  );
+  it('uses German for an unknown topic when the interface language is German', async () => {
+    await searchDatasetProviders({
+      query: 'custom',
+      providers: ['GENESIS_DESTATIS'],
+      language: 'de',
+    });
+    expect(mocks.searchGenesis).toHaveBeenCalledWith(
+      'custom',
+      'de',
+      50,
+      expect.any(AbortSignal),
+      expect.any(Object)
+    );
+  });
+  it('keeps short queries local and handles non-Error stored search failures', async () => {
+    mocks.searchStored.mockRejectedValue('offline');
+    expect(await searchDatasetProviders({ query: 'x', providers: [] })).toMatchObject({
+      results: [],
+      errors: [{ provider: 'UPLOAD', message: 'Provider search failed' }],
+    });
+    expect(mocks.searchGenesis).not.toHaveBeenCalled();
+  });
+  it('keeps successful Eurostat variants and reports provider errors', async () => {
+    mocks.searchEurostat.mockRejectedValueOnce(new Error('catalogue unavailable'));
+    const response = await searchDatasetProviders({ query: 'population', providers: ['EUROSTAT'] });
+    expect(response.errors).toContainEqual(
+      expect.objectContaining({ provider: 'EUROSTAT', message: 'catalogue unavailable' })
+    );
+  });
+  it('stops GENESIS synonyms once its shared provider budget is exhausted', async () => {
+    mocks.searchGenesis.mockImplementation(async (_query, _language, _limit, _signal, budget) => {
+      budget.remaining = 0;
+      return [];
+    });
+    await searchDatasetProviders({ query: 'population', providers: ['GENESIS_DESTATIS'] });
+    expect(mocks.searchGenesis).toHaveBeenCalledOnce();
+  });
+  it('stops GENESIS synonyms once a useful page has six results', async () => {
+    mocks.searchGenesis.mockResolvedValue(
+      Array.from({ length: 6 }, (_, index) => ({
+        id: `g${index}`,
+        provider: 'GENESIS_DESTATIS',
+        providerDatasetId: `12411-000${index}`,
+        title: `Population ${index}`,
+      }))
+    );
+    expect(
+      (await searchDatasetProviders({ query: 'population', providers: ['GENESIS_DESTATIS'] }))
+        .results
+    ).toHaveLength(6);
+    expect(mocks.searchGenesis).toHaveBeenCalledOnce();
+  });
+  it('marks missing GENESIS codes as unverified and enriches the remaining candidates', async () => {
+    mocks.searchGenesis.mockResolvedValue([
+      { id: 'missing', provider: 'GENESIS_DESTATIS', title: 'Population' },
+      {
+        id: 'valid',
+        provider: 'GENESIS_DESTATIS',
+        providerDatasetId: '12411-0001',
+        title: 'Population',
+      },
+    ]);
+    mocks.genesisMetadata.mockResolvedValue({ Content: 'Population Germany', Time: '2025' });
+    const response = await searchDatasetProviders({
+      query: 'Population 2025 Germany',
+      providers: ['GENESIS_DESTATIS'],
+    });
+    expect(response.errors).toContainEqual(
+      expect.objectContaining({ code: 'incomplete_metadata' })
+    );
+    expect(response.results.find(item => item.id === 'valid')?.spatialCoverage).toEqual([
+      'Deutschland',
+    ]);
+  });
+  it('stops metadata enrichment when its parent caller cancels', async () => {
+    const controller = new AbortController();
+    mocks.searchGenesis.mockResolvedValue([
+      {
+        id: 'first',
+        provider: 'GENESIS_DESTATIS',
+        providerDatasetId: '12411-0001',
+        title: 'Population',
+      },
+      {
+        id: 'next',
+        provider: 'GENESIS_DESTATIS',
+        providerDatasetId: '12411-0002',
+        title: 'Population',
+      },
+    ]);
+    mocks.genesisMetadata.mockImplementation(async () => {
+      controller.abort();
+      return { Content: 'Population Germany', Time: '2025' };
+    });
+    const response = await searchDatasetProviders({
+      query: 'Population 2025 Germany',
+      providers: ['GENESIS_DESTATIS'],
+      signal: controller.signal,
+    });
+    expect(response.errors).toContainEqual(
+      expect.objectContaining({ code: 'incomplete_metadata' })
+    );
+    expect(mocks.genesisMetadata).toHaveBeenCalledOnce();
+  });
+  it('does not start GENESIS catalogue calls for an already cancelled search', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await searchDatasetProviders({
+      query: 'population',
+      providers: ['GENESIS_DESTATIS'],
+      signal: controller.signal,
+    });
+    expect(mocks.searchGenesis).not.toHaveBeenCalled();
+  });
+  it('retains metadata but marks unavailable Eurostat scope combinations as other results', async () => {
+    mocks.searchEurostat.mockResolvedValue([
+      { code: 'POP', title: 'Population', type: 'dataset', valueCount: 10 },
+    ]);
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({
+        dimensions: [{ id: 'geo', label: 'Countries', values: [{ id: 'FR', label: 'France' }] }],
+      })
+    );
+    const response = await searchDatasetProviders({
+      query: 'Population Germany',
+      providers: ['EUROSTAT'],
+    });
+    expect(response.results[0].metadata?.searchScopeMatches).toBe(false);
+    expect(response.results[0].searchMatch?.group).toBe('other');
+  });
+  it('enriches direct Eurostat codes without imposing area or time filters', async () => {
+    mocks.searchEurostat.mockResolvedValue([
+      { code: 'DEMO_R_D3DENS', title: 'Density', type: 'dataset', valueCount: 10 },
+    ]);
+    const response = await searchDatasetProviders({
+      query: 'demo_r_d3dens',
+      providers: ['EUROSTAT'],
+    });
+    expect(response.results[0].metadata?.searchScopeMatches).toBeUndefined();
+    expect(mocks.eurostatDetails).toHaveBeenCalledOnce();
+  });
+  it('builds area-only, period-only and punctuation-safe GovData queries', () => {
+    expect(getGovDataSearchQueries('custom', { area: 'Germany', period: null })[0]).toBe(
+      '+"custom" +"Germany"'
+    );
+    expect(
+      getGovDataSearchQueries('custom', { area: null, period: { start: 2025, end: 2025 } })[0]
+    ).toBe('+"custom"  +"2025"');
+    expect(getGovDataSearchQueries('***')).toEqual(['']);
+  });
   it('finds known topics in the German GENESIS catalogue independently of interface language', async () => {
     await searchDatasetProviders({
       query: 'Arbeitslose 2025 Deutschland',

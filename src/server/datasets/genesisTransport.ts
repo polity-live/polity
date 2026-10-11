@@ -50,7 +50,8 @@ export async function postGenesis(
   ).replace(/\/?$/, '/');
   const credential = createStableHash({ base, token });
   const key = createStableHash({ credential, path, data });
-  if (options.signal?.aborted) throw abortError(options.signal);
+  const callerSignal = options.signal;
+  if (callerSignal?.aborted) throw abortError(callerSignal);
   let flight = flights.get(key);
   if (!flight) {
     const controller = new AbortController();
@@ -159,37 +160,35 @@ export async function postGenesis(
     const done = () => {
       if (finished) return false;
       finished = true;
-      options.signal?.removeEventListener('abort', abort);
+      callerSignal?.removeEventListener('abort', abort);
       active.controller.signal.removeEventListener('abort', controlAbort);
       active.subscribers--;
       return true;
     };
     const abort = () => {
-      if (!options.signal) return;
       if (!done()) return;
       if (active.subscribers === 0) {
-        if (flights.get(key) === active) flights.delete(key);
-        active.controller.abort(abortError(options.signal));
+        flights.delete(key);
+        active.controller.abort(abortError(callerSignal as AbortSignal));
       }
-      reject(abortError(options.signal));
+      reject(abortError(callerSignal as AbortSignal));
     };
     const controlAbort = () => {
-      if (!done()) return;
-      if (flights.get(key) === active) flights.delete(key);
+      done();
+      flights.delete(key);
       reject(abortError(active.controller.signal));
     };
-    options.signal?.addEventListener('abort', abort, { once: true });
+    callerSignal?.addEventListener('abort', abort, { once: true });
     active.controller.signal.addEventListener('abort', controlAbort, { once: true });
     active.promise.then(
       response => {
-        if (done()) resolve(response.clone ? response.clone() : response);
+        if (done()) resolve(response.clone());
       },
       error => {
         if (done()) reject(error);
       }
     );
-    if (options.signal?.aborted) abort();
-    else if (active.controller.signal.aborted) controlAbort();
+    if (callerSignal?.aborted) abort();
   });
 }
 

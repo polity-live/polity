@@ -57,6 +57,58 @@ const snapshot: DatasetSnapshotImportResult = {
     ],
   },
 };
+it('uses matching raw geographic cells when provider dimension metadata is absent', () => {
+  const query = inferDataViewConfiguration(snapshot.columnProfiles!).query;
+  expect(
+    applyDatasetSearchIntent(
+      query,
+      { ...snapshot, provenance: {}, rows: [{}, { geo: 'DE' }] },
+      interpretDatasetSearch('population Germany')
+    ).filters.geo
+  ).toBe('DE');
+  expect(
+    applyDatasetSearchIntent(
+      query,
+      { ...snapshot, columnProfiles: undefined },
+      interpretDatasetSearch('population Germany')
+    )
+  ).toEqual(query);
+  expect(applyDatasetSearchIntent(query, snapshot)).toBe(query);
+  expect(
+    applyDatasetSearchIntent(
+      query,
+      {
+        ...snapshot,
+        provenance: { providerDimensions: [{ id: 'geo', values: [{ id: 'UNKNOWN' }] }] },
+      },
+      interpretDatasetSearch('population Germany')
+    ).filters.geo
+  ).toBe('Deutschland');
+});
+it('omits absent, scalar, time, measure and plotted provider dimensions', () => {
+  const query = inferDataViewConfiguration(snapshot.columnProfiles!).query;
+  const dimensions = ['missing', 'TIME_PERIOD', 'OBS_VALUE', 'geo', 'unit'].map(id => ({
+    id,
+    position: 1,
+    label: id,
+    values: [],
+  }));
+  expect(
+    requiredProviderDimensions(
+      { ...snapshot, provenance: { providerDimensions: dimensions } },
+      { ...query, dimensionColumn: 'geo', seriesColumn: null, filters: {} }
+    ).map(item => item.id)
+  ).toEqual(['unit']);
+  expect(
+    requiredProviderDimensions(
+      {
+        ...snapshot,
+        columnProfiles: snapshot.columnProfiles!.map(item => ({ ...item, distinctCount: 1 })),
+      },
+      query
+    )
+  ).toEqual([]);
+});
 it.each(['Arbeitslose', 'Bevölkerung', 'Inflation', 'Bruttoinlandsprodukt'])(
   'transfers area and period for %s without unemployment-specific defaults',
   topic => {

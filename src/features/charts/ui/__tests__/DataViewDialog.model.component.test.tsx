@@ -212,6 +212,175 @@ afterEach(() => {
 });
 
 describe('useDataViewDialogModel boundaries', () => {
+  it('discards obsolete filter errors and upload errors without replacing the next dialog state', async () => {
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => {
+      openDialog();
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => result.current.useSelectedDataset());
+    const filters = deferred<string[]>();
+    mocks.loadDatasetColumnValues.mockReturnValueOnce(filters.promise);
+    let loading!: Promise<void>;
+    act(() => {
+      loading = result.current.loadFilterValues();
+    });
+    act(() => openDialog());
+    await act(async () => {
+      filters.reject(new Error('obsolete values'));
+      await loading;
+    });
+    expect(result.current.projectionError).toBeNull();
+    const upload = deferred<DatasetSnapshotImportResult>();
+    mocks.uploadDataset.mockReturnValueOnce(upload.promise);
+    act(() => {
+      result.current.setUploadGroupId('group-1');
+      result.current.setUploadFile(new File(['a,b'], 'late.csv'));
+    });
+    act(() => {
+      loading = result.current.submitUpload();
+    });
+    act(() => openDialog());
+    await act(async () => {
+      upload.reject(new Error('obsolete upload'));
+      await loading;
+    });
+    expect(result.current.uploadError).toBeNull();
+  });
+  it('discards obsolete successful filter loads and accepts the selected stored snapshot after editing', async () => {
+    const { result } = renderHook(() => useDataViewDialogModel());
+    const element: TDataViewElement = {
+      type: 'data_view',
+      view: 'chart',
+      source: {
+        kind: 'dataset',
+        provider: 'UPLOAD',
+        datasetId: 'stored',
+        snapshotId: 'snapshot',
+        title: 'Stored',
+      },
+      query: { filters: {}, aggregation: 'sum' },
+      presentation: {},
+      children: [{ text: '' }],
+    };
+    act(() => openDialog(element));
+    await act(async () => Promise.resolve());
+    await act(async () => result.current.useSelectedDataset());
+    const filters = deferred<string[]>();
+    mocks.loadDatasetColumnValues.mockReturnValueOnce(filters.promise);
+    let loading!: Promise<void>;
+    act(() => {
+      loading = result.current.loadFilterValues();
+    });
+    act(() => openDialog());
+    await act(async () => {
+      filters.resolve(['obsolete']);
+      await loading;
+    });
+    expect(result.current.filterValues).toEqual({});
+    expect(result.current.filterValuesLoading).toBe(false);
+  });
+  it('reuses prepared metadata, cancels scope selection and preserves functional modal updates', async () => {
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => {
+      openDialog();
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => result.current.useSelectedDataset(true));
+    expect(result.current.stage).toBe('prepare');
+    await act(async () => result.current.useSelectedDataset(true));
+    expect(mocks.prepareProviderDataset).toHaveBeenCalledOnce();
+    expect(mocks.createProviderSnapshot).not.toHaveBeenCalled();
+    act(() => result.current.cancelPreparation());
+    expect(result.current.stage).toBe('find');
+    expect(result.current.error).toBeNull();
+    act(() => result.current.setOpen(current => !current));
+    expect(result.current.open).toBe(false);
+  });
+  it.each([true, false])(
+    'imports GENESIS from prepared metadata with restrictImport=%s',
+    async restrict => {
+      const { result } = renderHook(() => useDataViewDialogModel());
+      act(() => {
+        openDialog();
+        result.current.setSelectedResult(searchResult({ provider: 'GENESIS_DESTATIS' }));
+      });
+      await act(async () => result.current.useSelectedDataset(true));
+      act(() => {
+        result.current.setRestrictImport(restrict);
+        result.current.setImportFilters({});
+      });
+      await act(async () => result.current.useSelectedDataset());
+      const request = mocks.createProviderSnapshot.mock.lastCall?.[0];
+      expect(request.provider).toBe('GENESIS_DESTATIS');
+      if (restrict) expect(request.filters).toEqual({});
+      else expect(request).not.toHaveProperty('filters');
+      expect(result.current.stage).toBe('build');
+    }
+  );
+  it('returns an oversized import to preparation without broadening the selection', async () => {
+    const failure = Object.assign(new Error('selection too large'), {
+      payload: { code: 'dataset_scope_too_large' },
+    });
+    mocks.createProviderSnapshot.mockRejectedValueOnce(failure);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => {
+      openDialog();
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => result.current.useSelectedDataset());
+    expect(result.current.stage).toBe('prepare');
+    expect(result.current.error).toBe('localized:selection too large');
+    expect(result.current.preparing).toBe(false);
+  });
+  it('ignores obsolete editing-detail failures and accepts empty profile metadata', async () => {
+    const pending = deferred<any>();
+    mocks.loadDatasetDetails.mockReturnValueOnce(pending.promise);
+    const element: TDataViewElement = {
+      type: 'data_view',
+      view: 'chart',
+      source: {
+        kind: 'dataset',
+        provider: 'UPLOAD',
+        datasetId: 'stored',
+        snapshotId: 'snapshot',
+        title: 'Stored',
+      },
+      query: { filters: {}, aggregation: 'sum' },
+      presentation: {},
+      children: [{ text: '' }],
+    };
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog(element));
+    act(() => openDialog());
+    await act(async () => pending.reject(new Error('obsolete details')));
+    expect(result.current.error).toBeNull();
+    mocks.loadDatasetDetails.mockResolvedValueOnce({});
+    act(() => openDialog(element));
+    await act(async () => Promise.resolve());
+    expect(result.current.columnProfiles).toEqual([]);
+  });
+  it('discards an upload that completes after the dialog has been reset', async () => {
+    const pending = deferred<DatasetSnapshotImportResult>();
+    mocks.uploadDataset.mockReturnValueOnce(pending.promise);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => {
+      openDialog();
+      result.current.setUploadGroupId('group-1');
+      result.current.setUploadFile(new File(['a,b'], 'late.csv'));
+    });
+    let loading!: Promise<void>;
+    act(() => {
+      loading = result.current.submitUpload();
+    });
+    act(() => openDialog());
+    await act(async () => {
+      pending.resolve(snapshot());
+      await loading;
+    });
+    expect(result.current.stage).toBe('find');
+    expect(result.current.snapshot).toBeNull();
+  });
   it.each([null, 25 * 1024 * 1024])(
     'prepares size %s before import and preserves manual scope changes',
     async estimatedBytes => {

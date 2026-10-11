@@ -4,6 +4,7 @@ import {
   getDatasetTopicQueries,
   interpretDatasetSearch,
   normalizeDatasetCoverage,
+  normalizeDatasetArea,
   parseDatasetSearchFilters,
   rankDatasetSearchResults,
 } from '../datasetSearch';
@@ -26,6 +27,38 @@ const national = result('national', {
 });
 
 describe('dataset search intent', () => {
+  it.each(['DE', 'DEU', 'de'])('normalizes country code %s to Germany', code => {
+    expect(normalizeDatasetArea(code)).toBe('deutschland');
+  });
+  it('keeps a reversed year range as topic text instead of inventing a period', () => {
+    expect(interpretDatasetSearch('custom 2025-2023')).toMatchObject({
+      topic: 'custom 2025-2023',
+      period: null,
+    });
+  });
+  it('keeps unknown topics intact and returns no provider variants for short input', () => {
+    expect(getDatasetTopicQueries(interpretDatasetSearch('x'))).toEqual([]);
+    expect(getDatasetTopicQueries(interpretDatasetSearch('custom values'))).toEqual([
+      'custom values',
+    ]);
+  });
+  it('accepts explicit null and ordered filter values while rejecting malformed periods', () => {
+    expect(
+      parseDatasetSearchFilters({ area: ' Germany ', period: { start: 2024, end: 2025 } })
+    ).toEqual({ area: 'Germany', period: { start: 2024, end: 2025 } });
+    expect(parseDatasetSearchFilters({ area: null, period: null })).toEqual({
+      area: null,
+      period: null,
+    });
+    expect(parseDatasetSearchFilters({})).toEqual({});
+    for (const value of [
+      { period: 'bad' },
+      { period: { start: 2020, end: 2200 } },
+      { area: 'bad\narea' },
+      { area: 2 },
+    ])
+      expect(() => parseDatasetSearchFilters(value)).toThrow();
+  });
   it('prioritizes the GENESIS catalogue language even when the input uses another language', () => {
     expect(
       getDatasetTopicQueries(interpretDatasetSearch('Arbeitslose 2025 Deutschland'), 'en')[0]
@@ -178,6 +211,59 @@ describe('dataset search intent', () => {
 });
 
 describe('dataset search relevance and coverage', () => {
+  it('ranks uploaded records without provider codes and generic title matches', () => {
+    expect(
+      rankDatasetSearchResults(
+        [result('generic', { providerDatasetId: null, title: 'custom values' })],
+        interpretDatasetSearch('custom values')
+      )[0].searchMatch?.group
+    ).toBe('matching');
+  });
+  it('keeps an empty topic broad and interprets object-shaped spatial coverage', () => {
+    const values = [
+      result('object', { spatialCoverage: { label: 'Germany', name: ' ', code: 'DE' } }),
+      result('many', { spatialCoverage: ['France', 'Berlin', 'Hamburg', 'Bremen'] }),
+    ];
+    expect(rankDatasetSearchResults(values, interpretDatasetSearch(''))).toHaveLength(2);
+    expect(
+      rankDatasetSearchResults(values, interpretDatasetSearch('Arbeitslose Germany'))[0].searchMatch
+        ?.area
+    ).toMatchObject({ status: 'match', source: 'metadata' });
+    expect(
+      rankDatasetSearchResults([values[1]], interpretDatasetSearch('Arbeitslose'))[0].searchMatch
+        ?.area.label
+    ).toBe('France, Berlin, Hamburg (+1)');
+  });
+  it('requires topic qualifiers, including generic words spread across title and description', () => {
+    expect(
+      rankDatasetSearchResults(
+        [result('wrong', { title: 'Population' }), result('right', { title: 'Population women' })],
+        interpretDatasetSearch('population women')
+      ).map(item => item.id)
+    ).toEqual(['right']);
+    expect(
+      rankDatasetSearchResults(
+        [
+          result('spread', { title: 'custom', description: 'values' }),
+          result('wrong', { title: 'custom', description: 'unrelated' }),
+        ],
+        interpretDatasetSearch('custom values')
+      ).map(item => item.id)
+    ).toEqual(['spread']);
+    expect(
+      rankDatasetSearchResults(
+        [result('qualified', { title: 'Population' })],
+        interpretDatasetSearch('population by x and the')
+      ).map(item => item.id)
+    ).toEqual(['qualified']);
+  });
+  it('uses an explicit nationwide description as spatial evidence', () => {
+    expect(
+      normalizeDatasetCoverage(
+        result('national-note', { description: 'Die Zahlen gelten bundesweit.' })
+      ).spatialCoverage
+    ).toEqual(['Deutschland']);
+  });
   it('ranks nationwide data before the reported municipal dataset and incidental income mentions', () => {
     const income = result('income', {
       title: 'Nettoäquivalenzeinkommen: Deutschland, Jahre',
@@ -267,6 +353,12 @@ describe('dataset search relevance and coverage', () => {
     expect(ranked.every(item => item.searchMatch?.group === 'other')).toBe(true);
   });
   it('deduplicates provider resources, retaining editable stored snapshots, and sorts ties stably', () => {
+    expect(
+      rankDatasetSearchResults(
+        [national, { ...national, id: 'duplicate-public' }],
+        interpretDatasetSearch('Arbeitslose')
+      ).map(item => item.id)
+    ).toEqual(['national']);
     const stored = { ...national, id: 'stored', snapshotId: 'snapshot' };
     expect(
       rankDatasetSearchResults([national, stored], interpretDatasetSearch('Arbeitslose'))

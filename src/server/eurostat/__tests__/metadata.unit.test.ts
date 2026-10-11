@@ -14,6 +14,26 @@ const entry: EurostatCatalogueEntry = {
 };
 const structure = `<message:Structure xmlns:message="m"><Structures><Codelists><Codelist id="CL_GEO"><Name xml:lang="en">Area</Name><Code id="DE"><Name xml:lang="en">Germany</Name></Code><Code id="FR"><Name xml:lang="en">France</Name></Code></Codelist></Codelists><DataStructures><DataStructure><DataStructureComponents><DimensionList><Dimension id="geo" position="1"><LocalRepresentation><Enumeration><Ref id="CL_GEO" /></Enumeration></LocalRepresentation></Dimension><TimeDimension id="TIME_PERIOD" position="2" /></DimensionList></DataStructureComponents></DataStructure></DataStructures></Structures></message:Structure>`;
 afterEach(() => vi.unstubAllGlobals());
+it.each([
+  ['2025-00', '2025-01'],
+  ['2025-13', '2026-01'],
+  ['bad', '2025'],
+  ['2025', undefined],
+  ['2025', '2025-Q2'],
+  ['2026', '2025'],
+  ['2025-99-99', '2026-01-01'],
+])('does not manufacture observations for invalid time constraints %s to %s', (start, end) => {
+  const constraint = {
+    Structure: {
+      Structures: {
+        Constraints: {
+          ContentConstraint: { CubeRegion: { TimeRange: { StartPeriod: start, EndPeriod: end } } },
+        },
+      },
+    },
+  };
+  expect(getEurostatConstraintRegions(constraint)[0].values.TIME_PERIOD).toEqual([]);
+});
 
 it.each([
   ['2024-12', '2025-02', ['2024-12', '2025-01', '2025-02']],

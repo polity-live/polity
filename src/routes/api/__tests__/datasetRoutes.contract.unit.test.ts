@@ -148,6 +148,47 @@ beforeEach(() => {
 afterEach(() => errorSpy.mockRestore());
 
 describe('provider preparation and failure boundaries', () => {
+  it('defaults GENESIS preparation to English and sanitizes unexpected provider errors', async () => {
+    mocks.prepareGenesis.mockResolvedValueOnce({ dimensions: [] });
+    expect(
+      (
+        await prepare({
+          request: jsonRequest('http://localhost/api/datasets/prepare', {
+            provider: 'GENESIS_DESTATIS',
+            code: '12411-0001',
+          }),
+        })
+      ).status
+    ).toBe(200);
+    expect(mocks.prepareGenesis).toHaveBeenCalledWith(
+      '12411-0001',
+      'en',
+      undefined,
+      expect.any(AbortSignal)
+    );
+    mocks.prepareGenesis.mockRejectedValueOnce(new Error('unexpected provider failure'));
+    expect(
+      (
+        await prepare({
+          request: jsonRequest('http://localhost/api/datasets/prepare', {
+            provider: 'GENESIS_DESTATIS',
+            code: '12411-0001',
+          }),
+        })
+      ).status
+    ).toBe(502);
+  });
+  it('returns a classified provider scope error from projection', async () => {
+    mocks.createProjection.mockRejectedValueOnce(
+      new DatasetProviderFailure('Choose one unit', 'invalid_scope', 422)
+    );
+    const response = await projection({
+      request: jsonRequest('http://localhost/api/datasets/snapshot-1/projection', {}),
+      params: { snapshotId: 'snapshot-1' },
+    });
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ error: { code: 'dataset_scope_unavailable' } });
+  });
   it.each(['EUROSTAT', 'GENESIS_DESTATIS'])(
     'prepares %s with validated scope without importing observations',
     async provider => {

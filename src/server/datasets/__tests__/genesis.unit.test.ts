@@ -8,9 +8,15 @@ import {
   importGenesisDatasetSnapshot,
   getGenesisTableMetadata,
   prepareGenesisDataset,
+  searchGenesisTableCatalogue,
+  genesisMetadataDimensions,
+  genesisSearchMetadata,
+  normalizeGenesisTable,
 } from '../genesis';
 import { assertGenesisStatus, postGenesis } from '../genesisTransport';
 import { clearDatasetSearchCache } from '../searchRuntime';
+import type { PersistDatasetSnapshotInput } from '../service';
+import type { EurostatDimension } from '@/features/charts/types';
 
 const status = { Code: 0, Type: 'Information', Content: 'erfolgreich' };
 const metadata = {
@@ -61,6 +67,41 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe('GENESIS catalogue and status', () => {
+  it.each(['de', 'en'])(
+    'searches valid table prefixes in %s and filters malformed catalogue entries',
+    async language => {
+      mocks.fetch.mockResolvedValue(
+        json({
+          List: [
+            { Code: '12411-0001', Content: 'Population', Time: { From: '2020', To: '2025' } },
+            { Code: '12411-0002', Content: '' },
+            { Code: '12411', Content: 'Statistics' },
+          ],
+        })
+      );
+      expect(await searchGenesisTableCatalogue('12411-*', language)).toMatchObject([
+        { providerDatasetId: '12411-0001', timeCoverage: { start: '2020', end: '2025' } },
+      ]);
+      const params = new URLSearchParams(String(mocks.fetch.mock.calls[0][1].body));
+      expect(params.get('selection')).toBe('12411-*');
+      expect(params.get('language')).toBe(language);
+      expect(params.get('pagelength')).toBe('50');
+    }
+  );
+  it('rejects unrestricted or malformed prefix selections without requesting the provider', async () => {
+    await expect(searchGenesisTableCatalogue('*', 'de')).rejects.toMatchObject({
+      code: 'invalid_scope',
+      httpStatus: 422,
+    });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+  it('normalizes non-German direct-code searches to English and clamps the provider page length', async () => {
+    mocks.fetch.mockResolvedValue(json({ List: { Code: '12411-0001', Content: 'Population' } }));
+    expect(await searchGenesisDatasets('12411-0001', 'fr', 100)).toHaveLength(1);
+    const params = new URLSearchParams(String(mocks.fetch.mock.calls[0][1].body));
+    expect(params.get('language')).toBe('en');
+    expect(params.get('pagelength')).toBe('50');
+  });
   it('classifies interrupted response streams and releases the credential queue', async () => {
     mocks.fetch.mockResolvedValueOnce(
       new Response(
@@ -223,6 +264,241 @@ describe('GENESIS catalogue and status', () => {
 });
 
 describe('GENESIS preparation and modern FFCSV import', () => {
+  it('imports required FFCSV fields without optional unit or measure columns', async () => {
+    const original = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(new Response('time;value\n2025;1'))
+        : original(url, init)
+    );
+    await importGenesisDatasetSnapshot({ code: '12411-0001', userId: 'user' });
+    const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+    expect((saved.dimensions as EurostatDimension[]).map(item => item.id)).toEqual(['time']);
+    expect(saved.table.rows).toEqual([{ time: '2025', value: '1' }]);
+  });
+  it('handles missing, reversed and nested metadata dimensions without inventing coverage', () => {
+    expect(genesisMetadataDimensions({})).toEqual([]);
+    expect(
+      genesisMetadataDimensions({
+        Time: '2025-2020',
+        Structure: {
+          Head: [
+            { Code: '', Type: 'Variable', Values: 1 },
+            { Code: 'EMPTY', Type: 'Variable', Values: 0 },
+            {
+              Code: 'HEADER',
+              Type: 'Statistik',
+              Values: 1,
+              Structure: { Code: 'KIND', Type: 'variable', Values: 2 },
+            },
+          ],
+        },
+      })
+    ).toEqual([{ id: 'KIND', label: 'KIND', position: 1, values: [] }]);
+  });
+  it('adds Germany coverage from its dimension and preserves other spatial metadata', async () => {
+    const result = (await searchGenesisDatasets('population'))[0];
+    expect(
+      genesisSearchMetadata({ Content: 'Population', Structure: metadata.Structure }, result)
+    ).toMatchObject({
+      spatialCoverage: ['Deutschland'],
+      metadata: { searchAreaSource: 'metadata' },
+    });
+    const european = {
+      ...result,
+      spatialCoverage: ['Europe'],
+      metadata: { searchAreaSource: 'catalogue' },
+    };
+    expect(genesisSearchMetadata({ Content: 'European population' }, european)).toMatchObject({
+      spatialCoverage: ['Europe'],
+      metadata: { searchAreaSource: 'catalogue' },
+    });
+    expect(
+      genesisSearchMetadata({ Content: 'Population' }, { ...result, metadata: undefined }).metadata
+        ?.searchAreaSource
+    ).toBeUndefined();
+    expect(genesisSearchMetadata({ Content: 'Germany' }, result).spatialCoverage).toEqual([
+      'Deutschland',
+    ]);
+  });
+  it.each([{ Code: '12411-0002', Content: 'Wrong table' }, { Code: '12411-0001' }])(
+    'rejects mismatched or untitled metadata %j',
+    async entry => {
+      mocks.fetch.mockResolvedValue(json({ Object: entry }));
+      await expect(getGenesisTableMetadata('12411-0001')).rejects.toMatchObject({
+        code: 'invalid_response',
+      });
+    }
+  );
+  it('detects country labels in English and filters blank variable identifiers', async () => {
+    mocks.fetch.mockImplementation(async (url: string) =>
+      url.endsWith('metadata/table')
+        ? json({
+            Object: {
+              Code: '12411-0001',
+              Content: 'Population',
+              Structure: {
+                Head: { Code: 'GEO', Content: 'Countries', Type: 'Variable', Values: 2 },
+              },
+            },
+          })
+        : json({ List: [{ Code: 'DE', Content: 'Germany' }, { Content: 'Broken' }] })
+    );
+    expect(await prepareGenesisDataset('12411-0001', 'en')).toMatchObject({
+      geoDimension: 'GEO',
+      timeDimension: null,
+      spatialCoverage: null,
+      dimensions: [{ values: [{ id: 'DE', label: 'Germany' }] }],
+    });
+    expect(
+      mocks.fetch.mock.calls.every(
+        ([, init]) => new URLSearchParams(String(init.body)).get('language') === 'en'
+      )
+    ).toBe(true);
+  });
+  it('prepares metadata without geographic or temporal selectors', async () => {
+    mocks.fetch.mockResolvedValue(json({ Object: { Code: '12411-0001', Content: 'Summary' } }));
+    expect(await prepareGenesisDataset('12411-0001')).toMatchObject({
+      geoDimension: undefined,
+      timeDimension: null,
+      dimensions: [],
+    });
+  });
+  it('preserves ordinary tables and tolerates absent FFCSV variable identities and attributes', () => {
+    const ordinary = { columns: ['name'], rows: [{ name: 'ordinary' }] };
+    expect(normalizeGenesisTable(ordinary)).toBe(ordinary);
+    expect(
+      normalizeGenesisTable({
+        columns: ['time', 'value', '1_variable_code', '2_variable_code'],
+        rows: [{ time: '2025', value: '1', '1_variable_code': '', '2_variable_code': 'KIND' }],
+      })
+    ).toMatchObject({ rows: [{ KIND: '' }] });
+  });
+  it('rejects blank dataset codes before requesting metadata', async () => {
+    await expect(importGenesisDatasetSnapshot({ code: ' ', userId: 'user' })).rejects.toMatchObject(
+      { code: 'invalid_scope', httpStatus: 422 }
+    );
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+  it.each([1, 6])(
+    'validates %i classifying selectors before requesting observations',
+    async count => {
+      const original = mocks.fetch.getMockImplementation()!;
+      mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+        url.endsWith('metadata/table')
+          ? Promise.resolve(
+              json({
+                Object: {
+                  Code: '12411-0001',
+                  Content: 'Summary',
+                  Structure: {
+                    Head: Array.from({ length: count }, (_, index) => ({
+                      Code: `D${index + 1}`,
+                      Content: 'Kind',
+                      Type: 'Variable',
+                      Values: 1,
+                    })),
+                  },
+                },
+              })
+            )
+          : url.endsWith('catalogue/values2variable')
+            ? Promise.resolve(json({ List: [{ Code: 'A', Content: 'Selected' }] }))
+            : url.endsWith('data/tablefile')
+              ? Promise.resolve(new Response(csv.replace('DINSG', 'D1').replace(';DG;', ';A;')))
+              : original(url, init)
+      );
+      const pending = importGenesisDatasetSnapshot({
+        code: '12411-0001',
+        userId: 'user',
+        filters: {
+          dimensions: Object.fromEntries(
+            Array.from({ length: count }, (_, index) => [`D${index + 1}`, 'A'])
+          ),
+        },
+      });
+      if (count > 5) {
+        await expect(pending).rejects.toMatchObject({ code: 'invalid_scope', httpStatus: 422 });
+        expect(mocks.fetch.mock.calls.some(([url]) => url.endsWith('data/tablefile'))).toBe(false);
+      } else {
+        await pending;
+        const call = mocks.fetch.mock.calls.find(([url]) => url.endsWith('data/tablefile'))!;
+        expect(new URLSearchParams(String(call[1].body)).get('classifyingvariable1')).toBe('D1');
+        expect(new URLSearchParams(String(call[1].body)).get('classifyingkey1')).toBe('A');
+      }
+    }
+  );
+  it('imports English units with stable fallback labels when FFCSV labels are empty', async () => {
+    const original = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(
+            new Response(csv.replace(';Stichtag;', ';;').replace(';Bevölkerungsstand', ';'))
+          )
+        : original(url, init)
+    );
+    const result = await importGenesisDatasetSnapshot({
+      code: '12411-0001',
+      language: 'en',
+      userId: 'user',
+    });
+    const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+    expect(saved.dimensions).toContainEqual(
+      expect.objectContaining({ id: 'value_unit', label: 'Unit' })
+    );
+    expect(saved.dimensions).toContainEqual(
+      expect.objectContaining({
+        id: 'value_variable_code',
+        label: 'Measure',
+        values: [{ id: 'BEVSTD', label: 'BEVSTD' }],
+      })
+    );
+    expect(result.columnProfiles).toContainEqual(
+      expect.objectContaining({ name: 'value', label: 'value' })
+    );
+    expect(result.columnProfiles).toContainEqual(
+      expect.objectContaining({ name: 'time', label: 'time' })
+    );
+  });
+  it('detects ZIP magic even when the content type is absent', async () => {
+    const original = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(new Response(zipSync({ 'data.csv': strToU8(csv) })))
+        : original(url, init)
+    );
+    await importGenesisDatasetSnapshot({ code: '12411-0001', userId: 'user' });
+    const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+    expect(saved.table.rows).toHaveLength(1);
+  });
+  it('rejects valid FFCSV without observations instead of persisting an empty snapshot', async () => {
+    const original = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(new Response(csv.split('\n')[0]))
+        : original(url, init)
+    );
+    await expect(
+      importGenesisDatasetSnapshot({ code: '12411-0001', userId: 'user' })
+    ).rejects.toMatchObject({ code: 'invalid_scope', httpStatus: 422 });
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
+  it('enforces the snapshot limit after decoding a smaller legacy-encoded response', async () => {
+    const original = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(
+            new Response(new Uint8Array(30 * 1024 * 1024).fill(0xe9), {
+              headers: { 'Content-Type': 'text/csv;charset=windows-1252' },
+            })
+          )
+        : original(url, init)
+    );
+    await expect(
+      importGenesisDatasetSnapshot({ code: '12411-0001', userId: 'user' })
+    ).rejects.toMatchObject({ code: 'too_large', httpStatus: 413 });
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
   it('loads table coverage and country selectors without downloading observations', async () => {
     const prepared = await prepareGenesisDataset('12411-0001');
     expect(prepared).toMatchObject({

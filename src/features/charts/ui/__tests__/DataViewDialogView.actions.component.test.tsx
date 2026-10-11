@@ -140,7 +140,18 @@ vi.mock('@/features/shared/ui/ui/popover', () => ({
 }));
 
 vi.mock('@/features/shared/ui/ui/collapsible', () => ({
-  Collapsible: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Collapsible: ({
+    children,
+    onOpenChange,
+  }: {
+    children: ReactNode;
+    onOpenChange?: (open: boolean) => void;
+  }) => (
+    <div>
+      {children}
+      <button data-testid="expand-other" onClick={() => onOpenChange?.(true)} />
+    </div>
+  ),
   CollapsibleContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -309,6 +320,273 @@ it('cancels import preparation by keyboard and renders import busy, invalid, err
   ).toBe(true);
   view.rerender(<DataViewDialogView model={model({ ...base, preparing: true })} />);
   expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+});
+it('edits scoped area, year boundaries and classifying selectors without discarding other filters', () => {
+  let filters: Record<string, any> = {};
+  let deferUpdate = false;
+  let deferred: ((current: Record<string, any>) => Record<string, any>) | undefined;
+  const setImportFilters = vi.fn(update => {
+    if (deferUpdate) deferred = update;
+    else filters = update(filters);
+  });
+  const setRestrictImport = vi.fn();
+  const preparation = {
+    title: 'Population',
+    dimensions: [
+      { id: 'geo', label: 'Country', values: [{ id: 'DE', label: 'Germany' }, { id: 'FR' }] },
+      { id: 'time', label: 'Time', values: [{ id: '2025' }] },
+      { id: 'unit', label: 'Unit', values: [{ id: 'NR', label: 'Number' }, { id: 'PC' }] },
+      { id: 'single', label: 'Only', values: [{ id: 'ONE' }] },
+    ],
+    geoDimension: 'geo',
+    timeDimension: 'time',
+    estimatedBytes: null,
+    importAllowed: true,
+  };
+  const view = render(
+    <DataViewDialogView
+      model={model({
+        stage: 'prepare',
+        preparation,
+        restrictImport: true,
+        importFilters: filters,
+        setImportFilters,
+        setRestrictImport,
+      })}
+    />
+  );
+  const input = (id: string, value: string) => {
+    deferUpdate = true;
+    fireEvent.change(view.container.querySelector(`#${id}`)!, { target: { value } });
+    // React may restore a controlled input before evaluating its queued updater.
+    expect(deferred).toBeTypeOf('function');
+    filters = deferred?.(filters) ?? filters;
+    deferred = undefined;
+    deferUpdate = false;
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'prepare',
+          preparation,
+          restrictImport: true,
+          importFilters: filters,
+          setImportFilters,
+          setRestrictImport,
+        })}
+      />
+    );
+  };
+  input('import-area', 'Germany');
+  expect(filters.area).toBe('Germany');
+  input('import-area', '');
+  expect(filters.area).toBeNull();
+  input('import-start', '2024');
+  expect(filters.period).toEqual({ start: 2024, end: 2024 });
+  input('import-end', '2025');
+  expect(filters.period).toEqual({ start: 2024, end: 2025 });
+  input('import-start', '2023');
+  expect(filters.period).toEqual({ start: 2023, end: 2025 });
+  input('import-end', '');
+  expect(filters.period).toBeNull();
+  input('import-end', '2025');
+  expect(filters.period).toEqual({ start: 2025, end: 2025 });
+  input('import-start', '');
+  expect(filters.period).toBeNull();
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: 'NR' } });
+  filters.dimensions.other = 'KEEP';
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: '__all__' } });
+  expect(filters.dimensions).toEqual({ other: 'KEEP' });
+  filters.dimensions = undefined;
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: '__all__' } });
+  expect(filters.dimensions).toEqual({});
+  fireEvent.change(view.getByRole('combobox', { name: 'plateJs.dataView.prepareTitle' }), {
+    target: { value: 'full' },
+  });
+  expect(setRestrictImport).toHaveBeenCalledWith(false);
+  fireEvent.change(view.getByRole('combobox', { name: 'plateJs.dataView.prepareTitle' }), {
+    target: { value: 'scope' },
+  });
+  expect(setRestrictImport).toHaveBeenCalledWith(true);
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'prepare',
+        preparation,
+        restrictImport: true,
+        importFilters: {
+          area: 'DE',
+          period: { start: 2025, end: 2025 },
+          dimensions: { unit: 'PC' },
+        },
+        setImportFilters,
+      })}
+    />
+  );
+  expect((view.getByRole('combobox', { name: 'Unit' }) as HTMLSelectElement).value).toBe('PC');
+});
+it('handles missing preparations, invalid year limits and providers that require scoped imports', () => {
+  const view = render(
+    <DataViewDialogView model={model({ stage: 'prepare', preparation: null })} />
+  );
+  expect(view.queryByText('plateJs.dataView.prepareHint')).toBeNull();
+  const preparation = {
+    title: 'Unknown-size data',
+    dimensions: [],
+    estimatedBytes: 0,
+    importAllowed: false,
+  };
+  for (const period of [
+    { start: 1700, end: 2025 },
+    { start: 2025, end: 2200 },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'prepare',
+          preparation,
+          restrictImport: true,
+          importFilters: { period },
+        })}
+      />
+    );
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true);
+    expect(view.queryByRole('option', { name: 'plateJs.dataView.fullImport' })).toBeNull();
+  }
+});
+it('requires provider dimensions in the builder and preserves existing query filters on selection', () => {
+  const builder = model({
+    stage: 'build',
+    requiredSelections: [
+      { id: 'unit', label: 'Unit', values: [{ id: 'NR', label: 'Number' }, { id: 'PC' }] },
+    ],
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: 'NR' } });
+  expect(builder.setQuery.mock.calls.at(-1)![0](builder.query).filters).toEqual({
+    Year: '2025',
+    unit: 'NR',
+  });
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        ...builder,
+        query: { ...builder.query, filters: { unit: 'PC' } },
+        snapshot: { ...builder.snapshot, provenance: { importScope: { unit: ['PC'] } } },
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.scopedSnapshot')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        ...builder,
+        snapshot: { ...builder.snapshot, provenance: { importScope: {} } },
+      })}
+    />
+  );
+  expect(view.queryByText('plateJs.dataView.scopedSnapshot')).toBeNull();
+});
+it('displays precise coverage evidence, unconfirmed periods and the absence of confirmed matches', () => {
+  const view = render(<DataViewDialogView model={model()} />);
+  const cases = [
+    {
+      group: 'matching',
+      area: { label: 'Germany', source: 'text', status: 'match' },
+      period: { start: 2024, end: 2025, source: 'text', status: 'match' },
+    },
+    {
+      group: 'other',
+      area: { source: 'unknown', status: 'different' },
+      period: { start: 2024, source: 'metadata', status: 'different' },
+    },
+    {
+      group: 'other',
+      area: { source: 'metadata', status: 'unknown' },
+      period: { end: 2025, source: 'text', status: 'unknown' },
+    },
+    {
+      group: 'matching',
+      area: { source: 'unknown', status: 'unknown' },
+      period: { source: 'unknown', status: 'unknown' },
+    },
+  ];
+  for (const [index, searchMatch] of cases.entries()) {
+    const source = { ...result, searchMatch };
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          searchQuery: 'Population',
+          searchResults: [source],
+          selectedResult: source,
+          searchIntent: {
+            topic: 'Population',
+            area: index === 0 ? 'Germany' : null,
+            period:
+              index === 0
+                ? { start: 2024, end: 2025 }
+                : index === 3
+                  ? { start: 2025, end: 2025 }
+                  : null,
+          },
+        })}
+      />
+    );
+    expect(view.getAllByText(/plateJs.dataView.searchArea/).length).toBeGreaterThan(0);
+    if (searchMatch.group === 'other') {
+      expect(view.getByText('plateJs.dataView.noConfirmedMatches')).toBeTruthy();
+      fireEvent.click(view.getByTestId('expand-other'));
+    }
+    if (index === 2) expect(view.getByText('plateJs.dataView.periodUnconfirmed')).toBeTruthy();
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        searchResults: [{ ...result, searchMatch: cases[0] }],
+        selectedResult: null,
+        searchIntent: { topic: 'Population', area: null, period: null },
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.matchingSearch')).toBeTruthy();
+});
+it('shows source selection, pending lookup and missing-topic states while reporting incomplete metadata', () => {
+  const view = render(
+    <DataViewDialogView model={model({ providers: [], selectedResult: null })} />
+  );
+  expect(view.getByText('plateJs.dataView.chooseSearchSource')).toBeTruthy();
+  view.rerender(<DataViewDialogView model={model({ searching: true, selectedResult: null })} />);
+  expect(view.getByText('plateJs.dataView.searchingDatasets')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        searchQuery: 'Germany 2025',
+        searchIntent: { topic: '', area: 'Germany', period: { start: 2025, end: 2025 } },
+        searchResults: [],
+        selectedResult: null,
+        providerErrors: [
+          { provider: 'EUROSTAT', message: 'Incomplete', code: 'incomplete_metadata' },
+        ],
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.addSearchTopic')).toBeTruthy();
+  expect(view.getByText('plateJs.dataView.coverageIncomplete')).toBeTruthy();
+});
+it('clears an inferred time range when an explicit observation filter replaces it', () => {
+  const builder = model({
+    stage: 'build',
+    filterableProfiles: [{ ...dimensionProfile, role: 'time' }],
+    query: { ...model().query, timeRange: { column: 'Year', startYear: 2024, endYear: 2025 } },
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  fireEvent.change(view.container.querySelector('#filter-Year')!, { target: { value: '2024' } });
+  expect(builder.setQuery.mock.calls.at(-1)![0](builder.query)).toMatchObject({
+    timeRange: null,
+    filters: { Year: '2024' },
+  });
 });
 
 it('opens scoped import from keyboard and retains busy and failed authorization feedback', async () => {

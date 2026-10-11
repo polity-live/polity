@@ -240,21 +240,20 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
         snapshotTakenAt: source.snapshotTakenAt,
         groupId: source.groupId,
       });
-      setSnapshot(
-        snapshotFromStoredResult(
-          {
-            id: source.datasetId,
-            provider: source.provider,
-            title: source.title,
-            publisher: source.publisher,
-            sourceUrl: source.sourceUrl,
-            snapshotId: source.snapshotId,
-            snapshotKey: source.snapshotKey,
-            snapshotTakenAt: source.snapshotTakenAt,
-          },
-          []
-        )
+      const editingSnapshot = snapshotFromStoredResult(
+        {
+          id: source.datasetId,
+          provider: source.provider,
+          title: source.title,
+          publisher: source.publisher,
+          sourceUrl: source.sourceUrl,
+          snapshotId: source.snapshotId,
+          snapshotKey: source.snapshotKey,
+          snapshotTakenAt: source.snapshotTakenAt,
+        },
+        []
       );
+      setSnapshot(editingSnapshot);
       setColumnProfiles([]);
       setViewState(element.view);
       setQuery(element.query);
@@ -274,17 +273,13 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
               layout: getValueColumnLayout(profiles, current.valueColumns),
             };
           });
-          setSnapshot(current =>
-            current
-              ? {
-                  ...current,
-                  columns: profiles.map(profile => profile.name),
-                  columnProfiles: profiles,
-                  provenance: details.metadata,
-                  providerResourceId: details.providerResourceId,
-                }
-              : current
-          );
+          setSnapshot({
+            ...editingSnapshot,
+            columns: profiles.map(profile => profile.name),
+            columnProfiles: profiles,
+            provenance: details.metadata,
+            providerResourceId: details.providerResourceId,
+          });
         })
         .catch(loadError => {
           if (version !== requestVersion.current) return;

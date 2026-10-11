@@ -402,7 +402,7 @@ export async function createDatasetProjection(
     const range = request.timeRange;
     if (!columnSet.has(range.column)) throw new Error(`Unknown dataset column: ${range.column}`);
     filteredRows = filteredRows.filter(row => {
-      const year = datasetYear(String(row[range.column] ?? ''));
+      const year = datasetYear(row[range.column]);
       return year !== null && year >= range.startYear && year <= range.endYear;
     });
   }

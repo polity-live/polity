@@ -131,6 +131,17 @@ describe('getEurostatCatalogue', () => {
 });
 
 describe('catalogue search and lookup', () => {
+  it('forwards cancellation and matches separated topic tokens across code and title', async () => {
+    const controller = new AbortController();
+    vi.mocked(fetch).mockResolvedValueOnce(
+      response(catalogueTsv(['dataset\tPOPULATION\tAnnual women\t\t\t\t\t1'])) as never
+    );
+    const { searchEurostatCatalogue } = await import('../catalogue');
+    expect(
+      await searchEurostatCatalogue('population women', 'en', 20, controller.signal)
+    ).toMatchObject([{ code: 'POPULATION' }]);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), { signal: controller.signal });
+  });
   it('scores every match category and applies value/title tie breakers and limits', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       response(

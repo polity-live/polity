@@ -1,13 +1,34 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { DatasetSearchControls } from '../DatasetSearchControls';
 import { interpretDatasetSearch } from '../../logic/datasetSearch';
 import type { DatasetSearchFilters } from '../../types';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+afterEach(cleanup);
+it('opens empty filter drafts, cancels by Escape and ignores invalid form submissions', async () => {
+  const setFilters = vi.fn();
+  const user = userEvent.setup();
+  render(
+    <DatasetSearchControls intent={interpretDatasetSearch('population')} setFilters={setFilters} />
+  );
+  await user.click(screen.getByRole('button', { name: 'plateJs.dataView.addSearchArea' }));
+  const area = screen.getByRole('textbox', { name: 'plateJs.dataView.searchArea' });
+  expect((area as HTMLInputElement).value).toBe('');
+  fireEvent.submit(area.closest('form')!);
+  expect(setFilters).not.toHaveBeenCalled();
+  await user.keyboard('{Escape}');
+  expect(screen.queryByRole('textbox')).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'plateJs.dataView.addSearchPeriod' }));
+  const start = screen.getByRole('spinbutton', { name: 'plateJs.dataView.searchYearFrom' });
+  expect((start as HTMLInputElement).value).toBe('');
+  fireEvent.submit(start.closest('form')!);
+  expect(setFilters).not.toHaveBeenCalled();
+  await user.keyboard('{Escape}');
+});
 
 it('edits and removes area and period with keyboard focus and rejects invalid local filter drafts', async () => {
   function Harness() {

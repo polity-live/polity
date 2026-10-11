@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { datasetYear, importScopeResourceId, resolveImportFilters } from '../importScope';
+import {
+  datasetYear,
+  importScopeResourceId,
+  resolveImportFilters,
+  importFiltersSchema,
+} from '../importScope';
 import { assertProviderProjectionScope } from '../projection';
 import type { DatasetPreparation } from '@/features/charts/types';
 
@@ -32,6 +37,90 @@ const preparation: DatasetPreparation = {
   ],
 };
 describe('provider import scopes', () => {
+  it('validates ordered API periods and rejects reversed direct-call periods', () => {
+    expect(importFiltersSchema.parse({ period: { start: 2024, end: 2025 } }).period).toEqual({
+      start: 2024,
+      end: 2025,
+    });
+    expect(importFiltersSchema.safeParse({ period: { start: 2025, end: 2024 } }).success).toBe(
+      false
+    );
+    expect(() => resolveImportFilters(preparation, { period: { start: 2025, end: 2024 } })).toThrow(
+      'period is unavailable'
+    );
+  });
+  it('rejects unknown dimensions and retains compatible explicit time selectors', () => {
+    expect(() => resolveImportFilters(preparation, { dimensions: { missing: 'X' } })).toThrow(
+      'Unknown dimension'
+    );
+    expect(
+      resolveImportFilters(preparation, {
+        dimensions: { TIME_PERIOD: '2023-Q2' },
+        period: { start: 2023, end: 2023 },
+      })
+    ).toEqual({ TIME_PERIOD: ['2023-Q2'] });
+    expect(() =>
+      resolveImportFilters(preparation, {
+        dimensions: { TIME_PERIOD: '2025' },
+        period: { start: 2023, end: 2023 },
+      })
+    ).toThrow('Conflicting time');
+  });
+  it('rejects missing geographic/time dimensions and ignores undated observations', () => {
+    expect(() =>
+      resolveImportFilters({ ...preparation, dimensions: [] }, { area: 'Germany' })
+    ).toThrow('unavailable');
+    expect(() =>
+      resolveImportFilters(
+        { ...preparation, dimensions: [] },
+        { period: { start: 2025, end: 2025 } }
+      )
+    ).toThrow('fully available');
+    expect(
+      resolveImportFilters(
+        {
+          ...preparation,
+          dimensions: [
+            {
+              id: 'TIME_PERIOD',
+              label: 'Time',
+              position: 1,
+              values: [{ id: 'unknown' }, { id: '2025' }],
+            },
+          ],
+        },
+        { period: { start: 2025, end: 2025 } }
+      )
+    ).toEqual({ TIME_PERIOD: ['2025'] });
+  });
+  it('allows unfiltered included regions with absent time metadata and preserves unknown area codes', () => {
+    expect(
+      resolveImportFilters({
+        ...preparation,
+        timeDimension: null,
+        coverageRegions: [{ included: true, values: {} }],
+      })
+    ).toEqual({});
+    expect(
+      resolveImportFilters(
+        {
+          ...preparation,
+          dimensions: [{ id: 'geo', label: 'Area', position: 1, values: [{ id: 'LOCAL' }] }],
+        },
+        { area: 'LOCAL' }
+      )
+    ).toEqual({ geo: ['LOCAL'] });
+    expect(importScopeResourceId({ ignored: [] })).toBeUndefined();
+    expect(() =>
+      resolveImportFilters(
+        {
+          ...preparation,
+          dimensions: [{ id: 'geo', label: 'Area', position: 1, values: [{ id: 'LOCAL' }] }],
+        },
+        { area: 'OTHER' }
+      )
+    ).toThrow('unavailable');
+  });
   it('resolves German state searches against English provider labels', () => {
     const state = {
       ...preparation,

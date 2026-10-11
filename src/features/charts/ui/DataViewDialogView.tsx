@@ -396,10 +396,9 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
           data-action-id="charts.data-view.use-dataset"
           type="button"
           className="w-full"
-          disabled={model.preparing || (result.byteSize ?? 0) > 50 * 1024 * 1024}
+          disabled={(result.byteSize ?? 0) > 50 * 1024 * 1024}
           onClick={() => void model.useSelectedDataset()}
         >
-          {model.preparing ? <Loader2Icon className="size-4 animate-spin" /> : null}
           {t('plateJs.dataView.useDataset')}
         </Button>
         {(result.byteSize ?? 0) > 50 * 1024 * 1024 ? (
@@ -410,7 +409,6 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
             type="button"
             variant="ghost"
             className="mt-2 w-full"
-            disabled={model.preparing}
             onClick={() => void model.useSelectedDataset(true)}
           >
             {t('plateJs.dataView.restrictImport')}
@@ -466,12 +464,13 @@ function ImportPreparation({ model }: DataViewDialogViewProps) {
                   list="import-area-options"
                   value={model.importFilters.area ?? ''}
                   placeholder={t('plateJs.dataView.allValues')}
-                  onChange={event =>
+                  onChange={event => {
+                    const value = event.target.value;
                     model.setImportFilters(current => ({
                       ...current,
-                      area: event.target.value || null,
-                    }))
-                  }
+                      area: value || null,
+                    }));
+                  }}
                 />
                 <datalist id="import-area-options">
                   {geo.values.map(value => (
@@ -495,17 +494,18 @@ function ImportPreparation({ model }: DataViewDialogViewProps) {
                     max={2199}
                     placeholder={t('plateJs.dataView.allValues')}
                     value={model.importFilters.period?.start ?? ''}
-                    onChange={event =>
+                    onChange={event => {
+                      const value = event.target.value;
                       model.setImportFilters(current => ({
                         ...current,
-                        period: event.target.value
+                        period: value
                           ? {
-                              start: Number(event.target.value),
-                              end: current.period?.end ?? Number(event.target.value),
+                              start: Number(value),
+                              end: current.period?.end ?? Number(value),
                             }
                           : null,
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </div>
                 <div>
@@ -519,17 +519,18 @@ function ImportPreparation({ model }: DataViewDialogViewProps) {
                     max={2199}
                     placeholder={t('plateJs.dataView.allValues')}
                     value={model.importFilters.period?.end ?? ''}
-                    onChange={event =>
+                    onChange={event => {
+                      const value = event.target.value;
                       model.setImportFilters(current => ({
                         ...current,
-                        period: event.target.value
+                        period: value
                           ? {
-                              start: current.period?.start ?? Number(event.target.value),
-                              end: Number(event.target.value),
+                              start: current.period?.start ?? Number(value),
+                              end: Number(value),
                             }
                           : null,
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </div>
               </>
@@ -576,7 +577,7 @@ function ImportPreparation({ model }: DataViewDialogViewProps) {
         </Button>
         <Button
           type="button"
-          disabled={model.preparing || Boolean(invalidPeriod)}
+          disabled={Boolean(invalidPeriod)}
           onClick={() => void model.useSelectedDataset()}
         >
           {t('plateJs.dataView.importSelection')}
@@ -983,13 +984,14 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
                 list={`filter-options-${profile.name}`}
                 value={model.query.filters[profile.name] ?? ''}
                 placeholder={t('plateJs.dataView.allValues')}
-                onChange={event =>
+                onChange={event => {
+                  const value = event.target.value;
                   model.setQuery(current => ({
                     ...current,
                     ...(profile.role === 'time' ? { timeRange: null } : {}),
-                    filters: { ...current.filters, [profile.name]: event.target.value },
-                  }))
-                }
+                    filters: { ...current.filters, [profile.name]: value },
+                  }));
+                }}
               />
               <datalist id={`filter-options-${profile.name}`}>
                 {(model.filterValues[profile.name] ?? []).map(value => (

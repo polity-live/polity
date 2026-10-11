@@ -154,7 +154,7 @@ function getConstraintDimensions(
 
   return keyValues
     .map((keyValue, index) => {
-      const id = String(keyValue['@_id'] ?? '');
+      const id = keyValue['@_id'];
       const definition = definitions.get(id);
       const codelist = definition?.codelistId ? codelists.get(definition.codelistId) : undefined;
       return {

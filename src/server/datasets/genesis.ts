@@ -364,7 +364,7 @@ export async function importGenesisDatasetSnapshot({
   }
   for (const row of table.rows)
     for (const [id, values] of Object.entries(resolved)) {
-      const value = id === 'time' ? String(datasetYear(row.time ?? '')) : row[id];
+      const value = id === 'time' ? String(datasetYear(row.time)) : row[id];
       if (value === undefined || !values.includes(value))
         throw new DatasetProviderFailure(
           'GENESIS returned data outside the selected scope',

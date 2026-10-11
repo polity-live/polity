@@ -13,6 +13,29 @@ import { createGovDataCsvSnapshot } from '../importer';
 import { assertSafePublicHttpUrl } from '../safety';
 
 describe('GovData utilities', () => {
+  it.each([
+    [{ spatial_text: '"Germany"' }, ['"Germany"']],
+    [{ spatial: { label: 'Germany', code: 'DE' } }, { label: 'Germany', code: 'DE' }],
+    [{ spatial: '' }, undefined],
+  ])('preserves string and object spatial metadata %j', (metadata, expected) => {
+    const entry = normalizeGovDataPackage({
+      id: 'spatial',
+      name: 'spatial',
+      title: 'Dataset',
+      ...metadata,
+      resources: [{ id: 'csv', format: 'CSV', url: 'https://example.com/data.csv' }],
+    });
+    expect(entry?.spatialCoverage).toEqual(expected);
+  });
+  it('forwards caller cancellation to catalogue fetches', async () => {
+    const controller = new AbortController();
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(Response.json({ success: true, result: { results: [] } }));
+    vi.stubGlobal('fetch', fetcher);
+    expect(await searchGovDataCatalogue('population', 20, controller.signal)).toEqual([]);
+    expect(fetcher.mock.calls[0][1]).toEqual({ signal: controller.signal });
+  });
   afterEach(() => {
     vi.unstubAllGlobals();
   });

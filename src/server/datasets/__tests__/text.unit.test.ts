@@ -5,6 +5,9 @@ import { parseDatasetCsv, tableToCsv } from '../csv';
 const csv = 'Veränderung;Stadt\n42;Düsseldorf\n-3;Köln';
 
 describe('dataset byte decoding', () => {
+  it('treats an empty content type as undeclared encoding', () => {
+    expect(decodeDatasetText(new TextEncoder().encode(csv), ' ')).toBe(csv);
+  });
   it.each([false, true])('preserves UTF-8 columns and cells with BOM=%s', bom => {
     const decoded = decodeDatasetText(new TextEncoder().encode((bom ? '\uFEFF' : '') + csv));
     expect(decoded).toBe(csv);

@@ -26,6 +26,22 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('dataset client contracts', () => {
+  it('encodes explicit search scope and cancellation for plain dataset searches', async () => {
+    fetchMock.mockResolvedValue(response([]));
+    const controller = new AbortController();
+    const filters = { area: 'Germany', period: { start: 2024, end: 2025 } };
+    await searchDatasets({
+      query: 'population',
+      providers: [],
+      filters,
+      signal: controller.signal,
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(new URL(url, 'https://polity.test').searchParams.get('filters')!)).toEqual(
+      filters
+    );
+    expect(init.signal).toBe(controller.signal);
+  });
   it('sends scope and cancellation through preparation and snapshot requests', async () => {
     fetchMock.mockResolvedValue(response({ ok: true }));
     const controller = new AbortController();
