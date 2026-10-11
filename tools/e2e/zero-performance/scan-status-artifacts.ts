@@ -22,6 +22,7 @@ export async function scanStatusCursor() {
 /** Recompute every correction; unnamed positive sort work remains part of the metric. */
 export function validateScanStatus(records: any[], counts: Counts, sqlite: Plans) {
   const actual: Record<string, number> = {};
+  const lastPlans: Plans = {};
   const seen = new Set<string>();
   for (const record of records) {
     if (
@@ -102,11 +103,11 @@ export function validateScanStatus(records: any[], counts: Counts, sqlite: Plans
     actual[record.sql] = (actual[record.sql] ?? 0) + total;
     if (!Number.isSafeInteger(actual[record.sql])) throw new Error('Unsafe SQLite SQL aggregate');
     if (!sqlite[record.sql]) throw new Error('Unexpected SQLite scan-status SQL');
-    assert.deepEqual(
-      record.nodes.map((node: any) => node.explain),
-      sqlite[record.sql],
-      'SQLite plan provenance mismatch'
-    );
+    // SQLite STAT4 can replan the same prepared SQL for different bindings.
+    // The SDK sums every execution's visits but recordExplain retains only the
+    // last nonempty plan. Preserve all raw plans and mirror that final selection.
+    const plan = record.nodes.map((node: any) => node.explain);
+    if (plan.length || !lastPlans[record.sql]) lastPlans[record.sql] = plan;
   }
   const expected: Record<string, number> = {};
   for (const queries of Object.values(counts))
@@ -122,6 +123,7 @@ export function validateScanStatus(records: any[], counts: Counts, sqlite: Plans
     ...Object.keys(sqlite),
   ])) {
     if (actual[sql] === undefined) throw new Error('Missing SQLite scan-status execution');
+    assert.deepEqual(lastPlans[sql], sqlite[sql], 'SQLite plan provenance mismatch');
     if ((actual[sql] ?? 0) !== (expected[sql] ?? 0))
       throw new Error('SQLite/analyzer visit aggregate mismatch');
   }

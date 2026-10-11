@@ -7,6 +7,7 @@ import {
   readScanStatusArtifact,
   scanStatusCursor,
   writeScanStatusArtifact,
+  validateScanStatus,
 } from '../scan-status-artifacts';
 import { readPerformanceReport, retainMeasurementArtifacts } from '../plan-artifacts';
 import { REPETITIONS } from '../metrics';
@@ -89,6 +90,27 @@ async function fixture() {
   return { output, artifact, record, report, file };
 }
 describe('SQLite scan-status evidence integrity', () => {
+  it('retains all visits when parameter-sensitive replanning changes the same SQL across fresh executions', async () => {
+    const { record } = await fixture();
+    const second = structuredClone(record);
+    second.epoch++;
+    second.nodes[0].name = 't';
+    second.nodes[0].explain = 'SCAN t';
+    second.nodes[0].rawVisits = second.nodes[0].correctedVisits = 7;
+    second.loops[0].name = 't';
+    second.loops[0].explain = 'SCAN t';
+    second.loops[0].visits = 7;
+    second.rawTotal = second.total = 7;
+    expect(() =>
+      validateScanStatus([record, second], { t: { sql: 7 } }, { sql: ['SCAN t'] })
+    ).not.toThrow();
+    expect(() =>
+      validateScanStatus([record, second], { t: { sql: 7 } }, { sql: ['SEARCH t USING INDEX idx'] })
+    ).toThrow('plan provenance mismatch');
+    expect(() =>
+      validateScanStatus([record, second], { t: { sql: 0 } }, { sql: ['SCAN t'] })
+    ).toThrow('aggregate mismatch');
+  });
   it('exports only fresh cursor executions and validates exact zero-row analysis evidence', async () => {
     const { output, artifact, file } = await fixture();
     expect((await readScanStatusArtifact(output, artifact)).records).toHaveLength(1);
