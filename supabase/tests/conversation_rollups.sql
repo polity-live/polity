@@ -3,7 +3,25 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(15);
+SELECT plan(17);
+
+SELECT is(
+  (
+    SELECT indexdef FROM pg_indexes
+    WHERE schemaname = 'public' AND indexname = 'idx_conversation_group_id'
+  ),
+  'CREATE INDEX idx_conversation_group_id ON public.conversation USING btree (group_id, id)',
+  'group conversation projections can filter and order through the same index'
+);
+
+SELECT is(
+  (
+    SELECT indexdef FROM pg_indexes
+    WHERE schemaname = 'public' AND indexname = 'idx_conversation_participant_conversation_id'
+  ),
+  'CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant USING btree (conversation_id, id)',
+  'participant projections can filter and order through the same index'
+);
 
 CREATE OR REPLACE FUNCTION pg_temp.capture_sqlstate(command TEXT)
 RETURNS TEXT
