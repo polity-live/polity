@@ -12,6 +12,7 @@ import {
 } from '../../../src/features/communication-studio/logic/document-v3';
 import { POLITY_THEME } from '../../../src/features/shared/appearance-theme';
 import { canvasMutationCases, studioApplyConflictCases } from './mutation-cases-canvas';
+import { presentationMutationCases } from './mutation-cases-presentation';
 import { studioCommandSchemas } from '../../../src/zero/communication-studio/commands';
 
 const epoch = new Date('2030-01-01T00:00:00Z');
@@ -2900,6 +2901,7 @@ export function contentMutationCases(): MutationCase[] {
       action => [statementCase(action, 'public-voter'), blogCase(action, 'public-voter')]
     ),
     ...canvasMutationCases(),
+    ...presentationMutationCases(),
     ...studioApplyConflictCases(),
     ...studioActions
       .filter(action => action !== 'canvas.command')

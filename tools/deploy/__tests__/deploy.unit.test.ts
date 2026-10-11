@@ -24,6 +24,8 @@ describe('deployment CLI dry-run', () => {
     expect(section).toContain('file_size_limit = "100MiB"');
     const mimeTypes = JSON.parse(section!.match(/allowed_mime_types\s*=\s*(\[[^\]]*\])/)![1]);
     expect(mimeTypes).toEqual([
+      'audio/mpeg',
+      'audio/wav',
       'image/png',
       'image/jpeg',
       'image/webp',

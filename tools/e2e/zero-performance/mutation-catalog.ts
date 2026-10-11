@@ -4,7 +4,6 @@ import { coreMutationCases } from './mutation-cases-core';
 import { contentMutationCases } from './mutation-cases-content';
 import { governanceMutationCases } from './mutation-cases-governance';
 import { amendmentMutationCases } from './mutation-cases-amendments';
-import { presentationMutationCases } from './mutation-cases-presentation';
 import { canonical } from './sharding';
 import type { MutationCase } from './mutation-case-types';
 import type { MutationExpectation } from './mutation-metrics';
@@ -86,7 +85,6 @@ export function loadMutationCases() {
     ...contentMutationCases(),
     ...governanceMutationCases(),
     ...amendmentMutationCases(),
-    ...presentationMutationCases(),
   ].sort((a, b) => mutationKey(a).localeCompare(mutationKey(b), 'en'));
 }
 export function mutationCaseManifest() {
