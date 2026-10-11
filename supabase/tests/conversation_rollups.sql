@@ -3,7 +3,16 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(18);
+SELECT plan(19);
+
+SELECT is(
+  (
+    SELECT indexdef FROM pg_indexes
+    WHERE schemaname = 'public' AND indexname = 'idx_conversation_event_id'
+  ),
+  'CREATE INDEX idx_conversation_event_id ON public.conversation USING btree (event_id, id)',
+  'event conversation projections can filter and order through the same index'
+);
 
 SELECT is(
   (

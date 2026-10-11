@@ -9,7 +9,7 @@
     "uniqueConstraints": 75,
     "uniqueIndexes": 31,
     "uniqueRules": 106,
-    "indexes": 763,
+    "indexes": 764,
     "functions": 152,
     "triggers": 122,
     "policies": 169,
