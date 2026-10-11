@@ -7,6 +7,8 @@ import { useMessageAttachments } from '../useMessageAttachments';
 
 const mocks = vi.hoisted(() => ({
   data: undefined as any,
+  search: vi.fn(),
+  voteState: vi.fn(),
   votes: [] as any[],
   uploadFile: vi.fn(),
   isUploading: false,
@@ -33,10 +35,16 @@ vi.mock('@/features/search/logic/searchMappers', () => ({
   mapMosaicToContentItems: mocks.mapMosaic,
 }));
 vi.mock('@/features/search/hooks/useSearchData', () => ({
-  useSearchData: () => ({ data: mocks.data }),
+  useSearchData: (...args: unknown[]) => {
+    mocks.search(...args);
+    return { data: mocks.data };
+  },
 }));
 vi.mock('@/zero/votes/useVoteState', () => ({
-  useVoteState: () => ({ votesWithDetails: mocks.votes }),
+  useVoteState: (options: unknown) => {
+    mocks.voteState(options);
+    return { votesWithDetails: mocks.votes };
+  },
 }));
 vi.mock('../../logic/buildAttachmentCardDataIndex', () => ({
   buildAttachmentCardDataIndex: mocks.buildIndex,
@@ -59,6 +67,8 @@ function option(entityType: string, entityId: string) {
 describe('useMessageAttachments exhaustive branches', () => {
   beforeEach(() => {
     mocks.data = undefined;
+    mocks.search.mockClear();
+    mocks.voteState.mockClear();
     mocks.votes = [];
     mocks.isUploading = false;
     mocks.uploadingFile = undefined;
@@ -80,6 +90,23 @@ describe('useMessageAttachments exhaustive branches', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+  });
+  it('loads the catalog on demand and keeps selected attachment cards reactive', () => {
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useMessageAttachments('conversation', enabled),
+      {
+        initialProps: { enabled: false },
+      }
+    );
+    expect(mocks.search).toHaveBeenLastCalledWith('', undefined, false);
+    expect(mocks.voteState).toHaveBeenLastCalledWith({ includeVotesWithDetails: false });
+    rerender({ enabled: true });
+    expect(mocks.search).toHaveBeenLastCalledWith('', undefined, true);
+    act(() => result.current.addAttachment(option('group', 'keep')));
+    rerender({ enabled: false });
+    expect(mocks.search).toHaveBeenLastCalledWith('', undefined, true);
+    act(() => result.current.clearAttachments());
+    expect(mocks.search).toHaveBeenLastCalledWith('', undefined, false);
   });
 
   it('uses empty data fallbacks and exposes missing-card and upload-state fallbacks', () => {

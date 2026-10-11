@@ -61,6 +61,16 @@ beforeEach(() => {
 });
 
 describe('useSubscribeGroup', () => {
+  it('uses projected subscriber rows when both aggregate counts are absent', () => {
+    const projected = {
+      subscriptions: [{ id: 'nested', subscriber_id: null, subscriber_user: { id: 'user' } }],
+      subscriberCount: undefined,
+      isLoading: false,
+    } as any;
+    const { result } = renderHook(() => useSubscribeGroup('group', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    expect(result.current.subscriberCount).toBe(1);
+  });
   it('derives facade subscription state from direct and related user rows', () => {
     mocks.subscribers = [{ id: 'direct', subscriber_id: 'user' }];
     mocks.subscriberCount = 5;

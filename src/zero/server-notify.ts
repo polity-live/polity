@@ -8,6 +8,7 @@
  */
 import * as helpers from '@/features/notifications/utils/notification-helpers.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { mutationDiagnostic } from '@/server/zero-mutation-diagnostics';
 
 const LOG = '[ServerNotify]';
 
@@ -29,9 +30,11 @@ export async function withNotificationDeliveryQueue<T>(callback: () => Promise<T
     try {
       return await callback();
     } finally {
+      const started = performance.now();
       while (pending.size > 0) {
         await Promise.all([...pending]);
       }
+      mutationDiagnostic('delivery', started);
     }
   });
 }

@@ -1,11 +1,14 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { forwardRef, useEffect, useState, type ComponentProps } from 'react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   Toolbar,
   ToolbarButton,
+  ToolbarTooltipContainer,
   ToolbarSplitButton,
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
@@ -35,6 +38,55 @@ afterEach(() => {
 });
 
 describe('Toolbar tooltip', () => {
+  it('hydrates the SSR control before enabling its accessible disabled tooltip wrapper', () => {
+    const element = (
+      <Toolbar>
+        <ToolbarButton disabled tooltip="Unavailable" aria-label="Hydrated action">
+          X
+        </ToolbarButton>
+      </Toolbar>
+    );
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(element);
+    document.body.append(container);
+    expect(container.querySelector('button')?.getAttribute('aria-hidden')).toBeNull();
+    const errors = vi.spyOn(console, 'error');
+    try {
+      render(element, { container, hydrate: true });
+      const wrapper = screen.getByRole('button', { name: 'Hydrated action' });
+      expect(wrapper.getAttribute('tabindex')).toBe('0');
+      expect(wrapper.querySelector('button')?.getAttribute('aria-hidden')).toBe('true');
+      expect(
+        errors.mock.calls.filter(call => /hydration|did not match/i.test(call.join(' ')))
+      ).toEqual([]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+  it('mounts client-navigation controls once and preserves their state', () => {
+    const mounted = vi.fn();
+    const Control = forwardRef<HTMLButtonElement, ComponentProps<'button'>>((props, ref) => {
+      const [count, setCount] = useState(0);
+      useEffect(() => {
+        mounted();
+      }, []);
+      return (
+        <button {...props} ref={ref} onClick={() => setCount(value => value + 1)}>
+          {count}
+        </button>
+      );
+    });
+    const view = render(
+      <ToolbarTooltipContainer Component={Control} componentProps={{}} tooltip="Control" />
+    );
+    expect(mounted).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Control' }));
+    view.rerender(
+      <ToolbarTooltipContainer Component={Control} componentProps={{}} tooltip="Updated" />
+    );
+    expect(screen.getByRole('button', { name: 'Updated' }).textContent).toBe('1');
+    expect(mounted).toHaveBeenCalledTimes(1);
+  });
   it('uses the shared tooltip and a structured shortcut badge', async () => {
     render(
       <KeyboardPlatformProvider platform="windows">

@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

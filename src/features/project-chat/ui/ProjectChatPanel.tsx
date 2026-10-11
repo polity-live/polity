@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ReactNode, PointerEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@/zero/observed-query';
 import { MessageSquare, MessageSquarePlus, Minus } from 'lucide-react';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';

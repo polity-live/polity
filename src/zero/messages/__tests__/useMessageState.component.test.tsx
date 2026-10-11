@@ -122,6 +122,24 @@ describe('useMessageState', () => {
     expect(mocks.useQuery.mock.calls.at(-1)?.[0]).toBeUndefined();
   });
 
+  it('can subscribe only to messages without waiting on unused conversation or unread metadata', () => {
+    const args = { conversation_id: 'conversation-1', limit: 80 };
+    setResult('messages', args, [{ id: 'message-1' }]);
+    setResult('conversation', { id: 'conversation-1' }, undefined, 'unknown');
+    setResult('unread', { conversation_id: 'conversation-1' }, undefined, 'unknown');
+    const { result, rerender } = renderHook(() =>
+      useMessageState({ conversationId: 'conversation-1', includeConversationMetadata: false })
+    );
+    expect(result.current.messages).toEqual([{ id: 'message-1' }]);
+    expect(result.current.isLoading).toBe(false);
+    expect(mocks.useQuery.mock.calls.filter(([query]) => query !== undefined)).toEqual([
+      [{ key: key('messages', args) }],
+    ]);
+    setResult('messages', args, undefined, 'unknown');
+    rerender();
+    expect(result.current.isLoading).toBe(true);
+  });
+
   it.each([
     [
       'messages',

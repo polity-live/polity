@@ -73,6 +73,7 @@ export function useSubscribeEvent(
 
   // Subscribe to an event
   const subscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetEventId) {
       return;
     }
@@ -125,6 +126,7 @@ export function useSubscribeEvent(
 
   // Unsubscribe from an event
   const unsubscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetEventId) {
       return;
     }
@@ -172,7 +174,7 @@ export function useSubscribeEvent(
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    if (isLoading) return;
+    if (projectedState?.isLoading || isLoading) return;
     if (isSubscribed) {
       await unsubscribe();
     } else {
@@ -181,9 +183,20 @@ export function useSubscribeEvent(
   };
 
   return {
-    isSubscribed,
-    subscriberCount,
-    isLoading,
+    isSubscribed:
+      projectedState && optimisticTargetRef.current === null
+        ? Boolean(
+            authUser?.id &&
+            subscriptionData.subscribers.some(
+              sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+            )
+          )
+        : isSubscribed,
+    subscriberCount:
+      projectedState && optimisticTargetRef.current === null
+        ? (resolvedPersistedSubscriberCount ?? subscriptionData.subscribers.length)
+        : subscriberCount,
+    isLoading: Boolean(projectedState?.isLoading) || isLoading,
     subscribe,
     unsubscribe,
     toggleSubscribe,

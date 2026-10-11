@@ -30,7 +30,7 @@ vi.mock('@/zero/events/useEventActions', () => ({
   }),
 }));
 vi.mock('@/zero/events/useEventState', () => ({
-  useEventById: (id: unknown) => {
+  useEventForParticipation: (id: unknown) => {
     mocks.byIdArgs.push(id);
     return { event: mocks.event, isLoading: mocks.eventLoading };
   },
@@ -76,6 +76,47 @@ beforeEach(() => {
 });
 
 describe('useEventParticipation coverage', () => {
+  it('blocks projected participation mutations while state loads and releases a resolved invitation', async () => {
+    const { result, rerender } = renderHook(
+      ({ loading, participants }) =>
+        useEventParticipation('event-1', {
+          event: event(),
+          participantCount: 8,
+          isLoading: loading,
+          participants,
+        }),
+      {
+        initialProps: {
+          loading: true,
+          participants: [] as { id: string; user_id: string; status: string }[],
+        },
+      }
+    );
+    await act(() => result.current.requestParticipation());
+    rerender({
+      loading: true,
+      participants: [{ id: 'invite', user_id: 'user-1', status: 'invited' }],
+    });
+    await act(async () => {
+      await result.current.acceptInvitation();
+      await result.current.leaveEvent();
+    });
+    expect(mocks.joinEvent).not.toHaveBeenCalled();
+    expect(mocks.leaveEvent).not.toHaveBeenCalled();
+    expect(mocks.updateParticipant).not.toHaveBeenCalled();
+    expect(result.current.isLoading).toBe(true);
+    expect(mocks.byIdArgs.every(id => id === undefined)).toBe(true);
+    expect(mocks.participantArgs.every(id => id === undefined)).toBe(true);
+    rerender({
+      loading: false,
+      participants: [{ id: 'invite', user_id: 'user-1', status: 'invited' }],
+    });
+    expect(result.current.isInvited).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    await act(() => result.current.acceptInvitation());
+    expect(mocks.updateParticipant).toHaveBeenCalledWith({ id: 'invite', status: 'active' });
+  });
+
   it('derives projected and queried statuses, counts, memberships, and delegates', () => {
     const projected = {
       event: event({

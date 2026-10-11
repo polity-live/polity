@@ -17,6 +17,9 @@ const state = vi.hoisted(() => ({
   loading: false,
   display: {} as Record<string, unknown>,
   params: {} as Record<string, string>,
+  permalinkId: 'permalink' as string | null,
+  contentTypes: ['group'],
+  providerContentTypes: undefined as readonly string[] | undefined,
   save: vi.fn().mockResolvedValue(undefined),
   error: vi.fn(),
 }));
@@ -26,13 +29,13 @@ vi.mock('../hooks/useSearchPage', () => ({
     view: state.view,
     setView: state.setView,
     searchContext: { query: 'q' },
-    permalinkId: 'permalink',
+    permalinkId: state.permalinkId,
     setTotalResults: vi.fn(),
     searchQuery: 'query',
     setSearchQuery: vi.fn(),
     showFilters: false,
     setShowFilters: vi.fn(),
-    contentTypes: [],
+    contentTypes: state.contentTypes,
     setContentTypes: vi.fn(),
     toggleContentType: vi.fn(),
     dateRange: 'all',
@@ -57,9 +60,16 @@ vi.mock('@/features/shared/hooks/useSwipeNavigation', () => ({
 }));
 
 vi.mock('../SearchCardStateProvider', () => ({
-  SearchCardStateProvider: ({ children }: { children: React.ReactNode }) => (
-    <section data-testid="provider">{children}</section>
-  ),
+  SearchCardStateProvider: ({
+    children,
+    contentTypes,
+  }: {
+    children: React.ReactNode;
+    contentTypes?: readonly string[];
+  }) => {
+    state.providerContentTypes = contentTypes;
+    return <section data-testid="provider">{children}</section>;
+  },
 }));
 vi.mock('../ui/SearchPageView', () => ({
   SearchPageView: ({ results }: { results: React.ReactNode }) => (
@@ -80,6 +90,9 @@ describe('SearchPage view branches', () => {
     state.loading = false;
     state.display = {};
     state.params = {};
+    state.permalinkId = 'permalink';
+    state.contentTypes = ['group'];
+    state.providerContentTypes = undefined;
     state.save.mockReset().mockResolvedValue(undefined);
     state.error.mockClear();
   });
@@ -106,6 +119,13 @@ describe('SearchPage view branches', () => {
 
     expect(screen.getByText('spatial-result')).toBeTruthy();
     expect(state.swipeOptions).toMatchObject({ canSwipePrev: true, canSwipeNext: false });
+  });
+  it('loads card permissions for permalinks outside the selected content types', () => {
+    const view = render(<SearchPage />);
+    expect(state.providerContentTypes).toBeUndefined();
+    state.permalinkId = null;
+    view.rerender(<SearchPage />);
+    expect(state.providerContentTypes).toEqual(['group']);
   });
   it('restores a saved view once loading completes, respects an explicit URL and reports failed saves', async () => {
     state.loading = true;

@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { studioAssetUrls, studioCapabilities } from '@/zero/communication-studio/projections';
 import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react';

@@ -1,3 +1,4 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -7,6 +8,7 @@ import {
   applyDocumentQueryAccess,
   applyEventQueryAccess,
   applyGroupQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
@@ -47,7 +49,7 @@ function groupStepRunForGroup(stepRun: any, groupId: string) {
     or(
       cmp('source_group_id', groupId),
       cmp('target_group_id', groupId),
-      exists('event', (event: any) => event.where('group_id', groupId))
+      exists('event', (event: any) => event.where('group_id', groupId), { flip: false })
     )
   );
 }
@@ -57,9 +59,16 @@ function groupProcessRunForGroup(run: any, groupId: string) {
     or(
       cmp('selected_source_group_id', groupId),
       cmp('selected_target_group_id', groupId),
-      exists('step_runs', (stepRun: any) => groupStepRunForGroup(stepRun, groupId)),
-      exists('compatibility_paths', (path: any) =>
-        path.whereExists('segments', (segment: any) => segment.where('group_id', groupId))
+      exists('step_runs', (stepRun: any) => groupStepRunForGroup(stepRun, groupId), {
+        flip: false,
+      }),
+      exists(
+        'compatibility_paths',
+        (path: any) =>
+          path.whereExists('segments', (segment: any) => segment.where('group_id', groupId), {
+            flip: false,
+          }),
+        { flip: false }
       )
     )
   );
@@ -100,18 +109,25 @@ function applyGroupAmendmentFilters({
   let q: any = applyAmendmentAccess(zql.amendment, userID).where(({ or, cmp, exists }: any) =>
     or(
       cmp('group_id', groupId),
-      exists('group_decisions', (decision: any) => decision.where('group_id', groupId)),
-      exists('event', (event: any) => event.where('group_id', groupId)),
-      exists('current_process_run', (run: any) => groupProcessRunForGroup(run, groupId))
+      exists('group_decisions', (decision: any) => decision.where('group_id', groupId), {
+        flip: false,
+      }),
+      exists('event', (event: any) => event.where('group_id', groupId), { flip: false }),
+      exists('current_process_run', (run: any) => groupProcessRunForGroup(run, groupId), {
+        flip: false,
+      })
     )
   );
-  if (status) q = q.whereExists('current_process_run', (run: any) => run.where('status', status));
+  if (status)
+    q = q.whereExists('current_process_run', (run: any) => run.where('status', status), {
+      flip: false,
+    });
   if (displayStatus) {
     const statuses = LEGACY_GROUP_AMENDMENT_STATUSES[displayStatus];
     q = q.where(({ or, exists }: any) =>
       or(
         exists('group_decisions', (decision: any) =>
-          decision.where('group_id', groupId).where('status', 'IN', statuses)
+          whereAnyOf(decision.where('group_id', groupId), 'status', statuses)
         ),
         exists('current_process_run', (run: any) =>
           run.whereExists('step_runs', (stepRun: any) =>
@@ -139,29 +155,48 @@ function applyGroupAmendmentFilters({
   return q;
 }
 
-function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
+function applyAmendmentManagerAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerAmendment = false
+): T {
   const query = q as any;
+  const plan = planPerAmendment ? { flip: false } : undefined;
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),
-      exists('roles', (role: any) =>
-        role
-          .where('scope', 'amendment')
-          .whereExists('amendment_collaborators', (collaborator: any) =>
-            collaborator
-              .where('user_id', userID)
-              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
-          )
-          .whereExists('amendment_action_rights', (right: any) =>
-            right.where('resource', 'amendments').where('action', 'manage')
-          )
+      exists(
+        'roles',
+        (role: any) =>
+          role
+            .where('scope', 'amendment')
+            .whereExists(
+              'amendment_collaborators',
+              (collaborator: any) =>
+                whereAnyOf(
+                  collaborator.where('user_id', userID),
+                  'status',
+                  ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+                ),
+              plan
+            )
+            .whereExists(
+              'amendment_action_rights',
+              (right: any) => right.where('resource', 'amendments').where('action', 'manage'),
+              plan
+            ),
+        plan
       )
     )
   ) as T;
 }
 
-function applyAmendmentCollaboratorRosterAccess<T>(q: T, userID: string | undefined): T {
+function applyAmendmentCollaboratorRosterAccess<T>(
+  q: T,
+  userID: string | undefined,
+  planPerCollaborator = false
+): T {
   const query = q as any;
 
   if (!userID || userID === 'anon') {
@@ -171,7 +206,11 @@ function applyAmendmentCollaboratorRosterAccess<T>(q: T, userID: string | undefi
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('amendment', (amendment: any) => applyAmendmentManagerAccess(amendment, userID))
+      exists(
+        'amendment',
+        (amendment: any) => applyAmendmentManagerAccess(amendment, userID, planPerCollaborator),
+        planPerCollaborator ? { flip: false } : undefined
+      )
     )
   ) as T;
 }
@@ -186,7 +225,11 @@ function applyAmendmentUserPrivateAccess<T>(q: T, userID: string | undefined): T
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('amendment', (amendment: any) => applyAmendmentManagerAccess(amendment, userID))
+      exists(
+        'amendment',
+        (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+        { flip: false }
+      )
     )
   ) as T;
 }
@@ -201,10 +244,15 @@ function applyChangeRequestVotePrivateAccess<T>(q: T, userID: string | undefined
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('change_request', (changeRequest: any) =>
-        changeRequest.whereExists('amendment', (amendment: any) =>
-          applyAmendmentManagerAccess(amendment, userID)
-        )
+      exists(
+        'change_request',
+        (changeRequest: any) =>
+          changeRequest.whereExists(
+            'amendment',
+            (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -220,10 +268,15 @@ function applyAmendmentThreadVotePrivateAccess<T>(q: T, userID: string | undefin
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('thread', (thread: any) =>
-        thread.whereExists('amendment', (amendment: any) =>
-          applyAmendmentManagerAccess(amendment, userID)
-        )
+      exists(
+        'thread',
+        (thread: any) =>
+          thread.whereExists(
+            'amendment',
+            (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -239,12 +292,20 @@ function applyAmendmentCommentVotePrivateAccess<T>(q: T, userID: string | undefi
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('comment', (comment: any) =>
-        comment.whereExists('thread', (thread: any) =>
-          thread.whereExists('amendment', (amendment: any) =>
-            applyAmendmentManagerAccess(amendment, userID)
-          )
-        )
+      exists(
+        'comment',
+        (comment: any) =>
+          comment.whereExists(
+            'thread',
+            (thread: any) =>
+              thread.whereExists(
+                'amendment',
+                (amendment: any) => applyAmendmentManagerAccess(amendment, userID, true),
+                { flip: false }
+              ),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -261,7 +322,7 @@ const amendmentQueriesBase = {
     ({ args: { id }, ctx: { userID } }) =>
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
         .related('created_by')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('collaborators', q =>
           applyAmendmentCollaboratorRosterAccess(q, userID)
             .related('user')
@@ -284,8 +345,7 @@ const amendmentQueriesBase = {
     applyAmendmentAccess(zql.amendment.where('id', id), userID)
       .related('created_by')
       .related('collaborators', q =>
-        q
-          .where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+        whereAnyOf(q, 'status', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
           .related('user')
           .related('role', role => role.related('action_rights'))
       )
@@ -293,31 +353,40 @@ const amendmentQueriesBase = {
       .related('support_votes', q => applyAmendmentUserPrivateAccess(q, userID).related('user'))
       .related('vote_entries', q => q.related('choices'))
       .related('change_requests', q =>
-        applyChangeRequestVisibilityAccess(q, userID)
+        applyChangeRequestVisibilityAccess(q, userID, true)
           .related('user')
           .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
       )
       .related('support_confirmations', q =>
-        q.related('group').related('event').related('process_task')
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('event')
+          .related('process_task')
       )
-      .related('group_decisions', q => q.related('group').orderBy('updated_at', 'desc'))
-      .related('group')
+      .related('group_decisions', q =>
+        q
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .orderBy('updated_at', 'desc')
+      )
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('paths', q => q.related('segments'))
       .related('current_process_run', q =>
         q
-          .related('selected_source_group')
-          .related('selected_target_group')
+          .related('selected_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('selected_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('selected_target_workflow')
           .related('active_branch', bq => bq.related('document'))
           .related('branches', bq =>
             bq
               .related('document')
               .related('document_version')
-              .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
+              .related('change_requests', cq =>
+                applyChangeRequestVisibilityAccess(cq, userID, true)
+              )
               .related('step_runs', sq =>
                 sq
-                  .related('source_group')
-                  .related('target_group')
+                  .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                  .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                   .related('event')
                   .related('agenda_item')
                   .orderBy('order_index', 'asc')
@@ -326,27 +395,33 @@ const amendmentQueriesBase = {
           )
           .related('tasks', tq =>
             tq
-              .related('group')
-              .related('target_group')
+              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
               .related('event')
               .related('agenda_item', aq =>
                 aq.related('votes', vq =>
                   applyVoteQueryAccess(vq, userID)
                     .related('choices', cq => cq.orderBy('order_index', 'asc'))
                     .related('offline_tallies', offlineTally =>
-                      offlineTally.whereExists('vote', vote =>
-                        applyVoteManagerQueryAccess(vote, userID)
+                      offlineTally.whereExists(
+                        'vote',
+                        vote => applyVoteManagerQueryAccess(vote, userID),
+                        { flip: false }
                       )
                     )
                     .related('voters', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
                     .related('final_participations', participation =>
-                      participation.whereExists('voter', voter =>
-                        applyVoteVoterOrManagerQueryAccess(voter, userID)
+                      participation.whereExists(
+                        'voter',
+                        voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+                        { flip: false }
                       )
                     )
                     .related('final_decisions', decision =>
-                      decision.whereExists('vote', vote =>
-                        applyVoteManagerQueryAccess(vote, userID)
+                      decision.whereExists(
+                        'vote',
+                        vote => applyVoteManagerQueryAccess(vote, userID),
+                        { flip: false }
                       )
                     )
                 )
@@ -356,19 +431,21 @@ const amendmentQueriesBase = {
       )
       .related('process_runs', q =>
         q
-          .related('selected_source_group')
-          .related('selected_target_group')
+          .related('selected_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('selected_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('selected_target_workflow')
           .related('active_branch', bq => bq.related('document'))
           .related('branches', bq =>
             bq
               .related('document')
               .related('document_version')
-              .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
+              .related('change_requests', cq =>
+                applyChangeRequestVisibilityAccess(cq, userID, true)
+              )
               .related('step_runs', sq =>
                 sq
-                  .related('source_group')
-                  .related('target_group')
+                  .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                  .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                   .related('event')
                   .related('agenda_item')
                   .orderBy('order_index', 'asc')
@@ -377,27 +454,33 @@ const amendmentQueriesBase = {
           )
           .related('tasks', tq =>
             tq
-              .related('group')
-              .related('target_group')
+              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
               .related('event')
               .related('agenda_item', aq =>
                 aq.related('votes', vq =>
                   applyVoteQueryAccess(vq, userID)
                     .related('choices', cq => cq.orderBy('order_index', 'asc'))
                     .related('offline_tallies', offlineTally =>
-                      offlineTally.whereExists('vote', vote =>
-                        applyVoteManagerQueryAccess(vote, userID)
+                      offlineTally.whereExists(
+                        'vote',
+                        vote => applyVoteManagerQueryAccess(vote, userID),
+                        { flip: false }
                       )
                     )
                     .related('voters', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
                     .related('final_participations', participation =>
-                      participation.whereExists('voter', voter =>
-                        applyVoteVoterOrManagerQueryAccess(voter, userID)
+                      participation.whereExists(
+                        'voter',
+                        voter => applyVoteVoterOrManagerQueryAccess(voter, userID),
+                        { flip: false }
                       )
                     )
                     .related('final_decisions', decision =>
-                      decision.whereExists('vote', vote =>
-                        applyVoteManagerQueryAccess(vote, userID)
+                      decision.whereExists(
+                        'vote',
+                        vote => applyVoteManagerQueryAccess(vote, userID),
+                        { flip: false }
                       )
                     )
                 )
@@ -417,7 +500,7 @@ const amendmentQueriesBase = {
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('agenda_items')
         .related('vote_entries')
@@ -425,16 +508,20 @@ const amendmentQueriesBase = {
         .related('current_process_run', q =>
           q
             .related('root_workflow')
-            .related('selected_source_group')
-            .related('selected_target_group')
+            .related('selected_source_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
+            .related('selected_target_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
             .related('selected_target_workflow')
             .related('active_branch')
             .related('terminal_step_run', sq =>
               sq
                 .related('workflow')
                 .related('workflow_step', wq => wq.related('target_workflow'))
-                .related('source_group')
-                .related('target_group')
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('vote')
@@ -450,8 +537,8 @@ const amendmentQueriesBase = {
                   sq
                     .related('workflow')
                     .related('workflow_step', wq => wq.related('target_workflow'))
-                    .related('source_group')
-                    .related('target_group')
+                    .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                     .related('event')
                     .related('agenda_item')
                     .related('vote')
@@ -460,8 +547,8 @@ const amendmentQueriesBase = {
                 )
                 .related('tasks', tq =>
                   tq
-                    .related('group')
-                    .related('target_group')
+                    .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                     .related('event')
                     .related('agenda_item')
                     .related('support_confirmation')
@@ -474,8 +561,8 @@ const amendmentQueriesBase = {
                 .related('branch')
                 .related('workflow')
                 .related('workflow_step', wq => wq.related('target_workflow'))
-                .related('source_group')
-                .related('target_group')
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('vote')
@@ -486,8 +573,8 @@ const amendmentQueriesBase = {
               tq
                 .related('branch')
                 .related('step_run')
-                .related('group')
-                .related('target_group')
+                .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('support_confirmation')
@@ -496,8 +583,12 @@ const amendmentQueriesBase = {
         )
         .related('process_runs', q =>
           q
-            .related('selected_source_group')
-            .related('selected_target_group')
+            .related('selected_source_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
+            .related('selected_target_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
             .related('selected_target_workflow')
             .related('active_branch')
             .related('branches', bq =>
@@ -514,21 +605,35 @@ const amendmentQueriesBase = {
                 )
                 .orderBy('created_at', 'asc')
             )
-            .related('tasks', tq => tq.related('group').related('target_group').related('event'))
+            .related('tasks', tq =>
+              tq
+                .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('event')
+            )
             .orderBy('created_at', 'desc')
         )
         .related('support_confirmations', q =>
-          q.related('group').related('event').related('process_task')
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('event')
+            .related('process_task')
         )
         .related('group_decisions', q =>
           q
-            .related('group')
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
             .related('process_run')
             .related('process_branch')
             .related('process_step_run')
             .orderBy('updated_at', 'desc')
         )
-        .related('paths', q => q.related('segments', sq => sq.related('group').related('event')))
+        .related('paths', q =>
+          q.related('segments', sq =>
+            sq
+              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('event')
+          )
+        )
         .one()
   ),
 
@@ -538,7 +643,7 @@ const amendmentQueriesBase = {
     ({ args: { id }, ctx: { userID } }) =>
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
         .related('group', group =>
-          group
+          applyGroupDiscoveryQueryAccess(group, userID)
             .related('memberships', membership =>
               membership
                 .where('user_id', userID ?? '__anon__')
@@ -579,8 +684,8 @@ const amendmentQueriesBase = {
                 )
                 .related('step_runs', sq =>
                   sq
-                    .related('source_group')
-                    .related('target_group')
+                    .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                    .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                     .related('event')
                     .related('agenda_item')
                     .orderBy('order_index', 'asc')
@@ -594,7 +699,7 @@ const amendmentQueriesBase = {
   // Amendment with group, event, paths+segments for path visualization
   byIdWithPathViz: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyAmendmentAccess(zql.amendment.where('id', id), userID)
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('event')
       .related('paths', q => q.related('segments'))
       .one()
@@ -633,7 +738,7 @@ const amendmentQueriesBase = {
         query,
         userID,
       });
-      if (ids) q = q.where('id', 'IN', ids);
+      if (ids) q = whereAnyOf(q, 'id', ids);
       const direction = dir === 'backward' ? 'asc' : 'desc';
       q = q.orderBy('created_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
@@ -690,9 +795,12 @@ const amendmentQueriesBase = {
     ({ args: { amendment_id }, ctx: { userID } }) =>
       applyAmendmentCollaboratorRosterAccess(
         zql.amendment_collaborator.where('amendment_id', amendment_id),
-        userID
+        userID,
+        true
       )
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+          flip: false,
+        })
         .related('user')
         .related('role', role => role.related('action_rights'))
         .orderBy('created_at', 'desc')
@@ -714,13 +822,17 @@ const amendmentQueriesBase = {
       args: { amendmentId, status, statuses, roleId, roleIds, query, limit, start, dir },
       ctx: { userID },
     }) => {
-      let q: any = applyAmendmentCollaboratorRosterAccess(zql.amendment_collaborator, userID)
-        .where('amendment_id', amendmentId)
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID));
+      let q: any = applyAmendmentCollaboratorRosterAccess(
+        zql.amendment_collaborator.where('amendment_id', amendmentId),
+        userID,
+        true
+      ).whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+        flip: false,
+      });
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       if (roleId) q = q.where('role_id', roleId);
-      if ((roleIds?.length ?? 0) > 0) q = q.where('role_id', 'IN', roleIds);
+      if ((roleIds?.length ?? 0) > 0) q = whereAnyOf(q, 'role_id', roleIds);
       const term = query.trim();
       if (term)
         q = q.whereExists('user', (user: any) =>
@@ -762,7 +874,7 @@ const amendmentQueriesBase = {
           )
         );
       if (status) q = q.where('status', status);
-      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((statuses?.length ?? 0) > 0) q = whereAnyOf(q, 'status', statuses);
       const term = query.trim();
       if (term)
         q = q.whereExists('amendment', (amendment: any) =>
@@ -777,7 +889,7 @@ const amendmentQueriesBase = {
         .related('role')
         .related('amendment', (amendment: any) =>
           amendment
-            .related('group')
+            .related('group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
             .related('amendment_hashtags', (link: any) => link.related('hashtag'))
             .related('current_process_run', (run: any) => run.related('branches'))
         )
@@ -838,8 +950,11 @@ const amendmentQueriesBase = {
       let q: any = applyChangeRequestVisibilityAccess(
         zql.change_request
           .where('amendment_id', amendmentId)
-          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
-        userID
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+            flip: false,
+          }),
+        userID,
+        true
       );
       if (branchId) q = q.where('process_branch_id', branchId);
       if (status) q = q.where('status', status);
@@ -858,7 +973,7 @@ const amendmentQueriesBase = {
   changeRequestById: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
-      applyChangeRequestVisibilityAccess(zql.change_request.where('id', id), userID)
+      applyChangeRequestVisibilityAccess(zql.change_request.where('id', id), userID, true)
         .related('user')
         .related('votes', vote => applyChangeRequestVotePrivateAccess(vote, userID).related('user'))
         .one()
@@ -871,8 +986,11 @@ const amendmentQueriesBase = {
       applyChangeRequestVisibilityAccess(
         zql.change_request
           .where('amendment_id', amendment_id)
-          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
-        userID
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+            flip: false,
+          }),
+        userID,
+        true
       )
         .related('votes', q => applyChangeRequestVotePrivateAccess(q, userID).related('user'))
         .orderBy('created_at', 'desc')
@@ -922,7 +1040,7 @@ const amendmentQueriesBase = {
       zql.amendment_group_decision
         .where('amendment_id', amendment_id)
         .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('process_run')
         .related('process_branch')
         .related('process_step_run')
@@ -936,8 +1054,8 @@ const amendmentQueriesBase = {
         .where('amendment_id', amendment_id)
         .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
         .related('root_workflow')
-        .related('selected_source_group')
-        .related('selected_target_group')
+        .related('selected_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('selected_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('selected_target_workflow')
         .related('active_branch')
         .related('branches', bq =>
@@ -947,8 +1065,8 @@ const amendmentQueriesBase = {
               sq
                 .related('workflow')
                 .related('workflow_step', wq => wq.related('target_workflow'))
-                .related('source_group')
-                .related('target_group')
+                .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('vote')
@@ -957,7 +1075,11 @@ const amendmentQueriesBase = {
             .orderBy('created_at', 'asc')
         )
         .related('tasks', tq =>
-          tq.related('group').related('target_group').related('event').orderBy('due_at', 'asc')
+          tq
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('event')
+            .orderBy('due_at', 'asc')
         )
         .orderBy('created_at', 'desc')
   ),
@@ -968,8 +1090,8 @@ const amendmentQueriesBase = {
       .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
       .related('amendment')
       .related('root_workflow')
-      .related('selected_source_group')
-      .related('selected_target_group')
+      .related('selected_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('selected_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('selected_target_workflow')
       .related('active_branch')
       .related('terminal_step_run')
@@ -982,15 +1104,19 @@ const amendmentQueriesBase = {
             sq
               .related('workflow')
               .related('workflow_step', wq => wq.related('target_workflow'))
-              .related('source_group')
-              .related('target_group')
+              .related('source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
               .related('event')
               .related('agenda_item')
               .related('vote')
               .orderBy('order_index', 'asc')
           )
           .related('tasks', tq =>
-            tq.related('group').related('target_group').related('event').orderBy('due_at', 'asc')
+            tq
+              .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+              .related('event')
+              .orderBy('due_at', 'asc')
           )
           .orderBy('created_at', 'asc')
       )
@@ -998,8 +1124,8 @@ const amendmentQueriesBase = {
         tq
           .related('branch')
           .related('step_run')
-          .related('group')
-          .related('target_group')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('event')
           .related('agenda_item')
           .related('support_confirmation')
@@ -1018,7 +1144,7 @@ const amendmentQueriesBase = {
         .related('process_run', q => q.related('amendment'))
         .related('branch')
         .related('step_run', sq => sq.related('event').related('agenda_item').related('vote'))
-        .related('target_group')
+        .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('agenda_item')
         .related('support_confirmation', sq => sq.related('amendment'))
@@ -1028,14 +1154,17 @@ const amendmentQueriesBase = {
   processTasksByGroupForAssignments: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
-      zql.process_task
-        .where('group_id', group_id)
-        .whereExists('group', group => applyGroupQueryAccess(group, userID))
-        .where('status', 'IN', ['open', 'scheduled', 'completed'])
+      whereAnyOf(
+        zql.process_task
+          .where('group_id', group_id)
+          .whereExists('group', group => applyGroupQueryAccess(group, userID)),
+        'status',
+        ['open', 'scheduled', 'completed']
+      )
         .related('process_run', q => q.related('amendment'))
         .related('branch')
         .related('step_run', sq => sq.related('event').related('agenda_item').related('vote'))
-        .related('target_group')
+        .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('agenda_item')
         .related('support_confirmation', sq => sq.related('amendment'))
@@ -1057,7 +1186,7 @@ const amendmentQueriesBase = {
             .related('step_runs', sq =>
               sq
                 .related('workflow_step')
-                .related('target_group')
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('vote')
@@ -1073,7 +1202,7 @@ const amendmentQueriesBase = {
             .related('step_runs', sq =>
               sq
                 .related('workflow_step')
-                .related('target_group')
+                .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
                 .related('event')
                 .related('agenda_item')
                 .related('vote')
@@ -1081,7 +1210,7 @@ const amendmentQueriesBase = {
                 .orderBy('order_index', 'asc')
             )
         )
-        .related('target_group')
+        .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('workflow_step')
         .related('event')
         .related('agenda_item')
@@ -1123,7 +1252,9 @@ const amendmentQueriesBase = {
       const direction = dir === 'forward' ? 'desc' : 'asc';
       let q: any = zql.thread
         .where('amendment_id', amendmentId)
-        .whereExists('amendment', (amendment: any) => applyAmendmentAccess(amendment, userID))
+        .whereExists('amendment', (amendment: any) => applyAmendmentAccess(amendment, userID), {
+          flip: false,
+        })
         .related('user')
         .related('votes', (vote: any) =>
           applyAmendmentThreadVotePrivateAccess(vote, userID).related('user')
@@ -1144,7 +1275,9 @@ const amendmentQueriesBase = {
     ({ args: { id }, ctx: { userID } }) =>
       zql.thread
         .where('id', id)
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+          flip: false,
+        })
         .related('user')
         .related('votes', vote =>
           applyAmendmentThreadVotePrivateAccess(vote, userID).related('user')
@@ -1165,10 +1298,15 @@ const amendmentQueriesBase = {
       let q: any = zql.comment
         .where('thread_id', threadId)
         .where('parent_id', 'IS', parentId as any)
-        .whereExists('thread', (thread: any) =>
-          thread.whereExists('amendment', (amendment: any) =>
-            applyAmendmentAccess(amendment, userID)
-          )
+        .whereExists(
+          'thread',
+          (thread: any) =>
+            thread.whereExists(
+              'amendment',
+              (amendment: any) => applyAmendmentAccess(amendment, userID),
+              { flip: false }
+            ),
+          { flip: false }
         )
         .orderBy('created_at', direction)
         .orderBy('id', direction);
@@ -1187,8 +1325,13 @@ const amendmentQueriesBase = {
     ({ args: { id }, ctx: { userID } }) =>
       zql.comment
         .where('id', id)
-        .whereExists('thread', thread =>
-          thread.whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .whereExists(
+          'thread',
+          thread =>
+            thread.whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+              flip: false,
+            }),
+          { flip: false }
         )
         .related('user')
         .related('votes', vote =>
@@ -1205,7 +1348,9 @@ const amendmentQueriesBase = {
     ({ args: { amendment_id }, ctx: { userID } }) =>
       zql.thread
         .where('amendment_id', amendment_id)
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID), {
+          flip: false,
+        })
         .related('user')
         .related('votes', q => applyAmendmentThreadVotePrivateAccess(q, userID).related('user'))
         .related('comments', q =>
@@ -1227,7 +1372,12 @@ const amendmentQueriesBase = {
 
   // Single document by id
   documentById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyDocumentQueryAccess(zql.document.where('id', id), userID).one()
+    // Start permission checks from the one document selected by its primary key.
+    // Flipped permission unions can invalidate Zero 1.9's Take bound during edits.
+    applyDocumentQueryAccess(zql.document.where('id', id), userID, {
+      collaboratorFlip: false,
+      amendmentFlip: false,
+    }).one()
   ),
 
   // Roles for amendment collaborators
@@ -1257,24 +1407,28 @@ const amendmentQueriesBase = {
           exists('child_group', (group: any) => applyGroupQueryAccess(group, userID))
         )
       )
-      .related('group_a')
-      .related('group_b')
-      .related('parent_group')
-      .related('child_group')
+      .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('parent_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      .related('child_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('created_by')
       .related('grants', grantQuery =>
         grantQuery
-          .related('holder_group')
-          .related('scope_group')
-          .related('initiator_group')
+          .related('holder_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('scope_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .orderBy('right_key', 'asc')
       )
       .related('membership_rule', membershipRuleQuery =>
         membershipRuleQuery
-          .related('member_source_group')
-          .related('member_target_group')
+          .related('member_source_group', group => applyGroupDiscoveryQueryAccess(group, userID))
+          .related('member_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('required_source_role')
-          .related('origins', originQuery => originQuery.related('eligible_origin_group'))
+          .related('origins', originQuery =>
+            originQuery.related('eligible_origin_group', group =>
+              applyGroupDiscoveryQueryAccess(group, userID)
+            )
+          )
       )
   ),
 
@@ -1282,7 +1436,7 @@ const amendmentQueriesBase = {
   allGroupMemberships: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership
       .whereExists('group', group => applyGroupQueryAccess(group, userID))
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('user')
       .related('membership_roles', q => q.related('role'))
   ),
@@ -1295,27 +1449,31 @@ const amendmentQueriesBase = {
         .where('user_id', user_id)
         .where('user_id', userID)
         .related('user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('membership_roles', q => q.related('role'))
   ),
 
   // Cross-domain: All events with group
   allEvents: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyEventQueryAccess(zql.event, userID).related('group')
+    applyEventQueryAccess(zql.event, userID).related('group', group =>
+      applyGroupDiscoveryQueryAccess(group, userID)
+    )
   ),
 
   // Cross-domain: Events by group with group
   eventsByGroup: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
-      applyEventQueryAccess(zql.event, userID).where('group_id', group_id).related('group')
+      applyEventQueryAccess(zql.event, userID)
+        .where('group_id', group_id)
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   // Cross-domain: All users
   allUsers: defineQuery(z.object({}), ({ ctx: { userID } }) => {
     if (!userID || userID === 'anon') return zql.user.where('visibility', 'public');
     return zql.user.where(({ or, cmp }: any) =>
-      or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
+      or(cmp('visibility', 'public'), cmp('visibility', 'authenticated'), cmp('id', userID))
     );
   }),
 
@@ -1323,10 +1481,10 @@ const amendmentQueriesBase = {
   usersByIds: defineQuery(
     z.object({ ids: z.array(z.string()) }),
     ({ args: { ids }, ctx: { userID } }) => {
-      const q = ids.length > 0 ? zql.user.where('id', 'IN', ids) : zql.user.where('id', '__none__');
+      const q = ids.length > 0 ? whereAnyOf(zql.user, 'id', ids) : zql.user.where('id', '__none__');
       if (!userID || userID === 'anon') return q.where('visibility', 'public');
       return q.where(({ or, cmp }: any) =>
-        or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
+        or(cmp('visibility', 'public'), cmp('visibility', 'authenticated'), cmp('id', userID))
       );
     }
   ),
@@ -1336,7 +1494,7 @@ const amendmentQueriesBase = {
     const q = zql.user.where('id', id).limit(1);
     if (!userID || userID === 'anon') return q.where('visibility', 'public');
     return q.where(({ or, cmp }: any) =>
-      or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
+      or(cmp('visibility', 'public'), cmp('visibility', 'authenticated'), cmp('id', userID))
     );
   }),
 
@@ -1357,14 +1515,16 @@ const amendmentQueriesBase = {
   ),
 
   currentUserActiveCollaborationsWithAmendments: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.amendment_collaborator
-      .where('user_id', userID)
-      .where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+    whereAnyOf(
+      zql.amendment_collaborator.where('user_id', userID),
+      'status',
+      WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+    )
       .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
       .related('amendment', q =>
         q
           .related('created_by')
-          .related('group')
+          .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('event')
           .related('amendment_hashtags', hq => hq.related('hashtag'))
           .related('current_process_run', rq =>
@@ -1387,27 +1547,31 @@ const amendmentQueriesBase = {
             role
               .where('scope', 'amendment')
               .whereExists('amendment_collaborators', (collaborator: any) =>
-                collaborator
-                  .where('user_id', userID)
-                  .where('status', 'IN', NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES)
+                whereAnyOf(
+                  collaborator.where('user_id', userID),
+                  'status',
+                  NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES
+                )
               )
               .whereExists('amendment_action_rights', (right: any) =>
-                right
-                  .where('resource', 'amendments')
-                  .where('action', 'IN', [...VIEW_IMPLYING_ACTIONS])
+                whereAnyOf(right.where('resource', 'amendments'), 'action', [
+                  ...VIEW_IMPLYING_ACTIONS,
+                ])
               )
           )
         )
       )
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('event')
       .related('current_process_run', q =>
         q
-          .related('selected_target_group')
+          .related('selected_target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
           .related('terminal_step_run')
           .related('branches', bq => bq.orderBy('created_at', 'asc'))
       )
-      .related('group_decisions', q => q.related('group'));
+      .related('group_decisions', q =>
+        q.related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+      );
   }),
 };
 
@@ -1428,16 +1592,20 @@ export const amendmentQueries = {
             or(
               cmp('created_by_id', userID),
               exists('collaborators', (collaborator: any) =>
-                collaborator
-                  .where('user_id', userID)
-                  .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+                whereAnyOf(
+                  collaborator.where('user_id', userID),
+                  'status',
+                  ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+                )
               ),
               exists('roles', (role: any) =>
                 role
                   .whereExists('amendment_collaborators', (collaborator: any) =>
-                    collaborator
-                      .where('user_id', userID)
-                      .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+                    whereAnyOf(
+                      collaborator.where('user_id', userID),
+                      'status',
+                      ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+                    )
                   )
                   .whereExists('amendment_action_rights', (right: any) =>
                     right.where('resource', 'amendments').where('action', 'manage')

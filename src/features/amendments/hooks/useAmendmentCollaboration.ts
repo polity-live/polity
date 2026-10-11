@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import {
+  useAmendmentCollaborationState,
+  type AmendmentCollaborationStatus,
+} from '@/zero/amendments/useAmendmentActionState';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ProjectedAmendmentCollaborationState } from '@/features/search/types/projected-card-state';
 
-export type CollaborationStatus =
-  'invited' | 'requested' | 'active' | 'collaborator' | 'member' | 'admin';
+export type CollaborationStatus = AmendmentCollaborationStatus;
 
 export function useAmendmentCollaboration(
   amendmentId: string,
@@ -31,7 +33,7 @@ export function useAmendmentCollaboration(
     isInvited,
     collaboratorCount,
     isLoading: queryLoading,
-  } = useAmendmentState({
+  } = useAmendmentCollaborationState({
     amendmentId: projectedState ? undefined : amendmentId,
     userId: projectedState ? undefined : user?.id,
   });
@@ -48,6 +50,7 @@ export function useAmendmentCollaboration(
 
   // Request to collaborate on the amendment
   const requestCollaboration = async () => {
+    if (projectedState?.isLoading) return;
     if (!user?.id || resolvedCollaboration) return;
 
     // Validate amendmentId is a valid UUID
@@ -88,6 +91,7 @@ export function useAmendmentCollaboration(
 
   // Leave the amendment collaboration
   const leaveCollaboration = async () => {
+    if (projectedState?.isLoading) return;
     if (!resolvedCollaboration?.id) return;
 
     setIsLoading(true);
@@ -107,6 +111,7 @@ export function useAmendmentCollaboration(
 
   // Accept invitation
   const acceptInvitation = async () => {
+    if (projectedState?.isLoading) return;
     if (!resolvedCollaboration?.id || resolvedStatus !== 'invited') return;
 
     setIsLoading(true);

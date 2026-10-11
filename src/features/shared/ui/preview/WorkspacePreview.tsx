@@ -1,6 +1,6 @@
-import { createContext, useContext, useRef, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from 'react';
 import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { Eye } from 'lucide-react';
 import { queries } from '@/zero/queries';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -206,22 +206,31 @@ function TodoPreview({ target }: { target: PreviewTarget }) {
 export function WorkspacePreviewProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const router = useRouter();
-  const location = useRouterState({ select: state => state.location });
+  const location = useRouterState({
+    select: state => ({ pathname: state.location.pathname, hash: state.location.hash }),
+    structuralSharing: true,
+  });
   const triggerRef = useRef<HTMLElement | null>(null);
   const pushedFrom = useRef<string | null>(null);
   const target = previewTargetFromHash(location.hash);
-  const openPreview = (next: PreviewTarget) => {
-    triggerRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (!target) pushedFrom.current = location.pathname;
-    void navigate({
-      to: '.',
-      search: true,
-      hash: `preview=${next.kind}:${next.id}`,
-      resetScroll: false,
-      replace: Boolean(target),
-    });
-  };
+  const openPreview = useCallback(
+    (next: PreviewTarget) => {
+      const currentLocation = router.state.location;
+      const currentTarget = previewTargetFromHash(currentLocation.hash);
+      triggerRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      if (!currentTarget) pushedFrom.current = currentLocation.pathname;
+      void navigate({
+        to: '.',
+        search: true,
+        hash: `preview=${next.kind}:${next.id}`,
+        resetScroll: false,
+        replace: Boolean(currentTarget),
+      });
+    },
+    [navigate, router]
+  );
+  const previewContext = useMemo(() => ({ openPreview }), [openPreview]);
   const closePreview = () => {
     if (pushedFrom.current === location.pathname) {
       pushedFrom.current = null;
@@ -231,7 +240,7 @@ export function WorkspacePreviewProvider({ children }: { children: ReactNode }) 
     }
   };
   return (
-    <PreviewContext.Provider value={{ openPreview }}>
+    <PreviewContext.Provider value={previewContext}>
       {children}
       <Dialog
         open={Boolean(target)}

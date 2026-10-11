@@ -22,6 +22,7 @@ vi.mock('platejs', () => ({
 }));
 
 vi.mock('@/features/shared/ui/ui-platejs/editor-static', () => ({
+  editorVariants: () => 'whitespace-pre-wrap',
   EditorStatic: (props: any) => {
     mocks.editorStatic(props);
     return <div data-testid="editor-static">rendered editor</div>;
@@ -58,6 +59,34 @@ describe('rich-text display contracts', () => {
     expect(screen.getByText('No description').className).toContain('text-muted-foreground');
     expect(screen.getByText('No description').className).toContain('fallback');
     expect(mocks.editorStatic).not.toHaveBeenCalled();
+    expect(mocks.createSlateEditor).not.toHaveBeenCalled();
+  });
+  it('preserves plain paragraphs, line breaks and literal markup without creating an editor', () => {
+    render(<RichTextPreview content={'First\r\nline\n\n<script>literal</script>'} />);
+    const preview = screen.getByLabelText(/First/);
+    expect(preview.getAttribute('aria-label')).toBe('First\r\nline\n\n<script>literal</script>');
+    expect(preview.querySelectorAll('p')).toHaveLength(2);
+    expect(preview.querySelector('p')?.textContent).toBe('First\nline');
+    expect(screen.getByText('<script>literal</script>')).toBeTruthy();
+    expect(preview.querySelector('script')).toBeNull();
+    expect(mocks.createSlateEditor).not.toHaveBeenCalled();
+  });
+  it('retains the full renderer for serialized formatting and links', () => {
+    const value = [
+      {
+        type: 'p',
+        children: [
+          { text: 'Bold', bold: true },
+          { type: 'a', url: 'https://example.test', children: [{ text: 'Link' }] },
+        ],
+      },
+    ];
+    render(<RichTextPreview content={JSON.stringify(value)} />);
+    expect(mocks.createSlateEditor).toHaveBeenCalledWith({
+      plugins: ['base-editor-plugin'],
+      value,
+    });
+    expect(screen.getByTestId('editor-static')).toBeTruthy();
   });
 
   it('creates and renders a read-only editor with an accessible plain-text label', () => {

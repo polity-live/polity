@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import type {
@@ -39,7 +39,6 @@ interface EventStateArgs {
 }
 
 interface SearchCardStateContextValue {
-  isReady: boolean;
   getSubscriptionState: (
     entityType: SubscribableEntityType,
     entityId: string,
@@ -85,9 +84,35 @@ function appendToIndex<T>(index: Map<string, T[]>, key: string | null | undefine
   }
 }
 
-export function SearchCardStateProvider({ children }: { children: ReactNode }) {
+// Each domain retains its projections across unrelated viewer-query stages.
+function memoizeProjection<Args extends unknown[], State extends object>(
+  project: (...args: Args) => State
+) {
+  const cache = new Map<string, State>();
+  return (...args: Args): State => {
+    const key = JSON.stringify(args);
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const state = project(...args);
+    cache.set(key, state);
+    return state;
+  };
+}
+
+export function SearchCardStateProvider({
+  children,
+  contentTypes,
+}: {
+  children: ReactNode;
+  contentTypes?: readonly string[];
+}) {
   const { user } = useAuth();
   const userId = user?.id;
+  const includes = (type: string) => !contentTypes?.length || contentTypes.includes(type);
+  const groupCards = includes('group');
+  const eventCards = includes('event');
+  const amendmentCards = includes('amendment');
+  const requiredStage = eventCards ? 6 : amendmentCards ? 5 : groupCards ? 3 : 1;
   const [activatedUserId, setActivatedUserId] = useState<string | null>(null);
   const [queryStage, setQueryStage] = useState(0);
 
@@ -131,30 +156,34 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     enabled && queryStage >= 1 ? queries.common.viewerSubscriptions({}) : undefined
   );
   const [memberships, membershipsResult] = useQuery(
-    enabled && queryStage >= 2 ? queries.rbac.viewerMemberships({}) : undefined
+    enabled && (groupCards || eventCards) && queryStage >= 2
+      ? queries.rbac.viewerMemberships({})
+      : undefined
   );
   const [guestAccesses, guestAccessesResult] = useQuery(
-    enabled && queryStage >= 3 ? queries.rbac.viewerGuestAccesses({}) : undefined
+    enabled && groupCards && queryStage >= 3 ? queries.rbac.viewerGuestAccesses({}) : undefined
   );
   const [participations, participationsResult] = useQuery(
-    enabled && queryStage >= 4 ? queries.rbac.viewerParticipations({}) : undefined
+    enabled && eventCards && queryStage >= 4 ? queries.rbac.viewerParticipations({}) : undefined
   );
   const [collaborations, collaborationsResult] = useQuery(
-    enabled && queryStage >= 5 ? queries.amendments.viewerCollaborations({}) : undefined
+    enabled && amendmentCards && queryStage >= 5
+      ? queries.amendments.viewerCollaborations({})
+      : undefined
   );
   const [delegations, delegationsResult] = useQuery(
-    enabled && queryStage >= 6 ? queries.events.viewerDelegations({}) : undefined
+    enabled && eventCards && queryStage >= 6 ? queries.events.viewerDelegations({}) : undefined
   );
 
   useEffect(() => {
-    if (!enabled || queryStage < 1 || queryStage >= 6) return;
+    if (!enabled || queryStage < 1 || queryStage >= requiredStage) return;
 
     const resultTypes = [
       subscriptionsResult.type,
-      membershipsResult.type,
-      guestAccessesResult.type,
-      participationsResult.type,
-      collaborationsResult.type,
+      groupCards || eventCards ? membershipsResult.type : 'complete',
+      groupCards ? guestAccessesResult.type : 'complete',
+      eventCards ? participationsResult.type : 'complete',
+      amendmentCards ? collaborationsResult.type : 'complete',
     ];
     if (resultTypes[queryStage - 1] === 'unknown') return;
 
@@ -183,11 +212,15 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     };
   }, [
     collaborationsResult.type,
+    amendmentCards,
     enabled,
+    eventCards,
     guestAccessesResult.type,
+    groupCards,
     membershipsResult.type,
     participationsResult.type,
     queryStage,
+    requiredStage,
     subscriptionsResult.type,
   ]);
 
@@ -274,107 +307,96 @@ export function SearchCardStateProvider({ children }: { children: ReactNode }) {
     return index;
   }, [delegations]);
 
-  const value = useMemo<SearchCardStateContextValue>(() => {
-    const subscriptionLoading =
-      Boolean(userId) && (queryStage < 1 || subscriptionsResult.type === 'unknown');
-    const membershipLoading =
-      Boolean(userId) &&
-      (queryStage < 3 ||
-        membershipsResult.type === 'unknown' ||
-        guestAccessesResult.type === 'unknown');
-    const participationLoading =
-      Boolean(userId) &&
-      (queryStage < 6 ||
-        participationsResult.type === 'unknown' ||
-        membershipsResult.type === 'unknown' ||
-        delegationsResult.type === 'unknown');
-    const collaborationLoading =
-      Boolean(userId) && (queryStage < 5 || collaborationsResult.type === 'unknown');
-    const isReady =
-      !userId ||
-      (enabled &&
-        queryStage >= 6 &&
-        subscriptionsResult.type !== 'unknown' &&
-        membershipsResult.type !== 'unknown' &&
-        guestAccessesResult.type !== 'unknown' &&
-        participationsResult.type !== 'unknown' &&
-        collaborationsResult.type !== 'unknown' &&
-        delegationsResult.type !== 'unknown');
+  const subscriptionLoading =
+    Boolean(userId) && (!enabled || queryStage < 1 || subscriptionsResult.type === 'unknown');
+  const membershipLoading =
+    Boolean(userId) &&
+    (!enabled ||
+      queryStage < 3 ||
+      membershipsResult.type === 'unknown' ||
+      (groupCards && guestAccessesResult.type === 'unknown'));
+  const participationLoading =
+    Boolean(userId) &&
+    (!enabled ||
+      queryStage < 6 ||
+      participationsResult.type === 'unknown' ||
+      membershipsResult.type === 'unknown' ||
+      delegationsResult.type === 'unknown');
+  const collaborationLoading =
+    Boolean(userId) && (!enabled || queryStage < 5 || collaborationsResult.type === 'unknown');
 
-    return {
-      isReady,
-      getSubscriptionState(entityType, entityId, subscriberCount) {
-        return {
+  const getSubscriptionState = useMemo<SearchCardStateContextValue['getSubscriptionState']>(
+    () =>
+      memoizeProjection(
+        (entityType: SubscribableEntityType, entityId: string, subscriberCount: number) => ({
           subscriberCount,
           subscriptions: subscriptionsByEntity.get(`${entityType}:${entityId}`) ?? [],
           isLoading: subscriptionLoading,
-        };
-      },
-      getGroupState(args) {
-        return {
-          group: {
-            id: args.id,
-            group_type: args.groupType,
-            connected_group_id: args.connectedGroupId,
-            primary_sibling_membership_mode: args.primarySiblingMembershipMode,
-          },
-          memberships: membershipsByGroup.get(args.id) ?? [],
-          connectedGroupMemberships: args.connectedGroupId
-            ? (membershipsByGroup.get(args.connectedGroupId) ?? [])
-            : [],
-          guestAccesses: guestAccessesByGroup.get(args.id) ?? [],
-          memberCount: args.memberCount,
-          isLoading: membershipLoading,
-        };
-      },
-      getEventState(args) {
-        const groupMemberships = args.groupId ? (membershipsByGroup.get(args.groupId) ?? []) : [];
-        return {
-          event: {
-            id: args.id,
-            event_type: args.eventType,
-            visibility: args.visibility,
-            group: args.groupId
-              ? {
-                  id: args.groupId,
-                  memberships: groupMemberships.map(row => ({
-                    user_id: user?.id,
-                    status: row.status,
-                  })),
-                }
-              : null,
-            delegates: delegationsByEvent.get(args.id) ?? [],
-          },
-          participants: participationsByEvent.get(args.id) ?? [],
-          participantCount: args.participantCount,
-          isLoading: participationLoading,
-        };
-      },
-      getAmendmentState(amendmentId, collaboratorCount) {
-        return {
-          collaborations: collaborationsByAmendment.get(amendmentId) ?? [],
-          collaboratorCount,
-          isLoading: collaborationLoading,
-        };
-      },
-    };
-  }, [
-    collaborationsResult.type,
-    collaborationsByAmendment,
-    delegationsByEvent,
-    delegationsResult.type,
-    enabled,
-    guestAccessesByGroup,
-    guestAccessesResult.type,
-    membershipsByGroup,
-    membershipsResult.type,
-    participationsByEvent,
-    participationsResult.type,
-    queryStage,
-    subscriptionsByEntity,
-    subscriptionsResult.type,
-    userId,
-  ]);
+        })
+      ),
+    [subscriptionsByEntity, subscriptionLoading, userId]
+  );
+  const getGroupState = useMemo<SearchCardStateContextValue['getGroupState']>(
+    () =>
+      memoizeProjection((args: GroupStateArgs) => ({
+        group: {
+          id: args.id,
+          group_type: args.groupType,
+          connected_group_id: args.connectedGroupId,
+          primary_sibling_membership_mode: args.primarySiblingMembershipMode,
+        },
+        memberships: membershipsByGroup.get(args.id) ?? [],
+        connectedGroupMemberships: args.connectedGroupId
+          ? (membershipsByGroup.get(args.connectedGroupId) ?? [])
+          : [],
+        guestAccesses: guestAccessesByGroup.get(args.id) ?? [],
+        memberCount: args.memberCount,
+        isLoading: membershipLoading,
+      })),
+    [membershipsByGroup, guestAccessesByGroup, membershipLoading, userId]
+  );
+  const getEventState = useMemo<SearchCardStateContextValue['getEventState']>(
+    () =>
+      memoizeProjection((args: EventStateArgs) => ({
+        event: {
+          id: args.id,
+          event_type: args.eventType,
+          visibility: args.visibility,
+          group: args.groupId
+            ? {
+                id: args.groupId,
+                memberships: (membershipsByGroup.get(args.groupId) ?? []).map(row => ({
+                  user_id: userId,
+                  status: row.status,
+                })),
+              }
+            : null,
+          delegates: delegationsByEvent.get(args.id) ?? [],
+        },
+        participants: participationsByEvent.get(args.id) ?? [],
+        participantCount: args.participantCount,
+        isLoading: participationLoading,
+      })),
+    [membershipsByGroup, delegationsByEvent, participationsByEvent, participationLoading, userId]
+  );
+  const getAmendmentState = useMemo<SearchCardStateContextValue['getAmendmentState']>(
+    () =>
+      memoizeProjection((amendmentId: string, collaboratorCount: number) => ({
+        collaborations: collaborationsByAmendment.get(amendmentId) ?? [],
+        collaboratorCount,
+        isLoading: collaborationLoading,
+      })),
+    [collaborationsByAmendment, collaborationLoading, userId]
+  );
+  const value = useMemo<SearchCardStateContextValue>(
+    () => ({
+      getSubscriptionState,
+      getGroupState,
+      getEventState,
+      getAmendmentState,
+    }),
+    [getSubscriptionState, getGroupState, getEventState, getAmendmentState]
+  );
 
   return (
     <SearchCardStateContext.Provider value={value}>{children}</SearchCardStateContext.Provider>

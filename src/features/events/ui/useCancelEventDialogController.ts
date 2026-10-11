@@ -25,14 +25,14 @@ export function useCancelEventDialogController({
   groupId,
 }: CancelEventDialogProps) {
   const { t } = useTranslation();
-  const { isLoading, agendaItems, cancelEvent } = useCancelEvent(eventId);
+  const { isLoading, agendaItems, cancelEvent } = useCancelEvent(eventId, open);
 
   const [reason, setReason] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [targetEventId, setTargetEventId] = useState<string>('');
 
   // Query other events in the group for reassignment
-  const { events: availableEvents } = useEventsByGroup(groupId, eventId);
+  const { events: availableEvents } = useEventsByGroup(open ? groupId : undefined, eventId);
 
   // Reset state when dialog opens
   useEffect(() => {

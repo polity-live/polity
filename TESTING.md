@@ -122,3 +122,13 @@ Test count is behavior-based, not a fixed quota. One parameterized test may cove
 - Keep the regression permanently. Do not replace it with a broad snapshot or a coverage-only assertion, and do not add a browser regression for a defect that a deterministic lower-level test fully reproduces.
 
 For all three change types, run the focused suite while developing, then `pnpm run test:all`, `pnpm run test:accountability:changed` and `pnpm run test:coverage:branches:check`. Also run `pnpm run test:db` or the relevant E2E suite whenever the change touches those boundaries. External AI, payment, map and currency services are stubbed at their network boundary; local email flows use Inbucket.
+
+# Selecting CI tests
+
+CI runs all checks by default. `.github/ci-tests.json` selects the checks for push/PR runs;
+set `tests` to `all` to restore the default. Manual runs can override it with the
+`tests` workflow input. Use `performance` to run the complete Zero performance gate,
+or a comma-separated list of flags: `performance`, `static`, `unit`, `component`,
+`flow`, `browser`, `coverage`, `security`, `service`, `database`, `build`, `e2e`,
+`dependencies`. Selecting `coverage` also enables its browser and database artifact
+dependencies. Invalid flags fail the selection job.

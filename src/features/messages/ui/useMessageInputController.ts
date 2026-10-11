@@ -23,7 +23,6 @@ export function useMessageInputController({
 }: MessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const attachments = useMessageAttachments(conversation.id);
   const [messageText, setMessageText] = useState('');
   const [caretPosition, setCaretPosition] = useState(0);
   const [suggestionAnchorPosition, setSuggestionAnchorPosition] =
@@ -34,6 +33,7 @@ export function useMessageInputController({
     () => parseActiveMentionQuery(messageText, caretPosition),
     [messageText, caretPosition]
   );
+  const attachments = useMessageAttachments(conversation.id, Boolean(mentionQuery));
 
   const selectedAttachmentKeys = useMemo(
     () =>

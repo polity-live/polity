@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 
 import { queries } from '@/zero/queries';
 import type { ActivitySeverityFilter } from '@/zero/activity/types';

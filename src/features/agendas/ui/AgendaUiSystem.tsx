@@ -1,7 +1,6 @@
-import type { ComponentProps, ReactNode } from 'react';
+import { useId, type ComponentProps, type ReactNode } from 'react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { cn } from '@/features/shared/utils/utils';
 
 export function AgendaPageShell({ className, ...props }: ComponentProps<'div'>) {
@@ -185,37 +184,82 @@ export function AgendaContextTabs({
   speakersLabel: ReactNode;
   value: AgendaContextPane;
 }) {
+  const prefix = useId();
+  const panes: { value: AgendaContextPane; label: ReactNode; content: ReactNode }[] = [
+    { value: 'details', label: detailsLabel, content: details },
+    { value: 'speakers', label: speakersLabel, content: speakers },
+  ];
+  const tabProps = (pane: AgendaContextPane) => ({
+    type: 'button' as const,
+    role: 'tab',
+    id: `${prefix}-${pane}-tab`,
+    'aria-controls': `${prefix}-${pane}-panel`,
+    'aria-selected': value === pane,
+    tabIndex: value === pane ? 0 : -1,
+    'data-state': value === pane ? 'active' : 'inactive',
+    className:
+      'ring-offset-background focus-visible:ring-ring data-[state=active]:text-foreground inline-flex items-center justify-center rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none data-[state=active]:border-current data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+  });
   return (
-    <Tabs
-      value={value}
-      onValueChange={nextValue => onValueChange(nextValue as AgendaContextPane)}
-      className="space-y-3"
-    >
-      <TabsList className="h-auto w-full justify-start rounded-none border-x-0 border-t-0 bg-transparent p-0 shadow-none">
-        <TabsTrigger
+    <div className="space-y-3" data-orientation="horizontal">
+      <div
+        role="tablist"
+        aria-orientation="horizontal"
+        className="scrollbar-hide text-muted-foreground border-border/70 inline-flex min-h-10 w-full max-w-full min-w-0 items-center justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-none border border-x-0 border-t-0 bg-transparent p-0 shadow-none"
+        onKeyDown={event => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const next =
+            event.key === 'Home'
+              ? 'details'
+              : event.key === 'End'
+                ? 'speakers'
+                : value === 'details'
+                  ? 'speakers'
+                  : 'details';
+          document.getElementById(`${prefix}-${next}-tab`)?.focus();
+        }}
+      >
+        <button
+          {...tabProps('details')}
           data-action-id="agendas.context.details.select"
           data-action-kind="selection"
-          value="details"
-          className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-current data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          onMouseDown={event => {
+            if (event.button === 0 && !event.ctrlKey) onValueChange('details');
+          }}
+          onFocus={() => onValueChange('details')}
+          onClick={() => onValueChange('details')}
         >
           {detailsLabel}
-        </TabsTrigger>
-        <TabsTrigger
+        </button>
+        <button
+          {...tabProps('speakers')}
           data-action-id="agendas.context.speakers.select"
           data-action-kind="selection"
-          value="speakers"
-          className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-current data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          onMouseDown={event => {
+            if (event.button === 0 && !event.ctrlKey) onValueChange('speakers');
+          }}
+          onFocus={() => onValueChange('speakers')}
+          onClick={() => onValueChange('speakers')}
         >
           {speakersLabel}
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="details" className="mt-0">
-        {details}
-      </TabsContent>
-      <TabsContent value="speakers" className="mt-0">
-        {speakers}
-      </TabsContent>
-    </Tabs>
+        </button>
+      </div>
+      {panes.map(pane => (
+        <div
+          key={pane.value}
+          role="tabpanel"
+          id={`${prefix}-${pane.value}-panel`}
+          aria-labelledby={`${prefix}-${pane.value}-tab`}
+          tabIndex={0}
+          hidden={value !== pane.value}
+          data-state={value === pane.value ? 'active' : 'inactive'}
+          className="ring-offset-background focus-visible:ring-ring mt-0 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+        >
+          {value === pane.value ? pane.content : null}
+        </div>
+      ))}
+    </div>
   );
 }
 

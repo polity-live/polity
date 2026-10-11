@@ -5,6 +5,7 @@ import type {
 } from '@/features/timeline/hooks/useTimelineFilters';
 import { ALL_CONTENT_TYPES } from '@/features/timeline/hooks/useTimelineFilters';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import { searchDocumentPageArgs } from '../shared/search-query-helpers';
 
 export interface SearchRoutePreloadParams {
   q?: string;
@@ -16,21 +17,11 @@ export interface SearchRoutePreloadParams {
   sort?: TimelineSortOption;
 }
 
-export const SEARCH_INITIAL_PAGE_LIMIT = 19;
+// Keep the first grid query equal to its bounded steady window, before layout/ResizeObserver.
+export const SEARCH_GRID_PAGE_SIZE = 48;
+export const SEARCH_INITIAL_PAGE_LIMIT = SEARCH_GRID_PAGE_SIZE + 1;
 
-interface SearchDocumentPagePreloadArgs {
-  query: string;
-  types: string[];
-  topics: string[];
-  createdAfter: number | null;
-  engagement: EngagementFilter;
-  sort: TimelineSortOption;
-  snapshotAt: number | null;
-  limit: number;
-  start: null;
-  dir: 'forward' | 'backward';
-  bounds: null;
-}
+type SearchDocumentPagePreloadArgs = ReturnType<typeof searchDocumentPageArgs>;
 
 export const HOME_DISCOVER_SEARCH_ARGS: SearchDocumentPagePreloadArgs = {
   query: '',
@@ -82,7 +73,8 @@ function parseContentTypes(typesParam?: string): ContentType[] {
     .map(type => type.trim())
     .filter((type): type is ContentType => ALL_CONTENT_TYPES.includes(type as ContentType));
 
-  return parsed.length === ALL_CONTENT_TYPES.length ? [] : parsed;
+  const unique = [...new Set(parsed)].sort();
+  return unique.length === ALL_CONTENT_TYPES.length ? [] : unique;
 }
 
 function parseTopics(topicsParam?: string, hashtagParam?: string): string[] {
@@ -97,7 +89,7 @@ function parseTopics(topicsParam?: string, hashtagParam?: string): string[] {
     topics.push(hashtagParam);
   }
 
-  return topics;
+  return [...new Set(topics)].sort();
 }
 
 function normalizeEngagement(engagement?: EngagementFilter): EngagementFilter {
@@ -113,17 +105,17 @@ function normalizeSort(sort?: TimelineSortOption): TimelineSortOption {
 export function createSearchDocumentPageArgs(
   search: SearchRoutePreloadParams
 ): SearchDocumentPagePreloadArgs {
-  return {
-    query: search.q ?? '',
-    types: parseContentTypes(search.types),
-    topics: parseTopics(search.topics, search.hashtag),
-    createdAfter: createdAfterForRange(search.range),
-    engagement: normalizeEngagement(search.engagement),
-    sort: normalizeSort(search.sort),
-    snapshotAt: null,
-    limit: SEARCH_INITIAL_PAGE_LIMIT,
-    start: null,
-    dir: 'forward',
-    bounds: null,
-  };
+  return searchDocumentPageArgs(
+    {
+      query: search.q ?? '',
+      types: parseContentTypes(search.types),
+      topics: parseTopics(search.topics, search.hashtag),
+      createdAfter: createdAfterForRange(search.range),
+      engagement: normalizeEngagement(search.engagement),
+      sort: normalizeSort(search.sort),
+      snapshotAt: null,
+      bounds: null,
+    },
+    { limit: SEARCH_INITIAL_PAGE_LIMIT, start: null, dir: 'forward' }
+  );
 }

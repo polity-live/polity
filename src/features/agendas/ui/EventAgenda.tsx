@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useEventData } from '@/features/events/hooks/useEventData';
 import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
@@ -18,7 +17,7 @@ import { agendaItemTextMatchesSearch } from '../logic/agendaItemTextSearch';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
-import { useElectionState } from '@/zero/elections/useElectionState';
+import { normalizeElectionRow } from '@/zero/elections/useElectionState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -64,7 +63,11 @@ import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
-import { useEventById, useEventParticipantsByParticipatedEventIds } from '@/zero/events';
+import {
+  useEventAgendaShell,
+  useEventById,
+  useEventParticipantsByParticipatedEventIds,
+} from '@/zero/events';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   getOrderedBranches,
@@ -92,12 +95,19 @@ interface EventAgendaProps {
 
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 import { EventAgendaView } from './EventAgendaView';
+// Format local hours/minutes through one fixed-zone formatter. Reading the date's
+// local fields preserves DST and system timezone changes across remounts.
+const agendaTimeFormatter = new Intl.DateTimeFormat('de-DE', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+});
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const { currentUser } = useUserState();
   const navigate = useNavigate();
-  const { event, isLoading: eventLoading } = useEventData(eventId);
+  const { event, isLoading: eventLoading } = useEventAgendaShell(eventId);
   const { agendaItems, isLoading } = useAgendaItems(eventId);
   const { can } = usePermissions({ eventId });
   const {
@@ -107,7 +117,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     reorderAgendaItems,
     initializeChangeRequestVoting,
   } = useAgendaActions();
-  const agendaNav = useAgendaNavigation(eventId);
+  const agendaNav = useAgendaNavigation(eventId, {
+    event,
+    agendaItems,
+    isLoading: isLoading || eventLoading,
+  });
 
   // Track current agenda item changes for toast notifications
   const previousAgendaItemIdRef = useRef<string | null>(null);
@@ -147,9 +161,18 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       closeExpiredFinalVotesForEvent({ event_id: eventId });
     };
 
-    closeExpiredVotes();
+    // This server-only maintenance pass must not compete with the first paint.
+    // The five-second polling deadline remains anchored to the page mount.
+    let maintenanceFrame: number | undefined;
+    const paintFrame = window.requestAnimationFrame(() => {
+      maintenanceFrame = window.requestAnimationFrame(closeExpiredVotes);
+    });
     const intervalId = window.setInterval(closeExpiredVotes, 5000);
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.cancelAnimationFrame(paintFrame);
+      if (maintenanceFrame !== undefined) window.cancelAnimationFrame(maintenanceFrame);
+      window.clearInterval(intervalId);
+    };
   }, [closeExpiredFinalVotesForEvent, eventId]);
   const allowsOfflineElectionTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
   const confirmedOfflineParticipantCount =
@@ -509,7 +532,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { event: streamDelegateTargetEvent } = useEventById(
     streamDelegateAssignmentMeta?.targetEventId
   );
-  const streamForwardingContext = useAgendaItemForwardingContext(streamAgendaItem?.id);
+  const streamForwardingContext = useAgendaItemForwardingContext(
+    streamAgendaItem?.amendment_id ? streamAgendaItem.id : undefined
+  );
   const crVoting = useAgendaItemCRVoting(streamAgendaItem?.id ?? '', user?.id);
   const votingRepairAttemptedAgendaIdsRef = useRef(new Set<string>());
   useEffect(() => {
@@ -556,23 +581,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     streamForwardingContext.currentStepRun,
     streamVariantVote,
   ]);
-  const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
-    agendaItemId: streamAgendaItem?.id,
-  });
-  const toolbarElection = useMemo(() => {
-    if (!actionBarElection) {
-      return streamElection;
-    }
-
-    return {
-      ...streamElection,
-      ...actionBarElection,
-      candidates:
-        actionBarCandidates.length > 0
-          ? actionBarCandidates
-          : (actionBarElection.candidates ?? streamElection?.candidates ?? []),
-    };
-  }, [actionBarCandidates, actionBarElection, streamElection]);
+  // The authorized agenda projects candidates and participation selections together.
+  const toolbarElection = useMemo(() => normalizeElectionRow(streamElection), [streamElection]);
+  const actionBarCandidates = toolbarElection?.candidates ?? [];
   const namedElectionResults = useMemo(
     () =>
       toolbarElection
@@ -1636,10 +1647,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     }
 
     const date = value instanceof Date ? value : new Date(value);
-    return date.toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (!Number.isFinite(date.getTime())) {
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+    return agendaTimeFormatter.format(Date.UTC(2000, 0, 1, date.getHours(), date.getMinutes()));
   };
 
   return (
@@ -1746,7 +1757,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       streamAgendaItemAmendmentEditingMode={streamAgendaItemAmendmentEditingMode}
       streamDocumentContent={streamDocumentContent}
       streamAmendmentDiscussions={streamAmendmentDiscussions}
-      actionBarElection={actionBarElection}
+      actionBarElection={toolbarElection}
       actionBarCandidates={actionBarCandidates}
       toolbarElection={toolbarElection}
       streamVotingPhase={streamVotingPhase}

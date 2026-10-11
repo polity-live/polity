@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   entityRouteAccessFn,
   type EntityRouteAccessInput,
@@ -18,6 +18,14 @@ interface EntityRouteAccessState {
   recoveryDraft: CreateRecoveryDraft | null;
 }
 
+export interface RouteOwnerEvidence {
+  entityType: 'group' | 'event' | 'amendment';
+  entityId: string;
+  ownerId: string | null | undefined;
+  visibility: string | null | undefined;
+  complete: boolean;
+}
+
 function toCreateRecoveryEntityType(
   entityType: EntityRouteAccessInput['entityType']
 ): ContentType | null {
@@ -33,19 +41,43 @@ function toCreateRecoveryEntityType(
   return null;
 }
 
-export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRouteAccessState {
+export function useEntityRouteAccess(
+  input: EntityRouteAccessInput,
+  owner?: RouteOwnerEvidence
+): EntityRouteAccessState {
   const { session, loading: authLoading } = useAuth();
   const recoveryDraft = useCreateRecoveryDraft(
     toCreateRecoveryEntityType(input.entityType),
     input.entityId
   );
-  const accessKey = JSON.stringify([
+  const identityKey = JSON.stringify([
     input.entityType,
     input.entityId,
     input.parentType,
     input.parentId,
     session?.user.id,
   ]);
+  const evidenceKey = JSON.stringify(
+    owner
+      ? [owner.entityType, owner.entityId, owner.ownerId, owner.visibility, owner.complete]
+      : null
+  );
+  const evidence = useRef({
+    identityKey,
+    key: evidenceKey,
+    complete: !!owner?.complete,
+    revision: 0,
+  });
+  if (evidence.current.identityKey !== identityKey) {
+    evidence.current = { identityKey, key: evidenceKey, complete: !!owner?.complete, revision: 0 };
+  } else if (evidence.current.key !== evidenceKey) {
+    // The first authoritative row supplements an existing server decision.
+    // Losing or changing established evidence invalidates it before rendering.
+    if (evidence.current.complete) evidence.current.revision++;
+    evidence.current.key = evidenceKey;
+    evidence.current.complete = !!owner?.complete;
+  }
+  const accessKey = JSON.stringify([identityKey, evidence.current.revision]);
   const pendingState: EntityRouteAccessState = {
     data: null,
     isLoading: true,
@@ -63,7 +95,7 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
     // Refreshing a token for the same account revalidates access in place.
     // Unmounting the route here discards forms and security confirmation dialogs.
     setState(previous =>
-      previous.accessKey === accessKey && previous.data
+      previous.accessKey === accessKey && !previous.error
         ? previous
         : { data: null, isLoading: true, error: null, recoveryDraft: null, accessKey }
     );
@@ -114,12 +146,35 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
     recoveryDraft?.submittedAt,
     session?.access_token,
     accessKey,
+    evidenceKey,
   ]);
 
   if (authLoading) {
     return {
       data: null,
       isLoading: true,
+      error: null,
+      recoveryDraft,
+    };
+  }
+
+  // A live, authoritative resource owned by this account independently grants
+  // private route access. Keep server revalidation running in the background;
+  // a denied response, changed owner, deletion or account change removes this path.
+  if (
+    !state.data &&
+    !state.error &&
+    owner?.complete &&
+    session?.user.id &&
+    owner.entityType === input.entityType &&
+    owner.entityId === input.entityId &&
+    owner.ownerId === session.user.id &&
+    !input.parentId &&
+    !input.parentType
+  ) {
+    return {
+      data: { exists: true, visibilities: [owner.visibility], canAccessPrivate: true },
+      isLoading: false,
       error: null,
       recoveryDraft,
     };

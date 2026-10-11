@@ -157,9 +157,26 @@ export const getOtherParticipant = (
   return conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
 };
 
+// Project local calendar fields into UTC so these formatters can be reused even
+// when the system timezone changes. The leap year also preserves February 29.
+const messageTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZone: 'UTC',
+});
+const messageDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
 export const formatTime = (date: string | number) => {
   const now = new Date();
   const messageDate = new Date(date);
+
+  if (Number.isNaN(messageDate.getTime())) {
+    return messageDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
 
   // Check if message is from today
   const isToday =
@@ -169,16 +186,14 @@ export const formatTime = (date: string | number) => {
 
   if (isToday) {
     // Show time if today (e.g., "2:30 PM")
-    return messageDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    return messageTimeFormatter.format(
+      Date.UTC(2000, 0, 1, messageDate.getHours(), messageDate.getMinutes())
+    );
   } else {
     // Show date if before today (e.g., "Jan 15")
-    return messageDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+    return messageDateFormatter.format(
+      Date.UTC(2000, messageDate.getMonth(), messageDate.getDate())
+    );
   }
 };
 

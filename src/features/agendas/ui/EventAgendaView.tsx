@@ -5,7 +5,7 @@ import {
   CollectionToggle,
 } from '@/features/shared/ui/collections/CollectionScope';
 
-import type { CSSProperties } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
@@ -27,11 +27,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/features/shared/ui/ui/collapsible';
+import { Collapsible, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
 import {
   Calendar,
   Vote,
@@ -89,6 +85,15 @@ import {
 import { getAppTutorialElectionCopy } from '@/features/app-tutorial/amendment-fixture';
 import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
+/** Avoid hidden dialog subscriptions at page mount; preserve state after first use. */
+function DeferredAgendaDialog({ open, children }: { open: boolean; children: ReactNode }) {
+  const [hasOpened, setHasOpened] = useState(open);
+  useEffect(() => {
+    if (open) setHasOpened(true);
+  }, [open]);
+  return open || hasOpened ? children : null;
+}
+
 export interface EventAgendaViewProps {
   virtualizeChangeRequests?: boolean;
   eventId: any;
@@ -395,6 +400,8 @@ export function EventAgendaView({
   scheduledButUnconfirmedAgendaItems,
   formatTime,
 }: EventAgendaViewProps) {
+  const streamPanelId = useId();
+  const statsPanelId = useId();
   const agendaStats = computeAgendaStats(agendaItems ?? []);
   const tutorialElectionCopy = getAppTutorialElectionCopy(language);
   const isTutorialElectionAgendaItem = (item: { type?: string | null } | null | undefined) =>
@@ -671,7 +678,7 @@ export function EventAgendaView({
     return null;
   };
 
-  const renderAgendaItemsList = (items: EventAgendaItemRow[], revealStartIndex = 0) => (
+  const renderAgendaItemsList = (items: EventAgendaItemRow[]) => (
     <div className="space-y-4">
       {items.map((item, index) => {
         const displayedTitle = isTutorialElectionAgendaItem(item)
@@ -686,7 +693,6 @@ export function EventAgendaView({
               tutorialRunId: event?.tutorial_run_id,
               language: language === 'en' ? 'en' : 'de',
             });
-        const revealIndex = Math.min(revealStartIndex + index, 11);
         const runtimeStatus = getAgendaRuntimeStatus({
           id: item.id,
           status: item.status,
@@ -778,16 +784,7 @@ export function EventAgendaView({
               endTime={formatTime(displayTimes.displayEndTime)}
               duration={item.duration || 30}
             >
-              <div
-                className="civic-load-card-reveal"
-                data-agenda-item-id={item.id}
-                data-slot="agenda-item-reveal"
-                style={
-                  {
-                    '--civic-load-index': revealIndex,
-                  } as CSSProperties
-                }
-              >
+              <div data-agenda-item-id={item.id} data-slot="agenda-item-reveal">
                 <div
                   className={cn(
                     'relative min-w-0',
@@ -1039,114 +1036,121 @@ export function EventAgendaView({
         {/* Spacer for fixed toolbar */}
         <div className="h-10" />
 
-        <OfflineTallyDialog
-          data-action-scope="presentation"
-          open={offlineTallyDialogOpen}
-          onOpenChange={handleOfflineTallyDialogOpenChange}
-          title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
-          description={translateText('features.events.agenda.offlineTallyDescription', {
-            item:
-              toolbarOfflineTallyEntity?.title ?? translateText('features.events.agenda.thisItem'),
-          })}
-          phase={toolbarOfflineTallyPhase ?? 'indicative'}
-          choices={toolbarOfflineTallyEntity?.choices ?? []}
-          tallies={toolbarOfflineTallyEntity?.tallies ?? []}
-          maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
-          maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
-          maxPerEntryLimitLabel={
-            toolbarOfflineTallyEntity?.kind === 'election'
-              ? translateText('features.events.agenda.candidate')
-              : undefined
-          }
-          participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
-          votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
-          isSubmitting={isOfflineTallySubmitting}
-          passwordError={offlineTallyPasswordError}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-          submitError={offlineTallySubmitError}
-          onSubmit={handleSubmitOfflineTally}
-        />
+        <DeferredAgendaDialog open={offlineTallyDialogOpen}>
+          <OfflineTallyDialog
+            data-action-scope="presentation"
+            open={offlineTallyDialogOpen}
+            onOpenChange={handleOfflineTallyDialogOpenChange}
+            title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
+            description={translateText('features.events.agenda.offlineTallyDescription', {
+              item:
+                toolbarOfflineTallyEntity?.title ??
+                translateText('features.events.agenda.thisItem'),
+            })}
+            phase={toolbarOfflineTallyPhase ?? 'indicative'}
+            choices={toolbarOfflineTallyEntity?.choices ?? []}
+            tallies={toolbarOfflineTallyEntity?.tallies ?? []}
+            maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
+            maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
+            maxPerEntryLimitLabel={
+              toolbarOfflineTallyEntity?.kind === 'election'
+                ? translateText('features.events.agenda.candidate')
+                : undefined
+            }
+            participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
+            votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
+            isSubmitting={isOfflineTallySubmitting}
+            passwordError={offlineTallyPasswordError}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+            submitError={offlineTallySubmitError}
+            onSubmit={handleSubmitOfflineTally}
+          />
+        </DeferredAgendaDialog>
 
-        <CandidacyPasswordDialog
-          {...actionBarHook.candidacyDialogProps}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-        />
+        <DeferredAgendaDialog open={actionBarHook.candidacyDialogProps.open}>
+          <CandidacyPasswordDialog
+            {...actionBarHook.candidacyDialogProps}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+          />
+        </DeferredAgendaDialog>
 
-        <EventLiveFocusDialog
-          open={liveFocusOpen}
-          onOpenChange={setLiveFocusOpen}
-          t={t}
-          streamUrl={event?.stream_url}
-          currentAgendaItem={streamAgendaItem}
-          currentAgendaItemTopNumber={streamAgendaItemTopNumber}
-          streamRuntimeStatus={streamRuntimeStatus}
-          streamIsLive={streamIsLive}
-          eventStartTimestamp={eventStartTimestamp}
-          speakerList={streamSpeakerListData}
-          showSpeakerGender={Boolean(event?.gender_quota_enabled)}
-          userId={user?.id}
-          isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
-          speakerLoading={actionBarHook.speakerLoading}
-          onJoinSpeakerList={
-            actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
-          }
-          onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
-          onMarkSpeakerCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
-          canManageAgenda={canManageAgenda}
-          navigationLoading={agendaNav.isLoading}
-          onStartVote={liveFocusStartVoteClick}
-          onStartFinalVote={liveFocusStartFinalVoteClick}
-          onCloseFinalVote={liveFocusCloseFinalVoteClick}
-          onJumpToNextVoteStep={
-            canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
-              ? handleJumpToNextStartableSequenceItem
-              : undefined
-          }
-          onEditItem={canManageAgenda ? actionBarHook.handleEditClick : undefined}
-          startVoteLabel={startVoteTooltip}
-          startFinalVoteLabel={startFinalVoteTooltip}
-          closeFinalVoteLabel={closeVoteTooltip}
-          onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
-          completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
-          onNextItem={agendaNav.moveToNextItem}
-          nextItemDisabled={liveFocusNextItemDisabled}
-          votingPhase={liveFocusVotingPhase}
-          isVotingActionAvailable={liveFocusIsVotingActionAvailable}
-          canVote={actionBarHook.hasVotingRight}
-          hasUserVoted={liveFocusHasUserVoted}
-          voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
-          disableVoteButton={voteButtonDisabled}
-          disabledVoteTooltip={disabledVoteTooltip}
-          onVoteClick={liveFocusVoteClick}
-          showOfflineTallyButton={showOfflineTallyButton}
-          onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
-          offlineTallyMode={toolbarOfflineTallyMode}
-          offlineTallyLabel={getOfflineTallyTooltip({
-            phase: toolbarOfflineTallyPhase,
-            mode: toolbarOfflineTallyMode,
-          })}
-          canBeCandidate={actionBarHook.hasCandidateRight}
-          isUserCandidate={actionBarHook.isUserCandidate}
-          candidateLoading={actionBarHook.candidateLoading}
-          onBecomeCandidate={actionBarHook.handleBecomeCandidate}
-          onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-          attendanceMode={attendanceMode}
-          confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
-          eligibleFinalVoterCount={eligibleFinalVoterCount}
-          streamElection={streamElection}
-          streamVote={streamVote}
-          streamDelegateTargetEvent={streamDelegateTargetEvent}
-          indicativeSelections={indicativeSelections}
-          finalSelections={finalSelections}
-          userHasElectionVoted={userHasElectionVoted}
-          userSelectedCandidateIds={userSelectedCandidateIds}
-          indicativeDecisions={indicativeDecisions}
-          finalDecisions={finalDecisions}
-          userHasVoteVoted={userHasVoteVoted}
-          userSelectedChoiceIds={userSelectedChoiceIds}
-          streamForwardingPreview={streamForwardingPreview}
-          votingWorkspace={renderVotingWorkspace('fullscreen')}
-        />
+        <DeferredAgendaDialog open={liveFocusOpen}>
+          <EventLiveFocusDialog
+            open={liveFocusOpen}
+            onOpenChange={setLiveFocusOpen}
+            t={t}
+            streamUrl={event?.stream_url}
+            currentAgendaItem={streamAgendaItem}
+            currentAgendaItemTopNumber={streamAgendaItemTopNumber}
+            streamRuntimeStatus={streamRuntimeStatus}
+            streamIsLive={streamIsLive}
+            eventStartTimestamp={eventStartTimestamp}
+            speakerList={streamSpeakerListData}
+            showSpeakerGender={Boolean(event?.gender_quota_enabled)}
+            userId={user?.id}
+            isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
+            speakerLoading={actionBarHook.speakerLoading}
+            onJoinSpeakerList={
+              actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
+            }
+            onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
+            onMarkSpeakerCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
+            canManageAgenda={canManageAgenda}
+            navigationLoading={agendaNav.isLoading}
+            onStartVote={liveFocusStartVoteClick}
+            onStartFinalVote={liveFocusStartFinalVoteClick}
+            onCloseFinalVote={liveFocusCloseFinalVoteClick}
+            onJumpToNextVoteStep={
+              canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
+                ? handleJumpToNextStartableSequenceItem
+                : undefined
+            }
+            onEditItem={canManageAgenda ? actionBarHook.handleEditClick : undefined}
+            startVoteLabel={startVoteTooltip}
+            startFinalVoteLabel={startFinalVoteTooltip}
+            closeFinalVoteLabel={closeVoteTooltip}
+            onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
+            completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
+            onNextItem={agendaNav.moveToNextItem}
+            nextItemDisabled={liveFocusNextItemDisabled}
+            votingPhase={liveFocusVotingPhase}
+            isVotingActionAvailable={liveFocusIsVotingActionAvailable}
+            canVote={actionBarHook.hasVotingRight}
+            hasUserVoted={liveFocusHasUserVoted}
+            voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
+            disableVoteButton={voteButtonDisabled}
+            disabledVoteTooltip={disabledVoteTooltip}
+            onVoteClick={liveFocusVoteClick}
+            showOfflineTallyButton={showOfflineTallyButton}
+            onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
+            offlineTallyMode={toolbarOfflineTallyMode}
+            offlineTallyLabel={getOfflineTallyTooltip({
+              phase: toolbarOfflineTallyPhase,
+              mode: toolbarOfflineTallyMode,
+            })}
+            canBeCandidate={actionBarHook.hasCandidateRight}
+            isUserCandidate={actionBarHook.isUserCandidate}
+            candidateLoading={actionBarHook.candidateLoading}
+            onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+            onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+            attendanceMode={attendanceMode}
+            confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
+            eligibleFinalVoterCount={eligibleFinalVoterCount}
+            streamElection={streamElection}
+            streamVote={streamVote}
+            streamDelegateTargetEvent={streamDelegateTargetEvent}
+            indicativeSelections={indicativeSelections}
+            finalSelections={finalSelections}
+            userHasElectionVoted={userHasElectionVoted}
+            userSelectedCandidateIds={userSelectedCandidateIds}
+            indicativeDecisions={indicativeDecisions}
+            finalDecisions={finalDecisions}
+            userHasVoteVoted={userHasVoteVoted}
+            userSelectedChoiceIds={userSelectedChoiceIds}
+            streamForwardingPreview={streamForwardingPreview}
+            votingWorkspace={renderVotingWorkspace('fullscreen')}
+          />
+        </DeferredAgendaDialog>
 
         {/* Stream Section */}
         <Collapsible open={streamOpen} onOpenChange={setStreamOpen}>
@@ -1209,7 +1213,7 @@ export function EventAgendaView({
                     >
                       <Maximize2 className="h-4 w-4" />
                     </Button>
-                    <CollapsibleTrigger asChild>
+                    <CollapsibleTrigger asChild aria-controls={streamPanelId}>
                       <Button
                         data-action-id="agendas.event-agenda.stream.toggle"
                         variant="ghost"
@@ -1231,83 +1235,87 @@ export function EventAgendaView({
                 }
               />
             </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="border-border/60 border-t p-4 sm:p-5">
-                {!streamAgendaItem ? (
-                  <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
-                    <Info className="h-5 w-5 flex-shrink-0" />
-                    <p className="text-sm">{t('features.events.stream.noActiveItem')}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {streamIsLive ? (
-                      <EventLivestreamPlayer
-                        streamUrl={event.stream_url}
-                        title={t('features.events.stream.liveStream')}
-                        containerClassName={featureThemeClassName(
-                          'agendaEventAgendaContrastBackground'
-                        )}
+            {/* These panels have no height animation. Avoid measuring the whole
+                agenda layout at mount just to populate unused animation sizes. */}
+            <div id={streamPanelId} hidden={!streamOpen}>
+              {streamOpen && (
+                <CardContent className="border-border/60 border-t p-4 sm:p-5">
+                  {!streamAgendaItem ? (
+                    <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
+                      <Info className="h-5 w-5 flex-shrink-0" />
+                      <p className="text-sm">{t('features.events.stream.noActiveItem')}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {streamIsLive ? (
+                        <EventLivestreamPlayer
+                          streamUrl={event.stream_url}
+                          title={t('features.events.stream.liveStream')}
+                          containerClassName={featureThemeClassName(
+                            'agendaEventAgendaContrastBackground'
+                          )}
+                        />
+                      ) : null}
+
+                      <AgendaContextTabs
+                        value={streamContextPane}
+                        onValueChange={setStreamContextPane}
+                        detailsLabel={t('features.events.agenda.details', 'Details')}
+                        speakersLabel={t('features.events.agenda.speakerList', 'Speaker list')}
+                        details={
+                          <div className="space-y-4" data-testid="agenda-overview-context-details">
+                            <AgendaItemContextCard
+                              presentation="embedded"
+                              agendaItem={{
+                                id: streamAgendaItem.id,
+                                title: displayedStreamAgendaItem?.title || '',
+                                description: displayedStreamAgendaItem?.description ?? undefined,
+                                type: streamAgendaItem.type || 'discussion',
+                                status: streamRuntimeStatus ?? 'planned',
+                              }}
+                              amendment={streamAgendaItem.amendment ?? undefined}
+                              amendmentForwardingPreview={streamForwardingPreview}
+                              election={displayedStreamElection ?? undefined}
+                            />
+                            {streamDelegateTargetEvent ? (
+                              <EventSearchCard event={streamDelegateTargetEvent} />
+                            ) : null}
+                          </div>
+                        }
+                        speakers={
+                          <div data-testid="agenda-overview-context-speakers">
+                            <AgendaSpeakerListSection
+                              agendaItemId={streamAgendaItem.id}
+                              speakers={streamSpeakerListData}
+                              isUserInSpeakerList={isUserInSpeakerList}
+                              canManageSpeakers={canManageAgenda}
+                              isAddingSpeaker={addingSpeaker}
+                              isRemovingSpeaker={removingSpeaker}
+                              userId={user?.id}
+                              agendaStartTime={
+                                streamAgendaItem.activated_at ??
+                                streamAgendaItem.start_time ??
+                                undefined
+                              }
+                              showGender={Boolean(event?.gender_quota_enabled)}
+                              onAddToSpeakerList={
+                                canJoinSpeakerList ? handleAddToSpeakerList : undefined
+                              }
+                              onRemoveFromSpeakerList={handleRemoveFromSpeakerList}
+                              onMarkCompleted={
+                                canManageAgenda ? handleMarkSpeakerCompleted : undefined
+                              }
+                            />
+                          </div>
+                        }
                       />
-                    ) : null}
 
-                    <AgendaContextTabs
-                      value={streamContextPane}
-                      onValueChange={setStreamContextPane}
-                      detailsLabel={t('features.events.agenda.details', 'Details')}
-                      speakersLabel={t('features.events.agenda.speakerList', 'Speaker list')}
-                      details={
-                        <div className="space-y-4" data-testid="agenda-overview-context-details">
-                          <AgendaItemContextCard
-                            presentation="embedded"
-                            agendaItem={{
-                              id: streamAgendaItem.id,
-                              title: displayedStreamAgendaItem?.title || '',
-                              description: displayedStreamAgendaItem?.description ?? undefined,
-                              type: streamAgendaItem.type || 'discussion',
-                              status: streamRuntimeStatus ?? 'planned',
-                            }}
-                            amendment={streamAgendaItem.amendment ?? undefined}
-                            amendmentForwardingPreview={streamForwardingPreview}
-                            election={displayedStreamElection ?? undefined}
-                          />
-                          {streamDelegateTargetEvent ? (
-                            <EventSearchCard event={streamDelegateTargetEvent} />
-                          ) : null}
-                        </div>
-                      }
-                      speakers={
-                        <div data-testid="agenda-overview-context-speakers">
-                          <AgendaSpeakerListSection
-                            agendaItemId={streamAgendaItem.id}
-                            speakers={streamSpeakerListData}
-                            isUserInSpeakerList={isUserInSpeakerList}
-                            canManageSpeakers={canManageAgenda}
-                            isAddingSpeaker={addingSpeaker}
-                            isRemovingSpeaker={removingSpeaker}
-                            userId={user?.id}
-                            agendaStartTime={
-                              streamAgendaItem.activated_at ??
-                              streamAgendaItem.start_time ??
-                              undefined
-                            }
-                            showGender={Boolean(event?.gender_quota_enabled)}
-                            onAddToSpeakerList={
-                              canJoinSpeakerList ? handleAddToSpeakerList : undefined
-                            }
-                            onRemoveFromSpeakerList={handleRemoveFromSpeakerList}
-                            onMarkCompleted={
-                              canManageAgenda ? handleMarkSpeakerCompleted : undefined
-                            }
-                          />
-                        </div>
-                      }
-                    />
-
-                    {renderVotingWorkspace('overview')}
-                  </div>
-                )}
-              </CardContent>
-            </CollapsibleContent>
+                      {renderVotingWorkspace('overview')}
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </div>
           </Card>
         </Collapsible>
 
@@ -1315,7 +1323,7 @@ export function EventAgendaView({
         <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
           <Card className="border-border/70 bg-card/70 overflow-hidden rounded-xl shadow-none">
             <CardHeader className="px-4 py-3 sm:px-5">
-              <CollapsibleTrigger asChild>
+              <CollapsibleTrigger asChild aria-controls={statsPanelId}>
                 <Button
                   data-action-id="agendas.event-agenda.statistics.toggle"
                   variant="ghost"
@@ -1332,55 +1340,61 @@ export function EventAgendaView({
                 </Button>
               </CollapsibleTrigger>
             </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="border-border/60 border-t p-4 sm:p-5">
-                <div className="grid grid-cols-3 gap-2 md:gap-4">
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
-                      <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
+            <div id={statsPanelId} hidden={!statsOpen}>
+              {statsOpen && (
+                <CardContent className="border-border/60 border-t p-4 sm:p-5">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4">
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
+                        <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.electionsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {agendaStats.electionsCount === 1
+                            ? t('features.events.agenda.election')
+                            : t('features.events.agenda.elections')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">{agendaStats.electionsCount}</p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {agendaStats.electionsCount === 1
-                          ? t('features.events.agenda.election')
-                          : t('features.events.agenda.elections')}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div
-                      className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}
-                    >
-                      <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div
+                        className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}
+                      >
+                        <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.amendmentsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {agendaStats.amendmentsCount === 1
+                            ? t('features.events.agenda.amendment')
+                            : t('features.events.agenda.amendments')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">{agendaStats.amendmentsCount}</p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {agendaStats.amendmentsCount === 1
-                          ? t('features.events.agenda.amendment')
-                          : t('features.events.agenda.amendments')}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                    <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
-                      <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold md:text-2xl">
-                        {agendaStats.openChangeRequestsCount}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs md:text-sm">
-                        {t('features.events.agenda.openChangeRequests')}
-                      </p>
+                    <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                      <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
+                        <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-bold md:text-2xl">
+                          {agendaStats.openChangeRequestsCount}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs md:text-sm">
+                          {t('features.events.agenda.openChangeRequests')}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
+                </CardContent>
+              )}
+            </div>
           </Card>
         </Collapsible>
 
@@ -1580,10 +1594,7 @@ export function EventAgendaView({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-                    {renderAgendaItemsList(
-                      scheduledButUnconfirmedAgendaItems,
-                      confirmedAgendaItems.length
-                    )}
+                    {renderAgendaItemsList(scheduledButUnconfirmedAgendaItems)}
                   </CardContent>
                 </Card>
               ) : null}
@@ -1591,121 +1602,127 @@ export function EventAgendaView({
           )}
         </CollectionScope>
 
-        <VoteCastDialog
-          open={actionBarHook.voteDialogOpen}
-          onOpenChange={actionBarHook.setVoteDialogOpen}
-          phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
-          title={
-            isCRToolbarActive ? selectedCRTitle : (displayedStreamAgendaItem?.title ?? undefined)
-          }
-          forwardingPreview={streamForwardingPreview}
-          documentPreviewContent={voteDialogDocumentPreviewContent}
-          candidates={
-            isCRToolbarActive
-              ? undefined
-              : streamElection
-                ? (streamElection.candidates as CandidatesByElectionRow[]).map(
-                    (candidate: any) => ({
-                      id: candidate.id,
-                      name: candidate.user
-                        ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
-                          candidate.user.email ||
-                          translateText('features.events.agenda.candidate')
-                        : candidate.name || translateText('features.events.agenda.candidate'),
-                      avatar: candidate.user?.avatar ?? undefined,
-                    })
-                  )
-                : undefined
-          }
-          maxVotes={streamElection?.max_votes ?? 1}
-          electionMode={
-            streamElection?.election_mode
-              ? normalizeElectionMode(streamElection.election_mode)
-              : null
-          }
-          seatCount={streamElection?.seat_count ?? null}
-          choices={
-            isCRToolbarActive
-              ? selectedCRChoices
-              : streamVote
-                ? (streamVote.choices as ChoicesByVoteRow[]).map((choice: any) => ({
-                    id: choice.id,
-                    label:
-                      choice.label ||
-                      translateText('features.events.agenda.defaultChoiceLabels.choice'),
-                    semanticKey: choice.semantic_key ?? null,
-                  }))
-                : undefined
-          }
-          tutorialAnchor={
-            event?.tutorial_run_id
-              ? streamElection
-                ? 'agenda-election-vote'
-                : 'agenda-amendment-vote'
-              : undefined
-          }
-          requirePassword={!event?.tutorial_run_id}
-          passwordError={passwordError}
-          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
-          isPasswordVerifying={isPasswordVerifying}
-          onPasswordSubmit={async password => {
-            setPasswordError(null);
-            setIsPasswordVerifying(true);
-            try {
-              await verifyVotingPassword(password);
-            } catch (err) {
-              const message =
-                err instanceof Error
-                  ? err.message
-                  : translateText('generated.inline.0010_verification_failed_e10d7e51');
-              setPasswordError(message);
-              throw err;
-            } finally {
-              setIsPasswordVerifying(false);
+        <DeferredAgendaDialog open={actionBarHook.voteDialogOpen}>
+          <VoteCastDialog
+            open={actionBarHook.voteDialogOpen}
+            onOpenChange={actionBarHook.setVoteDialogOpen}
+            phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
+            title={
+              isCRToolbarActive ? selectedCRTitle : (displayedStreamAgendaItem?.title ?? undefined)
             }
-          }}
-          onCastVote={
-            isCRToolbarActive
-              ? handleCastCRVoteFromDialog
-              : actionBarHook.voteCasting.castAmendmentVote
-          }
-          onCastElectionVote={
-            isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
-          }
-          isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
-        />
+            forwardingPreview={streamForwardingPreview}
+            documentPreviewContent={voteDialogDocumentPreviewContent}
+            candidates={
+              isCRToolbarActive
+                ? undefined
+                : streamElection
+                  ? (streamElection.candidates as CandidatesByElectionRow[]).map(
+                      (candidate: any) => ({
+                        id: candidate.id,
+                        name: candidate.user
+                          ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
+                            candidate.user.email ||
+                            translateText('features.events.agenda.candidate')
+                          : candidate.name || translateText('features.events.agenda.candidate'),
+                        avatar: candidate.user?.avatar ?? undefined,
+                      })
+                    )
+                  : undefined
+            }
+            maxVotes={streamElection?.max_votes ?? 1}
+            electionMode={
+              streamElection?.election_mode
+                ? normalizeElectionMode(streamElection.election_mode)
+                : null
+            }
+            seatCount={streamElection?.seat_count ?? null}
+            choices={
+              isCRToolbarActive
+                ? selectedCRChoices
+                : streamVote
+                  ? (streamVote.choices as ChoicesByVoteRow[]).map((choice: any) => ({
+                      id: choice.id,
+                      label:
+                        choice.label ||
+                        translateText('features.events.agenda.defaultChoiceLabels.choice'),
+                      semanticKey: choice.semantic_key ?? null,
+                    }))
+                  : undefined
+            }
+            tutorialAnchor={
+              event?.tutorial_run_id
+                ? streamElection
+                  ? 'agenda-election-vote'
+                  : 'agenda-amendment-vote'
+                : undefined
+            }
+            requirePassword={!event?.tutorial_run_id}
+            passwordError={passwordError}
+            noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+            isPasswordVerifying={isPasswordVerifying}
+            onPasswordSubmit={async password => {
+              setPasswordError(null);
+              setIsPasswordVerifying(true);
+              try {
+                await verifyVotingPassword(password);
+              } catch (err) {
+                const message =
+                  err instanceof Error
+                    ? err.message
+                    : translateText('generated.inline.0010_verification_failed_e10d7e51');
+                setPasswordError(message);
+                throw err;
+              } finally {
+                setIsPasswordVerifying(false);
+              }
+            }}
+            onCastVote={
+              isCRToolbarActive
+                ? handleCastCRVoteFromDialog
+                : actionBarHook.voteCasting.castAmendmentVote
+            }
+            onCastElectionVote={
+              isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
+            }
+            isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
+          />
+        </DeferredAgendaDialog>
 
-        <NamedBallotResultsDialog
-          open={namedResultsTarget !== null}
-          onOpenChange={open => {
-            if (!open) setNamedResultsTarget?.(null);
-          }}
-          title={
-            streamIsTutorialElection && namedResultsTarget === 'election'
-              ? tutorialElectionCopy.electionTitle
-              : (namedResultsDialogConfig?.title ??
-                t('features.events.agenda.namedResults.title', 'Named results'))
-          }
-          description={namedResultsDialogConfig?.description ?? ''}
-          model={namedResultsDialogConfig?.model ?? null}
-        />
+        <DeferredAgendaDialog open={namedResultsTarget !== null}>
+          <NamedBallotResultsDialog
+            open={namedResultsTarget !== null}
+            onOpenChange={open => {
+              if (!open) setNamedResultsTarget?.(null);
+            }}
+            title={
+              streamIsTutorialElection && namedResultsTarget === 'election'
+                ? tutorialElectionCopy.electionTitle
+                : (namedResultsDialogConfig?.title ??
+                  t('features.events.agenda.namedResults.title', 'Named results'))
+            }
+            description={namedResultsDialogConfig?.description ?? ''}
+            model={namedResultsDialogConfig?.model ?? null}
+          />
+        </DeferredAgendaDialog>
 
         {streamAgendaItem ? (
-          <EditElectionVoteDialog
-            open={actionBarHook.editDialogOpen}
-            onOpenChange={actionBarHook.setEditDialogOpen}
-            agendaItemId={streamAgendaItem.id}
-            agendaItemTitle={displayedStreamAgendaItem?.title ?? null}
-            agendaItemDescription={displayedStreamAgendaItem?.description ?? null}
-            agendaItemDuration={streamAgendaItem.duration ?? null}
-            election={displayedStreamElection ?? undefined}
-            vote={streamVote ?? undefined}
-            choices={(streamVote?.choices ?? []).map((choice: any) => ({
-              id: choice.id,
-              label: choice.label,
-              order_index: choice.order_index,
-            }))}
-          />
+          <DeferredAgendaDialog open={actionBarHook.editDialogOpen}>
+            <EditElectionVoteDialog
+              open={actionBarHook.editDialogOpen}
+              onOpenChange={actionBarHook.setEditDialogOpen}
+              agendaItemId={streamAgendaItem.id}
+              agendaItemTitle={displayedStreamAgendaItem?.title ?? null}
+              agendaItemDescription={displayedStreamAgendaItem?.description ?? null}
+              agendaItemDuration={streamAgendaItem.duration ?? null}
+              election={displayedStreamElection ?? undefined}
+              vote={streamVote ?? undefined}
+              choices={(streamVote?.choices ?? []).map((choice: any) => ({
+                id: choice.id,
+                label: choice.label,
+                order_index: choice.order_index,
+              }))}
+            />
+          </DeferredAgendaDialog>
         ) : null}
       </AgendaPageShell>
     </div>

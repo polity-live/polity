@@ -41,6 +41,12 @@ async function fixture() {
   menu.getByRole('menuitem', { name: 'plateJs.toolbar.table.title' }).focus();
   await userEvent.keyboard('{ArrowRight}');
   const picker = await screen.findByRole('button', { name: 'plateJs.toolbar.table.title: 0 x 0' });
+  const submenu = picker.closest<HTMLElement>('[data-slot="dropdown-menu-sub-content"]')!;
+  // Finding the picker does not mean its animated submenu has stopped moving.
+  // Aim the native pointer only after the actual opening animation finishes.
+  await waitFor(() =>
+    expect(submenu.getAnimations().some(animation => animation.playState === 'running')).toBe(false)
+  );
   return { editor, view, picker };
 }
 

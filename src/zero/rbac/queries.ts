@@ -1,6 +1,11 @@
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
-import { requireQueryUser, requireRequestedViewer } from './query-access';
+import {
+  requireQueryUser,
+  requireRequestedViewer,
+  applyGroupDiscoveryQueryAccess,
+} from './query-access';
 import { zql } from '../schema';
 
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
@@ -41,10 +46,13 @@ export const rbacQueries = {
   membershipPermissions: defineQuery(
     z.object({ userId: z.string() }),
     ({ args: { userId }, ctx: { userID } }) =>
-      requireRequestedViewer(zql.group_membership, userId, userID)
-        .where('status', 'IN', ['active', 'member', 'admin'])
+      whereAnyOf(requireRequestedViewer(zql.group_membership, userId, userID), 'status', [
+        'active',
+        'member',
+        'admin',
+      ])
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   /** Active guest accesses for a user with attached guest roles→action_rights and group */
@@ -54,7 +62,7 @@ export const rbacQueries = {
       requireRequestedViewer(zql.group_guest_access, userId, userID)
         .where('status', 'active')
         .related('guest_roles', q => q.related('role', rq => rq.related('action_rights')))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
   ),
 
   /** Groups owned by the user, used as an owner fallback in RBAC checks */
@@ -68,8 +76,11 @@ export const rbacQueries = {
   participantPermissions: defineQuery(
     z.object({ userId: z.string() }),
     ({ args: { userId }, ctx: { userID } }) =>
-      requireRequestedViewer(zql.event_participant, userId, userID)
-        .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      whereAnyOf(
+        requireRequestedViewer(zql.event_participant, userId, userID),
+        'status',
+        ACTIVE_EVENT_PARTICIPANT_STATUSES
+      )
         .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
         .related('event')
   ),

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { parseDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import {
   resolveElectionMode,
@@ -39,6 +39,20 @@ export function normalizeElectionRow<
     ...(delegateAssignmentMeta ? { delegate_assignment_meta: delegateAssignmentMeta } : {}),
     election_mode: electionMode,
     seat_count: seatCount,
+  };
+}
+
+/**
+ * Candidate detail projection for a visible election already supplied by an
+ * authorized parent view. The registered query retains its own access checks.
+ */
+export function useElectionCandidates(electionId?: string) {
+  const [candidates, result] = useQuery(
+    electionId ? queries.elections.candidatesByElection({ election_id: electionId }) : undefined
+  );
+  return {
+    candidates: candidates ?? [],
+    isLoading: Boolean(electionId) && result.type === 'unknown',
   };
 }
 

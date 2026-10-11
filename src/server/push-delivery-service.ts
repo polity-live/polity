@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { mutationBenchmarkDelivery } from './zero-mutation-delivery';
 import { timingSafeEqual } from 'node:crypto';
 
 import { NOTIFICATION_TYPE_TO_SETTING } from '@/features/notifications/logic/notificationTypeSettingMap';
@@ -304,7 +305,8 @@ export async function executePushDelivery(
   const supabase = deps.supabase ?? getSupabase();
   const sendNotification =
     deps.sendNotification ??
-    ((subscription, payload) => webpush.sendNotification(subscription, payload));
+    ((subscription, payload) =>
+      mutationBenchmarkDelivery('web-push', () => webpush.sendNotification(subscription, payload)));
   const limit = Math.min(Math.max(options.limit ?? 100, 1), 100);
 
   const { data: notificationJobs, error: notificationClaimError } = await (supabase.rpc as any)(

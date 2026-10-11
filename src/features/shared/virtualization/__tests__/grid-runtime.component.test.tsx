@@ -52,6 +52,38 @@ beforeEach(() => {
 });
 
 describe('vendored grid runtime contracts', () => {
+  it('keeps an in-flight initial window and avoids expanding a complete small directory', () => {
+    let authoritative = false;
+    const getPageQuery = vi.fn(({ limit }: { limit: number }) => ({ query: { limit } }));
+    mocks.useQuery.mockImplementation(query =>
+      query
+        ? [[{ id: 'one' }, { id: 'two' }], { type: authoritative ? 'complete' : 'unknown' }]
+        : [undefined, complete]
+    );
+    mocks.useVirtualizer.mockReturnValue({
+      scrollOffset: 0,
+      scrollRect: { width: 1200, height: 634 },
+      scrollToOffset: vi.fn(),
+      scrollToIndex: vi.fn(),
+      getVirtualItems: vi.fn(() => []),
+    });
+    const options = {
+      listContextParams: { scope: 'all' },
+      estimateSize: () => 40,
+      getScrollElement: () => null,
+      getPageQuery,
+      getSingleQuery: () => ({ query: null }),
+      toStartRow: (row: unknown) => row,
+      lanes: 3,
+      overscan: 8,
+    };
+    const hook = renderHook(() => useZeroGridVirtualizer(options));
+    expect(getPageQuery.mock.calls.every(([args]) => args.limit === 101)).toBe(true);
+    authoritative = true;
+    hook.rerender();
+    expect(getPageQuery.mock.calls.every(([args]) => args.limit === 101)).toBe(true);
+    hook.unmount();
+  });
   it('settles multi-column paging while scrolling down and back across query boundaries', () => {
     const documents = Array.from({ length: 60 }, (_, id) => ({ id: String(id) }));
     const pageCache = new Map<string, typeof documents>();

@@ -1,3 +1,4 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -6,7 +7,7 @@ export const calendarSubscriptionQueries = {
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.calendar_subscription
       .where('user_id', userID)
-      .related('target_group')
+      .related('target_group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('target_user')
   ),
 

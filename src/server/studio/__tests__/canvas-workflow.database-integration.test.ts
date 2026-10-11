@@ -3,6 +3,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
 
 import postgres from 'postgres';
+import { isLocalTestDatabase } from '@/test/local-database';
 import { studioCanvasCommand as canvasCommand } from '@/test/studio-zero-database.fixture';
 import { encodeAppError } from '@/features/shared/errors/app-error';
 import { studioSql } from '../db';
@@ -32,10 +33,7 @@ const assetUrls = (actor: string, projectId: string, workspaceId?: string) =>
 
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
-if (
-  !['localhost', '127.0.0.1'].includes(new URL(database).hostname) ||
-  new URL(database).port !== '54322'
-)
+if (!isLocalTestDatabase(database))
   throw new Error('Canvas tests require the explicit local development database');
 process.env.STUDIO_DATABASE_URL = database;
 const sql = postgres(database, { max: 12 });

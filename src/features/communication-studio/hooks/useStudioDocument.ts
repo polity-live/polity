@@ -1,7 +1,7 @@
 import { studioPresence } from '@/features/communication-studio/logic/studio-realtime-presence';
 import { z } from 'zod';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';

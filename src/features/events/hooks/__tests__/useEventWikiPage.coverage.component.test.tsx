@@ -31,7 +31,9 @@ vi.mock('@/zero/events/useEventState', () => ({
     isLoading: mocks.eventLoading,
   }),
 }));
-vi.mock('@/zero/users', () => ({ useUserState: () => ({ allUsers: mocks.allUsers }) }));
+vi.mock('@/zero/users', () => ({
+  useUserState: () => ({ currentUser: mocks.allUsers?.find(user => user.id === mocks.user?.id) }),
+}));
 vi.mock('@/zero/elections/useElectionActions', () => ({
   useElectionActions: () => ({ addCandidate: mocks.addCandidate }),
 }));

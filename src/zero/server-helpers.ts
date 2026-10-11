@@ -4,6 +4,7 @@
  */
 import { type Transaction } from '@rocicorp/zero';
 import { zql, type Schema } from './schema';
+import { requireAuthenticated } from './rbac/authorize';
 import {
   computeDistinctEventParticipantCount,
   computeDistinctGroupMemberCount,
@@ -43,6 +44,7 @@ export async function requireRecentVotingPasswordVerification(
   userId: string,
   maxAgeMs = 120_000
 ): Promise<void> {
+  requireAuthenticated(tx, { userID: userId });
   const record = await tx.run(zql.voting_password.where('user_id', userId).one());
   if (!record) return; // No PIN configured — no enforcement required.
   const verifiedAt = record.last_verified_at;
@@ -76,6 +78,7 @@ export async function requireConfiguredRecentVotingPasswordVerification(
   userId: string,
   maxAgeMs = 120_000
 ): Promise<void> {
+  requireAuthenticated(tx, { userID: userId });
   const record = await tx.run(zql.voting_password.where('user_id', userId).one());
   if (!record) {
     throw new Error('Please set your voting PIN before changing your candidacy.');

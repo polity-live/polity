@@ -49946,6 +49946,42 @@
           "identifierSource": "derived"
         }
       }
+    },
+    "src/features/agendas/ui/EventAgendaView.tsx#CollapsibleTrigger-558ce2820a": {
+      "status": "resolved",
+      "introducedBy": "ui-action-debt-baseline-v1",
+      "source": {
+        "file": "src/features/agendas/ui/EventAgendaView.tsx",
+        "tag": "CollapsibleTrigger",
+        "line": 1210,
+        "identifierSource": "unidentified"
+      },
+      "resolution": "alias-of-action",
+      "evidence": {
+        "scannerClassification": "transparent-wrapper",
+        "aliasFingerprint": "29e892d449",
+        "previousDebtKey": "src/features/agendas/ui/EventAgendaView.tsx#CollapsibleTrigger-f5ba1c8aab",
+        "canonicalActionId": "agendas.event-agenda.stream.toggle",
+        "note": "Same asChild wrapper and tested canonical button; disclosure ARIA controls changed its AST fingerprint."
+      }
+    },
+    "src/features/agendas/ui/EventAgendaView.tsx#CollapsibleTrigger-23c390ba8b": {
+      "status": "resolved",
+      "introducedBy": "ui-action-debt-baseline-v1",
+      "source": {
+        "file": "src/features/agendas/ui/EventAgendaView.tsx",
+        "tag": "CollapsibleTrigger",
+        "line": 1320,
+        "identifierSource": "accessible-text"
+      },
+      "resolution": "alias-of-action",
+      "evidence": {
+        "scannerClassification": "transparent-wrapper",
+        "aliasFingerprint": "2c8faca012",
+        "previousDebtKey": "src/features/agendas/ui/EventAgendaView.tsx#CollapsibleTrigger-f5ba1c8aab-2",
+        "canonicalActionId": "agendas.event-agenda.statistics.toggle",
+        "note": "Same asChild wrapper and tested canonical button; disclosure ARIA controls changed its AST fingerprint."
+      }
     }
   },
   "sourceReferences": {

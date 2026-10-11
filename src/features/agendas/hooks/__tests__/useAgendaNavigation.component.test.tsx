@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
     event: null as any,
     isLoading: false,
   },
+  queriedEvent: vi.fn(),
   user: { id: 'user-1' } as { id: string } | null,
   canManage: true,
   reportTutorialAction: vi.fn(),
@@ -31,7 +32,10 @@ vi.mock('@/zero/events/useEventActions', () => ({
 }));
 
 vi.mock('@/zero/events/useEventState', () => ({
-  useEventWithAgendaAndParticipants: () => mocks.eventState,
+  useEventWithAgendaAndParticipants: (eventId: string | undefined) => {
+    mocks.queriedEvent(eventId);
+    return mocks.eventState;
+  },
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
@@ -98,6 +102,32 @@ beforeEach(() => {
 });
 
 describe('useAgendaNavigation', () => {
+  it('keeps the fallback query disabled when an authorized projection has no event', () => {
+    const { result } = renderHook(() =>
+      useAgendaNavigation('event-1', { event: null, agendaItems: [], isLoading: false })
+    );
+    expect(mocks.queriedEvent).toHaveBeenCalledWith(undefined);
+    expect(result.current.currentAgendaItem).toBeNull();
+    expect(result.current.totalItems).toBe(0);
+  });
+  it('reuses the visible authorized agenda and withdraws controls when its evidence is loading', () => {
+    const item = agendaItem({ status: 'active' });
+    const projection = {
+      event: { current_agenda_item_id: 'agenda-1' },
+      agendaItems: [item] as any,
+      isLoading: false,
+    };
+    const { result, rerender } = renderHook(({ value }) => useAgendaNavigation('event-1', value), {
+      initialProps: { value: projection },
+    });
+    expect(mocks.queriedEvent).toHaveBeenCalledWith(undefined);
+    expect(result.current.currentAgendaItem?.id).toBe('agenda-1');
+    rerender({ value: { ...projection, isLoading: true } });
+    expect(result.current.isLoading).toBe(true);
+    mocks.canManage = false;
+    rerender({ value: projection });
+    expect(result.current.canNavigate).toBe(false);
+  });
   it('reports a successful event start even while tutorial metadata is absent', async () => {
     const { result } = renderHook(() => useAgendaNavigation('event-1'));
 

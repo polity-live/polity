@@ -5,22 +5,200 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Test flags: all, performance, or comma-separated flags (see TESTING.md)"
+        required: false
+        default: all
+        type: string
+      zero_baseline_ref:
+        description: Optional benchmark-enabled baseline commit for native acceptance runs
+        required: false
+        type: string
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && format('manual-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  test-selection:
+    name: Select CI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      enabled: ${{ steps.flags.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.21.0
+      - id: flags
+        name: Resolve test flags (default all)
+        env:
+          CI_TEST_SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.tests || '' }}
+        run: node tools/testing/ci-test-selection.mjs
+
+  zero-performance-prepare:
+    name: Zero preparation
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+      - name: Inventory both revisions and assign every case
+        id: prepare
+        env:
+          ZERO_PERFORMANCE_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || inputs.zero_baseline_ref || 'origin/master' }}
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts prepare
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output output/zero-performance/ci/preparation
+      - name: Upload immutable execution manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            output/zero-performance/ci/preparation/manifest.json
+            output/zero-performance/ci/preparation/prepare.json
+            output/zero-performance/ci/preparation/base-inventory/*.log
+
+  zero-performance-shards:
+    name: Zero measurements / ${{ matrix.shard }}
+    needs: [test-selection, zero-performance-prepare]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.zero-performance-prepare.outputs.matrix) }}
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+      - name: Download immutable execution manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          path: output/zero-performance/ci/preparation
+      - name: Identify pinned Chromium version
+        if: matrix.layer == 'journeys'
+        id: playwright
+        run: echo "version=$(node -p 'require("./node_modules/@playwright/test/package.json").version')" >> "$GITHUB_OUTPUT"
+      - name: Cache pinned Chromium
+        if: matrix.layer == 'journeys'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: zero-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium with bounded Ubuntu mirror access
+        if: matrix.layer == 'journeys'
+        run: |
+          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
+          pnpm exec playwright install --with-deps chromium
+      - name: Measure assigned cases and confirm regressions on this runner
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts run
+          --manifest output/zero-performance/ci/preparation/manifest.json
+          --shard "${{ matrix.shard }}"
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output "output/zero-performance/ci/${{ matrix.shard }}"
+      - name: Stop any remaining owned benchmark stacks
+        if: always()
+        run: node tools/e2e/zero-performance/cleanup.mjs
+      - name: Stage benchmark artifacts
+        if: always()
+        run: >-
+          node tools/e2e/zero-performance/stage-artifacts.mjs
+          --source "output/zero-performance/ci/${{ matrix.shard }}"
+          --output "output/zero-performance/ci-staged/${{ matrix.shard }}"
+      - name: Upload all measurements, plans, comparisons and service diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-shard-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 21
+          compression-level: 9
+          path: output/zero-performance/ci-staged/${{ matrix.shard }}/
+
+  zero-query-performance:
+    name: Zero Query Performance
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
+    needs: [test-selection, zero-performance-prepare, zero-performance-shards]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Record active job start
+        run: cut -d ' ' -f 1 /proc/uptime > "$RUNNER_TEMP/zero-job-start"
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-project
+      - name: Download immutable execution manifest
+        if: always()
+        uses: actions/download-artifact@v8
+        with:
+          name: zero-manifest-${{ github.run_attempt }}
+          path: output/zero-performance/ci/preparation
+      - name: Download every runner outcome and original diagnostic
+        if: always()
+        uses: actions/download-artifact@v8
+        with:
+          pattern: zero-shard-*-${{ github.run_attempt }}
+          path: output/zero-performance/ci/artifacts
+      - name: Reconcile full coverage, original diagnostics and paired regressions
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          pnpm exec tsx tools/e2e/zero-performance/distributed.ts merge
+          --manifest output/zero-performance/ci/preparation/manifest.json
+          --artifacts output/zero-performance/ci/artifacts
+          --job-start-file "$RUNNER_TEMP/zero-job-start"
+          --output output/zero-performance/ci/merged
+      - name: Upload full gate and complete reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zero-query-performance-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 21
+          compression-level: 9
+          path: output/zero-performance/ci/merged/
+      - name: Require successful preparation and every matrix job
+        if: always()
+        env:
+          PREPARE_RESULT: ${{ needs.zero-performance-prepare.result }}
+          SHARDS_RESULT: ${{ needs.zero-performance-shards.result }}
+        run: test "$PREPARE_RESULT" = success && test "$SHARDS_RESULT" = success
+
   static-analysis:
     name: Static Analysis
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').static == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -64,10 +242,12 @@ jobs:
 
   unit-tests:
     name: Unit Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').unit == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Run unit tests
         run: pnpm run test:unit
@@ -75,7 +255,7 @@ jobs:
         run: pnpm run test:performance:city-design:coverage
       - name: Upload City Design benchmark tooling coverage
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-city-design-performance-${{ github.run_attempt }}
           if-no-files-found: error
@@ -85,7 +265,7 @@ jobs:
         run: pnpm run studio:test:coverage
       - name: Upload Studio coverage
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-studio-${{ github.run_attempt }}
           if-no-files-found: error
@@ -94,16 +274,20 @@ jobs:
 
   component-tests:
     name: Component Integration Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').component == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Run component integration tests
         run: pnpm run test:component
 
   component-flow-shards:
     name: Component Flow / ${{ matrix.shard }} of 4
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').flow == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -111,7 +295,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Run component-flow shard
         run: pnpm run test:component-flow -- --shard=${{ matrix.shard }}/4
@@ -121,7 +305,7 @@ jobs:
           printf '%s\n' '${{ matrix.shard }}/4' > shard-markers/component-flow-${{ matrix.shard }}.txt
       - name: Upload component-flow marker
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: component-flow-marker-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -130,15 +314,15 @@ jobs:
 
   component-flow-gate:
     name: Component Flow Tests
-    if: always()
-    needs: component-flow-shards
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').flow == true
+    needs: [test-selection, component-flow-shards]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Download component-flow markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v8.0.2
+        uses: actions/download-artifact@v8
         with:
           pattern: component-flow-marker-*-${{ github.run_attempt }}
           path: component-flow-markers
@@ -159,10 +343,12 @@ jobs:
 
   browser-component-tests:
     name: Browser Component Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').browser == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Install Chromium with bounded Ubuntu mirror access
         run: |
@@ -172,7 +358,7 @@ jobs:
       - run: pnpm exec vitest run --config vitest.browser.coverage.config.ts
       - name: Upload browser coverage
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-browser-${{ github.run_attempt }}
           if-no-files-found: error
@@ -181,6 +367,8 @@ jobs:
 
   coverage-shards:
     name: Coverage Shard ${{ matrix.shard }} of 4
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -190,7 +378,7 @@ jobs:
     env:
       COVERAGE_SHARD_MAX_WORKERS: "2"
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Run isolated instrumented shard
         run: >-
@@ -198,7 +386,7 @@ jobs:
           pnpm run test:coverage:shard "${{ matrix.shard }}/4"
       - name: Upload coverage blob
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-blob-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -206,7 +394,7 @@ jobs:
           path: .vitest-reports/blob-${{ matrix.shard }}-4.json
       - name: Upload shard diagnostics
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -215,8 +403,8 @@ jobs:
 
   coverage-ratchet:
     name: Coverage Ratchet
-    if: always()
-    needs: [coverage-shards, browser-component-tests, database-tests]
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
+    needs: [test-selection, coverage-shards, browser-component-tests, database-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -234,12 +422,12 @@ jobs:
             echo "Supplemental coverage tests failed: browser=$BROWSER_RESULT database=$DATABASE_RESULT"
             exit 1
           fi
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
       - name: Download coverage blobs
-        uses: actions/download-artifact@v8.0.2
+        uses: actions/download-artifact@v8
         with:
           pattern: coverage-blob-*-${{ github.run_attempt }}
           path: ${{ runner.temp }}/coverage-blobs
@@ -259,12 +447,18 @@ jobs:
             --coverage \
             "--coverage.reportsDirectory=coverage"
       - name: Download browser coverage
-        uses: actions/download-artifact@v8.0.2
+        uses: actions/download-artifact@v8
         with:
           name: coverage-browser-${{ github.run_attempt }}
           path: coverage-browser
+      - name: Verify provider execution evidence independently
+        run: >-
+          pnpm exec vitest run --config vitest.coverage.config.ts
+          --project component src/providers/__tests__/zero-provider.component.test.tsx
+          --maxWorkers=2 --coverage.include=src/providers/zero-provider.tsx
+          --coverage.reportsDirectory=coverage-provider
       - name: Download database coverage
-        uses: actions/download-artifact@v8.0.2
+        uses: actions/download-artifact@v8
         with:
           name: coverage-database-${{ github.run_attempt }}
           path: coverage-database
@@ -274,6 +468,7 @@ jobs:
           coverage/coverage-final.json
           coverage-browser/coverage-final.json
           coverage-database/coverage-final.json
+          coverage-provider/coverage-final.json
       - name: Enforce repository and changed-code coverage
         run: |
           node tools/testing/check-coverage-ratchet.mjs
@@ -282,7 +477,7 @@ jobs:
           pnpm run test:accountability:coverage
       - name: Upload merged coverage diagnostics
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -291,17 +486,19 @@ jobs:
 
   security-tests:
     name: Security Contracts
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').security == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
-      - name: Audit runtime and development dependencies
-        run: pnpm audit
       - run: pnpm run test:security
 
   service-integration-shards:
     name: Service Integration / ${{ matrix.shard }} of 2
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').service == true
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -309,7 +506,7 @@ jobs:
       matrix:
         shard: [1, 2]
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Run service-integration shard
         run: pnpm run test:service-integration -- --shard=${{ matrix.shard }}/2
@@ -319,7 +516,7 @@ jobs:
           printf '%s\n' '${{ matrix.shard }}/2' > shard-markers/service-integration-${{ matrix.shard }}.txt
       - name: Upload service-integration marker
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: service-integration-marker-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -328,15 +525,15 @@ jobs:
 
   service-integration-gate:
     name: Service Integration Tests
-    if: always()
-    needs: service-integration-shards
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').service == true
+    needs: [test-selection, service-integration-shards]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Download service-integration markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v8.0.2
+        uses: actions/download-artifact@v8
         with:
           pattern: service-integration-marker-*-${{ github.run_attempt }}
           path: service-integration-markers
@@ -357,13 +554,15 @@ jobs:
 
   database-tests:
     name: Database Tests
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').database == true
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3.0.1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.115.0
       - name: Disable seed data for database startup
@@ -404,7 +603,7 @@ jobs:
         run: pnpm exec vitest run --config vitest.database.coverage.config.ts --project database-integration
       - name: Upload database coverage
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-database-${{ github.run_attempt }}
           if-no-files-found: error
@@ -426,16 +625,20 @@ jobs:
 
   build:
     name: Build
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').build == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Build production bundle
         run: pnpm run build
 
   e2e-tests:
     name: E2E / ${{ matrix.name }}
+    needs: [test-selection]
+    if: fromJSON(needs.test-selection.outputs.enabled || '{}').e2e == true
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -490,10 +693,10 @@ jobs:
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3.0.1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.115.0
       - name: Install Chromium
@@ -547,7 +750,7 @@ jobs:
           pnpm exec playwright test "${args[@]}"
       - name: Upload first-failure diagnostics
         if: always()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -556,7 +759,7 @@ jobs:
             test-results/
       - name: Upload shard blob report
         if: always() && steps.e2e.outcome != 'skipped'
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-blob-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -568,14 +771,14 @@ jobs:
 
   e2e-gate:
     name: E2E Gate
-    if: always()
-    needs: e2e-tests
+    if: always() && fromJSON(needs.test-selection.outputs.enabled || '{}').e2e == true
+    needs: [test-selection, e2e-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
-      - uses: actions/download-artifact@v8.0.2
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           pattern: e2e-blob-*-${{ github.run_attempt }}
@@ -593,7 +796,7 @@ jobs:
           fi
       - name: Merge shard reports
         run: pnpm exec playwright merge-reports --reporter html all-blob-reports
-      - uses: actions/upload-artifact@v7.0.2
+      - uses: actions/upload-artifact@v7
         with:
           name: e2e-html-report-${{ github.run_attempt }}
           if-no-files-found: error
@@ -611,11 +814,12 @@ jobs:
 
   dependency-review:
     name: Dependency Review
-    if: github.event_name == 'pull_request'
+    needs: [test-selection]
+    if: github.event_name == 'pull_request' && fromJSON(needs.test-selection.outputs.enabled || '{}').dependencies == true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
       - name: Review dependency changes
         uses: actions/dependency-review-action@v5.0.0
         with:

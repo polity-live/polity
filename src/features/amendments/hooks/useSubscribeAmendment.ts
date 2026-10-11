@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAmendmentSubscriptionState } from '@/zero/amendments/useAmendmentActionState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
@@ -26,12 +26,12 @@ export function useSubscribeAmendment(
   const createdSubscriptionIdRef = useRef<string | null>(null);
   const { subscribe: subscribeAction, unsubscribe: unsubscribeAction } = useAmendmentActions();
 
-  // Use facade state for amendment data and subscribers
+  // Subscribe only to the scalar summary and protected subscriber rows.
   const {
     subscriberCount: persistedSubscriberCount,
     subscribers: subscriptionData,
     isLoading: queriedSubscriptionLoading,
-  } = useAmendmentState({
+  } = useAmendmentSubscriptionState({
     amendmentId: projectedState ? undefined : targetAmendmentId,
     userId: projectedState ? undefined : authUser?.id,
   });
@@ -74,6 +74,7 @@ export function useSubscribeAmendment(
 
   // Subscribe to an amendment
   const subscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetAmendmentId) {
       return;
     }
@@ -121,6 +122,7 @@ export function useSubscribeAmendment(
 
   // Unsubscribe from an amendment
   const unsubscribe = async () => {
+    if (projectedState?.isLoading || isLoading) return;
     if (!authUser?.id || !targetAmendmentId) {
       return;
     }
@@ -170,7 +172,7 @@ export function useSubscribeAmendment(
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    if (isLoading) return;
+    if (projectedState?.isLoading || isLoading) return;
     if (isSubscribed) {
       await unsubscribe();
     } else {
@@ -179,9 +181,20 @@ export function useSubscribeAmendment(
   };
 
   return {
-    isSubscribed,
-    subscriberCount,
-    isLoading,
+    isSubscribed:
+      projectedState && optimisticTargetRef.current === null
+        ? Boolean(
+            authUser?.id &&
+            resolvedSubscriptionData.some(
+              sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+            )
+          )
+        : isSubscribed,
+    subscriberCount:
+      projectedState && optimisticTargetRef.current === null
+        ? (resolvedPersistedSubscriberCount ?? resolvedSubscriptionData.length)
+        : subscriberCount,
+    isLoading: Boolean(projectedState?.isLoading) || isLoading,
     subscribe,
     unsubscribe,
     toggleSubscribe,

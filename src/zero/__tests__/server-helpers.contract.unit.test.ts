@@ -132,6 +132,23 @@ beforeEach(() => {
 });
 
 describe('server helper status and voting guards', () => {
+  it.each([undefined, null, '', 'anon'])(
+    'rejects unauthenticated voting PIN lookups before accessing UUID columns (%s)',
+    async userID => {
+      for (const guard of [
+        requireRecentVotingPasswordVerification,
+        requireConfiguredRecentVotingPasswordVerification,
+      ]) {
+        await expect(guard(tx as never, userID as string)).rejects.toMatchObject({
+          name: 'PermissionError',
+          code: 'PERMISSION_DENIED',
+        });
+      }
+      expect(tx.run).not.toHaveBeenCalled();
+      expect(mocks.mutations).toEqual([]);
+    }
+  );
+
   it('recognizes active group, guest and event statuses including nulls', () => {
     expect(isActiveGroupStatus('active')).toBe(true);
     expect(isActiveGroupStatus('member')).toBe(true);

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useNotificationActions } from './useNotificationActions';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

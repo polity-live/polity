@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useWorkspacePreferences } from '@/zero/preferences/useWorkspacePreferences';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -14,6 +14,7 @@ function ConnectedPreferences({ children, userId }: { children: ReactNode; userI
   const { display, setDisplay, isLoading } = useWorkspacePreferences();
   const { t } = useTranslation();
   const revision = useSyncExternalStore(subscribeCollectionViews, collectionRevision, () => 0);
+  const context = useMemo(() => ({ userId, display, isLoading }), [userId, display, isLoading]);
   const writer = useRef(setDisplay);
   writer.current = setDisplay;
   useEffect(() => {
@@ -27,7 +28,7 @@ function ConnectedPreferences({ children, userId }: { children: ReactNode; userI
     }
   }, [isLoading, revision, t, userId]);
   return (
-    <CollectionPreferencesContext.Provider value={{ userId, display, isLoading }}>
+    <CollectionPreferencesContext.Provider value={context}>
       {children}
     </CollectionPreferencesContext.Provider>
   );

@@ -1,6 +1,8 @@
 /* oxlint-disable no-unused-expressions */
 // Vendored query windowing core; exposed only through the shared Polity grid adapter.
-import { useQuery } from '@rocicorp/zero/react';
+// Use the same public-hook boundary as other application views so benchmark
+// observations include grid materialization and release, not only its preload.
+import { useQuery } from '@/zero/observed-query';
 import { useCallback } from 'react';
 import { assert, unreachable } from './asserts';
 /**

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -151,5 +151,23 @@ describe('AppShell', () => {
     render(<AppShell>Waiting for Zero</AppShell>);
     expect(screen.queryByTestId('authenticated-shell')).toBeNull();
     expect(screen.getByText('Waiting for Zero')).toBeTruthy();
+  });
+  it('keeps the public frame available when authenticated frame prefetch fails', async () => {
+    mocks.user = { id: 'user-1' };
+    vi.doMock('../authenticated-shell', () => {
+      throw new Error('shell chunk unavailable');
+    });
+    vi.resetModules();
+    try {
+      const { AppShell: FreshShell } = await import('../app-shell');
+      render(<FreshShell>Waiting for Zero</FreshShell>);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.getByText('Waiting for Zero')).toBeTruthy();
+      expect(screen.queryByTestId('authenticated-shell')).toBeNull();
+    } finally {
+      vi.doUnmock('../authenticated-shell');
+    }
   });
 });

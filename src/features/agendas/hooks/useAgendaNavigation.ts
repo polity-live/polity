@@ -53,7 +53,17 @@ interface UseAgendaNavigationResult {
   isCurrentItemCompleted: boolean;
 }
 
-export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult {
+type NavigationEvent = NonNullable<ReturnType<typeof useEventWithAgendaAndParticipants>['event']>;
+export interface AgendaNavigationProjection {
+  event: Pick<NavigationEvent, 'current_agenda_item_id'> | null | undefined;
+  agendaItems: NavigationEvent['agenda_items'];
+  isLoading: boolean;
+}
+
+export function useAgendaNavigation(
+  eventId: string,
+  projection?: AgendaNavigationProjection
+): UseAgendaNavigationResult {
   const { user } = useAuth();
   const { updateAgendaItem } = useAgendaActions();
   const { updateEvent } = useEventActions();
@@ -61,7 +71,20 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event with agenda items
-  const { event, isLoading: queryLoading } = useEventWithAgendaAndParticipants(eventId);
+  const fallback = useEventWithAgendaAndParticipants(projection ? undefined : eventId);
+  const event = useMemo(
+    () =>
+      projection
+        ? projection.event
+          ? {
+              current_agenda_item_id: projection.event.current_agenda_item_id,
+              agenda_items: projection.agendaItems,
+            }
+          : null
+        : fallback.event,
+    [projection?.event, projection?.agendaItems, fallback.event]
+  );
+  const queryLoading = projection ? projection.isLoading : fallback.isLoading;
   const agendaItems: AgendaItem[] = useMemo(() => {
     if (!event?.agenda_items) return [];
     return [...event.agenda_items]

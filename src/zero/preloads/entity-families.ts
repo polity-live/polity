@@ -139,7 +139,7 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
           ...item,
           resolveAfterComplete: async () => {
             const agendaRows = await zero.run(queries.events.agendaItemsFull({ eventId }), {
-              type: 'unknown',
+              type: 'complete',
               ttl: 'none',
             });
             return createEventAgendaDependentPreloadEntries(
@@ -153,12 +153,14 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
           ...item,
           resolveAfterComplete: async () => {
             const eventRows = rows(
-              await zero.run(queries.events.byIdFull({ id: eventId }), {
-                type: 'unknown',
+              await zero.run(queries.events.withGroup({ id: eventId }), {
+                type: 'complete',
                 ttl: 'none',
               })
             );
-            const groupId = eventRows[0]?.group_id;
+            const group = eventRows[0]?.group;
+            const groupId =
+              group && typeof group === 'object' && 'id' in group ? group.id : undefined;
             return typeof groupId === 'string'
               ? [
                   createPreloadEntry(

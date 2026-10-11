@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '../queries';
 export function useStudioState(groupId: string | null, projectId?: string) {
   const [projects, listResult] = useQuery(queries.studio.list({ groupId }));

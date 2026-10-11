@@ -45,7 +45,6 @@ describe('VirtualSearchGridView', () => {
             left: 0,
             width: 500,
             document: undefined,
-            mode: 'preview',
           },
           {
             key: 'loaded',
@@ -59,7 +58,6 @@ describe('VirtualSearchGridView', () => {
               entity_id: 'one',
               title: 'Plan meeting',
             } as SearchDocument,
-            mode: 'preview',
           },
         ]}
         totalHeight={168}
@@ -120,7 +118,6 @@ describe('VirtualSearchGridView', () => {
             left: 40,
             width: 320,
             document,
-            mode: 'preview',
           },
         ]}
         totalHeight={400}
@@ -145,7 +142,7 @@ describe('VirtualSearchGridView', () => {
     expect(positionWrapper?.style.transform).toBe('translate(40px, 20px)');
     expect(positionWrapper?.style.height).toBe('360px');
     expect(positionWrapper?.dataset.searchDocumentId).toBe('search-doc-1');
-    expect(positionWrapper?.dataset.searchCardMode).toBe('preview');
+    expect(screen.getByTestId('search-result-card').textContent).toBe('Civic Assembly');
     expect(container.querySelector('.civic-load-card-reveal')).toBeNull();
     expect(container.querySelector('.civic-page-reveal')).toBeNull();
   });

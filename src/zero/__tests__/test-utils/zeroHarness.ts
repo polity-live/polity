@@ -2,6 +2,34 @@ import { vi, type Mock } from 'vitest';
 
 export type QueryCall = [string, ...unknown[]];
 
+/** Compare exact same-column equality disjunctions with their equivalent IN form. */
+export function canonicalWhereArgs(args: unknown[]): unknown[] {
+  if (typeof args[0] !== 'function') return args;
+  const marker = Symbol('scalar comparison');
+  const cmp = (field: unknown, op: unknown, value: unknown) => ({ marker, field, op, value });
+  const predicate = args[0]({
+    cmp,
+    or: (...values: unknown[]) => values,
+    and: () => null,
+    exists: () => null,
+  });
+  const terms = (Array.isArray(predicate) ? predicate : [predicate]) as ReturnType<typeof cmp>[];
+  if (
+    !terms.length ||
+    terms.some(
+      term =>
+        !term ||
+        term.marker !== marker ||
+        term.field !== terms[0].field ||
+        term.op !== '=' ||
+        term.value === null ||
+        term.value === undefined
+    )
+  )
+    return args;
+  return [terms[0].field, 'IN', terms.map(term => term.value)];
+}
+
 export interface FakeQuery {
   readonly table: string;
   readonly calls: QueryCall[];
@@ -38,7 +66,7 @@ export function createQueryHarness(): QueryHarness {
       table,
       calls: [],
       where: (...args: unknown[]) => {
-        query.calls.push(['where', ...args]);
+        query.calls.push(['where', ...canonicalWhereArgs(args)]);
         return query;
       },
       whereExists: (relation: string, fn: (q: FakeQuery) => unknown) => {
@@ -115,6 +143,15 @@ export function evaluatePredicate(predicate: unknown): QueryCall[] {
     },
     or: (...args: unknown[]) => {
       const call: QueryCall = ['or', ...args];
+      const terms = args as QueryCall[];
+      if (
+        terms.length &&
+        terms.every(
+          term =>
+            Array.isArray(term) && term[0] === 'cmp' && term[1] === terms[0][1] && term[2] === '='
+        )
+      )
+        calls.push(['cmp', terms[0][1], 'IN', terms.map(term => term[3])]);
       calls.push(call);
       return call;
     },
@@ -128,7 +165,7 @@ export function evaluatePredicate(predicate: unknown): QueryCall[] {
   function makeQuery(queryTable: string): PredicateQuery {
     const query: PredicateQuery = {
       where: (...args: unknown[]) => {
-        calls.push(['where', queryTable, ...args]);
+        calls.push(['where', queryTable, ...canonicalWhereArgs(args)]);
         if (typeof args[0] === 'function') {
           args[0](helpers);
         }

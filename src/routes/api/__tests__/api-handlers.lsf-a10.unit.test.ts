@@ -110,8 +110,9 @@ describe('A10 API handler LSF contracts', () => {
   });
 
   it('builds and executes the dynamic Zero query transformer', async () => {
-    mocks.handleQuery.mockImplementation(async (transform: any) => {
-      expect(transform('query-name', { value: 1 })).toEqual({ query: true });
+    mocks.handleQuery.mockImplementation(async ({ handler, userID }: any) => {
+      expect(userID).toBe('user');
+      expect(handler('query-name', { value: 1 })).toEqual({ query: true });
       return { rows: [] };
     });
     const response = await (QueryRoute as any).server.handlers.POST({ request });

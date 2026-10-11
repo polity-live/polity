@@ -12,7 +12,9 @@ import {
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroGrid } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
-import { useSearchCardState } from '../SearchCardStateProvider';
+import { searchDocumentPageArgs } from '@/zero/shared/search-query-helpers';
+import { SEARCH_GRID_PAGE_SIZE } from '@/zero/preloads/search-context';
+import { observeRouteReadiness } from '@/zero/observed-query';
 
 import type {
   SearchDocument,
@@ -25,7 +27,6 @@ import {
   type VirtualSearchGridCell,
 } from '../ui/VirtualSearchGridView';
 import { useStableSearchListContext } from './useStableSearchListContext';
-import { useProgressiveSearchCards } from './useProgressiveSearchCards';
 
 export function getSearchGridLanes(width: number) {
   if (width >= 1440) return 4;
@@ -47,6 +48,15 @@ function getRowKey(document: SearchDocument) {
   return document.id;
 }
 
+// Retain measured geometry only, never rows or authorization state. A resized
+// browser starts without a cached width; ResizeObserver remains authoritative.
+const measuredWidths = new Map<string, number>();
+function viewportKey(compact: boolean) {
+  return typeof window === 'undefined'
+    ? ''
+    : `${compact}:${window.innerWidth}:${window.innerHeight}`;
+}
+
 interface UseVirtualSearchGridControllerOptions {
   compact?: boolean;
   context: SearchListContext;
@@ -61,7 +71,8 @@ export function useVirtualSearchGridController({
   onTotalChange,
 }: UseVirtualSearchGridControllerOptions) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
+  const geometryKey = viewportKey(compact);
+  const [width, setWidth] = useState(() => measuredWidths.get(geometryKey) ?? 0);
   const [hasNewResults, setHasNewResults] = useState(false);
   const isAwayFromTopRef = useRef(false);
   const previousHeadKeyRef = useRef<string | null>(null);
@@ -76,13 +87,17 @@ export function useVirtualSearchGridController({
     const resizeObserver = new ResizeObserver(entries => {
       const entry = entries[0];
       if (!entry) return;
+      // Keep a bounded cache for the recent layout sizes. Reusing the measured
+      // width avoids a zero-width render and a second lane/query rebuild on return.
+      if (measuredWidths.size >= 8) measuredWidths.clear();
+      measuredWidths.set(viewportKey(compact), entry.contentRect.width);
       startTransition(() => setWidth(entry.contentRect.width));
     });
 
     resizeObserver.observe(element);
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [compact]);
 
   useEffect(() => {
     const element = parentRef.current;
@@ -137,12 +152,9 @@ export function useVirtualSearchGridController({
       const ttl = settled ? ('5m' as const) : ('none' as const);
 
       return {
-        query: queries.search.searchDocumentPage({
-          ...listContextParams,
-          limit,
-          start,
-          dir,
-        }) as any,
+        query: queries.search.searchDocumentPage(
+          searchDocumentPageArgs(listContextParams, { limit, start, dir })
+        ) as any,
         options: { ttl },
       };
     },
@@ -163,8 +175,8 @@ export function useVirtualSearchGridController({
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => rowHeight + SEARCH_GRID_GAP, [rowHeight]),
     overscan: 2,
-    minPageSize: 18,
-    maxPageSize: 48,
+    minPageSize: SEARCH_GRID_PAGE_SIZE,
+    maxPageSize: SEARCH_GRID_PAGE_SIZE,
     useFlushSync: false,
     lanes,
     getPageQuery,
@@ -220,7 +232,7 @@ export function useVirtualSearchGridController({
     setHasNewResults(false);
   }, [virtualizer]);
 
-  const baseCells = useMemo<Omit<VirtualSearchGridCell, 'mode'>[]>(
+  const cells = useMemo<VirtualSearchGridCell[]>(
     () =>
       virtualItems.map(virtualItem => ({
         key: virtualItem.key,
@@ -232,29 +244,7 @@ export function useVirtualSearchGridController({
       })),
     [columnWidth, rowAt, virtualItems]
   );
-  const visibleDocumentIds = useMemo(
-    () => baseCells.flatMap(cell => (cell.document ? [cell.document.id] : [])),
-    [baseCells]
-  );
-  const progressiveContextKey = useMemo(
-    () => JSON.stringify(listContextParams),
-    [listContextParams]
-  );
-  const searchCardState = useSearchCardState();
-  const interactiveIds = useProgressiveSearchCards({
-    contextKey: progressiveContextKey,
-    documentIds: visibleDocumentIds,
-    stateReady: searchCardState?.isReady ?? false,
-  });
-  const cells = useMemo<VirtualSearchGridCell[]>(
-    () =>
-      baseCells.map(cell => ({
-        ...cell,
-        mode: cell.document && interactiveIds.has(cell.document.id) ? 'interactive' : 'preview',
-      })),
-    [baseCells, interactiveIds]
-  );
-
+  observeRouteReadiness('search.searchDocumentPage', complete);
   return {
     compact,
     rowHeight,

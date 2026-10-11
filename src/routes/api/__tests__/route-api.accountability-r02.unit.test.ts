@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   appErrorBody: vi.fn(),
@@ -89,6 +89,11 @@ beforeEach(() => {
   mocks.appErrorBody.mockImplementation((_error, fallbackCode) => ({ code: fallbackCode }));
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
+
 describe('R02 currency route accountability', () => {
   it('serves live and fallback currency catalogues through GET only', async () => {
     const routeHandlers = handlers(CurrenciesRoute);
@@ -164,19 +169,65 @@ describe('R02 Zero mutation route accountability', () => {
 });
 
 describe('R02 Zero query route accountability', () => {
+  it('reports query identities and structural counts without logging predicate values', async () => {
+    vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
+    const logged = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const result = {
+      kind: 'QueryResponse',
+      queries: [
+        {
+          id: 'query-one',
+          name: 'groups.by-id',
+          ast: { table: 'group', where: { type: 'simple', value: 'private-predicate' } },
+        },
+        { id: 'query-two', name: 'groups.unavailable', error: 'forbidden' },
+      ],
+    };
+    mocks.handleQuery.mockResolvedValueOnce(result);
+    const response = await handlers(QueryRoute).POST({ request: request('/api/query') });
+    await expect(response.json()).resolves.toEqual(result);
+    const diagnostic = logged.mock.calls
+      .map(([value]) => JSON.parse(value as string))
+      .find(event => event.phase === 'query-identities');
+    expect(diagnostic.queries).toEqual([
+      {
+        id: 'query-one',
+        name: 'groups.by-id',
+        structure: { bytes: expect.any(Number), queries: 1, conditions: 1, maxQueryDepth: 1 },
+      },
+      { id: 'query-two', name: 'groups.unavailable' },
+    ]);
+    expect(JSON.stringify(logged.mock.calls)).not.toContain('private-predicate');
+  });
+
+  it('preserves a query error response while diagnostics are enabled', async () => {
+    vi.stubEnv('ZERO_PERFORMANCE_DIAGNOSTICS', '1');
+    const logged = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const result = { kind: 'Error', message: 'query unavailable' };
+    mocks.handleQuery.mockResolvedValueOnce(result);
+    const response = await handlers(QueryRoute).POST({ request: request('/api/query') });
+    await expect(response.json()).resolves.toEqual(result);
+    expect(
+      logged.mock.calls.some(([value]) => JSON.parse(value as string).phase === 'query-identities')
+    ).toBe(false);
+  });
   it('authenticates and transforms Zero queries through POST only', async () => {
     const routeHandlers = handlers(QueryRoute);
     expect(Object.keys(routeHandlers)).toEqual(['POST']);
     const queryRequest = request('/api/query');
-    mocks.handleQuery.mockImplementationOnce(async (transform, schema, receivedRequest) => {
-      expect(schema).toBe(mocks.schema);
-      expect(receivedRequest).toBe(queryRequest);
-      return { query: transform('groups.by-id', { id: 'group-1' }) };
-    });
+    mocks.handleQuery.mockImplementationOnce(
+      async ({ handler, schema, request: receivedRequest, userID }) => {
+        expect(schema).toBe(mocks.schema);
+        expect(receivedRequest).toBe(queryRequest);
+        expect(userID).toBe('user-1');
+        return { query: handler('groups.by-id', { id: 'group-1' }) };
+      }
+    );
 
     const response = await routeHandlers.POST({ request: queryRequest });
 
     expect(mocks.getAuth).toHaveBeenCalledWith(queryRequest);
+    expect(mocks.getAuth).toHaveBeenCalledOnce();
     expect(mocks.mustGetQuery).toHaveBeenCalledWith(mocks.queries, 'groups.by-id');
     expect(mocks.queryFn).toHaveBeenCalledWith({
       args: { id: 'group-1' },
@@ -190,10 +241,60 @@ describe('R02 Zero query route accountability', () => {
     mocks.mustGetQuery.mockImplementationOnce(() => {
       throw failure;
     });
-    mocks.handleQuery.mockImplementationOnce(async transform => transform('missing-query', {}));
+    mocks.handleQuery.mockImplementationOnce(async ({ handler }) => handler('missing-query', {}));
 
     await expect(handlers(QueryRoute).POST({ request: request('/api/query') })).rejects.toBe(
       failure
     );
+  });
+
+  it('binds the response to the validated identity rather than a claimed request identity', async () => {
+    const queryRequest = new Request('http://localhost/api/query?userID=other-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'other-user' },
+      body: JSON.stringify({ userID: 'other-user' }),
+    });
+    mocks.handleQuery.mockResolvedValueOnce({
+      kind: 'QueryResponse',
+      userID: 'user-1',
+      queries: [],
+    });
+
+    await handlers(QueryRoute).POST({ request: queryRequest });
+
+    expect(mocks.getAuth).toHaveBeenCalledExactlyOnceWith(queryRequest);
+    expect(mocks.handleQuery).toHaveBeenCalledExactlyOnceWith({
+      handler: expect.any(Function),
+      schema: mocks.schema,
+      request: queryRequest,
+      userID: 'user-1',
+    });
+  });
+
+  it('reports anonymous authentication as null while preserving anonymous access rules', async () => {
+    mocks.getAuth.mockResolvedValueOnce({ userID: 'anon', email: '' });
+    mocks.handleQuery.mockImplementationOnce(async ({ handler, userID }) => {
+      expect(userID).toBeNull();
+      return { query: handler('groups.by-id', { id: 'public-group' }) };
+    });
+
+    await handlers(QueryRoute).POST({ request: request('/api/query') });
+
+    expect(mocks.getAuth).toHaveBeenCalledOnce();
+    expect(mocks.queryFn).toHaveBeenCalledWith({
+      args: { id: 'public-group' },
+      ctx: { userID: 'anon', email: '' },
+    });
+  });
+
+  it('does not execute transformations when authentication fails', async () => {
+    const failure = new Error('authentication unavailable');
+    mocks.getAuth.mockRejectedValueOnce(failure);
+
+    await expect(handlers(QueryRoute).POST({ request: request('/api/query') })).rejects.toBe(
+      failure
+    );
+    expect(mocks.handleQuery).not.toHaveBeenCalled();
+    expect(mocks.queryFn).not.toHaveBeenCalled();
   });
 });

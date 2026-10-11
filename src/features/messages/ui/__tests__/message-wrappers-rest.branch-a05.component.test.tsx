@@ -126,6 +126,24 @@ describe('message wrapper branches', () => {
     );
     expect(ref.current?.style.height).toBe('44px');
     expect(ref.current?.style.overflowY).toBe('hidden');
+    const measure = vi.fn(() => 250);
+    Object.defineProperty(ref.current!, 'scrollHeight', { configurable: true, get: measure });
+    view.rerender(
+      <ChatComposer value="" textareaRef={ref} onSubmit={vi.fn()} minTextareaHeight={44}>
+        <textarea ref={ref} />
+      </ChatComposer>
+    );
+    expect(measure).not.toHaveBeenCalled();
+    expect(ref.current?.style.height).toBe('44px');
+    expect(ref.current?.style.overflowY).toBe('hidden');
+    view.rerender(
+      <ChatComposer value="resized" textareaRef={ref} onSubmit={vi.fn()} minTextareaHeight={44}>
+        <textarea ref={ref} />
+      </ChatComposer>
+    );
+    expect(measure).toHaveBeenCalledTimes(1);
+    expect(ref.current?.style.height).toBe('176px');
+    expect(ref.current?.style.overflowY).toBe('auto');
   });
 
   it('returns null or the input view and forwards list defaults/overrides', () => {

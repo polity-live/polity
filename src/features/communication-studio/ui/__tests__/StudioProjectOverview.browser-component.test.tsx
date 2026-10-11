@@ -5,7 +5,10 @@ import { StudioProjectOverview } from '../StudioProjectOverview';
 import { CollectionPreferencesContext } from '@/features/shared/ui/collections/useCollectionView';
 import { workspaceDisplaySchema } from '@/zero/preferences/workspace-schema';
 
-vi.mock('@rocicorp/zero/react', () => ({ useQuery: () => [true] }));
+vi.mock('@rocicorp/zero/react', async importOriginal => ({
+  ...(await importOriginal<typeof import('@rocicorp/zero/react')>()),
+  useQuery: () => [true],
+}));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
   useTranslation: () => ({ t: (key: string) => key.replace('features.studio.', '') }),

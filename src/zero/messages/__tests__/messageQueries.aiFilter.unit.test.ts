@@ -147,7 +147,7 @@ describe('messageQueries unread summary projection', () => {
 
     expect(queryState.conversationQueries[0].calls).toEqual([
       ['where', 'user_id', 'user-1'],
-      ['whereExists', 'conversation', expect.any(Function)],
+      ['whereExists', 'conversation', expect.any(Function), { flip: false }],
       ['related', 'conversation', []],
     ]);
   });
@@ -160,7 +160,7 @@ describe('messageQueries unread summary projection', () => {
 
     expect(queryState.conversationQueries[0].calls).toEqual([
       ['where', 'id', '__unauthorized__'],
-      ['whereExists', 'conversation', expect.any(Function)],
+      ['whereExists', 'conversation', expect.any(Function), { flip: false }],
       ['related', 'conversation', []],
     ]);
   });

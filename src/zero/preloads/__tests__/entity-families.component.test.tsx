@@ -65,6 +65,8 @@ vi.mock('@/zero/queries', () => ({
       byGroupActive: (args: unknown) => mocks.query('events.byGroupActive', args),
       agendaItemsFull: (args: unknown) => mocks.query('events.agendaItemsFull', args),
       byIdFull: (args: unknown) => mocks.query('events.byIdFull', args),
+      byId: (args: unknown) => mocks.query('events.byId', args),
+      withGroup: (args: unknown) => mocks.query('events.withGroup', args),
       groupRelationships: (args: unknown) => mocks.query('events.groupRelationships', args),
     },
     groups: {
@@ -309,14 +311,18 @@ describe('entity family hook contracts', () => {
 
   it('discovers an event group relationship only for a string group id', async () => {
     mocks.pathname = '/event/event-1/network';
-    mocks.zeroRun.mockResolvedValueOnce([{ group_id: 'group-1' }]);
+    mocks.zeroRun.mockResolvedValueOnce([{ group_id: 'group-1', group: { id: 'group-1' } }]);
     renderHook(() => useEventRouteFamilyPreloads('event-1'));
     const activeTask = mocks.active.mock.calls.at(-1)?.[0];
     await expect(activeTask.resolveAfterComplete()).resolves.toMatchObject([
       { key: expect.stringContaining('group-1') },
     ]);
+    expect(mocks.zeroRun).toHaveBeenLastCalledWith(
+      { name: 'events.withGroup', args: { id: 'event-1' } },
+      { type: 'complete', ttl: 'none' }
+    );
 
-    mocks.zeroRun.mockResolvedValueOnce([{ group_id: 42 }]);
+    mocks.zeroRun.mockResolvedValueOnce([{ group_id: 'private-group', group: null }]);
     await expect(activeTask.resolveAfterComplete()).resolves.toEqual([]);
     mocks.zeroRun.mockResolvedValueOnce(null);
     await expect(activeTask.resolveAfterComplete()).resolves.toEqual([]);

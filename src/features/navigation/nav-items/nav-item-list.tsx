@@ -173,7 +173,10 @@ export function NavItemList({
   navigationView: NavigationView;
   screenType: ScreenType;
 }) {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash } = useLocation({
+    select: location => ({ pathname: location.pathname, hash: location.hash }),
+    structuralSharing: true,
+  });
   const normalizedHash = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
   const activeHashSectionRoute = useActiveHashSectionRoute({
     enabled: !isPrimary,

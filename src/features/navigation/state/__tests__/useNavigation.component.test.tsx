@@ -35,7 +35,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
-  useLocation: () => mocks.location,
+  useLocation: ({ select }: any) => select(mocks.location),
 }));
 
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({

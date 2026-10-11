@@ -16,7 +16,10 @@ vi.mock('../offline-membership-helpers', () => ({
   ensureOfflineDirectMembership: vi.fn(),
 }));
 
-import { groupSharedMutatorInternals as helpers } from '../shared-mutators';
+import {
+  groupSharedMutatorInternals as helpers,
+  groupSharedMutators as mutators,
+} from '../shared-mutators';
 
 function createTx(location: 'client' | 'server' = 'server') {
   const mutation = () => ({ insert: vi.fn(), update: vi.fn(), delete: vi.fn() });
@@ -45,6 +48,94 @@ beforeEach(() => {
 });
 
 describe('shared group mutator policy helpers', () => {
+  it.each([
+    'updateOfflineMember',
+    'deleteOfflineMember',
+    'acceptInvitation',
+    'updateMembership',
+    'acceptGuestInvitation',
+    'revokeGuestAccess',
+    'addMembershipRole',
+    'removeMembershipRole',
+    'syncMembershipRoles',
+    'addOfflineMembershipRole',
+    'removeOfflineMembershipRole',
+    'syncOfflineMembershipRoles',
+    'addGuestRole',
+    'removeGuestRole',
+    'syncGuestRoles',
+  ] as const)(
+    '%s skips an evicted rebase target but rejects an initially missing target',
+    async name => {
+      const args = {
+        id: 'missing',
+        group_membership_id: 'missing',
+        group_offline_membership_id: 'missing',
+        group_guest_access_id: 'missing',
+        role_id: 'role',
+        role_ids: ['role'],
+      };
+      const rebase = createTx('client');
+      rebase.reason = 'rebase';
+      rebase.run.mockResolvedValue(null);
+      await mutators[name].fn({ tx: rebase, ctx, args } as never);
+      for (const table of Object.values(rebase.mutate) as Record<
+        string,
+        ReturnType<typeof vi.fn>
+      >[])
+        for (const method of Object.values(table)) expect(method).not.toHaveBeenCalled();
+      const optimistic = createTx('client');
+      optimistic.reason = 'optimistic';
+      optimistic.run.mockResolvedValue(null);
+      await expect(mutators[name].fn({ tx: optimistic, ctx, args } as never)).rejects.toThrow(
+        'not found'
+      );
+    }
+  );
+
+  it.each([
+    'joinGroup',
+    'inviteMember',
+    'inviteGuest',
+    'addMembershipRole',
+    'syncMembershipRoles',
+    'addOfflineMembershipRole',
+    'syncOfflineMembershipRoles',
+    'addGuestRole',
+    'syncGuestRoles',
+  ] as const)(
+    '%s makes no partial writes when an assignable role is evicted during rebase',
+    async name => {
+      mocks.group = { id: 'group', group_type: 'base' };
+      const tx = createTx('client');
+      tx.reason = 'rebase';
+      tx.run.mockResolvedValue(null);
+      if (!['joinGroup', 'inviteMember', 'inviteGuest'].includes(name))
+        tx.run.mockResolvedValueOnce({ id: 'parent', group_id: 'group', user_id: 'actor' });
+      const args = {
+        id: 'parent',
+        group_id: 'group',
+        user_id: 'actor',
+        status: 'invited',
+        group_membership_id: 'parent',
+        group_offline_membership_id: 'parent',
+        group_guest_access_id: 'parent',
+        initial_role_id: 'role',
+        role_id: 'role',
+        role_ids: ['role'],
+      };
+      await mutators[name].fn({ tx, ctx, args } as never);
+      for (const table of Object.values(tx.mutate) as Record<string, ReturnType<typeof vi.fn>>[])
+        for (const method of Object.values(table)) expect(method).not.toHaveBeenCalled();
+    }
+  );
+
+  it('still rejects an initially missing role on the client', async () => {
+    const tx = createTx('client');
+    tx.reason = 'optimistic';
+    tx.run.mockResolvedValue(null);
+    await expect(helpers.loadRole(tx, 'role')).rejects.toThrow('Role not found');
+  });
   it('validates amendment rights and guest-only sibling modes', () => {
     expect(helpers.isAllowedAmendmentActionRight(null, null)).toBe(false);
     expect(helpers.isAllowedAmendmentActionRight('amendments', null)).toBe(false);
@@ -163,6 +254,15 @@ describe('shared group mutator policy helpers', () => {
       const missing = createTx();
       missing.run.mockResolvedValueOnce(null);
       await expect(load(missing, ctx, 'id')).rejects.toThrow(message);
+
+      const optimistic = createTx('client');
+      optimistic.reason = 'optimistic';
+      optimistic.run.mockResolvedValueOnce(null);
+      await expect(load(optimistic, ctx, 'id')).rejects.toThrow(message);
+      const rebase = createTx('client');
+      rebase.reason = 'rebase';
+      rebase.run.mockResolvedValueOnce(null);
+      await expect(load(rebase, ctx, 'id')).resolves.toBeUndefined();
 
       const present = createTx();
       present.run.mockResolvedValueOnce({ id: 'id', group_id: 'group' });

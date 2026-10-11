@@ -84,7 +84,6 @@ describe('SearchResultCard', () => {
   it('projects tutorial search cards immediately while preserving equal normal user data', () => {
     const { rerender } = render(
       <SearchResultCard
-        mode="preview"
         document={makeSearchDocument({
           title: 'Münchner Klimarat',
           summary: 'Transparente, vernetzte Klimapolitik für München.',
@@ -93,17 +92,20 @@ describe('SearchResultCard', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: 'Munich Climate Council' })).toBeTruthy();
-    expect(screen.getByText('Transparent, connected climate policy for Munich.')).toBeTruthy();
+    expect(readDynamicCardProps().props).toMatchObject({
+      group: { name: 'Munich Climate Council' },
+    });
+    expect(readDynamicCardProps().props).toMatchObject({
+      group: { description: 'Transparent, connected climate policy for Munich.' },
+    });
 
     act(() => {
       useLanguageStore.setState({ language: 'de' });
     });
-    expect(screen.getByRole('link', { name: 'Münchner Klimarat' })).toBeTruthy();
+    expect(readDynamicCardProps().props).toMatchObject({ group: { name: 'Münchner Klimarat' } });
 
     rerender(
       <SearchResultCard
-        mode="preview"
         document={makeSearchDocument({
           title: 'Münchner Klimarat',
           summary: 'Eigene Gruppe',
@@ -114,35 +116,25 @@ describe('SearchResultCard', () => {
     act(() => {
       useLanguageStore.setState({ language: 'en' });
     });
-    expect(screen.getByRole('link', { name: 'Münchner Klimarat' })).toBeTruthy();
-    expect(screen.getByText('Eigene Gruppe')).toBeTruthy();
+    expect(readDynamicCardProps().props).toMatchObject({ group: { name: 'Münchner Klimarat' } });
+    expect(readDynamicCardProps().props).toMatchObject({ group: { description: 'Eigene Gruppe' } });
   });
 
-  it('renders an immediately navigable, fixed-cell preview without loading the dynamic card', () => {
-    const { container } = render(
-      <div style={{ height: 360 }}>
-        <SearchResultCard
-          mode="preview"
-          document={makeSearchDocument({
-            topics: [{ topic: 'democracy' }],
-            card_payload: { type: 'group', stats: { members: 12 } },
-          })}
-        />
-      </div>
+  it('renders the final card immediately from indexed content', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          topics: [{ topic: 'democracy' }],
+          card_payload: { type: 'group', stats: { members: 12 } },
+        })}
+      />
     );
-
-    const preview = container.querySelector('[data-search-card-mode="preview"]');
-    const link = screen.getByRole('link', { name: 'Civic Assembly' });
-
-    expect(preview).toBeTruthy();
-    expect(link.getAttribute('data-action-id')).toBe('search.result.preview.open');
-    expect(link.getAttribute('href')).toBe('/group/group-1');
-    link.focus();
-    expect(document.activeElement).toBe(link);
-    expect(screen.getByText('A group for civic work.')).toBeTruthy();
-    expect(screen.getByText('#democracy')).toBeTruthy();
-    expect(screen.getByText('12')).toBeTruthy();
-    expect(screen.queryByTestId('dynamic-card')).toBeNull();
+    const { card, props } = readDynamicCardProps();
+    expect(card.getAttribute('data-card-type')).toBe('group');
+    expect(props).toMatchObject({
+      href: '/group/group-1',
+      group: { name: 'Civic Assembly', description: 'A group for civic work.', memberCount: 12 },
+    });
   });
 
   it('passes compact search card classes without stretching cards to the virtual row height', () => {
@@ -390,14 +382,14 @@ describe('SearchResultCard', () => {
       search_text: 'g4 single',
       card_payload: { type: 'studio' },
     });
-    const view = render(<SearchResultCard mode="preview" document={document} />);
+    const view = render(<SearchResultCard document={document} />);
     expect(screen.getByText('Studio project')).toBeTruthy();
     expect(screen.getByText('Single post')).toBeTruthy();
     expect(screen.queryByText('g4 single')).toBeNull();
     view.unmount();
 
     act(() => useLanguageStore.setState({ language: 'de' }));
-    render(<SearchResultCard mode="preview" document={document} />);
+    render(<SearchResultCard document={document} />);
     expect(screen.getByText('Studio-Projekt')).toBeTruthy();
     expect(screen.getByText('Einzelpost')).toBeTruthy();
   });

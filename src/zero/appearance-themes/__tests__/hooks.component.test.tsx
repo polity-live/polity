@@ -14,13 +14,18 @@ const mocks = vi.hoisted(() => ({
   updateAppearanceTheme: vi.fn(),
   setAppearanceTheme: vi.fn(),
   safeParse: vi.fn(),
+  requests: vi.fn(),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
-  useQuery: (query: { key: string }) =>
-    query.key === 'catalog'
+  useQuery: (query: { key: string } | undefined) => {
+    mocks.requests(query);
+    return query?.key === 'catalog'
       ? [mocks.catalogRows, { type: mocks.catalogType }]
-      : [mocks.selectedRow, { type: mocks.selectedType }],
+      : query
+        ? [mocks.selectedRow, { type: mocks.selectedType }]
+        : [undefined, { type: 'unknown' }];
+  },
 }));
 
 vi.mock('@/zero/preferences/usePreferenceState', () => ({
@@ -89,6 +94,7 @@ function row(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  mocks.requests.mockClear();
   mocks.catalogRows = undefined;
   mocks.catalogType = 'complete';
   mocks.selectedRow = undefined;
@@ -155,6 +161,7 @@ describe('useAppearanceThemeSync', () => {
     mocks.preferenceLoading = true;
     renderHook(() => useAppearanceThemeSync());
     expect(mocks.setAppearanceTheme).not.toHaveBeenCalled();
+    expect(mocks.requests).toHaveBeenCalledWith(undefined);
   });
 
   it('applies a builtin theme immediately', () => {
@@ -163,6 +170,7 @@ describe('useAppearanceThemeSync', () => {
     renderHook(() => useAppearanceThemeSync());
     expect(mocks.setAppearanceTheme).toHaveBeenCalledWith(mocks.builtin);
     expect(mocks.updateAppearanceTheme).not.toHaveBeenCalled();
+    expect(mocks.requests).toHaveBeenCalledWith(undefined);
   });
 
   it('waits for an unresolved selected group theme query', () => {

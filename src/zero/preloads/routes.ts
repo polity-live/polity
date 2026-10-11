@@ -15,11 +15,11 @@ import {
 } from './route-manifests';
 import type { SearchRoutePreloadParams } from './search-context';
 
-export function usePrimaryRouteIdlePreloads() {
+export function usePrimaryRouteIdlePreloads(enabled = true) {
   const { user } = useAuth();
   const pathname = useLocation().pathname;
   const tasks = useMemo(() => {
-    if (!user?.id) return [];
+    if (!enabled || !user?.id) return [];
     const ordered = createPrimaryIdleTasks(user.id);
     const activeIndex = ordered.findIndex(
       item => pathname === item.route.href || pathname.startsWith(`${item.route.href}/`)
@@ -27,7 +27,7 @@ export function usePrimaryRouteIdlePreloads() {
     return activeIndex < 0
       ? ordered
       : [...ordered.slice(activeIndex + 1), ...ordered.slice(0, activeIndex)];
-  }, [pathname, user?.id]);
+  }, [enabled, pathname, user?.id]);
   useIdlePreloadTasks('primary', tasks, 3);
 }
 
@@ -46,10 +46,10 @@ export function useMessagesPreloads(selectedConversationId?: string) {
   useActivePreloadTask(task);
 }
 
-export function useSearchPreloads(search: SearchRoutePreloadParams) {
+export function useSearchPreloads(search: SearchRoutePreloadParams, enabled = true) {
   const { user } = useAuth();
   const task = useMemo(
-    () => (user?.id ? createSearchPreloadTask(user.id, search) : undefined),
+    () => (enabled && user?.id ? createSearchPreloadTask(user.id, search) : undefined),
     [
       search.engagement,
       search.hashtag,
@@ -58,6 +58,7 @@ export function useSearchPreloads(search: SearchRoutePreloadParams) {
       search.sort,
       search.topics,
       search.types,
+      enabled,
       user?.id,
     ]
   );

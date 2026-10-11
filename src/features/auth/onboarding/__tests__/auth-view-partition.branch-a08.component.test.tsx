@@ -4,13 +4,8 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@tanstack/react-router', () => ({
-  Navigate: ({ to, search }: any) => (
-    <div data-testid="navigate">
-      {to}:{search.reason}
-    </div>
-  ),
-}));
+const navigation = vi.hoisted(() => ({ navigate: vi.fn() }));
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigation.navigate }));
 vi.mock('@/features/shared/ui/feedback', () => ({
   AppBootLoadingState: () => <div>boot-loading</div>,
   PageSkeleton: () => <div>page-loading</div>,
@@ -206,13 +201,45 @@ describe('guard views', () => {
     [{ state: 'error' }, 'access-denied'],
     [{ state: 'not-found' }, 'not-found'],
     [{ state: 'recovery', draft: { id: 'draft' } }, 'recovery:draft'],
-    [{ state: 'unauthorized', reason: 'private' }, '/unauthorized:private'],
+    [{ state: 'unauthorized', reason: 'private' }, 'access-denied'],
     [{ state: 'allowed' }, 'entity-content'],
   ] as const)('renders entity guard %o', (guard, expected) => {
     render(
       <EntityVisibilityGuardView guard={guard as never}>entity-content</EntityVisibilityGuardView>
     );
     expect(screen.getByText(expected)).toBeTruthy();
+  });
+
+  it('settles one denial redirect despite parent updates and hides revoked content immediately', () => {
+    navigation.navigate.mockClear();
+    const view = render(
+      <EntityVisibilityGuardView guard={{ state: 'allowed' }}>
+        private-content
+      </EntityVisibilityGuardView>
+    );
+    expect(screen.getByText('private-content')).toBeTruthy();
+    const denied = (reason: 'private' | 'login-required') => (
+      <EntityVisibilityGuardView guard={{ state: 'unauthorized', reason }}>
+        private-content
+      </EntityVisibilityGuardView>
+    );
+    view.rerender(denied('private'));
+    for (let i = 0; i < 5; i++) view.rerender(denied('private'));
+    expect(screen.queryByText('private-content')).toBeNull();
+    expect(screen.getByText('access-denied')).toBeTruthy();
+    expect(navigation.navigate).toHaveBeenCalledTimes(1);
+    expect(navigation.navigate).toHaveBeenLastCalledWith({
+      to: '/unauthorized',
+      search: { reason: 'private' },
+      replace: true,
+    });
+    view.rerender(denied('login-required'));
+    expect(navigation.navigate).toHaveBeenCalledTimes(2);
+    expect(navigation.navigate).toHaveBeenLastCalledWith({
+      to: '/unauthorized',
+      search: { reason: 'login-required' },
+      replace: true,
+    });
   });
 });
 

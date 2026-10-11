@@ -25,8 +25,8 @@ vi.mock('@/zero/amendments/useAmendmentActions', () => ({
     acceptInvitation: mocks.accept,
   }),
 }));
-vi.mock('@/zero/amendments/useAmendmentState', () => ({
-  useAmendmentState: () => mocks.state,
+vi.mock('@/zero/amendments/useAmendmentActionState', () => ({
+  useAmendmentCollaborationState: () => mocks.state,
 }));
 vi.mock('@/zero/mutate-with-server-check', () => ({
   waitForClientApply: (...args: unknown[]) => mocks.waitForClientApply(...args),

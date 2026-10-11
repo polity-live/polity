@@ -8,6 +8,12 @@ import {
   type SearchRoutePreloadParams,
 } from './search-context';
 import { createEventAgendaBasePreloadEntries } from './event-agenda';
+import {
+  INITIAL_CONVERSATION_LIMIT,
+  conversationsArgs,
+  conversationArgs,
+  messagesWindowArgs,
+} from '../messages/query-args';
 
 function task(key: string, href: string, entries: readonly ZeroPreloadEntry[]): PreloadTask {
   return { key, entries, route: { href } };
@@ -84,21 +90,21 @@ export function createMessagesPreloadTask(selectedConversationId?: string): Prel
   const entries: ZeroPreloadEntry[] = [
     createPreloadEntry(
       'queries.messages.conversationsWithRelations',
-      { limit: 40 },
-      queries.messages.conversationsWithRelations({ limit: 40 })
+      conversationsArgs(INITIAL_CONVERSATION_LIMIT),
+      queries.messages.conversationsWithRelations(conversationsArgs(INITIAL_CONVERSATION_LIMIT))
     ),
   ];
   if (selectedConversationId) {
     entries.push(
       createPreloadEntry(
         'queries.messages.messagesWindow',
-        { conversation_id: selectedConversationId, limit: 80 },
-        queries.messages.messagesWindow({ conversation_id: selectedConversationId, limit: 80 })
+        messagesWindowArgs(selectedConversationId),
+        queries.messages.messagesWindow(messagesWindowArgs(selectedConversationId))
       ),
       createPreloadEntry(
         'queries.messages.conversationById',
-        { id: selectedConversationId },
-        queries.messages.conversationById({ id: selectedConversationId })
+        conversationArgs(selectedConversationId),
+        queries.messages.conversationById(conversationArgs(selectedConversationId))
       )
     );
   }
@@ -274,7 +280,7 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
       ...common,
       createPreloadEntry(
         'queries.groups.todosByGroup',
-        { groupId },
+        { groupId, archive: 'active' },
         queries.groups.todosByGroup({ groupId, archive: 'active' })
       ),
       createPreloadEntry(
@@ -397,7 +403,11 @@ export function createEventPreloadTasks(eventId: string, viewerId?: string): Pre
   ];
   return [
     task(`event:${eventId}:overview`, base, [
-      ...common,
+      createPreloadEntry(
+        'queries.events.forParticipation',
+        { id: eventId },
+        queries.events.forParticipation({ id: eventId })
+      ),
       createPreloadEntry(
         'queries.events.wikiData',
         { id: eventId },
@@ -424,17 +434,29 @@ export function createEventPreloadTasks(eventId: string, viewerId?: string): Pre
         queries.events.subscribersByEvent({ eventId })
       ),
       ...(viewerId
-        ? [
-            createPreloadEntry('queries.users.current', {}, queries.users.current({})),
-            createPreloadEntry('queries.users.allUsers', {}, queries.users.allUsers({})),
-          ]
+        ? [createPreloadEntry('queries.users.current', {}, queries.users.current({}))]
         : []),
     ]),
     task(`event:${eventId}:agenda`, `${base}/agenda`, [
-      ...common,
+      createPreloadEntry(
+        'queries.events.forAgenda',
+        { id: eventId },
+        queries.events.forAgenda({ id: eventId })
+      ),
       ...createEventAgendaBasePreloadEntries(eventId),
     ]),
-    task(`event:${eventId}:network`, `${base}/network`, common),
+    task(`event:${eventId}:network`, `${base}/network`, [
+      createPreloadEntry(
+        'queries.events.withGroup',
+        { id: eventId },
+        queries.events.withGroup({ id: eventId })
+      ),
+      createPreloadEntry(
+        'queries.events.byId',
+        { id: eventId },
+        queries.events.byId({ id: eventId })
+      ),
+    ]),
     task(`event:${eventId}:participants`, `${base}/participants`, [
       ...common,
       createPreloadEntry(

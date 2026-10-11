@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   electionOptions: vi.fn(),
   voteOptions: vi.fn(),
   searchOptions: vi.fn(),
+  eventOptions: vi.fn(),
+  amendmentOptions: vi.fn(),
+  roleOptions: vi.fn(),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
@@ -40,9 +43,18 @@ vi.mock('@/zero/groups/useGroupState', () => ({
 }));
 
 vi.mock('@/zero/events/useEventState', () => ({
-  useAllEvents: () => ({ events: mocks.events }),
-  useAllAmendments: () => ({ amendments: mocks.amendments }),
-  useRolesWithGroups: () => ({ roles: mocks.roles }),
+  useAllEvents: (enabled: boolean) => {
+    mocks.eventOptions(enabled);
+    return { events: mocks.events };
+  },
+  useAllAmendments: (enabled: boolean) => {
+    mocks.amendmentOptions(enabled);
+    return { amendments: mocks.amendments };
+  },
+  useRolesWithGroups: (enabled: boolean) => {
+    mocks.roleOptions(enabled);
+    return { roles: mocks.roles };
+  },
 }));
 
 vi.mock('@/zero/elections/useElectionState', () => ({
@@ -130,7 +142,11 @@ describe('useTypeaheadData', () => {
     expect(mocks.groupOptions).toHaveBeenLastCalledWith({ includeSearch: false });
     expect(mocks.electionOptions).toHaveBeenLastCalledWith({ includeElectionsForSearch: false });
     expect(mocks.voteOptions).toHaveBeenLastCalledWith({ includeVotesWithDetails: false });
+    expect(mocks.eventOptions).toHaveBeenLastCalledWith(false);
+    expect(mocks.amendmentOptions).toHaveBeenLastCalledWith(false);
+    expect(mocks.roleOptions).toHaveBeenLastCalledWith(false);
     expect(mocks.searchOptions).toHaveBeenLastCalledWith({
+      enabled: false,
       userId: undefined,
       limits: {
         users: 1,
@@ -314,7 +330,11 @@ describe('useTypeaheadData', () => {
     expect(mocks.groupOptions).toHaveBeenLastCalledWith({ includeSearch: true });
     expect(mocks.electionOptions).toHaveBeenLastCalledWith({ includeElectionsForSearch: true });
     expect(mocks.voteOptions).toHaveBeenLastCalledWith({ includeVotesWithDetails: true });
+    expect(mocks.eventOptions).toHaveBeenLastCalledWith(true);
+    expect(mocks.amendmentOptions).toHaveBeenLastCalledWith(true);
+    expect(mocks.roleOptions).toHaveBeenLastCalledWith(true);
     expect(mocks.searchOptions).toHaveBeenLastCalledWith({
+      enabled: true,
       userId: 'viewer',
       limits: {
         users: 1,

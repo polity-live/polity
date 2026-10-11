@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Navigate } from '@tanstack/react-router';
+import { useEffect, type ReactNode } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import type { UnauthorizedReason } from '@/features/auth/logic/routeVisibilityAccess';
@@ -20,6 +20,16 @@ interface EntityVisibilityGuardViewProps {
   guard: EntityVisibilityGuardState;
 }
 
+function UnauthorizedRedirect({ reason }: { reason: UnauthorizedReason }) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    // A live rights change can rerender the parent while this navigation is
+    // pending. Restarting it on each render prevents the route from settling.
+    void navigate({ to: '/unauthorized', search: { reason }, replace: true });
+  }, [navigate, reason]);
+  return <AccessDenied />;
+}
+
 export function EntityVisibilityGuardView({ children, guard }: EntityVisibilityGuardViewProps) {
   if (guard.state === 'loading') {
     return <PageSkeleton />;
@@ -38,7 +48,7 @@ export function EntityVisibilityGuardView({ children, guard }: EntityVisibilityG
   }
 
   if (guard.state === 'unauthorized') {
-    return <Navigate to="/unauthorized" search={{ reason: guard.reason }} replace />;
+    return <UnauthorizedRedirect reason={guard.reason} />;
   }
 
   return <>{children}</>;

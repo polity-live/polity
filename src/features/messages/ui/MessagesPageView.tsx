@@ -9,6 +9,7 @@ import { NewConversationDialog } from './NewConversationDialog';
 import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 export interface MessagesPageViewProps {
   isLoading: boolean;
+  allConversationsLoaded?: boolean;
   currentUserId?: string;
   filteredConversations: Conversation[];
   conversationOnlineStatus: Readonly<Record<string, boolean>>;
@@ -50,6 +51,7 @@ export interface MessagesPageViewProps {
 
 export function MessagesPageView({
   isLoading,
+  allConversationsLoaded,
   currentUserId,
   filteredConversations,
   conversationOnlineStatus,
@@ -99,6 +101,7 @@ export function MessagesPageView({
         <ConversationList
           className="h-full"
           isLoading={isLoading}
+          allConversationsLoaded={allConversationsLoaded}
           conversations={filteredConversations}
           conversationOnlineStatus={conversationOnlineStatus}
           selectedConversationId={selectedConversationId}

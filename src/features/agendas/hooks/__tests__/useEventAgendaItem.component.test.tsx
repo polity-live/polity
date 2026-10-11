@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   canJoin: true,
   agendaDetail: { agendaItem: null as any, isLoading: false },
   agendaState: { agendaItems: [] as any[], isLoading: false },
+  agendaTiming: vi.fn(),
   electionState: {
     election: null as any,
     candidates: [] as any[],
@@ -65,7 +66,10 @@ vi.mock('@/zero/events/useEventState', () => ({
   useAgendaItemDetail: () => mocks.agendaDetail,
 }));
 vi.mock('@/zero/agendas/useAgendaState', () => ({
-  useAgendaState: () => mocks.agendaState,
+  useAgendaTimingState: (eventIds: string[]) => {
+    mocks.agendaTiming(eventIds);
+    return mocks.agendaState;
+  },
 }));
 vi.mock('@/zero/agendas/useAgendaActions', () => ({
   useAgendaActions: () => ({
@@ -174,6 +178,25 @@ describe('useEventAgendaItem', () => {
       isLoading: false,
     });
     expect(result.current.estimatedStartTime).toEqual(new Date('2026-08-09T10:00:00.000Z'));
+  });
+
+  it('uses stable protected timing demand and clears the estimate after revocation', () => {
+    const { result, rerender } = renderHook(
+      ({ eventId }) => useEventAgendaItem(eventId, 'agenda-1'),
+      {
+        initialProps: { eventId: 'event-1' },
+      }
+    );
+    const firstIds = mocks.agendaTiming.mock.calls[0][0];
+    expect(firstIds).toEqual(['event-1']);
+    rerender({ eventId: 'event-1' });
+    expect(mocks.agendaTiming.mock.calls.at(-1)?.[0]).toBe(firstIds);
+    mocks.agendaState.agendaItems = [];
+    rerender({ eventId: 'event-2' });
+    expect(mocks.agendaTiming.mock.calls.at(-1)?.[0]).toEqual(['event-2']);
+    expect(result.current.estimatedStartTime).toBeUndefined();
+    expect(result.current.election).toBe(mocks.electionState.election);
+    expect(result.current.vote).toBe(mocks.voteState.vote);
   });
 
   it.each(['agendaDetail', 'electionState', 'voteState', 'agendaState', 'forwardingContext'])(

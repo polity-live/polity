@@ -52,6 +52,18 @@ beforeEach(() => {
 });
 
 describe('useSubscribeEvent coverage', () => {
+  it('recognizes nested projected subscribers when an aggregate is missing', async () => {
+    const projected = {
+      subscriptions: [{ id: 'nested', subscriber_id: null, subscriber_user: { id: 'user-1' } }],
+      subscriberCount: undefined,
+      isLoading: false,
+    } as any;
+    const { result } = renderHook(() => useSubscribeEvent('event-1', projected));
+    expect(result.current.isSubscribed).toBe(true);
+    expect(result.current.subscriberCount).toBe(1);
+    await act(() => result.current.subscribe());
+    expect(mocks.subscribe).not.toHaveBeenCalled();
+  });
   it('resolves persisted direct, related-user, anonymous, and projected subscriptions', async () => {
     mocks.query.subscribers = [
       { id: 'other', subscriber_id: 'other' },

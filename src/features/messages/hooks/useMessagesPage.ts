@@ -4,6 +4,7 @@ import { useOnlineUsers } from '@/presence';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { useMessageState } from '@/zero/messages/useMessageState';
+import { INITIAL_MESSAGE_LIMIT } from '@/zero/messages/query-args';
 import { useConversationData } from './useConversationData';
 import { useMessageMutations } from './useMessageMutations';
 import { useConversationFilters } from './useConversationFilters';
@@ -31,7 +32,7 @@ export function useMessagesPage() {
   const [memberListDialogOpen, setMemberListDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
-  const [messageLimit, setMessageLimit] = useState(80);
+  const [messageLimit, setMessageLimit] = useState(INITIAL_MESSAGE_LIMIT);
   const [isSelectedConversationAtEnd, setIsSelectedConversationAtEnd] = useState(true);
 
   // Current user name for notifications
@@ -41,7 +42,7 @@ export function useMessagesPage() {
     t('features.messages.fallbacks.someone');
 
   // Data hooks
-  const { conversations, isLoading } = useConversationData(user?.id);
+  const { conversations, isLoading, allConversationsLoaded } = useConversationData(user?.id);
   const mutations = useMessageMutations();
   const {
     searchQuery,
@@ -54,10 +55,15 @@ export function useMessagesPage() {
   const { selectedConversationId, setSelectedConversationId, selectedConversation } =
     useConversationSelection(conversations, {
       openAriaKai: shouldOpenAriaKai,
+      restoreOnNavigation: true,
+      viewerID: user?.id,
+      initialConversationID: searchParams.conversationId,
     });
   const { messages: selectedMessages, isLoading: isSelectedMessagesLoading } = useMessageState({
     conversationId: selectedConversationId ?? undefined,
     messageLimit,
+    // The conversation list already supplies metadata; this caller only uses messages.
+    includeConversationMetadata: false,
   });
 
   const conversationOnlineStatus = useMemo<Record<string, boolean>>(() => {
@@ -127,34 +133,50 @@ export function useMessagesPage() {
   const messageConversationId = searchParams.conversationId;
   const messageUserId = searchParams.userId;
 
-  const clearComposeIntentFromUrl = useCallback(() => {
-    const {
-      conversationId,
-      userId,
-      name,
-      new: newConversation,
-      search,
-      userSearch,
-      ...remainingSearch
-    } = searchParams;
+  const clearComposeIntentFromUrl = useCallback(
+    (conversationToPersist?: string) => {
+      const {
+        conversationId,
+        userId,
+        name,
+        new: newConversation,
+        search,
+        userSearch,
+        ...remainingSearch
+      } = searchParams;
 
-    if (
-      conversationId === undefined &&
-      userId === undefined &&
-      name === undefined &&
-      newConversation === undefined &&
-      search === undefined &&
-      userSearch === undefined
-    ) {
-      return;
-    }
+      if (
+        conversationId === undefined &&
+        userId === undefined &&
+        name === undefined &&
+        newConversation === undefined &&
+        search === undefined &&
+        userSearch === undefined
+      ) {
+        return;
+      }
 
-    navigate({
-      to: '/messages',
-      search: remainingSearch,
-      replace: true,
-    });
-  }, [navigate, searchParams]);
+      navigate({
+        to: '/messages',
+        search: remainingSearch,
+        replace: true,
+        // Consuming a compose intent must preserve the thread's scroll anchor.
+        resetScroll: false,
+        state: previous => ({
+          ...previous,
+          ...(user?.id
+            ? {
+                polityMessageSelection: {
+                  viewerID: user.id,
+                  conversationID: conversationToPersist ?? selectedConversationId,
+                },
+              }
+            : {}),
+        }),
+      });
+    },
+    [navigate, searchParams, selectedConversationId, user?.id]
+  );
 
   const handleUserSearchDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -193,7 +215,7 @@ export function useMessagesPage() {
     setUserSearchDialogOpen(false);
     setNewConversationSearch('');
     setNewConversationTargetUserId(undefined);
-    clearComposeIntentFromUrl();
+    clearComposeIntentFromUrl(existingConversation.id);
   }, [
     messageConversationId,
     conversations,
@@ -219,7 +241,7 @@ export function useMessagesPage() {
       setUserSearchDialogOpen(false);
       setNewConversationSearch('');
       setNewConversationTargetUserId(undefined);
-      clearComposeIntentFromUrl();
+      clearComposeIntentFromUrl(existingConversation.id);
       return;
     }
 
@@ -383,6 +405,7 @@ export function useMessagesPage() {
 
     // Conversation data
     filteredConversations,
+    allConversationsLoaded,
     conversationOnlineStatus,
     selectedConversationId,
     setSelectedConversationId,

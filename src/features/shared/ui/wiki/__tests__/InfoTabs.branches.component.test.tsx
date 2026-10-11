@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ language: 'en' }));
@@ -12,20 +13,6 @@ vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
     language: mocks.language,
     t: (key: string) => key,
   }),
-}));
-
-vi.mock('@/features/shared/ui/ui/tabs.tsx', () => ({
-  Tabs: ({ children, defaultValue, ...props }: any) => (
-    <div data-default={defaultValue} {...props}>
-      {children}
-    </div>
-  ),
-  TabsContent: ({ children, value }: any) => <section data-content={value}>{children}</section>,
-  TabsTrigger: ({ children, value }: any) => <button data-value={value}>{children}</button>,
-}));
-
-vi.mock('@/features/shared/ui/navigation/ScrollableTabs', () => ({
-  ScrollableTabsList: ({ children }: React.PropsWithChildren) => <nav>{children}</nav>,
 }));
 
 vi.mock('@/features/shared/ui/ui/card.tsx', () => ({
@@ -84,22 +71,28 @@ describe('InfoTabs branch contracts', () => {
   });
 
   it('selects about by default and omits a location tab without location data', () => {
-    const { container } = render(<InfoTabs about="About text" className="tabs" />);
-    expect(container.firstElementChild?.getAttribute('data-default')).toBe('about');
+    render(<InfoTabs about="About text" className="tabs" />);
+    expect(
+      screen.getByRole('tab', { name: 'components.infoTabs.about' }).getAttribute('aria-selected')
+    ).toBe('true');
     expect(screen.getByText('About text')).toBeTruthy();
-    expect(document.querySelector('[data-value="location"]')).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'components.infoTabs.labels.location' })).toBeNull();
   });
 
   it('renders coordinates, event dates, end time, location cards, and tags', () => {
     const start = new Date('2025-01-02T10:00:00Z').getTime();
     const end = new Date('2025-01-02T12:30:00Z').getTime();
-    const { container } = render(
+    render(
       <InfoTabs
         contact={{ city: 'Berlin', latitude: 52.5, longitude: 13.4 }}
         eventDetails={{ endDate: end, startDate: start, tags: ['assembly', 'public'] }}
       />
     );
-    expect(container.firstElementChild?.getAttribute('data-default')).toBe('location');
+    expect(
+      screen
+        .getByRole('tab', { name: 'components.infoTabs.locationAndDate' })
+        .getAttribute('aria-selected')
+    ).toBe('true');
     expect(screen.getByTestId('map')).toBeTruthy();
     fireEvent.click(screen.getByTestId('map'));
     expect(screen.getByText('Berlin')).toBeTruthy();
@@ -136,10 +129,44 @@ describe('InfoTabs branch contracts', () => {
   });
 
   it('renders the optional activity tab and content without changing the default tab', () => {
-    const { container } = render(<InfoTabs about="About" activity={<div>Activity content</div>} />);
-    expect(container.firstElementChild?.getAttribute('data-default')).toBe('about');
-    expect(document.querySelector('[data-value="activity"]')).toBeTruthy();
+    render(<InfoTabs about="About" activity={<div>Activity content</div>} />);
+    expect(
+      screen.getByRole('tab', { name: 'components.infoTabs.about' }).getAttribute('aria-selected')
+    ).toBe('true');
     expect(screen.getByText('components.activityLog.title')).toBeTruthy();
+    expect(screen.queryByText('Activity content')).toBeNull();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'components.activityLog.title' }), {
+      button: 0,
+    });
     expect(screen.getByText('Activity content')).toBeTruthy();
+  });
+  it('links panels to triggers and preserves keyboard selection while unmounting inactive content', async () => {
+    const user = userEvent.setup();
+    render(<InfoTabs about="About" contact={{ email: 'member@example.test' }} />);
+    const about = screen.getByRole('tab', { name: 'components.infoTabs.about' });
+    const contact = screen.getByRole('tab', { name: 'components.infoTabs.contact' });
+    const panel = screen.getByRole('tabpanel');
+    expect(panel.id).toBe(about.getAttribute('aria-controls'));
+    expect(panel.getAttribute('aria-labelledby')).toBe(about.id);
+    expect(panel.style.animationDuration).toBe('0s');
+    expect(screen.queryByText('member@example.test')).toBeNull();
+    about.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(document.activeElement).toBe(contact);
+    expect(contact.getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tabpanel').id).toBe(contact.getAttribute('aria-controls'));
+    expect(screen.getByText('member@example.test')).toBeTruthy();
+    expect(screen.queryByText('About')).toBeNull();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByText('About')).toBeTruthy();
+    expect(screen.queryByText('member@example.test')).toBeNull();
+  });
+  it('selects the data-driven default when content arrives after an empty render', () => {
+    const view = render(<InfoTabs />);
+    view.rerender(<InfoTabs about="Arrived" />);
+    expect(screen.getByText('Arrived')).toBeTruthy();
+    expect(
+      screen.getByRole('tab', { name: 'components.infoTabs.about' }).getAttribute('aria-selected')
+    ).toBe('true');
   });
 });

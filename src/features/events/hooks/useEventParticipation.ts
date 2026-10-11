@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
-import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
+import { useEventForParticipation, useEventParticipantsQuery } from '@/zero/events/useEventState';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ProjectedEventParticipationState } from '@/features/search/types/projected-card-state';
@@ -19,7 +19,7 @@ export function useEventParticipation(
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event details including type and group
-  const { event: queriedEvent, isLoading: queriedEventLoading } = useEventById(
+  const { event: queriedEvent, isLoading: queriedEventLoading } = useEventForParticipation(
     projectedState ? undefined : eventId
   );
   const event = projectedState?.event ?? queriedEvent;
@@ -68,6 +68,7 @@ export function useEventParticipation(
 
   // Request to participate in the event
   const requestParticipation = async () => {
+    if (projectedState?.isLoading) return;
     if (!user?.id || participation) return;
 
     // Validate eventId is a valid UUID
@@ -134,6 +135,7 @@ export function useEventParticipation(
 
   // Leave the event
   const leaveEvent = async () => {
+    if (projectedState?.isLoading) return;
     if (!participation?.id) return;
 
     setIsLoading(true);
@@ -152,6 +154,7 @@ export function useEventParticipation(
 
   // Accept invitation
   const acceptInvitation = async () => {
+    if (projectedState?.isLoading) return;
     if (!participation?.id || status !== 'invited') return;
 
     setIsLoading(true);

@@ -145,7 +145,8 @@ export function useAssistantChat(
   const { skills, tools } = useAiState();
   const aiActions = useAiActions();
   const mutations = useMessageMutations();
-  const attachmentComposer = useMessageAttachments(conversation.id);
+  const [attachmentSearchEnabled, setAttachmentSearchEnabled] = useState(false);
+  const attachmentComposer = useMessageAttachments(conversation.id, attachmentSearchEnabled);
 
   const [models, setModels] = useState<AiCatalogModel[]>([]);
   const [selectedModelKey, setSelectedModelKey] = useState('');
@@ -881,6 +882,7 @@ export function useAssistantChat(
     addProjectContext: controllerOptions.project?.addContextReference,
     removeProjectContext: controllerOptions.project?.removeContextReference,
     selectedAttachments: attachmentComposer.selectedAttachments,
+    setAttachmentSearchEnabled,
     attachmentOptions: attachmentComposer.attachmentOptions,
     resolveAttachmentCardData: attachmentComposer.resolveAttachmentCardData,
     addAttachment: attachmentComposer.addAttachment,

@@ -1,4 +1,4 @@
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useMemo } from 'react';
 import { queries } from '../queries';
 import { applyEntityReadState } from './notificationReadState';

@@ -126,7 +126,7 @@ describe('AmendmentProcessDetailsPanelView A04 branch accountability', () => {
           } as any
         }
         pathVisualizationData={[]}
-        open={false}
+        open
         onOpenChange={vi.fn()}
         labels={labels}
       />

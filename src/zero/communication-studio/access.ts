@@ -1,3 +1,5 @@
+import { whereAnyOf } from '../shared/query-conditions';
+
 const activeMemberships = ['active', 'member', 'admin'];
 
 export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T {
@@ -7,22 +9,23 @@ export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T
       exists(
         'memberships',
         (membership: any) =>
-          membership
-            .where('user_id', actor)
-            .where('status', 'IN', activeMemberships)
-            .whereExists(
-              'membership_roles',
-              (assignment: any) =>
-                assignment.whereExists(
-                  'studio_project_rights',
-                  (right: any) =>
-                    right
-                      .where('resource', 'projects')
-                      .where('action', 'IN', edit ? ['manage'] : ['view', 'manage']),
-                  { flip: false }
-                ),
-              { flip: false }
-            ),
+          (
+            whereAnyOf(membership.where('user_id', actor), 'status', activeMemberships) as any
+          ).whereExists(
+            'membership_roles',
+            (assignment: any) =>
+              assignment.whereExists(
+                'studio_project_rights',
+                (right: any) =>
+                  whereAnyOf(
+                    right.where('resource', 'projects'),
+                    'action',
+                    edit ? ['manage'] : ['view', 'manage']
+                  ),
+                { flip: false }
+              ),
+            { flip: false }
+          ),
         { flip: false }
       )
     )

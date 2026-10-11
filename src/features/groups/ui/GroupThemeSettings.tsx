@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Copy, Palette, Plus, Send, Trash2 } from 'lucide-react';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
 import { onServerError } from '@/zero/mutate-with-server-check';

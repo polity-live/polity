@@ -145,4 +145,23 @@ describe('global and primary route preload hooks', () => {
     renderHook(() => usePrimaryRouteIdlePreloads());
     expect(mocks.idle.mock.calls[2]?.[1]).toEqual([]);
   });
+  it('holds speculative primary routes until user readiness and starts only the selected search', () => {
+    mocks.user = { id: 'user-1' };
+    const idle = renderHook(({ enabled }) => usePrimaryRouteIdlePreloads(enabled), {
+      initialProps: { enabled: false },
+    });
+    expect(mocks.idle.mock.calls.at(-1)?.[1]).toEqual([]);
+    idle.rerender({ enabled: true });
+    expect(mocks.idle.mock.calls.at(-1)?.[1]).toHaveLength(3);
+    const search = renderHook(
+      ({ enabled }) => useSearchPreloads({ q: 'benchmark', types: 'group' }, enabled),
+      { initialProps: { enabled: false } }
+    );
+    expect(mocks.active.mock.calls.at(-1)?.[0]).toBeUndefined();
+    search.rerender({ enabled: true });
+    expect(mocks.tasks).toHaveBeenCalledWith('search', 'user-1', {
+      q: 'benchmark',
+      types: 'group',
+    });
+  });
 });

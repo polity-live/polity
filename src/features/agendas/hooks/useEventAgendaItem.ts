@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useAgendaState } from '@/zero/agendas/useAgendaState';
+import { useAgendaTimingState } from '@/zero/agendas/useAgendaState';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
@@ -39,7 +39,8 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     useAgendaItemDetail(agendaItemId);
   const agendaItem = agendaItemRaw;
   const event = agendaItem?.event;
-  const { agendaItems, isLoading: agendaLoading } = useAgendaState({ eventId });
+  const timingEventIds = useMemo(() => [eventId], [eventId]);
+  const { agendaItems, isLoading: agendaLoading } = useAgendaTimingState(timingEventIds);
   const forwardingContext = useAgendaItemForwardingContext(agendaItemId);
 
   // Election state for this agenda item

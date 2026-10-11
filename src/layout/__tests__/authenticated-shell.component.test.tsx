@@ -4,6 +4,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AuthenticatedShell from '../authenticated-shell';
+import { useSecondaryNavigationVisible } from '@/features/navigation/state/navigation-layout-context';
 
 const mocks = vi.hoisted(() => ({
   pathname: '/group/group-1/members',
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   visibleRoutes: vi.fn(),
   dynamicNavigation: vi.fn(),
   sync: vi.fn(),
+  preloadScope: vi.fn(),
 }));
 
 vi.mock('@/features/shared/ui/collections/CollectionPreferencesProvider', () => ({
@@ -30,6 +32,7 @@ vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
   useRouterState: ({ select }: any) => select({ location: { pathname: mocks.pathname } }),
+  useSearch: ({ select }: any) => select({}),
 }));
 vi.mock('@/features/navigation/dynamic-navigation.tsx', () => ({
   DynamicNavigation: (props: any) => {
@@ -64,14 +67,31 @@ vi.mock('@/features/shared/hooks/useSwipeNavigation.ts', () => ({
     return { handlers: { 'data-swipe-enabled': String(options.enabled) } };
   },
 }));
-vi.mock('@/zero/preloads', () => ({
-  InternalLinkIntentPreloader: () => <div>intent-preloader</div>,
-  PrioritizedPreloadProvider: ({ children }: any) => <>{children}</>,
-  useGlobalZeroPreloads: mocks.sync,
-  usePrimaryRouteIdlePreloads: mocks.sync,
-  useVisiblePreloadRoutes: mocks.visibleRoutes,
-}));
+vi.mock('@/zero/preloads', async () => {
+  const { createContext, useContext } = await import('react');
+  const Scope = createContext(false);
+  const useScope = () => {
+    mocks.preloadScope(useContext(Scope));
+    mocks.sync();
+  };
+  return {
+    InternalLinkIntentPreloader: () => <div>intent-preloader</div>,
+    PrioritizedPreloadProvider: ({ children }: any) => (
+      <Scope.Provider value={true}>{children}</Scope.Provider>
+    ),
+    useGlobalZeroPreloads: useScope,
+    usePrimaryRouteIdlePreloads: useScope,
+    useSearchPreloads: useScope,
+    useVisiblePreloadRoutes: (routes: string[]) => {
+      mocks.preloadScope(useContext(Scope));
+      mocks.visibleRoutes(routes);
+    },
+  };
+});
 vi.mock('@/zero/preferences/usePreferenceSync.ts', () => ({ usePreferenceSync: mocks.sync }));
+vi.mock('@/zero/users/useUserState', () => ({
+  useUserState: () => ({ currentUser: { id: 'user-1' }, isLoading: false }),
+}));
 vi.mock('@/zero/appearance-themes/hooks', () => ({ useAppearanceThemeSync: mocks.sync }));
 vi.mock('@/features/notifications/hooks/useToastSettingsSync.ts', () => ({
   useToastSettingsSync: mocks.sync,
@@ -104,6 +124,35 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('AuthenticatedShell', () => {
+  it('registers search demand on the search route', () => {
+    mocks.pathname = '/search';
+    render(<AuthenticatedShell>Search content</AuthenticatedShell>);
+    expect(screen.getByText('Search content')).toBeTruthy();
+    expect(mocks.preloadScope.mock.calls.every(([inside]) => inside === true)).toBe(true);
+  });
+  it('registers shell background and visible route demand inside the priority coordinator', () => {
+    render(<AuthenticatedShell>Content</AuthenticatedShell>);
+    expect(mocks.preloadScope.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(mocks.preloadScope.mock.calls.every(([inside]) => inside === true)).toBe(true);
+  });
+  it('shares actual secondary navigation visibility with toolbars without another navigation query', () => {
+    function ToolbarLayoutProbe() {
+      return <output>{String(useSecondaryNavigationVisible())}</output>;
+    }
+    const { rerender } = render(
+      <AuthenticatedShell>
+        <ToolbarLayoutProbe />
+      </AuthenticatedShell>
+    );
+    expect(screen.getByRole('status').textContent).toBe('true');
+    mocks.navigationType = 'primary';
+    rerender(
+      <AuthenticatedShell>
+        <ToolbarLayoutProbe />
+      </AuthenticatedShell>
+    );
+    expect(screen.getByRole('status').textContent).toBe('false');
+  });
   it('contains mobile navigation margins on the City Design canvas route', () => {
     mocks.pathname = '/amendment/a/citydesign';
     const { container } = render(<AuthenticatedShell>Canvas</AuthenticatedShell>);

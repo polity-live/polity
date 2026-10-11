@@ -1,3 +1,4 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -82,7 +83,7 @@ export const todoQueries = {
         )
         .related('creator')
         .related('assignments', (assignment: any) => assignment.related('user'))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('amendment');
 
@@ -175,7 +176,7 @@ export const todoQueries = {
         .where('id', id)
         .related('creator')
         .related('assignments', q => q.related('user'))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('amendment')
         .related('threads', thread =>
@@ -212,7 +213,7 @@ export const todoQueries = {
         )
         .related('creator')
         .related('assignments', q => q.related('user'))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('amendment')
         .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')
@@ -229,7 +230,7 @@ export const todoQueries = {
         .where('group_id', group_id)
         .related('creator')
         .related('assignments', q => q.related('user'))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('amendment')
         .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')

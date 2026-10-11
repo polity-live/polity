@@ -143,10 +143,8 @@ describe('event agenda preloads', () => {
     const keys = createEventAgendaBasePreloadEntries('event-1').map(entry => entry.key);
 
     expect(keys).toEqual([
-      'queries.events.agendaWithElections:{"eventId":"event-1"}',
       'queries.events.agendaItemsFull:{"eventId":"event-1"}',
-      'queries.agendas.byEvent:{"event_id":"event-1"}',
-      'queries.events.withAgendaAndParticipants:{"id":"event-1"}',
+      'queries.agendas.timingByEventIds:{"event_ids":["event-1"]}',
     ]);
   });
 
@@ -165,7 +163,6 @@ describe('event agenda preloads', () => {
       'queries.votes.byAgendaItem:{"agenda_item_id":"agenda-1"}',
       'queries.agendas.changeRequestTimeline:{"agenda_item_id":"agenda-1"}',
       'queries.amendments.agendaItemForwardingContext:{"agenda_item_id":"agenda-1"}',
-      'queries.votes.byAgendaItems:{"agenda_item_ids":["agenda-1"]}',
       'queries.elections.candidatesByElection:{"election_id":"election-1"}',
       'queries.elections.electorsByElection:{"election_id":"election-1"}',
       'queries.votes.choicesByVote:{"vote_id":"vote-1"}',

@@ -180,7 +180,27 @@ describe('useZeroGridVirtualizer branch contracts', () => {
     expect(call.config.getItemKey(1)).toBe('row-1');
     call.scenario.rowMissing = true;
     expect(call.config.getItemKey(1)).toBe('default-1');
+    expect(mocks.setPageSize).not.toHaveBeenCalled();
+
+    run(
+      {
+        rows: { ...baseRows(), atStart: true, atEnd: false },
+        virtualizer: { ...baseVirtualizer(), scrollRect: { height: 2000 } },
+        pageSize: 2,
+      },
+      { minPageSize: 3, maxPageSize: 999 }
+    );
     expect(mocks.setPageSize).toHaveBeenCalledWith(198);
+
+    run(
+      {
+        rows: { ...baseRows(), complete: false },
+        virtualizer: { ...baseVirtualizer(), scrollRect: { height: 2000 } },
+        pageSize: 2,
+      },
+      { minPageSize: 3, maxPageSize: 999 }
+    );
+    expect(mocks.setPageSize).not.toHaveBeenCalled();
 
     call = run(
       { rows: { ...baseRows(), rowsLength: 0, atEnd: false } },

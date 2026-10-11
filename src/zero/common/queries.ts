@@ -1,3 +1,5 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
+import { whereAnyOf } from '../shared/query-conditions';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
@@ -29,11 +31,14 @@ function applySubscriberQueryAccess<T>(q: T, userID: string | undefined | null):
       isAuthenticatedUserId(userID)
         ? cmp('subscriber_id', userID)
         : cmp('subscriber_id', '__anon__'),
-      exists('user', (user: any) => applyUserQueryAccess(user, userID)),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID)),
-      exists('event', (event: any) => applyEventQueryAccess(event, userID)),
-      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID))
+      // Each target is already correlated to this subscriber's foreign key.
+      exists('user', (user: any) => applyUserQueryAccess(user, userID), { flip: false }),
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, true), { flip: false }),
+      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), {
+        flip: false,
+      }),
+      exists('event', (event: any) => applyEventQueryAccess(event, userID), { flip: false }),
+      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID, true), { flip: false })
     )
   ) as T;
 }
@@ -44,28 +49,33 @@ function applyLinkQueryAccess<T>(q: T, userID: string | undefined | null): T {
   return query.where(({ or, cmp, exists }: any) =>
     or(
       isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-      exists('user', (user: any) => applyUserQueryAccess(user, userID)),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('event', (event: any) => applyEventQueryAccess(event, userID))
+      exists('user', (user: any) => applyUserQueryAccess(user, userID), { flip: false }),
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, true), { flip: false }),
+      exists('event', (event: any) => applyEventQueryAccess(event, userID), { flip: false })
     )
   ) as T;
 }
 
 function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null, now: number): T {
   const query = q as any;
+  const plan = { flip: false };
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       isAuthenticatedUserId(userID) ? cmp('actor_id', userID) : cmp('actor_id', '__anon__'),
       isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-      exists('user', (user: any) => applyUserQueryAccess(user, userID)),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID)),
-      exists('event', (event: any) => applyEventQueryAccess(event, userID)),
-      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID)),
-      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID)),
-      exists('statement', (statement: any) => applyStatementQueryAccess(statement, userID, now)),
-      exists('election', (election: any) => applyElectionQueryAccess(election, userID))
+      exists('user', (user: any) => applyUserQueryAccess(user, userID), plan),
+      exists('group', (group: any) => applyGroupQueryAccess(group, userID, true), plan),
+      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), plan),
+      exists('event', (event: any) => applyEventQueryAccess(event, userID), plan),
+      exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID, true), plan),
+      exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID, true), plan),
+      exists(
+        'statement',
+        (statement: any) => applyStatementQueryAccess(statement, userID, now, true),
+        plan
+      ),
+      exists('election', (election: any) => applyElectionQueryAccess(election, userID), plan)
     )
   ) as T;
 }
@@ -116,23 +126,33 @@ export const commonQueries = {
     ({ args: { now }, ctx: { userID } }) =>
       zql.hashtag
         .related('user_hashtags', links =>
-          links.whereExists('user', user => applyUserQueryAccess(user, userID))
+          links.whereExists('user', user => applyUserQueryAccess(user, userID), { flip: false })
         )
         .related('group_hashtags', links =>
-          links.whereExists('group', group => applyGroupQueryAccess(group, userID))
+          links.whereExists('group', group => applyGroupQueryAccess(group, userID, true), {
+            flip: false,
+          })
         )
         .related('amendment_hashtags', links =>
-          links.whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+          links.whereExists(
+            'amendment',
+            amendment => applyAmendmentQueryAccess(amendment, userID),
+            { flip: false }
+          )
         )
         .related('event_hashtags', links =>
-          links.whereExists('event', event => applyEventQueryAccess(event, userID))
+          links.whereExists('event', event => applyEventQueryAccess(event, userID), { flip: false })
         )
         .related('blog_hashtags', links =>
-          links.whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+          links.whereExists('blog', blog => applyBlogQueryAccess(blog, userID, true), {
+            flip: false,
+          })
         )
         .related('statement_hashtags', links =>
-          links.whereExists('statement', statement =>
-            applyStatementQueryAccess(statement, userID, now)
+          links.whereExists(
+            'statement',
+            statement => applyStatementQueryAccess(statement, userID, now, true),
+            { flip: false }
           )
         )
         .orderBy('tag', 'asc')
@@ -144,7 +164,7 @@ export const commonQueries = {
     ({ args: { user_id }, ctx: { userID } }) =>
       zql.user_hashtag
         .where('user_id', user_id)
-        .whereExists('user', user => applyUserQueryAccess(user, userID))
+        .whereExists('user', user => applyUserQueryAccess(user, userID), { flip: false })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -155,7 +175,7 @@ export const commonQueries = {
     ({ args: { group_id }, ctx: { userID } }) =>
       zql.group_hashtag
         .where('group_id', group_id)
-        .whereExists('group', group => applyGroupQueryAccess(group, userID))
+        .whereExists('group', group => applyGroupQueryAccess(group, userID, true), { flip: false })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -166,7 +186,9 @@ export const commonQueries = {
     ({ args: { amendment_id }, ctx: { userID } }) =>
       zql.amendment_hashtag
         .where('amendment_id', amendment_id)
-        .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+        .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID), {
+          flip: false,
+        })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -177,7 +199,7 @@ export const commonQueries = {
     ({ args: { event_id }, ctx: { userID } }) =>
       zql.event_hashtag
         .where('event_id', event_id)
-        .whereExists('event', event => applyEventQueryAccess(event, userID))
+        .whereExists('event', event => applyEventQueryAccess(event, userID), { flip: false })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -188,7 +210,7 @@ export const commonQueries = {
     ({ args: { blog_id }, ctx: { userID } }) =>
       zql.blog_hashtag
         .where('blog_id', blog_id)
-        .whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+        .whereExists('blog', blog => applyBlogQueryAccess(blog, userID, true), { flip: false })
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -199,7 +221,11 @@ export const commonQueries = {
     ({ args: { statement_id, now }, ctx: { userID } }) =>
       zql.statement_hashtag
         .where('statement_id', statement_id)
-        .whereExists('statement', statement => applyStatementQueryAccess(statement, userID, now))
+        .whereExists(
+          'statement',
+          statement => applyStatementQueryAccess(statement, userID, now, true),
+          { flip: false }
+        )
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -238,16 +264,18 @@ export const commonQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({ args: { entityIds, contentTypes, now, limit, start, dir }, ctx: { userID } }) => {
+      // Page in timeline order, checking access through each candidate's indexed
+      // entity relationships instead of enumerating every access join direction.
       let q = applyTimelineEventAccess(zql.timeline_event, userID, now);
-      if (entityIds.length > 0) q = q.where('entity_id', 'IN', entityIds);
-      if (contentTypes.length > 0) q = q.where('content_type', 'IN', contentTypes);
+      if (entityIds.length > 0) q = whereAnyOf(q, 'entity_id', entityIds);
+      if (contentTypes.length > 0) q = whereAnyOf(q, 'content_type', contentTypes);
       const direction = dir === 'backward' ? 'asc' : 'desc';
       q = q.orderBy('created_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
       return q
         .related('actor')
         .related('user', user => user.related('user_hashtags', h => h.related('hashtag')))
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event', event =>
           event
             .related('event_hashtags', h => h.related('hashtag'))
@@ -274,7 +302,7 @@ export const commonQueries = {
         .where('id', id)
         .related('actor')
         .related('user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .related('amendment')
         .related('blog')
@@ -293,7 +321,9 @@ export const commonQueries = {
         .where(({ or, cmp, exists }: any) =>
           or(
             isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID, now))
+            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID, now), {
+              flip: false,
+            })
           )
         )
         .orderBy('created_at', 'desc')
@@ -307,10 +337,10 @@ export const commonQueries = {
         .where('subscriber_id', subscriber_id)
         .where('subscriber_id', userID)
         .related('user')
-        .related('group')
-        .related('amendment')
-        .related('event', q => q.related('creator'))
-        .related('blog')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+        .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+        .related('event', event => applyEventQueryAccess(event, userID).related('creator'))
+        .related('blog', blog => applyBlogQueryAccess(blog, userID, true))
   ),
 
   // User subscriptions with deep related entities for timeline
@@ -322,10 +352,10 @@ export const commonQueries = {
         .where('subscriber_id', userID)
         .related('user')
         .related('group', q =>
-          q
+          applyGroupDiscoveryQueryAccess(q, userID)
             .related('group_hashtags', q => q.related('hashtag'))
-            .related('events')
-            .related('amendments')
+            .related('events', event => applyEventQueryAccess(event, userID))
+            .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
         )
         .related('amendment')
         .related('event', q => q.related('creator'))
@@ -347,7 +377,7 @@ export const commonQueries = {
       if (start) q = q.start(start, { inclusive: false });
       return q
         .related('user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('amendment')
         .related('event')
         .related('blog')
@@ -360,7 +390,7 @@ export const commonQueries = {
       .where('id', id)
       .where('subscriber_id', userID)
       .related('user')
-      .related('group')
+      .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
       .related('amendment')
       .related('event')
       .related('blog')
@@ -378,8 +408,7 @@ export const commonQueries = {
   timelineEventsByEntityIds: defineQuery(
     z.object({ entity_ids: z.array(z.string()), now: z.number() }),
     ({ args: { entity_ids, now }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID, now)
-        .where('entity_id', 'IN', entity_ids)
+      whereAnyOf(applyTimelineEventAccess(zql.timeline_event, userID, now), 'entity_id', entity_ids)
         .related('actor')
         .related('user', q =>
           q
@@ -393,7 +422,7 @@ export const commonQueries = {
                 .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
             )
         )
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('amendment', q =>
           q
             .related('documents', q => applyDocumentQueryAccess(q, userID))
@@ -425,7 +454,11 @@ export const commonQueries = {
             )
         )
         .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
-        .related('todo', q => q.related('group').related('creator'))
+        .related('todo', q =>
+          q
+            .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
+            .related('creator')
+        )
         .related('statement', q => q.related('user'))
         .related('election', q => q.related('agenda_item', q => q.related('event')))
   ),
@@ -434,10 +467,13 @@ export const commonQueries = {
   timelineEventsByContentTypes: defineQuery(
     z.object({ content_types: z.array(z.string()), limit: z.number(), now: z.number() }),
     ({ args: { content_types, limit, now }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID, now)
-        .where('content_type', 'IN', content_types)
+      whereAnyOf(
+        applyTimelineEventAccess(zql.timeline_event, userID, now),
+        'content_type',
+        content_types
+      )
         .related('actor')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
         .limit(limit)
   ),

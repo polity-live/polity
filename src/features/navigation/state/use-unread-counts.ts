@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { queries } from '@/zero/queries';
 import {

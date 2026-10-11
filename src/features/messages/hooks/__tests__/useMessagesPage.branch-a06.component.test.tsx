@@ -160,6 +160,21 @@ afterEach(() => {
 });
 
 describe('useMessagesPage branch contract', () => {
+  it('preserves history when clearing a signed-out compose intent without a selection', () => {
+    setup({ search: { new: '1', keep: 'yes' }, user: null });
+    renderHook(() => useMessagesPage());
+    const navigation = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(navigation.search).toEqual({ keep: 'yes' });
+    expect(navigation.state({ __TSR_index: 7 })).toEqual({ __TSR_index: 7 });
+  });
+  it('persists the current selection when clearing a compose intent without an explicit target', () => {
+    setup({ search: { new: '1' }, selectedConversationId: 'selected' });
+    renderHook(() => useMessagesPage());
+    const navigation = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(navigation.state({ __TSR_index: 7 })).toMatchObject({
+      polityMessageSelection: { viewerID: 'current-user', conversationID: 'selected' },
+    });
+  });
   it('derives names, online states, direct-user ids, swipe bounds, and selected loading state', () => {
     const conversations = [
       conversation({ id: 'group', type: 'group' }),
@@ -272,6 +287,8 @@ describe('useMessagesPage branch contract', () => {
       to: '/messages',
       search: { keep: 'yes' },
       replace: true,
+      resetScroll: false,
+      state: expect.any(Function),
     });
 
     act(() => result.current.setUserSearchDialogOpen(true));
@@ -312,9 +329,21 @@ describe('useMessagesPage branch contract', () => {
     setup({ search: { conversationId: target.id }, conversations: [target] });
     renderHook(() => useMessagesPage());
 
+    expect(mocks.useMessageState).toHaveBeenCalledWith(
+      expect.objectContaining({ includeConversationMetadata: false })
+    );
+
     expect(mocks.setSelectedConversationId).toHaveBeenCalledWith(target.id);
     expect(mocks.setSearchQuery).toHaveBeenCalledWith('');
     expect(mocks.navigate).toHaveBeenCalled();
+    const navigation = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(navigation.state({ __TSR_index: 7 })).toMatchObject({
+      __TSR_index: 7,
+      polityMessageSelection: {
+        viewerID: 'current-user',
+        conversationID: target.id,
+      },
+    });
 
     cleanup();
     vi.clearAllMocks();

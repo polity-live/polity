@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { getHashtagToneClasses } from '@/features/shared/theme';
-import { Card } from '@/features/shared/ui/ui/card';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import {
   TimelineCardBase,
@@ -18,6 +18,12 @@ import {
 } from '../logic/searchResultHref';
 import type { SearchContentItem } from '../types/search.types';
 import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-document.types';
+import type {
+  ProjectedSubscriptionState,
+  ProjectedGroupMembershipState,
+  ProjectedEventParticipationState,
+  ProjectedAmendmentCollaborationState,
+} from '../types/projected-card-state';
 import { useSearchCardState } from '../SearchCardStateProvider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
@@ -28,16 +34,6 @@ interface SearchTimelineCardDefinition {
   item: SearchContentItem | null;
   cardType: ReturnType<typeof buildTimelineCardProps>['cardType'];
   cardProps: ReturnType<typeof buildTimelineCardProps>['cardProps'];
-}
-interface SearchCardModel {
-  payload: SearchDocumentCardPayload;
-  href: string;
-  type: string;
-  title: string;
-  subtitle?: string;
-  excerpt?: string;
-  tags: string[];
-  stats: { label: string; value: number | string }[];
 }
 
 const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
@@ -54,7 +50,6 @@ const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
   'vote',
 ]);
 const timelineCardDefinitionCache = new WeakMap<SearchDocument, SearchTimelineCardDefinition>();
-const searchCardModelCache = new WeakMap<SearchDocument, SearchCardModel>();
 
 const SEARCH_TIMELINE_CARD_CLASS = [
   'entity-search-card-no-spotlight',
@@ -156,11 +151,8 @@ function cleanSubtitle(value: string | null | undefined) {
   return value.startsWith('@') ? undefined : value;
 }
 
-function toContentItem(
-  document: SearchDocument,
-  model = getSearchCardModel(document)
-): SearchContentItem | null {
-  const payload = model.payload;
+function toContentItem(document: SearchDocument): SearchContentItem | null {
+  const payload = asPayload(document.card_payload);
   const type = getSearchType(document, payload);
   if (!type) return null;
 
@@ -168,7 +160,7 @@ function toContentItem(
   const metadata = isRecord(payload.metadata) ? payload.metadata : {};
   const createdAt = asDate(document.created_at) ?? new Date();
   const updatedAt = asDate(document.updated_at);
-  const tags = model.tags;
+  const tags = collectTags(document, payload);
   const groupName = document.group?.name ?? undefined;
   const subtitle = document.subtitle ?? undefined;
   const description =
@@ -293,95 +285,6 @@ function getTimelineCardDefinition(document: SearchDocument): SearchTimelineCard
   return definition;
 }
 
-function getSearchCardModel(document: SearchDocument): SearchCardModel {
-  const cached = searchCardModelCache.get(document);
-  if (cached) return cached;
-
-  const payload = asPayload(document.card_payload);
-  const stats = isRecord(payload.stats)
-    ? Object.entries(payload.stats)
-        .flatMap(([label, value]) =>
-          typeof value === 'number' || typeof value === 'string' ? [{ label, value }] : []
-        )
-        .slice(0, 3)
-    : [];
-  const model = {
-    payload,
-    href: getSearchDocumentHref(document),
-    type: String(payload.type || document.entity_type || ''),
-    title: document.title || '',
-    subtitle: document.subtitle || document.group?.name || undefined,
-    excerpt: document.summary || document.search_text || undefined,
-    tags: collectTags(document, payload),
-    stats,
-  };
-  searchCardModelCache.set(document, model);
-  return model;
-}
-
-function SearchPreviewCard({ document }: { document: SearchDocument }) {
-  const { t } = useTranslation();
-  const model = getSearchCardModel(document);
-  const fallback = t('common.entities.result');
-  const hashtagTone = getHashtagToneClasses();
-  const subtitle = studioSearchKindLabel(document, t) ?? model.subtitle;
-  const excerpt = document.entity_type === 'studio' ? document.summary : model.excerpt;
-
-  return (
-    <a
-      href={model.href}
-      aria-label={model.title || fallback}
-      data-action-id="search.result.preview.open"
-      data-search-card-mode="preview"
-      className="focus-visible:ring-ring block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-    >
-      <Card
-        surface="search"
-        shape="xl"
-        className="hover:bg-accent/20 flex h-full flex-col overflow-hidden transition-colors"
-      >
-        <div className="border-border/70 bg-muted/35 border-b p-4">
-          <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-            {model.type === 'studio'
-              ? t('features.timeline.contentTypes.studio')
-              : model.type || fallback}
-          </span>
-          <h2 className="mt-1 line-clamp-2 text-base font-semibold">{model.title || fallback}</h2>
-          {subtitle ? (
-            <p className="text-muted-foreground mt-1 truncate text-xs">{subtitle}</p>
-          ) : null}
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col p-4">
-          {excerpt ? <p className="text-muted-foreground line-clamp-5 text-sm">{excerpt}</p> : null}
-          {model.tags.length > 0 ? (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {model.tags.slice(0, 3).map(tag => (
-                <span
-                  key={tag}
-                  className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs ${hashtagTone.badge}`}
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {model.stats.length > 0 ? (
-            <dl className="text-muted-foreground mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-4 text-xs">
-              {model.stats.map(stat => (
-                <div key={stat.label} className="flex gap-1">
-                  <dt>{stat.label}</dt>
-                  <dd className="text-foreground font-medium">{stat.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-        </div>
-      </Card>
-    </a>
-  );
-}
-
 function SearchFallbackCard({ document }: { document: SearchDocument }) {
   const { t } = useTranslation();
   const fallback = t('common.entities.result');
@@ -441,6 +344,33 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
   );
 }
 
+interface SearchTimelineCardProps {
+  cardType: NonNullable<SearchTimelineCardDefinition['cardType']>;
+  cardProps: NonNullable<SearchTimelineCardDefinition['cardProps']>;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
+  projectedMembershipState?: ProjectedGroupMembershipState;
+  projectedParticipationState?: ProjectedEventParticipationState;
+  projectedCollaborationState?: ProjectedAmendmentCollaborationState;
+}
+
+// Context changes for other entity types must not re-render the full card tree.
+const SearchTimelineCard = memo(function SearchTimelineCard({
+  cardType,
+  cardProps,
+  ...projectedCardProps
+}: SearchTimelineCardProps) {
+  return (
+    <DynamicTimelineCard
+      cardType={cardType}
+      fallback={
+        <Skeleton aria-hidden data-search-card-loading className="h-full w-full rounded-2xl" />
+      }
+      cardProps={{ ...cardProps, ...projectedCardProps, className: SEARCH_TIMELINE_CARD_CLASS }}
+      className={SEARCH_TIMELINE_CARD_CLASS}
+    />
+  );
+});
+
 function InteractiveSearchResultCard({ document }: { document: SearchDocument }) {
   const searchCardState = useSearchCardState();
   const { item, cardType, cardProps } = getTimelineCardDefinition(document);
@@ -459,7 +389,7 @@ function InteractiveSearchResultCard({ document }: { document: SearchDocument })
       : item.type === 'event'
         ? (item.eventId ?? item.id)
         : item.id;
-  const projectedCardProps: Record<string, unknown> = {};
+  const projectedCardProps: Omit<SearchTimelineCardProps, 'cardType' | 'cardProps'> = {};
   if (
     searchCardState &&
     (item.type === 'user' ||
@@ -499,25 +429,13 @@ function InteractiveSearchResultCard({ document }: { document: SearchDocument })
     );
   }
 
-  return (
-    <DynamicTimelineCard
-      cardType={cardType}
-      cardProps={{
-        ...cardProps,
-        ...projectedCardProps,
-        className: SEARCH_TIMELINE_CARD_CLASS,
-      }}
-      className={SEARCH_TIMELINE_CARD_CLASS}
-    />
-  );
+  return <SearchTimelineCard cardType={cardType} cardProps={cardProps} {...projectedCardProps} />;
 }
 
 export const SearchResultCard = memo(function SearchResultCard({
   document,
-  mode = 'interactive',
 }: {
   document: SearchDocument;
-  mode?: 'preview' | 'interactive';
 }) {
   const { language } = useTranslation();
   const displayDocument = useMemo(
@@ -530,15 +448,10 @@ export const SearchResultCard = memo(function SearchResultCard({
   );
   return (
     <div
-      data-search-card-mode={mode}
       data-tutorial-anchor={document.tutorial_run_id ? 'tutorial-search-result' : undefined}
       className="h-full rounded-xl"
     >
-      {mode === 'preview' ? (
-        <SearchPreviewCard document={displayDocument} />
-      ) : (
-        <InteractiveSearchResultCard document={displayDocument} />
-      )}
+      <InteractiveSearchResultCard document={displayDocument} />
     </div>
   );
 });

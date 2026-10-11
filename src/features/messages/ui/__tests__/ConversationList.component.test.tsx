@@ -87,4 +87,46 @@ describe('ConversationList virtual permalink behavior', () => {
     expect(captured.listOptions.at(-1)?.permalinkID).toBe('conversation-1');
     expect(captured.viewProps.selectedConversationId).toBe('conversation-1');
   });
+
+  it('uses the first window when the complete directory contains the selected conversation', () => {
+    render(
+      <ConversationList
+        {...baseProps}
+        allConversationsLoaded
+        conversations={[{ id: 'conversation-1' } as any]}
+        selectedConversationId="conversation-1"
+      />
+    );
+    expect(captured.listOptions.at(-1)?.permalinkID).toBeUndefined();
+    expect(captured.viewProps.selectedConversationId).toBe('conversation-1');
+  });
+
+  it('retains deep linking when the directory is incomplete or the selection is outside the filtered rows', () => {
+    const view = render(
+      <ConversationList
+        {...baseProps}
+        conversations={[{ id: 'conversation-1' } as any]}
+        selectedConversationId="conversation-1"
+      />
+    );
+    expect(captured.listOptions.at(-1)?.permalinkID).toBe('conversation-1');
+    view.rerender(
+      <ConversationList
+        {...baseProps}
+        allConversationsLoaded
+        selectedConversationId="conversation-1"
+      />
+    );
+    expect(captured.listOptions.at(-1)?.permalinkID).toBe('conversation-1');
+  });
+
+  it('waits for the initial directory before choosing and registering its query window', () => {
+    render(<ConversationList {...baseProps} isLoading selectedConversationId="conversation-1" />);
+    const options = captured.listOptions.at(-1);
+    expect(options.permalinkID).toBeUndefined();
+    expect(
+      options.getPageQuery({ limit: 51, start: null, dir: 'forward', settled: false }).query
+    ).toBeUndefined();
+    expect(options.getSingleQuery({ id: 'conversation-1', settled: false }).query).toBeUndefined();
+  });
 });

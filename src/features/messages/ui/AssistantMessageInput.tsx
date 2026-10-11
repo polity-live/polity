@@ -4,7 +4,7 @@ import {
   contextReferenceKey,
   type ProjectContextReference,
 } from '@/features/project-chat/logic/context-references';
-import { useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { featureThemeClassName } from '@/features/shared/theme';
@@ -108,6 +108,10 @@ export function AssistantMessageInput({
     () => parseActiveMentionQuery(messageText, caretPosition),
     [messageText, caretPosition]
   );
+  useEffect(() => {
+    assistantChat.setAttachmentSearchEnabled?.(Boolean(mentionQuery));
+    return () => assistantChat.setAttachmentSearchEnabled?.(false);
+  }, [assistantChat.setAttachmentSearchEnabled, Boolean(mentionQuery)]);
 
   const skillCommand = useMemo(
     () => parseActiveSkillCommand(messageText, caretPosition),

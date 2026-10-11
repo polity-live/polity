@@ -64,7 +64,10 @@ async function loadQueries() {
     defineQuery: (validator: unknown, fn: QueryDefinition['fn']) => ({ validator, fn }),
   }));
   vi.doMock('../../schema', () => ({ zql: harness.zql }));
-  vi.doMock('../../rbac/query-access', () => ({ applyGroupQueryAccess }));
+  vi.doMock('../../rbac/query-access', () => ({
+    applyGroupQueryAccess,
+    applyGroupDiscoveryQueryAccess: applyGroupQueryAccess,
+  }));
   const { networkQueries } = await import('../queries');
   return {
     harness,

@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '@/zero/queries';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

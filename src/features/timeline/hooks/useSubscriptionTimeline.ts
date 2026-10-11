@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import type { SubscriptionPageRow, TimelineFeedPageRow } from '@/zero/common/queries';

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createSlateEditor } from 'platejs';
-import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static';
+import { EditorStatic, editorVariants } from '@/features/shared/ui/ui-platejs/editor-static';
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit';
 import {
   hasRichTextContent,
@@ -19,14 +19,6 @@ export function RichTextPreview({ content, emptyText, className }: RichTextPrevi
   const hasContent = hasRichTextContent(content);
   const plainText = richTextToPlainText(content);
   const value = useMemo(() => toRichTextValue(content), [content]);
-  const editor = useMemo(
-    () =>
-      createSlateEditor({
-        plugins: BaseEditorKit,
-        value,
-      }),
-    [value]
-  );
 
   if (!hasContent) {
     if (!emptyText) {
@@ -38,7 +30,24 @@ export function RichTextPreview({ content, emptyText, className }: RichTextPrevi
 
   return (
     <div className={cn('w-full text-sm', className)} aria-label={plainText}>
-      <EditorStatic editor={editor} variant="none" />
+      {typeof content === 'string' && !content.trimStart().startsWith('[') ? (
+        <div className={editorVariants({ variant: 'none' })}>
+          {value.map((block, index) => (
+            <p key={index} className="m-0 px-0 py-1">
+              {richTextToPlainText([block])}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <StructuredPreview value={value} />
+      )}
     </div>
   );
+}
+
+// Structured data (including serialized JSON arrays) keeps all Plate formatting,
+// links and media. Plain descriptions and empty fallbacks need no editor instance.
+function StructuredPreview({ value }: { value: ReturnType<typeof toRichTextValue> }) {
+  const editor = useMemo(() => createSlateEditor({ plugins: BaseEditorKit, value }), [value]);
+  return <EditorStatic editor={editor} variant="none" />;
 }

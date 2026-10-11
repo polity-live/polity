@@ -24,8 +24,8 @@ vi.mock('@/zero/amendments/useAmendmentActions', () => ({
     acceptInvitation: mocks.accept,
   }),
 }));
-vi.mock('@/zero/amendments/useAmendmentState', () => ({
-  useAmendmentState: () => mocks.state,
+vi.mock('@/zero/amendments/useAmendmentActionState', () => ({
+  useAmendmentCollaborationState: () => mocks.state,
 }));
 vi.mock('@/zero/mutate-with-server-check', () => ({
   waitForClientApply: (...args: any[]) => mocks.waitForClientApply(...args),
@@ -57,6 +57,33 @@ describe('useAmendmentCollaboration A04 branch accountability', () => {
   });
 
   afterEach(() => cleanup());
+
+  it('blocks all projected collaboration mutations until viewer state is ready', async () => {
+    const { result, rerender } = renderHook(
+      ({ loading, collaborations }) =>
+        useAmendmentCollaboration('amendment', {
+          isLoading: loading,
+          collaboratorCount: 4,
+          collaborations,
+        }),
+      { initialProps: { loading: true, collaborations: [] as { id: string; status: string }[] } }
+    );
+    await act(() => result.current.requestCollaboration());
+    rerender({ loading: true, collaborations: [{ id: 'invite', status: 'invited' }] });
+    await act(async () => {
+      await result.current.acceptInvitation();
+      await result.current.leaveCollaboration();
+    });
+    expect(result.current.isLoading).toBe(true);
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.leave).not.toHaveBeenCalled();
+    expect(mocks.accept).not.toHaveBeenCalled();
+    rerender({ loading: false, collaborations: [{ id: 'invite', status: 'invited' }] });
+    expect(result.current.isInvited).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    await act(() => result.current.acceptInvitation());
+    expect(mocks.accept).toHaveBeenCalledWith('invite');
+  });
 
   it('returns facade state and requests collaboration successfully', async () => {
     const { result } = renderHook(() => useAmendmentCollaboration('amendment'));

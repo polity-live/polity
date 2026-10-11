@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';

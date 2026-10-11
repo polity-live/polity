@@ -19,7 +19,6 @@ export interface VirtualSearchGridCell {
   left: number;
   width: number;
   document?: SearchDocument | null;
-  mode: 'preview' | 'interactive';
 }
 
 interface VirtualSearchGridViewProps {
@@ -111,12 +110,11 @@ export function VirtualSearchGridView({
           </div>
         ) : (
           <div className="relative" style={{ height: totalHeight }}>
-            {cells.map((cell: any) => (
+            {cells.map(cell => (
               <div
                 key={cell.key}
                 data-index={cell.index}
                 data-search-document-id={cell.document?.id}
-                data-search-card-mode={cell.mode}
                 className="absolute"
                 style={{
                   height: rowHeight,
@@ -132,7 +130,7 @@ export function VirtualSearchGridView({
                       </CompactSearchRow>
                     ) : (
                       <>
-                        <SearchResultCard document={cell.document} mode={cell.mode} />
+                        <SearchResultCard document={cell.document} />
                         <div className="bg-background/95 absolute top-2 right-2 z-10 rounded-md">
                           <PreviewButton href={getSearchDocumentHref(cell.document)} />
                         </div>

@@ -28,6 +28,7 @@ vi.mock('../../rbac/query-access', () => {
     applyAmendmentQueryAccess: pass,
     applyBlogQueryAccess: pass,
     applyElectionQueryAccess: pass,
+    applyElectionQueryAccessFromAuthorizedAgendaItem: pass,
     applyEventManagerQueryAccess: pass,
     applyEventParticipantOrManagerQueryAccess: pass,
     applyEventQueryAccess: pass,

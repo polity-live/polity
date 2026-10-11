@@ -25,9 +25,7 @@ const mocks = vi.hoisted(() => ({
   updateAgendaItem: vi.fn(),
   waitForClientApply: vi.fn(),
   relationItems: [] as any[],
-  calculatedItems: [] as any[],
   relationLoading: false,
-  calculatedLoading: false,
 }));
 
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: mocks.user }) }));
@@ -74,12 +72,6 @@ vi.mock('@/zero/events/useEventState', () => ({
     isLoading: mocks.relationLoading,
   }),
 }));
-vi.mock('@/zero/agendas/useAgendaState', () => ({
-  useAgendaState: () => ({
-    agendaItems: mocks.calculatedItems,
-    isLoading: mocks.calculatedLoading,
-  }),
-}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -87,9 +79,7 @@ beforeEach(() => {
   mocks.requestAccreditation.mockResolvedValue(undefined);
   mocks.waitForClientApply.mockImplementation(async value => value);
   mocks.relationItems = [];
-  mocks.calculatedItems = [];
   mocks.relationLoading = false;
-  mocks.calculatedLoading = false;
 });
 
 afterEach(() => vi.useRealTimers());
@@ -232,24 +222,55 @@ describe('useAgendaItemMutations', () => {
 });
 
 describe('useAgendaItems and offline submission progress', () => {
-  it('merges calculated times and both loading sources', () => {
+  it('calculates live agenda times from the authorized detail snapshot and retains ballot data', () => {
+    const votes = [{ id: 'vote', choices: [{ id: 'choice' }] }];
     mocks.relationItems = [
-      { id: 'a', title: 'A' },
-      { id: 'b', title: 'B' },
+      {
+        id: 'a',
+        title: 'A',
+        event_id: 'event-1',
+        event: { start_date: 1_000 },
+        order_index: 0,
+        duration: 10,
+        completed_at: 631_000,
+        votes,
+      },
+      {
+        id: 'b',
+        title: 'B',
+        event_id: 'event-1',
+        event: { start_date: 1_000 },
+        order_index: 1,
+        duration: 5,
+      },
     ];
-    mocks.calculatedItems = [{ id: 'a', calculated_start_time: 1, calculated_end_time: 2 }];
     mocks.relationLoading = true;
     const { result, rerender } = renderHook(() => useAgendaItems('event-1'));
     expect(result.current.agendaItems[0]).toMatchObject({
-      calculated_start_time: 1,
-      calculated_end_time: 2,
+      calculated_start_time: 1_000,
+      calculated_end_time: 601_000,
     });
-    expect(result.current.agendaItems[1].calculated_start_time).toBeUndefined();
+    expect(result.current.agendaItems[0].votes).toBe(votes);
+    expect(result.current.agendaItems[1]).toMatchObject({
+      calculated_start_time: 631_000,
+      calculated_end_time: 931_000,
+    });
     expect(result.current.isLoading).toBe(true);
     mocks.relationLoading = false;
-    mocks.calculatedLoading = true;
+    mocks.relationItems = [
+      { ...mocks.relationItems[0], duration: 20, completed_at: null },
+      mocks.relationItems[1],
+    ];
     rerender();
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.agendaItems[1]).toMatchObject({
+      calculated_start_time: 1_201_000,
+      calculated_end_time: 1_501_000,
+    });
+    mocks.relationItems = [];
+    rerender();
+    expect(result.current.agendaItems).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
   });
 
   it('advances and resets all submission steps', () => {

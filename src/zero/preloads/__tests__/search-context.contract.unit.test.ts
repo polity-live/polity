@@ -46,6 +46,14 @@ describe('search preload argument normalization', () => {
     });
   });
 
+  it('matches reordered filters to the visible grid without duplicate type/topic queries', () => {
+    expect(
+      createSearchDocumentPageArgs({
+        types: 'group,event,group',
+        topics: 'mobility,climate,mobility',
+      })
+    ).toEqual(createSearchDocumentPageArgs({ types: 'event,group', topics: 'climate,mobility' }));
+  });
   it('computes each supported relative date boundary', () => {
     const today = createSearchDocumentPageArgs({ range: 'today' }).createdAfter;
     const week = createSearchDocumentPageArgs({ range: 'week' }).createdAfter;

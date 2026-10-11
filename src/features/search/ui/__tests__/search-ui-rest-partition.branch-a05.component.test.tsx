@@ -81,8 +81,8 @@ vi.mock('@/features/shared/virtualization', () => ({
   ),
 }));
 vi.mock('../SearchResultCard', () => ({
-  SearchResultCard: ({ document, mode }: any) => (
-    <span data-testid={`result-${document.id}`}>{mode}</span>
+  SearchResultCard: ({ document }: any) => (
+    <span data-testid={`result-${document.id}`}>{document.title}</span>
   ),
 }));
 vi.mock('@tanstack/react-router', () => ({
@@ -328,7 +328,7 @@ describe('search result list/card branches', () => {
     const jump = vi.fn();
     const ref = createRef<HTMLDivElement>();
     const cells = [
-      { key: 's', index: 0, top: 0, left: 0, width: 100, document: null, mode: 'preview' },
+      { key: 's', index: 0, top: 0, left: 0, width: 100, document: null },
       {
         key: 'd',
         index: 1,
@@ -336,7 +336,6 @@ describe('search result list/card branches', () => {
         left: 20,
         width: 100,
         document: document('doc'),
-        mode: 'interactive',
       },
     ] as never;
     const view = render(

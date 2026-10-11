@@ -246,6 +246,10 @@ function useZeroGridVirtualizerImplementation({
     awaitingScrollSettleRef.current = true;
   };
   useEffect(() => {
+    // Keep the first window until its authoritative result arrives. Resizing
+    // immediately after mount otherwise discards an in-flight query. When the
+    // entire directory already fits, a larger window cannot reveal more rows.
+    if (!complete || (atStart && atEnd)) return;
     // Size the query window for every lane, including overscan. A window
     // smaller than the rendered grid can alternate between its two edges
     // indefinitely, even when the user has stopped scrolling.
@@ -269,6 +273,9 @@ function useZeroGridVirtualizerImplementation({
       setPageSize(boundedPageSize);
     }
   }, [
+    complete,
+    atStart,
+    atEnd,
     estimateSize,
     lanes,
     overscan,

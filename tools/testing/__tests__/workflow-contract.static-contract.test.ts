@@ -147,12 +147,12 @@ describe('GitHub workflow contracts', () => {
     expect(componentFlow).toContain('fail-fast: false');
     expect(componentFlow).toContain('name: Component Flow Tests');
     expect(componentFlow).toContain('if: always()');
-    expect(componentFlow).toContain('needs: component-flow-shards');
+    expect(componentFlow).toContain('needs: [test-selection, component-flow-shards]');
     expect(componentFlow).toContain('markers=$marker_count/4');
     expect(serviceIntegration).toContain('shard: [1, 2]');
     expect(serviceIntegration).toContain('fail-fast: false');
     expect(serviceIntegration).toContain('name: Service Integration Tests');
-    expect(serviceIntegration).toContain('needs: service-integration-shards');
+    expect(serviceIntegration).toContain('needs: [test-selection, service-integration-shards]');
     expect(serviceIntegration).toContain('markers=$marker_count/2');
   });
 
@@ -169,7 +169,9 @@ describe('GitHub workflow contracts', () => {
     expect(ci).not.toContain('\n  coverage-tests:');
     expect(ratchet).toContain('name: Coverage Ratchet');
     expect(ratchet).toContain('if: always()');
-    expect(ratchet).toContain('needs: [coverage-shards, browser-component-tests, database-tests]');
+    expect(ratchet).toContain(
+      'needs: [test-selection, coverage-shards, browser-component-tests, database-tests]'
+    );
     expect(ratchet).toContain('COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}');
     expect(ratchet).toContain('if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]');
     expect(ratchet).toContain('BROWSER_RESULT: ${{ needs.browser-component-tests.result }}');

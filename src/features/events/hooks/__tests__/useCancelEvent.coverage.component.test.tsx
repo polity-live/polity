@@ -8,6 +8,7 @@ import { useCancelEvent } from '../useCancelEvent';
 const mocks = vi.hoisted(() => ({
   user: { id: 'user-1' } as { id: string } | null,
   event: null as any,
+  queriedEvent: vi.fn(),
   cancelEvent: vi.fn(),
   updateAgendaItem: vi.fn(),
   updateRole: vi.fn(),
@@ -27,7 +28,10 @@ vi.mock('@/zero/groups/useGroupActions', () => ({
   useGroupActions: () => ({ updateRole: mocks.updateRole }),
 }));
 vi.mock('@/zero/events/useEventState', () => ({
-  useEventForCancel: () => ({ event: mocks.event }),
+  useEventForCancel: (eventId?: string) => {
+    mocks.queriedEvent(eventId);
+    return { event: mocks.event };
+  },
 }));
 vi.mock('@/zero/mutate-with-server-check', () => ({
   waitForClientApply: mocks.waitForClientApply,
@@ -48,6 +52,12 @@ beforeEach(() => {
 });
 
 describe('useCancelEvent coverage', () => {
+  it('disables cancellation detail demand when the action is hidden', () => {
+    const { result } = renderHook(() => useCancelEvent('event-1', false));
+    expect(mocks.queriedEvent).toHaveBeenCalledWith(undefined);
+    expect(result.current.agendaItems).toEqual([]);
+    expect(mocks.cancelEvent).not.toHaveBeenCalled();
+  });
   it('normalizes and sorts every agenda-item variant', () => {
     mocks.event = {
       agenda_items: [

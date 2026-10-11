@@ -3,22 +3,24 @@ import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import { createPreloadEntry, useZeroPreloads } from './preload-registry';
 
+export function createCoreZeroPreloadEntries(userID?: string) {
+  if (!userID || userID === 'anon') return [];
+  return [
+    createPreloadEntry('queries.users.current', {}, queries.users.current({})),
+    createPreloadEntry('queries.notifications.settings', {}, queries.notifications.settings({})),
+    createPreloadEntry(
+      'queries.notifications.pushSubscriptions',
+      {},
+      queries.notifications.pushSubscriptions({})
+    ),
+    createPreloadEntry('queries.messages.unreadSummary', {}, queries.messages.unreadSummary({})),
+  ];
+}
+
 /** Shell-critical data stays eager because navigation, badges and push setup consume it. */
 export function useCoreZeroPreloads() {
   const { user } = useAuth();
-  const entries = useMemo(() => {
-    if (!user?.id) return [];
-    return [
-      createPreloadEntry('queries.users.current', {}, queries.users.current({})),
-      createPreloadEntry('queries.notifications.settings', {}, queries.notifications.settings({})),
-      createPreloadEntry(
-        'queries.notifications.pushSubscriptions',
-        {},
-        queries.notifications.pushSubscriptions({})
-      ),
-      createPreloadEntry('queries.messages.unreadSummary', {}, queries.messages.unreadSummary({})),
-    ];
-  }, [user?.id]);
+  const entries = useMemo(() => createCoreZeroPreloadEntries(user?.id), [user?.id]);
   useZeroPreloads(entries);
 }
 

@@ -8,6 +8,7 @@ import {
 } from './schema';
 import { zql } from '../schema';
 import { can } from '../rbac/can';
+import { requireAuthenticated } from '../rbac/authorize';
 import {
   themeFontsSchema,
   themePaletteSchema,
@@ -48,6 +49,7 @@ async function requireEditTheme(
 
 export const appearanceThemeSharedMutators = {
   createPersonal: defineMutator(createPersonalAppearanceThemeSchema, async ({ tx, ctx, args }) => {
+    requireAuthenticated(tx, ctx, { action: 'create', resource: '$users' });
     const now = Date.now();
     await tx.mutate.appearance_theme.insert({
       id: args.id,

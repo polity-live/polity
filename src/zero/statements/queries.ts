@@ -1,3 +1,4 @@
+import { applyGroupDiscoveryQueryAccess } from '../rbac/query-access';
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
@@ -47,7 +48,7 @@ export const statementQueries = {
       const direction = dir === 'forward' ? 'desc' : 'asc';
       let q: any = applyStatementAccess(zql.statement.where('user_id', userId), userID, now)
         .related('user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('statement_hashtags', (hashtag: any) => hashtag.related('hashtag'))
         .related('support_votes', (vote: any) => vote.where('user_id', userID ?? '__anon__'))
         .related('surveys', (survey: any) =>
@@ -100,7 +101,7 @@ export const statementQueries = {
 
       return q
         .related('user')
-        .related('group')
+        .related('group', (group: any) => applyGroupDiscoveryQueryAccess(group, userID))
         .related('statement_hashtags', (q2: any) => q2.related('hashtag'))
         .related('support_votes', (q2: any) => q2.where('user_id', userID ?? '__anon__'))
         .orderBy('created_at', 'desc')
@@ -121,7 +122,7 @@ export const statementQueries = {
     ({ args: { id, now }, ctx: { userID } }) =>
       applyStatementAccess(zql.statement.where('id', id), userID, now)
         .related('user')
-        .related('group')
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q => q.where('user_id', userID ?? '__anon__').related('user'))
         .related('surveys', q =>

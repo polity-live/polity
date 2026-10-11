@@ -61,6 +61,20 @@ beforeEach(() => {
 });
 
 describe('search state normalization helpers', () => {
+  it('does not activate search queries for a disabled selector and restores them when enabled', () => {
+    const hook = renderHook(({ enabled }) => useSearchState({ enabled, userId: 'viewer' }), {
+      initialProps: { enabled: false },
+    });
+    expect(mocks.calls.every(call => call.key === undefined)).toBe(true);
+    expect(hook.result.current.users).toEqual([]);
+    mocks.calls.length = 0;
+    hook.rerender({ enabled: true });
+    expect(mocks.calls.some(call => call.key === 'search.searchableUsers')).toBe(true);
+    expect(mocks.calls.some(call => call.key === 'search.userGroupMemberships')).toBe(true);
+    mocks.calls.length = 0;
+    hook.rerender({ enabled: false });
+    expect(mocks.calls.every(call => call.key === undefined)).toBe(true);
+  });
   it('selects and normalizes linked or legacy roles', () => {
     expect(selectPrimarySearchGroupRole([])).toBeNull();
     expect(

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { queries } from '../queries';
 import { usePreferenceActions } from '../preferences/usePreferenceActions';
 import { usePreferenceState } from '../preferences/usePreferenceState';
@@ -78,9 +78,10 @@ export function useAppearanceThemeSync(): void {
   const setAppearanceTheme = useThemeStore(state => state.setAppearanceTheme);
   const previousFallback = useRef<string | null>(null);
   const builtin = getBuiltinTheme(appearanceThemeId);
-  const queryId = builtin ? POLITY_THEME.id : (appearanceThemeId ?? POLITY_THEME.id);
   const [selectedRow, selectedResult] = useQuery(
-    queries.appearanceThemes.selectedGroupTheme({ themeId: queryId })
+    !preferenceLoading && !builtin && appearanceThemeId
+      ? queries.appearanceThemes.selectedGroupTheme({ themeId: appearanceThemeId })
+      : undefined
   );
 
   useEffect(() => {
@@ -88,6 +89,11 @@ export function useAppearanceThemeSync(): void {
     if (builtin) {
       previousFallback.current = null;
       setAppearanceTheme(builtin);
+      return;
+    }
+    if (!appearanceThemeId) {
+      previousFallback.current = null;
+      setAppearanceTheme(POLITY_THEME);
       return;
     }
     if (selectedResult.type === 'unknown') return;

@@ -1,5 +1,5 @@
 import { useState, type RefObject } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useQuery } from '@/zero/observed-query';
 import { useNavigate } from '@tanstack/react-router';
 import { queries } from '@/zero/queries';
 import { useStudioClient } from '@/zero/communication-studio/useStudioClient';

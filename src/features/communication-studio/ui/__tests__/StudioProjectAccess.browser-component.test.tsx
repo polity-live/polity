@@ -1,6 +1,9 @@
-vi.mock('@rocicorp/zero/react', async () => {
+vi.mock('@rocicorp/zero/react', async importOriginal => {
   const { studioSnapshotFixture } = await import('@/test/studio-snapshot.fixture');
-  return { useQuery: (q: any) => studioSnapshotFixture(q, io) };
+  return {
+    ...(await importOriginal<typeof import('@rocicorp/zero/react')>()),
+    useQuery: (q: any) => studioSnapshotFixture(q, io),
+  };
 });
 vi.mock('@/zero/queries', async () => {
   const { studioQueryFixture } = await import('@/test/studio-client.fixture');

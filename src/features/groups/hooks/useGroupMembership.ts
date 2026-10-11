@@ -138,7 +138,9 @@ export function useGroupMembership(
     primarySiblingMembershipMode === 'none' &&
     Boolean(group?.connected_group_id);
   const joinEligibilityLoading =
-    groupLoading || (siblingJoinRequiresConnectedMembership && connectedMembershipLoading);
+    Boolean(projectedState?.isLoading) ||
+    groupLoading ||
+    (siblingJoinRequiresConnectedMembership && connectedMembershipLoading);
   const joinConflictPreflight = useGroupConflictPreflight(
     user?.id && !membership && !joinEligibilityLoading && groupId
       ? {
@@ -149,7 +151,7 @@ export function useGroupMembership(
       : null
   );
   const acceptConflictPreflight = useGroupConflictPreflight(
-    membership?.id && status === 'invited'
+    !joinEligibilityLoading && membership?.id && status === 'invited'
       ? {
           kind: 'membership_activation',
           membership_id: membership.id,
@@ -184,6 +186,7 @@ export function useGroupMembership(
     !joinEligibilityLoading &&
     !requestJoinDisabledReason;
   const canAcceptInvitation =
+    !joinEligibilityLoading &&
     effectiveStatus === 'invited' &&
     Boolean(user?.id) &&
     (requiresGuestAccessFlow || !acceptConflictPreflight.blocking);
@@ -234,6 +237,7 @@ export function useGroupMembership(
   };
 
   const leaveGroup = async () => {
+    if (projectedState?.isLoading) return;
     if (!membership?.id && !guestAccess?.id) return;
     if (effectiveStatus === 'requested' && group?.tutorial_run_id) return;
     const guestAccessId = guestAccess?.id;

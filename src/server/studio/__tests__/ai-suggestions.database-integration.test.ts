@@ -91,14 +91,12 @@ import {
 import { generateStudioSuggestion } from '../ai-suggestions';
 import { studioCanvasCommand as canvasCommand } from '@/test/studio-zero-database.fixture';
 import { studioSql } from '../db';
+import { isLocalTestDatabase } from '@/test/local-database';
 import { inviteStudioCollaborators } from '../collaborators';
 
 const database =
   process.env.STUDIO_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
-if (
-  !['localhost', '127.0.0.1'].includes(new URL(database).hostname) ||
-  new URL(database).port !== '54322'
-)
+if (!isLocalTestDatabase(database))
   throw new Error('Studio AI tests require the explicit local development database');
 process.env.STUDIO_DATABASE_URL = database;
 process.env.STUDIO_AI_ENABLED = 'true';

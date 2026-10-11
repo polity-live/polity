@@ -17,6 +17,7 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
       <PageWrapper>
         <MessagesPageContentView
           isLoading={mp.isLoading}
+          allConversationsLoaded={mp.allConversationsLoaded}
           currentUserId={mp.currentUserId}
           filteredConversations={mp.filteredConversations}
           conversationOnlineStatus={mp.conversationOnlineStatus}

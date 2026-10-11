@@ -10,7 +10,10 @@ describe('vote query branches', () => {
       defineQuery: (_schema: unknown, fn: unknown) => ({ fn }),
     }));
     vi.doMock('../../schema', () => ({ zql: harness.zql }));
-    vi.doMock('../../rbac/query-access', () => ({
+    vi.doMock('../../rbac/query-access', async () => ({
+      ...(await vi.importActual<typeof import('../../rbac/query-access')>(
+        '../../rbac/query-access'
+      )),
       applyAgendaItemQueryAccess: (query: unknown) => query,
       applyAmendmentQueryAccess: (query: unknown) => query,
       applyEventQueryAccess: (query: unknown) => query,
