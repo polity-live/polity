@@ -126118,6 +126118,11 @@
             "coveredStatements": 62,
             "totalStatements": 78
           }
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains full conversation detail while omitting unused requester objects from directories"
         }
       ],
       "suggestedTestRefs": [

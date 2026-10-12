@@ -115,7 +115,7 @@ import {
   applyElectionQueryAccessFromAuthorizedAgendaItem,
 } from '../../../../src/zero/rbac/query-access';
 import { zql } from '../../../../src/zero/schema';
-import { conversationAccessFilter } from '../../../../src/zero/messages/queries';
+import { conversationAccessFilter, messageQueries } from '../../../../src/zero/messages/queries';
 import { securityScenarios, securityCaseManifest, SECURITY_SCENARIO_COUNT } from '../security';
 import {
   applyAgendaItemQueryAccess,
@@ -402,6 +402,54 @@ describe('Zero performance gate', () => {
         (relation: any) => !['agenda_items', 'roles'].includes(relation.subquery.alias)
       );
       expect(detail).toEqual(full);
+    }
+  });
+
+  it('retains full conversation detail while omitting unused requester objects from directories', () => {
+    for (const userID of ['owner', 'outsider', 'anon']) {
+      const ctx = { userID, email: '' };
+      const full = queryAST(
+        messageQueries.conversationById.fn({ args: { id: 'conversation' }, ctx })
+      );
+      if (!full.related) throw new Error('Expected full conversation detail relations');
+      expect(
+        full.related.filter((relation: any) => relation.subquery.alias === 'requested_by')
+      ).toHaveLength(1);
+      const directoryRelations = full.related.filter(
+        (relation: any) => relation.subquery.alias !== 'requested_by'
+      );
+      for (const limit of [undefined, 20]) {
+        const directory = queryAST(
+          messageQueries.conversationsWithRelations.fn({ args: { limit }, ctx })
+        );
+        expect(directory.related).toEqual(directoryRelations);
+        expect(directory.where).toEqual(
+          queryAST(conversationAccessFilter(zql.conversation, userID, true)).where
+        );
+        expect(directory.orderBy).toEqual([['last_message_at', 'desc']]);
+        expect(directory.limit).toBe(limit);
+      }
+      for (const filter of ['all', 'direct', 'group', 'event', 'ai'] as const) {
+        for (const dir of ['forward', 'backward'] as const) {
+          const start =
+            dir === 'backward' ? { id: 'cursor', pinned: false, last_message_at: 123 } : null;
+          const page = queryAST(
+            messageQueries.conversationPage.fn({
+              args: { filter, query: '  search  ', limit: 51, start, dir },
+              ctx,
+            })
+          );
+          expect(page.related).toEqual(directoryRelations);
+          expect(page.limit).toBe(51);
+          const direction = dir === 'forward' ? 'desc' : 'asc';
+          expect(page.orderBy).toEqual([
+            ['pinned', direction],
+            ['last_message_at', direction],
+            ['id', direction],
+          ]);
+          expect(page.start).toEqual(start ? { row: start, exclusive: true } : undefined);
+        }
+      }
     }
   });
 
