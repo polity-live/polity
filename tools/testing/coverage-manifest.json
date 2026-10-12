@@ -138672,6 +138672,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/zero/__tests__/binary-copy-timestamps.unit.test.ts",
+      "domain": "tools:zero",
+      "owner": "polity/tools:zero",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/zero/__tests__/clean-dev-cache.unit.test.ts",
       "domain": "tools:zero",
       "owner": "polity/tools:zero",
