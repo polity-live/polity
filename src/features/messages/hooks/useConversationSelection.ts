@@ -33,6 +33,14 @@ export function useConversationSelection(
 
   useEffect(() => {
     if (!options?.restoreOnNavigation || !options.viewerID) return;
+    const previous = window.history.state?.polityMessageSelection;
+    // TanStack observes native replaceState calls as navigation. A restored
+    // selection is already persisted; avoid a redundant router notification.
+    if (
+      previous?.viewerID === options.viewerID &&
+      previous.conversationID === selectedConversationId
+    )
+      return;
     window.history.replaceState(
       {
         ...window.history.state,

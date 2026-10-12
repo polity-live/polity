@@ -51571,6 +51571,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
+      "domain": "features:messages",
+      "owner": "polity/features:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
       "domain": "features:messages",
       "owner": "polity/features:messages",
@@ -51732,6 +51742,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -51767,6 +51778,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -51802,6 +51814,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -51842,6 +51855,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -51877,6 +51891,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -51962,6 +51977,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -52007,6 +52023,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -52042,6 +52059,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -52077,6 +52095,7 @@
         "src/features/messages/hooks/__tests__/useAssistantChat.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationFilters.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
@@ -115490,6 +115509,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/shared/hooks/__tests__/useHistoryToolbarButtonController.component.test.tsx",
         "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
         "src/lib/ai/__tests__/historyCompression.unit.test.ts",
@@ -115500,8 +115520,7 @@
         "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
         "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
-        "src/server/project-chat/__tests__/run.database-integration.test.ts",
-        "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts"
+        "src/server/project-chat/__tests__/run.database-integration.test.ts"
       ]
     },
     {
