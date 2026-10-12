@@ -235,6 +235,255 @@ afterEach(() => {
 });
 
 describe('useDataViewDialogModel boundaries', () => {
+  it('labels a single official measure and preserves it when table selections are adopted before and after import', async () => {
+    const measure = {
+      id: 'count',
+      label: 'People',
+      unit: 'Number',
+      filters: { value_variable_code: 'COUNT', value_unit: 'Number' },
+    };
+    const officialProfiles = [...profiles, { ...profiles[1], name: 'value' }];
+    mocks.createProviderSnapshot.mockResolvedValueOnce(
+      snapshot({ columnProfiles: officialProfiles, provenance: { measureOptions: [measure] } })
+    );
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+    act(() => {
+      result.current.setOpen(true);
+      result.current.setSelectedResult(searchResult());
+    });
+    const selection = {
+      filters: {},
+      rowFilters: measure.filters,
+      rowConditions: [],
+      columns: ['Year', 'Value', 'value'],
+    };
+    await act(async () => result.current.applyDatasetExplorer(selection));
+    expect(result.current.columnProfiles.find(profile => profile.name === 'value')?.label).toBe(
+      'People · Number'
+    );
+    expect(result.current.presentation.yAxisLabel).toBe('Number');
+    act(() => result.current.openDatasetExplorer());
+    act(() => result.current.closeDatasetExplorer());
+    expect(result.current.datasetExplorerOpen).toBe(false);
+    await act(async () => result.current.applyDatasetExplorer(selection));
+    expect(result.current.presentation.title).toBe('People · Number');
+    expect(result.current.query.filters).toEqual(measure.filters);
+    act(() => result.current.chooseMeasure('missing'));
+    expect(result.current.query.filters).toEqual(measure.filters);
+    act(() =>
+      result.current.setQuery(current => ({
+        ...current,
+        filters: { ...current.filters, value_variable_label: 'old', Region: 'A' },
+        rowConditions: [
+          { column: 'value_unit', operator: 'in', values: ['Number'] },
+          { column: 'value_variable_label', operator: 'empty' },
+          { column: 'Region', operator: 'contains', value: 'A' },
+        ],
+      }))
+    );
+    act(() => result.current.chooseMeasure('count'));
+    expect(result.current.query.rowConditions).toEqual([
+      { column: 'Region', operator: 'contains', value: 'A' },
+    ]);
+    expect(result.current.query.filters).toEqual({ ...measure.filters, Region: 'A' });
+  });
+
+  it.each(['EUROSTAT', 'GENESIS_DESTATIS'] as const)(
+    'rejects mismatched %s preparation and stored snapshot details',
+    async provider => {
+      mocks.prepareProviderDataset.mockResolvedValueOnce({
+        provider,
+        code: 'other-code',
+        dimensions: [],
+        estimatedBytes: 1,
+      });
+      const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+      act(() => {
+        result.current.setOpen(true);
+        result.current.setSelectedResult(searchResult({ provider }));
+      });
+      await act(async () => result.current.useSelectedDataset());
+      expect(result.current.error).toContain('selectionMismatch');
+      expect(mocks.createProviderSnapshot).not.toHaveBeenCalled();
+      mocks.loadDatasetDetails.mockResolvedValueOnce({ id: 'other', snapshotId: 'snapshot-1' });
+      act(() =>
+        result.current.setSelectedResult(searchResult({ provider, snapshotId: 'snapshot-1' }))
+      );
+      await act(async () => result.current.useSelectedDataset());
+      expect(result.current.error).toContain('selectionMismatch');
+    }
+  );
+
+  it.each(['EUROSTAT', 'GENESIS_DESTATIS'] as const)(
+    'imports scoped %s explorer selections',
+    async provider => {
+      const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+      act(() => {
+        result.current.setOpen(true);
+        result.current.setSelectedResult(searchResult({ provider }));
+      });
+      await act(async () =>
+        result.current.applyDatasetExplorer({
+          filters: { area: 'DE' },
+          rowFilters: {},
+          rowConditions: [],
+          columns: ['Year', 'Value'],
+        })
+      );
+      expect(mocks.createProviderSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({ provider, filters: { area: 'DE' } }),
+        'token',
+        expect.any(AbortSignal)
+      );
+      expect(result.current.stage).toBe('build');
+    }
+  );
+
+  it('rejects preview and projection identities and supports a preview retry', async () => {
+    mocks.loadDatasetPreview.mockResolvedValueOnce({
+      identity: { provider: 'UPLOAD' },
+      columns: [],
+      rows: [],
+      rowFilters: {},
+      appliedFilters: {},
+    });
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+    act(() => {
+      result.current.setOpen(true);
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => Promise.resolve());
+    expect(result.current.dataPreviewError).toContain('selectionMismatch');
+    act(() => result.current.retryDataPreview());
+    await act(async () => Promise.resolve());
+    expect(result.current.dataPreviewError).toBeNull();
+    expect(result.current.dataPreview?.identity.provider).toBe('EUROSTAT');
+    mocks.createDataViewProjection.mockResolvedValueOnce({ ...projection(), snapshotId: 'wrong' });
+    await act(async () => result.current.useSelectedDataset());
+    await flushTimers(300);
+    expect(result.current.projectionError).toContain('selectionMismatch');
+    expect(result.current.canInsert).toBe(false);
+    mocks.loadDatasetPreview.mockRejectedValueOnce(new Error('offline'));
+    act(() => result.current.retryDataPreview());
+    await act(async () => Promise.resolve());
+    expect(result.current.dataPreviewError).toBe('localized:offline');
+  });
+
+  it('saves provenance and open-ended or concrete time periods', async () => {
+    const insert = vi.fn();
+    mocks.createProviderSnapshot.mockResolvedValueOnce(
+      snapshot({ provenance: { sourceUpdatedAt: '2026-01-01' } })
+    );
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: insert }));
+    act(() => {
+      result.current.setOpen(true);
+      result.current.setSelectedResult(searchResult());
+    });
+    await act(async () => result.current.useSelectedDataset());
+    for (const [startYear, endYear, expected] of [
+      [1800, 2199, { start: '…', end: '…' }],
+      [2024, 2025, { start: '2024', end: '2025' }],
+    ] as const) {
+      act(() => {
+        result.current.setOpen(true);
+        result.current.setQuery(current => ({
+          ...current,
+          timeRange: { column: 'Year', startYear, endYear },
+        }));
+      });
+      await flushTimers(300);
+      act(() => result.current.save());
+      expect(insert.mock.lastCall?.[0].source).toMatchObject({
+        sourceUpdatedAt: '2026-01-01',
+        dataPeriod: expected,
+      });
+    }
+  });
+
+  it('retains recoverable rejected files and clears recovery when the upload selection changes', () => {
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+    const file = new File(['a,b'], 'rejected.csv');
+    act(() => result.current.rejectUploadFile(file, 'too large'));
+    expect(result.current.rejectedUploadFile).toBe(file);
+    expect(result.current.uploadDownloadAvailable).toBe(true);
+    act(() => result.current.rejectUploadFile(null, 'invalid'));
+    expect(result.current.uploadDownloadAvailable).toBe(false);
+  });
+
+  it('accepts stored identity without optional profiles and retains a file identity when upload metadata omits it', async () => {
+    const element: TDataViewElement = {
+      type: 'data_view',
+      view: 'table',
+      source: {
+        kind: 'dataset',
+        provider: 'UPLOAD',
+        datasetId: 'stored',
+        snapshotId: 'snapshot-1',
+        title: 'Stored',
+      },
+      query: { filters: {}, aggregation: 'sum' },
+      presentation: {},
+      children: [{ text: '' }],
+    };
+    mocks.loadDatasetDetails.mockResolvedValueOnce({
+      id: 'stored',
+      provider: 'UPLOAD',
+      snapshotId: 'snapshot-1',
+    });
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+    act(() => {
+      result.current.resetDialog(element);
+      result.current.setOpen(true);
+    });
+    await act(async () => Promise.resolve());
+    expect(result.current.columnProfiles).toEqual([]);
+    expect(result.current.error).toBeNull();
+    mocks.uploadDataset.mockResolvedValueOnce(
+      snapshot({ provider: 'UPLOAD', providerDatasetId: undefined })
+    );
+    act(() => {
+      result.current.setUploadGroupId('group-1');
+      result.current.setUploadFile(new File(['a,b'], 'sample.csv'));
+    });
+    await act(async () => result.current.submitUpload());
+    expect(result.current.selectedResult?.providerDatasetId).toBe('sample.csv');
+    await act(async () =>
+      result.current.applyDatasetExplorer({
+        filters: {},
+        rowFilters: {},
+        rowConditions: [],
+        columns: ['Year', 'Value'],
+      })
+    );
+    expect(result.current.query.columns).toEqual(['Year', 'Value']);
+  });
+
+  it('discards late preview errors and successful filter values after closing the dialog', async () => {
+    const preview = deferred<any>();
+    mocks.loadDatasetPreview.mockReturnValueOnce(preview.promise);
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: vi.fn() }));
+    act(() => {
+      result.current.setOpen(true);
+      result.current.setSelectedResult(searchResult());
+    });
+    act(() => result.current.setOpen(false));
+    await act(async () => preview.reject(new Error('obsolete')));
+    expect(result.current.dataPreviewError).toBeNull();
+    act(() => result.current.setOpen(true));
+    await act(async () => result.current.useSelectedDataset());
+    const values = deferred<string[]>();
+    mocks.loadDatasetColumnValues.mockReturnValueOnce(values.promise);
+    let loading!: Promise<void>;
+    act(() => {
+      loading = result.current.loadFilterValues();
+    });
+    act(() => result.current.setOpen(false));
+    await act(async () => {
+      values.resolve(['obsolete']);
+      await loading;
+    });
+    expect(result.current.filterValues).toEqual({});
+  });
   it('discards obsolete filter errors and upload errors without replacing the next dialog state', async () => {
     const { result } = renderHook(() => useDataViewDialogModel());
     act(() => {

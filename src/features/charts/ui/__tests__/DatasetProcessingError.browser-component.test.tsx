@@ -153,3 +153,78 @@ it('labels stored CSV separately and still provides a native link when popups ar
   await userEvent.keyboard('{Enter}');
   await screen.findByText('Download started. Your browser manages the transfer.');
 });
+
+it.each(['https://untrusted.test/api/datasets/raw-download', '/api/unexpected'])(
+  'rejects a prepared destination outside the download endpoint: %s',
+  async url => {
+    const popup = {
+      opener: null,
+      document: { title: '', body: { textContent: '' } },
+      closed: false,
+      close: vi.fn(),
+      location: { replace: vi.fn() },
+    };
+    vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    vi.mocked(prepareDatasetRawDownload).mockResolvedValue({
+      url,
+      fileName: 'data.csv',
+      kind: 'provider',
+      fullDataset: true,
+    });
+    render(<DatasetProcessingError message="Import failed" target={{ request }} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download complete raw data' }));
+    await screen.findByText('The file could not be downloaded.');
+    expect(popup.close).toHaveBeenCalledOnce();
+    expect(popup.location.replace).not.toHaveBeenCalled();
+  }
+);
+
+it('offers a fresh native download link when the reserved window was closed', async () => {
+  const popup = {
+    opener: null,
+    document: { title: '', body: { textContent: '' } },
+    closed: true,
+    close: vi.fn(),
+    location: { replace: vi.fn() },
+  };
+  vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+  vi.mocked(prepareDatasetRawDownload).mockResolvedValue({
+    url: '/api/datasets/raw-download?ticket=fresh',
+    fileName: 'data.csv',
+    kind: 'provider',
+    fullDataset: true,
+  });
+  render(
+    <DatasetProcessingError
+      message="Import failed"
+      target={{ request }}
+      sourceUrl="javascript:alert(1)"
+    />
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Download complete raw data' }));
+  expect(await screen.findByRole('link', { name: 'Download complete raw data' })).toHaveAttribute(
+    'href',
+    expect.stringContaining('ticket=fresh')
+  );
+  expect(popup.location.replace).not.toHaveBeenCalled();
+  expect(screen.queryByRole('link', { name: 'Open source' })).toBeNull();
+});
+
+it('keeps a target without a request inert and ignores cancelled preparation failures', async () => {
+  const view = render(<DatasetProcessingError message="No download identity" target={{}} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Download complete raw data' }));
+  expect(prepareDatasetRawDownload).not.toHaveBeenCalled();
+  let reject!: (reason: Error) => void;
+  vi.mocked(prepareDatasetRawDownload).mockImplementation(
+    () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      })
+  );
+  vi.spyOn(window, 'open').mockReturnValue(null);
+  view.rerender(<DatasetProcessingError message="Import failed" target={{ request }} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Download complete raw data' }));
+  view.rerender(<DatasetProcessingError message="Different import" />);
+  reject(new Error('Cancelled transfer'));
+  await waitFor(() => expect(screen.queryByText('The file could not be downloaded.')).toBeNull());
+});

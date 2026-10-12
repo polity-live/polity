@@ -25,6 +25,21 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('DataViewAttribution', () => {
+  it.each(['2026', undefined])('shows update date and a period with end %s', end => {
+    render(
+      <DataViewAttribution
+        source={{
+          provider: 'EUROSTAT',
+          sourceUpdatedAt: '2026-10-01T00:00:00.000Z',
+          dataPeriod: { start: '2024', end },
+        }}
+      />
+    );
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain('01.10.2026');
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain(
+      `2024–${end ?? 2024}`
+    );
+  });
   it('shows the group and localized upload date without an external link', () => {
     render(
       <DataViewAttribution

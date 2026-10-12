@@ -374,7 +374,8 @@ export async function loadGenesisSelection(
   const resolved = resolveImportFilters(preparation, filters);
   const data: Record<string, string | boolean> = {};
   if (filters.period) {
-    const availableYears = (resolved[preparation.timeDimension ?? 'time'] ?? [])
+    // Successful period resolution guarantees the generated GENESIS time dimension.
+    const availableYears = resolved.time
       .map(datasetYear)
       .filter((year): year is number => year !== null);
     data.startyear = String(
@@ -447,7 +448,7 @@ export async function importGenesisDatasetSnapshot({
   if (!result.table.rows.length)
     throw new DatasetProviderFailure('No data exists for the selected scope', 'invalid_scope', 422);
   const observedYears = result.table.rows
-    .map(row => datasetYear(row.observation_period ?? row.time ?? ''))
+    .map(row => datasetYear(row.observation_period))
     .filter((year): year is number => year !== null);
   return persistDatasetSnapshot({
     provider: 'GENESIS_DESTATIS',

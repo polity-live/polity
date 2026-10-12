@@ -16,6 +16,34 @@ it('offers recovery for processing and size failures, but not permission, valida
     expect(canRecoverDatasetFile(encodeAppError(code))).toBe(false);
   expect(canRecoverDatasetFile(new DOMException('Aborted', 'AbortError'))).toBe(false);
 });
+
+it('requires a provider and preserves snapshot identity and supported languages from selected results', () => {
+  expect(datasetRawDownloadTarget()).toBeUndefined();
+  const result = {
+    id: 'dataset',
+    provider: 'UPLOAD' as const,
+    snapshotId: 'snapshot',
+    sourceUrl: 'https://source.example/data.csv',
+  } as Parameters<typeof datasetRawDownloadTarget>[0];
+  expect(datasetRawDownloadTarget(result, null, 'fr')).toEqual({
+    request: {
+      provider: 'UPLOAD',
+      providerDatasetId: undefined,
+      providerResourceId: undefined,
+      snapshotId: 'snapshot',
+      datasetId: 'dataset',
+      language: 'fr',
+    },
+    sourceUrl: 'https://source.example/data.csv',
+  });
+  for (const language of ['de', 'en', 'fr']) {
+    expect(
+      datasetRawDownloadTarget(null, { provider: 'EUROSTAT', providerDatasetId: 'demo', language })
+        ?.request?.language
+    ).toBe(language);
+  }
+  expect(canRecoverDatasetFile(undefined)).toBe(true);
+});
 it('retains exact dataset/resource/snapshot identity without any import or table filters', () => {
   const target = datasetRawDownloadTarget(null, {
     provider: 'GENESIS_DESTATIS',

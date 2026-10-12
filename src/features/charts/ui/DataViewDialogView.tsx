@@ -1716,6 +1716,7 @@ function Builder({ model }: DataViewDialogViewProps) {
 
 function UploadSheet({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
+  const recoverableFile = model.rejectedUploadFile ?? model.uploadFile;
   const handleRejectedFiles = (rejections: FileDropzoneRejection[]) => {
     const code = rejections[0]?.code;
     const message =
@@ -1865,8 +1866,8 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
               className="border-destructive/30 bg-destructive/5 border px-3 py-2"
               message={model.uploadError}
               target={
-                model.uploadDownloadAvailable && (model.rejectedUploadFile || model.uploadFile)
-                  ? { file: model.rejectedUploadFile ?? model.uploadFile ?? undefined }
+                model.uploadDownloadAvailable && recoverableFile
+                  ? { file: recoverableFile }
                   : undefined
               }
             />

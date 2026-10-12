@@ -19,18 +19,21 @@ export function rawResponseStream(
   let timer: ReturnType<typeof setTimeout>;
   let output: ReadableStreamDefaultController<Uint8Array> | undefined;
   const finish = () => {
-    if (finished) return;
     finished = true;
     clearTimeout(timer);
     options.signal?.removeEventListener('abort', abort);
-    options.onFinish?.();
   };
   const fail = (reason: unknown) => {
     if (finished) return;
+    // Upstream cancellation may synchronously abort the same signal.
+    finish();
     output?.error(reason);
     void reader.cancel(reason).catch(() => undefined);
-    options.onAbort?.();
-    finish();
+    try {
+      options.onAbort?.();
+    } finally {
+      options.onFinish?.();
+    }
   };
   const abort = () => fail(options.signal?.reason ?? new DOMException('Aborted', 'AbortError'));
   const reset = () => {
@@ -48,13 +51,13 @@ export function rawResponseStream(
       if (options.signal?.aborted) abort();
     },
     async pull(controller) {
-      if (finished) return;
       try {
         const chunk = await reader.read();
         if (finished) return;
         if (chunk.done) {
           controller.close();
           finish();
+          options.onFinish?.();
         } else {
           reset();
           controller.enqueue(chunk.value);
@@ -65,8 +68,13 @@ export function rawResponseStream(
     },
     async cancel(reason) {
       finish();
-      options.onAbort?.();
-      await reader.cancel(reason).catch(() => undefined);
+      const cancellation = reader.cancel(reason).catch(() => undefined);
+      try {
+        options.onAbort?.();
+      } finally {
+        options.onFinish?.();
+      }
+      await cancellation;
     },
   });
 }

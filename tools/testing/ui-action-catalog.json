@@ -21566,8 +21566,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21578,7 +21578,7 @@
       "actionId": "charts.dataset-explorer.apply",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1043,
+      "line": 1040,
       "column": 8,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -21620,8 +21620,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21632,7 +21632,7 @@
       "actionId": "charts.dataset-explorer.back",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1039,
+      "line": 1036,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21669,8 +21669,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21717,8 +21717,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21766,8 +21766,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21815,8 +21815,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21827,7 +21827,7 @@
       "actionId": "charts.dataset-explorer.columns.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 701,
+      "line": 698,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -21863,8 +21863,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21875,7 +21875,7 @@
       "actionId": "charts.dataset-explorer.columns.technical",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 713,
+      "line": 710,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -21912,8 +21912,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -21924,7 +21924,7 @@
       "actionId": "charts.dataset-explorer.columns.toggle",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 736,
+      "line": 733,
       "column": 20,
       "kind": "selection",
       "classification": "canonical-action",
@@ -21961,8 +21961,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22010,8 +22010,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22059,8 +22059,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22107,8 +22107,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22156,8 +22156,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22168,7 +22168,7 @@
       "actionId": "charts.dataset-explorer.filters.clear",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 838,
+      "line": 835,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -22205,8 +22205,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22217,7 +22217,7 @@
       "actionId": "charts.dataset-explorer.scope.apply",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 677,
+      "line": 674,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -22253,8 +22253,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22265,7 +22265,7 @@
       "actionId": "charts.dataset-explorer.scope.clear",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 688,
+      "line": 685,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -22302,14 +22302,14 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
     {
       "key": "src/features/charts/ui/DatasetProcessingError.tsx#charts.dataset-processing-error.download",
-      "debtKey": "src/features/charts/ui/DatasetProcessingError.tsx#Button-553c963218",
+      "debtKey": "src/features/charts/ui/DatasetProcessingError.tsx#Button-a79f844a7f",
       "file": "src/features/charts/ui/DatasetProcessingError.tsx",
       "actionId": "charts.dataset-processing-error.download",
       "identifierSource": "data-action-id",
@@ -22355,8 +22355,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22409,8 +22409,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22462,8 +22462,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22516,8 +22516,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22554,8 +22554,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22592,8 +22592,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22632,8 +22632,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -22671,8 +22671,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22709,8 +22709,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22748,8 +22748,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22786,8 +22786,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22825,8 +22825,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22857,8 +22857,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -22910,8 +22910,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -22942,8 +22942,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -23004,8 +23004,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23043,8 +23043,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23075,8 +23075,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -23129,8 +23129,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23168,8 +23168,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23180,7 +23180,7 @@
       "actionId": "charts.data-view.change-dataset",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1939,
+      "line": 1940,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23207,8 +23207,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23245,8 +23245,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23284,8 +23284,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23323,8 +23323,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23362,8 +23362,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23401,8 +23401,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23413,7 +23413,7 @@
       "actionId": "charts.data-view.dataset-info",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1975,
+      "line": 1976,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23449,8 +23449,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23461,7 +23461,7 @@
       "actionId": "charts.data-view.explore-dataset",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1950,
+      "line": 1951,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -23488,8 +23488,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23527,8 +23527,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23565,8 +23565,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23605,8 +23605,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias"
     },
@@ -23643,8 +23643,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23655,7 +23655,7 @@
       "actionId": "charts.data-view.save",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 2094,
+      "line": 2095,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -23682,8 +23682,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23721,8 +23721,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23760,8 +23760,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23799,8 +23799,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23838,8 +23838,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23876,8 +23876,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23915,8 +23915,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23954,8 +23954,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -23993,8 +23993,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24031,8 +24031,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24070,8 +24070,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24109,8 +24109,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24147,8 +24147,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24186,8 +24186,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24224,8 +24224,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24262,8 +24262,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24301,8 +24301,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24313,7 +24313,7 @@
       "actionId": "charts.data-view.upload.cancel",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1876,
+      "line": 1877,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -24340,8 +24340,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24352,7 +24352,7 @@
       "actionId": "charts.data-view.upload.mode.file",
       "identifierSource": "data-action-id",
       "tag": "TabsTrigger",
-      "line": 1753,
+      "line": 1754,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24379,8 +24379,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24391,7 +24391,7 @@
       "actionId": "charts.data-view.upload.mode.manual",
       "identifierSource": "data-action-id",
       "tag": "TabsTrigger",
-      "line": 1762,
+      "line": 1763,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -24418,8 +24418,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24457,8 +24457,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24496,8 +24496,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24508,7 +24508,7 @@
       "actionId": "charts.data-view.upload.remove-file",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1840,
+      "line": 1841,
       "column": 18,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -24535,8 +24535,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24547,7 +24547,7 @@
       "actionId": "charts.data-view.upload.submit",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 1885,
+      "line": 1886,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -24573,8 +24573,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24612,8 +24612,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24651,8 +24651,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24690,8 +24690,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24729,8 +24729,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24768,8 +24768,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24807,8 +24807,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24846,8 +24846,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24885,8 +24885,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24924,8 +24924,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -24963,8 +24963,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -27011,7 +27011,7 @@
       "actionId": "communication-studio.arrangement.reference.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 593,
+      "line": 594,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -27049,7 +27049,7 @@
       "actionId": "communication-studio.assets.upload.open",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1630,
+      "line": 1631,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27089,7 +27089,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-10ee17ceb1",
       "tag": "StudioMenuItem",
-      "line": 1556,
+      "line": 1557,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27129,7 +27129,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-28ad060596",
       "tag": "StudioMenuItem",
-      "line": 1510,
+      "line": 1511,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27169,7 +27169,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-2b460b552e",
       "tag": "StudioMenuItem",
-      "line": 1417,
+      "line": 1418,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27209,7 +27209,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-54d83a3825",
       "tag": "StudioMenuItem",
-      "line": 1448,
+      "line": 1449,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27249,7 +27249,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-66c9f87b00",
       "tag": "StudioMenuItem",
-      "line": 1531,
+      "line": 1532,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27289,7 +27289,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-80ae783095",
       "tag": "StudioMenuItem",
-      "line": 1550,
+      "line": 1551,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27329,7 +27329,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-8990b1b229",
       "tag": "StudioMenuItem",
-      "line": 1543,
+      "line": 1544,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27369,7 +27369,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ac6599da75",
       "tag": "StudioMenuItem",
-      "line": 1479,
+      "line": 1480,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27409,7 +27409,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c2ff45f97e",
       "tag": "StudioMenuItem",
-      "line": 1498,
+      "line": 1499,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27449,7 +27449,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-c5319378ab",
       "tag": "StudioMenuItem",
-      "line": 1485,
+      "line": 1486,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27489,7 +27489,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-d1e85167c3",
       "tag": "StudioMenuItem",
-      "line": 1537,
+      "line": 1538,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27529,7 +27529,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioMenuItem-ded0999a54",
       "tag": "StudioMenuItem",
-      "line": 1504,
+      "line": 1505,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27569,7 +27569,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-008fcc9c86",
       "tag": "ToolbarButton",
-      "line": 1517,
+      "line": 1518,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27615,7 +27615,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-1675c4b11a",
       "tag": "ToolbarButton",
-      "line": 1370,
+      "line": 1371,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27654,7 +27654,7 @@
       "actionId": "communication-studio.collaboration.comments.open",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1569,
+      "line": 1570,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27693,7 +27693,7 @@
       "actionId": "communication-studio.context.action.activate",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 1206,
+      "line": 1207,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27727,12 +27727,12 @@
     },
     {
       "key": "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.dataset.edit.open",
-      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioDatasetEditButton-f5df6674ad",
+      "debtKey": "src/features/communication-studio/ui/StudioEditor.tsx#StudioDatasetEditButton-ab8db2275f",
       "file": "src/features/communication-studio/ui/StudioEditor.tsx",
       "actionId": "communication-studio.dataset.edit.open",
       "identifierSource": "data-action-id",
       "tag": "StudioDatasetEditButton",
-      "line": 1171,
+      "line": 1172,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27770,7 +27770,7 @@
       "actionId": "communication-studio.elements.instance.publish",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2314,
+      "line": 2315,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27808,7 +27808,7 @@
       "actionId": "communication-studio.elements.library.search",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2244,
+      "line": 2245,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27846,7 +27846,7 @@
       "actionId": "communication-studio.elements.selection.save",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2254,
+      "line": 2255,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27884,7 +27884,7 @@
       "actionId": "communication-studio.elements.set.archive",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2290,
+      "line": 2291,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -27922,7 +27922,7 @@
       "actionId": "communication-studio.elements.set.rename",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2277,
+      "line": 2278,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28050,7 +28050,7 @@
       "actionId": "communication-studio.export.frame.toggle",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2461,
+      "line": 2462,
       "column": 22,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28088,7 +28088,7 @@
       "actionId": "communication-studio.export.frames.search",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2419,
+      "line": 2420,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28126,7 +28126,7 @@
       "actionId": "communication-studio.export.frames.select-all",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2429,
+      "line": 2430,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28165,7 +28165,7 @@
       "actionId": "communication-studio.export.frames.select-current",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2437,
+      "line": 2438,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28204,7 +28204,7 @@
       "actionId": "communication-studio.media.crop.open",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 990,
+      "line": 991,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28248,7 +28248,7 @@
       "actionId": "communication-studio.node.constraint.horizontal",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1082,
+      "line": 1083,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28286,7 +28286,7 @@
       "actionId": "communication-studio.node.constraint.vertical",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1106,
+      "line": 1107,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28324,7 +28324,7 @@
       "actionId": "communication-studio.preview.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 2370,
+      "line": 2371,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28363,7 +28363,7 @@
       "actionId": "communication-studio.project.clone.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1339,
+      "line": 1340,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28402,7 +28402,7 @@
       "actionId": "communication-studio.project.list.navigate",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1310,
+      "line": 1311,
       "column": 10,
       "kind": "navigation",
       "classification": "transparent-wrapper",
@@ -28453,7 +28453,7 @@
       "actionId": "communication-studio.project.list.navigate",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 1316,
+      "line": 1317,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -28503,7 +28503,7 @@
       "actionId": "communication-studio.project.template.save",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1325,
+      "line": 1326,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28542,7 +28542,7 @@
       "actionId": "communication-studio.project.title.edit",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2574,
+      "line": 2575,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28580,7 +28580,7 @@
       "actionId": "communication-studio.project.visibility.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1347,
+      "line": 1348,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28619,7 +28619,7 @@
       "actionId": "communication-studio.selection.align.apply",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1762,
+      "line": 1763,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28658,7 +28658,7 @@
       "actionId": "communication-studio.selection.copy.duplicate",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1726,
+      "line": 1727,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28703,7 +28703,7 @@
       "actionId": "communication-studio.selection.distribute.horizontal",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1780,
+      "line": 1781,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28742,7 +28742,7 @@
       "actionId": "communication-studio.selection.distribute.vertical",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1793,
+      "line": 1794,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28781,7 +28781,7 @@
       "actionId": "communication-studio.selection.group.toggle",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1836,
+      "line": 1837,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28820,7 +28820,7 @@
       "actionId": "communication-studio.selection.lock.toggle",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1359,
+      "line": 1360,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28865,7 +28865,7 @@
       "actionId": "communication-studio.selection.order.apply",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1817,
+      "line": 1818,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28904,7 +28904,7 @@
       "actionId": "communication-studio.selection.remove.delete",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1735,
+      "line": 1736,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28949,7 +28949,7 @@
       "actionId": "communication-studio.shape.arrowhead.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1053,
+      "line": 1054,
       "column": 20,
       "kind": "selection",
       "classification": "canonical-action",
@@ -28988,7 +28988,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-1488e0d1c3",
       "tag": "button",
-      "line": 2650,
+      "line": 2651,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29033,7 +29033,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-9fe2f0396c",
       "tag": "button",
-      "line": 2641,
+      "line": 2642,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29078,7 +29078,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#button-aa0b083391",
       "tag": "button",
-      "line": 2607,
+      "line": 2608,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29122,7 +29122,7 @@
       "actionId": "communication-studio.studio-editor.activate.input-6b4651ec8d",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 1927,
+      "line": 1928,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29173,7 +29173,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#input-922d2dbcbc",
       "tag": "input",
-      "line": 1133,
+      "line": 1134,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -29218,7 +29218,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#input-e7c5465a6d",
       "tag": "input",
-      "line": 835,
+      "line": 836,
       "column": 6,
       "kind": "selection",
       "classification": "canonical-action",
@@ -29262,7 +29262,7 @@
       "actionId": "communication-studio.studio-editor.activate.input-f9d64640a1",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 1871,
+      "line": 1872,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29313,7 +29313,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-13558298cb",
       "tag": "ToolbarButton",
-      "line": 1584,
+      "line": 1585,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29365,7 +29365,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-30e1803505",
       "tag": "ToolbarButton",
-      "line": 1592,
+      "line": 1593,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29416,7 +29416,7 @@
       "actionId": "communication-studio.studio-editor.add",
       "identifierSource": "handler",
       "tag": "ToolbarButton",
-      "line": 1602,
+      "line": 1603,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29467,7 +29467,7 @@
       "actionId": "communication-studio.studio-editor.insert-frame",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1396,
+      "line": 1397,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29512,7 +29512,7 @@
       "actionId": "communication-studio.studio-editor.insert-frame-set",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1407,
+      "line": 1408,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29557,7 +29557,7 @@
       "actionId": "communication-studio.studio-editor.set-guides",
       "identifierSource": "handler",
       "tag": "ToolbarButton",
-      "line": 2379,
+      "line": 2380,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29602,7 +29602,7 @@
       "actionId": "communication-studio.studio-editor.set-tool",
       "identifierSource": "handler",
       "tag": "StudioMenuItem",
-      "line": 1457,
+      "line": 1458,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29641,7 +29641,7 @@
       "actionId": "communication-studio.studio-workspace.export-media",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2403,
+      "line": 2404,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29691,7 +29691,7 @@
       "actionId": "communication-studio.studio-workspace.set-photo-edit",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 1033,
+      "line": 1034,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29736,7 +29736,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-07f95dca6d",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2514,
+      "line": 2515,
       "column": 26,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29787,7 +29787,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-f159baea82",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2544,
+      "line": 2545,
       "column": 24,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29838,7 +29838,7 @@
       "actionId": "communication-studio.studioworkspace.activate.button-fdbeb1cd6b",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2506,
+      "line": 2507,
       "column": 24,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -29883,7 +29883,7 @@
       "actionId": "communication-studio.studioworkspace.activate.format-2",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 2390,
+      "line": 2391,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -29927,7 +29927,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-70799f297e",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 966,
+      "line": 967,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -29972,7 +29972,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-f891eec816",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 954,
+      "line": 955,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30016,7 +30016,7 @@
       "actionId": "communication-studio.studioworkspace.activate.input-f95d891276",
       "identifierSource": "data-action-id",
       "tag": "InlineCheckbox",
-      "line": 1022,
+      "line": 1023,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30061,7 +30061,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-1408e711cc",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1004,
+      "line": 1005,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30105,7 +30105,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-4d0cd79d46",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 870,
+      "line": 871,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30149,7 +30149,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-515683ba65",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 883,
+      "line": 884,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30193,7 +30193,7 @@
       "actionId": "communication-studio.studioworkspace.activate.select-74119eaeb9",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 975,
+      "line": 976,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30237,7 +30237,7 @@
       "actionId": "communication-studio.studioworkspace.activate.textarea-dcebf42594",
       "identifierSource": "data-action-id",
       "tag": "textarea",
-      "line": 859,
+      "line": 860,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30282,7 +30282,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/communication-studio/ui/StudioEditor.tsx#TableSizePicker-0c08f9ff3b",
       "tag": "TableSizePicker",
-      "line": 1618,
+      "line": 1619,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30321,7 +30321,7 @@
       "actionId": "communication-studio.text.alignment.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 1965,
+      "line": 1966,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30359,7 +30359,7 @@
       "actionId": "communication-studio.text.color.select-role",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 943,
+      "line": 944,
       "column": 22,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30398,7 +30398,7 @@
       "actionId": "communication-studio.text.font.select",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuRadioItem",
-      "line": 1861,
+      "line": 1862,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30436,7 +30436,7 @@
       "actionId": "communication-studio.text.inspector.toggle-mark",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 900,
+      "line": 901,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30475,7 +30475,7 @@
       "actionId": "communication-studio.text.link.edit",
       "identifierSource": "data-action-id",
       "tag": "input",
-      "line": 2027,
+      "line": 2028,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30513,7 +30513,7 @@
       "actionId": "communication-studio.text.link.open",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 2011,
+      "line": 2012,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30552,7 +30552,7 @@
       "actionId": "communication-studio.text.list.bullet",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 1990,
+      "line": 1991,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30590,7 +30590,7 @@
       "actionId": "communication-studio.text.list.numbered",
       "identifierSource": "data-action-id",
       "tag": "StudioMenuItem",
-      "line": 2000,
+      "line": 2001,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30628,7 +30628,7 @@
       "actionId": "communication-studio.text.mark-code.apply",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1907,
+      "line": 1908,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30673,7 +30673,7 @@
       "actionId": "communication-studio.text.mark-highlight.apply",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1917,
+      "line": 1918,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30718,7 +30718,7 @@
       "actionId": "communication-studio.text.toolbar.toggle-mark",
       "identifierSource": "data-action-id",
       "tag": "ToolbarButton",
-      "line": 1894,
+      "line": 1895,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30763,7 +30763,7 @@
       "actionId": "communication-studio.text.vertical-align.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 1144,
+      "line": 1145,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30801,7 +30801,7 @@
       "actionId": "communication-studio.theme.appearance-mode.select",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2150,
+      "line": 2151,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30840,7 +30840,7 @@
       "actionId": "communication-studio.theme.definition.select",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 2124,
+      "line": 2125,
       "column": 14,
       "kind": "selection",
       "classification": "canonical-action",
@@ -30878,7 +30878,7 @@
       "actionId": "communication-studio.theme.settings.navigate",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 2219,
+      "line": 2220,
       "column": 14,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -30922,7 +30922,7 @@
       "actionId": "communication-studio.theme.text-style.apply",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 2201,
+      "line": 2202,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30961,7 +30961,7 @@
       "actionId": "editor.shell.share.open",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 2584,
+      "line": 2585,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30999,7 +30999,7 @@
       "actionId": "studio.live.select10.change",
       "identifierSource": "data-action-id",
       "tag": "select",
-      "line": 2346,
+      "line": 2347,
       "column": 18,
       "kind": "selection",
       "classification": "canonical-action",

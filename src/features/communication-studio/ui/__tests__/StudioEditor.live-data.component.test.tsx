@@ -7,6 +7,7 @@ import type { ComponentProps } from 'react';
 import type { StudioLiveTools } from '../StudioLiveTools';
 import type { StudioDataViewDialog } from '../StudioDataViewDialog';
 import { openStudioPanel } from '../../logic/panel-events';
+import { insertStudioDataView } from '../../logic/data-view-import';
 
 const tools = vi.hoisted(() => ({
   live: null as ComponentProps<typeof StudioLiveTools> | null,
@@ -63,6 +64,51 @@ it('selects a live source node and inserts resolved data into the selected frame
     )
   ).toBe(true);
   expect(io.canvasProps.selected).toEqual(added.map((node: { id: string }) => node.id));
+});
+
+it.each([true, false])('edits only the saved representation with group membership %s', grouped => {
+  useCanonicalDocument();
+  const frame = io.editor.v3Value.nodes.find((node: { type: string }) => node.type === 'frame');
+  let ids: string[] = [];
+  act(() =>
+    io.editor.transactV3((document: Parameters<typeof insertStudioDataView>[0]) => {
+      ids = insertStudioDataView(document, frame.id, configuration(), projection);
+      if (!grouped)
+        document.nodes
+          .filter(node => ids.includes(node.id))
+          .forEach(node => {
+            node.groupIds = [];
+          });
+      insertStudioDataView(document, frame.id, configuration('line'), projection);
+    })
+  );
+  return show().then(() => {
+    const transact = io.editor.transactV3;
+    io.editor.transactV3 = (change: Parameters<typeof transact>[0]) => {
+      transact(change);
+      return true;
+    };
+    act(() => io.canvasProps.selectExact([ids[0]]));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit data view' }));
+    expect(tools.data!.editingElement).toEqual(configuration());
+    const otherIds = io.editor.v3Value.nodes
+      .filter((node: { id: string }) => !ids.includes(node.id))
+      .map((node: { id: string }) => node.id);
+    act(() => tools.data!.onInsert(configuration('pie'), projection));
+    expect(io.editor.v3Value.nodes.some((node: { id: string }) => node.id === ids[0])).toBe(false);
+    expect(
+      otherIds.every((id: string) =>
+        io.editor.v3Value.nodes.some((node: { id: string }) => node.id === id)
+      )
+    ).toBe(true);
+    expect(io.canvasProps.selected.length).toBeGreaterThan(1);
+    if (!grouped)
+      expect(
+        ids
+          .slice(1)
+          .every(id => io.editor.v3Value.nodes.some((node: { id: string }) => node.id === id))
+      ).toBe(true);
+  });
 });
 
 it('rejects data insertion after edit rights are withdrawn', async () => {

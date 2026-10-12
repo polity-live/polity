@@ -12,6 +12,8 @@ import {
   genesisMetadataDimensions,
   genesisSearchMetadata,
   normalizeGenesisTable,
+  loadGenesisSelection,
+  readGenesisTable,
 } from '../genesis';
 import { assertGenesisStatus, postGenesis } from '../genesisTransport';
 import { clearDatasetSearchCache } from '../searchRuntime';
@@ -304,6 +306,151 @@ describe('GENESIS catalogue and status', () => {
 });
 
 describe('GENESIS preparation and modern FFCSV import', () => {
+  it.each([
+    { start: 1800, end: 2025 },
+    { start: 2025, end: 2199 },
+    { start: 1800, end: 2199 },
+  ])(
+    'limits open-ended period %j to provider years and persists the observed bounds',
+    async period => {
+      await importGenesisDatasetSnapshot({
+        code: '12411-0001',
+        userId: 'user',
+        filters: { period },
+      });
+      const call = mocks.fetch.mock.calls.find(([url]) => url.endsWith('data/tablefile'));
+      expect(call?.[1].body.get('startyear')).toBe(
+        String(period.start === 1800 ? 1950 : period.start)
+      );
+      expect(call?.[1].body.get('endyear')).toBe('2025');
+      const persisted = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
+      expect(persisted.timeCoverage).toEqual({ start: '2025', end: '2025' });
+    }
+  );
+
+  it('rejects mismatched statistic identifiers in otherwise valid FFCSV', async () => {
+    mocks.fetch.mockResolvedValue(
+      new Response(csv.replace('12411;Bevölkerung', '13211;Bevölkerung'))
+    );
+    await expect(readGenesisTable('12411-0001', 'en', {})).rejects.toMatchObject({
+      code: 'invalid_response',
+      message: 'GENESIS returned a different statistic',
+    });
+  });
+
+  it('keeps selected measures and units in their own provider parameters and checks missing returned keys', async () => {
+    const entry = {
+      ...metadata,
+      Structure: {
+        ...metadata.Structure,
+        Columns: [{ Code: 'BEVSTD', Content: 'Population', Type: 'Variable', Values: -1 }],
+        Rows: [{ Code: 'value_unit', Content: 'Unit', Type: 'Variable', Values: 1 }],
+      },
+    };
+    mocks.fetch.mockImplementation(async (url: string, init: { body: URLSearchParams }) =>
+      url.endsWith('metadata/table')
+        ? json({ Object: entry })
+        : url.endsWith('catalogue/values2variable')
+          ? json({
+              List: [
+                {
+                  Code: init.body.get('name') === 'value_unit' ? 'Anzahl' : 'DG',
+                  Content: 'Value',
+                },
+              ],
+            })
+          : new Response(csv)
+    );
+    const result = await loadGenesisSelection('12411-0001', 'en', {
+      dimensions: { value_variable_code: 'BEVSTD', value_unit: 'Anzahl' },
+    });
+    expect(result.table.rows).toHaveLength(1);
+    expect(
+      result.preparation.dimensions.find(item => item.id === 'value_variable_code')?.label
+    ).toBe('Measure');
+    const call = mocks.fetch.mock.calls.find(([url]) => url.endsWith('data/tablefile'));
+    expect(call?.[1].body.get('contents')).toBe('BEVSTD');
+    expect(call?.[1].body.has('classifyingvariable1')).toBe(false);
+    const old = mocks.fetch.getMockImplementation();
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.endsWith('data/tablefile')
+        ? Promise.resolve(new Response('time;value;value_unit\n2025;1;Anzahl'))
+        : old?.(url, init)
+    );
+    await expect(
+      loadGenesisSelection('12411-0001', 'en', { dimensions: { value_variable_code: 'BEVSTD' } })
+    ).rejects.toMatchObject({ code: 'invalid_scope' });
+  });
+
+  it.each([true, false])(
+    'includes verified national totals in English only when observations confirm them: %s',
+    async confirmed => {
+      const observations = genesisObservations();
+      mocks.fetch.mockImplementation(async (url: string, init: { body: URLSearchParams }) => {
+        if (url.endsWith('metadata/table'))
+          return json({
+            Object: {
+              Code: '13211-0002',
+              Content: 'Unemployment: Germany',
+              Time: { From: '2025', To: '2025' },
+              Structure: {
+                Columns: [{ Code: 'ERW006', Content: 'Unemployed', Type: 'Variable', Values: -1 }],
+                Rows: [{ Code: 'DINSGF', Content: 'Area', Type: 'Variable', Values: 2 }],
+              },
+            },
+          });
+        if (url.endsWith('catalogue/values2variable'))
+          return json({ List: [{ Code: 'DF', Content: 'West Germany' }] });
+        const rows = observations.rows.filter(
+          row =>
+            (!init.body.get('contents') || row.value_variable_code === init.body.get('contents')) &&
+            (confirmed || row['2_variable_attribute_code'])
+        );
+        return new Response(tableToCsv({ ...observations, rows }));
+      });
+      const preparation = await prepareGenesisDataset('13211-0002', 'en');
+      const geography = preparation.dimensions.find(item => item.id === 'DINSGF');
+      expect(geography?.values.some(item => item.id === '__total__:DINSGF')).toBe(confirmed);
+      if (confirmed) {
+        expect(geography?.values).toContainEqual({ id: '__total__:DINSGF', label: 'Germany' });
+        const selected = await loadGenesisSelection('13211-0002', 'en', {
+          dimensions: { DINSGF: '__total__:DINSGF', value_variable_code: 'ERW006' },
+        });
+        expect(
+          selected.table.rows.every(
+            row => row.DINSGF === '__total__:DINSGF' && row.value_variable_code === 'ERW006'
+          )
+        ).toBe(true);
+        const download = mocks.fetch.mock.calls
+          .filter(([url]) => url.endsWith('data/tablefile'))
+          .at(-1);
+        expect(download?.[1].body.has('regionalkey')).toBe(false);
+      }
+    }
+  );
+
+  it('skips total verification when national metadata has no parseable end year', async () => {
+    mocks.fetch.mockImplementation(async (url: string) =>
+      url.endsWith('metadata/table')
+        ? json({
+            Object: {
+              Code: '13211-0002',
+              Content: 'Germany',
+              Time: { From: '2025' },
+              Structure: {
+                Columns: [{ Code: 'ERW006', Type: 'Variable', Values: -1 }],
+                Rows: [{ Code: 'DINSGF', Type: 'Variable', Values: 2 }],
+              },
+            },
+          })
+        : json({ List: [{ Code: 'DF' }] })
+    );
+    const result = await prepareGenesisDataset('13211-0002');
+    expect(result.dimensions.find(item => item.id === 'DINSGF')?.values).toEqual([
+      { id: 'DF', label: '' },
+    ]);
+    expect(mocks.fetch.mock.calls.some(([url]) => url.endsWith('data/tablefile'))).toBe(false);
+  });
   it('imports required FFCSV fields without optional unit or measure columns', async () => {
     const original = mocks.fetch.getMockImplementation()!;
     mocks.fetch.mockImplementation((url: string, init: RequestInit) =>

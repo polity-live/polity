@@ -653,6 +653,13 @@ vi.mock('@/features/file-upload/ui/FileDropzone', () => ({
     onFilesSelected: (files: File[]) => void;
   }) => (
     <div data-testid="file-dropzone">
+      <button
+        data-testid="reject-file"
+        type="button"
+        onClick={() =>
+          onFilesRejected([{ code: 'file-size', file: new File(['a,b'], 'rejected.csv') } as any])
+        }
+      />
       <button data-testid="select-no-file" type="button" onClick={() => onFilesSelected([])} />
       {['file-size', 'too-many-files', 'file-invalid-type'].map(code => (
         <button
@@ -676,6 +683,30 @@ vi.mock('../DataViewAttribution', () => ({
 
 vi.mock('../ManualChartTableEditor', () => ({
   ManualChartTableEditor: () => <div data-testid="manual-table" />,
+}));
+
+vi.mock('../DatasetExplorer', () => ({
+  DatasetExplorer: ({
+    title,
+    onApply,
+    onBack,
+  }: {
+    title: string;
+    onApply: (selection: any) => void;
+    onBack: () => void;
+  }) => (
+    <div data-testid="dataset-explorer">
+      <p data-testid="explorer-title">{title}</p>
+      <button onClick={onBack}>Back to builder</button>
+      <button
+        onClick={() =>
+          onApply({ filters: {}, rowFilters: {}, rowConditions: [], columns: ['Year'] })
+        }
+      >
+        Apply table
+      </button>
+    </div>
+  ),
 }));
 
 afterEach(cleanup);
@@ -825,6 +856,180 @@ function actionIds(container: HTMLElement) {
     )
   );
 }
+
+it('requires explicit metric choices, hides their redundant selectors and removes replaced predicates', () => {
+  const options = [
+    { id: 'count', label: 'People', unit: 'Number', filters: { value_unit: 'Number' } },
+    { id: 'rate', label: 'Rate', unit: 'Percent', filters: { value_unit: 'Percent' } },
+  ];
+  const dimensions = [
+    { id: 'value_unit', label: 'Unit', values: [{ id: 'Number' }] },
+    { id: 'Region', label: 'Region', values: [{ id: 'DE', label: 'Germany' }] },
+  ];
+  const builder = model({
+    stage: 'build',
+    needsMeasure: true,
+    measureOptions: options,
+    chooseMeasure: vi.fn(),
+    requiredSelections: dimensions,
+    query: {
+      ...model().query,
+      rowConditions: [
+        { column: 'Year', operator: 'empty' },
+        { column: 'Region', operator: 'empty' },
+      ],
+    },
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  expect(view.getByText('plateJs.dataView.chooseMeasureRequired')).toBeTruthy();
+  expect(view.queryByLabelText('Unit')).toBeNull();
+  fireEvent.change(view.getByLabelText('plateJs.dataView.measureAndUnit'), {
+    target: { value: 'rate' },
+  });
+  expect(builder.chooseMeasure).toHaveBeenCalledWith('rate');
+  fireEvent.change(view.container.querySelector('#filter-Year')!, { target: { value: '2024' } });
+  const updated = builder.setQuery.mock.lastCall?.[0](builder.query);
+  expect(updated.rowConditions).toEqual([{ column: 'Region', operator: 'empty' }]);
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'build',
+        measureOptions: options,
+        selectedMeasure: options[0],
+        requiredSelections: dimensions,
+      })}
+    />
+  );
+  expect(view.getAllByText('People · Number').length).toBeGreaterThan(0);
+});
+
+it('exposes recovery downloads for finder, projection, builder and upload errors', () => {
+  const recoverable = { ...result, providerDatasetId: 'package', providerResourceId: 'csv' };
+  const view = render(
+    <DataViewDialogView
+      model={model({
+        selectedResult: recoverable,
+        sampleDownloadAvailable: true,
+        dataPreviewError: 'Sample failed',
+      })}
+    />
+  );
+  expect(view.getByRole('button', { name: 'plateJs.dataView.rawDownload.full' })).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        selectedResult: { ...recoverable, byteSize: 60 * 1024 * 1024 },
+        dataPreviewError: 'Sample failed',
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'build',
+        selectedResult: recoverable,
+        projectionError: 'Projection failed',
+        projectionDownloadAvailable: true,
+        dataPreviewError: 'Sample failed',
+        sampleDownloadAvailable: true,
+        error: 'Import failed',
+        errorDownloadAvailable: true,
+      })}
+    />
+  );
+  expect(view.getAllByRole('button', { name: 'plateJs.dataView.rawDownload.full' })).toHaveLength(
+    3
+  );
+  const rejectUploadFile = vi.fn();
+  const rejected = model({ rejectUploadFile });
+  view.rerender(<DataViewDialogView model={rejected} />);
+  fireEvent.click(view.getByTestId('reject-file'));
+  expect(rejectUploadFile).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'rejected.csv' }),
+    'plateJs.dataView.fileTooLarge'
+  );
+  fireEvent.click(view.getByTestId('reject-file-size'));
+  expect(rejectUploadFile).toHaveBeenCalledWith(null, 'plateJs.dataView.fileTooLarge');
+  for (const files of [
+    { rejectedUploadFile: new File(['x'], 'rejected.csv'), uploadFile: null },
+    { rejectedUploadFile: null, uploadFile: new File(['x'], 'selected.csv') },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({ uploadError: 'File failed', uploadDownloadAvailable: true, ...files })}
+      />
+    );
+    expect(
+      view.getByRole('button', { name: 'plateJs.dataView.rawDownload.original' })
+    ).toBeTruthy();
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        uploadError: 'File failed',
+        uploadDownloadAvailable: true,
+        rejectedUploadFile: null,
+        uploadFile: null,
+      })}
+    />
+  );
+  expect(view.queryByRole('button', { name: 'plateJs.dataView.rawDownload.original' })).toBeNull();
+});
+
+it('renders preview attribution for open-ended and explicit periods', () => {
+  const view = render(<DataViewDialogView model={model({ stage: 'build' })} />);
+  for (const timeRange of [
+    { column: 'Year', startYear: 1800, endYear: 2199 },
+    { column: 'Year', startYear: 2024, endYear: 2025 },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'build',
+          query: { ...model().query, timeRange },
+          snapshot: { ...model().snapshot, provenance: { sourceUpdatedAt: '2026-01-01' } },
+          projection: { view: 'chart', points: [], rowCount: 0, snapshotId: 'snapshot-1' },
+        })}
+      />
+    );
+    expect(view.getByTestId('attribution')).toBeTruthy();
+  }
+  view.rerender(<DataViewDialogView model={model({ editingElement: { type: 'data_view' } })} />);
+  expect(view.getByRole('heading', { name: 'plateJs.dataView.editTitle' })).toBeTruthy();
+});
+
+it('opens the explorer with and without a selected title and applies or closes its table selection', () => {
+  const applyDatasetExplorer = vi.fn();
+  const closeDatasetExplorer = vi.fn();
+  const explorer = model({
+    datasetExplorerOpen: true,
+    explorerRequest: { provider: 'EUROSTAT', providerDatasetId: 'demo' },
+    applyDatasetExplorer,
+    closeDatasetExplorer,
+  });
+  const view = render(<DataViewDialogView model={explorer} />);
+  expect(view.getByTestId('explorer-title').textContent).toBe('Employment');
+  fireEvent.click(view.getByRole('button', { name: 'Apply table' }));
+  expect(applyDatasetExplorer).toHaveBeenCalledWith({
+    filters: {},
+    rowFilters: {},
+    rowConditions: [],
+    columns: ['Year'],
+  });
+  fireEvent.click(view.getByRole('button', { name: 'Back to builder' }));
+  expect(closeDatasetExplorer).toHaveBeenCalledOnce();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        datasetExplorerOpen: true,
+        explorerRequest: { provider: 'EUROSTAT' },
+        selectedResult: null,
+      })}
+    />
+  );
+  expect(view.getByTestId('explorer-title').textContent).toBe('');
+});
 
 describe('DataViewDialogView action contracts', () => {
   it('exposes and drives stable finder and source actions across result states', () => {

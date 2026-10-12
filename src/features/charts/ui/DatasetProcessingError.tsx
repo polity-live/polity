@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DownloadIcon, Loader2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -23,13 +23,13 @@ export function DatasetProcessingError({
   sourceUrl?: string | null;
 }) {
   const { t } = useTranslation();
-  const [busy, setBusy] = React.useState(false);
-  const [started, setStarted] = React.useState(false);
-  const [failed, setFailed] = React.useState(false);
-  const [readyUrl, setReadyUrl] = React.useState<string | null>(null);
-  const pending = React.useRef<{ controller: AbortController; window: Window | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [readyUrl, setReadyUrl] = useState<string | null>(null);
+  const pending = useRef<{ controller: AbortController; window: Window | null } | null>(null);
   const requestKey = JSON.stringify(target?.request);
-  React.useEffect(() => {
+  useEffect(() => {
     setBusy(false);
     setStarted(false);
     setFailed(false);
@@ -42,15 +42,15 @@ export function DatasetProcessingError({
   }, [requestKey, target?.file, message]);
   const stored = target?.request?.provider === 'UPLOAD';
   const label = target?.file ? 'original' : stored ? 'snapshot' : 'full';
-  const download = async () => {
-    if (!target || busy) return;
+  const download = async (selectedTarget: DatasetRawDownloadTarget) => {
+    if (busy) return;
     setFailed(false);
     setStarted(false);
-    if (target.file) {
-      const url = URL.createObjectURL(target.file);
+    if (selectedTarget.file) {
+      const url = URL.createObjectURL(selectedTarget.file);
       const link = document.createElement('a');
       link.href = url;
-      link.download = target.file.name;
+      link.download = selectedTarget.file.name;
       link.hidden = true;
       document.body.append(link);
       link.click();
@@ -59,7 +59,7 @@ export function DatasetProcessingError({
       setStarted(true);
       return;
     }
-    if (!target.request) return;
+    if (!selectedTarget.request) return;
     // Reserve a user-initiated window before awaiting authentication/registry lookup.
     const popup = window.open('about:blank', '_blank');
     if (popup) {
@@ -72,7 +72,7 @@ export function DatasetProcessingError({
     setBusy(true);
     try {
       const prepared = await prepareDatasetRawDownload(
-        target.request,
+        selectedTarget.request,
         accessToken,
         controller.signal
       );
@@ -119,7 +119,7 @@ export function DatasetProcessingError({
             variant="outline"
             size="sm"
             disabled={busy}
-            onClick={() => void download()}
+            onClick={() => void download(target)}
           >
             {busy ? (
               <Loader2Icon className="size-4 animate-spin motion-reduce:animate-none" />

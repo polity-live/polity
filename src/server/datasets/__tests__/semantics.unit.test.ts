@@ -6,6 +6,60 @@ import { genesisObservations } from './fixtures/genesis-observations';
 import { assertProviderProjectionScope } from '../projection';
 
 describe('13211-0002 monthly observations and 13211-0001 annual observations', () => {
+  it('keeps missing observation times blank and falls back to measure codes without optional labels or units', () => {
+    const semantic = genesisSemantics(
+      {
+        columns: ['time', 'value', 'value_variable_code'],
+        rows: [
+          { value: '1', value_variable_code: 'COUNT' },
+          { time: '2025', value: '2', value_variable_code: 'COUNT' },
+        ],
+      },
+      [],
+      'en'
+    );
+    expect(semantic.table.rows[0].observation_period).toBe('');
+    expect(semantic.metadata.measureOptions).toEqual([
+      { id: 'COUNT:', label: 'COUNT', unit: '', filters: { value_variable_code: 'COUNT' } },
+    ]);
+    expect(semantic.metadata.providerDimensions).toEqual([
+      {
+        id: 'value_variable_code',
+        position: 0,
+        label: 'Measure',
+        values: [{ id: 'COUNT', label: 'COUNT' }],
+      },
+    ]);
+    expect(semantic.profiles.find(item => item.name === 'observation_period')?.label).toBe(
+      'Period'
+    );
+  });
+
+  it('labels verified official totals in English and retains source dimension labels', () => {
+    const semantic = genesisSemantics(
+      genesisObservations(),
+      [
+        {
+          id: 'DINSGF',
+          label: 'Geographical area',
+          position: 0,
+          values: [{ id: 'DF', label: 'West Germany' }],
+        },
+      ],
+      'en',
+      'Germany'
+    );
+    const geography = semantic.metadata.providerDimensions.find(item => item.id === 'DINSGF');
+    expect(geography?.label).toBe('Geographical area');
+    expect(geography?.values).toContainEqual({
+      id: totalIdentity('DINSGF'),
+      label: 'Germany (Total)',
+    });
+    expect(geography?.values).toContainEqual({ id: 'DF', label: 'West Germany' });
+    expect(semantic.metadata.providerDimensions.find(item => item.id === 'value_unit')?.label).toBe(
+      'Unit'
+    );
+  });
   it('preserves the precision of quarterly and daily provider observations', () => {
     const quarterly = normalizeGenesisTable({
       columns: ['time', 'value', '1_variable_code', '1_variable_attribute_code'],

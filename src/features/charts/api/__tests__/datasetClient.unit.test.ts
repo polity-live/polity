@@ -8,6 +8,7 @@ import {
   prepareProviderDataset,
   loadDatasetColumnValues,
   loadDatasetDetails,
+  loadDatasetPreview,
   searchDatasetCatalog,
   searchDatasets,
   uploadDataset,
@@ -22,6 +23,28 @@ function response(body: unknown, ok = true) {
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+});
+
+it('loads the selected private snapshot and forwards the complete preview request with cancellation', async () => {
+  const preview = { columns: ['year'], rows: [{ year: 2025 }] };
+  fetchMock.mockResolvedValue(response(preview));
+  const controller = new AbortController();
+  await loadDatasetDetails('dataset/1', 'token', 'snapshot/1', controller.signal);
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    '/api/datasets/dataset%2F1/details?snapshotId=snapshot%2F1'
+  );
+  const request = {
+    provider: 'EUROSTAT' as const,
+    providerDatasetId: 'demo',
+    language: 'de',
+    filters: { area: 'DE' },
+  };
+  await expect(loadDatasetPreview(request, 'token', controller.signal)).resolves.toEqual(preview);
+  const [url, init] = fetchMock.mock.calls[1];
+  expect(url).toBe('/api/datasets/preview');
+  expect(JSON.parse(init.body)).toEqual(request);
+  expect(init.signal).toBe(controller.signal);
+  expect(new Headers(init.headers).get('Authorization')).toBe('Bearer token');
 });
 
 afterEach(() => vi.unstubAllGlobals());

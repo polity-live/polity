@@ -37,7 +37,7 @@ function result(
   metadata: Record<string, unknown>,
   appliedFilters: DatasetImportFilters,
   sampled: boolean
-): DatasetPreview {
+): DatasetPreview & { metadata: Record<string, unknown> } {
   const rowFilters = { ...request.rowFilters };
   const geo = columns.find(column => column.role === 'geo');
   const timeColumn = columns.find(column => column.role === 'time' && !column.technical);
@@ -213,7 +213,7 @@ export async function previewDataset(
     request,
     { columns: source.columns.map(column => column.name), rows: source.rows },
     source.columns,
-    source.metadata ?? {},
+    source.metadata,
     source.appliedFilters,
     source.sampled
   );
@@ -287,15 +287,12 @@ async function externalPreview(
           422
         );
     }
+    const period = applied.period;
     if (
-      applied.period &&
+      period &&
       table.rows.some(row => {
         const year = datasetYear(row.time);
-        return (
-          year === null ||
-          year < (applied.period?.start ?? 0) ||
-          year > (applied.period?.end ?? 2199)
-        );
+        return year === null || year < period.start || year > period.end;
       })
     )
       throw new DatasetProviderFailure(
@@ -453,7 +450,8 @@ async function externalPreview(
         }
         if (budgetReached)
           throw new DatasetProviderFailure('Narrow the CSV sample', 'too_large', 413);
-        if (done) break;
+        // A terminal read either returns the parsed table above or throws the
+        // invalid-CSV error; it cannot fall through to another stream read.
       }
     } finally {
       await reader.cancel().catch(() => undefined);

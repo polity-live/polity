@@ -14,7 +14,7 @@ vi.mock('@/server/datasets/rawDownload', async original => ({
   streamRawDownload: mocks.stream,
 }));
 vi.mock('@/server/datasets/service', () => ({ loadRawSnapshotRecord: vi.fn() }));
-import { Route } from '../datasets/raw-download';
+import { Route, rawDownloadErrorPage } from '../datasets/raw-download';
 import { DatasetProviderFailure } from '@/server/datasets/providerError';
 import { RawDownloadDenied } from '@/server/datasets/rawDownload';
 type Handler = (args: { request: Request }) => Promise<Response>;
@@ -31,6 +31,39 @@ const request = (body: object) =>
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.session.mockResolvedValue({ user: { id: actor } });
+});
+
+it('handles rejected snapshot rights, unknown preparation failures and missing download tickets', async () => {
+  mocks.prepare.mockRejectedValueOnce(new RawDownloadDenied('revoked'));
+  expect((await handlers.POST({ request: request(selection) })).status).toBe(403);
+  mocks.prepare.mockRejectedValueOnce(new Error('private details'));
+  const failed = await handlers.POST({ request: request(selection) });
+  expect(failed.status).toBe(502);
+  expect(await failed.json()).toMatchObject({ error: { code: 'dataset_operation_failed' } });
+  mocks.verify.mockImplementationOnce(() => {
+    throw new RawDownloadDenied('missing');
+  });
+  expect(
+    (await handlers.GET({ request: new Request('http://localhost/api/datasets/raw-download') }))
+      .status
+  ).toBe(403);
+  expect(mocks.verify).toHaveBeenLastCalledWith('');
+});
+
+it('escapes source links and renders generic transfer failures in English without provider details', async () => {
+  const ticket = {
+    selection: { ...selection, language: 'fr' },
+    sourceUrl: 'https://source.example/?q=<value>&quote="\'"',
+  } as Parameters<typeof rawDownloadErrorPage>[1];
+  const failed = rawDownloadErrorPage(new Error('private details'), ticket);
+  expect(failed.status).toBe(502);
+  const html = await failed.text();
+  expect(html).toContain('<html lang="en">');
+  expect(html).toContain('&lt;value&gt;&amp;quote=&quot;&#39;&quot;');
+  expect(html).not.toContain('private details');
+  const provider = rawDownloadErrorPage(new DatasetProviderFailure('secret', 'unavailable', 503));
+  expect(provider.status).toBe(503);
+  expect(await provider.text()).not.toContain('<a href=');
 });
 it('requires authentication, rejects filter-bearing requests and prepares only the exact identity', async () => {
   mocks.session.mockResolvedValueOnce(null);

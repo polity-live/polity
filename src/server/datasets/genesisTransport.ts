@@ -71,7 +71,7 @@ export async function postGenesis(
       .catch(() => undefined)
       .then(async () => {
         const signal = controller.signal;
-        for (let attempt = 0; attempt < 2; attempt++) {
+        for (let attempt = 0; ; attempt++) {
           signal.throwIfAborted();
           if (options.budget && options.budget.remaining <= 0)
             throw new DatasetProviderFailure(
@@ -150,7 +150,6 @@ export async function postGenesis(
             response.status
           );
         }
-        throw new DatasetProviderFailure('GENESIS unavailable', 'unavailable');
       })
       .finally(() => {
         clearTimeout(timeout);
@@ -246,7 +245,7 @@ export async function postGenesisStream(
     .catch(() => undefined)
     .then(async () => {
       try {
-        for (let attempt = 0; attempt < 2; attempt++) {
+        for (let attempt = 0; ; attempt++) {
           signal.throwIfAborted();
           const response = await fetch(`${base}${path}`, {
             method: 'POST',
@@ -283,7 +282,6 @@ export async function postGenesisStream(
           }
           throw new DatasetProviderFailure('GENESIS download is unavailable', 'unavailable');
         }
-        throw new DatasetProviderFailure('GENESIS download is unavailable', 'unavailable');
       } catch (error) {
         clearTimeout(timer);
         release();

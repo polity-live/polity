@@ -3,6 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { buildMultiMeasureProjectionPoints, assertProviderProjectionScope } from '../projection';
 
 describe('buildMultiMeasureProjectionPoints contracts', () => {
+  it('allows an unlabelled unit when checking whether summed observations are additive', () => {
+    expect(() =>
+      assertProviderProjectionScope(
+        { columns: ['value'], rows: [{ value: '2' }] },
+        { filters: {}, aggregation: 'sum' }
+      )
+    ).not.toThrow();
+    expect(() =>
+      assertProviderProjectionScope(
+        { columns: ['value'], rows: [{ value: '2' }] },
+        { filters: {}, aggregation: 'sum' },
+        { providerDimensions: [] }
+      )
+    ).not.toThrow();
+  });
   it('allows plotted categories but enforces one value for unplotted provider dimensions', () => {
     const table = {
       columns: ['geo', 'unit'],

@@ -77,7 +77,7 @@ export function verifyRawDownloadTicket(value: string, now = Date.now()) {
 function safeFileName(value: string) {
   const cleaned = Array.from(value)
     .map(character => {
-      const code = character.codePointAt(0) ?? 0;
+      const code = character.charCodeAt(0);
       return code < 32 || code === 127 ? '_' : character;
     })
     .join('')
@@ -123,6 +123,7 @@ async function resolveSelection(
   if (selection.provider === 'UPLOAD') {
     if (!snapshot) throw new RawDownloadDenied('Snapshot identity required');
     return {
+      provider: 'UPLOAD' as const,
       selection,
       snapshot,
       fileName: safeFileName(`${snapshot.dataset.title}-snapshot.csv`),
@@ -146,12 +147,21 @@ async function resolveSelection(
     } catch {
       name = 'dataset.csv';
     }
-    return { selection, fileName: safeFileName(name), sourceUrl: url.toString(), snapshot };
+    return {
+      provider: 'GOVDATA' as const,
+      code,
+      selection,
+      fileName: safeFileName(name),
+      sourceUrl: url.toString(),
+      snapshot,
+    };
   }
   if (selection.provider === 'GENESIS_DESTATIS') {
     if (!/^\d{5}-\d{4}$/.test(code))
       throw new DatasetProviderFailure('Invalid table code', 'invalid_scope', 422);
     return {
+      provider: 'GENESIS_DESTATIS' as const,
+      code,
       selection,
       fileName: `${code}.csv`,
       sourceUrl: `https://www-genesis.destatis.de/genesis/online?operation=table&code=${encodeURIComponent(code)}`,
@@ -159,6 +169,8 @@ async function resolveSelection(
     };
   }
   return {
+    provider: 'EUROSTAT' as const,
+    code,
     selection,
     fileName: safeFileName(`${code}.csv`),
     sourceUrl: `https://ec.europa.eu/eurostat/databrowser/view/${encodeURIComponent(code)}/default/table`,
@@ -240,20 +252,19 @@ export async function streamRawDownload(ticket: RawDownloadTicket, signal: Abort
   // Recheck private rights and registry identity at transfer time; no parser or readiness test.
   const resolved = await resolveSelection(ticket.selection, ticket.actor, signal);
   let response: Response;
-  if (resolved.selection.provider === 'UPLOAD') {
+  if (resolved.provider === 'UPLOAD') {
     const snapshot = resolved.snapshot;
-    if (!snapshot) throw new RawDownloadDenied('Snapshot identity required');
     const { data, error } = await createClient()
       .storage.from(snapshot.storage_bucket)
       .createSignedUrl(snapshot.storage_path, 60);
     if (error || !data?.signedUrl)
       throw new DatasetProviderFailure('Stored file is unavailable', 'unavailable');
     response = await fetchRawFile(new URL(data.signedUrl), signal, undefined, true);
-  } else if (resolved.selection.provider === 'GENESIS_DESTATIS') {
+  } else if (resolved.provider === 'GENESIS_DESTATIS') {
     const started = Date.now();
     const language = resolved.selection.language === 'de' ? 'de' : 'en';
     const entry = await getGenesisTableMetadata(
-      resolved.selection.providerDatasetId ?? '',
+      resolved.code,
       language,
       AbortSignal.any([signal, AbortSignal.timeout(120_000)])
     );
@@ -269,7 +280,7 @@ export async function streamRawDownload(ticket: RawDownloadTicket, signal: Abort
     response = await postGenesisStream(
       'data/tablefile',
       {
-        name: resolved.selection.providerDatasetId ?? '',
+        name: resolved.code,
         area: 'free',
         format: 'ffcsv',
         compress: false,
@@ -279,8 +290,8 @@ export async function streamRawDownload(ticket: RawDownloadTicket, signal: Abort
       },
       { signal, timeoutMs: Math.max(1, 120_000 - (Date.now() - started)) }
     );
-  } else if (resolved.selection.provider === 'EUROSTAT') {
-    const url = createEurostatDataUrl(resolved.selection.providerDatasetId ?? '', {});
+  } else if (resolved.provider === 'EUROSTAT') {
+    const url = createEurostatDataUrl(resolved.code, {});
     url.searchParams.set('format', 'csvdata');
     url.searchParams.set('formatVersion', '2.0');
     url.searchParams.set('compressed', 'true');
@@ -288,8 +299,7 @@ export async function streamRawDownload(ticket: RawDownloadTicket, signal: Abort
       Accept: 'application/vnd.sdmx.data+csv;version=2.0.0',
     });
   } else {
-    if (!resolved.sourceUrl)
-      throw new DatasetProviderFailure('Source file is unavailable', 'unavailable');
+    // The remaining provider is GOVDATA, whose registry URL was validated above.
     response = await fetchRawFile(new URL(resolved.sourceUrl), signal);
   }
 

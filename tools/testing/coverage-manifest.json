@@ -20490,8 +20490,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20526,8 +20526,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20562,8 +20562,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20591,8 +20591,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20627,8 +20627,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20663,8 +20663,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20699,8 +20699,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20735,8 +20735,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20771,8 +20771,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20800,8 +20800,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20829,8 +20829,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20858,8 +20858,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20894,8 +20894,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20930,8 +20930,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -20966,8 +20966,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -21071,7 +21071,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/ui/__tests__/DatasetProcessingError.boundaries.component.test.tsx",
       "domain": "features:charts",
       "owner": "polity/features:charts",
       "kind": "test-infrastructure",
@@ -21162,8 +21182,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {
@@ -21198,8 +21218,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx"
       ]
     },
     {

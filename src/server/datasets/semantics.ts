@@ -70,6 +70,8 @@ export function genesisSemantics(
     )
     .map((id, position) => {
       const original = dimensions.find(item => item.id === id);
+      const firstRows = new Map<string, DatasetTable['rows'][number]>();
+      for (const row of normalized.rows) if (!firstRows.has(row[id])) firstRows.set(row[id], row);
       return {
         id,
         position,
@@ -84,8 +86,7 @@ export function genesisSemantics(
                 ? 'Kennzahl'
                 : 'Measure'
               : id),
-        values: [...new Set(normalized.rows.map(row => row[id]))].map(value => {
-          const row = normalized.rows.find(item => item[id] === value) ?? {};
+        values: [...firstRows].map(([value, row]) => {
           const prefix = Object.keys(row)
             .find(key => /^\d+_variable_code$/.test(key) && row[key] === id)
             ?.replace(/_code$/, '');
@@ -107,18 +108,13 @@ export function genesisSemantics(
         }),
       };
     });
-  const measureOptions: DatasetMeasureOption[] = [
-    ...new Set(
-      normalized.rows
-        .filter(row => row.value_variable_code)
-        .map(row => `${row.value_variable_code}\u0000${row.value_unit ?? ''}`)
-    ),
-  ].map(key => {
+  const measures = new Map<string, DatasetTable['rows'][number]>();
+  for (const row of normalized.rows.filter(row => row.value_variable_code)) {
+    const key = `${row.value_variable_code}\u0000${row.value_unit ?? ''}`;
+    if (!measures.has(key)) measures.set(key, row);
+  }
+  const measureOptions: DatasetMeasureOption[] = [...measures].map(([key, row]) => {
     const [code, unit] = key.split('\u0000');
-    const row =
-      normalized.rows.find(
-        item => item.value_variable_code === code && (item.value_unit ?? '') === unit
-      ) ?? {};
     return {
       id: `${code}:${encodeURIComponent(unit)}`,
       label: row.value_variable_label || code,

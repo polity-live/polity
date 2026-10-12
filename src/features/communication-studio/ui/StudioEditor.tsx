@@ -359,7 +359,8 @@ function StudioEditorReady({
       : ['error', 'offline', 'unavailable', 'conflict'].includes(c.status)
         ? 'error'
         : 'saved';
-  const activeNode = c.v3Value?.nodes.find(node => node.id === c.selected[0]);
+  const canonicalDocument = c.v3Value;
+  const activeNode = canonicalDocument?.nodes.find(node => node.id === c.selected[0]);
   const masterFrame = c.v3Value?.nodes.find(
     (node): node is FrameNode =>
       node.type === 'frame' && node.id === c.v3Value?.masterLayout.frameId
@@ -1167,7 +1168,7 @@ function StudioEditorReady({
           }
         />
       )}
-      {activeNode?.dataView && (
+      {activeNode?.dataView && canonicalDocument && (
         <StudioDatasetEditButton
           data-action-id="communication-studio.dataset.edit.open"
           data-action-kind="interaction"
@@ -1175,13 +1176,13 @@ function StudioEditorReady({
           onEdit={() => {
             const group = activeNode.groupIds[0];
             setDataViewEditingIds(
-              c.v3Value?.nodes
+              canonicalDocument.nodes
                 .filter(
                   node =>
                     node.dataView &&
                     (group ? node.groupIds.includes(group) : node.id === activeNode.id)
                 )
-                .map(node => node.id) ?? []
+                .map(node => node.id)
             );
             setDataViewOpen(true);
           }}

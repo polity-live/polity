@@ -1,6 +1,6 @@
 import { DatasetProcessingError } from './DatasetProcessingError';
 import { datasetRawDownloadTarget, canRecoverDatasetFile } from '../logic/datasetRawDownload';
-import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeftIcon,
   ArrowDownUpIcon,
@@ -54,13 +54,13 @@ function ColumnFilter({
   onHide: () => void;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = React.useState(false);
-  const [operator, setOperator] = React.useState<DatasetRowCondition['operator']>('in');
-  const [selected, setSelected] = React.useState<string[]>([]);
-  const [search, setSearch] = React.useState('');
-  const [min, setMin] = React.useState('');
-  const [max, setMax] = React.useState('');
-  const [text, setText] = React.useState('');
+  const [open, setOpen] = useState(false);
+  const [operator, setOperator] = useState<DatasetRowCondition['operator']>('in');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [min, setMin] = useState('');
+  const [max, setMax] = useState('');
+  const [text, setText] = useState('');
   const rangeValid =
     Boolean(min || max) &&
     (column.type !== 'number' ||
@@ -286,42 +286,40 @@ export function DatasetExplorer({
 }) {
   const { t } = useTranslation();
   const { session } = useAuth();
-  const [scope, setScope] = React.useState<DatasetImportFilters>(request.filters ?? {});
-  const [rowFilters, setRowFilters] = React.useState(request.rowFilters ?? {});
-  const [conditions, setConditions] = React.useState<DatasetRowCondition[]>(
-    request.rowConditions ?? []
-  );
-  const [timeRange, setTimeRange] = React.useState(request.timeRange);
-  const [sort, setSort] = React.useState(request.sort);
-  const [columns, setColumns] = React.useState<string[]>(initialColumns ?? []);
-  const [technical, setTechnical] = React.useState(false);
-  const [preview, setPreview] = React.useState<DatasetPreview | null>(null);
-  const [quick, setQuick] = React.useState({
+  const [scope, setScope] = useState<DatasetImportFilters>(request.filters ?? {});
+  const [rowFilters, setRowFilters] = useState(request.rowFilters ?? {});
+  const [conditions, setConditions] = useState<DatasetRowCondition[]>(request.rowConditions ?? []);
+  const [timeRange, setTimeRange] = useState(request.timeRange);
+  const [sort, setSort] = useState(request.sort);
+  const [columns, setColumns] = useState<string[]>(initialColumns ?? []);
+  const [technical, setTechnical] = useState(false);
+  const [preview, setPreview] = useState<DatasetPreview | null>(null);
+  const [quick, setQuick] = useState({
     area: Boolean(request.filters?.area),
     period: Boolean(request.filters?.period),
   });
-  const [scopeApplying, setScopeApplying] = React.useState(false);
-  const [scopeError, setScopeError] = React.useState<string | null>(null);
-  const quickController = React.useRef<AbortController | null>(null);
-  const [pages, setPages] = React.useState<Map<number, Record<string, string>[]>>(new Map());
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [downloadAvailable, setDownloadAvailable] = React.useState(false);
-  const [scopeDownloadAvailable, setScopeDownloadAvailable] = React.useState(false);
-  const [revision, setRevision] = React.useState(0);
-  const [area, setArea] = React.useState(request.filters?.area ?? '');
-  const [from, setFrom] = React.useState(
+  const [scopeApplying, setScopeApplying] = useState(false);
+  const [scopeError, setScopeError] = useState<string | null>(null);
+  const quickController = useRef<AbortController | null>(null);
+  const [pages, setPages] = useState<Map<number, Record<string, string>[]>>(new Map());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [downloadAvailable, setDownloadAvailable] = useState(false);
+  const [scopeDownloadAvailable, setScopeDownloadAvailable] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const [area, setArea] = useState(request.filters?.area ?? '');
+  const [from, setFrom] = useState(
     String(request.filters?.period?.start ?? request.timeRange?.startYear ?? '')
   );
-  const [to, setTo] = React.useState(
+  const [to, setTo] = useState(
     String(request.filters?.period?.end ?? request.timeRange?.endYear ?? '')
   );
-  const [scopeDirty, setScopeDirty] = React.useState(false);
-  const columnsInitialized = React.useRef(initialColumns !== undefined);
-  const metadataInitialized = React.useRef(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const controllers = React.useRef(new Map<number, AbortController>());
-  const version = React.useRef(0);
+  const [scopeDirty, setScopeDirty] = useState(false);
+  const columnsInitialized = useRef(initialColumns !== undefined);
+  const metadataInitialized = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const controllers = useRef(new Map<number, AbortController>());
+  const version = useRef(0);
   const dimensions = (preview?.metadata?.providerDimensions ?? []) as EurostatDimension[];
   const effectiveRequest = {
     ...request,
@@ -332,9 +330,9 @@ export function DatasetExplorer({
     sort,
   };
   const key = JSON.stringify(effectiveRequest);
-  const latestRequest = React.useRef(effectiveRequest);
+  const latestRequest = useRef(effectiveRequest);
   latestRequest.current = effectiveRequest;
-  const latestLabel = React.useRef(t);
+  const latestLabel = useRef(t);
   latestLabel.current = t;
   const total = preview?.page?.total ?? preview?.rows.length ?? 0;
   const visibleProfiles = orderDatasetPreviewColumns(preview?.columns ?? []).filter(
@@ -349,9 +347,8 @@ export function DatasetExplorer({
   });
   const items = virtualizer.getVirtualItems();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const current = ++version.current;
-    for (const controller of controllers.current.values()) controller.abort();
     controllers.current.clear();
     setPages(new Map());
     setLoading(true);
@@ -416,7 +413,7 @@ export function DatasetExplorer({
   const neededOffsets = [
     ...new Set(items.map(item => Math.floor(item.index / PAGE_SIZE) * PAGE_SIZE)),
   ].filter(offset => !pages.has(offset));
-  React.useEffect(() => {
+  useEffect(() => {
     if (loading || error) return;
     for (const offset of neededOffsets) {
       if (controllers.current.has(offset)) continue;
@@ -880,18 +877,18 @@ export function DatasetExplorer({
               <thead className="bg-background sticky top-0 z-10 shadow-sm">
                 <tr>
                   {visibleProfiles.map(column => {
-                    const condition =
-                      conditions.find(item => item.column === column.name) ??
-                      ((rowFilters[column.name] ??
+                    const rowFilter =
+                      rowFilters[column.name] ??
                       (quick.area && column.role === 'geo'
                         ? preview?.rowFilters[column.name]
-                        : undefined))
+                        : undefined);
+                    const condition =
+                      conditions.find(item => item.column === column.name) ??
+                      (rowFilter
                         ? {
                             column: column.name,
                             operator: 'in' as const,
-                            values: [
-                              rowFilters[column.name] ?? preview?.rowFilters[column.name] ?? '',
-                            ],
+                            values: [rowFilter],
                           }
                         : quick.period && column.role === 'time' && scope.period
                           ? {

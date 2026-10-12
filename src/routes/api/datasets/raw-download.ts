@@ -18,12 +18,8 @@ import {
 } from '@/server/datasets/rawDownload';
 
 function escapeHtml(value: string) {
-  return value.replace(
-    /[&<>"']/g,
-    character =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ??
-      character
-  );
+  const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return value.replace(/[&<>"']/g, character => entities[character as keyof typeof entities]);
 }
 /** A failed native transfer stays in its own window; no error document is saved as CSV. */
 export function rawDownloadErrorPage(error: unknown, ticket?: RawDownloadTicket) {

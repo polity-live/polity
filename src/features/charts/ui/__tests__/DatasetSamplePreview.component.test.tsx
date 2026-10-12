@@ -66,3 +66,90 @@ it('keeps sample loading, empty and error states independent of a chart', async 
   await userEvent.setup().keyboard('{Enter}');
   expect(retry).toHaveBeenCalledOnce();
 });
+it.each([
+  { start: 1800, end: 2199, startYear: 1800, endYear: 2199, expected: '…–…' },
+  { start: 2024, end: 2025, startYear: 2023, endYear: 2026, expected: '2024–2025' },
+])('describes period and dimension scope and resolves sample codes ($expected)', scope => {
+  render(
+    <DatasetSamplePreview
+      preview={{
+        ...preview,
+        rows: [
+          { period: '2025', code: '13211' },
+          { period: 'unknown', code: '13211' },
+        ],
+        appliedFilters: {
+          period: { start: scope.start, end: scope.end },
+          dimensions: { period: '2025', unknown: 'raw', unlisted: 'raw' },
+        },
+        rowFilters: { code: '13211' },
+        timeRange: { column: 'period', startYear: scope.startYear, endYear: scope.endYear },
+        metadata: {
+          providerDimensions: [
+            { id: 'period', label: 'Year', values: [{ id: '2025', label: 'Year 2025' }] },
+            { id: 'unknown', label: 'Unknown dimension', values: [] },
+            {
+              id: 'code',
+              label: 'Code',
+              values: [{ id: '13211', label: 'Decoded technical code' }],
+            },
+          ],
+        },
+      }}
+    />
+  );
+  expect(screen.getByText(/sampleScope/).textContent).toContain(scope.expected);
+  expect(screen.getByText(/sampleScope/).textContent).toContain('Year: Year 2025');
+  expect(screen.getByText(/sampleScope/).textContent).toContain('Unknown dimension: raw');
+  expect(screen.getByText(/sampleScope/).textContent).toContain('unlisted: raw');
+  expect(within(screen.getByRole('table')).getByText('Year 2025')).toBeTruthy();
+  expect(within(screen.getByRole('table')).getByText('unknown')).toBeTruthy();
+  fireEvent.click(screen.getByRole('checkbox'));
+  expect(within(screen.getByRole('table')).queryByText('Decoded technical code')).toBeNull();
+  expect(within(screen.getByRole('table')).getAllByText('13211')).toHaveLength(2);
+});
+
+const isolatedScopes: (Pick<DatasetPreview, 'appliedFilters' | 'rowFilters' | 'timeRange'> & {
+  scope: string | null;
+})[] = [
+  {
+    appliedFilters: { dimensions: { period: '2025' } },
+    rowFilters: {},
+    timeRange: undefined,
+    scope: 'period: 2025',
+  },
+  {
+    appliedFilters: {},
+    rowFilters: { period: '2025' },
+    timeRange: undefined,
+    scope: 'period: 2025',
+  },
+  {
+    appliedFilters: {},
+    rowFilters: {},
+    timeRange: { column: 'period', startYear: 2020, endYear: 2025 },
+    scope: '2020–2025',
+  },
+  { appliedFilters: {}, rowFilters: {}, timeRange: undefined, scope: null },
+];
+it.each(isolatedScopes)(
+  'describes scope independently when the only restriction is $scope',
+  selection => {
+    render(
+      <DatasetSamplePreview
+        preview={{
+          ...preview,
+          appliedFilters: selection.appliedFilters,
+          rowFilters: selection.rowFilters,
+          timeRange: selection.timeRange,
+        }}
+      />
+    );
+    if (selection.scope) {
+      expect(screen.getByText(/sampleScope/).textContent).toContain(selection.scope);
+    } else {
+      expect(screen.queryByText(/sampleScope/)).toBeNull();
+    }
+    expect(screen.getByRole('table')).toBeTruthy();
+  }
+);

@@ -295,6 +295,29 @@ describe('GovData snapshot import', () => {
 });
 
 describe('Eurostat snapshot import', () => {
+  it('persists the actual observed years for an open-ended import period', async () => {
+    mocks.eurostatDetails.mockResolvedValue(
+      eurostatDetails({
+        dimensions: [
+          { id: 'TIME_PERIOD', label: 'Year', values: [{ id: '2020' }, { id: '2025' }] },
+        ],
+      })
+    );
+    mocks.parseCsv.mockReturnValue({
+      columns: ['TIME_PERIOD', 'OBS_VALUE'],
+      rows: [
+        { TIME_PERIOD: '2025', OBS_VALUE: '2' },
+        { TIME_PERIOD: '2020', OBS_VALUE: '1' },
+      ],
+    });
+    await importEurostatDatasetSnapshot({
+      code: 'POP',
+      language: 'en',
+      userId: 'u1',
+      filters: { period: { start: 1800, end: 2199 } },
+    });
+    expect(mocks.persist.mock.lastCall?.[0].timeCoverage).toEqual({ start: '2020', end: '2025' });
+  });
   it('prepares labelled geography, code fallbacks and selectors without downloading observations', async () => {
     mocks.eurostatDetails.mockResolvedValue(
       eurostatDetails({

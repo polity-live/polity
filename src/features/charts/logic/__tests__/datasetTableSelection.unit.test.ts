@@ -14,6 +14,45 @@ const profiles: DatasetColumnProfile[] = [
   },
   { name: 'area', label: 'Area', type: 'category', role: 'geo', nullCount: 0, distinctCount: 2 },
 ];
+
+it('clears missing axes, falls back to a visible category and retains multi-value layouts', () => {
+  const selection = { filters: {}, rowFilters: {}, rowConditions: [], columns: [] as string[] };
+  expect(
+    applyDatasetTableSelection(
+      { aggregation: 'sum', filters: {}, layout: 'wide' },
+      selection,
+      profiles
+    )
+  ).toMatchObject({
+    measureColumn: null,
+    dimensionColumn: null,
+    seriesColumn: null,
+    valueColumns: [],
+    layout: 'long',
+  });
+  expect(
+    applyDatasetTableSelection(
+      { aggregation: 'sum', filters: {} },
+      { ...selection, columns: ['area'] },
+      profiles
+    )
+  ).toMatchObject({ dimensionColumn: 'area', measureColumn: null });
+  const secondValue = { ...profiles[1], name: 'other' };
+  expect(
+    applyDatasetTableSelection(
+      { aggregation: 'sum', filters: {}, measureColumn: 'value', dimensionColumn: 'area' },
+      { ...selection, columns: ['value', 'area'] },
+      profiles
+    )
+  ).toMatchObject({ measureColumn: 'value', dimensionColumn: 'area' });
+  expect(
+    applyDatasetTableSelection(
+      { aggregation: 'sum', filters: {}, layout: 'multi', seriesColumn: 'area' },
+      { ...selection, columns: ['value', 'other', 'area'] },
+      [...profiles, secondValue]
+    )
+  ).toMatchObject({ layout: 'multi', valueColumns: ['value', 'other'], seriesColumn: 'area' });
+});
 it('retains filters on hidden columns and removes axes and series excluded from the selected columns', () => {
   const query = applyDatasetTableSelection(
     { aggregation: 'none', filters: {}, dimensionColumn: 'area', seriesColumn: 'area' },

@@ -5,6 +5,61 @@ beforeEach(() => {
   vi.stubEnv('GENESIS_API_TOKEN', 'transport-boundaries');
   vi.stubEnv('GENESIS_BASE_URL', 'https://genesis.test/');
 });
+
+it('rejects missing transport credentials and classifies buffered authentication failures', async () => {
+  const fetch = vi.fn();
+  vi.stubGlobal('fetch', fetch);
+  vi.stubEnv('GENESIS_API_TOKEN', '');
+  await expect(postGenesis('missing-token', {})).rejects.toMatchObject({ code: 'authentication' });
+  expect(fetch).not.toHaveBeenCalled();
+  vi.stubEnv('GENESIS_API_TOKEN', 'transport-boundaries');
+  fetch.mockResolvedValue(new Response(null, { status: 403 }));
+  await expect(postGenesis('forbidden', {})).rejects.toMatchObject({
+    code: 'authentication',
+    upstreamStatus: 403,
+  });
+});
+
+it('retries a buffered request once while decrementing its shared budget', async () => {
+  vi.useFakeTimers();
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(new Response('retry', { status: 500 }))
+    .mockResolvedValueOnce(new Response('CSV'));
+  vi.stubGlobal('fetch', fetch);
+  const budget = { remaining: 2 };
+  const pending = postGenesis('budget-retry', {}, { budget });
+  await vi.advanceTimersByTimeAsync(300);
+  expect(await (await pending).text()).toBe('CSV');
+  expect(budget.remaining).toBe(0);
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+it('does not retry an exhausted buffered budget and rejects an oversized successful response', async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(new Response('retry', { status: 503 }))
+    .mockResolvedValueOnce(new Response('too big'));
+  vi.stubGlobal('fetch', fetch);
+  await expect(
+    postGenesis('exhausted-after-request', {}, { budget: { remaining: 1 } })
+  ).rejects.toMatchObject({ code: 'unavailable' });
+  await expect(postGenesis('oversized', {}, { maxBytes: 1 })).rejects.toMatchObject({
+    code: 'too_large',
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+it('allows known and permissive warning statuses while refusing strict warnings and authentication errors', () => {
+  expect(() => assertGenesisStatus({ Status: { Code: 104 } })).not.toThrow();
+  expect(() => assertGenesisStatus({ Status: { Code: 23, Type: 'Warning' } })).not.toThrow();
+  expect(() => assertGenesisStatus({ Status: { Code: 23, Type: 'Warnung' } }, true)).toThrow(
+    'filter parameters'
+  );
+  expect(() =>
+    assertGenesisStatus({ Status: { Code: 23, Type: 'Error', Content: 'Invalid token' } })
+  ).toThrow('authentication');
+});
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();

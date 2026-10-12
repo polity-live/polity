@@ -12,6 +12,25 @@ import {
 const frame = createFrameNode('widescreen');
 
 describe('resolved Studio data import', () => {
+  it.each(['2026', undefined])('retains update and period attribution with end %s', end => {
+    const config = configuration();
+    config.source.sourceUpdatedAt = '2026-10-01T00:00:00.000Z';
+    config.source.dataPeriod = { start: '2024', end };
+    const nodes = createStudioDataViewNodes(config, projection, frame);
+    expect(JSON.stringify(nodes)).toContain('01.10.2026');
+    expect(JSON.stringify(nodes)).toContain(`2024–${end ?? 2024}`);
+  });
+
+  it('rejects replacing deleted nodes or root nodes without a frame before mutating the document', () => {
+    const document = createStudioDocumentV5('Missing representation');
+    document.nodes = [frame];
+    const before = structuredClone(document);
+    expect(() =>
+      updateStudioDataView(document, ['missing'], configuration(), projection)
+    ).toThrow();
+    expect(() => updateStudioDataView(document, [frame.id], configuration(), projection)).toThrow();
+    expect(document).toEqual(before);
+  });
   it('retains the exact snapshot configuration after saving and replaces one representation within its existing bounds', () => {
     const document = createStudioDocumentV5('Snapshot identity');
     document.nodes.push(frame);
