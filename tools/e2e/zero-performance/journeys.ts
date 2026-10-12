@@ -107,6 +107,9 @@ export async function measureJourneys(
   const clientSamples: ViewClientSamples = new Map();
   const warnings: string[] = [];
   const errorCounts = { page: 0, console: 0, react: {} as Record<string, number> };
+  // Six destinations across first/back/repeat. Data-update and revocation use
+  // separate non-navigation clocks and are not represented by these cuts.
+  const originalNavigationFrames: unknown[] = [];
   const countReactError = (message: string) => {
     const code = message.match(/Minified React error #(\d+)/)?.[1];
     if (code) errorCounts.react[code] = (errorCounts.react[code] ?? 0) + 1;
@@ -365,11 +368,18 @@ export async function measureJourneys(
             page.evaluate(() => ({
               preloads: (globalThis as any).__zeroPerformancePreloadEvents,
               views: (globalThis as any).__zeroPerformanceViewEvents,
+              navigationFrames: (globalThis as any).__snapshotBenchmarkNavigationFrames(),
             })),
             'Browser evaluate'
           );
           record.preloadEvents = events.preloads;
           record.viewEvents = events.views;
+          originalNavigationFrames.push({
+            scope: 'original-measured-navigation',
+            route: record.route,
+            visit: record.visit,
+            ...events.navigationFrames,
+          });
           for (const query of record.queries) {
             record.failures.push(
               ...queryObservationFailures(query).map(failure => `Query ${query.name}: ${failure}`)
@@ -958,6 +968,10 @@ export async function measureJourneys(
     }
     return records;
   } finally {
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-original-frames.ndjson'),
+      originalNavigationFrames.map(frame => JSON.stringify(frame)).join('\n') + '\n'
+    );
     await writeFile(
       path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'browser-error-counts.json'),
       JSON.stringify(errorCounts)

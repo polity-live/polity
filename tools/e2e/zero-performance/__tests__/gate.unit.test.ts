@@ -18,13 +18,11 @@ import {
   type Measurement,
 } from '../metrics';
 import { discoverQueries, loadCases, buildQuery } from '../catalog';
+import { rootSQL, resultIDs, relatedResultIDs, queryAST } from '../oracle';
 import {
-  rootSQL,
-  resultIDs,
-  relatedResultIDs,
-  queryAST,
   assertAuthoritativeRootResult,
-} from '../oracle';
+  diagnosticRootSQL,
+} from '../authoritative-order-diagnostic';
 import type { Sql } from 'postgres';
 import {
   assertOutputDirectory,
@@ -1713,7 +1711,7 @@ describe('Zero performance gate', () => {
       limit: 2,
     };
     const original = rootSQL(ast, columns);
-    const diagnostic = rootSQL(ast, columns, true);
+    const diagnostic = diagnosticRootSQL(ast, columns);
     expect(diagnostic.values).toEqual(original.values);
     expect(diagnostic.text.slice(diagnostic.text.indexOf(' FROM public.'))).toBe(
       original.text.slice(original.text.indexOf(' FROM public.'))

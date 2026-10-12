@@ -47,6 +47,7 @@ afterEach(() => {
   const scope = globalThis as any;
   scope.__benchmarkPaint?.observer?.disconnect();
   scope.__benchmarkLongTaskObserver?.disconnect();
+  scope.__benchmarkPaint?.frameObserver?.disconnect();
   document.body.replaceChildren();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -73,6 +74,282 @@ function probe() {
     frame: () => frames.splice(0).forEach(callback => callback(performance.now())),
   };
 }
+
+function longFrameObservers(supportedTypes = ['long-animation-frame']) {
+  const instances: Observer[] = [];
+  class Observer {
+    static supportedEntryTypes = supportedTypes;
+    observe = vi.fn();
+    disconnect = vi.fn();
+    queued: PerformanceEntry[] = [];
+    takeRecords = vi.fn(() => this.queued.splice(0));
+    callback: PerformanceObserverCallback;
+    constructor(callback: PerformanceObserverCallback) {
+      this.callback = callback;
+      instances.push(this);
+    }
+    emit(...entries: unknown[]) {
+      this.callback(
+        { getEntries: () => entries } as PerformanceObserverEntryList,
+        this as unknown as PerformanceObserver
+      );
+    }
+  }
+  vi.stubGlobal('PerformanceObserver', Observer);
+  return instances;
+}
+
+describe('original navigation frame diagnostics', () => {
+  it('exports whole native frames overlapping the completed original navigation cut', () => {
+    const observers = longFrameObservers();
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(100);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    const styles = vi.spyOn(globalThis, 'getComputedStyle');
+    const geometry = vi.spyOn(Element.prototype, 'getClientRects');
+    scope.__beginBenchmarkNavigation({
+      path: '/target',
+      text: 'Target',
+      queryNames: ['users.current'],
+    });
+    expect(observers[0].observe).toHaveBeenCalledWith({
+      type: 'long-animation-frame',
+      buffered: true,
+    });
+    const circularWindow: { self?: unknown } = {};
+    circularWindow.self = circularWindow;
+    const nativeFrame = {
+      startTime: 105,
+      duration: 80,
+      blockingDuration: 17,
+      renderStart: 130,
+      styleAndLayoutStart: 133,
+      firstUIEventTimestamp: 104,
+      scripts: [
+        {
+          startTime: 106,
+          duration: 65,
+          executionStart: 107,
+          pauseDuration: 0,
+          forcedStyleAndLayoutDuration: 12.5,
+          sourceURL: 'https://user:secret@probe.test/assets/route.js?token=secret#private',
+          sourceFunctionName: 'renderRoute',
+          sourceCharPosition: 0,
+          invokerType: 'user-callback',
+          windowAttribution: 'self',
+          window: circularWindow,
+        },
+        { duration: 7, sourceURL: '', sourceFunctionName: '', sourceCharPosition: -1 },
+        {
+          duration: 6,
+          sourceURL: 'opaque source',
+          sourceCharPosition: '0',
+          forcedStyleAndLayoutDuration: NaN,
+        },
+        { duration: 6 },
+        { duration: 6, sourceURL: 'data:text/javascript,private-source' },
+      ],
+    };
+    observers[0].emit(
+      { startTime: 20, duration: 70 },
+      { startTime: 90, duration: 30 },
+      nativeFrame,
+      { startTime: 141, duration: 80 }
+    );
+    clock.mockReturnValue(120);
+    scope.__zeroPerformanceReady('users.current', true, performance.now());
+    clock.mockReturnValue(140);
+    frame();
+    const paint = {
+      start: scope.__benchmarkPaint.start,
+      displayed: scope.__benchmarkPaint.displayed,
+      authoritative: scope.__benchmarkPaint.authoritative,
+    };
+    const styleCount = styles.mock.calls.length;
+    const geometryCount = geometry.mock.calls.length;
+    clock.mockReturnValue(5_000);
+    const snapshot = scope.__snapshotBenchmarkNavigationFrames();
+    expect(snapshot).toMatchObject({
+      supported: true,
+      selection: 'frames-overlapping-measured-window',
+      browserTimeOrigin: performance.timeOrigin,
+      start: 100,
+      end: 140,
+    });
+    expect(snapshot.frames.map((entry: PerformanceEntry) => entry.startTime)).toEqual([90, 105]);
+    const attributedFrame = snapshot.frames[1];
+    expect(snapshot.frames[0]).toEqual({ startTime: 90, duration: 30, scripts: [] });
+    expect(attributedFrame).toMatchObject({
+      startTime: 105,
+      duration: 80,
+      renderStart: 130,
+      styleAndLayoutStart: 133,
+      blockingDuration: 17,
+      firstUIEventTimestamp: 104,
+    });
+    expect(attributedFrame.scripts[0]).toEqual({
+      startTime: 106,
+      duration: 65,
+      executionStart: 107,
+      pauseDuration: 0,
+      forcedStyleAndLayoutDuration: 12.5,
+      sourceURL: 'https://probe.test/assets/route.js',
+      sourceFunctionName: 'renderRoute',
+      sourceCharPosition: 0,
+      invokerType: 'user-callback',
+      windowAttribution: 'self',
+    });
+    expect(attributedFrame.scripts[1]).toMatchObject({
+      sourceURL: '',
+      sourceFunctionName: '',
+      sourceCharPosition: -1,
+    });
+    expect(JSON.stringify(attributedFrame.scripts.slice(2))).toBe(
+      '[{"duration":6},{"duration":6},{"duration":6}]'
+    );
+    expect(nativeFrame.duration).toBe(80);
+    expect(nativeFrame.scripts[0].sourceURL).toContain('token=secret');
+    expect(JSON.stringify(snapshot)).not.toMatch(/secret|private-source|"window":/);
+    expect(styles).toHaveBeenCalledTimes(styleCount);
+    expect(geometry).toHaveBeenCalledTimes(geometryCount);
+    expect(scope.__benchmarkPaint).toMatchObject(paint);
+    expect(observers[0].disconnect).toHaveBeenCalledTimes(1);
+    expect(scope.__snapshotBenchmarkNavigationFrames()).toEqual(snapshot);
+    observers[0].emit({ startTime: 110, duration: 60 });
+    expect(scope.__snapshotBenchmarkNavigationFrames()).toEqual(snapshot);
+  });
+
+  it('drains pending native records and discards stale navigation observers', () => {
+    const observers = longFrameObservers();
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(100);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    const target = { path: '/target', text: 'Target', queryNames: ['users.current'] };
+    scope.__beginBenchmarkNavigation(target);
+    observers[0].emit({ startTime: 105, duration: 60 });
+    clock.mockReturnValue(200);
+    scope.__beginBenchmarkNavigation(target);
+    expect(observers[0].disconnect).toHaveBeenCalledTimes(1);
+    observers[0].emit({ startTime: 205, duration: 60 });
+    observers[1].queued.push({ startTime: 210, duration: 75 } as PerformanceEntry);
+    scope.__zeroPerformanceReady('users.current', true, performance.now());
+    clock.mockReturnValue(240);
+    frame();
+    const snapshot = scope.__snapshotBenchmarkNavigationFrames();
+    expect(snapshot).toMatchObject({ supported: true, start: 200, end: 240 });
+    expect(snapshot.frames).toEqual([{ startTime: 210, duration: 75, scripts: [] }]);
+    expect(observers[1].takeRecords).toHaveBeenCalledTimes(1);
+    expect(observers[1].disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the cold connection anchor while including genuine document boot frames', () => {
+    const observers = longFrameObservers();
+    const callbacks: ((state: { name: string }) => void)[] = [];
+    vi.stubGlobal('__zero', {
+      clientID: 'cold-frame-client',
+      connection: {
+        state: {
+          current: { name: 'connecting' },
+          subscribe: (callback: (typeof callbacks)[number]) => callbacks.push(callback),
+        },
+      },
+    });
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(100);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation(
+      { path: '/target', text: 'Target', queryNames: ['users.current'] },
+      0,
+      true
+    );
+    scope.__zeroPerformanceView({ phase: 'render' });
+    observers[0].emit({ startTime: 50, duration: 70 });
+    expect(scope.__benchmarkPaint.start).toBeNull();
+    clock.mockReturnValue(150);
+    callbacks[0]({ name: 'connected' });
+    clock.mockReturnValue(170);
+    scope.__zeroPerformanceReady('users.current', true, performance.now());
+    clock.mockReturnValue(180);
+    frame();
+    expect(scope.__benchmarkPaint).toMatchObject({ start: 150, displayed: 30, authoritative: 20 });
+    expect(scope.__snapshotBenchmarkNavigationFrames()).toEqual({
+      supported: true,
+      selection: 'frames-overlapping-measured-window',
+      browserTimeOrigin: performance.timeOrigin,
+      start: 0,
+      end: 180,
+      frames: [{ startTime: 50, duration: 70, scripts: [] }],
+    });
+  });
+
+  it.each(['absent', 'unsupported'])(
+    'keeps paint and authoritative readiness unchanged when the observer is %s',
+    kind => {
+      const observers = longFrameObservers([]);
+      if (kind === 'absent') vi.stubGlobal('PerformanceObserver', undefined);
+      vi.spyOn(performance, 'now').mockReturnValue(100);
+      history.replaceState(null, '', '/target');
+      document.body.innerHTML = '<main><h1>Target</h1></main>';
+      const { scope, frame } = probe();
+      scope.__beginBenchmarkNavigation({
+        path: '/target',
+        text: 'Target',
+        queryNames: ['users.current'],
+      });
+      scope.__zeroPerformanceReady('users.current', true, performance.now());
+      frame();
+      expect(scope.__benchmarkPaint).toMatchObject({ start: 100, displayed: 0, authoritative: 0 });
+      expect(scope.__snapshotBenchmarkNavigationFrames()).toEqual({
+        supported: false,
+        selection: 'frames-overlapping-measured-window',
+        browserTimeOrigin: performance.timeOrigin,
+        start: 100,
+        end: 100,
+        frames: [],
+      });
+      expect(observers).toHaveLength(0);
+    }
+  );
+
+  it('does not invent a completed snapshot and cleans up observers on reinstallation or rejection', () => {
+    const observers = longFrameObservers();
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    const target = { path: '/target', text: 'Target' };
+    scope.__beginBenchmarkNavigation(target);
+    frame();
+    observers[0].emit({ startTime: performance.now(), duration: 60 });
+    expect(scope.__snapshotBenchmarkNavigationFrames()).toMatchObject({
+      supported: true,
+      end: undefined,
+      frames: [],
+    });
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    scope.__beginBenchmarkNavigation(target);
+    installNavigationProbe();
+    expect(observers[1].disconnect).toHaveBeenCalledTimes(1);
+    observers[1].emit({ startTime: performance.now(), duration: 60 });
+    expect(scope.__benchmarkPaint.longAnimationFrames).toEqual([]);
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class {
+        static supportedEntryTypes = ['long-animation-frame'];
+        observe() {
+          throw new Error('Observer type rejected');
+        }
+        disconnect = vi.fn();
+      }
+    );
+    installNavigationProbe();
+    expect(() => scope.__beginBenchmarkNavigation(target)).not.toThrow();
+    expect(scope.__snapshotBenchmarkNavigationFrames().supported).toBe(false);
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+  });
+});
 
 describe('navigation paint measurement', () => {
   it('records candidates first discovered by the initial RAF in that real frame', () => {

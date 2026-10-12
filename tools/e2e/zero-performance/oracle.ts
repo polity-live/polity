@@ -1,5 +1,4 @@
 import { required } from './required';
-import assert from 'node:assert/strict';
 import type { Sql } from 'postgres';
 import { schema } from '../../../src/zero/schema';
 
@@ -23,11 +22,7 @@ export function primaryKeys(table: string): readonly string[] {
   return keys;
 }
 const identifier = (name: string) => `"${name.replaceAll('"', '""')}"`;
-export function rootSQL(
-  ast: AST,
-  columns: Map<string, Map<string, { type: string }>>,
-  diagnosticProjection = false
-) {
+export function rootSQL(ast: AST, columns: Map<string, Map<string, { type: string }>>) {
   const values: unknown[] = [];
   let nextAlias = 0;
   const bind = (value: unknown) => {
@@ -131,69 +126,13 @@ export function rootSQL(
     return `${column(ast.table, alias, field)} ${direction} NULLS ${direction === 'asc' ? 'FIRST' : 'LAST'}`;
   });
   const keys = primaryKeys(ast.table);
-  let keyProjection = keys
+  const keyProjection = keys
     .map((key, index) => `${column(ast.table, alias, key)}::text AS key${index}`)
     .join(', ');
-  if (diagnosticProjection) {
-    keyProjection = [...new Set([...keys, ...effectiveOrder.map(([field]) => field)])]
-      .flatMap(field => {
-        const physical = (schema.tables as any)[ast.table].columns[field]?.serverName ?? field;
-        const raw = `${alias}.${identifier(physical)}`;
-        const value = column(ast.table, alias, field);
-        return /timestamp/.test(columns.get(table(ast.table))?.get(physical)?.type ?? '')
-          ? [
-              `${raw}::text AS ${identifier(`${field}__timestamp`)}`,
-              `${value}::text AS ${identifier(`${field}__epoch_ms_exact`)}`,
-              `${value}::double precision AS ${identifier(field)}`,
-            ]
-          : [`${value} AS ${identifier(field)}`];
-      })
-      .join(', ');
-  }
   return {
     text: `SELECT ${keyProjection} FROM public.${identifier(table(ast.table))} ${alias} WHERE ${where}${order.length ? ` ORDER BY ${order.join(', ')}` : ''}${ast.limit !== undefined ? ` LIMIT ${bind(ast.limit)}` : ''}`,
     values,
   };
-}
-
-// Capture only a failed oracle's ordering inputs. Diagnostic I/O must never
-// replace the original assertion or change the successful measurement path.
-export async function assertAuthoritativeRootResult(
-  sql: Sql,
-  ast: AST,
-  columns: Parameters<typeof rootSQL>[1],
-  result: unknown,
-  expected: string[],
-  message: string,
-  save: (diagnostic: unknown) => Promise<unknown>
-) {
-  try {
-    assert.deepEqual(resultIDs(result, ast.table), expected, message);
-  } catch (error) {
-    try {
-      const query = rootSQL(ast, columns, true);
-      const fields = [
-        ...new Set([...primaryKeys(ast.table), ...(ast.orderBy ?? []).map(([field]) => field)]),
-      ];
-      const actualRows = (result == null ? [] : Array.isArray(result) ? result : [result]).map(
-        row =>
-          Object.fromEntries(fields.map(field => [field, (row as Record<string, unknown>)[field]]))
-      );
-      const sqlRows = await sql.unsafe(query.text, query.values as never[]);
-      await save({
-        protocol: 'zero-authoritative-order-diagnostic/v1',
-        ast,
-        query,
-        expectedIDs: expected,
-        actualIDs: resultIDs(result, ast.table),
-        actualRows,
-        sqlRows,
-      });
-    } catch {
-      // Keep the authoritative assertion even if SQL or artifact capture fails.
-    }
-    throw error;
-  }
 }
 export async function expectedRootIDs(sql: Sql, ast: AST, columns: Parameters<typeof rootSQL>[1]) {
   const query = rootSQL(ast, columns);

@@ -13,13 +13,8 @@ import { closeDb } from '../../../e2e/fixtures/db';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { buildQuery, loadCases, OWNER, OUTSIDER, type BenchmarkCase } from './catalog';
 import { Fixtures } from './fixtures';
-import {
-  expectedRootIDs,
-  queryAST,
-  resultIDs,
-  relatedResultIDs,
-  assertAuthoritativeRootResult,
-} from './oracle';
+import { expectedRootIDs, queryAST, resultIDs, relatedResultIDs } from './oracle';
+import { assertAuthoritativeRootResult } from './authoritative-order-diagnostic';
 import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
 import { measureJourneys } from './journeys';
 import {
