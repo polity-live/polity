@@ -438,17 +438,11 @@ export const eventQueries = {
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
-  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→votes+election, roles */
-  /** Event metadata and permitted attendance for the separate full agenda projection. */
+  /** Agenda metadata and permitted attendance, without unused event-level roles. */
   forAgenda: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    buildEventDetailBase(id, userID).related('roles', roleQuery =>
-      roleQuery.whereExists(
-        'event',
-        event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
-        { flip: false }
-      )
-    )
+    buildEventDetailBase(id, userID)
   ),
+  /** Deep event detail with the complete agenda and protected event-level roles. */
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     buildEventDetailBase(id, userID)
       .related('agenda_items', agendaItemQuery =>

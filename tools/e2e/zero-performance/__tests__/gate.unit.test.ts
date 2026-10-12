@@ -120,6 +120,7 @@ import { securityScenarios, securityCaseManifest, SECURITY_SCENARIO_COUNT } from
 import {
   applyAgendaItemQueryAccess,
   applyEventQueryAccess,
+  applyEventManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteQueryAccessFromAuthorizedAgendaItem,
   applyRoleQueryAccess,
@@ -361,7 +362,7 @@ describe('Zero performance gate', () => {
     expect(owner.where.conditions[0].left.name).toBe('id');
     expect(owner.where.conditions[1].conditions[0].left.name).toBe('creator_id');
   });
-  it('preserves every authorized event metadata projection while querying the agenda separately', () => {
+  it('preserves authorized agenda metadata and participant permissions while omitting unused event roles', () => {
     const cases = loadCases();
     const fullCase = cases.find(
       entry => entry.name === 'events.byIdFull' && entry.variant === 'default'
@@ -378,8 +379,27 @@ describe('Zero performance gate', () => {
       expect(
         full.related.filter((relation: any) => relation.subquery.alias === 'agenda_items')
       ).toHaveLength(1);
+      const eventRoles = full.related.filter(
+        (relation: any) => relation.subquery.alias === 'roles'
+      );
+      expect(eventRoles).toHaveLength(1);
+      expect(eventRoles[0].subquery.table).toBe('role');
+      expect(eventRoles[0].subquery.where).toEqual(
+        queryAST(
+          zql.role.whereExists(
+            'event',
+            event =>
+              applyEventManagerQueryAccess(
+                event,
+                userID === 'anon' ? undefined : userID,
+                'manage_participants'
+              ),
+            { flip: false }
+          )
+        ).where
+      );
       full.related = full.related.filter(
-        (relation: any) => relation.subquery.alias !== 'agenda_items'
+        (relation: any) => !['agenda_items', 'roles'].includes(relation.subquery.alias)
       );
       expect(detail).toEqual(full);
     }

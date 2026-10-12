@@ -336,11 +336,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('useEventState complete query contracts', () => {
-  it('loads permitted agenda metadata without the duplicate agenda tree and clears revoked data', () => {
+  it('loads permitted agenda metadata without unused event roles or the duplicate agenda tree and clears revoked data', () => {
     const row = {
       id: 'event-1',
       current_agenda_item_id: 'agenda-1',
-      roles: [role('role-1')],
       group: { id: 'group-1', memberships: [{ id: 'membership-1' }] },
       assembly_scopes: [{ id: 'scope-1' }],
       delegate_election_assignments: [{ id: 'assignment-1' }],
@@ -358,7 +357,6 @@ describe('useEventState complete query contracts', () => {
     expect(result.current.event).toMatchObject({
       id: row.id,
       current_agenda_item_id: row.current_agenda_item_id,
-      roles: [{ id: 'role-1', title: row.roles[0].name }],
       participants: [{ id: 'participant-1', status: 'active', roles: [], role: null }],
     });
     for (const field of [
@@ -370,6 +368,7 @@ describe('useEventState complete query contracts', () => {
     ] as const)
       expect(result.current.event?.[field]).toBe(row[field]);
     expect(result.current.event).not.toHaveProperty('agenda_items');
+    expect(result.current.event).not.toHaveProperty('roles');
     expect(result.current.isLoading).toBe(false);
     setResponse('forAgenda', [], 'unknown');
     rerender({ eventId: 'event-1' });
@@ -571,10 +570,10 @@ describe('useEventState complete query contracts', () => {
     expect(mocks.votes.byAgendaItems).not.toHaveBeenCalled();
   });
 
-  it('normalizes an agenda shell whose optional roles are absent', () => {
-    setResponse('forAgenda', [{ id: 'event-1', participants: [] }]);
+  it('normalizes absent agenda participants without adding event-level roles', () => {
+    setResponse('forAgenda', [{ id: 'event-1' }]);
     const { event } = renderHook(() => useEventAgendaShell('event-1')).result.current;
-    expect(event?.roles).toEqual([]);
+    expect(event).not.toHaveProperty('roles');
     expect(event?.participants).toEqual([]);
   });
 

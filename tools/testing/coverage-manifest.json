@@ -124992,7 +124992,7 @@
         {
           "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
           "project": "unit",
-          "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
+          "caseId": "preserves authorized agenda metadata and participant permissions while omitting unused event roles"
         }
       ],
       "suggestedTestRefs": [
@@ -125213,7 +125213,7 @@
         {
           "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
           "project": "component",
-          "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+          "caseId": "loads permitted agenda metadata without unused event roles or the duplicate agenda tree and clears revoked data"
         },
         {
           "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
@@ -125223,7 +125223,7 @@
         {
           "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
           "project": "component",
-          "caseId": "normalizes an agenda shell whose optional roles are absent"
+          "caseId": "normalizes absent agenda participants without adding event-level roles"
         },
         {
           "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",

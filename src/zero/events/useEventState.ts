@@ -297,7 +297,6 @@ export function useEventAgendaShell(eventId?: string) {
     if (!current) return null;
     return {
       ...current,
-      roles: (current.roles ?? []).map(mapRoleForDisplay),
       participants: normalizeParticipants(current.participants),
     };
   }, [rows]);

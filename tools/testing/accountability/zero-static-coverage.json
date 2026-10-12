@@ -186,7 +186,7 @@
       {
         "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
         "project": "component",
-        "caseId": "normalizes an agenda shell whose optional roles are absent"
+        "caseId": "normalizes absent agenda participants without adding event-level roles"
       },
       {
         "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
