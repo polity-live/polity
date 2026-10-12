@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
 /** Reject typos before creating stacks or accidentally measuring the full catalog. */
@@ -79,6 +79,86 @@ export function corepackPNPMEntryPoint(
     throw new Error(
       'Installed Corepack pnpm entrypoint is missing; enable the pinned package manager before measurement'
     );
+  return found;
+}
+
+/** Reuse an installed exact pin without executing PATH shims or bootstrapping over the network. */
+export function installedPNPMEntryPoint(
+  packageManager,
+  source = process.env,
+  platform = process.platform,
+  readManifest = candidate => JSON.parse(readFileSync(candidate, 'utf8')),
+  isFile = candidate => statSync(candidate).isFile(),
+  readDirectories = directory => readdirSync(directory)
+) {
+  const pin = /^pnpm@(\d+\.\d+\.\d+)(\+sha(?:224|256|384|512)\.[a-f\d]+)?$/i.exec(packageManager);
+  if (!pin) throw new Error('Invalid pinned benchmark package manager');
+  // A manifest proves the version, but only Corepack can verify the requested archive integrity.
+  if (pin[2]) return;
+  const version = pin[1];
+  const paths = platform === 'win32' ? path.win32 : path.posix;
+  const searchPath = source.PATH ?? source.Path ?? '';
+  const directories = [source.PNPM_HOME, ...searchPath.split(paths.delimiter)].filter(
+    directory => typeof directory === 'string' && paths.isAbsolute(directory)
+  );
+  const packages = new Set(
+    directories.flatMap(directory => [
+      paths.resolve(directory, `.tools/pnpm/${version}/node_modules/pnpm`),
+      paths.resolve(directory, `../.tools/pnpm/${version}/node_modules/pnpm`),
+      paths.resolve(directory, '../pnpm'),
+      paths.resolve(directory, '../node_modules/pnpm'),
+      paths.resolve(directory, '../lib/node_modules/pnpm'),
+      paths.resolve(directory, 'node_modules/pnpm'),
+      paths.resolve(directory, '..'),
+    ])
+  );
+  const inspect = directory => {
+    try {
+      const manifest = readManifest(paths.join(directory, 'package.json'));
+      if (manifest.name !== 'pnpm' || manifest.version !== version) return;
+      const bin = manifest.bin?.pnpm;
+      if (typeof bin !== 'string' || paths.isAbsolute(bin) || !/\.(?:cjs|mjs|js)$/.test(bin))
+        return;
+      const entrypoint = paths.resolve(directory, bin);
+      const relative = paths.relative(directory, entrypoint);
+      if (!relative || relative.startsWith('..') || paths.isAbsolute(relative)) return;
+      if (isFile(entrypoint)) return entrypoint;
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
+    }
+  };
+  for (const directory of packages) {
+    const entrypoint = inspect(directory);
+    if (entrypoint) return entrypoint;
+  }
+  // pnpm v11 self-update installs into randomized global/v11 directories, then links bins.
+  const globalRoots = new Set(
+    directories.flatMap(directory => [
+      paths.resolve(directory, 'global/v11'),
+      paths.resolve(directory, '../global/v11'),
+    ])
+  );
+  let found;
+  let inspected = 0;
+  for (const directory of globalRoots) {
+    let installs;
+    try {
+      installs = readDirectories(directory).filter(name =>
+        /^[a-f\d]+-[a-f\d]+-[a-f\d]{16}$/i.test(name)
+      );
+    } catch (error) {
+      if (error.code === 'ENOENT' || error.code === 'ENOTDIR') continue;
+      throw error;
+    }
+    if (installs.length > 32) return;
+    for (const install of installs) {
+      if (++inspected > 32) return;
+      const entrypoint = inspect(paths.join(directory, install, 'node_modules/pnpm'));
+      if (!entrypoint) continue;
+      if (found && found !== entrypoint) return;
+      found = entrypoint;
+    }
+  }
   return found;
 }
 

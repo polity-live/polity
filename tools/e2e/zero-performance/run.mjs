@@ -26,6 +26,7 @@ import {
   verifyBuildAssets,
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
+  installedPNPMEntryPoint,
   shouldCopyBenchmarkSource,
   validateBenchmarkArguments,
 } from './isolation.mjs';
@@ -332,12 +333,16 @@ async function copySource() {
   );
   if (rootLock !== copiedLock || unpinned.length || args.includes('--frozen-dependencies')) {
     const dependenciesAt = Date.now();
-    const corepack = corepackPNPMEntryPoint(process.execPath);
+    const packageManager = JSON.parse(
+      await readFile(path.join(sandbox, 'package.json'), 'utf8')
+    ).packageManager;
+    const pnpm =
+      installedPNPMEntryPoint(packageManager) ?? corepackPNPMEntryPoint(process.execPath);
     await command(
-      [corepack, 'install', '--frozen-lockfile', '--ignore-scripts'],
+      [pnpm, 'install', '--frozen-lockfile', '--ignore-scripts'],
       'dependencies-install'
     );
-    await command([corepack, 'rebuild', '@rocicorp/zero-sqlite3'], 'dependencies-native');
+    await command([pnpm, 'rebuild', '@rocicorp/zero-sqlite3'], 'dependencies-native');
     startup.dependenciesMs = Date.now() - dependenciesAt;
     startup.replacedUnpinnedDependencies = unpinned;
   } else {
