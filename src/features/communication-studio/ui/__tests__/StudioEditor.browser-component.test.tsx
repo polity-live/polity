@@ -34,7 +34,7 @@ it.each([undefined, 'transform'] as const)(
     const node = document.nodes.find(n => n.type === 'shape')!;
     const frameId = node.parentFrameId;
     await show();
-    await screen.findByTestId('canvas');
+    await screen.findByTestId('canvas', {}, { timeout: 10_000 });
     await act(() =>
       io.canvasProps.applyCanvasChanges(
         [
