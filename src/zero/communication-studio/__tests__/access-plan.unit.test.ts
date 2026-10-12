@@ -181,3 +181,68 @@ it.each(['owner', 'outsider', 'anon'])(
     );
   }
 );
+
+it.each(['owner', 'outsider', 'anon', undefined])(
+  'authorizes only the requested asset parent while retaining audience and workspace rights for %s',
+  userID => {
+    const projectId = '00000000-0000-4000-8000-000000000001';
+    const actor = userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
+    for (const workspaceId of [undefined, '00000000-0000-4000-8000-000000000002']) {
+      const ast = queryAST(
+        studioQueries.assets.fn({ args: { projectId, workspaceId }, ctx: { userID } } as never)
+      );
+      const previous = queryAST(
+        zql.studio_asset
+          .where('project_id', projectId)
+          .where('ready', true)
+          .where(({ or, cmp }) =>
+            or(
+              cmp('workspace_id', 'IS', null),
+              cmp('workspace_id', '=', workspaceId ?? '00000000-0000-0000-0000-000000000000')
+            )
+          )
+          .whereExists('project', project =>
+            workspaceId
+              ? studioProjectCollaborativeAccess(project.where('document_schema_version', 6), actor)
+              : studioProjectReadAccess(
+                  project.where('document_schema_version', 6),
+                  userID && userID !== 'anon' ? userID : null
+                )
+          )
+          .where(({ or, cmp, exists }) =>
+            or(
+              cmp('workspace_id', 'IS', null),
+              exists('workspace', workspace =>
+                workspace.where(({ or, cmp, exists }) =>
+                  or(
+                    cmp('checksum', 'IS NOT', null),
+                    cmp('owner_id', actor),
+                    exists('readers', reader => reader.where('user_id', actor))
+                  )
+                )
+              )
+            )
+          )
+      );
+      const isProject = (condition: any) =>
+        condition.type === 'correlatedSubquery' &&
+        condition.related.subquery.table === 'studio_project';
+      const parent = ast.where.conditions.find(isProject);
+      const oldParent = previous.where.conditions.find(isProject);
+      expect(parent.flip).toBe(true);
+      expect(parent.related.correlation).toEqual(oldParent.related.correlation);
+      expect(parent.related.subquery.where.conditions[0]).toMatchObject({
+        type: 'simple',
+        left: { name: 'id' },
+        op: '=',
+        right: { value: projectId },
+      });
+      expect(parent.related.subquery.where.conditions.slice(1)).toEqual(
+        oldParent.related.subquery.where.conditions
+      );
+      expect(ast.where.conditions.filter((condition: any) => !isProject(condition))).toEqual(
+        previous.where.conditions.filter((condition: any) => !isProject(condition))
+      );
+    }
+  }
+);

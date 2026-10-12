@@ -230,10 +230,19 @@ export const studioQueries = {
             cmp('workspace_id', '=', args.workspaceId ?? '00000000-0000-0000-0000-000000000000')
           )
         )
-        .whereExists('project', project =>
-          args.workspaceId
-            ? collaborativeProject(project, requireQueryUser(ctx.userID))
-            : relatedProject(project, ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null)
+        .whereExists(
+          'project',
+          project =>
+            args.workspaceId
+              ? collaborativeProject(
+                  project.where('id', args.projectId),
+                  requireQueryUser(ctx.userID)
+                )
+              : relatedProject(
+                  project.where('id', args.projectId),
+                  ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null
+                ),
+          { flip: true }
         )
         .where(({ or, cmp, exists }) =>
           or(
