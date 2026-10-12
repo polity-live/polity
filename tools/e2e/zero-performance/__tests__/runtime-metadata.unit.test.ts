@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { runtimeMetadata } from '../execution';
 import { linuxEnvironment } from '../linux-runtime.mjs';
@@ -14,7 +14,9 @@ vi.mock('node:fs/promises', () => ({
       : Buffer.from(file.endsWith('table-source.js') ? files.source : files.lock)
   ),
 }));
+beforeEach(() => vi.stubEnv('ZERO_INITIAL_SYNC_TEXT_COPY', 'true'));
 afterEach(() => {
+  vi.unstubAllEnvs();
   files.version = '1.9.0';
   files.lock = 'reviewed revision-owned lock';
   files.source = 'original SDK source';
@@ -25,6 +27,7 @@ describe('owned Docker benchmark environment', () => {
     ZERO_UPSTREAM_DB: 'postgres://owner@127.0.0.1:15625/db',
     ZERO_CVR_DB: 'postgres://owner@127.0.0.1:15625/db',
     ZERO_CHANGE_DB: 'postgres://owner@127.0.0.1:15625/db',
+    ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
     ZERO_QUERY_URL: 'http://localhost:15620/api/query',
     ZERO_MUTATE_URL: 'http://localhost:15620/api/mutate',
     ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID: '00000000-0000-4000-8000-000000000001',
@@ -40,6 +43,7 @@ describe('owned Docker benchmark environment', () => {
       ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID: environment.ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID,
       NODE_OPTIONS: '--import=/scan-adapter/sqlite-scan-preload.mjs',
       ZERO_REPLICA_FILE: '/replica/zero.db',
+      ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
       ZERO_QUERY_URL: 'http://host.docker.internal:15620/api/query',
     });
     expect(mapped).not.toHaveProperty('ZERO_PERFORMANCE_OUTPUT');
@@ -66,6 +70,7 @@ describe('shared benchmark runtime fingerprint', () => {
     expect(await runtimeMetadata(158)).toEqual(collector);
     expect(collector).toMatchObject({
       zero: '1.9.0',
+      initialSyncCopyFormat: 'text',
       schemaTables: 158,
       lockSHA256: createHash('sha256').update(files.lock).digest('hex'),
       scanStatusSourceSHA256: createHash('sha256').update(files.source).digest('hex'),
@@ -85,4 +90,11 @@ describe('shared benchmark runtime fingerprint', () => {
     files.lock = '';
     await expect(runtimeMetadata(158)).rejects.toThrow('Missing runtime lockfile');
   });
+  it.each([undefined, '', 'false', '1'])(
+    'requires the explicit supported text COPY option %s before recording runtime evidence',
+    async option => {
+      vi.stubEnv('ZERO_INITIAL_SYNC_TEXT_COPY', option);
+      await expect(runtimeMetadata(158)).rejects.toThrow('explicit text COPY');
+    }
+  );
 });

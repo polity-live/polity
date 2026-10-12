@@ -8,6 +8,8 @@ import type { Execution } from './sharding';
 export async function runtimeMetadata(schemaTables: number) {
   if (!Number.isSafeInteger(schemaTables) || schemaTables < 1)
     throw new Error('Invalid runtime schema');
+  if (process.env.ZERO_INITIAL_SYNC_TEXT_COPY !== 'true')
+    throw new Error('Benchmark requires explicit text COPY for replica timestamp consistency');
   const version = JSON.parse(
     await readFile('node_modules/@rocicorp/zero/package.json', 'utf8')
   ).version;
@@ -27,6 +29,7 @@ export async function runtimeMetadata(schemaTables: number) {
     platform: process.platform,
     arch: process.arch,
     zero: version,
+    initialSyncCopyFormat: 'text',
     lockSHA256: createHash('sha256').update(lock).digest('hex'),
     schemaTables,
     scanStatusSourceSHA256: createHash('sha256').update(tableSource).digest('hex'),

@@ -16,6 +16,7 @@ async function fixture() {
   const artifact = await writeJoinPlanArtifact(output, 'users.current/default/empty/owner', joins);
   const file = path.join(output, 'report.json');
   const report = {
+    runtime: { initialSyncCopyFormat: 'text' },
     infrastructure: [],
     measurements: [{ key: 'users.current', plans: { joinsArtifact: artifact } }],
   };
@@ -24,6 +25,22 @@ async function fixture() {
 }
 
 describe('external join-plan diagnostics', () => {
+  it.each([
+    ['head', undefined],
+    ['head', 'binary'],
+    ['base', undefined],
+    ['base', 'binary'],
+  ] as const)(
+    'rejects unavailable or inconsistent %s replica transport %s on artifact ingest',
+    async (revision, format) => {
+      const { file, report } = await fixture();
+      report.runtime.initialSyncCopyFormat = format as string;
+      await writeFile(file, JSON.stringify({ ...report, execution: { revision } }));
+      expect((await readPerformanceReport(file)).infrastructure).toContain(
+        'Missing or inconsistent replica text COPY provenance'
+      );
+    }
+  );
   it('verifies complete traces without retaining them in the measurement report', async () => {
     const { file, artifact } = await fixture();
     const report = await readPerformanceReport(file);

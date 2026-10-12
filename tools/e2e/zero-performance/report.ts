@@ -110,6 +110,7 @@ export function isAbsoluteBudgetFailure(failure: string) {
 }
 
 export interface Report {
+  runtime?: unknown;
   expectedMutations?: import('./mutation-metrics').MutationExpectation[];
   mutations?: import('./mutation-metrics').MutationMeasurement[];
   mutationDiagnostics?: import('./mutation-report').MutationAPIRecord[];
@@ -149,6 +150,14 @@ export interface Report {
       connections?: { clientID: string; state: string; at: number }[];
     };
   }[];
+}
+
+/** The snapshot and WAL must use the same timestamp decoder on both revisions. */
+export function replicaTransportFailures(report: Report) {
+  const runtime = (report as Report & { runtime?: { initialSyncCopyFormat?: unknown } }).runtime;
+  return runtime?.initialSyncCopyFormat === 'text'
+    ? []
+    : ['Missing or inconsistent replica text COPY provenance'];
 }
 
 function routeQuery(route: string) {

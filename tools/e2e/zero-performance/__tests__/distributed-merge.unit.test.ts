@@ -60,6 +60,7 @@ async function partial(
   };
   const apiDiagnostics: any[] = [];
   const runtime = {
+    initialSyncCopyFormat: 'text',
     zero: '1.10.0',
     node: 'v24.18.0',
     sqliteDriver: 'fixture-driver',

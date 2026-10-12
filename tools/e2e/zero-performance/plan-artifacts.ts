@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, link, copyFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
-import type { Report } from './report';
+import { replicaTransportFailures, type Report } from './report';
 import assert from 'node:assert/strict';
 import { REPETITIONS } from './metrics';
 import { readScanStatusArtifact, type ScanStatusArtifact } from './scan-status-artifacts';
@@ -77,6 +77,7 @@ export async function retainMeasurementArtifacts(source: string, output: string,
 /** Verify one exported trace at a time; missing or altered diagnostics cannot pass the gate. */
 export async function readPerformanceReport(file: string): Promise<Report> {
   const report: Report = JSON.parse(await readFile(file, 'utf8'));
+  report.infrastructure.push(...replicaTransportFailures(report));
   const runtime = (
     report as Report & {
       runtime?: {

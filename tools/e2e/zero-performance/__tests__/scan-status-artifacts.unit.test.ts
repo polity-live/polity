@@ -65,6 +65,7 @@ async function fixture() {
   const report: any = {
     infrastructure: [],
     runtime: {
+      initialSyncCopyFormat: 'text',
       zero: '1.10.0',
       node: 'v24.18.0',
       sqliteDriver: '0.1.0',

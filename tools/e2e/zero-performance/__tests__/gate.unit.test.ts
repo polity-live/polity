@@ -109,6 +109,8 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   measuredServerWarnings,
+  replicaTransportFailures,
+  type Report,
 } from '../report';
 import { stopOwnedRuntime, stopOwnedSupabase, dependencyVersions } from '../linux-runtime.mjs';
 import { browserTargets, browserTarget } from '../linux-browser.mjs';
@@ -2112,6 +2114,63 @@ describe('Zero performance gate', () => {
       actualRows: actual.map(({ privateField: _private, ...row }) => row),
       sqlRows,
     });
+  });
+  it('VERIFY:ZERO:REPLICA-TEXT-COPY keeps equal captured snapshot and WAL timestamps tied without weakening the oracle', async () => {
+    const unixMicros = 1791835039551486n;
+    // The pinned SDKs use these distinct binary-COPY and WAL decoding paths.
+    const binaryMillis = Number(unixMicros - 946684800000000n) / 1000 + 946684800000;
+    const textMillis = Number(unixMicros / 1000n) + Number(unixMicros % 1000n) / 1000;
+    expect(binaryMillis).toBe(1791835039551.4858);
+    expect(textMillis).toBe(1791835039551.486);
+    const owner = 'user:20000000-0000-4000-8000-000000000002';
+    const assistant = 'user:a12a0000-0000-4000-a000-000000000001';
+    const ast = {
+      table: 'search_document',
+      orderBy: [
+        ['created_at', 'desc'],
+        ['id', 'desc'],
+      ] as const,
+    };
+    const sql = { unsafe: vi.fn().mockResolvedValue([]) } as unknown as Sql;
+    const columns = new Map();
+    const save = vi.fn();
+    const ordered = (snapshotMillis: number) =>
+      [
+        { id: owner, created_at: textMillis },
+        { id: assistant, created_at: snapshotMillis },
+      ].sort((a, b) => b.created_at - a.created_at || b.id.localeCompare(a.id));
+    await expect(
+      assertAuthoritativeRootResult(
+        sql,
+        ast,
+        columns,
+        ordered(binaryMillis),
+        [assistant, owner],
+        'Captured timestamp ordering',
+        save
+      )
+    ).rejects.toThrow('Captured timestamp ordering');
+    await expect(
+      assertAuthoritativeRootResult(
+        sql,
+        ast,
+        columns,
+        ordered(textMillis),
+        [assistant, owner],
+        'Captured timestamp ordering',
+        save
+      )
+    ).resolves.toBeUndefined();
+    expect(save).toHaveBeenCalledOnce();
+  });
+  it('requires explicit replica transport evidence instead of accepting legacy or binary-mode reports', () => {
+    const report = { runtime: { initialSyncCopyFormat: 'text' } } as Report;
+    expect(replicaTransportFailures(report)).toEqual([]);
+    for (const runtime of [undefined, {}, { initialSyncCopyFormat: 'binary' }]) {
+      expect(replicaTransportFailures({ ...report, runtime })).toEqual([
+        'Missing or inconsistent replica text COPY provenance',
+      ]);
+    }
   });
   it('does no diagnostic SQL or output for a successful authoritative oracle', async () => {
     const unsafe = vi.fn();
