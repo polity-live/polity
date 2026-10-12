@@ -34,6 +34,9 @@ export default defineConfig({
     },
   },
   test: {
+    // Each worker owns a real Chromium page with canvas and animation work.
+    // Bound contention so native input and rendering keep making progress.
+    maxWorkers: 2,
     env: {
       VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
       VITE_SUPABASE_ANON_KEY: 'unit-test-anon-key',

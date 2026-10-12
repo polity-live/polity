@@ -51,13 +51,17 @@ it('keeps canonical slide positions when an entering animation crosses responsiv
       <KonvaStudioCanvas {...props} document={wide} />
     </div>
   );
-  await waitFor(() =>
-    expect(
-      Konva.stages
-        .find(s => s.findOne(`#${title.id}-show`))
-        ?.findOne(`#${title.id}-show`)
-        ?.opacity()
-    ).toBe(1)
+  // The real 800 ms tween also has a stagger delay and shares browser frames
+  // with the other coverage tests. Wait for completion beyond the default 1 s.
+  await waitFor(
+    () =>
+      expect(
+        Konva.stages
+          .find(s => s.findOne(`#${title.id}-show`))
+          ?.findOne(`#${title.id}-show`)
+          ?.opacity()
+      ).toBe(1),
+    { timeout: 5_000 }
   );
   expect(node()?.x()).toBe(title.transform.x + title.transform.width / 2);
   expect(node()?.y()).toBe(title.transform.y + title.transform.height / 2);
