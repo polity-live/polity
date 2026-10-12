@@ -9,6 +9,10 @@ import type { StudioDataViewDialog } from '../StudioDataViewDialog';
 import { openStudioPanel } from '../../logic/panel-events';
 import { insertStudioDataView } from '../../logic/data-view-import';
 
+// The complete editor renders hundreds of controls; instrumented CI runs need
+// the same bounded interaction timeout as the other Studio editor suites.
+vi.setConfig({ testTimeout: 15_000 });
+
 const tools = vi.hoisted(() => ({
   live: null as ComponentProps<typeof StudioLiveTools> | null,
   data: null as ComponentProps<typeof StudioDataViewDialog> | null,
