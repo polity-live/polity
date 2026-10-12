@@ -46,40 +46,47 @@ it('freezes nonanimated intro time and safely repaints an attached or detached c
 });
 
 it('keeps the scene alive across live document and clock updates and disposes it on actual changes', () => {
-  const document = createEventTemplate('cover', crypto.randomUUID());
-  const frame = document.nodes[0];
-  if (frame.type !== 'frame') throw new Error('frame');
-  const r = render(<StudioIntroBackground frame={frame} theme={document.theme} animate />);
-  expect(io.create).toHaveBeenCalledOnce();
-  const now = io.create.mock.calls[0][4] as () => number;
-  const before = now();
-  r.rerender(
-    <StudioIntroBackground
-      frame={structuredClone(frame)}
-      theme={structuredClone(document.theme)}
-      animate
-      clockOffset={4000}
-    />
-  );
-  expect(io.create).toHaveBeenCalledOnce();
-  expect(now() - before).toBeGreaterThanOrEqual(4000);
-  const changed = structuredClone(frame);
-  if (!changed.intro) throw new Error('intro');
-  changed.intro.intensity = 0.9;
-  r.rerender(<StudioIntroBackground frame={changed} theme={document.theme} animate />);
-  expect(io.dispose).toHaveBeenCalledOnce();
-  expect(io.create).toHaveBeenCalledTimes(2);
-  changed.intro.scene = 'democracy-illustrated';
-  r.rerender(
-    <StudioIntroBackground frame={changed} theme={document.theme} animate clockOffset={4000} />
-  );
-  expect(io.create).toHaveBeenCalledTimes(3);
-  expect(io.create.mock.calls[2][1].scene).toBe('democracy-illustrated');
-  expect((io.create.mock.calls[2][4] as () => number)() - Date.now()).toBeGreaterThanOrEqual(3999);
-  changed.intro.mode = 'static';
-  r.rerender(<StudioIntroBackground frame={changed} theme={document.theme} animate />);
-  expect(io.dispose).toHaveBeenCalledTimes(3);
-  expect(r.queryByTestId('intro-background')).toBeNull();
-  r.unmount();
-  expect(io.dispose).toHaveBeenCalledTimes(3);
+  const clockBase = 10_000;
+  const wallClock = vi.spyOn(Date, 'now').mockReturnValue(clockBase);
+  try {
+    const document = createEventTemplate('cover', crypto.randomUUID());
+    const frame = document.nodes[0];
+    if (frame.type !== 'frame') throw new Error('frame');
+    const r = render(<StudioIntroBackground frame={frame} theme={document.theme} animate />);
+    expect(io.create).toHaveBeenCalledOnce();
+    const now = io.create.mock.calls[0][4] as () => number;
+    const before = now();
+    expect(before).toBe(clockBase);
+    r.rerender(
+      <StudioIntroBackground
+        frame={structuredClone(frame)}
+        theme={structuredClone(document.theme)}
+        animate
+        clockOffset={4000}
+      />
+    );
+    expect(io.create).toHaveBeenCalledOnce();
+    expect(now() - before).toBe(4000);
+    const changed = structuredClone(frame);
+    if (!changed.intro) throw new Error('intro');
+    changed.intro.intensity = 0.9;
+    r.rerender(<StudioIntroBackground frame={changed} theme={document.theme} animate />);
+    expect(io.dispose).toHaveBeenCalledOnce();
+    expect(io.create).toHaveBeenCalledTimes(2);
+    changed.intro.scene = 'democracy-illustrated';
+    r.rerender(
+      <StudioIntroBackground frame={changed} theme={document.theme} animate clockOffset={4000} />
+    );
+    expect(io.create).toHaveBeenCalledTimes(3);
+    expect(io.create.mock.calls[2][1].scene).toBe('democracy-illustrated');
+    expect((io.create.mock.calls[2][4] as () => number)()).toBe(clockBase + 4000);
+    changed.intro.mode = 'static';
+    r.rerender(<StudioIntroBackground frame={changed} theme={document.theme} animate />);
+    expect(io.dispose).toHaveBeenCalledTimes(3);
+    expect(r.queryByTestId('intro-background')).toBeNull();
+    r.unmount();
+    expect(io.dispose).toHaveBeenCalledTimes(3);
+  } finally {
+    wallClock.mockRestore();
+  }
 });
