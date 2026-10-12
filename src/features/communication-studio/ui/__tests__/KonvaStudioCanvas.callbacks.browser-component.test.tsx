@@ -99,10 +99,25 @@ it('ignores idle cancellation and rolls back an active native drag exactly once'
   await userEvent.keyboard('{Escape}');
   expect(dragEnd).not.toHaveBeenCalled();
   const group = stage().findOne<Konva.Group>(`#${node.id}`)!;
+  const local = { x: 60, y: 40 };
+  await waitFor(() =>
+    expect(stage().getIntersection(group.getAbsoluteTransform().point(local))).toBe(
+      group.findOne('Rect')
+    )
+  );
   const original = { x: group.x(), y: group.y() };
-  const point = group.getAbsoluteTransform().point({ x: 60, y: 40 });
+  const point = group.getAbsoluteTransform().point(local);
   const bounds = stage().container().getBoundingClientRect();
-  const start = { x: bounds.left + point.x, y: bounds.top + point.y };
+  // CDP consumes outer viewport coordinates; Vitest can scale its test iframe.
+  const iframe = window.frameElement as HTMLElement | null;
+  const outer = iframe?.getBoundingClientRect();
+  const scaleX = iframe && outer ? outer.width / iframe.offsetWidth : 1;
+  const scaleY = iframe && outer ? outer.height / iframe.offsetHeight : 1;
+  const start = {
+    x: (bounds.left + point.x) * scaleX + (outer?.left ?? 0),
+    y: (bounds.top + point.y) * scaleY + (outer?.top ?? 0),
+  };
+  const end = { x: start.x + 50 * scaleX, y: start.y + 30 * scaleY };
   await cdp().send('Input.dispatchMouseEvent', {
     type: 'mousePressed',
     ...start,
@@ -113,10 +128,11 @@ it('ignores idle cancellation and rolls back an active native drag exactly once'
   try {
     await cdp().send('Input.dispatchMouseEvent', {
       type: 'mouseMoved',
-      x: start.x + 50,
-      y: start.y + 30,
+      ...end,
+      button: 'left',
       buttons: 1,
     });
+    await waitFor(() => expect(group.isDragging()).toBe(true));
     await waitFor(() => expect(dragMove).toHaveBeenCalled());
     await userEvent.keyboard('{Escape}');
     expect(dragEnd).toHaveBeenCalledExactlyOnceWith(node.id, [node.id], Number.NaN, Number.NaN);
@@ -125,8 +141,7 @@ it('ignores idle cancellation and rolls back an active native drag exactly once'
   } finally {
     await cdp().send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
-      x: start.x + 50,
-      y: start.y + 30,
+      ...end,
       button: 'left',
       buttons: 0,
       clickCount: 1,

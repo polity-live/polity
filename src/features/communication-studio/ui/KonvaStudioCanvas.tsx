@@ -1721,13 +1721,14 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         const preview = dragPreview.current;
         if (!preview) {
           return;
+        } else {
+          event.preventDefault();
+          ignoredFollowerDrags.current.add(preview.driverId);
+          stage.current?.findOne(`#${preview.driverId}`)?.stopDrag();
+          clearStudioDragPreview(stage.current, preview);
+          dragPreview.current = null;
+          props.onNodeDragEnd?.(preview.driverId, preview.selectedIds, Number.NaN, Number.NaN);
         }
-        event.preventDefault();
-        ignoredFollowerDrags.current.add(preview.driverId);
-        stage.current?.findOne(`#${preview.driverId}`)?.stopDrag();
-        clearStudioDragPreview(stage.current, preview);
-        dragPreview.current = null;
-        props.onNodeDragEnd?.(preview.driverId, preview.selectedIds, Number.NaN, Number.NaN);
       };
       window.addEventListener('pointercancel', cancel, true);
       window.addEventListener('keydown', cancel, true);
@@ -2014,10 +2015,16 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 if (ignoredFollowerDrags.current.has(node.id)) return;
                 if (touchSuppressed.current) {
                   return;
+                } else {
+                  const point = dragClientPoint(event.evt);
+                  const preview = updateDragPreview(node.id, point.clientX, point.clientY);
+                  props.onNodeDragMove?.(
+                    node.id,
+                    preview.selectedIds,
+                    point.clientX,
+                    point.clientY
+                  );
                 }
-                const point = dragClientPoint(event.evt);
-                const preview = updateDragPreview(node.id, point.clientX, point.clientY);
-                props.onNodeDragMove?.(node.id, preview.selectedIds, point.clientX, point.clientY);
               }}
               onDragEnd={event => {
                 if (event.target !== event.currentTarget) return;
