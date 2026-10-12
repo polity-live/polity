@@ -160,6 +160,18 @@ export function replicaTransportFailures(report: Report) {
     : ['Missing or inconsistent replica text COPY provenance'];
 }
 
+/** Both revisions must execute with the same bounded cooperative scheduling. */
+export function ivmSchedulingFailures(report: Report) {
+  const runtime = (
+    report as Report & {
+      runtime?: { ivmYieldThresholdMs?: unknown; ivmPriorityYieldThresholdMs?: unknown };
+    }
+  ).runtime;
+  return runtime?.ivmYieldThresholdMs === 4000 && runtime.ivmPriorityYieldThresholdMs === 1000
+    ? []
+    : ['Missing or inconsistent 4000/1000-ms IVM yield threshold provenance'];
+}
+
 function routeQuery(route: string) {
   if (route === '/search') return { name: 'search.searchDocumentPage' };
   if (route === '/messages') return { name: 'messages.messagePage' };

@@ -66,6 +66,8 @@ async function fixture() {
     infrastructure: [],
     runtime: {
       initialSyncCopyFormat: 'text',
+      ivmYieldThresholdMs: 4000,
+      ivmPriorityYieldThresholdMs: 1000,
       zero: '1.10.0',
       node: 'v24.18.0',
       sqliteDriver: '0.1.0',

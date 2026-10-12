@@ -607,6 +607,10 @@ ${storageBuckets}
       // Binary COPY and WAL can round the same sub-millisecond timestamp differently.
       // Both revisions use the supported text transport before any timed activation.
       ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
+      // Zero 1.9 can mistake a cooperative yield for a row in an OR-branch delete.
+      // Priority work quarters this option: both modes stay >= the 1000-ms total budget.
+      // All original latency budgets and the SDK's advancement reset limits still apply.
+      ZERO_YIELD_THRESHOLD_MS: '4000',
       ZERO_ADMIN_PASSWORD: `benchmark-${runID}`,
       ZERO_LOG_FORMAT: 'json',
       ZERO_QUERY_HYDRATION_STATS: 'true',

@@ -14,7 +14,10 @@ vi.mock('node:fs/promises', () => ({
       : Buffer.from(file.endsWith('table-source.js') ? files.source : files.lock)
   ),
 }));
-beforeEach(() => vi.stubEnv('ZERO_INITIAL_SYNC_TEXT_COPY', 'true'));
+beforeEach(() => {
+  vi.stubEnv('ZERO_INITIAL_SYNC_TEXT_COPY', 'true');
+  vi.stubEnv('ZERO_YIELD_THRESHOLD_MS', '4000');
+});
 afterEach(() => {
   vi.unstubAllEnvs();
   files.version = '1.9.0';
@@ -28,6 +31,7 @@ describe('owned Docker benchmark environment', () => {
     ZERO_CVR_DB: 'postgres://owner@127.0.0.1:15625/db',
     ZERO_CHANGE_DB: 'postgres://owner@127.0.0.1:15625/db',
     ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
+    ZERO_YIELD_THRESHOLD_MS: '4000',
     ZERO_QUERY_URL: 'http://localhost:15620/api/query',
     ZERO_MUTATE_URL: 'http://localhost:15620/api/mutate',
     ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID: '00000000-0000-4000-8000-000000000001',
@@ -44,6 +48,7 @@ describe('owned Docker benchmark environment', () => {
       NODE_OPTIONS: '--import=/scan-adapter/sqlite-scan-preload.mjs',
       ZERO_REPLICA_FILE: '/replica/zero.db',
       ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
+      ZERO_YIELD_THRESHOLD_MS: '4000',
       ZERO_QUERY_URL: 'http://host.docker.internal:15620/api/query',
     });
     expect(mapped).not.toHaveProperty('ZERO_PERFORMANCE_OUTPUT');
@@ -71,6 +76,8 @@ describe('shared benchmark runtime fingerprint', () => {
     expect(collector).toMatchObject({
       zero: '1.9.0',
       initialSyncCopyFormat: 'text',
+      ivmYieldThresholdMs: 4000,
+      ivmPriorityYieldThresholdMs: 1000,
       schemaTables: 158,
       lockSHA256: createHash('sha256').update(files.lock).digest('hex'),
       scanStatusSourceSHA256: createHash('sha256').update(files.source).digest('hex'),
@@ -95,6 +102,13 @@ describe('shared benchmark runtime fingerprint', () => {
     async option => {
       vi.stubEnv('ZERO_INITIAL_SYNC_TEXT_COPY', option);
       await expect(runtimeMetadata(158)).rejects.toThrow('explicit text COPY');
+    }
+  );
+  it.each([undefined, '', '10', '1000', '4001', '4000.0'])(
+    'requires the same explicit bounded IVM yield option %s before recording either revision',
+    async option => {
+      vi.stubEnv('ZERO_YIELD_THRESHOLD_MS', option);
+      await expect(runtimeMetadata(158)).rejects.toThrow('shared 4000-ms IVM yield threshold');
     }
   );
 });

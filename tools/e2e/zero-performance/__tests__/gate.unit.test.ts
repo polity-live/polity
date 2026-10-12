@@ -110,6 +110,7 @@ import {
   MEASUREMENT_PROTOCOL,
   measuredServerWarnings,
   replicaTransportFailures,
+  ivmSchedulingFailures,
   type Report,
 } from '../report';
 import { stopOwnedRuntime, stopOwnedSupabase, dependencyVersions } from '../linux-runtime.mjs';
@@ -2171,6 +2172,52 @@ describe('Zero performance gate', () => {
         'Missing or inconsistent replica text COPY provenance',
       ]);
     }
+  });
+  it('VERIFY:ZERO:IVM-YIELD-BOUNDARY preserves deletion checks within the shared scheduling limit and retains all absolute budgets', () => {
+    const report = {
+      runtime: { ivmYieldThresholdMs: 4000, ivmPriorityYieldThresholdMs: 1000 },
+    } as Report;
+    expect(ivmSchedulingFailures(report)).toEqual([]);
+    for (const runtime of [
+      undefined,
+      {},
+      { ivmYieldThresholdMs: 10 },
+      { ivmYieldThresholdMs: '4000', ivmPriorityYieldThresholdMs: 1000 },
+      { ivmYieldThresholdMs: 4000 },
+      { ivmYieldThresholdMs: 4000, ivmPriorityYieldThresholdMs: 250 },
+    ])
+      expect(ivmSchedulingFailures({ ...report, runtime })).toEqual([
+        'Missing or inconsistent 4000/1000-ms IVM yield threshold provenance',
+      ]);
+    // Source reads emit a cooperative marker when elapsedLap() exceeds the option.
+    // Zero 1.9's first() mistakes that marker for a row in its OR-branch delete check.
+    const otherBranch = function* (elapsedMs: number, thresholdMs: number) {
+      if (elapsedMs > thresholdMs) yield 'yield';
+    };
+    const configured = 4000;
+    const thresholds = [Math.max(configured, 2), Math.max(configured / 4, 2)];
+    expect(thresholds).toEqual([4000, 1000]);
+    expect(otherBranch(30, 10).next().value).toBe('yield');
+    for (const threshold of thresholds) {
+      expect(otherBranch(999, threshold).next().value).toBeUndefined();
+      expect(otherBranch(1000, threshold).next().value).toBeUndefined();
+      expect(otherBranch(threshold + 1, threshold).next().value).toBe('yield');
+    }
+    expect(BUDGETS).toEqual({ totalMs: 1000, clientMs: 50, serverMs: 100 });
+    const tooSlow = measurement();
+    tooSlow.samples = tooSlow.samples.map(sample => ({
+      ...sample,
+      totalMs: 1001,
+      clientMs: 51,
+      serverMs: 101,
+    }));
+    expect(checkBudgets(tooSlow)).toEqual(
+      expect.arrayContaining([
+        'Total exceeds 1000 ms',
+        'Client exceeds 50 ms',
+        'Server materialization exceeds 100 ms',
+      ])
+    );
   });
   it('does no diagnostic SQL or output for a successful authoritative oracle', async () => {
     const unsafe = vi.fn();

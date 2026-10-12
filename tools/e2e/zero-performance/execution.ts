@@ -10,6 +10,8 @@ export async function runtimeMetadata(schemaTables: number) {
     throw new Error('Invalid runtime schema');
   if (process.env.ZERO_INITIAL_SYNC_TEXT_COPY !== 'true')
     throw new Error('Benchmark requires explicit text COPY for replica timestamp consistency');
+  if (process.env.ZERO_YIELD_THRESHOLD_MS !== '4000')
+    throw new Error('Benchmark requires the shared 4000-ms IVM yield threshold');
   const version = JSON.parse(
     await readFile('node_modules/@rocicorp/zero/package.json', 'utf8')
   ).version;
@@ -30,6 +32,8 @@ export async function runtimeMetadata(schemaTables: number) {
     arch: process.arch,
     zero: version,
     initialSyncCopyFormat: 'text',
+    ivmYieldThresholdMs: 4000,
+    ivmPriorityYieldThresholdMs: 1000,
     lockSHA256: createHash('sha256').update(lock).digest('hex'),
     schemaTables,
     scanStatusSourceSHA256: createHash('sha256').update(tableSource).digest('hex'),

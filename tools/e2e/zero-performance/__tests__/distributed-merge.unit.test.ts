@@ -61,6 +61,8 @@ async function partial(
   const apiDiagnostics: any[] = [];
   const runtime = {
     initialSyncCopyFormat: 'text',
+    ivmYieldThresholdMs: 4000,
+    ivmPriorityYieldThresholdMs: 1000,
     zero: '1.10.0',
     node: 'v24.18.0',
     sqliteDriver: 'fixture-driver',
