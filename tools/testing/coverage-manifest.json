@@ -136084,7 +136084,18 @@
       "kind": "test-infrastructure",
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
-      "testRefs": [],
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads the pinned SDK physical row contract with exact parameters"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+          "project": "unit",
+          "caseId": "performs no CVR SQL for success or an unretained failure"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {

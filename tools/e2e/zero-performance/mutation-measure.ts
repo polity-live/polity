@@ -489,7 +489,16 @@ export async function measureMutations(
               const diagnostic = await rollbackTrace.failure(
                 error,
                 writer,
-                process.env.ZERO_ADMIN_PASSWORD
+                process.env.ZERO_ADMIN_PASSWORD,
+                {
+                  clientGroupID: sample.clientGroupID,
+                  databaseURL: process.env.E2E_DATABASE_URL,
+                  cvrDatabaseURL: process.env.ZERO_CVR_DB,
+                  // The isolated runner strips inherited Zero configuration;
+                  // both pinned SDKs default to app.id='zero', shard.num=0.
+                  appID: process.env.ZERO_APP_ID ?? 'zero',
+                  shardNum: process.env.ZERO_SHARD_NUM ?? '0',
+                }
               );
               if (diagnostic)
                 await writeAtomicReport(
