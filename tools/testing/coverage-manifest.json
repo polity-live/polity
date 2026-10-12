@@ -136013,6 +136013,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/mutation-rollback-diagnostics.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/mutation-runtime.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",

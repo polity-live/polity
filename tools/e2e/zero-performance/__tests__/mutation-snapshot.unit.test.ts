@@ -1,10 +1,306 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import assert from 'node:assert/strict';
+import type { Sql } from 'postgres';
+import { rollbackDiagnostics } from '../mutation-rollback-diagnostics';
+import { replicatedTimestampValues } from '../mutation-timestamp';
 import {
   waitForRollback,
   waitForReadOnlyRollbackProof,
   watchMutationSnapshot,
 } from '../mutation-snapshot';
+
+function diagnosticSQL(results: unknown[][]) {
+  const statements: string[] = [];
+  const execute = vi.fn();
+  const sql = ((input: string | TemplateStringsArray) => {
+    if (typeof input === 'string') return { identifier: input };
+    const index = statements.length;
+    statements.push(input.join('?'));
+    return {
+      then(resolve?: (value: unknown[]) => unknown, reject?: (error: unknown) => unknown) {
+        execute();
+        return Promise.resolve(results[index]).then(resolve, reject);
+      },
+    };
+  }) as unknown as Sql;
+  return { sql, statements, execute };
+}
+function diagnosticWriter() {
+  return {
+    inspector: {
+      authenticate: vi.fn(async () => true),
+      client: {
+        map: vi.fn(
+          async () =>
+            new Map<string, unknown>([
+              [
+                'e/action_right/fixture-right',
+                {
+                  id: 'fixture-right',
+                  role_id: 'fixture-role',
+                  event_id: 'fixture-event',
+                  resource: 'events',
+                  action: 'manage_votes',
+                  created_at: 1_791_684_800_000.006,
+                  name: 'private application content',
+                },
+              ],
+            ])
+        ),
+        queries: vi.fn(async () => [
+          {
+            id: 'query-id',
+            name: 'votes.byId',
+            got: true,
+            ttl: 'none',
+            inactivatedAt: null,
+            rowCount: 27,
+            deleted: false,
+            args: ['private query argument'],
+            serverZQL: 'private SQL',
+          },
+        ]),
+      },
+    },
+  };
+}
+
+describe('failure-only rollback evidence', () => {
+  it('forwards SDK class methods and getters with their real private-field receiver', async () => {
+    class Client {
+      #id = 'private-field-client';
+      get id() {
+        return this.#id;
+      }
+      async map() {
+        return new Map<string, unknown>();
+      }
+      async queries() {
+        return [{ id: this.#id }];
+      }
+    }
+    class Inspector {
+      #client = new Client();
+      #password = 'private-field-password';
+      get client() {
+        return this.#client;
+      }
+      async authenticate(password: string) {
+        return password === this.#password;
+      }
+    }
+    class Writer {
+      #inspector = new Inspector();
+      get inspector() {
+        return this.#inspector;
+      }
+    }
+    const source = diagnosticSQL([]);
+    const trace = rollbackDiagnostics(source.sql);
+    await trace.verify(new Writer(), async observed => {
+      const writer = observed as Writer;
+      const inspector = writer.inspector;
+      expect(await inspector.authenticate('private-field-password')).toBe(true);
+      expect(inspector.authenticate).toBe(inspector.authenticate);
+      expect(inspector.client.id).toBe('private-field-client');
+      expect(await inspector.client.queries()).toEqual([{ id: 'private-field-client' }]);
+      expect(inspector.client.queries).toBe(inspector.client.queries);
+      expect(await inspector.client.map()).toEqual(new Map());
+    });
+    expect(source.execute).not.toHaveBeenCalled();
+  });
+  it('observes only the oracle awaits and performs no success SQL or metadata reads', async () => {
+    const source = diagnosticSQL([
+      [{ id: 'fixture-right' }],
+      [{ microseconds: '845000000000006' }],
+    ]);
+    const trace = rollbackDiagnostics(source.sql);
+    const writer = diagnosticWriter();
+    await trace.verify(writer, async observed => {
+      await (observed as typeof writer).inspector.client.map();
+      const pending = trace.sql`select * from ${trace.sql('action_right')} where id = ${'fixture-right'}`;
+      expect(source.execute).not.toHaveBeenCalled();
+      expect(await pending).toHaveLength(1);
+      expect(
+        await replicatedTimestampValues(trace.sql, 'action_right', 'created_at', 'fixture-right')
+      ).toEqual([1_791_684_800_000.0059, 1_791_684_800_000.006]);
+    });
+    expect(source.execute).toHaveBeenCalledTimes(2);
+    expect(source.statements).toHaveLength(2);
+    expect(writer.inspector.client.map).toHaveBeenCalledTimes(1);
+    expect(await trace.failure(new Error('unrelated'), writer, 'private password')).toBeUndefined();
+    expect(writer.inspector.authenticate).not.toHaveBeenCalled();
+    expect(writer.inspector.client.queries).not.toHaveBeenCalled();
+  });
+  it('retains the identical row assertion, precise row identity and sanitized metadata', async () => {
+    const source = diagnosticSQL([[]]);
+    const trace = rollbackDiagnostics(source.sql);
+    const writer = diagnosticWriter();
+    const original = new assert.AssertionError({
+      actual: 0,
+      expected: 1,
+      message: 'Rollback row proof: action_right',
+    });
+    original.stack =
+      'private assertion diff\n at verify (C:/private/mutation-cases-governance-revocation.ts:234:12)';
+    await expect(
+      trace.verify(writer, async observed => {
+        await (observed as typeof writer).inspector.client.map();
+        await trace.sql`select * from ${trace.sql('action_right')} where id = ${'fixture-right'}`;
+        throw original;
+      })
+    ).rejects.toBe(original);
+    const diagnostic = await trace.failure(original, writer, 'private password');
+    expect(diagnostic?.assertion).toEqual({
+      proof: 'Rollback row proof: action_right',
+      origin: 'row-select',
+      frames: ['mutation-cases-governance-revocation.ts:234:12'],
+    });
+    expect(diagnostic?.inspector).toMatchObject({
+      key: 'e/action_right/fixture-right',
+      table: 'action_right',
+      id: 'fixture-right',
+      row: { id: 'fixture-right', role_id: 'fixture-role', action: 'manage_votes' },
+    });
+    expect(diagnostic?.reads).toEqual([
+      {
+        kind: 'row-select',
+        table: 'action_right',
+        id: 'fixture-right',
+        at: expect.any(Number),
+        rowCount: 0,
+      },
+    ]);
+    expect(diagnostic?.queries).toEqual([
+      {
+        id: 'query-id',
+        name: 'votes.byId',
+        got: true,
+        ttl: 'none',
+        inactivatedAt: null,
+        rowCount: 27,
+        deleted: false,
+      },
+    ]);
+    expect(diagnostic?.queryInspection).toBe('complete');
+    expect(JSON.stringify(diagnostic)).not.toContain('private');
+    expect(source.execute).toHaveBeenCalledTimes(1);
+  });
+  it('distinguishes the original timestamp read and retains preceding full SQL precision', async () => {
+    const source = diagnosticSQL([
+      [{ created_at: new Date() }],
+      [{ microseconds: '845000000000006' }],
+      [],
+    ]);
+    const trace = rollbackDiagnostics(source.sql);
+    const writer = diagnosticWriter();
+    let original: unknown;
+    try {
+      await trace.verify(writer, async observed => {
+        await (observed as typeof writer).inspector.client.map();
+        await trace.sql`select * from ${trace.sql('action_right')} where id = ${'fixture-right'}`;
+        await replicatedTimestampValues(trace.sql, 'action_right', 'created_at', 'fixture-right');
+        await replicatedTimestampValues(trace.sql, 'action_right', 'updated_at', 'fixture-right');
+      });
+    } catch (error) {
+      original = error;
+    }
+    expect(original).toBeInstanceOf(assert.AssertionError);
+    const diagnostic = await trace.failure(original, writer, undefined);
+    expect(diagnostic?.assertion.origin).toBe('timestamp-select');
+    expect(diagnostic?.assertion.frames[0]).toMatch(/^mutation-timestamp\.ts:\d+:\d+$/);
+    expect(diagnostic?.reads.map(({ at: _at, ...read }) => read)).toEqual([
+      { kind: 'row-select', table: 'action_right', id: 'fixture-right', rowCount: 1 },
+      {
+        kind: 'timestamp-select',
+        table: 'action_right',
+        id: 'fixture-right',
+        column: 'created_at',
+        rowCount: 1,
+        microseconds: ['845000000000006'],
+      },
+      {
+        kind: 'timestamp-select',
+        table: 'action_right',
+        id: 'fixture-right',
+        column: 'updated_at',
+        rowCount: 0,
+        microseconds: [],
+      },
+    ]);
+    expect(writer.inspector.client.queries).not.toHaveBeenCalled();
+    expect(source.execute).toHaveBeenCalledTimes(3);
+  });
+  it('keeps evidence for an earlier mismatch when the original rollback deadline rejects', async () => {
+    vi.useFakeTimers();
+    const source = diagnosticSQL([[]]);
+    const trace = rollbackDiagnostics(source.sql);
+    const writer = diagnosticWriter();
+    const original = new assert.AssertionError({
+      actual: 0,
+      expected: 1,
+      message: 'Rollback row proof: action_right',
+    });
+    let attempt = 0;
+    const proof = waitForReadOnlyRollbackProof(
+      'delegated-authority-revoked-after-preload',
+      () =>
+        trace.verify(writer, async observed => {
+          await (observed as typeof writer).inspector.client.map();
+          if (++attempt === 1) {
+            await trace.sql`select * from ${trace.sql('action_right')} where id = ${'fixture-right'}`;
+            throw original;
+          }
+          await new Promise<void>(() => undefined);
+        }),
+      20
+    );
+    const rejected = expect(proof).rejects.toBe(original);
+    await vi.advanceTimersByTimeAsync(20);
+    await rejected;
+    const diagnostic = await trace.failure(original, writer, undefined);
+    expect(diagnostic?.inspector?.snapshot).toBe(1);
+    expect(diagnostic?.reads[0].rowCount).toBe(0);
+  });
+  it('bounds failing query metadata without replacing or leaking the assertion', async () => {
+    vi.useFakeTimers();
+    const source = diagnosticSQL([[]]);
+    const trace = rollbackDiagnostics(source.sql);
+    const writer = diagnosticWriter();
+    const original = new assert.AssertionError({ message: 'Rollback row proof: action_right' });
+    await expect(
+      trace.verify(writer, async observed => {
+        await (observed as typeof writer).inspector.client.map();
+        await trace.sql`select * from ${trace.sql('action_right')} where id = ${'fixture-right'}`;
+        throw original;
+      })
+    ).rejects.toBe(original);
+    writer.inspector.authenticate.mockRejectedValueOnce(new Error('private RPC error'));
+    expect((await trace.failure(original, writer, 'private password'))?.queryInspection).toBe(
+      'failed'
+    );
+    writer.inspector.client.queries.mockImplementationOnce(() => new Promise(() => undefined));
+    const diagnostic = trace.failure(original, writer, 'private password');
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect((await diagnostic)?.queryInspection).toBe('timed-out');
+    let finishAuthentication!: (authenticated: boolean) => void;
+    writer.inspector.authenticate.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finishAuthentication = resolve;
+        })
+    );
+    const late = trace.failure(original, writer, 'private password');
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect((await late)?.queryInspection).toBe('timed-out');
+    const calls = writer.inspector.client.queries.mock.calls.length;
+    finishAuthentication(true);
+    await Promise.resolve();
+    expect(writer.inspector.client.queries).toHaveBeenCalledTimes(calls);
+    expect(original.message).toBe('Rollback row proof: action_right');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
 
 afterEach(() => vi.useRealTimers());
 describe('mutation snapshot and rollback proof', () => {

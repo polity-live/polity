@@ -32,6 +32,7 @@ export const mechanics = [
   'mutation-measure.ts',
   'mutation-observation.ts',
   'mutation-snapshot.ts',
+  'mutation-rollback-diagnostics.ts',
   'mutation-request-completion.ts',
   'mutation-error-diagnostics.ts',
   'delivery-endpoint.mjs',
