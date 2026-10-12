@@ -75,6 +75,135 @@ function probe() {
 }
 
 describe('navigation paint measurement', () => {
+  it('records candidates first discovered by the initial RAF in that real frame', () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
+    history.replaceState(null, '', '/old');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    scope.__zeroPerformanceView({
+      activationID: 'retained',
+      phase: 'commit',
+      name: 'messages.messagePage',
+      args: { conversationId: 'expected' },
+      ids: ['message'],
+      type: 'complete',
+      at: 9,
+    });
+    scope.__beginBenchmarkNavigation({
+      path: '/target',
+      text: 'Target',
+      contentSelector: 'main',
+      queryNames: ['messages.messagePage'],
+      queryArgs: { conversationId: 'expected' },
+      id: 'message',
+    });
+    history.replaceState(null, '', '/target');
+    expect(scope.__benchmarkPaint.start).toBe(10);
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    expect(scope.__benchmarkPaint.authoritative).toBeNull();
+    clock.mockReturnValue(26);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBe(16);
+    expect(scope.__benchmarkPaint.authoritative).toBe(16);
+    clock.mockReturnValue(42);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBe(16);
+    expect(scope.__benchmarkPaint.authoritative).toBe(16);
+  });
+
+  it('keeps candidates discovered by an outside-frame mutation waiting for the next RAF', async () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    const geometry = vi.spyOn(Element.prototype, 'getClientRects');
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    clock.mockReturnValue(26);
+    frame();
+    clock.mockReturnValue(27);
+    document.querySelector('h1')!.textContent = 'Target';
+    await Promise.resolve();
+    expect(geometry).not.toHaveBeenCalled();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    clock.mockReturnValue(42);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBe(32);
+    expect(scope.__benchmarkPaint.authoritative).toBeNull();
+  });
+
+  it('does not duplicate a paint already queued before the initial RAF inspection', async () => {
+    vi.spyOn(performance, 'now').mockReturnValue(10);
+    history.replaceState(null, '', '/old');
+    document.body.innerHTML = '<main><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    const geometry = vi.spyOn(Element.prototype, 'getClientRects');
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    history.replaceState(null, '', '/target');
+    document.querySelector('h1')!.textContent = 'Target';
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.pendingFrame).toBe(true);
+    expect(geometry).not.toHaveBeenCalled();
+    frame();
+    expect(geometry).toHaveBeenCalledTimes(1);
+    expect(scope.__benchmarkPaint.displayed).toBe(0);
+    frame();
+    expect(geometry).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['hidden', 'transparent', 'offscreen', 'replaced', 'missing'])(
+    'rejects %s content discovered by the initial RAF until it is really paintable',
+    async condition => {
+      const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
+      history.replaceState(null, '', '/old');
+      document.body.innerHTML = '<section><main><h1>Target</h1></main></section>';
+      if (condition === 'hidden') document.querySelector('section')!.style.visibility = 'hidden';
+      if (condition === 'transparent') document.querySelector('section')!.style.opacity = '0';
+      if (condition === 'missing') document.querySelector('h1')!.textContent = 'Other';
+      const { scope, frame } = probe();
+      const bounds = vi.spyOn(Element.prototype, 'getBoundingClientRect');
+      if (condition === 'offscreen')
+        bounds.mockReturnValue({
+          top: innerHeight + 1,
+          left: 10,
+          width: 100,
+          height: 30,
+          right: 110,
+          bottom: innerHeight + 31,
+        } as DOMRect);
+      scope.__beginBenchmarkNavigation({
+        path: '/target',
+        text: 'Target',
+        contentSelector: 'main',
+      });
+      if (condition === 'replaced') {
+        document.querySelector('main')!.outerHTML = '<main><h1>Other</h1></main>';
+        await Promise.resolve();
+      }
+      history.replaceState(null, '', '/target');
+      clock.mockReturnValue(26);
+      frame();
+      expect(scope.__benchmarkPaint.displayed).toBeNull();
+      expect(scope.__benchmarkPaint.authoritative).toBeNull();
+      document.querySelector('section')!.style.visibility = 'visible';
+      document.querySelector('section')!.style.opacity = '1';
+      bounds.mockReturnValue({
+        top: 10,
+        left: 10,
+        width: 100,
+        height: 30,
+        right: 110,
+        bottom: 40,
+      } as DOMRect);
+      document.querySelector('h1')!.textContent = 'Target';
+      await Promise.resolve();
+      expect(scope.__benchmarkPaint.displayed).toBeNull();
+      clock.mockReturnValue(42);
+      frame();
+      expect(scope.__benchmarkPaint.displayed).toBe(32);
+      expect(scope.__benchmarkPaint.authoritative).toBeNull();
+    }
+  );
+
   it('ignores unrelated header text while observing actual content text changes', async () => {
     history.replaceState(null, '', '/target');
     document.body.innerHTML = '<header><span>Other</span></header><main><h1>Other</h1></main>';

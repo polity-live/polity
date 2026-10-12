@@ -219,7 +219,7 @@ export function installNavigationProbe() {
       // in unrelated headers, navigation, sidebars or portals.
       for (const parent of parents) state.observer?.observe(parent, { childList: true });
     };
-    const inspect = () => {
+    const inspect = (inAnimationFrame = false) => {
       if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
       if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) {
         observeContent(null);
@@ -295,8 +295,13 @@ export function installNavigationProbe() {
         }
       };
       if (!state.pendingFrame) {
-        state.pendingFrame = true;
-        requestAnimationFrame(paint);
+        // The initial RAF inspection already runs at a real paint opportunity.
+        // Mutation callbacks still schedule their visibility check for a RAF.
+        if (inAnimationFrame) paint();
+        else {
+          state.pendingFrame = true;
+          requestAnimationFrame(paint);
+        }
       }
     };
     state.observer = new MutationObserver(records => {
@@ -312,6 +317,6 @@ export function installNavigationProbe() {
     });
     state.observer.observe(document, { childList: true, subtree: true, characterData: true });
     inspect();
-    requestAnimationFrame(inspect);
+    requestAnimationFrame(() => inspect(true));
   };
 }
