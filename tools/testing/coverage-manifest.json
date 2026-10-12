@@ -19870,7 +19870,37 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
       "domain": "features:charts",
       "owner": "polity/features:charts",
       "kind": "test-infrastructure",
@@ -19936,7 +19966,10 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -19962,7 +19995,10 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -19994,14 +20030,14 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
-        "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
-        "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
-        "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
-        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx"
+        "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx"
       ]
     },
     {
@@ -20023,11 +20059,42 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
         "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/dataViewConfiguration.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/data-view-import.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains the exact snapshot configuration after saving and replaces one representation within its existing bounds"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
       ]
     },
     {
@@ -20049,7 +20116,137 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetNumbers.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+          "project": "unit",
+          "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows",
+          "scenarios": ["success"]
+        },
+        {
+          "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds predicates in API validation and retains them for chart and table requests",
+          "scenarios": ["success", "error"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetPreviewColumns.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+          "project": "component",
+          "caseId": "shows names, a separate type row, five samples, missing values and a technical-column toggle",
+          "scenarios": ["success"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetRawDownload.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+          "project": "unit",
+          "caseId": "offers recovery for processing and size failures, but not permission, validation or aborted requests"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetRowConditions.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+          "project": "unit",
+          "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows",
+          "scenarios": ["success"]
+        },
+        {
+          "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+          "project": "unit",
+          "caseId": "bounds predicates in API validation and retains them for chart and table requests",
+          "scenarios": ["success", "error"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -20074,11 +20271,71 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts",
         "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetSelection.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects annual tables, different resources and different snapshots even when titles are alike"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/charts/logic/datasetTableSelection.ts",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains filters on hidden columns and removes axes and series excluded from the selected columns",
+          "scenarios": ["success"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/chartData.parse-error.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartData.unit.test.ts",
+        "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
+        "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
+        "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
       ]
     },
     {
@@ -20107,7 +20364,10 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -20132,7 +20392,10 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -20157,7 +20420,10 @@
         "src/features/charts/logic/__tests__/chartData.unit.test.ts",
         "src/features/charts/logic/__tests__/chartPalette.unit.test.ts",
         "src/features/charts/logic/__tests__/dataView.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
         "src/features/charts/logic/__tests__/datasetSearch.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
         "src/features/charts/logic/__tests__/groupDatasetRights.unit.test.ts",
         "src/features/charts/logic/__tests__/providerDataView.unit.test.ts"
@@ -20224,8 +20490,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20260,8 +20526,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20296,8 +20562,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20325,8 +20591,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20361,8 +20627,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20397,8 +20663,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20433,8 +20699,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20469,8 +20735,102 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/charts/ui/DatasetExplorer.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+          "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+        },
+        {
+          "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+          "scenarios": ["loading", "error", "success", "disabled"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/charts/ui/DatasetProcessingError.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+          "project": "browser-component",
+          "caseId": "keeps import and download failures separate, preserves source access, and retries the exact identity"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/charts/ui/DatasetSamplePreview.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+          "project": "component",
+          "caseId": "shows names, a separate type row, five samples, missing values and a technical-column toggle"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/ui/__tests__/ChartRenderer.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartRendererView.boundaries.component.test.tsx",
+        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewAttribution.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
+        "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20498,8 +20858,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20534,8 +20894,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20570,8 +20930,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20606,8 +20966,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20711,6 +21071,36 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+      "domain": "features:charts",
+      "owner": "polity/features:charts",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
       "domain": "features:charts",
       "owner": "polity/features:charts",
@@ -20772,8 +21162,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -20808,8 +21198,8 @@
         "src/features/charts/ui/__tests__/DataViewDialog.public.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewDialogView.actions.component.test.tsx",
         "src/features/charts/ui/__tests__/DataViewRenderer.component.test.tsx",
-        "src/features/charts/ui/__tests__/DatasetSearchControls.component.test.tsx",
-        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+        "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx"
       ]
     },
     {
@@ -27269,6 +27659,35 @@
       ]
     },
     {
+      "path": "src/features/communication-studio/ui/StudioDatasetEditButton.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
+          "project": "component",
+          "caseId": "opens the saved data editor with keyboard focus and prevents disabled edits"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.animations.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.boundaries.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.callbacks.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.edit-lifecycle.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.focus.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.frame-labels.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.presentation.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.text-gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCanonicalProperties.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/communication-studio/ui/StudioEditor.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -30043,6 +30462,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -87736,6 +88165,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupMembershipButton.actions.component.test.tsx",
         "src/features/groups/ui/__tests__/GroupSubscribeButton.actions.component.test.tsx",
         "src/features/payments/ui/__tests__/WikiSubscribeButton.actions.component.test.tsx",
@@ -87746,8 +88176,7 @@
         "src/features/shared/hooks/__tests__/useLineHeightToolbarButtonController.component.test.tsx",
         "src/features/shared/hooks/__tests__/useMembershipButtonController.component.test.tsx",
         "src/features/shared/hooks/__tests__/useModeToolbarButtonController.component.test.tsx",
-        "src/features/shared/hooks/__tests__/useTurnIntoToolbarButtonController.component.test.tsx",
-        "src/features/shared/ui/action-buttons/__tests__/MembershipButtonView.branches.component.test.tsx"
+        "src/features/shared/hooks/__tests__/useTurnIntoToolbarButtonController.component.test.tsx"
       ]
     },
     {
@@ -89307,7 +89736,7 @@
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.actions.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetGroupEventSelectorView.lsf-a04.component.test.tsx",
         "src/features/amendments/ui/__tests__/TargetSelectionDialog.a04.component.test.tsx",
-        "src/features/charts/ui/__tests__/ChartTypeSelector.component.test.tsx"
+        "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts"
       ]
     },
     {
@@ -89655,6 +90084,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -89664,8 +90094,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -108832,6 +109261,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/routes/api/__tests__/datasetPreviewRoute.contract.unit.test.ts",
+      "domain": "routes:api",
+      "owner": "polity/routes:api",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
       "domain": "routes:api",
       "owner": "polity/routes:api",
@@ -108853,6 +109292,16 @@
     },
     {
       "path": "src/routes/api/__tests__/deliveryRoutes.contract.unit.test.ts",
+      "domain": "routes:api",
+      "owner": "polity/routes:api",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
       "domain": "routes:api",
       "owner": "polity/routes:api",
       "kind": "test-infrastructure",
@@ -109644,6 +110093,68 @@
           "file": "src/routes/api/__tests__/datasetRoutes.contract.unit.test.ts",
           "project": "unit",
           "caseId": "prepares %s with validated scope without importing observations",
+          "evidence": {
+            "relation": "direct"
+          }
+        }
+      ],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
+      "path": "src/routes/api/datasets/preview.ts",
+      "domain": "routes:api",
+      "owner": "polity/routes:api",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/routes/api/__tests__/datasetPreviewRoute.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires authentication and rejects invalid preview scopes before calling the provider",
+          "evidence": {
+            "relation": "direct"
+          }
+        },
+        {
+          "file": "src/routes/api/__tests__/datasetPreviewRoute.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves exact preview filters, pagination and identity and forwards browser cancellation",
+          "evidence": {
+            "relation": "direct"
+          }
+        }
+      ],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
+      "path": "src/routes/api/datasets/raw-download.ts",
+      "domain": "routes:api",
+      "owner": "polity/routes:api",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires authentication, rejects filter-bearing requests and prepares only the exact identity",
+          "evidence": {
+            "relation": "direct"
+          }
+        },
+        {
+          "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates transfer tickets and renders a localized failure page without an attachment header",
+          "evidence": {
+            "relation": "direct"
+          }
+        },
+        {
+          "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+          "project": "unit",
+          "caseId": "streams successful native downloads and leaves the browser to manage the transfer",
           "evidence": {
             "relation": "direct"
           }
@@ -112808,7 +113319,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/datasets/__tests__/genesis.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/genesisStream.unit.test.ts",
       "domain": "server:datasets",
       "owner": "polity/server:datasets",
       "kind": "test-infrastructure",
@@ -112829,6 +113360,26 @@
     },
     {
       "path": "src/server/datasets/__tests__/importScope.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/preview.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/previewRows.unit.test.ts",
       "domain": "server:datasets",
       "owner": "polity/server:datasets",
       "kind": "test-infrastructure",
@@ -112898,7 +113449,37 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/datasets/__tests__/rawDownload.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/rawStream.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/datasets/__tests__/searchRuntime.unit.test.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/datasets/__tests__/semantics.unit.test.ts",
       "domain": "server:datasets",
       "owner": "polity/server:datasets",
       "kind": "test-infrastructure",
@@ -113008,15 +113589,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113044,15 +113625,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113080,15 +113661,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113109,15 +113690,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113138,15 +113719,73 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/datasets/preview.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/preview.unit.test.ts",
+          "project": "unit",
+          "caseId": "pages a complete snapshot after filtering, returns facets and checks access on every page"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/agendas/logic/__tests__/changeRequestDocumentPreview.unit.test.ts",
+        "src/features/agendas/ui/__tests__/ChangeRequestCardsListView.cityDesignPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.a04.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.component.test.tsx",
+        "src/features/amendments/city-design/ui/__tests__/CityDesignChangeRequestPreview.lsf-a04.component.test.tsx",
+        "src/features/amendments/logic/__tests__/amendmentForwardingPreview.unit.test.ts",
+        "src/features/amendments/ui/__tests__/AmendmentForwardingPreview.component.test.tsx",
+        "src/features/change-requests/hooks/__tests__/change-request-preview-hooks.component.test.tsx",
+        "src/features/change-requests/ui/__tests__/CREditorPreviewView.spacing.component.test.tsx",
+        "src/features/charts/logic/__tests__/eurostatChartPreview.unit.test.ts",
+        "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/server/datasets/previewRows.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+          "project": "unit",
+          "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/server/datasets/__tests__/access.unit.test.ts",
+        "src/server/datasets/__tests__/csv.contract.unit.test.ts",
+        "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
+        "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
+        "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "src/server/datasets/__tests__/projection.contract.unit.test.ts",
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113177,12 +113816,12 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
-        "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts"
+        "src/server/datasets/__tests__/preview.unit.test.ts"
       ]
     },
     {
@@ -113210,15 +113849,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113239,15 +113878,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113275,15 +113914,73 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/datasets/rawDownload.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/rawDownload.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds identity and actor to an expiring signature and rejects filters, forged tickets and expiry"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+        "src/server/datasets/__tests__/access.unit.test.ts",
+        "src/server/datasets/__tests__/csv.contract.unit.test.ts",
+        "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
+        "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
+        "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/datasets/rawStream.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/rawStream.unit.test.ts",
+          "project": "unit",
+          "caseId": "releases the reader and queue on body completion and cancellation"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/server/datasets/__tests__/access.unit.test.ts",
+        "src/server/datasets/__tests__/csv.contract.unit.test.ts",
+        "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
+        "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
+        "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "src/server/datasets/__tests__/projection.contract.unit.test.ts",
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113304,15 +114001,44 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/datasets/semantics.ts",
+      "domain": "server:datasets",
+      "owner": "polity/server:datasets",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/server/datasets/__tests__/semantics.unit.test.ts",
+          "project": "unit",
+          "caseId": "preserves the precision of quarterly and daily provider observations"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/server/datasets/__tests__/access.unit.test.ts",
+        "src/server/datasets/__tests__/csv.contract.unit.test.ts",
+        "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
+        "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
+        "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
+        "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "src/server/datasets/__tests__/projection.contract.unit.test.ts",
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113376,15 +114102,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113405,15 +114131,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -113441,15 +114167,15 @@
         "src/server/datasets/__tests__/access.unit.test.ts",
         "src/server/datasets/__tests__/csv.contract.unit.test.ts",
         "src/server/datasets/__tests__/csvProfile.unit.test.ts",
+        "src/server/datasets/__tests__/fixtures/genesis-observations.ts",
         "src/server/datasets/__tests__/genesis.unit.test.ts",
+        "src/server/datasets/__tests__/genesisStream.unit.test.ts",
         "src/server/datasets/__tests__/genesisTransport.unit.test.ts",
         "src/server/datasets/__tests__/importScope.unit.test.ts",
+        "src/server/datasets/__tests__/preview.unit.test.ts",
+        "src/server/datasets/__tests__/previewRows.unit.test.ts",
         "src/server/datasets/__tests__/projection.contract.unit.test.ts",
-        "src/server/datasets/__tests__/projection.unit.test.ts",
-        "src/server/datasets/__tests__/projectionRequest.unit.test.ts",
-        "src/server/datasets/__tests__/providerError.unit.test.ts",
-        "src/server/datasets/__tests__/providerSearch.unit.test.ts",
-        "src/server/datasets/__tests__/providers.contract.unit.test.ts"
+        "src/server/datasets/__tests__/projection.unit.test.ts"
       ]
     },
     {
@@ -118843,6 +119569,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -118852,8 +119579,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -119397,6 +120123,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -119406,8 +120133,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -119670,6 +120396,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -119679,8 +120406,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -120688,6 +121414,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -120697,8 +121424,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -120835,6 +121561,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -120844,8 +121571,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -121127,6 +121853,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -121136,8 +121863,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -121424,6 +122150,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -121433,8 +122160,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -121667,6 +122393,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -121676,8 +122403,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -121996,6 +122722,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -122005,8 +122732,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -122602,6 +123328,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -122611,8 +123338,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -123433,6 +124159,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -123442,8 +124169,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -123658,6 +124384,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -123667,8 +124394,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -123785,6 +124511,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -123794,8 +124521,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -123884,6 +124610,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -123893,8 +124620,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -124188,6 +124914,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -124197,8 +124924,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -124574,6 +125300,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -124583,8 +125310,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -125141,6 +125867,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -125150,8 +125877,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -125852,6 +126578,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -125861,8 +126588,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -126333,6 +127059,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -126342,8 +127069,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -127083,6 +127809,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -127092,8 +127819,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -127633,6 +128359,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -127642,8 +128369,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -128159,6 +128885,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -128168,8 +128895,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -128400,6 +129126,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -128409,8 +129136,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -128662,6 +129388,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -128671,8 +129398,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -129817,6 +130543,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -129826,8 +130553,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -130651,6 +131377,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -130660,8 +131387,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -131374,6 +132100,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -131383,8 +132110,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -131747,6 +132473,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -131756,8 +132483,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -132072,6 +132798,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -132081,8 +132808,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -132506,6 +133232,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -132515,8 +133242,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -132841,6 +133567,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
         "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/table-operations.unit.test.ts",
@@ -132850,8 +133577,7 @@
         "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
         "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
-        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx"
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx"
       ]
     },
     {
@@ -138383,6 +139109,16 @@
     },
     {
       "path": "tools/testing/coverage-scope.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/dataset-monthly-acceptance.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

@@ -1,5 +1,118 @@
 {
   "version": 1,
+  "sourceReferenceAdditions": {
+    "src/features/charts/logic/dataViewConfiguration.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/data-view-import.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains the exact snapshot configuration after saving and replaces one representation within its existing bounds"
+      }
+    ],
+    "src/features/charts/logic/datasetRawDownload.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/datasetRawDownload.unit.test.ts",
+        "project": "unit",
+        "caseId": "offers recovery for processing and size failures, but not permission, validation or aborted requests"
+      }
+    ],
+    "src/features/charts/logic/datasetSelection.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/datasetSelection.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects annual tables, different resources and different snapshots even when titles are alike"
+      }
+    ],
+    "src/features/charts/ui/DatasetProcessingError.tsx": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps import and download failures separate, preserves source access, and retries the exact identity"
+      }
+    ],
+    "src/features/charts/ui/DatasetSamplePreview.tsx": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "shows names, a separate type row, five samples, missing values and a technical-column toggle"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDatasetEditButton.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the saved data editor with keyboard focus and prevents disabled edits"
+      }
+    ],
+    "src/routes/api/datasets/preview.ts": [
+      {
+        "file": "src/routes/api/__tests__/datasetPreviewRoute.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires authentication and rejects invalid preview scopes before calling the provider",
+        "evidence": { "relation": "direct" }
+      },
+      {
+        "file": "src/routes/api/__tests__/datasetPreviewRoute.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves exact preview filters, pagination and identity and forwards browser cancellation",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/api/datasets/raw-download.ts": [
+      {
+        "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires authentication, rejects filter-bearing requests and prepares only the exact identity",
+        "evidence": { "relation": "direct" }
+      },
+      {
+        "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates transfer tickets and renders a localized failure page without an attachment header",
+        "evidence": { "relation": "direct" }
+      },
+      {
+        "file": "src/routes/api/__tests__/rawDownloadRoutes.contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "streams successful native downloads and leaves the browser to manage the transfer",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/server/datasets/preview.ts": [
+      {
+        "file": "src/server/datasets/__tests__/preview.unit.test.ts",
+        "project": "unit",
+        "caseId": "pages a complete snapshot after filtering, returns facets and checks access on every page"
+      }
+    ],
+    "src/server/datasets/previewRows.ts": [
+      {
+        "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "project": "unit",
+        "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows"
+      }
+    ],
+    "src/server/datasets/rawDownload.ts": [
+      {
+        "file": "src/server/datasets/__tests__/rawDownload.unit.test.ts",
+        "project": "unit",
+        "caseId": "binds identity and actor to an expiring signature and rejects filters, forged tickets and expiry"
+      }
+    ],
+    "src/server/datasets/rawStream.ts": [
+      {
+        "file": "src/server/datasets/__tests__/rawStream.unit.test.ts",
+        "project": "unit",
+        "caseId": "releases the reader and queue on body completion and cancellation"
+      }
+    ],
+    "src/server/datasets/semantics.ts": [
+      {
+        "file": "src/server/datasets/__tests__/semantics.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the precision of quarterly and daily provider observations"
+      }
+    ]
+  },
   "sourceReferences": {
     "tools/zero/run-cache.mjs": [
       {
