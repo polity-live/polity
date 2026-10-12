@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   adaptNavigationHistoryDiagnostic,
@@ -9,11 +9,16 @@ import {
 
 describe('revision-owned navigation diagnostic adapter', () => {
   const head = readFileSync('tools/e2e/zero-performance/journeys.ts', 'utf8');
-  const base = execFileSync(
-    'git',
-    ['show', 'bae28aeba46c7498a9948dd3c6f7e0605cac911d:tools/e2e/zero-performance/journeys.ts'],
-    { encoding: 'utf8' }
+  // Exact bae28aeba46c7498a9948dd3c6f7e0605cac911d input, independent of checkout depth.
+  const base = readFileSync(
+    new URL('./fixtures/journeys-base.fixture.txt', import.meta.url),
+    'utf8'
   );
+  it('pins the immutable Base fixture independently of repository history', () => {
+    expect(createHash('sha256').update(base.replaceAll('\r\n', '\n')).digest('hex')).toBe(
+      '332e39228b42655c2f459018bbe7845ad2edae35d8f53f883a662239fbbd0969'
+    );
+  });
   for (const [name, original] of [
     ['Head', head],
     ['Base', base],
