@@ -40,16 +40,24 @@ function collaborativeProject<T>(project: T, actor: string): T {
 }
 
 function canvasWorkspaces(actor: string, projectId: string) {
-  return zql.canvas_proposal
-    .where('project_id', projectId)
-    .whereExists('project', (project: any) => collaborativeProject(project, actor))
-    .where(({ or, cmp, exists }) =>
-      or(
-        cmp('checksum', 'IS NOT', null),
-        cmp('owner_id', actor),
-        exists('readers', reader => reader.where('user_id', actor))
+  return (
+    zql.canvas_proposal
+      .where('project_id', projectId)
+      // The root's project_id and this foreign key identify one project. Resolve
+      // that primary-key endpoint before planning workspace access across projects.
+      .whereExists(
+        'project',
+        (project: any) => collaborativeProject(project.where('id', projectId), actor),
+        { flip: true }
       )
-    );
+      .where(({ or, cmp, exists }) =>
+        or(
+          cmp('checksum', 'IS NOT', null),
+          cmp('owner_id', actor),
+          exists('readers', reader => reader.where('user_id', actor))
+        )
+      )
+  );
 }
 
 function workspaceReadAccess<T>(query: T, actor: string): T {

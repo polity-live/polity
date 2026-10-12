@@ -17,6 +17,66 @@ import {
   studioChatAccess,
 } from '../../project-chat/access';
 
+it.each(['owner', 'outsider', 'anon', undefined])(
+  'bounds workspace and proposal authorization to their exact project without changing access rules for %s',
+  userID => {
+    const projectId = '00000000-0000-4000-8000-000000000001';
+    const workspaceId = '00000000-0000-4000-8000-000000000002';
+    const actor = userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
+    const workspaceAccess = queryAST(
+      zql.canvas_proposal.where(({ or, cmp, exists }) =>
+        or(
+          cmp('checksum', 'IS NOT', null),
+          cmp('owner_id', actor),
+          exists('readers', reader => reader.where('user_id', actor))
+        )
+      )
+    ).where;
+    for (const [query, args] of [
+      [studioQueries.workspace, { projectId, workspaceId }],
+      [studioQueries.proposals, { projectId }],
+    ] as const) {
+      const ast = queryAST(query.fn({ args, ctx: { userID } } as never));
+      const parent = ast.where.conditions.find(
+        (condition: any) =>
+          condition.type === 'correlatedSubquery' &&
+          condition.related.subquery.table === 'studio_project'
+      );
+      expect(parent.flip).toBe(true);
+      expect(parent.related.correlation).toEqual({
+        parentField: ['project_id'],
+        childField: ['id'],
+      });
+      expect(parent.related.subquery.where.conditions[0]).toMatchObject({
+        type: 'simple',
+        left: { name: 'id' },
+        op: '=',
+        right: { value: projectId },
+      });
+      // Retain the full event audience/manager predicate and every legacy
+      // owner, collaborator and group-right branch after the identity bound.
+      expect(parent.related.subquery.where.conditions.slice(1)).toEqual(
+        queryAST(
+          studioProjectCollaborativeAccess(
+            zql.studio_project.where('document_schema_version', 6),
+            actor
+          )
+        ).where.conditions
+      );
+      expect(ast.where.conditions).toContainEqual(workspaceAccess);
+      expect(ast.where.conditions).toContainEqual({
+        type: 'simple',
+        left: { type: 'column', name: 'project_id' },
+        op: '=',
+        right: { type: 'literal', value: projectId },
+      });
+      expect(ast.related).toContainEqual(
+        queryAST(zql.canvas_proposal.related('readers')).related![0]
+      );
+    }
+  }
+);
+
 it.each([
   ['event', 'event', applyEventQueryAccess],
   ['agenda_item', 'event', applyEventQueryAccess],
