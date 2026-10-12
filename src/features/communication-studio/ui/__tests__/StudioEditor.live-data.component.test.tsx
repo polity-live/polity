@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { io, show, useCanonicalDocument } from './StudioWorkspace.fixture';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { configuration, projection } from '@/test/studio-data-view.fixture';
 import type { ComponentProps } from 'react';
@@ -15,9 +15,21 @@ const tools = vi.hoisted(() => ({
 vi.mock('../StudioLiveTools', () => ({
   StudioLiveTools: (props: ComponentProps<typeof StudioLiveTools>) => {
     tools.live = props;
-    return <button onClick={props.onInsertData}>Insert resolved data</button>;
+    return (
+      <div data-testid="live-data-controls">
+        <button onClick={props.onInsertData}>Insert resolved data</button>
+      </div>
+    );
   },
 }));
+
+function insertResolvedData() {
+  fireEvent.click(
+    within(screen.getByTestId('live-data-controls')).getByRole('button', {
+      name: 'Insert resolved data',
+    })
+  );
+}
 vi.mock('../StudioDataViewDialog', () => ({
   StudioDataViewDialog: (props: ComponentProps<typeof StudioDataViewDialog>) => {
     tools.data = props;
@@ -37,7 +49,7 @@ it('selects a live source node and inserts resolved data into the selected frame
   const text = io.editor.v3Value.nodes.find((node: { type: string }) => node.type === 'richText');
   act(() => tools.live!.onSelect!(text, frame.id));
   expect(io.canvasProps.selected).toEqual([text.id]);
-  fireEvent.click(screen.getByRole('button', { name: 'Insert resolved data' }));
+  insertResolvedData();
   expect(screen.getByTestId('data-dialog')).toBeTruthy();
   expect(tools.data!.groupId).toBeNull();
   const before = io.editor.v3Value.nodes.length;
@@ -57,7 +69,7 @@ it('rejects data insertion after edit rights are withdrawn', async () => {
   useCanonicalDocument();
   io.editor.canEdit = false;
   await show();
-  fireEvent.click(screen.getByRole('button', { name: 'Insert resolved data' }));
+  insertResolvedData();
   const before = structuredClone(io.editor.v3Value);
   expect(() => tools.data!.onInsert(configuration(), projection)).toThrow('readOnly');
   expect(io.editor.v3Value).toEqual(before);
@@ -67,7 +79,7 @@ it('reports failed canonical transactions without changing the current selection
   useCanonicalDocument();
   io.editor.transactV3 = vi.fn(() => false);
   await show();
-  fireEvent.click(screen.getByRole('button', { name: 'Insert resolved data' }));
+  insertResolvedData();
   const before = [...io.canvasProps.selected];
   expect(() => tools.data!.onInsert(configuration(), projection)).toThrow('invalid');
   expect(io.canvasProps.selected).toEqual(before);
@@ -131,7 +143,7 @@ it('uses the persisted project group for resolved data when no route group is su
   useCanonicalDocument();
   io.project = { id: 'project', group_id: 'persisted-group' };
   await show({ projectId: 'project', groupId: null, open: vi.fn() });
-  fireEvent.click(screen.getByRole('button', { name: 'Insert resolved data' }));
+  insertResolvedData();
   expect(tools.data!.groupId).toBe('persisted-group');
 });
 
@@ -140,7 +152,8 @@ it('requests a portrait export from the visible portrait preview', async () => {
   await show();
   act(() => tools.live!.setPortrait(true));
   act(() => openStudioPanel('exports'));
-  fireEvent.click(await screen.findByRole('button', { name: /^export$/i }));
+  const exports = within(await screen.findByRole('dialog', { name: 'exports' }));
+  fireEvent.click(exports.getByRole('button', { name: /^export$/i }));
   await waitFor(() =>
     expect(io.request).toHaveBeenCalledWith(
       'export',
