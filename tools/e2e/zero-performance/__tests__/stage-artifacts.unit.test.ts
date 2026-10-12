@@ -46,6 +46,7 @@ describe('original CI artifact staging', () => {
       'head/initial/workers/journeys/navigation-timeline.json',
       'head/initial/workers/journeys/navigation-style-reads.json',
       'base/initial/workers/queries-62/rollback-failure-4-client_id.json',
+      'base/initial/workers/queries-1/authoritative-order-failure-search-searchDocumentPage-forward-warm-owner-0.json',
       'base/mutation-browser-observation.ndjson',
       'head/navigation-history-adaptation.ndjson',
       'head/initial/workers/journeys/navigation-history-diagnostic/manifest.json',

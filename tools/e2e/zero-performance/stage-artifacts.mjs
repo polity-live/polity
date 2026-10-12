@@ -35,6 +35,7 @@ const allowed = relative => {
   return (
     records.has(filename) ||
     /^rollback-failure-[1-5]-[A-Za-z0-9_-]+\.json$/.test(filename) ||
+    /^authoritative-order-failure-[A-Za-z0-9_-]+\.json$/.test(filename) ||
     (segments.at(-2) === 'navigation-history-diagnostic' &&
       (filename === 'manifest.json' || /^[A-Za-z0-9_$.-]+\.(js|css)$/.test(filename))) ||
     /\.(log|ndjson)$/.test(filename) ||
