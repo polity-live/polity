@@ -13,7 +13,13 @@ import { closeDb } from '../../../e2e/fixtures/db';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { buildQuery, loadCases, OWNER, OUTSIDER, type BenchmarkCase } from './catalog';
 import { Fixtures } from './fixtures';
-import { expectedRootIDs, queryAST, resultIDs, relatedResultIDs } from './oracle';
+import {
+  expectedRootIDs,
+  queryAST,
+  resultIDs,
+  relatedResultIDs,
+  assertAuthoritativeRootResult,
+} from './oracle';
 import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
 import { measureJourneys } from './journeys';
 import {
@@ -267,10 +273,21 @@ async function measure(
           required(measurement.relatedChecks).observed.push(observed);
           assert.deepEqual(observed, related.relations, 'Unexpected authorized related results');
         }
-        assert.deepEqual(
-          resultIDs(data, ast.table),
+        await assertAuthoritativeRootResult(
+          sql,
+          ast,
+          fixtures.columns,
+          data,
           expected,
-          `${measurement.key}: unexpected authoritative result`
+          `${measurement.key}: unexpected authoritative result`,
+          diagnostic =>
+            writeFile(
+              path.join(
+                output,
+                `authoritative-order-failure-${entry.name.replaceAll('.', '-')}-${entry.variant}-${profile}-${actor}-${iteration}.json`
+              ),
+              JSON.stringify({ execution, key: measurement.key, iteration, diagnostic }, null, 2)
+            )
         );
         const inspection = await deadline(zero.inspector.client.queries(), 'Query metrics');
         const stats = inspection.find(item => item.name === entry.name);

@@ -18,7 +18,14 @@ import {
   type Measurement,
 } from '../metrics';
 import { discoverQueries, loadCases, buildQuery } from '../catalog';
-import { rootSQL, resultIDs, relatedResultIDs, queryAST } from '../oracle';
+import {
+  rootSQL,
+  resultIDs,
+  relatedResultIDs,
+  queryAST,
+  assertAuthoritativeRootResult,
+} from '../oracle';
+import type { Sql } from 'postgres';
 import {
   assertOutputDirectory,
   isolatedPorts,
@@ -1688,6 +1695,127 @@ describe('Zero performance gate', () => {
     );
     expect(query('asc', null, false).text).toContain('t0."id" IS NOT DISTINCT FROM');
     expect(query('desc', 'name').values).toEqual(['name', 'name', 'cursor-id']);
+  });
+  it('VERIFY:ZERO:AUTHORITATIVE-ORDER-DIAGNOSTIC preserves predicates, cursor, ordering, limit and exact timestamp inputs', async () => {
+    const columns = new Map([
+      ['user', new Map([['created_at', { type: 'timestamp with time zone' }]])],
+    ]);
+    const ast = {
+      table: 'user',
+      where: {
+        type: 'simple',
+        left: { type: 'column', name: 'visibility' },
+        op: '=',
+        right: { type: 'literal', value: 'public' },
+      },
+      orderBy: [['created_at', 'desc']] as const,
+      start: { row: { created_at: 1791773154029.5706, id: 'cursor' }, exclusive: true },
+      limit: 2,
+    };
+    const original = rootSQL(ast, columns);
+    const diagnostic = rootSQL(ast, columns, true);
+    expect(diagnostic.values).toEqual(original.values);
+    expect(diagnostic.text.slice(diagnostic.text.indexOf(' FROM public.'))).toBe(
+      original.text.slice(original.text.indexOf(' FROM public.'))
+    );
+    expect(diagnostic.text).toContain('t0."created_at"::text AS "created_at__timestamp"');
+    expect(diagnostic.text).toContain(
+      '(extract(epoch from t0."created_at") * 1000)::text AS "created_at__epoch_ms_exact"'
+    );
+    expect(diagnostic.text).toContain(
+      '(extract(epoch from t0."created_at") * 1000)::double precision AS "created_at"'
+    );
+    const sqlRows = [
+      {
+        id: 'two',
+        created_at__timestamp: '2026-10-12 04:05:54.029571+00',
+        created_at__epoch_ms_exact: '1791773154029.571000',
+        created_at: 1791773154029.571,
+      },
+    ];
+    const unsafe = vi.fn().mockResolvedValue(sqlRows);
+    const save = vi.fn().mockResolvedValue(undefined);
+    const actual = [
+      { id: 'one', created_at: 1791773154029.5706, privateField: 'omit' },
+      { id: 'two', created_at: 1791773154029.571 },
+    ];
+    await expect(
+      assertAuthoritativeRootResult(
+        { unsafe } as unknown as Sql,
+        ast,
+        columns,
+        actual,
+        ['two', 'one'],
+        'Original ordered assertion',
+        save
+      )
+    ).rejects.toThrow('Original ordered assertion');
+    expect(unsafe).toHaveBeenCalledWith(diagnostic.text, diagnostic.values);
+    expect(save).toHaveBeenCalledWith({
+      protocol: 'zero-authoritative-order-diagnostic/v1',
+      ast,
+      query: diagnostic,
+      expectedIDs: ['two', 'one'],
+      actualIDs: ['one', 'two'],
+      actualRows: actual.map(({ privateField: _private, ...row }) => row),
+      sqlRows,
+    });
+  });
+  it('does no diagnostic SQL or output for a successful authoritative oracle', async () => {
+    const unsafe = vi.fn();
+    const save = vi.fn();
+    for (const result of [[{ id: 'one' }], { id: 'one' }, null]) {
+      await assertAuthoritativeRootResult(
+        { unsafe } as unknown as Sql,
+        { table: 'user' },
+        new Map(),
+        result,
+        result == null ? [] : ['one'],
+        'Valid oracle',
+        save
+      );
+    }
+    expect(unsafe).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
+  it('retains the original ordered assertion when diagnostic SQL or artifact writing fails', async () => {
+    for (const phase of ['sql', 'artifact']) {
+      const unsafe =
+        phase === 'sql'
+          ? vi.fn().mockRejectedValue(new Error('Diagnostic SQL failed'))
+          : vi.fn().mockResolvedValue([{ id: 'one' }]);
+      const save = vi.fn().mockRejectedValue(new Error('Diagnostic artifact failed'));
+      await expect(
+        assertAuthoritativeRootResult(
+          { unsafe } as unknown as Sql,
+          { table: 'user' },
+          new Map(),
+          { id: 'one' },
+          ['two'],
+          'Keep this assertion',
+          save
+        )
+      ).rejects.toThrow('Keep this assertion');
+      expect(save).toHaveBeenCalledTimes(phase === 'artifact' ? 1 : 0);
+    }
+    const saveEmpty = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      assertAuthoritativeRootResult(
+        { unsafe: vi.fn().mockResolvedValue([{ id: 'missing' }]) } as unknown as Sql,
+        { table: 'user' },
+        new Map(),
+        null,
+        ['missing'],
+        'Missing rows remain a failure',
+        saveEmpty
+      )
+    ).rejects.toThrow('Missing rows remain a failure');
+    expect(saveEmpty.mock.calls[0][0]).toMatchObject({
+      expectedIDs: ['missing'],
+      actualIDs: [],
+      actualRows: [],
+      sqlRows: [{ id: 'missing' }],
+    });
   });
   it('uses parametrized root-result SQL, handles empty IN and rejects unsupported AST shapes', () => {
     const columns = new Map([

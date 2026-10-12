@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { cdp } from 'vitest/browser';
 import { createFrameNode, createStudioDocumentV5 } from '../../logic/document-v3';
@@ -44,28 +44,73 @@ function stage() {
 
 it('plays entering tweens and pulse animation, then cancels animation frames on unmount', async () => {
   const { document, frame, nodes } = fixture();
+  // Konva queues frames per owning window and reads that window's RAF at
+  // scheduling time. Drain earlier native draws before taking clock ownership.
+  await new Promise<void>(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  );
+  vi.useFakeTimers({
+    toFake: [
+      'Date',
+      'performance',
+      'setTimeout',
+      'clearTimeout',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+    ],
+  });
   const cancel = vi.spyOn(window, 'cancelAnimationFrame');
-  const view = render(
-    <div style={{ width: 700, height: 500 }}>
-      <KonvaStudioCanvas
-        document={document}
-        activeFrameId={frame.id}
-        assets={[]}
-        selected={[]}
-        editable={false}
-        fit="contain"
-        showCue="enter"
-      />
-    </div>
-  );
-  await waitFor(() =>
-    expect(stage().findOne(`#${nodes[0].id}-show`)?.opacity()).toBeLessThan(0.999)
-  );
-  await waitFor(() => expect(stage().findOne(`#${nodes[2].id}-show`)?.opacity()).toBe(1));
-  await waitFor(() => expect(stage().findOne(`#${nodes[3].id}-show`)?.x()).toBe(0));
-  view.unmount();
-  expect(cancel).toHaveBeenCalled();
-  expect(Konva.stages.some(stage => stage.findOne(`#${nodes[0].id}-show`))).toBe(false);
+  let view: ReturnType<typeof render> | undefined;
+  async function advance(milliseconds: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(milliseconds);
+    });
+  }
+  try {
+    view = render(
+      <div style={{ width: 700, height: 500 }}>
+        <KonvaStudioCanvas
+          document={document}
+          activeFrameId={frame.id}
+          assets={[]}
+          selected={[]}
+          editable={false}
+          fit="contain"
+          showCue="enter"
+        />
+      </div>
+    );
+    await advance(80);
+    expect(stage().findOne(`#${nodes[0].id}-show`)?.opacity()).toBeLessThan(0.999);
+    const slide = stage().findOne(`#${nodes[1].id}-show`)!;
+    expect(slide.x()).toBeGreaterThan(0);
+    expect(slide.x()).toBeLessThan(64);
+    const stagger = stage().findOne(`#${nodes[3].id}-show`)!;
+    expect(stagger.x()).toBe(64);
+    await advance(176);
+    expect(stage().findOne(`#${nodes[2].id}-show`)?.opacity()).toBe(1);
+    expect(stagger.x()).toBe(64);
+    await advance(112);
+    expect(stagger.x()).toBeGreaterThan(0);
+    expect(stagger.x()).toBeLessThan(64);
+    await advance(208);
+    expect(stagger.x()).toBe(0);
+    view.unmount();
+    view = undefined;
+    expect(cancel).toHaveBeenCalled();
+    expect(Konva.stages.some(stage => stage.findOne(`#${nodes[0].id}-show`))).toBe(false);
+    await advance(64);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(Konva.Animation.animRunning).toBe(false);
+  } finally {
+    try {
+      view?.unmount();
+      await advance(64);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  }
 });
 
 it('renders deterministic paused animation positions and respects reduced motion', async () => {
