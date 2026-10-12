@@ -34,6 +34,9 @@ const allowed = relative => {
   const filename = segments.at(-1);
   return (
     records.has(filename) ||
+    /^rollback-failure-[1-5]-[A-Za-z0-9_-]+\.json$/.test(filename) ||
+    (segments.at(-2) === 'navigation-history-diagnostic' &&
+      (filename === 'manifest.json' || /^[A-Za-z0-9_$.-]+\.(js|css)$/.test(filename))) ||
     /\.(log|ndjson)$/.test(filename) ||
     (segments.includes('plans') && filename.endsWith('.json')) ||
     (segments.includes('screenshots') && filename.endsWith('.png'))

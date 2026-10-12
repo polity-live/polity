@@ -45,6 +45,12 @@ describe('original CI artifact staging', () => {
       'head/initial/workers/journeys/navigation.cpuprofile',
       'head/initial/workers/journeys/navigation-timeline.json',
       'head/initial/workers/journeys/navigation-style-reads.json',
+      'base/initial/workers/queries-62/rollback-failure-4-client_id.json',
+      'base/mutation-browser-observation.ndjson',
+      'head/navigation-history-adaptation.ndjson',
+      'head/initial/workers/journeys/navigation-history-diagnostic/manifest.json',
+      'head/initial/workers/journeys/navigation-history-diagnostic/router-runtime-hash.js',
+      'head/initial/workers/journeys/navigation-history-diagnostic/styles-hash.css',
     ];
     for (const relative of paths) await save(relative, `original\r\n${relative}\r\n`);
     const staged = await stageArtifacts(source, target);
@@ -63,6 +69,12 @@ describe('original CI artifact staging', () => {
     await save('head/project/node_modules/dependency/report.json', 'dependency');
     await save('head/build-cache/nitro/report.json', 'compiled app');
     await save('head/.env', 'credential');
+    await save('head/private.js', 'outside declared diagnostic');
+    await save('head/initial/workers/journeys/navigation-history-diagnostic/.env', 'credential');
+    await save(
+      'head/initial/workers/journeys/navigation-history-diagnostic/unreviewed.json',
+      'unreviewed'
+    );
     const external = path.join(root, 'dependencies');
     await mkdir(external);
     await writeFile(path.join(external, 'report.json'), 'linked dependency');

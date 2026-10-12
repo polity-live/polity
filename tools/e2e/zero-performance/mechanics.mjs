@@ -7,6 +7,8 @@ export const mechanics = [
   'metrics.ts',
   'results.ts',
   'browser-navigation.ts',
+  'navigation-history-adapter.mjs',
+  'navigation-history-diagnostic.ts',
   'journey-metrics.ts',
   'report.ts',
   'plan-artifacts.ts',
@@ -37,6 +39,8 @@ export const mechanics = [
   'mutation-error-diagnostics.ts',
   'delivery-endpoint.mjs',
   'mutation-browser-metrics.ts',
+  'mutation-browser-observation.ts',
+  'mutation-browser-observation-adapter.mjs',
   'mechanics.mjs',
 ];
 
@@ -46,3 +50,27 @@ export const applicationMechanics = [
   'src/server/zero-mutation-diagnostics.ts',
   'src/server/zero-mutation-delivery.ts',
 ];
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+/** Shared preparation/runtime binding; retain the original byte order and raw-file hashing. */
+export async function mechanicsDigest(directory) {
+  const hash = createHash('sha256');
+  const files = [
+    ...mechanics,
+    'distributed.ts',
+    'distributed-runner.ts',
+    'distributed-merge.ts',
+    'distributed-report.ts',
+    'distributed-io.ts',
+    'distributed-timing.ts',
+    'shard-weights.json',
+    'stage-artifacts.mjs',
+  ];
+  for (const file of files.sort())
+    hash.update(file).update(await readFile(path.join(directory, file)));
+  for (const file of applicationMechanics)
+    hash.update(file).update(await readFile(path.resolve(directory, '../../..', file)));
+  return hash.digest('hex');
+}

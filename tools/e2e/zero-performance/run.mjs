@@ -3,10 +3,19 @@ import { createWriteStream } from 'node:fs';
 import { cp, mkdir, readFile, writeFile, symlink, access, open, unlink } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
-import { randomUUID, createECDH } from 'node:crypto';
+import { randomUUID, createECDH, createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYAML } from 'yaml';
-import { mechanics, applicationMechanics } from './mechanics.mjs';
+import { mechanics, applicationMechanics, mechanicsDigest } from './mechanics.mjs';
+import {
+  adaptVoteSuccessObserver,
+  bindVoteObservation,
+  voteObservationPolicy,
+} from './mutation-browser-observation-adapter.mjs';
+import {
+  adaptNavigationHistoryDiagnostic,
+  removeNavigationHistoryDiagnostic,
+} from './navigation-history-adapter.mjs';
 import {
   assertOutputDirectory,
   isolatedPorts,
@@ -219,6 +228,64 @@ async function copySource() {
       const target = path.join(sandbox, file);
       await mkdir(path.dirname(target), { recursive: true });
       await cp(path.resolve(harnessRoot, '../../..', file), target);
+    }
+  }
+  if (harnessRoot || !sourceRef) {
+    const commonDirectory = path.resolve(
+      harnessRoot ?? path.dirname(fileURLToPath(import.meta.url))
+    );
+    const digest = await mechanicsDigest(commonDirectory);
+    const executionFile = option('--execution-file');
+    const execution = executionFile ? JSON.parse(await readFile(executionFile, 'utf8')) : undefined;
+    const observationSource = path.join(sandbox, voteObservationPolicy.path);
+    const observation = adaptVoteSuccessObserver(await readFile(observationSource));
+    const observationModules = {};
+    for (const file of [
+      'mutation-browser-observation.ts',
+      'mutation-browser-observation-adapter.mjs',
+    ]) {
+      observationModules[file] = createHash('sha256')
+        .update(await readFile(path.join(sandbox, 'tools/e2e/zero-performance', file)))
+        .digest('hex');
+    }
+    const observationReceipt = bindVoteObservation(
+      observation.provenance,
+      observationModules,
+      digest,
+      execution,
+      sourceRef
+    );
+    await writeFile(observationSource, observation.source);
+    await writeFile(
+      path.join(artifactRoot, 'mutation-browser-observation.ndjson'),
+      JSON.stringify(observationReceipt) + '\n'
+    );
+    if (args.includes('--profile-navigation')) {
+      const target = 'tools/e2e/zero-performance/journeys.ts';
+      const source = await readFile(path.join(sandbox, target), 'utf8');
+      const adapted = adaptNavigationHistoryDiagnostic(source);
+      if (removeNavigationHistoryDiagnostic(adapted.source) !== source)
+        throw new Error('Navigation diagnostic changed revision-owned source');
+      const modules = {};
+      for (const file of ['navigation-history-adapter.mjs', 'navigation-history-diagnostic.ts'])
+        modules[file] = createHash('sha256')
+          .update(await readFile(path.join(sandbox, 'tools/e2e/zero-performance', file)))
+          .digest('hex');
+      await writeFile(path.join(sandbox, target), adapted.source);
+      await writeFile(
+        path.join(artifactRoot, 'navigation-history-adaptation.ndjson'),
+        JSON.stringify({
+          adapter: 'post-acceptance-fresh-context-history-diagnostic',
+          sourceIdentity: 'original-revision-with-declared-diagnostic-insertion',
+          target,
+          inputSHA256: adapted.inputSHA256,
+          outputSHA256: adapted.outputSHA256,
+          harnessDigest: digest,
+          execution,
+          sourceRef,
+          modules,
+        }) + '\n'
+      );
     }
   }
   const rootLock = await readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8');
