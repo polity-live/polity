@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   activeParticipants: [] as Record<string, unknown>[],
   authUser: { id: 'user-1', email: 'user@example.test' } as Record<string, unknown> | null,
   crVoting: null as Record<string, any> | null,
+  crVotingQuery: vi.fn(),
   currentUser: { id: 'user-1', gender: 'female' } as Record<string, unknown> | null,
   delegateParticipants: [] as Record<string, unknown>[],
   documentPreviewModel: null as Record<string, unknown> | null,
@@ -117,16 +118,20 @@ vi.mock('../../hooks/useAgendaNavigation', () => ({
 }));
 vi.mock('../../hooks/useAgendaItemCRVoting', () => ({
   getVoteResult: vi.fn(),
-  useAgendaItemCRVoting: () =>
-    mocks.crVoting ?? {
-      castCRVote: vi.fn(),
-      closeVoting: vi.fn(),
-      closingVoteItem: null,
-      crTimeline: [],
-      currentItem: null,
-      hasUserVoted: vi.fn(() => false),
-      startFinalPhase: vi.fn(),
-    },
+  useAgendaItemCRVoting: (agendaItemId?: string, userId?: string) => {
+    mocks.crVotingQuery(agendaItemId, userId);
+    return (
+      mocks.crVoting ?? {
+        castCRVote: vi.fn(),
+        closeVoting: vi.fn(),
+        closingVoteItem: null,
+        crTimeline: [],
+        currentItem: null,
+        hasUserVoted: vi.fn(() => false),
+        startFinalPhase: vi.fn(),
+      }
+    );
+  },
 }));
 vi.mock('@/zero/events', () => ({
   useEventAgendaShell: () => ({ event: mocks.event, isLoading: false }),
@@ -185,6 +190,7 @@ beforeEach(() => {
     mocks.addSpeaker,
     mocks.agendaNavStartFirstPendingItem,
     mocks.closeExpiredFinalVotesForEvent,
+    mocks.crVotingQuery,
     mocks.forwardingQuery,
     mocks.initializeChangeRequestVoting,
     mocks.gatedToastError,
@@ -267,6 +273,7 @@ describe('EventAgenda controller contract', () => {
     mocks.agendaItems = [agendaItem];
     const rendered = render(<EventAgenda eventId="event-1" />);
     expect(mocks.forwardingQuery).toHaveBeenLastCalledWith(undefined);
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith(undefined, 'user-1');
     expect(props().toolbarElection).toBeNull();
 
     const election = { id: 'election-1', title: 'Election', candidates: [] };
@@ -274,6 +281,7 @@ describe('EventAgenda controller contract', () => {
     rendered.rerender(<EventAgenda eventId="event-1" />);
     expect(props().toolbarElection).toEqual(election);
     expect(mocks.forwardingQuery).toHaveBeenLastCalledWith(undefined);
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith(undefined, 'user-1');
 
     const candidates = [{ id: 'candidate-1', user: { id: 'candidate-user-1' } }];
     mocks.agendaItems = [
@@ -289,6 +297,25 @@ describe('EventAgenda controller contract', () => {
 
     mocks.agendaItems = [agendaItem];
     rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(props().toolbarElection).toBeNull();
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith(undefined, 'user-1');
+
+    // The same spotlight ID now represents an amendment, so its live CR query
+    // must activate even though the agenda item itself did not change identity.
+    mocks.agendaItems = [{ ...agendaItem, type: 'amendment', amendment_id: 'amendment-1' }];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith('agenda-1', 'user-1');
+    expect(mocks.forwardingQuery).toHaveBeenLastCalledWith('agenda-1');
+    expect(props().toolbarElection).toBeNull();
+
+    mocks.agendaItems = [{ ...agendaItem, type: 'election', election: [election] }];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith(undefined, 'user-1');
+    expect(props().toolbarElection).toEqual(election);
+
+    mocks.agendaItems = [agendaItem];
+    rendered.rerender(<EventAgenda eventId="event-1" />);
+    expect(mocks.crVotingQuery).toHaveBeenLastCalledWith(undefined, 'user-1');
     expect(props().toolbarElection).toBeNull();
   });
 

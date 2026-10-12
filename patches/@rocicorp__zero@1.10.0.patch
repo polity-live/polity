@@ -1,0 +1,12 @@
+diff --git a/out/zero-cache/src/services/change-streamer/replica-poller.js b/out/zero-cache/src/services/change-streamer/replica-poller.js
+--- a/out/zero-cache/src/services/change-streamer/replica-poller.js
++++ b/out/zero-cache/src/services/change-streamer/replica-poller.js
+@@ -31,7 +31,7 @@ var ReplicaPoller = class {
+ 		return this.#stream;
+ 	}
+ 	#pollReplica = () => {
+-		const db = new Database(this.#lc, this.#replicaFile);
++		const db = new Database(this.#lc, this.#replicaFile, { readonly: true });
+ 		try {
+ 			const { stateVersion } = getReplicationState(new StatementRunner(db));
+ 			if (stateVersion !== this.#lastWatermark) {

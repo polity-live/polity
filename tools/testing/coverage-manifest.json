@@ -1835,6 +1835,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "patches/@rocicorp__zero@1.10.0.patch",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "asset",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "playwright.collaboration.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
@@ -138653,6 +138663,16 @@
     },
     {
       "path": "tools/zero/__tests__/clean-dev-cache.unit.test.ts",
+      "domain": "tools:zero",
+      "owner": "polity/tools:zero",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/zero/__tests__/replica-poller-readonly.unit.test.ts",
       "domain": "tools:zero",
       "owner": "polity/tools:zero",
       "kind": "test-infrastructure",

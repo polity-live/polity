@@ -6,6 +6,7 @@ RUN corepack enable \
     && corepack prepare pnpm@10.34.6 --activate
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
     && pnpm rebuild @parcel/watcher @rocicorp/zero-sqlite3 esbuild protobufjs \
