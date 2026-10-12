@@ -179,24 +179,67 @@ export function installNavigationProbe() {
       authoritative: null as number | null,
       target,
       observer: undefined as MutationObserver | undefined,
+      observedContent: null as Element | null,
+      observedAncestors: [] as Node[],
       pendingFrame: false,
       candidates: [] as { node: Node; element: Element }[],
     };
     scope.__benchmarkPaint = state;
+    const contentRoot = () =>
+      target.contentSelector ? document.querySelector(target.contentSelector) : document.body;
+    const ancestors = (content: Element | null) => {
+      const result: Node[] = [];
+      for (let parent = content?.parentNode; parent; parent = parent.parentNode)
+        result.push(parent);
+      return result;
+    };
+    const sameAncestors = (parents: Node[]) =>
+      parents.length === state.observedAncestors.length &&
+      parents.every((parent, index) => parent === state.observedAncestors[index]);
+    const observeContent = (content: Element | null) => {
+      const parents = ancestors(content);
+      if (state.observedContent === content && sameAncestors(parents)) return;
+      state.observer?.disconnect();
+      state.observedContent = content;
+      state.observedAncestors = parents;
+      if (!content) {
+        state.observer?.observe(document, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+        return;
+      }
+      state.observer?.observe(content, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+      // Watch structural replacements/reparenting without recording text work
+      // in unrelated headers, navigation, sidebars or portals.
+      for (const parent of parents) state.observer?.observe(parent, { childList: true });
+    };
     const inspect = () => {
       if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
-      if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) return;
+      if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) {
+        observeContent(null);
+        return;
+      }
       const search = new URLSearchParams(location.search);
       if (
         Object.entries(target.search ?? {}).some(([key, value]) =>
           target.consumedSearch?.includes(key) ? search.has(key) : search.get(key) !== value
         )
-      )
+      ) {
+        observeContent(null);
         return;
-      if (!document.body) return;
-      const content = target.contentSelector
-        ? document.querySelector(target.contentSelector)
-        : document.body;
+      }
+      if (!document.body) {
+        observeContent(null);
+        return;
+      }
+      const content = contentRoot();
+      observeContent(content);
       if (!content) return;
       const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
       const candidates: { node: Node; element: Element }[] = [];
@@ -256,7 +299,17 @@ export function installNavigationProbe() {
         requestAnimationFrame(paint);
       }
     };
-    state.observer = new MutationObserver(inspect);
+    state.observer = new MutationObserver(records => {
+      if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
+      const content = contentRoot();
+      if (
+        content !== state.observedContent ||
+        !sameAncestors(ancestors(content)) ||
+        !content ||
+        records.some(record => content.contains(record.target))
+      )
+        inspect();
+    });
     state.observer.observe(document, { childList: true, subtree: true, characterData: true });
     inspect();
     requestAnimationFrame(inspect);

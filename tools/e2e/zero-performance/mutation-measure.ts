@@ -19,7 +19,11 @@ import {
 } from './mutation-metrics';
 import type { Execution } from './sharding';
 import { required } from './required';
-import { watchMutationSnapshot, waitForRollback } from './mutation-snapshot';
+import {
+  watchMutationSnapshot,
+  waitForRollback,
+  waitForReadOnlyRollbackProof,
+} from './mutation-snapshot';
 import { MutationRequestCompletion } from './mutation-request-completion';
 import { mutationErrorShape, mutationSDKErrorDiagnostic } from './mutation-error-diagnostics';
 import { watchMutationObservation as watch } from './mutation-observation';
@@ -449,7 +453,9 @@ export async function measureMutations(
           sample.databaseVerified = true;
           stage = 'optimistic rollback verification';
           if (sample.outcome !== 'success') {
-            if (prepared.verifyRollback) await prepared.verifyRollback(writer);
+            const verifyRollback = prepared.verifyRollback;
+            if (verifyRollback)
+              await waitForReadOnlyRollbackProof(entry.variant, () => verifyRollback(writer));
             else if (prepared.observe) {
               await waitForRollback(() => writerCurrent, writerBaseline);
               for (const baseline of additionalWriterBaselines)

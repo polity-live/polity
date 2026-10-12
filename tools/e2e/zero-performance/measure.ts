@@ -39,6 +39,7 @@ import { executionMetadata, runtimeMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
 import type { MutationBrowserResult } from './mutation-browser';
 import { mutationBrowserFailures } from './mutation-browser-metrics';
+import { deleteFreshBenchmarkClient } from './fresh-client-cleanup';
 
 (globalThis as any).TESTING ??= false;
 
@@ -156,7 +157,7 @@ async function client(actor: keyof typeof contexts, warnings: string[]) {
       throw new Error('Inspector authentication rejected');
     return zero;
   } catch (error) {
-    await zero.close();
+    await deleteFreshBenchmarkClient(zero);
     throw error;
   }
 }
@@ -213,7 +214,7 @@ async function measure(
         const clientGroupID = await deadline(zero.clientGroupID, 'Client group identity');
         return { zero, clientGroupID, connectionMs: performance.now() - connectionAt };
       } catch (error) {
-        await deadline(zero.close(), 'Closing failed connection');
+        await deadline(deleteFreshBenchmarkClient(zero), 'Deleting failed connection storage');
         throw error;
       }
     })
@@ -396,7 +397,10 @@ async function measure(
     const closing = await Promise.allSettled(
       connections.map(connection =>
         connection.status === 'fulfilled'
-          ? deadline(connection.value.zero.close(), 'Closing benchmark client')
+          ? deadline(
+              deleteFreshBenchmarkClient(connection.value.zero),
+              'Deleting benchmark client storage'
+            )
           : Promise.resolve()
       )
     );

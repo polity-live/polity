@@ -2,6 +2,7 @@ export const mechanics = [
   'run.mjs',
   'collect.ts',
   'measure.ts',
+  'fresh-client-cleanup.ts',
   'metrics.ts',
   'results.ts',
   'browser-navigation.ts',

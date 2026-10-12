@@ -75,6 +75,160 @@ function probe() {
 }
 
 describe('navigation paint measurement', () => {
+  it('ignores unrelated header text while observing actual content text changes', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<header><span>Other</span></header><main><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    const walk = vi.spyOn(document, 'createTreeWalker');
+    const main = document.querySelector('main');
+    const textWalks = () =>
+      walk.mock.calls.filter(
+        ([root, whatToShow]) => root === main && whatToShow === NodeFilter.SHOW_TEXT
+      ).length;
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    const walks = textWalks();
+    for (let index = 0; index < 5; index++) {
+      document.querySelector('header span')!.textContent = `Target ${index}`;
+      await Promise.resolve();
+    }
+    frame();
+    expect(textWalks()).toBe(walks);
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    document.querySelector('main h1')!.firstChild!.nodeValue = 'Target';
+    await Promise.resolve();
+    expect(textWalks()).toBeGreaterThan(walks);
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+    const completedWalks = textWalks();
+    document.querySelector('main h1')!.firstChild!.nodeValue = 'Other';
+    await Promise.resolve();
+    expect(textWalks()).toBe(completedWalks);
+  });
+
+  it('excludes navigation and aside duplicates inside the selected content root', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML =
+      '<header>Target</header><main><nav>Target</nav><aside>Target</aside><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    document.querySelector('main h1')!.textContent = 'Target';
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('finds a selected root inserted late inside an existing container', async () => {
+    history.replaceState(null, '', '/messages');
+    document.body.innerHTML = '<header>Message</header><main><section></section></main>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({
+      path: '/messages',
+      text: 'Message',
+      contentSelector: '#message-expected',
+    });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    document.querySelector('section')!.innerHTML =
+      '<article id="message-expected"><p>Message</p></article>';
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('keeps document bootstrap active before the body and destination route exist', async () => {
+    history.replaceState(null, '', '/other');
+    const { scope, frame } = probe();
+    const body = document.body;
+    body.remove();
+    try {
+      scope.__beginBenchmarkNavigation({
+        path: '/target',
+        text: 'Target',
+        contentSelector: 'main',
+      });
+      frame();
+      expect(scope.__benchmarkPaint.displayed).toBeNull();
+      history.replaceState(null, '', '/target');
+      frame();
+      expect(scope.__benchmarkPaint.displayed).toBeNull();
+      body.innerHTML = '<main><h1>Target</h1></main>';
+      document.documentElement.append(body);
+      await Promise.resolve();
+      expect(scope.__benchmarkPaint.displayed).toBeNull();
+      frame();
+      expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+    } finally {
+      if (!document.body) document.documentElement.append(body);
+    }
+  });
+
+  it('observes replaced roots and returns to bootstrap after removal until a new root arrives', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<section><main style="opacity:0"><h1>Target</h1></main></section>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    const replacement = document.createElement('section');
+    replacement.innerHTML = '<main style="opacity:0"><h1>Target</h1></main>';
+    document.querySelector('section')!.replaceWith(replacement);
+    await Promise.resolve();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    replacement.querySelector('main')!.remove();
+    await Promise.resolve();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    replacement.innerHTML = '<div><main><h1>Target</h1></main></div>';
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('rechecks new ancestors after reparenting before accepting viewport-visible content', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML =
+      '<section style="opacity:0"><main><h1>Target</h1></main></section><div style="visibility:hidden"></div>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    const destination = document.querySelector('div')!;
+    destination.append(document.querySelector('main')!);
+    await Promise.resolve();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    destination.style.visibility = 'visible';
+    const bounds = vi.spyOn(Element.prototype, 'getBoundingClientRect');
+    bounds.mockReturnValue({
+      top: innerHeight + 1,
+      left: 10,
+      width: 100,
+      height: 30,
+      right: 110,
+      bottom: innerHeight + 31,
+    } as DOMRect);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    bounds.mockReturnValue({
+      top: 10,
+      left: 10,
+      width: 100,
+      height: 30,
+      right: 110,
+      bottom: 40,
+    } as DOMRect);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
+
   it('requires visible destination content inside the selected main region', async () => {
     history.replaceState(null, '', '/target');
     document.body.innerHTML = '<header><h1>Target</h1></header><main><h1>Other</h1></main>';

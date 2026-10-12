@@ -105633,7 +105633,9 @@
         "src/lib/supabase/__tests__/middleware.unit.test.ts",
         "src/lib/supabase/__tests__/server.unit.test.ts",
         "src/server/__tests__/database-clients.unit.test.ts",
-        "src/zero/communication-studio/__tests__/client.component.test.tsx"
+        "src/zero/communication-studio/__tests__/client.component.test.tsx",
+        "tools/e2e/zero-performance/__tests__/fresh-client-cleanup.unit.test.ts",
+        "tools/e2e/zero-performance/fresh-client-cleanup.ts"
       ]
     },
     {
@@ -135044,6 +135046,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/fresh-client-cleanup.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -135549,6 +135561,16 @@
           "caseId": "binds an unassigned parent FK to the actual constrained child identity"
         }
       ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/fresh-client-cleanup.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
       "suggestedTestRefs": []
     },
     {

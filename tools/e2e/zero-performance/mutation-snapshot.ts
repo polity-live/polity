@@ -82,3 +82,64 @@ export async function waitForRollback(read: () => unknown, baseline: unknown, ti
     }
   }
 }
+
+/** These two factories provide only fresh Inspector and SQL reads. Keep their
+ * revision-owned assertions intact while awaiting asynchronous authority eviction.
+ * Other rollback callbacks may have side effects and must run exactly once.
+ */
+export async function waitForReadOnlyRollbackProof(
+  variant: string,
+  verify: () => Promise<void>,
+  timeoutMs = 15_000
+) {
+  if (
+    variant !== 'delegated-authority-revoked-after-preload' &&
+    variant !== 'secret-manager-authority-revoked-after-preload'
+  ) {
+    await verify();
+    return;
+  }
+  let stopped = false;
+  let lastMismatch: assert.AssertionError | undefined;
+  let pollTimer: ReturnType<typeof setTimeout> | undefined;
+  let resumePoll: (() => void) | undefined;
+  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+  const verification = async () => {
+    while (!stopped) {
+      try {
+        await verify();
+        return;
+      } catch (error) {
+        if (stopped) return;
+        if (
+          !(error instanceof assert.AssertionError) ||
+          !/^Rollback (row|field) proof: [A-Za-z_]+(?:\.[A-Za-z_]+)?$/.test(
+            error.message.split('\n')[0]
+          )
+        )
+          throw error;
+        lastMismatch = error;
+        await new Promise<void>(resolve => {
+          resumePoll = resolve;
+          pollTimer = setTimeout(resolve, 5);
+        });
+      }
+    }
+  };
+  try {
+    await Promise.race([
+      verification(),
+      new Promise<never>((_, reject) => {
+        deadlineTimer = setTimeout(() => {
+          stopped = true;
+          reject(lastMismatch ?? new Error('Read-only rollback verification timed out'));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    stopped = true;
+    clearTimeout(deadlineTimer);
+    clearTimeout(pollTimer);
+    resumePoll?.();
+  }
+}

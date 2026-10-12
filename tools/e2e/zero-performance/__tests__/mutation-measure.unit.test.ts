@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import assert from 'node:assert/strict';
 import type { MutationCase } from '../mutation-case-types';
 import type { MutationExpectation, MutationMeasurement } from '../mutation-metrics';
 
@@ -50,7 +51,8 @@ vi.mock('../catalog', () => ({
 vi.mock('../../../../e2e/fixtures/zero-readiness', () => ({
   waitForZeroReady: harness.ready,
 }));
-vi.mock('../mutation-snapshot', () => ({
+vi.mock('../mutation-snapshot', async importOriginal => ({
+  ...(await importOriginal<typeof import('../mutation-snapshot')>()),
   watchMutationSnapshot: () => ({
     promise: Promise.resolve({ at: performance.now(), mutationID: 1 }),
     cancel: vi.fn(),
@@ -126,10 +128,10 @@ vi.mock('@rocicorp/zero', () => ({
 import { measureMutations } from '../mutation-measure';
 import { mutationFailures } from '../mutation-metrics';
 
-function fixture() {
+function fixture(variant = 'authorized') {
   const entry: MutationCase = {
     name: 'fixture.update',
-    variant: 'authorized',
+    variant,
     actor: 'owner',
     outcome: 'success',
     observer: { query: 'fixture.byId' },
@@ -148,7 +150,7 @@ function fixture() {
     })),
   };
   const expectation: MutationExpectation = {
-    key: 'mutation/fixture.update/authorized/owner',
+    key: `mutation/fixture.update/${variant}/owner`,
     name: entry.name,
     variant: entry.variant,
     actor: entry.actor,
@@ -192,6 +194,32 @@ afterEach(() => {
 });
 
 describe('mutation measurement engine lifecycle', () => {
+  it.each([
+    'delegated-authority-revoked-after-preload',
+    'secret-manager-authority-revoked-after-preload',
+  ])(
+    'awaits the original read-only rollback callback after authority eviction for %s',
+    async variant => {
+      harness.mode = 'client-result-error';
+      const { entry, rows, run } = fixture(variant);
+      const prepare = entry.prepare;
+      const verifyRollback = vi.fn(async () => undefined);
+      verifyRollback.mockRejectedValueOnce(
+        new assert.AssertionError({ message: 'Rollback row proof: action_right' })
+      );
+      entry.prepare = async context => ({ ...(await prepare(context)), verifyRollback });
+      const measurement = run();
+      await vi.advanceTimersByTimeAsync(50);
+      await measurement;
+      expect(verifyRollback).toHaveBeenCalledTimes(6);
+      expect(rows[0].samples.every(sample => sample.rollbackVerified)).toBe(true);
+      expect(
+        rows[0].failures.some(failure => failure.includes('rollback verification failed'))
+      ).toBe(false);
+      expect(harness.verify).toHaveBeenCalledTimes(5);
+      expect(harness.restore).toHaveBeenCalledTimes(5);
+    }
+  );
   it('reports only schema labels from database assertion failures', async () => {
     harness.verify.mockRejectedValueOnce(
       new Error('Database field proof: vote.closing_type\nSECRET SQL row and credentials')
