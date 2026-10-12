@@ -14,6 +14,7 @@ interface Props {
   disabled: boolean;
   groupId: string | null;
   userId: string;
+  editingElement?: TDataViewElement;
   onInsert: (configuration: TDataViewElement, projection: DataViewProjection) => void;
 }
 export function StudioDataViewDialog(props: Props) {
@@ -29,7 +30,13 @@ export function StudioDataViewDialog(props: Props) {
     </ChartDatasetContextProvider>
   );
 }
-function StudioDataViewDialogContent({ open, onOpenChange, disabled, onInsert }: Props) {
+function StudioDataViewDialogContent({
+  open,
+  onOpenChange,
+  disabled,
+  onInsert,
+  editingElement,
+}: Props) {
   const { t } = useTranslation();
   const model = useDataViewBuilderModel({
     onInsert: (configuration, projection) => {
@@ -43,12 +50,16 @@ function StudioDataViewDialogContent({ open, onOpenChange, disabled, onInsert }:
         : validateStudioDataProjection(projection, kind),
   });
   const { resetDialog, setOpen } = model;
-  const wasOpen = useRef(false);
+  const currentReset = useRef(resetDialog);
+  const currentElement = useRef(editingElement);
+  currentReset.current = resetDialog;
+  currentElement.current = editingElement;
   useEffect(() => {
-    if (open && !wasOpen.current) resetDialog();
-    wasOpen.current = open;
+    // Strict Mode replays mount effects after aborting their first request.
+    // Restart preparation on that replay, without resetting an open editor on token refresh.
+    if (open) currentReset.current(currentElement.current);
     setOpen(open);
-  }, [open, resetDialog, setOpen]);
+  }, [open, setOpen]);
   return (
     <DataViewDialogView
       model={{

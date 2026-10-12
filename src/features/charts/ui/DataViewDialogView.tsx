@@ -1,4 +1,8 @@
+import { DatasetProcessingError } from './DatasetProcessingError';
+import { datasetRawDownloadTarget } from '../logic/datasetRawDownload';
 import * as React from 'react';
+import { DatasetSamplePreview } from './DatasetSamplePreview';
+import { DatasetExplorer } from './DatasetExplorer';
 import {
   ArrowLeftIcon,
   ChartNoAxesCombinedIcon,
@@ -6,6 +10,9 @@ import {
   DatabaseIcon,
   FileSpreadsheetIcon,
   FileUpIcon,
+  ExpandIcon,
+  InfoIcon,
+  RefreshCwIcon,
   Loader2Icon,
   SearchIcon,
   SigmaIcon,
@@ -314,7 +321,7 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
           </Badge>
           {result.snapshotTakenAt ? (
             <Badge variant="secondary" className="rounded-sm font-normal">
-              {t('plateJs.dataView.dataAsOf', { date: result.snapshotTakenAt.slice(0, 10) })}
+              {t('plateJs.dataView.importedAt', { date: result.snapshotTakenAt.slice(0, 10) })}
             </Badge>
           ) : null}
         </div>
@@ -390,19 +397,50 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
             </div>
           ) : null}
         </dl>
+        <DatasetSamplePreview
+          preview={model.dataPreview}
+          loading={model.dataPreviewLoading}
+          error={model.dataPreviewError}
+          downloadTarget={
+            model.sampleDownloadAvailable
+              ? datasetRawDownloadTarget(
+                  model.selectedResult,
+                  model.explorerRequest,
+                  model.downloadLanguage
+                )
+              : undefined
+          }
+          downloadAccessToken={model.downloadAccessToken}
+          sourceUrl={model.selectedResult?.sourceUrl}
+          onRetry={model.retryDataPreview}
+        />
       </div>
       <div className="border-t p-4">
         <Button
           data-action-id="charts.data-view.use-dataset"
           type="button"
           className="w-full"
-          disabled={(result.byteSize ?? 0) > 50 * 1024 * 1024}
-          onClick={() => void model.useSelectedDataset()}
+          disabled={model.preparing || (result.byteSize ?? 0) > 50 * 1024 * 1024}
+          onClick={model.openDatasetExplorer}
         >
           {t('plateJs.dataView.useDataset')}
         </Button>
         {(result.byteSize ?? 0) > 50 * 1024 * 1024 ? (
-          <p className="text-destructive mt-2 text-xs">{t('plateJs.dataView.tooLarge')}</p>
+          model.dataPreviewError ? (
+            <p className="text-destructive mt-2 text-xs">{t('plateJs.dataView.tooLarge')}</p>
+          ) : (
+            <DatasetProcessingError
+              className="mt-3"
+              message={t('plateJs.dataView.tooLarge')}
+              target={datasetRawDownloadTarget(
+                result,
+                model.explorerRequest,
+                model.downloadLanguage
+              )}
+              accessToken={model.downloadAccessToken}
+              sourceUrl={result.sourceUrl}
+            />
+          )
         ) : null}
         {!result.snapshotId && ['EUROSTAT', 'GENESIS_DESTATIS'].includes(result.provider) && (
           <Button
@@ -441,6 +479,14 @@ function ImportPreparation({ model }: DataViewDialogViewProps) {
                 size: formatBytes(prepared.estimatedBytes) ?? '0 MB',
               })}
         </p>
+        {!prepared.importAllowed && !model.error && (
+          <DatasetProcessingError
+            message={t('plateJs.dataView.tooLarge')}
+            target={datasetRawDownloadTarget(model.selectedResult, null, model.downloadLanguage)}
+            accessToken={model.downloadAccessToken}
+            sourceUrl={model.selectedResult?.sourceUrl}
+          />
+        )}
         <SelectField
           label={t('plateJs.dataView.prepareTitle')}
           value={model.restrictImport ? 'scope' : 'full'}
@@ -990,6 +1036,9 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
                     ...current,
                     ...(profile.role === 'time' ? { timeRange: null } : {}),
                     filters: { ...current.filters, [profile.name]: value },
+                    rowConditions: current.rowConditions?.filter(
+                      condition => condition.column !== profile.name
+                    ),
                   }));
                 }}
               />
@@ -1009,7 +1058,12 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
             size="sm"
             className="mt-4"
             onClick={() =>
-              model.setQuery(current => ({ ...current, filters: {}, timeRange: null }))
+              model.setQuery(current => ({
+                ...current,
+                filters: {},
+                rowConditions: [],
+                timeRange: null,
+              }))
             }
           >
             {t('plateJs.dataView.clearFilters')}
@@ -1025,7 +1079,7 @@ function AggregationSelect({
   'data-action-id': actionId,
 }: DataViewDialogViewProps & { 'data-action-id': string }) {
   const { t } = useTranslation();
-  const aggregations: DataAggregation[] = ['sum', 'mean', 'median', 'min', 'max', 'count'];
+  const aggregations: DataAggregation[] = ['none', 'sum', 'mean', 'median', 'min', 'max', 'count'];
   return (
     <SelectField
       data-action-id={actionId}
@@ -1391,15 +1445,29 @@ function ProjectionPreview({ model }: DataViewDialogViewProps) {
   }
   if (model.projectionError) {
     return (
-      <div className="text-destructive flex min-h-80 items-center justify-center px-8 text-center text-sm">
-        {model.projectionError}
-      </div>
+      <DatasetProcessingError
+        className="min-h-80 p-5"
+        message={model.projectionError}
+        target={
+          model.projectionDownloadAvailable
+            ? datasetRawDownloadTarget(
+                model.selectedResult,
+                model.explorerRequest,
+                model.downloadLanguage
+              )
+            : undefined
+        }
+        accessToken={model.downloadAccessToken}
+        sourceUrl={model.selectedResult?.sourceUrl}
+      />
     );
   }
   if (!projection) {
     return (
       <div className="text-muted-foreground flex min-h-80 items-center justify-center px-8 text-center text-sm">
-        {t('plateJs.dataView.previewHint')}
+        {model.needsMeasure
+          ? t('plateJs.dataView.chooseMeasureRequired')
+          : t('plateJs.dataView.previewHint')}
       </div>
     );
   }
@@ -1412,6 +1480,22 @@ function ProjectionPreview({ model }: DataViewDialogViewProps) {
           publisher: model.selectedResult.publisher,
           sourceUrl: model.selectedResult.sourceUrl,
           snapshotTakenAt: model.snapshot.snapshotTakenAt,
+          sourceUpdatedAt:
+            typeof model.snapshot.provenance?.sourceUpdatedAt === 'string'
+              ? model.snapshot.provenance.sourceUpdatedAt
+              : null,
+          dataPeriod: model.query.timeRange
+            ? {
+                start:
+                  model.query.timeRange.startYear === 1800
+                    ? '…'
+                    : String(model.query.timeRange.startYear),
+                end:
+                  model.query.timeRange.endYear === 2199
+                    ? '…'
+                    : String(model.query.timeRange.endYear),
+              }
+            : model.selectedResult.timeCoverage,
         }}
       />
     ) : null;
@@ -1424,6 +1508,12 @@ function ProjectionPreview({ model }: DataViewDialogViewProps) {
           presentation={model.presentation}
           className="min-h-80"
         />
+        {model.query.aggregation !== 'none' && (
+          <p className="text-muted-foreground mt-2 text-xs">
+            {t('plateJs.dataView.aggregation')}:{' '}
+            {t(`plateJs.dataView.aggregationValues.${model.query.aggregation}`)}
+          </p>
+        )}
         {attribution}
       </div>
     );
@@ -1459,7 +1549,10 @@ function ProjectionPreview({ model }: DataViewDialogViewProps) {
           ) : null}
         </div>
       ) : null}
-      <table className="w-full border-collapse text-left text-sm">
+      <table
+        className="w-full border-collapse text-left text-sm"
+        aria-label={t('plateJs.dataView.preview')}
+      >
         <thead>
           <tr className="border-b">
             {projection.columns.map(column => (
@@ -1493,63 +1586,61 @@ function Builder({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {model.requiredSelections?.length > 0 && (
-        <div className="space-y-3 border-b p-4">
-          <p role="status" className="text-sm">
-            {t('plateJs.dataView.requiredDimensions')}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {model.requiredSelections.map(dimension => (
-              <SelectField
-                key={dimension.id}
-                label={dimension.label}
-                placeholder={t('plateJs.dataView.chooseDimension')}
-                value={model.query.filters[dimension.id] || undefined}
-                onValueChange={value =>
-                  model.setQuery(current => ({
-                    ...current,
-                    filters: { ...current.filters, [dimension.id]: value },
-                  }))
-                }
-                options={dimension.values.map(value => ({
-                  value: value.id,
-                  label: value.label || value.id,
-                }))}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      {Boolean(
-        model.snapshot?.provenance?.importScope &&
-        Object.keys(model.snapshot.provenance.importScope as object).length > 0
-      ) && <p className="border-b px-5 py-2 text-xs">{t('plateJs.dataView.scopedSnapshot')}</p>}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{model.selectedResult?.title}</p>
-            <p className="text-muted-foreground truncate text-xs">
-              {model.snapshot ? providerLabel(model.snapshot.provider) : null}
-              {model.snapshot?.snapshotTakenAt
-                ? ` · ${t('plateJs.dataView.dataAsOf', { date: model.snapshot.snapshotTakenAt.slice(0, 10) })}`
-                : ''}
-            </p>
-          </div>
-        </div>
-        <Button
-          data-action-id="charts.data-view.change-dataset"
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={model.changeDataset}
-        >
-          {t('plateJs.dataView.changeDataset')}
-        </Button>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid min-h-full lg:grid-cols-[minmax(300px,0.68fr)_minmax(0,1.32fr)]">
           <div className="space-y-5 border-b p-5 lg:border-r lg:border-b-0">
+            {(model.measureOptions?.length ?? 0) > 1 && (
+              <div className="border-b pb-3">
+                <SelectField
+                  label={t('plateJs.dataView.measureAndUnit')}
+                  placeholder={t('plateJs.dataView.chooseMeasureRequired')}
+                  value={model.selectedMeasure?.id ?? ''}
+                  onValueChange={model.chooseMeasure}
+                  options={model.measureOptions.map(option => ({
+                    value: option.id,
+                    label: `${option.label} · ${option.unit}`,
+                  }))}
+                />
+              </div>
+            )}
+            {model.requiredSelections?.filter(
+              dimension =>
+                !model.measureOptions?.length ||
+                !['value_variable_code', 'value_unit'].includes(dimension.id)
+            ).length > 0 && (
+              <div className="space-y-3 border-b pb-3">
+                <p role="status" className="text-sm">
+                  {t('plateJs.dataView.requiredDimensions')}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {model.requiredSelections
+                    .filter(
+                      dimension =>
+                        !model.measureOptions?.length ||
+                        !['value_variable_code', 'value_unit'].includes(dimension.id)
+                    )
+                    .map(dimension => (
+                      <SelectField
+                        key={dimension.id}
+                        label={dimension.label}
+                        placeholder={t('plateJs.dataView.chooseDimension')}
+                        value={model.query.filters[dimension.id] || undefined}
+                        onValueChange={value =>
+                          model.setQuery(current => ({
+                            ...current,
+                            filters: { ...current.filters, [dimension.id]: value },
+                          }))
+                        }
+                        options={dimension.values.map(value => ({
+                          value: value.id,
+                          label: value.label || value.id,
+                        }))}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+
             <Tabs
               value={model.view}
               onValueChange={value => model.setView(value as 'chart' | 'table' | 'stat')}
@@ -1599,6 +1690,23 @@ function Builder({ model }: DataViewDialogViewProps) {
               ) : null}
             </div>
             <ProjectionPreview model={model} />
+            <DatasetSamplePreview
+              preview={model.dataPreview}
+              loading={model.dataPreviewLoading}
+              error={model.dataPreviewError}
+              downloadTarget={
+                model.sampleDownloadAvailable
+                  ? datasetRawDownloadTarget(
+                      model.selectedResult,
+                      model.explorerRequest,
+                      model.downloadLanguage
+                    )
+                  : undefined
+              }
+              downloadAccessToken={model.downloadAccessToken}
+              sourceUrl={model.selectedResult?.sourceUrl}
+              onRetry={model.retryDataPreview}
+            />
           </div>
         </div>
       </div>
@@ -1610,13 +1718,14 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
   const handleRejectedFiles = (rejections: FileDropzoneRejection[]) => {
     const code = rejections[0]?.code;
-    model.setUploadError(
+    const message =
       code === 'file-size'
         ? t('plateJs.dataView.fileTooLarge')
         : code === 'too-many-files'
           ? t('plateJs.dataView.tooManyFiles')
-          : t('plateJs.dataView.invalidFileType')
-    );
+          : t('plateJs.dataView.invalidFileType');
+    if (model.rejectUploadFile) model.rejectUploadFile(rejections[0]?.file ?? null, message);
+    else model.setUploadError(message);
   };
 
   return (
@@ -1752,12 +1861,15 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
             />
           )}
           {model.uploadError ? (
-            <p
-              className="border-destructive/30 bg-destructive/5 text-destructive border px-3 py-2 text-sm"
-              role="alert"
-            >
-              {model.uploadError}
-            </p>
+            <DatasetProcessingError
+              className="border-destructive/30 bg-destructive/5 border px-3 py-2"
+              message={model.uploadError}
+              target={
+                model.uploadDownloadAvailable && (model.rejectedUploadFile || model.uploadFile)
+                  ? { file: model.rejectedUploadFile ?? model.uploadFile ?? undefined }
+                  : undefined
+              }
+            />
           ) : null}
         </div>
         <SheetFooter>
@@ -1787,6 +1899,109 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
   );
 }
 
+function CompactBuilderHeader({ model }: DataViewDialogViewProps) {
+  const { t } = useTranslation();
+  const restricted = Boolean(
+    model.snapshot?.provenance?.importScope &&
+    Object.keys(model.snapshot.provenance.importScope as object).length
+  );
+  const measure = model.selectedMeasure
+    ? `${model.selectedMeasure.label} · ${model.selectedMeasure.unit}`
+    : '';
+  const provider = model.snapshot ? providerLabel(model.snapshot.provider) : '';
+  const imported = model.snapshot?.snapshotTakenAt
+    ? t('plateJs.dataView.importedAt', { date: model.snapshot.snapshotTakenAt.slice(0, 10) })
+    : '';
+  return (
+    <DialogHeader
+      separator
+      className="shrink-0 gap-1 px-4 py-2 pr-12 text-left"
+      data-testid="compact-data-header"
+    >
+      <div
+        className="flex h-8 min-w-0 items-center gap-2"
+        data-testid="compact-data-header-primary"
+      >
+        <DialogTitle className="shrink-0 text-base">
+          {t(model.editingElement ? 'plateJs.dataView.editTitle' : 'plateJs.dataView.insertTitle')}
+        </DialogTitle>
+        <span className="min-w-0 flex-1 truncate text-sm" title={measure}>
+          {measure}
+        </span>
+        {restricted && (
+          <Badge className="shrink-0 px-1.5 text-[10px]">
+            <span className="hidden sm:inline">{t('plateJs.dataView.scopedSnapshot')}</span>
+            <span className="sm:hidden" aria-label={t('plateJs.dataView.scopedSnapshot')}>
+              !
+            </span>
+          </Badge>
+        )}
+        <Button
+          data-action-id="charts.data-view.change-dataset"
+          variant="outline"
+          size="sm"
+          className="h-7 shrink-0 px-2"
+          aria-label={t('plateJs.dataView.changeDataset')}
+          onClick={model.changeDataset}
+        >
+          <RefreshCwIcon className="size-3.5" />
+          <span className="hidden md:inline">{t('plateJs.dataView.changeDataset')}</span>
+        </Button>
+        <Button
+          data-action-id="charts.data-view.explore-dataset"
+          variant="outline"
+          size="sm"
+          className="h-7 shrink-0 px-2"
+          aria-label={t('plateJs.dataView.explorerOpen')}
+          onClick={model.openDatasetExplorer}
+        >
+          <ExpandIcon className="size-3.5" />
+          <span className="hidden md:inline">{t('plateJs.dataView.explorerOpen')}</span>
+        </Button>
+      </div>
+      <div
+        className="text-muted-foreground flex h-6 min-w-0 items-center gap-2 text-xs"
+        data-testid="compact-data-header-secondary"
+      >
+        <span className="min-w-0 flex-1 truncate" title={model.selectedResult?.title}>
+          {model.selectedResult?.title}
+        </span>
+        <span className="max-w-[45%] shrink-0 truncate">
+          {provider}
+          {imported ? ` · ${imported}` : ''}
+        </span>
+        <Popover>
+          <PopoverTrigger data-action-scope="presentation" asChild>
+            <Button
+              data-action-id="charts.data-view.dataset-info"
+              variant="ghost"
+              size="icon"
+              className="size-6 shrink-0"
+              aria-label={t('plateJs.dataView.datasetInformation')}
+            >
+              <InfoIcon className="size-3.5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="max-h-[min(70dvh,var(--radix-popover-content-available-height))] w-[min(360px,calc(100vw-2rem))] space-y-2 overflow-auto text-sm"
+          >
+            <p className="font-medium">{model.selectedResult?.title}</p>
+            {measure && <p>{measure}</p>}
+            <p>{provider}</p>
+            <p>{imported}</p>
+            {restricted && <p>{t('plateJs.dataView.scopedSnapshotExplanation')}</p>}
+            <p className="text-muted-foreground">{t('plateJs.dataView.buildDescription')}</p>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <DialogDescription className="sr-only">
+        {t('plateJs.dataView.buildDescription')}
+      </DialogDescription>
+    </DialogHeader>
+  );
+}
+
 export function DataViewDialogView({ model }: DataViewDialogViewProps) {
   const { t } = useTranslation();
   const insertLabel = model.editingElement
@@ -1800,25 +2015,51 @@ export function DataViewDialogView({ model }: DataViewDialogViewProps) {
   return (
     <Dialog open={model.open} onOpenChange={model.setOpen}>
       <ScrollableDialogContent
-        className="bg-background flex h-dvh !max-h-none w-screen max-w-none flex-col overflow-hidden rounded-none p-0 sm:h-[min(820px,calc(100dvh-3rem))] sm:w-[min(1200px,calc(100vw-3rem))] sm:max-w-none sm:rounded-md"
+        className={cn(
+          'bg-background flex h-dvh !max-h-none w-screen max-w-none flex-col overflow-hidden rounded-none p-0',
+          (model.stage === 'build' || model.datasetExplorerOpen) && 'gap-0',
+          model.datasetExplorerOpen
+            ? 'sm:h-dvh sm:w-screen sm:max-w-none sm:rounded-none'
+            : 'sm:h-[min(820px,calc(100dvh-3rem))] sm:w-[min(1200px,calc(100vw-3rem))] sm:max-w-none sm:rounded-md'
+        )}
         onEscapeKeyDown={event => event.preventDefault()}
         onPointerDownOutside={event => event.preventDefault()}
         onInteractOutside={event => event.preventDefault()}
       >
-        <DialogHeader separator className="px-5 py-4 pr-12">
-          <DialogTitle>
-            {model.editingElement
-              ? t('plateJs.dataView.editTitle')
-              : t('plateJs.dataView.insertTitle')}
-          </DialogTitle>
-          <DialogDescription>
-            {model.stage === 'find'
-              ? t('plateJs.dataView.findDescription')
-              : t('plateJs.dataView.buildDescription')}
-          </DialogDescription>
-        </DialogHeader>
+        {model.stage === 'build' && !model.datasetExplorerOpen ? (
+          <CompactBuilderHeader model={model} />
+        ) : (
+          <DialogHeader
+            separator
+            className={model.datasetExplorerOpen ? 'px-4 py-2 pr-12' : 'px-5 py-4 pr-12'}
+          >
+            <DialogTitle>
+              {model.datasetExplorerOpen
+                ? t('plateJs.dataView.explorerTitle')
+                : model.editingElement
+                  ? t('plateJs.dataView.editTitle')
+                  : t('plateJs.dataView.insertTitle')}
+            </DialogTitle>
+            <DialogDescription className={model.datasetExplorerOpen ? 'sr-only' : undefined}>
+              {model.datasetExplorerOpen
+                ? t('plateJs.dataView.explorerDescription')
+                : model.stage === 'find'
+                  ? t('plateJs.dataView.findDescription')
+                  : t('plateJs.dataView.buildDescription')}
+            </DialogDescription>
+          </DialogHeader>
+        )}
 
-        {model.preparing ? (
+        {model.datasetExplorerOpen && model.explorerRequest ? (
+          <DatasetExplorer
+            request={model.explorerRequest}
+            title={model.selectedResult?.title ?? ''}
+            sourceUrl={model.selectedResult?.sourceUrl}
+            initialColumns={model.explorerColumns}
+            onBack={model.closeDatasetExplorer}
+            onApply={selection => void model.applyDatasetExplorer(selection)}
+          />
+        ) : model.preparing ? (
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
             <PolityLoadingScreen label={t('plateJs.dataView.loading')} />
           </div>
@@ -1831,12 +2072,24 @@ export function DataViewDialogView({ model }: DataViewDialogViewProps) {
         )}
 
         {model.error ? (
-          <p className="border-destructive/30 bg-destructive/5 text-destructive mx-5 mb-3 border px-3 py-2 text-sm">
-            {model.error}
-          </p>
+          <DatasetProcessingError
+            className="border-destructive/30 bg-destructive/5 mx-5 mb-3 border px-3 py-2"
+            message={model.error}
+            target={
+              model.errorDownloadAvailable
+                ? datasetRawDownloadTarget(
+                    model.selectedResult,
+                    model.explorerRequest,
+                    model.downloadLanguage
+                  )
+                : undefined
+            }
+            accessToken={model.downloadAccessToken}
+            sourceUrl={model.selectedResult?.sourceUrl}
+          />
         ) : null}
 
-        {model.stage === 'build' ? (
+        {model.stage === 'build' && !model.datasetExplorerOpen ? (
           <DialogFooter separator surface="background" className="px-5 py-3">
             <Button
               data-action-id="charts.data-view.save"

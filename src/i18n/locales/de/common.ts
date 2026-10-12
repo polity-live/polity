@@ -300,6 +300,10 @@ export const commonTranslations = {
     dataset_provider_invalid_response: 'Die Datenquelle hat eine ungültige Antwort geliefert.',
     dataset_scope_unavailable:
       'Das gewählte Gebiet, der Zeitraum oder die Kombination ist nicht verfügbar. Bitte die Auswahl anpassen.',
+    dataset_observations_ambiguous:
+      'Mehrere Beobachtungen gehören zu demselben Punkt. Bitte weitere Filter setzen oder ausdrücklich eine Berechnung wählen.',
+    dataset_non_additive:
+      'Prozentwerte und Indizes können nicht summiert werden. Bitte Originalwerte oder eine passende Berechnung wählen.',
     dataset_scope_too_large:
       'Der Datensatz ist für diesen Import zu groß. Bitte Gebiet, Zeitraum oder weitere Merkmale einschränken.',
     external_service_failed: 'Ein externer Dienst ist derzeit nicht verfügbar.',

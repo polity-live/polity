@@ -812,6 +812,7 @@ function model(overrides: Record<string, unknown> = {}): TestDataViewDialogModel
     uploadOpen: true,
     uploadTitle: 'Data',
     useSelectedDataset: vi.fn(),
+    openDatasetExplorer: vi.fn(),
     view: 'chart',
     ...overrides,
   } as unknown as TestDataViewDialogModel;
@@ -859,7 +860,7 @@ describe('DataViewDialogView action contracts', () => {
     fireEvent.click(
       view.container.querySelector('[data-action-id="charts.data-view.use-dataset"]')!
     );
-    expect(finder.useSelectedDataset).toHaveBeenCalledOnce();
+    expect(finder.openDatasetExplorer).toHaveBeenCalledOnce();
 
     const noResults = model({ searchQuery: 'missing', searchResults: [], selectedResult: null });
     view.rerender(<DataViewDialogView model={noResults} />);

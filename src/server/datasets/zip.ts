@@ -22,7 +22,7 @@ function findSignature(bytes: Uint8Array, signature: number, start: number, end:
   return -1;
 }
 
-export function unzipFirstTextFile(bytes: Uint8Array) {
+export function unzipFirstTextFile(bytes: Uint8Array, maxBytes = MAX_DATASET_SNAPSHOT_BYTES) {
   const eocdOffset = findSignature(bytes, 0x06054b50, bytes.length - 22, 0);
   if (eocdOffset < 0) {
     return new TextDecoder().decode(bytes);
@@ -65,16 +65,14 @@ export function unzipFirstTextFile(bytes: Uint8Array) {
   const localExtraLength = readUInt16LE(bytes, localHeaderOffset + 28);
   const dataOffset = localHeaderOffset + 30 + localNameLength + localExtraLength;
   const compressed = bytes.slice(dataOffset, dataOffset + compressedSize);
-  if (uncompressedSize > MAX_DATASET_SNAPSHOT_BYTES)
-    throw new Error('ZIP exceeds the 50 MiB snapshot limit');
+  if (uncompressedSize > maxBytes)
+    throw new Error(`ZIP exceeds the ${maxBytes / 1024 / 1024} MiB limit`);
 
   if (compressionMethod === 0) {
     return new TextDecoder().decode(compressed);
   }
   if (compressionMethod === 8) {
-    return new TextDecoder().decode(
-      inflateRawSync(compressed, { maxOutputLength: MAX_DATASET_SNAPSHOT_BYTES })
-    );
+    return new TextDecoder().decode(inflateRawSync(compressed, { maxOutputLength: maxBytes }));
   }
 
   throw new Error(`ZIP_UNSUPPORTED_COMPRESSION_${compressionMethod}`);

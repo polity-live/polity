@@ -13,7 +13,7 @@ export const EUROSTAT_VALUE_FIELDS = [EUROSTAT_DEFAULT_VALUE_FIELD] as const;
 
 export type ChartType = 'line' | 'bar' | 'area' | 'pie';
 export type DataViewKind = 'chart' | 'table' | 'stat';
-export type DataAggregation = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count';
+export type DataAggregation = 'none' | 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count';
 export type DataSortDirection = 'asc' | 'desc';
 export type DatasetColumnType = 'number' | 'date' | 'category' | 'text';
 export type DatasetColumnRole = 'measure' | 'time' | 'geo' | 'dimension' | 'label';
@@ -85,6 +85,7 @@ export interface GovDataProvenance {
 }
 
 export interface DatasetColumnProfile {
+  technical?: boolean;
   name: string;
   label: string;
   type: DatasetColumnType;
@@ -95,11 +96,77 @@ export interface DatasetColumnProfile {
   max?: number | string | null;
 }
 
+export interface DatasetMeasureOption {
+  id: string;
+  label: string;
+  unit: string;
+  filters: Record<string, string>;
+}
+
+export interface DatasetSelectionIdentity {
+  provider: DatasetProviderId;
+  providerDatasetId?: string | null;
+  providerResourceId?: string | null;
+  snapshotId?: string | null;
+  datasetId?: string | null;
+}
+
+/** Download identity only: display and import filters deliberately have no place here. */
+export interface DatasetRawDownloadRequest extends DatasetSelectionIdentity {
+  language?: 'de' | 'en' | 'fr';
+}
+export interface DatasetRawDownloadPreparation {
+  url: string;
+  fileName: string;
+  kind: 'provider' | 'snapshot';
+  fullDataset: boolean;
+}
+
+export interface DatasetPreviewRequest extends DatasetSelectionIdentity {
+  language?: string;
+  filters?: DatasetImportFilters;
+  rowFilters?: Record<string, string>;
+  timeRange?: DataViewQuery['timeRange'];
+  rowConditions?: DatasetRowCondition[];
+  page?: { offset: number; limit: number };
+  sort?: DataViewQuery['sort'];
+}
+
+export type DatasetRowCondition =
+  | { column: string; operator: 'in'; values: string[] }
+  | { column: string; operator: 'contains'; value: string }
+  | { column: string; operator: 'range'; min?: string; max?: string; numeric?: boolean }
+  | { column: string; operator: 'empty' };
+
+export interface DatasetTableSelection {
+  filters: DatasetImportFilters;
+  rowFilters: Record<string, string>;
+  rowConditions: DatasetRowCondition[];
+  timeRange?: DataViewQuery['timeRange'];
+  columns: string[];
+  sort?: DataViewQuery['sort'];
+}
+
+export interface DatasetPreview {
+  identity: DatasetSelectionIdentity;
+  columns: DatasetColumnProfile[];
+  rows: Record<string, string>[];
+  appliedFilters: DatasetImportFilters;
+  rowFilters: Record<string, string>;
+  timeRange?: DataViewQuery['timeRange'];
+  sampled: boolean;
+  sampledRowCount: number;
+  metadata?: Record<string, unknown>;
+  page?: { offset: number; limit: number; total: number; nextOffset: number | null };
+  facets?: Record<string, { values: string[]; complete: boolean }>;
+}
+
 export interface DataViewQuery {
   measureColumn?: string | null;
   dimensionColumn?: string | null;
   seriesColumn?: string | null;
   filters: Record<string, string>;
+  rowConditions?: DatasetRowCondition[];
   timeRange?: { column: string; startYear: number; endYear: number } | null;
   aggregation: DataAggregation;
   layout?: 'long' | 'wide' | 'multi';
@@ -156,6 +223,8 @@ export interface GovDataImportResult {
 export type DatasetProviderId = 'EUROSTAT' | 'GENESIS_DESTATIS' | 'GOVDATA' | 'UPLOAD';
 
 export interface DatasetChartSource {
+  sourceUpdatedAt?: string | null;
+  dataPeriod?: { start?: string | null; end?: string | null } | null;
   kind: 'dataset';
   provider: DatasetProviderId;
   datasetId: string;
@@ -334,6 +403,7 @@ export interface DatasetProviderSearchResponse {
 }
 
 export interface DatasetSnapshotImportResult {
+  providerDatasetId?: string | null;
   datasetId: string;
   snapshotId: string;
   snapshotKey: string;

@@ -3,6 +3,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AppError } from '@/features/shared/errors/app-error';
 import { useDataViewDialogModel } from '../../hooks/useDataViewDialogModel';
 import { useDataViewBuilderModel } from '../../hooks/useDataViewBuilderModel';
 import { OPEN_DATA_VIEW_DIALOG_EVENT } from '../chartDialogEvents';
@@ -35,6 +36,13 @@ const mocks = vi.hoisted(() => ({
   prepareProviderDataset: vi.fn(),
   loadDatasetColumnValues: vi.fn(),
   loadDatasetDetails: vi.fn(),
+  loadDatasetPreview: vi.fn(async (request: any, _token?: string, _signal?: AbortSignal) => ({
+    identity: request,
+    columns: [],
+    rows: [],
+    rowFilters: {},
+    appliedFilters: {},
+  })),
   searchDatasetCatalog: vi.fn(),
   uploadDataset: vi.fn(),
 }));
@@ -64,7 +72,8 @@ vi.mock('@/zero/groups/useGroupState', () => ({
 vi.mock('../../context/ChartDatasetContext', () => ({
   useChartDatasetContext: () => mocks.context,
 }));
-vi.mock('@/features/shared/errors/app-error', () => ({
+vi.mock('@/features/shared/errors/app-error', async original => ({
+  ...(await original<typeof import('@/features/shared/errors/app-error')>()),
   localizeAppError: (error: unknown) =>
     `localized:${error instanceof Error ? error.message : String(error)}`,
 }));
@@ -74,6 +83,7 @@ vi.mock('../../api/datasetClient', () => ({
   prepareProviderDataset: mocks.prepareProviderDataset,
   loadDatasetColumnValues: mocks.loadDatasetColumnValues,
   loadDatasetDetails: mocks.loadDatasetDetails,
+  loadDatasetPreview: mocks.loadDatasetPreview,
   searchDatasetCatalog: mocks.searchDatasetCatalog,
   uploadDataset: mocks.uploadDataset,
 }));
@@ -124,6 +134,7 @@ function snapshot(
     snapshotId: 'snapshot-1',
     snapshotKey: 'snapshot-key',
     provider: 'EUROSTAT',
+    providerDatasetId: 'demo-code',
     title: 'Dataset',
     columns: profiles.map(profile => profile.name),
     columnProfiles: profiles,
@@ -190,8 +201,20 @@ beforeEach(() => {
   mocks.groupsLoading = false;
   mocks.findPath.mockReturnValue([0]);
   mocks.searchDatasetCatalog.mockResolvedValue({ results: [], errors: [] });
-  mocks.loadDatasetDetails.mockResolvedValue({ columnProfiles: profiles });
-  mocks.createProviderSnapshot.mockResolvedValue(snapshot());
+  mocks.loadDatasetDetails.mockImplementation(async (id, _token, snapshotId) => ({
+    id,
+    provider: 'EUROSTAT',
+    providerDatasetId: 'demo-code',
+    snapshotId: snapshotId ?? 'snapshot-1',
+    columnProfiles: profiles,
+  }));
+  mocks.createProviderSnapshot.mockImplementation(async request =>
+    snapshot({
+      provider: request.provider,
+      providerDatasetId: request.code ?? request.packageId,
+      providerResourceId: request.resourceId,
+    })
+  );
   mocks.prepareProviderDataset.mockImplementation(async request => ({
     provider: request.provider,
     code: request.code,
@@ -380,6 +403,168 @@ describe('useDataViewDialogModel boundaries', () => {
     });
     expect(result.current.stage).toBe('find');
     expect(result.current.snapshot).toBeNull();
+  });
+  it('rejects a yearly-table response for the selected monthly table', async () => {
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    mocks.createProviderSnapshot.mockResolvedValueOnce(
+      snapshot({ provider: 'GENESIS_DESTATIS', providerDatasetId: '13211-0001' })
+    );
+    act(() =>
+      result.current.setSelectedResult(
+        searchResult({ provider: 'GENESIS_DESTATIS', providerDatasetId: '13211-0002' })
+      )
+    );
+    await act(async () => result.current.useSelectedDataset());
+    expect(result.current.snapshot).toBeNull();
+    expect(result.current.stage).toBe('find');
+    expect(result.current.error).toContain('selectionMismatch');
+  });
+  it('explores without importing and preserves the adopted table filters through insertion and reopening', async () => {
+    const insert = vi.fn();
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: insert }));
+    act(() => {
+      result.current.resetDialog();
+      result.current.setOpen(true);
+    });
+    act(() =>
+      result.current.setSelectedResult(
+        searchResult({
+          provider: 'GOVDATA',
+          providerDatasetId: 'package',
+          providerResourceId: 'csv',
+        })
+      )
+    );
+    act(() => result.current.openDatasetExplorer());
+    await flushTimers(300);
+    expect(result.current.datasetExplorerOpen).toBe(true);
+    expect(mocks.createProviderSnapshot).not.toHaveBeenCalled();
+    await act(async () =>
+      result.current.applyDatasetExplorer({
+        filters: { period: { start: 2025, end: 2025 } },
+        rowFilters: { Region: 'A' },
+        rowConditions: [
+          { column: 'Value', operator: 'range', min: '10', max: '20', numeric: true },
+        ],
+        timeRange: { column: 'Year', startYear: 2025, endYear: 2025 },
+        columns: ['Year', 'Value'],
+      })
+    );
+    await flushTimers(300);
+    expect(result.current.query).toMatchObject({
+      filters: { Region: 'A' },
+      rowConditions: [{ column: 'Value', operator: 'range' }],
+      aggregation: 'none',
+      columns: ['Year', 'Value'],
+    });
+    expect(mocks.createDataViewProjection).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        rowConditions: result.current.query.rowConditions,
+        filters: { Region: 'A' },
+      }),
+      'token',
+      expect.any(AbortSignal)
+    );
+    act(() => result.current.save());
+    const stored = insert.mock.calls[0][0] as TDataViewElement;
+    expect(stored.query.rowConditions).toEqual(result.current.query.rowConditions);
+    mocks.loadDatasetDetails.mockResolvedValueOnce({
+      id: stored.source.datasetId,
+      provider: stored.source.provider,
+      providerDatasetId: stored.source.providerDatasetId,
+      snapshotId: stored.source.snapshotId,
+      columnProfiles: profiles,
+    });
+    act(() => {
+      result.current.resetDialog(stored);
+      result.current.setOpen(true);
+    });
+    await flushTimers(300);
+    expect(result.current.query).toEqual(stored.query);
+    expect(mocks.createProviderSnapshot).toHaveBeenCalledOnce();
+  });
+  it('refuses the adopted selection when access to the saved snapshot is denied', async () => {
+    const insert = vi.fn();
+    const { result } = renderHook(() => useDataViewBuilderModel({ onInsert: insert }));
+    act(() => {
+      result.current.resetDialog();
+      result.current.setOpen(true);
+    });
+    act(() => result.current.setSelectedResult(searchResult({ snapshotId: 'snapshot-1' })));
+    mocks.loadDatasetDetails.mockRejectedValueOnce(new Error('Dataset access denied'));
+    await act(async () =>
+      result.current.applyDatasetExplorer({
+        filters: {},
+        rowFilters: {},
+        rowConditions: [],
+        columns: ['Year', 'Value'],
+      })
+    );
+    expect(result.current.error).toContain('access denied');
+    expect(result.current.preparing).toBe(false);
+    expect(result.current.canInsert).toBe(false);
+    expect(insert).not.toHaveBeenCalled();
+  });
+  it('requires an explicit combined measure and unit before requesting a provider chart', async () => {
+    const options = [
+      {
+        id: 'count',
+        label: 'Arbeitslose',
+        unit: 'Anzahl',
+        filters: { value_variable_code: 'ERW006', value_unit: 'Anzahl' },
+      },
+      {
+        id: 'rate',
+        label: 'Arbeitslosenquote',
+        unit: 'Prozent',
+        filters: { value_variable_code: 'ERW112', value_unit: 'Prozent' },
+      },
+    ];
+    mocks.createProviderSnapshot.mockResolvedValueOnce(
+      snapshot({
+        provider: 'GENESIS_DESTATIS',
+        providerDatasetId: '13211-0002',
+        provenance: { measureOptions: options },
+      })
+    );
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    act(() =>
+      result.current.setSelectedResult(
+        searchResult({ provider: 'GENESIS_DESTATIS', providerDatasetId: '13211-0002' })
+      )
+    );
+    await act(async () => result.current.useSelectedDataset());
+    await flushTimers(300);
+    expect(result.current.needsMeasure).toBe(true);
+    expect(result.current.canInsert).toBe(false);
+    expect(mocks.createDataViewProjection).not.toHaveBeenCalled();
+    expect(result.current.query.aggregation).toBe('none');
+    act(() => result.current.chooseMeasure('count'));
+    await flushTimers(300);
+    expect(result.current.needsMeasure).toBe(false);
+    expect(mocks.createDataViewProjection.mock.calls[0][0].filters).toEqual(options[0].filters);
+    expect(result.current.presentation.title).toBe('Arbeitslose · Anzahl');
+  });
+  it('aborts and ignores sample data from an obsolete selection or a closed dialog', async () => {
+    const old = deferred<any>();
+    mocks.loadDatasetPreview.mockReturnValueOnce(old.promise);
+    const { result } = renderHook(() => useDataViewDialogModel());
+    act(() => openDialog());
+    act(() => result.current.setSelectedResult(searchResult({ providerDatasetId: 'first' })));
+    const oldSignal = mocks.loadDatasetPreview.mock.calls[0][2];
+    act(() => result.current.setSelectedResult(searchResult({ providerDatasetId: 'second' })));
+    await act(async () => Promise.resolve());
+    expect(oldSignal?.aborted).toBe(true);
+    await act(async () =>
+      old.resolve({ identity: { provider: 'EUROSTAT', providerDatasetId: 'first' } })
+    );
+    expect(result.current.dataPreview?.identity.providerDatasetId).toBe('second');
+    const currentSignal = mocks.loadDatasetPreview.mock.calls.at(-1)?.[2];
+    act(() => result.current.setOpen(false));
+    expect(currentSignal?.aborted).toBe(true);
+    expect(result.current.dataPreview).toBeNull();
   });
   it.each([null, 25 * 1024 * 1024])(
     'prepares size %s before import and preserves manual scope changes',
@@ -575,7 +760,7 @@ describe('useDataViewDialogModel boundaries', () => {
   );
 
   it('waits for restored metadata before requesting the preview', async () => {
-    const pending = deferred<{ columnProfiles: DatasetColumnProfile[] }>();
+    const pending = deferred<any>();
     mocks.loadDatasetDetails.mockReturnValueOnce(pending.promise);
     const { result } = renderHook(() => useDataViewDialogModel());
     const element: TDataViewElement = {
@@ -599,7 +784,12 @@ describe('useDataViewDialogModel boundaries', () => {
     await flushTimers(500);
     expect(mocks.createDataViewProjection).not.toHaveBeenCalled();
     await act(async () => {
-      pending.resolve({ columnProfiles: profiles });
+      pending.resolve({
+        id: 'dataset-1',
+        provider: 'UPLOAD',
+        snapshotId: 'snapshot-1',
+        columnProfiles: profiles,
+      });
     });
     expect(result.current.preparing).toBe(false);
     expect(result.current.columnProfiles).toEqual(profiles);
@@ -869,7 +1059,12 @@ describe('useDataViewDialogModel boundaries', () => {
       presentation: {},
       children: [{ text: '' }],
     };
-    mocks.loadDatasetDetails.mockResolvedValueOnce({ columnProfiles: profiles });
+    mocks.loadDatasetDetails.mockResolvedValueOnce({
+      id: 'stored',
+      provider: 'UPLOAD',
+      snapshotId: 'stored-snapshot',
+      columnProfiles: profiles,
+    });
     const { result } = renderHook(() => useDataViewDialogModel());
     act(() => openDialog(element));
     await act(async () => Promise.resolve());
@@ -966,7 +1161,8 @@ describe('useDataViewDialogModel boundaries', () => {
     await act(async () => result.current.useSelectedDataset());
     expect(mocks.createProviderSnapshot).toHaveBeenLastCalledWith(
       { provider: 'GOVDATA', packageId: 'package', resourceId: 'resource' },
-      'token'
+      'token',
+      expect.any(AbortSignal)
     );
 
     mocks.language = 'en-US';
@@ -1284,4 +1480,27 @@ describe('useDataViewDialogModel boundaries', () => {
     act(() => result.current.save());
     expect(result.current.error).toBe('localized:editor failed');
   });
+});
+
+it('tracks recoverable processing failures independently from denied access and retains rejected original files', async () => {
+  const { result } = renderHook(() => useDataViewDialogModel());
+  act(() => openDialog());
+  act(() => result.current.setSelectedResult(searchResult()));
+  mocks.createProviderSnapshot.mockRejectedValueOnce(
+    new AppError({ version: 1, code: 'permission_denied' })
+  );
+  await act(async () => result.current.useSelectedDataset());
+  expect(result.current.errorDownloadAvailable).toBe(false);
+  mocks.createProviderSnapshot.mockRejectedValueOnce(
+    new AppError({ version: 1, code: 'dataset_scope_too_large' })
+  );
+  await act(async () => result.current.useSelectedDataset());
+  expect(result.current.errorDownloadAvailable).toBe(true);
+  const original = new File([new Uint8Array([0xe4])], 'unreadable.csv');
+  act(() => result.current.rejectUploadFile(original, 'Cannot process file'));
+  expect(result.current.rejectedUploadFile).toBe(original);
+  expect(result.current.uploadDownloadAvailable).toBe(true);
+  act(() => result.current.setUploadFile(null));
+  expect(result.current.rejectedUploadFile).toBeNull();
+  expect(result.current.uploadDownloadAvailable).toBe(false);
 });

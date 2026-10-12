@@ -5,12 +5,44 @@ import { createFrameNode, createStudioDocumentV5, studioDocumentV3Schema } from 
 import {
   createStudioDataViewNodes,
   insertStudioDataView,
+  updateStudioDataView,
   validateStudioDataProjection,
 } from '../data-view-import';
 
 const frame = createFrameNode('widescreen');
 
 describe('resolved Studio data import', () => {
+  it('retains the exact snapshot configuration after saving and replaces one representation within its existing bounds', () => {
+    const document = createStudioDocumentV5('Snapshot identity');
+    document.nodes.push(frame);
+    const config = configuration('line');
+    config.source.providerDatasetId = '13211-0002';
+    config.query = {
+      filters: { DINSGF: '__total__:DINSGF', value_variable_code: 'ERW006', value_unit: 'Anzahl' },
+      dimensionColumn: 'observation_period',
+      measureColumn: 'value',
+      aggregation: 'none',
+      timeRange: { column: 'observation_period', startYear: 2025, endYear: 2025 },
+    };
+    const ids = insertStudioDataView(document, frame.id, config, projection);
+    const restored = studioDocumentV3Schema.parse(JSON.parse(JSON.stringify(document)));
+    expect(restored.nodes.find(node => node.id === ids[0])?.dataView).toEqual(config);
+    const old = restored.nodes.filter(node => ids.includes(node.id));
+    old.forEach(node => {
+      node.transform.x += 100;
+      node.transform.y += 50;
+      node.transform.width *= 0.8;
+    });
+    const replacement = updateStudioDataView(restored, ids, config, projection);
+    expect(restored.nodes.filter(node => replacement.includes(node.id))).toHaveLength(old.length);
+    expect(restored.nodes.some(node => ids.includes(node.id))).toBe(false);
+    expect(restored.nodes.find(node => node.id === replacement[0])?.transform.x).toBeCloseTo(
+      old[0].transform.x
+    );
+    expect(restored.nodes.find(node => node.id === replacement[0])?.groupIds).toEqual(
+      old[0].groupIds
+    );
+  });
   it('keeps imported text readable on dark frames', () => {
     const dark = createFrameNode('widescreen');
     dark.style.fill = '#12362D';
@@ -128,7 +160,10 @@ describe('resolved Studio data import', () => {
     expect(restored.nodes.find(n => n.id === ids[0])?.groupIds).not.toEqual(
       restored.nodes.find(n => n.id === secondIds[0])?.groupIds
     );
-    expect(JSON.stringify(restored)).not.toContain('snapshot');
+    expect(restored.nodes.find(node => node.id === secondIds[0])?.dataView?.source.snapshotId).toBe(
+      'snapshot'
+    );
+    expect(restored.nodes.every(node => !node.liveBinding)).toBe(true);
   });
   it('accepts the exact table boundary and rejects additional rows or columns', () => {
     const table: DataViewProjection = {

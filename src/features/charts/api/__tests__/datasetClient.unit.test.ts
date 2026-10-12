@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   archiveDataset,
+  prepareDatasetRawDownload,
   createDataViewProjection,
   createProviderSnapshot,
   prepareProviderDataset,
@@ -217,4 +218,34 @@ describe('dataset client contracts', () => {
       'Bearer token'
     );
   });
+});
+
+it('prepares a complete raw download using identity only, with auth and cancellation', async () => {
+  fetchMock.mockResolvedValue(
+    response({
+      url: '/api/datasets/raw-download?ticket=test',
+      fileName: 'data.csv',
+      kind: 'provider',
+      fullDataset: true,
+    })
+  );
+  const controller = new AbortController();
+  const selected = {
+    provider: 'GENESIS_DESTATIS' as const,
+    providerDatasetId: '13211-0002',
+    language: 'de' as const,
+    filters: { area: 'Deutschland' },
+    rowFilters: { metric: 'rate' },
+    timeRange: { startYear: 2025, endYear: 2025 },
+  };
+  await prepareDatasetRawDownload(selected, 'token', controller.signal);
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe('/api/datasets/raw-download');
+  expect(JSON.parse(init.body)).toEqual({
+    provider: 'GENESIS_DESTATIS',
+    providerDatasetId: '13211-0002',
+    language: 'de',
+  });
+  expect(new Headers(init.headers).get('Authorization')).toBe('Bearer token');
+  expect(init.signal).toBe(controller.signal);
 });

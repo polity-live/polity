@@ -5,7 +5,9 @@ import type {
   EurostatDimension,
 } from '@/features/charts/types';
 import { MAX_DATASET_SNAPSHOT_BYTES } from '@/features/charts/types';
-import { parseDatasetCsv, profileDatasetColumns, type DatasetTable } from './csv';
+import { parseDatasetCsv } from './csv';
+import { genesisSemantics, normalizeGenesisTable, totalIdentity } from './semantics';
+export { normalizeGenesisTable } from './semantics';
 import { persistDatasetSnapshot } from './service';
 import { bytesToText, readLimitedResponseBytes } from './storage';
 import { unzipFirstTextFile } from './zip';
@@ -220,31 +222,77 @@ export async function prepareGenesisDataset(
       )
   );
   for (const dimension of dimensions.filter(item => item.id !== 'time')) {
-    dimension.values = await cachedPublicDatasetSearch(
-      `genesis-values:${language === 'de' ? 'de' : 'en'}:${dimension.id}`,
-      async inner => {
-        const response = await postGenesis(
-          'catalogue/values2variable',
-          {
-            name: dimension.id,
-            selection: '*',
-            area: 'all',
-            searchcriterion: 'Code',
-            sortcriterion: 'Code',
-            pagelength: '25000',
-            language: language === 'de' ? 'de' : 'en',
-          },
-          { signal: inner, timeoutMs: 30_000 }
-        );
-        const body = await readGenesisJson(response);
-        assertGenesisStatus(body);
-        return array(body.List)
-          .map(value => ({ id: text(value.Code), label: text(value.Content) }))
-          .filter(value => value.id);
-      },
-      signal,
-      30_000
-    );
+    dimension.values = (
+      await cachedPublicDatasetSearch(
+        `genesis-values:${language === 'de' ? 'de' : 'en'}:${dimension.id}`,
+        async inner => {
+          const response = await postGenesis(
+            'catalogue/values2variable',
+            {
+              name: dimension.id,
+              selection: '*',
+              area: 'all',
+              searchcriterion: 'Code',
+              sortcriterion: 'Code',
+              pagelength: '25000',
+              language: language === 'de' ? 'de' : 'en',
+            },
+            { signal: inner, timeoutMs: 30_000 }
+          );
+          const body = await readGenesisJson(response);
+          assertGenesisStatus(body);
+          return array(body.List)
+            .map(value => ({ id: text(value.Code), label: text(value.Content) }))
+            .filter(value => value.id);
+        },
+        signal,
+        30_000
+      )
+    )
+      .filter(
+        (value, index, values) =>
+          !value.id.startsWith('__total__:') &&
+          values.findIndex(item => item.id === value.id) === index
+      )
+      .map(value => ({ ...value }));
+  }
+  const measures = array(entry.Structure?.Columns).filter(
+    item => Number(item.Values) === -1 && ['Merkmal', 'variable', 'Variable'].includes(item.Type)
+  );
+  if (measures.length)
+    dimensions.push({
+      id: 'value_variable_code',
+      label: language === 'de' ? 'Kennzahl' : 'Measure',
+      position: dimensions.length,
+      values: measures.map(item => ({ id: text(item.Code), label: text(item.Content) })),
+    });
+  if (geo?.id === 'DINSGF' && measures.length && /Deutschland|Germany/i.test(text(entry.Content))) {
+    const year = datasetYear(timeCoverage(entry.Time)?.end ?? '');
+    if (year !== null) {
+      const totals = await cachedPublicDatasetSearch(
+        `genesis-total:${code}:${language}`,
+        async inner => {
+          const table = await readGenesisTable(
+            code,
+            language,
+            { startyear: String(year), endyear: String(year), contents: text(measures[0].Code) },
+            inner,
+            2 * 1024 * 1024
+          );
+          return table.rows.some(row => row.DINSGF === totalIdentity('DINSGF'))
+            ? [
+                {
+                  id: totalIdentity('DINSGF'),
+                  label: language === 'de' ? 'Deutschland' : 'Germany',
+                },
+              ]
+            : [];
+        },
+        signal,
+        20_000
+      );
+      geo.values.push(...totals);
+    }
   }
   return {
     provider: 'GENESIS_DESTATIS',
@@ -261,22 +309,124 @@ export async function prepareGenesisDataset(
   };
 }
 
-/** Modern FFCSV carries dimension identities in each row alongside its generic English column names. */
-export function normalizeGenesisTable(table: DatasetTable) {
-  if (!table.columns.includes('value') || !table.columns.includes('time')) return table;
-  const ids = new Set<string>();
-  const rows = table.rows.map(row => {
-    const result = { ...row };
-    for (const column of table.columns.filter(name => /^\d+_variable_code$/.test(name))) {
-      const prefix = column.replace(/_code$/, '');
-      const id = row[column];
-      if (!id) continue;
-      ids.add(id);
-      result[id] = row[`${prefix}_attribute_code`] ?? '';
+/** Bounded read without persistence; also used by the preview endpoint and total verification. */
+export async function readGenesisTable(
+  code: string,
+  language: string,
+  data: Record<string, string | boolean>,
+  signal?: AbortSignal,
+  maxBytes = MAX_DATASET_SNAPSHOT_BYTES
+) {
+  try {
+    const response = await postGenesis(
+      'data/tablefile',
+      {
+        name: code,
+        area: 'free',
+        format: 'ffcsv',
+        compress: false,
+        language: language === 'de' ? 'de' : 'en',
+        ...data,
+      },
+      { signal, timeoutMs: maxBytes < MAX_DATASET_SNAPSHOT_BYTES ? 20_000 : 120_000, maxBytes }
+    );
+    const bytes = await readLimitedResponseBytes(response, 'GENESIS dataset', maxBytes);
+    const contentType = response.headers.get('content-type') ?? '';
+    const csvText =
+      contentType.includes('zip') || (bytes[0] === 0x50 && bytes[1] === 0x4b)
+        ? unzipFirstTextFile(bytes, maxBytes)
+        : bytesToText(bytes, contentType);
+    if (new TextEncoder().encode(csvText).byteLength > maxBytes)
+      throw new DatasetProviderFailure('Reduce the selected scope', 'too_large', 413);
+    if (csvText.trim().startsWith('{')) {
+      assertGenesisStatus(JSON.parse(csvText), true);
+      throw new DatasetProviderFailure(
+        'GENESIS returned no CSV; reduce the selection',
+        'too_large',
+        413
+      );
     }
-    return result;
-  });
-  return { columns: [...new Set([...table.columns, ...ids])], rows };
+    const table = normalizeGenesisTable(parseDatasetCsv(csvText, { maxRows: 1_000_000 }));
+    if (!table.columns.includes('value') || !table.columns.includes('time'))
+      throw new DatasetProviderFailure(
+        'GENESIS returned invalid FFCSV columns',
+        'invalid_response'
+      );
+    if (table.rows.some(row => row.statistics_code && row.statistics_code !== code.slice(0, 5)))
+      throw new DatasetProviderFailure(
+        'GENESIS returned a different statistic',
+        'invalid_response'
+      );
+    return table;
+  } catch (error) {
+    throw providerResponseFailure(error, 'GENESIS');
+  }
+}
+
+export async function loadGenesisSelection(
+  code: string,
+  language: string,
+  filters: DatasetImportFilters = {},
+  signal?: AbortSignal,
+  maxBytes = MAX_DATASET_SNAPSHOT_BYTES
+) {
+  const preparation = await prepareGenesisDataset(code, language, filters, signal);
+  const resolved = resolveImportFilters(preparation, filters);
+  const data: Record<string, string | boolean> = {};
+  if (filters.period) {
+    const availableYears = (resolved[preparation.timeDimension ?? 'time'] ?? [])
+      .map(datasetYear)
+      .filter((year): year is number => year !== null);
+    data.startyear = String(
+      filters.period.start === 1800 && availableYears.length
+        ? Math.min(...availableYears)
+        : filters.period.start
+    );
+    data.endyear = String(
+      filters.period.end === 2199 && availableYears.length
+        ? Math.max(...availableYears)
+        : filters.period.end
+    );
+  }
+  const geo = preparation.geoDimension;
+  const total = geo && resolved[geo]?.[0] === totalIdentity(geo);
+  if (geo && resolved[geo] && !total) {
+    data.regionalvariable = geo;
+    data.regionalkey = resolved[geo][0];
+  }
+  let index = 1;
+  for (const [id, values] of Object.entries(resolved)) {
+    if (id === geo || id === 'time' || id === 'value_unit') continue;
+    if (id === 'value_variable_code') {
+      data.contents = values[0];
+      continue;
+    }
+    if (index > 5)
+      throw new DatasetProviderFailure('Too many classifying filters', 'invalid_scope', 422);
+    data[`classifyingvariable${index}`] = id;
+    data[`classifyingkey${index++}`] = values[0];
+  }
+  let table = await readGenesisTable(code, language, data, signal, maxBytes);
+  // Total has no native regional key. Keep the explicitly identified official observations only.
+  if (total && geo)
+    table = { ...table, rows: table.rows.filter(row => row[geo] === totalIdentity(geo)) };
+  if (resolved.value_unit)
+    table = {
+      ...table,
+      rows: table.rows.filter(row => resolved.value_unit.includes(row.value_unit)),
+    };
+  for (const row of table.rows)
+    for (const [id, values] of Object.entries(resolved)) {
+      const value = id === 'time' ? String(datasetYear(row.time)) : row[id];
+      if (value === undefined || !values.includes(value))
+        throw new DatasetProviderFailure(
+          'GENESIS returned data outside the selected scope',
+          'invalid_scope',
+          422
+        );
+    }
+  const semantic = genesisSemantics(table, preparation.dimensions, language, preparation.title);
+  return { ...semantic, preparation, resolved };
 }
 
 export async function importGenesisDatasetSnapshot({
@@ -293,170 +443,39 @@ export async function importGenesisDatasetSnapshot({
   signal?: AbortSignal;
 }) {
   const normalizedCode = code.trim();
-  if (!normalizedCode)
-    throw new DatasetProviderFailure('GENESIS dataset code is required', 'invalid_scope', 422);
-  const preparation = await prepareGenesisDataset(normalizedCode, language, filters, signal);
-  const resolved = resolveImportFilters(preparation, filters);
-  const data: Record<string, string | boolean> = {
-    name: normalizedCode,
-    area: 'free',
-    format: 'ffcsv',
-    compress: false,
-    language: language === 'de' ? 'de' : 'en',
-  };
-  if (filters?.period) {
-    data.startyear = String(filters.period.start);
-    data.endyear = String(filters.period.end);
-  }
-  if (preparation.geoDimension && resolved[preparation.geoDimension]) {
-    data.regionalvariable = preparation.geoDimension;
-    data.regionalkey = resolved[preparation.geoDimension][0];
-  }
-  let index = 1;
-  for (const [id, values] of Object.entries(resolved)) {
-    if (id === preparation.geoDimension || id === 'time') continue;
-    if (index > 5)
-      throw new DatasetProviderFailure(
-        'GENESIS supports at most five classifying filters',
-        'invalid_scope',
-        422
-      );
-    data[`classifyingvariable${index}`] = id;
-    data[`classifyingkey${index++}`] = values[0];
-  }
-  const response = await postGenesis('data/tablefile', data, { signal, timeoutMs: 120_000 });
-  let table: DatasetTable;
-  try {
-    const bytes = await readLimitedResponseBytes(response, 'GENESIS dataset');
-    const contentType = response.headers.get('content-type') ?? '';
-    const csvText =
-      contentType.includes('zip') || (bytes[0] === 0x50 && bytes[1] === 0x4b)
-        ? unzipFirstTextFile(bytes)
-        : bytesToText(bytes, contentType);
-    if (csvText.trim().startsWith('{')) {
-      assertGenesisStatus(JSON.parse(csvText), true);
-      throw new DatasetProviderFailure(
-        'GENESIS returned no CSV; reduce the import selection',
-        'too_large',
-        413
-      );
-    }
-    if (new TextEncoder().encode(csvText).byteLength > MAX_DATASET_SNAPSHOT_BYTES)
-      throw new DatasetProviderFailure(
-        'GENESIS dataset exceeds the 50 MiB snapshot limit',
-        'too_large',
-        413
-      );
-    table = normalizeGenesisTable(parseDatasetCsv(csvText, { maxRows: 1_000_000 }));
-    if (!table.columns.includes('value') || !table.columns.includes('time'))
-      throw new DatasetProviderFailure(
-        'GENESIS returned invalid FFCSV columns',
-        'invalid_response'
-      );
-    if (!table.rows.length)
-      throw new DatasetProviderFailure(
-        'No data exists for the selected scope',
-        'invalid_scope',
-        422
-      );
-  } catch (error) {
-    throw providerResponseFailure(error, 'GENESIS');
-  }
-  for (const row of table.rows)
-    for (const [id, values] of Object.entries(resolved)) {
-      const value = id === 'time' ? String(datasetYear(row.time)) : row[id];
-      if (value === undefined || !values.includes(value))
-        throw new DatasetProviderFailure(
-          'GENESIS returned data outside the selected scope',
-          'invalid_scope',
-          422
-        );
-    }
-  const profiles = profileDatasetColumns(table).map(profile => {
-    if (profile.name === 'value') {
-      const labels = [...new Set(table.rows.map(row => row.value_variable_label).filter(Boolean))];
-      return {
-        ...profile,
-        label: labels.length === 1 ? labels[0] : profile.label,
-        role: 'measure' as const,
-        type: 'number' as const,
-      };
-    }
-    if (profile.name === 'time')
-      return {
-        ...profile,
-        label: table.rows[0]?.time_label || profile.label,
-        role: 'time' as const,
-        type: 'date' as const,
-      };
-    const dimension = preparation.dimensions.find(item => item.id === profile.name);
-    return {
-      ...profile,
-      label: dimension?.label ?? profile.label,
-      role:
-        profile.name === preparation.geoDimension
-          ? ('geo' as const)
-          : dimension || ['value_unit', 'value_variable_code'].includes(profile.name)
-            ? ('dimension' as const)
-            : ('label' as const),
-      type: 'category' as const,
-    };
-  });
-  const actualDimensions = preparation.dimensions
-    .filter(item => table.columns.includes(item.id))
-    .map(item => ({
-      ...item,
-      values: item.values.filter(value =>
-        table.rows.some(row =>
-          item.id === 'time'
-            ? datasetYear(row.time) === Number(value.id)
-            : row[item.id] === value.id
-        )
-      ),
-    }));
-  for (const id of ['value_unit', 'value_variable_code'])
-    if (table.columns.includes(id))
-      actualDimensions.push({
-        id,
-        label:
-          id === 'value_unit'
-            ? language === 'de'
-              ? 'Einheit'
-              : 'Unit'
-            : language === 'de'
-              ? 'Kennzahl'
-              : 'Measure',
-        position: actualDimensions.length,
-        values: [...new Set(table.rows.map(row => row[id]).filter(Boolean))].map(value => ({
-          id: value,
-          label:
-            id === 'value_variable_code'
-              ? table.rows.find(row => row[id] === value)?.value_variable_label || value
-              : value,
-        })),
-      });
+  const result = await loadGenesisSelection(normalizedCode, language, filters, signal);
+  if (!result.table.rows.length)
+    throw new DatasetProviderFailure('No data exists for the selected scope', 'invalid_scope', 422);
+  const observedYears = result.table.rows
+    .map(row => datasetYear(row.observation_period ?? row.time ?? ''))
+    .filter((year): year is number => year !== null);
   return persistDatasetSnapshot({
     provider: 'GENESIS_DESTATIS',
     providerDatasetId: normalizedCode,
-    providerResourceId: importScopeResourceId(resolved),
-    title: preparation.title,
+    providerResourceId: importScopeResourceId(result.resolved),
+    title: result.preparation.title,
     publisher: 'Statistisches Bundesamt (Destatis)',
     sourceUrl,
     language,
     timeCoverage: filters?.period
-      ? { start: String(filters.period.start), end: String(filters.period.end) }
-      : preparation.timeCoverage,
-    spatialCoverage: filters?.area ? [filters.area] : preparation.spatialCoverage,
-    dimensions: actualDimensions,
-    columnProfiles: profiles,
-    metadata: {
-      source: 'GENESIS/Destatis',
-      importScope: resolved,
-      providerDimensions: actualDimensions,
-      geoDimension: preparation.geoDimension,
-      timeDimension: 'time',
-    },
+      ? {
+          start: String(
+            filters.period.start === 1800 && observedYears.length
+              ? Math.min(...observedYears)
+              : filters.period.start
+          ),
+          end: String(
+            filters.period.end === 2199 && observedYears.length
+              ? Math.max(...observedYears)
+              : filters.period.end
+          ),
+        }
+      : result.preparation.timeCoverage,
+    spatialCoverage: filters?.area ? [filters.area] : result.preparation.spatialCoverage,
+    dimensions: result.metadata.providerDimensions,
+    columnProfiles: result.profiles,
+    metadata: { source: 'GENESIS/Destatis', importScope: result.resolved, ...result.metadata },
     createdById: userId,
-    table,
+    table: result.table,
   });
 }

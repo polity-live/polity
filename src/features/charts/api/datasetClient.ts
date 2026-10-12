@@ -8,8 +8,36 @@ import type {
   DatasetSearchFilters,
   DatasetImportFilters,
   DatasetPreparation,
+  DatasetPreviewRequest,
+  DatasetPreview,
 } from '../types';
 import { toAppError } from '@/features/shared/errors/app-error';
+import type { DatasetRawDownloadRequest, DatasetRawDownloadPreparation } from '../types';
+
+export async function prepareDatasetRawDownload(
+  request: DatasetRawDownloadRequest,
+  accessToken?: string | null,
+  signal?: AbortSignal
+) {
+  // Whitelist identity fields even when a caller passes a preview object containing filters.
+  const { provider, providerDatasetId, providerResourceId, datasetId, snapshotId, language } =
+    request;
+  return readJson<DatasetRawDownloadPreparation>(
+    await fetch('/api/datasets/raw-download', {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      signal,
+      body: JSON.stringify({
+        provider,
+        providerDatasetId,
+        providerResourceId,
+        datasetId,
+        snapshotId,
+        language,
+      }),
+    })
+  );
+}
 
 async function readJson<T>(response: Response): Promise<T> {
   const body = (await response.json()) as T & { error?: unknown };
@@ -144,7 +172,8 @@ export async function prepareProviderDataset(
 
 export async function createDataViewProjection(
   request: DataViewProjectionRequest,
-  accessToken?: string | null
+  accessToken?: string | null,
+  signal?: AbortSignal
 ) {
   const { snapshotId, ...body } = request;
   return readJson<DataViewProjection>(
@@ -152,6 +181,7 @@ export async function createDataViewProjection(
       method: 'POST',
       headers: authHeaders(accessToken),
       body: JSON.stringify(body),
+      signal,
     })
   );
 }
@@ -170,11 +200,34 @@ export async function loadDatasetColumnValues(
   );
 }
 
-export async function loadDatasetDetails(datasetId: string, accessToken?: string | null) {
+export async function loadDatasetDetails(
+  datasetId: string,
+  accessToken?: string | null,
+  snapshotId?: string | null,
+  signal?: AbortSignal
+) {
   const headers = new Headers();
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return readJson<DatasetSearchResult & { snapshots: unknown[] }>(
-    await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/details`, { headers })
+    await fetch(
+      `/api/datasets/${encodeURIComponent(datasetId)}/details${snapshotId ? `?snapshotId=${encodeURIComponent(snapshotId)}` : ''}`,
+      { headers, signal }
+    )
+  );
+}
+
+export async function loadDatasetPreview(
+  request: DatasetPreviewRequest,
+  accessToken?: string | null,
+  signal?: AbortSignal
+) {
+  return readJson<DatasetPreview>(
+    await fetch('/api/datasets/preview', {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify(request),
+      signal,
+    })
   );
 }
 

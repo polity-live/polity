@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { HTMLAttributes, ReactNode } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -8,6 +8,7 @@ import {
   createProviderSnapshot,
   searchDatasetCatalog,
   uploadDataset,
+  loadDatasetPreview,
 } from '../../api/datasetClient';
 import { ChartDatasetContextProvider } from '../../context/ChartDatasetContext';
 import { ChartDialog, openDataViewDialog } from '../ChartDialog';
@@ -67,6 +68,13 @@ vi.mock('../../api/datasetClient', () => ({
   createProviderSnapshot: vi.fn(),
   loadDatasetColumnValues: vi.fn(),
   loadDatasetDetails: vi.fn(),
+  loadDatasetPreview: vi.fn(async request => ({
+    identity: request,
+    columns: [],
+    rows: [],
+    rowFilters: {},
+    appliedFilters: {},
+  })),
   searchDatasetCatalog: vi.fn(),
   uploadDataset: vi.fn(),
 }));
@@ -138,6 +146,7 @@ const labels: Record<string, string> = {
   'plateJs.dataView.backToResults': 'Back to results',
   'plateJs.dataView.searchHint': 'Search all sources',
   'plateJs.dataView.useDataset': 'Use dataset',
+  'plateJs.dataView.explorerContinue': 'Apply selection',
   'plateJs.dataView.changeDataset': 'Change dataset',
   'plateJs.dataView.chart': 'Chart',
   'plateJs.dataView.table': 'Table',
@@ -234,9 +243,36 @@ async function selectUploadGroup(name = 'Example group') {
   fireEvent.click(option);
 }
 
+async function chooseDataset() {
+  fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole('button', { name: 'Apply selection' }) as HTMLButtonElement).disabled
+    ).toBe(false)
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Apply selection' }));
+}
+
+let previewProfiles = profiles;
+
 describe('DataViewDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    previewProfiles = profiles;
+    vi.mocked(loadDatasetPreview).mockImplementation(async request => ({
+      identity: request,
+      columns: previewProfiles,
+      rows: [
+        Object.fromEntries(
+          previewProfiles.map(column => [column.name, column.role === 'time' ? '2025' : '42'])
+        ),
+      ],
+      rowFilters: request.rowFilters ?? {},
+      appliedFilters: request.filters ?? {},
+      sampled: false,
+      sampledRowCount: 1,
+      page: request.page ? { ...request.page, total: 1, nextOffset: null } : undefined,
+    }));
     vi.mocked(searchDatasetCatalog).mockResolvedValue({
       results: [
         {
@@ -256,6 +292,8 @@ describe('DataViewDialog', () => {
       snapshotId: 'snapshot-id',
       snapshotKey: 'snapshot-key',
       provider: 'GOVDATA',
+      providerDatasetId: 'package',
+      providerResourceId: 'resource',
       title: 'Employment in Germany',
       columns: ['Year', 'Value'],
       columnProfiles: profiles,
@@ -364,7 +402,7 @@ describe('DataViewDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to results' }));
     expect(screen.queryByRole('button', { name: 'Use dataset' })).toBeNull();
     fireEvent.click(screen.getByTestId('dataset-result'));
-    fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+    await chooseDataset();
 
     await waitFor(() => expect(createProviderSnapshot).toHaveBeenCalled());
     expect(await screen.findByRole('tab', { name: 'Chart' })).toBeTruthy();
@@ -382,13 +420,14 @@ describe('DataViewDialog', () => {
       target: { value: 'employment' },
     });
     fireEvent.click(await screen.findByTestId('dataset-result'));
-    fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+    await chooseDataset();
     await screen.findByRole('tab', { name: 'Table' });
     fireEvent.click(screen.getByRole('tab', { name: 'Table' }));
     await waitFor(() =>
       expect(createDataViewProjection).toHaveBeenCalledWith(
         expect.objectContaining({ view: 'table' }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
     const valueColumn = screen.getByRole('checkbox', { name: 'Value' });
@@ -396,19 +435,33 @@ describe('DataViewDialog', () => {
     await waitFor(() =>
       expect(createDataViewProjection).toHaveBeenLastCalledWith(
         expect.objectContaining({ view: 'table', columns: ['Year'] }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
-    await waitFor(() => expect(screen.queryByRole('columnheader', { name: 'Value' })).toBeNull());
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('table', { name: 'Preview' })).queryByRole('columnheader', {
+          name: 'Value',
+        })
+      ).toBeNull()
+    );
 
     fireEvent.click(valueColumn);
     await waitFor(() =>
       expect(createDataViewProjection).toHaveBeenLastCalledWith(
         expect.objectContaining({ view: 'table', columns: ['Year', 'Value'] }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
-    expect(await screen.findByRole('columnheader', { name: 'Value' })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('table', { name: 'Preview' })).getByRole('columnheader', {
+          name: 'Value',
+        })
+      ).toBeTruthy()
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Insert table' }));
     inserted = editorMocks.insertNodes.mock.calls[1][0];
     expect(inserted).toMatchObject({ type: 'data_view', view: 'table' });
@@ -419,13 +472,14 @@ describe('DataViewDialog', () => {
       target: { value: 'employment' },
     });
     fireEvent.click(await screen.findByTestId('dataset-result'));
-    fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+    await chooseDataset();
     await screen.findByRole('tab', { name: 'Metric' });
     fireEvent.click(screen.getByRole('tab', { name: 'Metric' }));
     await waitFor(() =>
       expect(createDataViewProjection).toHaveBeenCalledWith(
         expect.objectContaining({ view: 'stat' }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Insert metric' }));
@@ -435,11 +489,14 @@ describe('DataViewDialog', () => {
   }, 15_000);
 
   it('updates all selected chart value columns and sends them as separate series', async () => {
+    previewProfiles = multiMeasureProfiles;
     vi.mocked(createProviderSnapshot).mockResolvedValue({
       datasetId: 'dataset-id',
       snapshotId: 'snapshot-id',
       snapshotKey: 'snapshot-key',
       provider: 'GOVDATA',
+      providerDatasetId: 'package',
+      providerResourceId: 'resource',
       title: 'Unemployment in Germany',
       columns: multiMeasureProfiles.map(profile => profile.name),
       columnProfiles: multiMeasureProfiles,
@@ -467,7 +524,7 @@ describe('DataViewDialog', () => {
       target: { value: 'unemployment' },
     });
     fireEvent.click(await screen.findByTestId('dataset-result'));
-    fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+    await chooseDataset();
 
     await waitFor(() =>
       expect(createDataViewProjection).toHaveBeenLastCalledWith(
@@ -477,7 +534,8 @@ describe('DataViewDialog', () => {
           dimensionColumn: 'Year',
           valueColumns: ['Unemployed (absolute)', 'Unemployment rate'],
         }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
     await waitFor(() => expect(screen.getByTestId('chart-preview').textContent).toBe('2'));
@@ -490,7 +548,8 @@ describe('DataViewDialog', () => {
           layout: 'multi',
           valueColumns: ['Unemployment rate'],
         }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
     await waitFor(() => expect(screen.getByTestId('chart-preview').textContent).toBe('1'));
@@ -502,7 +561,8 @@ describe('DataViewDialog', () => {
           layout: 'multi',
           valueColumns: ['Unemployed (absolute)', 'Unemployment rate'],
         }),
-        'token'
+        'token',
+        expect.any(AbortSignal)
       )
     );
     await waitFor(() => expect(screen.getByTestId('chart-preview').textContent).toBe('2'));

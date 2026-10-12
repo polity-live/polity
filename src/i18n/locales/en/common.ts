@@ -291,6 +291,10 @@ export const commonTranslations = {
     dataset_provider_invalid_response: 'The data source returned an invalid response.',
     dataset_scope_unavailable:
       'The selected area, period or combination is unavailable. Please adjust the selection.',
+    dataset_observations_ambiguous:
+      'Several observations belong to the same point. Add filters or explicitly choose a calculation.',
+    dataset_non_additive:
+      'Percentages and indices cannot be summed. Choose original values or an appropriate calculation.',
     dataset_scope_too_large:
       'The dataset is too large for this import. Please narrow the area, period or other dimensions.',
     external_service_failed: 'An external service is currently unavailable.',

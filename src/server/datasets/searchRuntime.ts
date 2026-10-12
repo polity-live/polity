@@ -10,9 +10,12 @@ const cache = new Map<
     settled: boolean;
   }
 >();
+// Row samples have a larger footprint than catalogue entries; keep a separate small public cache.
+const previewCache = new Map<string, NonNullable<ReturnType<typeof cache.get>>>();
 
 export function clearDatasetSearchCache() {
   cache.clear();
+  previewCache.clear();
 }
 
 /** Only public catalogue queries belong here; never cache permission-dependent dataset rows. */
@@ -24,7 +27,8 @@ export function cachedPublicDatasetSearch<T>(
 ): Promise<T[]> {
   if (signal?.aborted)
     return Promise.reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
-  const cached = cache.get(key);
+  const selectedCache = key.startsWith('dataset-preview:') ? previewCache : cache;
+  const cached = selectedCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return subscribe(cached, signal) as Promise<T[]>;
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout>;
@@ -37,12 +41,12 @@ export function cachedPublicDatasetSearch<T>(
   });
   const promise = Promise.race([Promise.resolve().then(() => run(controller.signal)), timeout])
     .then(results => {
-      const entry = cache.get(key);
+      const entry = selectedCache.get(key);
       if (entry?.promise === promise) entry.expiresAt = Date.now() + CACHE_MS;
       return results;
     })
     .catch(error => {
-      if (cache.get(key)?.promise === promise) cache.delete(key);
+      if (selectedCache.get(key)?.promise === promise) selectedCache.delete(key);
       throw error;
     })
     .finally(() => {
@@ -50,8 +54,9 @@ export function cachedPublicDatasetSearch<T>(
       entry.settled = true;
     });
   // A bounded cache also coalesces identical in-flight catalogue requests.
-  const oldestKey = cache.keys().next().value;
-  if (cache.size >= 200 && oldestKey !== undefined) cache.delete(oldestKey);
+  const oldestKey = selectedCache.keys().next().value;
+  if (selectedCache.size >= (selectedCache === previewCache ? 12 : 200) && oldestKey !== undefined)
+    selectedCache.delete(oldestKey);
   const entry = {
     expiresAt: Date.now() + CACHE_MS,
     promise,
@@ -59,7 +64,7 @@ export function cachedPublicDatasetSearch<T>(
     subscribers: 0,
     settled: false,
   };
-  cache.set(key, entry);
+  selectedCache.set(key, entry);
   return subscribe(entry, signal) as Promise<T[]>;
 }
 
@@ -89,7 +94,8 @@ function subscribe(
     const abort = () => {
       if (!done()) return;
       if (!entry.subscribers && !entry.settled) {
-        for (const [key, value] of cache) if (value === entry) cache.delete(key);
+        for (const store of [cache, previewCache])
+          for (const [key, value] of store) if (value === entry) store.delete(key);
         entry.controller.abort(signal.reason);
       }
       reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));

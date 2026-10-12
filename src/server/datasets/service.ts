@@ -22,7 +22,8 @@ import {
 } from './csv';
 import { datasetSql as sql } from './db';
 import { buildMultiMeasureProjectionPoints, assertProviderProjectionScope } from './projection';
-import { datasetYear } from './importScope';
+import { filterPreviewRows } from './previewRows';
+import { genesisSemantics } from './semantics';
 import {
   DATASET_SNAPSHOT_BUCKET,
   createSnapshotStoragePath,
@@ -237,6 +238,7 @@ function toImportResult(
     snapshotId: snapshot.id,
     snapshotKey: snapshot.snapshot_key,
     provider: dataset.provider,
+    providerDatasetId: dataset.provider_dataset_id,
     providerResourceId: dataset.provider_resource_id,
     title: dataset.title,
     publisher: dataset.publisher,
@@ -333,7 +335,20 @@ async function loadSnapshotWithDataset(snapshotId: string) {
   return rows[0] ?? null;
 }
 
-export async function loadDatasetDetails(datasetId: string, userId?: string | null) {
+/** File recovery must not depend on CSV parsing or snapshot readiness. */
+export async function loadRawSnapshotRecord(snapshotId: string, userId: string) {
+  const snapshot = await loadSnapshotWithDataset(snapshotId);
+  if (!snapshot) throw new Error('Dataset snapshot not found');
+  await assertCanReadDataset(userId, snapshot.dataset);
+  return snapshot;
+}
+
+export async function loadDatasetDetails(
+  datasetId: string,
+  userId?: string | null,
+  snapshotId?: string | null,
+  signal?: AbortSignal
+) {
   const datasetRows = await sql<DatasetRecord[]>`
     SELECT *
     FROM dataset
@@ -352,11 +367,21 @@ export async function loadDatasetDetails(datasetId: string, userId?: string | nu
     LIMIT 10
   `;
 
+  const selected = snapshotId ? await loadSnapshotWithDataset(snapshotId) : snapshots[0];
+  if (snapshotId && (!selected || selected.dataset_id !== dataset.id))
+    throw new Error('Dataset snapshot identity mismatch');
+  const loaded =
+    selected && dataset.provider === 'GENESIS_DESTATIS'
+      ? await loadSnapshotTable(selected.id, userId, signal)
+      : null;
   return {
-    ...toDatasetSearchResult(dataset, snapshots[0] ?? null),
-    dimensions: asArray(dataset.dimensions),
-    columns: asArray(dataset.columns),
-    columnProfiles: asColumnProfiles(dataset.column_profiles),
+    ...toDatasetSearchResult(dataset, selected ?? null),
+    metadata: loaded?.snapshot.metadata ?? selected?.metadata ?? dataset.metadata,
+    dimensions: asArray(selected?.dimensions ?? dataset.dimensions),
+    columns: loaded?.table.columns ?? asArray(selected?.columns ?? dataset.columns),
+    columnProfiles: asColumnProfiles(
+      loaded?.snapshot.column_profiles ?? selected?.column_profiles ?? dataset.column_profiles
+    ),
     snapshots: snapshots.map(snapshot => ({
       id: snapshot.id,
       snapshotKey: snapshot.snapshot_key,
@@ -370,42 +395,62 @@ export async function loadDatasetDetails(datasetId: string, userId?: string | nu
   };
 }
 
-export async function loadSnapshotTable(snapshotId: string, userId?: string | null) {
+export async function loadSnapshotTable(
+  snapshotId: string,
+  userId?: string | null,
+  signal?: AbortSignal
+) {
   const snapshot = await loadSnapshotWithDataset(snapshotId);
   if (!snapshot) throw new Error('Dataset snapshot not found');
   await assertCanReadDataset(userId, snapshot.dataset);
   if (snapshot.status !== 'ready') throw new Error('Dataset snapshot is not ready');
 
-  const text = await downloadSnapshotText(snapshot.storage_path);
+  const text = await downloadSnapshotText(snapshot.storage_path, signal);
+  signal?.throwIfAborted();
+  let table = parseDatasetCsv(text, { maxRows: 1_000_000 });
+  if (snapshot.dataset.provider === 'GENESIS_DESTATIS') {
+    const semantic = genesisSemantics(
+      table,
+      snapshot.metadata?.providerDimensions as
+        import('@/features/charts/types').EurostatDimension[] | undefined,
+      snapshot.dataset.language,
+      snapshot.dataset.title
+    );
+    table = semantic.table;
+    snapshot.column_profiles = semantic.profiles;
+    snapshot.metadata = { ...snapshot.metadata, ...semantic.metadata };
+  }
   return {
     dataset: snapshot.dataset,
     snapshot,
-    table: parseDatasetCsv(text, { maxRows: 1_000_000 }),
+    table,
   };
 }
 
 export async function createDatasetProjection(
   request: DatasetProjectionRequest,
-  userId?: string | null
+  userId?: string | null,
+  signal?: AbortSignal
 ) {
-  const { table, snapshot } = await loadSnapshotTable(request.snapshotId, userId);
+  const { table, snapshot } = await loadSnapshotTable(request.snapshotId, userId, signal);
   const columnSet = new Set(table.columns);
-  for (const column of Object.keys(request.filters ?? {})) {
+  for (const column of [
+    ...Object.keys(request.filters ?? {}),
+    ...('view' in request
+      ? [
+          ...(request.rowConditions ?? []).map(condition => condition.column),
+          ...(request.timeRange ? [request.timeRange.column] : []),
+        ]
+      : []),
+  ]) {
     if (!columnSet.has(column)) throw new Error(`Unknown dataset column: ${column}`);
   }
-  let filteredRows = Object.entries(request.filters ?? {}).reduce(
-    (rows, [column, value]) =>
-      value ? rows.filter(row => String(row[column]) === String(value)) : rows,
-    table.rows
+  const filteredRows = filterPreviewRows(
+    table,
+    request.filters,
+    'view' in request ? request.timeRange : undefined,
+    'view' in request ? request.rowConditions : undefined
   );
-  if ('view' in request && request.timeRange) {
-    const range = request.timeRange;
-    if (!columnSet.has(range.column)) throw new Error(`Unknown dataset column: ${range.column}`);
-    filteredRows = filteredRows.filter(row => {
-      const year = datasetYear(row[range.column]);
-      return year !== null && year >= range.startYear && year <= range.endYear;
-    });
-  }
   const filteredTable = { ...table, rows: filteredRows };
   if ('view' in request && request.view !== 'table')
     assertProviderProjectionScope(filteredTable, request, snapshot.metadata);
@@ -498,6 +543,12 @@ export async function createDatasetProjection(
       valueColumns,
       aggregation: request.aggregation,
     });
+    if (
+      asColumnProfiles(snapshot.column_profiles).some(
+        profile => profile.name === dimensionColumn && profile.role === 'time'
+      )
+    )
+      points.sort((a, b) => a.x.localeCompare(b.x, undefined, { numeric: true }));
     if (points.length === 0) throw new Error('No values match the selected configuration');
     if (points.length > 5_000) throw new Error('The selected view contains too many points');
     return {
@@ -542,9 +593,24 @@ export async function createDatasetProjection(
   }
   const points = [...groups.values()].map(group => {
     const value = aggregateDatasetValues(group.values, request.aggregation);
-    return { x: group.x, value: value as number, series: group.series || null };
+    return {
+      x: group.x,
+      value: value as number,
+      series:
+        group.series ||
+        (measureColumn === 'value' && filteredRows[0]?.value_variable_label
+          ? `${filteredRows[0].value_variable_label} · ${filteredRows[0].value_unit}`
+          : null),
+    };
   });
   if (points.length === 0) throw new Error('No values match the selected configuration');
+  if (
+    request.layout === 'wide' ||
+    asColumnProfiles(snapshot.column_profiles).some(
+      profile => profile.name === dimensionColumn && profile.role === 'time'
+    )
+  )
+    points.sort((a, b) => a.x.localeCompare(b.x, undefined, { numeric: true }));
 
   return {
     view: 'chart',
@@ -603,7 +669,10 @@ function toDatasetSearchResult(
     publisher: metadataText(dataset.publisher),
     license: metadataText(dataset.license),
     sourceUrl: dataset.source_url,
-    modified: dateToIso(dataset.updated_at),
+    modified:
+      typeof (snapshot?.metadata ?? dataset.metadata)?.sourceUpdatedAt === 'string'
+        ? String((snapshot?.metadata ?? dataset.metadata).sourceUpdatedAt)
+        : null,
     structureSummary: metadataText(dataset.structure_summary),
     formatSummary: snapshot?.format?.toUpperCase() ?? undefined,
     valueSummary: snapshot

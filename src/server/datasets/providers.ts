@@ -152,9 +152,10 @@ export async function importGovDataDatasetSnapshot({
       organizationTitle,
       modified: nullableText(pkg.modified ?? pkg.metadata_modified),
       resourceModified,
+      sourceUpdatedAt: resourceModified,
       importedAt,
     },
-    snapshotTakenAt: resourceModified ?? importedAt,
+    snapshotTakenAt: importedAt,
     createdById: userId,
     table,
   });
@@ -277,6 +278,9 @@ export async function importEurostatDatasetSnapshot({
       ),
     }));
 
+  const observedYears = table.rows
+    .map(row => datasetYear(row.TIME_PERIOD ?? ''))
+    .filter((year): year is number => year !== null);
   return persistDatasetSnapshot({
     provider: 'EUROSTAT',
     providerDatasetId: details.code,
@@ -293,11 +297,23 @@ export async function importEurostatDatasetSnapshot({
       .find(item => item.id === 'geo')
       ?.values.map(value => value.label ?? value.id),
     timeCoverage: filters?.period
-      ? { start: String(filters.period.start), end: String(filters.period.end) }
+      ? {
+          start: String(
+            filters.period.start === 1800 && observedYears.length
+              ? Math.min(...observedYears)
+              : filters.period.start
+          ),
+          end: String(
+            filters.period.end === 2199 && observedYears.length
+              ? Math.max(...observedYears)
+              : filters.period.end
+          ),
+        }
       : { start: details.dataStart, end: details.dataEnd },
     metadata: {
       snapshotKey: details.snapshotKey,
       sourceLastUpdate: details.lastUpdate,
+      sourceUpdatedAt: details.lastUpdate,
       structureLastChange: details.structureLastChange,
       attributes: details.attributes,
       valueCount: details.valueCount,
@@ -306,7 +322,7 @@ export async function importEurostatDatasetSnapshot({
       timeDimension: 'TIME_PERIOD',
       importScope: resolved,
     },
-    snapshotTakenAt: details.lastUpdate ?? new Date().toISOString(),
+    snapshotTakenAt: new Date().toISOString(),
     createdById: userId,
     table,
   });

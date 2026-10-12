@@ -271,6 +271,24 @@ export const plateJsTranslations = {
     invalidUrl: 'Ungültige URL',
   },
   dataView: {
+    rawDownload: {
+      full: 'Vollständige Rohdaten herunterladen',
+      original: 'Originaldatei herunterladen',
+      snapshot: 'Gespeicherte CSV herunterladen',
+      fullHint:
+        'Der Download enthält den vollständigen Datensatz und berücksichtigt deine Filter nicht.',
+      snapshotHint: 'Dies ist der gespeicherte CSV-Snapshot, nicht die vollständige Originaldatei.',
+      preparing: 'Download wird vorbereitet',
+      started: 'Download wurde gestartet. Dein Browser verwaltet die Übertragung.',
+      failed: 'Die Datei konnte nicht heruntergeladen werden.',
+      expired: 'Der Downloadlink ist abgelaufen oder der Zugriff ist nicht mehr verfügbar.',
+      providerBackground:
+        'Der Anbieter kann die vollständige Datei nicht direkt liefern. Öffne die Quelle, um sie dort herunterzuladen.',
+      retryInDialog:
+        'Kehre zum Datendialog zurück, um es erneut zu versuchen. Deine Auswahl bleibt erhalten.',
+      openSource: 'Quelle öffnen',
+    },
+
     prepareTitle: 'Import vorbereiten',
     prepareHint: 'Wähle bei großen Datensätzen Gebiet und Zeitraum, um weniger Daten zu laden.',
     restrictImport: 'Import eingrenzen',
@@ -353,7 +371,61 @@ export const plateJsTranslations = {
     allValues: 'Alle Werte',
     clearFilters: 'Filter leeren',
     aggregation: 'Berechnung',
+    dataSample: 'Datenvorschau',
+    explorerTitle: 'Datensatz ansehen und auswählen',
+    explorerDescription:
+      'Filtere konkrete Werte direkt in der Tabelle. Übernimm deine Auswahl und gestalte anschließend das Diagramm.',
+    explorerOpen: 'Datensatz in Vollbild ansehen',
+    explorerTable: 'Virtuelle Datenvorschau',
+    explorerSort: '{{column}} sortieren',
+    explorerFilter: '{{column}} filtern',
+    explorerOperator: 'Filterart',
+    explorerValues: 'Werte auswählen',
+    explorerContains: 'Text enthält',
+    explorerRange: 'Bereich',
+    explorerMissing: 'Nur fehlende Werte',
+    explorerFindValue: 'Wert suchen',
+    explorerPartialValues:
+      'Diese Werteliste ist ein Ausschnitt. Weitere Werte kannst du über Text oder Bereich filtern.',
+    explorerFrom: 'Von',
+    explorerTo: 'Bis',
+    explorerInvalidRange:
+      'Bitte einen gültigen Bereich von einem kleineren zu einem größeren Wert angeben.',
+    explorerRemoveFilter: 'Filter entfernen',
+    explorerApplyFilter: 'Filter anwenden',
+    explorerFromYear: 'Ab Jahr',
+    explorerToYear: 'Bis Jahr',
+    explorerRemoveQuick: 'Schnellfilter entfernen',
+    explorerHideColumn: 'Spalte {{column}} ausblenden',
+    datasetInformation: 'Datensatzinformationen',
+    scopedSnapshotExplanation:
+      'Eingeschränkter Import: Dieser Snapshot enthält nur den beim Import ausgewählten Umfang. Das Entfernen von Anzeigefiltern stellt darüber hinausgehende Daten nicht wieder her.',
+    explorerApplyScope: 'Schnellfilter anwenden',
+    explorerApplyScopeHint: 'Beim Übernehmen werden nur angewendete Schnellfilter berücksichtigt.',
+    explorerRowCount: '{{count}} passende Zeilen im Datensatz',
+    explorerSampleCount: '{{count}} passende Zeilen im verfügbaren Ausschnitt',
+    explorerSampleHint:
+      'Externe Vorschau mit begrenztem Datenumfang. Angezeigte Einschränkungen gelten für den Ausschnitt; Zeilenfilter werden nach dem Import auf den gespeicherten Umfang angewendet.',
+    explorerChooseColumns: 'Wähle mindestens eine sichtbare Spalte.',
+    explorerBack: 'Zurück',
+    explorerContinue: 'Auswahl übernehmen',
+    technicalColumns: 'Technische Spalten einblenden',
+    loadingDataSample: 'Beispieldaten werden geladen',
+    sampleNarrowHint:
+      'Bitte Gebiet, Zeitraum oder Kennzahl weiter eingrenzen. Die Auswahl wird nicht automatisch erweitert.',
+    sampleDescription:
+      'Bis zu fünf Beispieldatenzeilen, ohne Diagrammberechnung. Diese Vorschau ist kein vollständiger Datensatz.',
+    sampleScope: 'Angewandte Einschränkungen',
+    sampleEmpty: 'Keine Beispieldaten entsprechen dieser Auswahl.',
+    missingValue: 'Fehlend',
+    selectionMismatch:
+      'Die Antwort gehört zu einem anderen Datensatz. Bitte die Auswahl erneut laden.',
+    measureAndUnit: 'Kennzahl und Einheit',
+    chooseMeasureRequired: 'Bitte Kennzahl und Einheit auswählen',
+    importedAt: 'Importiert am {{date}}',
+    dataTypes: { number: 'Zahl', date: 'Zeitraum', category: 'Kategorie', text: 'Text' },
     aggregationValues: {
+      none: 'Originalwerte',
       sum: 'Summe',
       mean: 'Mittelwert',
       median: 'Median',

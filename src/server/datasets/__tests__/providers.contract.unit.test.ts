@@ -248,7 +248,7 @@ describe('GovData snapshot import', () => {
       providerResourceId: 'resource-1',
       title: 'Package title',
       publisher: 'Publisher',
-      snapshotTakenAt: '2025-02-01',
+      snapshotTakenAt: expect.any(String),
       createdById: 'u1',
       table,
       metadata: { organizationTitle: 'Organization', resourceName: 'Resource' },
@@ -288,7 +288,7 @@ describe('GovData snapshot import', () => {
       description: null,
       publisher: 'Org fallback',
       license: null,
-      snapshotTakenAt: '2024-02-01',
+      snapshotTakenAt: expect.any(String),
       metadata: { packageId: '', packageName: '', resourceName: 'CSV resource' },
     });
   });

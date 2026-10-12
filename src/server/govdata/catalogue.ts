@@ -291,6 +291,6 @@ export async function searchGovDataCatalogue(query: string, limit = 20, signal?:
     .slice(0, limit);
 }
 
-export async function loadGovDataPackage(packageId: string) {
-  return callGovDataAction<CkanPackage>('package_show', { id: packageId });
+export async function loadGovDataPackage(packageId: string, signal?: AbortSignal) {
+  return callGovDataAction<CkanPackage>('package_show', { id: packageId }, signal);
 }

@@ -17,6 +17,8 @@ import { assertGenesisStatus, postGenesis } from '../genesisTransport';
 import { clearDatasetSearchCache } from '../searchRuntime';
 import type { PersistDatasetSnapshotInput } from '../service';
 import type { EurostatDimension } from '@/features/charts/types';
+import { genesisObservations } from './fixtures/genesis-observations';
+import { tableToCsv } from '../csv';
 
 const status = { Code: 0, Type: 'Information', Content: 'erfolgreich' };
 const metadata = {
@@ -101,6 +103,44 @@ describe('GENESIS catalogue and status', () => {
     const params = new URLSearchParams(String(mocks.fetch.mock.calls[0][1].body));
     expect(params.get('language')).toBe('en');
     expect(params.get('pagelength')).toBe('50');
+  });
+  it('verifies the blank national total without mutating shared cached regional values on reopening', async () => {
+    mocks.fetch.mockImplementation(async (url: string, init: { body: URLSearchParams }) => {
+      if (url.endsWith('metadata/table'))
+        return json({
+          Object: {
+            Code: '13211-0002',
+            Content: 'Arbeitslose: Deutschland, Monate',
+            Time: { From: '2005', To: '2026' },
+            Structure: {
+              Columns: [{ Code: 'ERW006', Content: 'Arbeitslose', Type: 'Merkmal', Values: '-1' }],
+              Rows: [{ Code: 'MONAT', Content: 'Monate', Type: 'Merkmal', Values: '12' }],
+              Subtitel: { Code: 'DINSGF', Content: 'Gebiet', Type: 'Merkmal', Values: '2' },
+            },
+          },
+        });
+      if (url.endsWith('catalogue/values2variable'))
+        return json({
+          List:
+            init.body.get('name') === 'DINSGF'
+              ? [
+                  { Code: 'DF', Content: 'Früheres Bundesgebiet' },
+                  { Code: 'DN', Content: 'Neue Länder' },
+                ]
+              : [{ Code: 'MONAT01', Content: 'Januar' }],
+        });
+      return new Response(tableToCsv(genesisObservations()));
+    });
+    const first = await prepareGenesisDataset('13211-0002');
+    const second = await prepareGenesisDataset('13211-0002');
+    const firstGeo = first.dimensions.find(item => item.id === 'DINSGF');
+    const secondGeo = second.dimensions.find(item => item.id === 'DINSGF');
+    expect(secondGeo?.values.map(item => item.id)).toEqual(['DF', 'DN', '__total__:DINSGF']);
+    expect(firstGeo?.values).not.toBe(secondGeo?.values);
+    expect(firstGeo?.values).toEqual(secondGeo?.values);
+    const dataCalls = mocks.fetch.mock.calls.filter(([url]) => url.endsWith('data/tablefile'));
+    expect(dataCalls).toHaveLength(1);
+    expect(dataCalls[0][1].body.get('contents')).toBe('ERW006');
   });
   it('classifies interrupted response streams and releases the credential queue', async () => {
     mocks.fetch.mockResolvedValueOnce(
@@ -273,8 +313,12 @@ describe('GENESIS preparation and modern FFCSV import', () => {
     );
     await importGenesisDatasetSnapshot({ code: '12411-0001', userId: 'user' });
     const saved = mocks.persist.mock.lastCall?.[0] as PersistDatasetSnapshotInput;
-    expect((saved.dimensions as EurostatDimension[]).map(item => item.id)).toEqual(['time']);
-    expect(saved.table.rows).toEqual([{ time: '2025', value: '1' }]);
+    expect((saved.dimensions as EurostatDimension[]).map(item => item.id)).toEqual([]);
+    expect(saved.table.rows).toEqual([{ time: '2025', value: '1', observation_period: '2025' }]);
+    expect(saved.metadata).toMatchObject({
+      timeDimension: 'observation_period',
+      measureOptions: [],
+    });
   });
   it('handles missing, reversed and nested metadata dimensions without inventing coverage', () => {
     expect(genesisMetadataDimensions({})).toEqual([]);
@@ -454,10 +498,10 @@ describe('GENESIS preparation and modern FFCSV import', () => {
       })
     );
     expect(result.columnProfiles).toContainEqual(
-      expect.objectContaining({ name: 'value', label: 'value' })
+      expect.objectContaining({ name: 'value', label: 'Value', role: 'measure' })
     );
     expect(result.columnProfiles).toContainEqual(
-      expect.objectContaining({ name: 'time', label: 'time' })
+      expect.objectContaining({ name: 'observation_period', label: 'Period', role: 'time' })
     );
   });
   it('detects ZIP magic even when the content type is absent', async () => {

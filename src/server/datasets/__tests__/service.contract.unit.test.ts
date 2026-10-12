@@ -153,6 +153,52 @@ beforeEach(() => {
   mocks.uploadBytes.mockResolvedValue(undefined);
   mocks.multiPoints.mockReturnValue([{ x: 'A', value: 1, series: null }]);
 });
+it('applies table-selected predicates to charts and tables over the same snapshot', async () => {
+  const rowConditions = [
+    { column: 'value', operator: 'range' as const, min: '2', max: '4', numeric: true },
+  ];
+  queueSnapshotLoad();
+  const chart = await createDatasetProjection(
+    {
+      snapshotId: 'snapshot-1',
+      view: 'chart',
+      filters: {},
+      rowConditions,
+      aggregation: 'none',
+      dimensionColumn: 'category',
+      measureColumn: 'value',
+      seriesColumn: 'series',
+    },
+    'user-1'
+  );
+  expect(chart).toMatchObject({
+    rowCount: 2,
+    points: [
+      { x: 'A', value: 2, series: 'One' },
+      { x: 'A', value: 3, series: 'Two' },
+    ],
+  });
+  queueSnapshotLoad();
+  const selectedTable = await createDatasetProjection(
+    {
+      snapshotId: 'snapshot-1',
+      view: 'table',
+      filters: {},
+      rowConditions,
+      aggregation: 'none',
+      columns: ['value', 'other'],
+      limit: 50,
+    },
+    'user-1'
+  );
+  expect(selectedTable).toMatchObject({
+    rowCount: 2,
+    rows: [
+      { value: '2', other: 'invalid' },
+      { value: '3', other: '30' },
+    ],
+  });
+});
 
 describe('dataset snapshot persistence', () => {
   it('updates a group dataset and reuses a ready snapshot', async () => {

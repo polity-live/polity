@@ -5,21 +5,29 @@ import { decodeDatasetText } from './text';
 
 export const DATASET_SNAPSHOT_BUCKET = 'dataset-snapshots';
 
-export function assertDatasetSize(byteSize: number, label = 'Dataset snapshot') {
-  if (byteSize > MAX_DATASET_SNAPSHOT_BYTES) {
-    throw new Error(`${label} exceeds the 50 MiB snapshot limit`);
+export function assertDatasetSize(
+  byteSize: number,
+  label = 'Dataset snapshot',
+  maxBytes = MAX_DATASET_SNAPSHOT_BYTES
+) {
+  if (byteSize > maxBytes) {
+    throw new Error(`${label} exceeds the ${maxBytes / 1024 / 1024} MiB snapshot limit`);
   }
 }
 
-export async function readLimitedResponseBytes(response: Response, label = 'Dataset download') {
+export async function readLimitedResponseBytes(
+  response: Response,
+  label = 'Dataset download',
+  maxBytes = MAX_DATASET_SNAPSHOT_BYTES
+) {
   const contentLength = Number(response.headers.get('content-length'));
   if (Number.isFinite(contentLength)) {
-    assertDatasetSize(contentLength, label);
+    assertDatasetSize(contentLength, label, maxBytes);
   }
 
   if (!response.body) {
     const bytes = new Uint8Array(await response.arrayBuffer());
-    assertDatasetSize(bytes.byteLength, label);
+    assertDatasetSize(bytes.byteLength, label, maxBytes);
     return bytes;
   }
 
@@ -32,9 +40,9 @@ export async function readLimitedResponseBytes(response: Response, label = 'Data
     if (done) break;
     if (!value) continue;
     totalBytes += value.byteLength;
-    if (totalBytes > MAX_DATASET_SNAPSHOT_BYTES) {
+    if (totalBytes > maxBytes) {
       void reader.cancel().catch(() => undefined);
-      assertDatasetSize(totalBytes, label);
+      assertDatasetSize(totalBytes, label, maxBytes);
     }
     chunks.push(value);
   }
@@ -85,9 +93,11 @@ export async function uploadSnapshotBytes(
   }
 }
 
-export async function downloadSnapshotText(path: string) {
+export async function downloadSnapshotText(path: string, signal?: AbortSignal) {
   const supabase = createClient();
-  const { data, error } = await supabase.storage.from(DATASET_SNAPSHOT_BUCKET).download(path);
+  const { data, error } = await supabase.storage
+    .from(DATASET_SNAPSHOT_BUCKET)
+    .download(path, {}, signal ? { signal } : undefined);
   if (error) {
     throw new Error(error.message);
   }

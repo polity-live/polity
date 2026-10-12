@@ -40,7 +40,13 @@ export function DataViewAttribution({
       ) : (
         <span>{label}</span>
       )}
-      {date ? ` · ${t('plateJs.dataView.dataAsOf', { date })}` : null}
+      {date ? ` · ${t('plateJs.dataView.importedAt', { date })}` : null}
+      {source.sourceUpdatedAt
+        ? ` · ${t('plateJs.dataView.updated')}: ${localizedDate(source.sourceUpdatedAt, i18n.resolvedLanguage)}`
+        : null}
+      {source.dataPeriod?.start
+        ? ` · ${t('plateJs.dataView.searchPeriod')}: ${source.dataPeriod.start}–${source.dataPeriod.end ?? source.dataPeriod.start}`
+        : null}
     </p>
   );
 }

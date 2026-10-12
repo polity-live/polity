@@ -75,6 +75,8 @@ import { Route as ApiCurrencyCurrenciesRouteImport } from './routes/api/currency
 import { Route as ApiCurrencyRatesRouteImport } from './routes/api/currency/rates'
 import { Route as ApiDatasetsArchiveRouteImport } from './routes/api/datasets/archive'
 import { Route as ApiDatasetsPrepareRouteImport } from './routes/api/datasets/prepare'
+import { Route as ApiDatasetsPreviewRouteImport } from './routes/api/datasets/preview'
+import { Route as ApiDatasetsRawDownloadRouteImport } from './routes/api/datasets/raw-download'
 import { Route as ApiDatasetsSearchRouteImport } from './routes/api/datasets/search'
 import { Route as ApiDatasetsSnapshotsRouteImport } from './routes/api/datasets/snapshots'
 import { Route as ApiDatasetsUploadRouteImport } from './routes/api/datasets/upload'
@@ -496,6 +498,16 @@ const ApiDatasetsArchiveRoute = ApiDatasetsArchiveRouteImport.update({
 const ApiDatasetsPrepareRoute = ApiDatasetsPrepareRouteImport.update({
   id: '/api/datasets/prepare',
   path: '/api/datasets/prepare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDatasetsPreviewRoute = ApiDatasetsPreviewRouteImport.update({
+  id: '/api/datasets/preview',
+  path: '/api/datasets/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDatasetsRawDownloadRoute = ApiDatasetsRawDownloadRouteImport.update({
+  id: '/api/datasets/raw-download',
+  path: '/api/datasets/raw-download',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiDatasetsSearchRoute = ApiDatasetsSearchRouteImport.update({
@@ -1057,6 +1069,8 @@ export interface FileRoutesByFullPath {
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
   '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
+  '/api/datasets/preview': typeof ApiDatasetsPreviewRoute
+  '/api/datasets/raw-download': typeof ApiDatasetsRawDownloadRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1207,6 +1221,8 @@ export interface FileRoutesByTo {
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
   '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
+  '/api/datasets/preview': typeof ApiDatasetsPreviewRoute
+  '/api/datasets/raw-download': typeof ApiDatasetsRawDownloadRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1361,6 +1377,8 @@ export interface FileRoutesById {
   '/api/currency/rates': typeof ApiCurrencyRatesRoute
   '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
   '/api/datasets/prepare': typeof ApiDatasetsPrepareRoute
+  '/api/datasets/preview': typeof ApiDatasetsPreviewRoute
+  '/api/datasets/raw-download': typeof ApiDatasetsRawDownloadRoute
   '/api/datasets/search': typeof ApiDatasetsSearchRoute
   '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
   '/api/datasets/upload': typeof ApiDatasetsUploadRoute
@@ -1521,6 +1539,8 @@ export interface FileRouteTypes {
     | '/api/currency/rates'
     | '/api/datasets/archive'
     | '/api/datasets/prepare'
+    | '/api/datasets/preview'
+    | '/api/datasets/raw-download'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1671,6 +1691,8 @@ export interface FileRouteTypes {
     | '/api/currency/rates'
     | '/api/datasets/archive'
     | '/api/datasets/prepare'
+    | '/api/datasets/preview'
+    | '/api/datasets/raw-download'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1824,6 +1846,8 @@ export interface FileRouteTypes {
     | '/api/currency/rates'
     | '/api/datasets/archive'
     | '/api/datasets/prepare'
+    | '/api/datasets/preview'
+    | '/api/datasets/raw-download'
     | '/api/datasets/search'
     | '/api/datasets/snapshots'
     | '/api/datasets/upload'
@@ -1948,6 +1972,8 @@ export interface RootRouteChildren {
   ApiCurrencyRatesRoute: typeof ApiCurrencyRatesRoute
   ApiDatasetsArchiveRoute: typeof ApiDatasetsArchiveRoute
   ApiDatasetsPrepareRoute: typeof ApiDatasetsPrepareRoute
+  ApiDatasetsPreviewRoute: typeof ApiDatasetsPreviewRoute
+  ApiDatasetsRawDownloadRoute: typeof ApiDatasetsRawDownloadRoute
   ApiDatasetsSearchRoute: typeof ApiDatasetsSearchRoute
   ApiDatasetsSnapshotsRoute: typeof ApiDatasetsSnapshotsRoute
   ApiDatasetsUploadRoute: typeof ApiDatasetsUploadRoute
@@ -2437,6 +2463,20 @@ declare module '@tanstack/react-router' {
       path: '/api/datasets/prepare'
       fullPath: '/api/datasets/prepare'
       preLoaderRoute: typeof ApiDatasetsPrepareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/preview': {
+      id: '/api/datasets/preview'
+      path: '/api/datasets/preview'
+      fullPath: '/api/datasets/preview'
+      preLoaderRoute: typeof ApiDatasetsPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/raw-download': {
+      id: '/api/datasets/raw-download'
+      path: '/api/datasets/raw-download'
+      fullPath: '/api/datasets/raw-download'
+      preLoaderRoute: typeof ApiDatasetsRawDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/datasets/search': {
@@ -3510,6 +3550,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCurrencyRatesRoute: ApiCurrencyRatesRoute,
   ApiDatasetsArchiveRoute: ApiDatasetsArchiveRoute,
   ApiDatasetsPrepareRoute: ApiDatasetsPrepareRoute,
+  ApiDatasetsPreviewRoute: ApiDatasetsPreviewRoute,
+  ApiDatasetsRawDownloadRoute: ApiDatasetsRawDownloadRoute,
   ApiDatasetsSearchRoute: ApiDatasetsSearchRoute,
   ApiDatasetsSnapshotsRoute: ApiDatasetsSnapshotsRoute,
   ApiDatasetsUploadRoute: ApiDatasetsUploadRoute,

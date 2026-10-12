@@ -37,6 +37,8 @@ export const APP_ERROR_CODES = [
   'dataset_provider_invalid_response',
   'dataset_scope_unavailable',
   'dataset_scope_too_large',
+  'dataset_observations_ambiguous',
+  'dataset_non_additive',
   'external_service_failed',
   'push_operation_failed',
   'tutorial_operation_failed',

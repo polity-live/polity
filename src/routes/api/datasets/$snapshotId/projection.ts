@@ -20,7 +20,8 @@ export const Route = createFileRoute('/api/datasets/$snapshotId/projection')({
           return Response.json(
             await createDatasetProjection(
               { snapshotId: params.snapshotId, ...body },
-              session.user.id
+              session.user.id,
+              request.signal
             )
           );
         } catch (error) {

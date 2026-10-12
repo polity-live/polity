@@ -31,6 +31,7 @@ export function getValueColumnLayout(
 }
 
 export function inferDataViewConfiguration(profiles: readonly DatasetColumnProfile[]) {
+  profiles = profiles.filter(profile => !profile.technical);
   const measures = profiles.filter(profile => profile.role === 'measure');
   const yearMeasures = measures.filter(isYearValueColumn);
   const measure =
@@ -82,7 +83,13 @@ export function inferDataViewConfiguration(profiles: readonly DatasetColumnProfi
 
 export function getFilterableProfiles(profiles: readonly DatasetColumnProfile[]) {
   return profiles
-    .filter(profile => profile.role !== 'measure' && profile.distinctCount > 0)
+    .filter(
+      profile =>
+        !profile.technical &&
+        profile.role !== 'label' &&
+        profile.role !== 'measure' &&
+        profile.distinctCount > 0
+    )
     .sort((left, right) => left.distinctCount - right.distinctCount)
     .slice(0, 8);
 }

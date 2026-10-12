@@ -2,7 +2,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import type { DatasetChartSource, DatasetProviderId } from '../types';
 export type DataViewAttributionSource = Pick<
   DatasetChartSource,
-  'provider' | 'publisher' | 'sourceUrl' | 'snapshotTakenAt'
+  'provider' | 'publisher' | 'sourceUrl' | 'snapshotTakenAt' | 'sourceUpdatedAt' | 'dataPeriod'
 >;
 function providerLabel(provider: DatasetProviderId) {
   if (provider === 'GENESIS_DESTATIS') return 'GENESIS/Destatis';

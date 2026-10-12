@@ -19,7 +19,7 @@ export function providerResponseFailure(error: unknown, provider: string): Error
   if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) return error;
   if (
     error instanceof Error &&
-    (/50 MiB|TOO_MANY_ROWS/.test(error.message) ||
+    (/MiB|TOO_MANY_ROWS/.test(error.message) ||
       (error as { code?: string }).code === 'ERR_BUFFER_TOO_LARGE')
   )
     return new DatasetProviderFailure(
@@ -51,7 +51,7 @@ export function datasetProviderErrorResponse(error: unknown): Response | null {
   }
   if (
     error instanceof Error &&
-    (/50 MiB|TOO_MANY_ROWS/.test(error.message) ||
+    (/MiB|TOO_MANY_ROWS/.test(error.message) ||
       (error as { code?: string }).code === 'ERR_BUFFER_TOO_LARGE')
   )
     return Response.json(appErrorHttpBody('dataset_scope_too_large'), { status: 413 });

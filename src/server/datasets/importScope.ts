@@ -59,7 +59,11 @@ export function resolveImportFilters(
       return year !== null && year >= period.start && year <= period.end;
     });
     const years = new Set(values?.map(value => datasetYear(value.id)));
-    for (let year = filters.period.start; year <= filters.period.end; year++) {
+    for (
+      let year = filters.period.start;
+      filters.period.start !== 1800 && filters.period.end !== 2199 && year <= filters.period.end;
+      year++
+    ) {
       if (!years.has(year))
         throw new DatasetProviderFailure(
           'The selected period is not fully available',

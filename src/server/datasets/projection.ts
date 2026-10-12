@@ -6,6 +6,7 @@ import type {
 } from '@/features/charts/types';
 import { aggregateDatasetValues, parseDatasetNumber, type DatasetTable } from './csv';
 import { DatasetProviderFailure } from './providerError';
+import { encodeAppError } from '@/features/shared/errors/app-error';
 
 export function assertProviderProjectionScope(
   table: DatasetTable,
@@ -30,6 +31,13 @@ export function assertProviderProjectionScope(
         );
     }
   }
+  if (
+    query.aggregation === 'sum' &&
+    table.rows.some(row =>
+      /%|percent|prozent|index|^PC(?:_|$)|^I\d/i.test(row.value_unit ?? row.unit ?? '')
+    )
+  )
+    throw new Error(encodeAppError('dataset_non_additive'));
 }
 
 export function buildMultiMeasureProjectionPoints({

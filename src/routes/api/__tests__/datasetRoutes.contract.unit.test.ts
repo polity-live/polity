@@ -441,7 +441,12 @@ describe('dataset search and read routes', () => {
       params: { datasetId: 'dataset-1' },
     });
     expect(response.status).toBe(200);
-    expect(mocks.loadDetails).toHaveBeenCalledWith('dataset-1', undefined);
+    expect(mocks.loadDetails).toHaveBeenCalledWith(
+      'dataset-1',
+      undefined,
+      null,
+      expect.any(AbortSignal)
+    );
 
     for (const [failure, status] of [
       [new Error('access denied'), 403],
@@ -585,7 +590,8 @@ describe('dataset mutation routes', () => {
     expect(response.status).toBe(200);
     expect(mocks.createProjection).toHaveBeenCalledWith(
       { snapshotId: 'snapshot-1', filters: {}, mapping: { xColumn: 'year' } },
-      'user-1'
+      'user-1',
+      expect.any(AbortSignal)
     );
 
     const { z } = await import('zod');

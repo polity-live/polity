@@ -2156,6 +2156,59 @@
       ]
     },
     {
+      "file": "src/routes/api/datasets/preview.ts",
+      "routePath": "/api/datasets/preview",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/raw-download.ts",
+      "routePath": "/api/datasets/raw-download",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "file": "src/routes/api/datasets/search.ts",
       "routePath": "/api/datasets/search",
       "access": "public",

@@ -6,6 +6,17 @@ beforeEach(() => {
   vi.useFakeTimers();
 });
 afterEach(() => vi.useRealTimers());
+it('bounds public row samples separately from catalogue metadata', async () => {
+  const catalogue = vi.fn(async () => ['catalogue']);
+  const sample = vi.fn(async () => ['sample']);
+  await cachedPublicDatasetSearch('catalogue', catalogue);
+  for (let index = 0; index < 13; index++)
+    await cachedPublicDatasetSearch(`dataset-preview:${index}`, sample);
+  await cachedPublicDatasetSearch('dataset-preview:0', sample);
+  expect(sample).toHaveBeenCalledTimes(14);
+  await cachedPublicDatasetSearch('catalogue', catalogue);
+  expect(catalogue).toHaveBeenCalledOnce();
+});
 it('coalesces concurrent queries and expires successful public results after five minutes', async () => {
   const run = vi.fn(async () => ['dataset']);
   const first = cachedPublicDatasetSearch('public', run);

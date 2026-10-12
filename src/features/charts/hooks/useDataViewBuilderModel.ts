@@ -9,6 +9,7 @@ import {
   prepareProviderDataset,
   loadDatasetColumnValues,
   loadDatasetDetails,
+  loadDatasetPreview,
   searchDatasetCatalog,
   uploadDataset,
 } from '../api/datasetClient';
@@ -27,6 +28,9 @@ import type {
   DataViewKind,
   DataViewProjection,
   DataViewQuery,
+  DatasetPreview,
+  DatasetPreviewRequest,
+  DatasetTableSelection,
   DatasetColumnProfile,
   DatasetProviderError,
   DatasetProviderId,
@@ -37,10 +41,17 @@ import type {
   DatasetSearchIntent,
   TDataViewElement,
 } from '../types';
+import { canRecoverDatasetFile } from '../logic/datasetRawDownload';
 import { localizeAppError } from '@/features/shared/errors/app-error';
 import { DataViewInsertionError } from '../logic/dataViewInsertion';
 import { interpretDatasetSearch } from '../logic/datasetSearch';
+import { applyDatasetTableSelection } from '../logic/datasetTableSelection';
 import { applyDatasetSearchIntent, requiredProviderDimensions } from '../logic/providerDataView';
+import {
+  sameDatasetSelection,
+  datasetMeasureOptions,
+  selectedDatasetMeasure,
+} from '../logic/datasetSelection';
 import type { DatasetSearchFilters } from '../types';
 const ALL_PROVIDERS: DatasetProviderId[] = ['EUROSTAT', 'GENESIS_DESTATIS', 'GOVDATA', 'UPLOAD'];
 function createEmptyManualTable(
@@ -77,6 +88,7 @@ function snapshotFromStoredResult(
     snapshotId,
     snapshotKey: result.snapshotKey ?? snapshotId,
     provider: result.provider,
+    providerDatasetId: result.providerDatasetId,
     providerResourceId: result.providerResourceId,
     title: result.title,
     columns: profiles.map(profile => profile.name),
@@ -110,13 +122,17 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     canUploadDatasets = false,
   } = useChartDatasetContext();
   const { groups: uploadGroups, isLoading: uploadGroupsLoading } = useCurrentUserActiveGroups();
-  const language = ['de', 'fr'].includes(i18n.resolvedLanguage?.split('-')[0] ?? '')
+  const language: 'de' | 'en' | 'fr' = ['de', 'fr'].includes(
+    i18n.resolvedLanguage?.split('-')[0] ?? ''
+  )
     ? (i18n.resolvedLanguage?.split('-')[0] as 'de' | 'fr')
     : 'en';
   const [open, setOpenState] = React.useState(false);
   const openRef = React.useRef(false);
   const requestVersion = React.useRef(0);
   const [stage, setStage] = React.useState<'find' | 'prepare' | 'build'>('find');
+  const [datasetExplorerOpen, setDatasetExplorerOpen] = React.useState(false);
+  const pendingTableSelection = React.useRef<DatasetTableSelection | null>(null);
   const datasetAbort = React.useRef<AbortController | null>(null);
   const chosenIntent = React.useRef<DatasetSearchIntent | null>(null);
   const [preparation, setPreparation] = React.useState<DatasetPreparation | null>(null);
@@ -148,8 +164,17 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
   const [presentation, setPresentation] = React.useState<ChartPresentation>(emptyPresentation);
   const [projection, setProjection] = React.useState<DataViewProjection | null>(null);
   const [projectionLoading, setProjectionLoading] = React.useState(false);
+  const [dataPreview, setDataPreview] = React.useState<DatasetPreview | null>(null);
+  const [dataPreviewLoading, setDataPreviewLoading] = React.useState(false);
+  const [dataPreviewError, setDataPreviewError] = React.useState<string | null>(null);
+  const [previewRevision, setPreviewRevision] = React.useState(0);
   const [projectionError, setProjectionError] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [errorDownloadAvailable, setErrorDownloadAvailable] = React.useState(false);
+  const [sampleDownloadAvailable, setSampleDownloadAvailable] = React.useState(false);
+  const [projectionDownloadAvailable, setProjectionDownloadAvailable] = React.useState(false);
+  const [uploadDownloadAvailable, setUploadDownloadAvailable] = React.useState(false);
+  const [rejectedUploadFile, setRejectedUploadFile] = React.useState<File | null>(null);
   const [filterValues, setFilterValues] = React.useState<Record<string, string[]>>({});
   const [filterValuesLoading, setFilterValuesLoading] = React.useState(false);
   const [uploadOpen, setUploadOpen] = React.useState(false);
@@ -196,11 +221,15 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       const version = requestVersion.current;
       setEditingElement(element);
       setError(null);
+      setErrorDownloadAvailable(false);
       setProjectionError(null);
+      setProjectionDownloadAvailable(false);
       setProviderErrors([]);
       setSearchResults([]);
       setSearchFilters({});
       setSelectedResult(null);
+      setDatasetExplorerOpen(false);
+      pendingTableSelection.current = null;
       setPreparation(null);
       chosenIntent.current = null;
       setFilterValues({});
@@ -210,6 +239,8 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       setUploadTitle('');
       setUploadDescription('');
       setUploadError(null);
+      setUploadDownloadAvailable(false);
+      setRejectedUploadFile(null);
       setManualTable(createEmptyManualTable(t));
       if (!element) {
         setStage('find');
@@ -239,6 +270,7 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
         snapshotKey: source.snapshotKey,
         snapshotTakenAt: source.snapshotTakenAt,
         groupId: source.groupId,
+        timeCoverage: source.dataPeriod,
       });
       const editingSnapshot = snapshotFromStoredResult(
         {
@@ -261,9 +293,21 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       setPresentation(element.presentation);
       setProjection(null);
       setPreparing(true);
-      void loadDatasetDetails(source.datasetId, session?.access_token)
+      const controller = new AbortController();
+      datasetAbort.current = controller;
+      void loadDatasetDetails(
+        source.datasetId,
+        session?.access_token,
+        source.snapshotId,
+        controller.signal
+      )
         .then(details => {
           if (version !== requestVersion.current) return;
+          if (
+            !sameDatasetSelection(source, { ...details, datasetId: details.id }) ||
+            details.snapshotId !== source.snapshotId
+          )
+            throw new Error(t('plateJs.dataView.selectionMismatch'));
           const profiles = details.columnProfiles ?? [];
           setColumnProfiles(profiles);
           setQuery(current => {
@@ -285,6 +329,7 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
           if (version !== requestVersion.current) return;
           setSnapshot(null);
           setError(localizeAppError(loadError));
+          setErrorDownloadAvailable(canRecoverDatasetFile(loadError));
         })
         .finally(() => {
           if (version === requestVersion.current) setPreparing(false);
@@ -298,7 +343,10 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       setSearchResults([]);
       setProviderErrors([]);
       setSearching(false);
-      if (open && stage === 'find') setError(null);
+      if (open && stage === 'find') {
+        setError(null);
+        setErrorDownloadAvailable(false);
+      }
       if (open && stage === 'find' && providers.length === 0) setSelectedResult(null);
       return;
     }
@@ -309,6 +357,7 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     setSelectedResult(null);
     setProviderErrors([]);
     setError(null);
+    setErrorDownloadAvailable(false);
     const timeout = window.setTimeout(() => {
       void searchDatasetCatalog({
         query: normalizedQuery,
@@ -351,17 +400,68 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
   ]);
   const activateSnapshot = React.useCallback(
     (nextSnapshot: DatasetSnapshotImportResult, result: DatasetSearchResult) => {
-      const profiles = nextSnapshot.columnProfiles ?? result.columnProfiles ?? [];
+      if (
+        !sameDatasetSelection(
+          {
+            provider: result.provider,
+            providerDatasetId: result.providerDatasetId,
+            ...(result.provider === 'GOVDATA'
+              ? { providerResourceId: result.providerResourceId }
+              : {}),
+            snapshotId: result.snapshotId,
+          },
+          {
+            ...nextSnapshot,
+            providerDatasetId:
+              nextSnapshot.provider === 'UPLOAD'
+                ? result.providerDatasetId
+                : nextSnapshot.providerDatasetId,
+          }
+        )
+      )
+        throw new Error(t('plateJs.dataView.selectionMismatch'));
+      let profiles = nextSnapshot.columnProfiles ?? result.columnProfiles ?? [];
       const inferred = inferDataViewConfiguration(profiles);
+      if (['EUROSTAT', 'GENESIS_DESTATIS', 'GOVDATA'].includes(nextSnapshot.provider))
+        inferred.query.aggregation = 'none';
+      const options = datasetMeasureOptions(nextSnapshot);
+      if (options.length === 1) {
+        inferred.query.filters = { ...inferred.query.filters, ...options[0].filters };
+        const label = `${options[0].label} · ${options[0].unit}`;
+        profiles = profiles.map(profile =>
+          profile.name === 'value' ? { ...profile, label } : profile
+        );
+        inferred.presentation.yAxisLabel = options[0].unit;
+      }
       inferred.query = applyDatasetSearchIntent(
         inferred.query,
         { ...nextSnapshot, columnProfiles: profiles },
         chosenIntent.current
       );
+      if (pendingTableSelection.current) {
+        inferred.query = applyDatasetTableSelection(
+          inferred.query,
+          pendingTableSelection.current,
+          profiles,
+          options
+        );
+        const measure = selectedDatasetMeasure(options, inferred.query);
+        if (measure) {
+          profiles = profiles.map(profile =>
+            profile.name === inferred.query.measureColumn
+              ? { ...profile, label: `${measure.label} · ${measure.unit}` }
+              : profile
+          );
+          inferred.presentation.yAxisLabel = measure.unit;
+        }
+        pendingTableSelection.current = null;
+      }
       setSnapshot(nextSnapshot);
       setSelectedResult({
         ...result,
         id: nextSnapshot.datasetId,
+        title: nextSnapshot.title,
+        providerDatasetId: nextSnapshot.providerDatasetId ?? result.providerDatasetId,
         snapshotId: nextSnapshot.snapshotId,
         snapshotKey: nextSnapshot.snapshotKey,
         snapshotTakenAt: nextSnapshot.snapshotTakenAt,
@@ -392,23 +492,28 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       setProjection(null);
       setStage('build');
       setError(null);
+      setErrorDownloadAvailable(false);
     },
-    []
+    [t]
   );
   const useSelectedDataset = React.useCallback(
-    async (chooseScope = false) => {
+    async (chooseScope = false, tableSelection?: DatasetTableSelection) => {
       if (!selectedResult || preparing) return;
+      if (tableSelection) pendingTableSelection.current = tableSelection;
+      const tableScope = pendingTableSelection.current?.filters;
       const version = ++requestVersion.current;
       datasetAbort.current?.abort();
       const controller = new AbortController();
       datasetAbort.current = controller;
       const intent = chosenIntent.current ?? searchIntent;
-      chosenIntent.current =
-        stage === 'prepare' && restrictImport
+      chosenIntent.current = tableScope
+        ? { ...intent, area: tableScope.area ?? null, period: tableScope.period ?? null }
+        : stage === 'prepare' && restrictImport
           ? { ...intent, area: importFilters.area ?? null, period: importFilters.period ?? null }
           : intent;
       setPreparing(true);
       setError(null);
+      setErrorDownloadAvailable(false);
       try {
         let result: DatasetSnapshotImportResult;
         if (
@@ -427,19 +532,24 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
                 provider: selectedResult.provider as 'EUROSTAT' | 'GENESIS_DESTATIS',
                 code: selectedResult.providerDatasetId,
                 language,
-                filters: { area: intent.area, period: intent.period },
+                filters: tableScope ?? { area: intent.area, period: intent.period },
               },
               session?.access_token,
               controller.signal
             );
             if (version !== requestVersion.current) return;
+            if (
+              prepared.provider !== selectedResult.provider ||
+              prepared.code.toUpperCase() !== selectedResult.providerDatasetId.toUpperCase()
+            )
+              throw new Error(t('plateJs.dataView.selectionMismatch'));
             setPreparation(prepared);
-            setImportFilters({ area: intent.area, period: intent.period });
+            setImportFilters(tableScope ?? { area: intent.area, period: intent.period });
             setRestrictImport(true);
             if (
               chooseScope ||
-              prepared.estimatedBytes === null ||
-              prepared.estimatedBytes >= 25 * 1024 * 1024
+              (!tableScope &&
+                (prepared.estimatedBytes === null || prepared.estimatedBytes >= 25 * 1024 * 1024))
             ) {
               setStage('prepare');
               return;
@@ -450,7 +560,17 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
           }
         }
         if (selectedResult.snapshotId) {
-          const details = await loadDatasetDetails(selectedResult.id, session?.access_token);
+          const details = await loadDatasetDetails(
+            selectedResult.id,
+            session?.access_token,
+            selectedResult.snapshotId,
+            controller.signal
+          );
+          if (
+            (details.id && details.id !== selectedResult.id) ||
+            (details.snapshotId && details.snapshotId !== selectedResult.snapshotId)
+          )
+            throw new Error(t('plateJs.dataView.selectionMismatch'));
           const profiles = details.columnProfiles ?? selectedResult.columnProfiles ?? [];
           result = snapshotFromStoredResult(
             { ...selectedResult, ...details, snapshotId: selectedResult.snapshotId },
@@ -462,7 +582,11 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
               provider: 'EUROSTAT',
               code: selectedResult.providerDatasetId,
               language,
-              ...(stage === 'prepare' && restrictImport ? { filters: importFilters } : {}),
+              ...(tableScope
+                ? { filters: tableScope }
+                : stage === 'prepare' && restrictImport
+                  ? { filters: importFilters }
+                  : {}),
             },
             session?.access_token,
             controller.signal
@@ -478,7 +602,8 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
               packageId: selectedResult.providerDatasetId,
               resourceId: selectedResult.providerResourceId,
             },
-            session?.access_token
+            session?.access_token,
+            controller.signal
           );
         } else if (
           selectedResult.provider === 'GENESIS_DESTATIS' &&
@@ -489,7 +614,11 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
               provider: 'GENESIS_DESTATIS',
               code: selectedResult.providerDatasetId,
               language: language === 'de' ? 'de' : 'en',
-              ...(stage === 'prepare' && restrictImport ? { filters: importFilters } : {}),
+              ...(tableScope
+                ? { filters: tableScope }
+                : stage === 'prepare' && restrictImport
+                  ? { filters: importFilters }
+                  : {}),
             },
             session?.access_token,
             controller.signal
@@ -502,6 +631,7 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       } catch (prepareError) {
         if (version === requestVersion.current) {
           setError(localizeAppError(prepareError));
+          setErrorDownloadAvailable(canRecoverDatasetFile(prepareError));
           if (
             (prepareError as { payload?: { code?: string } })?.payload?.code ===
             'dataset_scope_too_large'
@@ -526,6 +656,38 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       importFilters,
     ]
   );
+  const measureOptions = datasetMeasureOptions(snapshot);
+  const selectedMeasure = selectedDatasetMeasure(measureOptions, query);
+  const needsMeasure = measureOptions.length > 1 && !selectedMeasure;
+  const chooseMeasure = (id: string) => {
+    const option = measureOptions.find(item => item.id === id);
+    if (!option) return;
+    setQuery(current => ({
+      ...current,
+      filters: {
+        ...Object.fromEntries(
+          Object.entries(current.filters).filter(([column]) => column !== 'value_variable_label')
+        ),
+        ...option.filters,
+      },
+      rowConditions: current.rowConditions?.filter(
+        condition =>
+          !(condition.column in option.filters) && condition.column !== 'value_variable_label'
+      ),
+    }));
+    setColumnProfiles(current =>
+      current.map(profile =>
+        profile.name === query.measureColumn
+          ? { ...profile, label: `${option.label} · ${option.unit}` }
+          : profile
+      )
+    );
+    setPresentation(current => ({
+      ...current,
+      title: `${option.label} · ${option.unit}`,
+      yAxisLabel: option.unit,
+    }));
+  };
   const requiredSelections =
     snapshot && view !== 'table' ? requiredProviderDimensions(snapshot, query) : [];
   const setView = React.useCallback(
@@ -552,7 +714,15 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     [columnProfiles, query.dimensionColumn, query.measureColumn, selectedResult]
   );
   React.useEffect(() => {
-    if (!open || stage !== 'build' || !snapshot || preparing || requiredSelections.length > 0) {
+    if (
+      !open ||
+      datasetExplorerOpen ||
+      stage !== 'build' ||
+      !snapshot ||
+      preparing ||
+      needsMeasure ||
+      requiredSelections.length > 0
+    ) {
       setProjection(null);
       setProjectionLoading(false);
       return;
@@ -571,20 +741,28 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     setProjection(null);
     setProjectionLoading(true);
     setProjectionError(null);
+    setProjectionDownloadAvailable(false);
     let cancelled = false;
+    const controller = new AbortController();
     const version = requestVersion.current;
     const timeout = window.setTimeout(() => {
       void createDataViewProjection(
         { snapshotId: snapshot.snapshotId, view, ...query },
-        session?.access_token
+        session?.access_token,
+        controller.signal
       )
         .then(result => {
-          if (!cancelled && version === requestVersion.current) setProjection(result);
+          if (!cancelled && version === requestVersion.current) {
+            if (result.snapshotId !== snapshot.snapshotId)
+              throw new Error(t('plateJs.dataView.selectionMismatch'));
+            setProjection(result);
+          }
         })
         .catch(projectionFailure => {
           if (cancelled || version !== requestVersion.current) return;
           setProjection(null);
           setProjectionError(localizeAppError(projectionFailure));
+          setProjectionDownloadAvailable(canRecoverDatasetFile(projectionFailure));
         })
         .finally(() => {
           if (!cancelled && version === requestVersion.current) setProjectionLoading(false);
@@ -592,9 +770,12 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     }, 250);
     return () => {
       cancelled = true;
+      controller.abort();
       window.clearTimeout(timeout);
     };
   }, [
+    needsMeasure,
+    datasetExplorerOpen,
     open,
     preparing,
     query,
@@ -604,6 +785,80 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     view,
     requiredSelections.length,
   ]);
+  const previewRequest = React.useMemo<DatasetPreviewRequest | null>(() => {
+    if (!open || !selectedResult) return null;
+    if (stage === 'build' && snapshot)
+      return {
+        provider: snapshot.provider,
+        providerDatasetId: snapshot.providerDatasetId ?? selectedResult.providerDatasetId,
+        providerResourceId: snapshot.providerResourceId ?? selectedResult.providerResourceId,
+        datasetId: snapshot.datasetId,
+        snapshotId: snapshot.snapshotId,
+        language,
+        rowFilters: query.filters,
+        rowConditions: query.rowConditions,
+        sort: query.sort,
+        timeRange: query.timeRange,
+      };
+    if (stage !== 'find') return null;
+    return {
+      provider: selectedResult.provider,
+      providerDatasetId: selectedResult.providerDatasetId,
+      providerResourceId: selectedResult.providerResourceId,
+      ...(selectedResult.snapshotId
+        ? { snapshotId: selectedResult.snapshotId, datasetId: selectedResult.id }
+        : {}),
+      language,
+      filters: {
+        area: chosenIntent.current?.area ?? searchIntent.area,
+        period: chosenIntent.current?.period ?? searchIntent.period,
+      },
+    };
+  }, [
+    open,
+    selectedResult,
+    stage,
+    snapshot,
+    language,
+    query.filters,
+    query.rowConditions,
+    query.sort,
+    query.timeRange,
+    searchIntent.area,
+    searchIntent.period,
+  ]);
+  React.useEffect(() => {
+    setDataPreview(null);
+    setDataPreviewError(null);
+    setSampleDownloadAvailable(false);
+    if (!previewRequest || preparing || datasetExplorerOpen) {
+      setDataPreviewLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    let active = true;
+    setDataPreviewLoading(true);
+    void loadDatasetPreview(previewRequest, session?.access_token, controller.signal)
+      .then(response => {
+        if (!active) return;
+        if (!sameDatasetSelection(previewRequest, response.identity))
+          throw new Error(t('plateJs.dataView.selectionMismatch'));
+        setDataPreview(response);
+      })
+      .catch(error => {
+        if (active) {
+          setDataPreviewError(localizeAppError(error));
+          setSampleDownloadAvailable(canRecoverDatasetFile(error));
+        }
+      })
+      .finally(() => {
+        if (active) setDataPreviewLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [previewRequest, preparing, datasetExplorerOpen, previewRevision, session?.access_token]);
   const loadFilterValues = React.useCallback(async () => {
     if (!snapshot || filterValuesLoading) return;
     const profiles = getFilterableProfiles(columnProfiles).filter(
@@ -631,12 +886,16 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
         setFilterValues(current => ({ ...current, ...Object.fromEntries(entries) }));
       }
     } catch (loadError) {
-      if (version === requestVersion.current) setProjectionError(localizeAppError(loadError));
+      if (version === requestVersion.current) {
+        setProjectionError(localizeAppError(loadError));
+        setProjectionDownloadAvailable(canRecoverDatasetFile(loadError));
+      }
     } finally {
       if (version === requestVersion.current) setFilterValuesLoading(false);
     }
   }, [columnProfiles, filterValues, filterValuesLoading, session?.access_token, snapshot]);
   const submitUpload = React.useCallback(async () => {
+    setUploadDownloadAvailable(false);
     if (!canUploadDatasets || !session?.user) {
       setUploadError(t('plateJs.dataView.uploadPermission'));
       return;
@@ -672,6 +931,8 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     setUploading(true);
     const version = requestVersion.current;
     setUploadError(null);
+    setUploadDownloadAvailable(false);
+    setRejectedUploadFile(null);
     try {
       const result = await uploadDataset(
         {
@@ -703,7 +964,10 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       setUploadOpen(false);
       activateSnapshot(result, searchResult);
     } catch (uploadError) {
-      if (version === requestVersion.current) setUploadError(localizeAppError(uploadError));
+      if (version === requestVersion.current) {
+        setUploadError(localizeAppError(uploadError));
+        setUploadDownloadAvailable(canRecoverDatasetFile(uploadError));
+      }
     } finally {
       if (version === requestVersion.current) setUploading(false);
     }
@@ -731,6 +995,7 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     !projectionError &&
     !validationError &&
     requiredSelections.length === 0 &&
+    !needsMeasure &&
     options.canInsert !== false
   );
   const save = React.useCallback(() => {
@@ -751,6 +1016,16 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
         sourceUrl: selectedResult.sourceUrl,
         license: selectedResult.license,
         snapshotTakenAt: snapshot.snapshotTakenAt,
+        sourceUpdatedAt:
+          typeof snapshot.provenance?.sourceUpdatedAt === 'string'
+            ? snapshot.provenance.sourceUpdatedAt
+            : null,
+        dataPeriod: query.timeRange
+          ? {
+              start: query.timeRange.startYear === 1800 ? '…' : String(query.timeRange.startYear),
+              end: query.timeRange.endYear === 2199 ? '…' : String(query.timeRange.endYear),
+            }
+          : selectedResult.timeCoverage,
         groupId: selectedResult.groupId,
       },
       query,
@@ -783,16 +1058,54 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     t,
     view,
   ]);
-  const numericProfiles = columnProfiles.filter(profile => profile.role === 'measure');
-  const dimensionProfiles = columnProfiles.filter(profile => profile.role !== 'measure');
+  const numericProfiles = columnProfiles.filter(
+    profile =>
+      profile.role === 'measure' && (!query.columns || query.columns.includes(profile.name))
+  );
+  const dimensionProfiles = columnProfiles.filter(
+    profile =>
+      !profile.technical &&
+      profile.role !== 'label' &&
+      profile.role !== 'measure' &&
+      (!query.columns || query.columns.includes(profile.name))
+  );
   const filterableProfiles = getFilterableProfiles(columnProfiles);
   const activeFilterCount =
-    Object.values(query.filters).filter(Boolean).length + Number(Boolean(query.timeRange));
+    Object.values(query.filters).filter(Boolean).length +
+    Number(Boolean(query.timeRange)) +
+    (query.rowConditions?.length ?? 0);
   return {
     open,
     resetDialog,
     setOpen,
     stage,
+    datasetExplorerOpen,
+    openDatasetExplorer: () => setDatasetExplorerOpen(true),
+    closeDatasetExplorer: () => setDatasetExplorerOpen(false),
+    explorerRequest: previewRequest,
+    explorerColumns: stage === 'build' ? query.columns : undefined,
+    applyDatasetExplorer: async (selection: DatasetTableSelection) => {
+      setDatasetExplorerOpen(false);
+      if (stage === 'build' && snapshot) {
+        const next = applyDatasetTableSelection(query, selection, columnProfiles, measureOptions);
+        setQuery(next);
+        const measure = selectedDatasetMeasure(measureOptions, next);
+        if (measure) {
+          setColumnProfiles(current =>
+            current.map(profile =>
+              profile.name === next.measureColumn
+                ? { ...profile, label: `${measure.label} · ${measure.unit}` }
+                : profile
+            )
+          );
+          setPresentation(current => ({
+            ...current,
+            title: `${measure.label} · ${measure.unit}`,
+            yAxisLabel: measure.unit,
+          }));
+        }
+      } else await useSelectedDataset(false, selection);
+    },
     editingElement,
     searchQuery,
     setSearchQuery,
@@ -808,6 +1121,8 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     selectedResult,
     setSelectedResult: (value: React.SetStateAction<DatasetSearchResult | null>) => {
       invalidateDatasetLoads();
+      setDatasetExplorerOpen(false);
+      pendingTableSelection.current = null;
       setPreparation(null);
       chosenIntent.current = searchIntent;
       setSelectedResult(value);
@@ -818,10 +1133,19 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     restrictImport,
     setRestrictImport,
     requiredSelections,
+    measureOptions,
+    selectedMeasure,
+    needsMeasure,
+    chooseMeasure,
+    dataPreview,
+    dataPreviewLoading,
+    dataPreviewError,
+    retryDataPreview: () => setPreviewRevision(current => current + 1),
     cancelPreparation: () => {
       invalidateDatasetLoads();
       setStage('find');
       setError(null);
+      setErrorDownloadAvailable(false);
     },
     preparing,
     snapshot,
@@ -841,6 +1165,18 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     projectionLoading,
     projectionError,
     error: error ?? validationError,
+    errorDownloadAvailable: Boolean(error) && errorDownloadAvailable,
+    sampleDownloadAvailable,
+    projectionDownloadAvailable,
+    uploadDownloadAvailable,
+    rejectedUploadFile,
+    rejectUploadFile: (file: File | null, message: string) => {
+      setRejectedUploadFile(file);
+      setUploadDownloadAvailable(Boolean(file));
+      setUploadError(message);
+    },
+    downloadAccessToken: session?.access_token,
+    downloadLanguage: language,
     setError,
     filterValues,
     filterValuesLoading,
@@ -849,11 +1185,14 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
     useSelectedDataset,
     changeDataset: () => {
       invalidateDatasetLoads();
+      setDatasetExplorerOpen(false);
+      pendingTableSelection.current = null;
       setStage('find');
       setSelectedResult(null);
       setSnapshot(null);
       setProjection(null);
       setError(null);
+      setErrorDownloadAvailable(false);
     },
     uploadOpen,
     setUploadOpen: (nextOpen: boolean) => {
@@ -861,17 +1200,23 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       if (nextOpen) setUploadGroupId('');
       setUploadOpen(nextOpen);
       setUploadError(null);
+      setUploadDownloadAvailable(false);
+      setRejectedUploadFile(null);
     },
     uploadMode,
     setUploadMode: (nextMode: 'file' | 'manual') => {
       setUploadMode(nextMode);
       setUploadError(null);
+      setUploadDownloadAvailable(false);
+      setRejectedUploadFile(null);
     },
     uploadFile,
     uploadGroupId,
     setUploadGroupId: (groupId: string) => {
       setUploadGroupId(groupId);
       setUploadError(null);
+      setUploadDownloadAvailable(false);
+      setRejectedUploadFile(null);
     },
     uploadGroups,
     uploadGroupsLoading,
@@ -879,6 +1224,8 @@ export function useDataViewBuilderModel(options: DataViewBuilderOptions) {
       const previousAutomaticTitle = uploadFile?.name.replace(/\.[^.]+$/, '') ?? '';
       setUploadFile(file);
       setUploadError(null);
+      setUploadDownloadAvailable(false);
+      setRejectedUploadFile(null);
       if (file) {
         const nextAutomaticTitle = file.name.replace(/\.[^.]+$/, '');
         setUploadTitle(current =>

@@ -1,5 +1,6 @@
 import { CHART_PALETTE } from '@/features/charts/logic/chartPalette';
 import { DataViewInsertionError } from '@/features/charts/logic/dataViewInsertion';
+import { dataViewConfigurationSchema } from '@/features/charts/logic/dataViewConfiguration';
 import type { ChartType, DataViewProjection, TDataViewElement } from '@/features/charts/types';
 import { localizedDate, sourceLabel } from '@/features/charts/logic/dataViewAttribution';
 import { translate as tr } from '@/features/shared/hooks/use-translation';
@@ -107,7 +108,7 @@ export function studioChartFromProjection(
   });
 }
 
-/** Resolved values only: these nodes never retain dataset queries or live bindings. */
+/** Values render without network access; the snapshot configuration is retained for explicit editing. */
 export function createStudioDataViewNodes(
   configuration: TDataViewElement,
   projection: DataViewProjection,
@@ -148,6 +149,7 @@ export function createStudioDataViewNodes(
     node.transform.x = x;
     node.transform.y = top + y;
     node.groupIds = [groupId];
+    node.dataView = dataViewConfigurationSchema.parse(configuration);
     if (node.type === 'richText' && values?.bold)
       node.content.forEach(p =>
         // Newly created text nodes contain only the plain text leaves emitted by the importer.
@@ -215,7 +217,10 @@ export function createStudioDataViewNodes(
     });
   }
   const date = localizedDate(configuration.source.snapshotTakenAt, language);
-  const attribution = `${tr('plateJs.dataView.source')}: ${sourceLabel(configuration.source)}${date ? ` · ${tr('plateJs.dataView.dataAsOf', { date })}` : ''}${configuration.source.sourceUrl ? `\n${configuration.source.sourceUrl}` : ''}`;
+  const updated = localizedDate(configuration.source.sourceUpdatedAt, language);
+  const period = configuration.source.dataPeriod;
+  const calculation = configuration.query.aggregation;
+  const attribution = `${tr('plateJs.dataView.source')}: ${sourceLabel(configuration.source)}${date ? ` · ${tr('plateJs.dataView.importedAt', { date })}` : ''}${updated ? ` · ${tr('plateJs.dataView.updated')}: ${updated}` : ''}${period?.start ? ` · ${tr('plateJs.dataView.searchPeriod')}: ${period.start}–${period.end ?? period.start}` : ''}${calculation !== 'none' ? ` · ${tr('plateJs.dataView.aggregation')}: ${tr(`plateJs.dataView.aggregationValues.${calculation}`)}` : ''}${configuration.source.sourceUrl ? `\n${configuration.source.sourceUrl}` : ''}`;
   add('text', height * 0.86, height * 0.14, {
     text: attribution,
     fontSize: Math.max(8, 12 * textScale),
@@ -248,4 +253,42 @@ export function insertStudioDataView(
   });
   document.nodes.push(...nodes);
   return nodes.map(n => n.id);
+}
+
+/** Replace one saved representation while preserving its canvas bounds and group identity. */
+export function updateStudioDataView(
+  document: StudioDocumentV3,
+  nodeIds: string[],
+  configuration: TDataViewElement,
+  projection: DataViewProjection,
+  language?: string
+) {
+  const previous = document.nodes.filter(node => nodeIds.includes(node.id));
+  const frameId = previous[0]?.parentFrameId;
+  if (!frameId || !previous.length)
+    throw new DataViewInsertionError(tr('features.studio.dataImport.invalid'));
+  const ids = insertStudioDataView(document, frameId, configuration, projection, language);
+  const next = document.nodes.filter(node => ids.includes(node.id));
+  const bounds = (nodes: StudioNode[]) => {
+    const x = Math.min(...nodes.map(node => node.transform.x));
+    const y = Math.min(...nodes.map(node => node.transform.y));
+    return {
+      x,
+      y,
+      width: Math.max(...nodes.map(node => node.transform.x + node.transform.width)) - x,
+      height: Math.max(...nodes.map(node => node.transform.y + node.transform.height)) - y,
+    };
+  };
+  const before = bounds(previous),
+    after = bounds(next);
+  next.forEach((node, index) => {
+    node.transform.x = before.x + ((node.transform.x - after.x) * before.width) / after.width;
+    node.transform.y = before.y + ((node.transform.y - after.y) * before.height) / after.height;
+    node.transform.width *= before.width / after.width;
+    node.transform.height *= before.height / after.height;
+    node.groupIds = [...previous[0].groupIds];
+    node.zIndex = previous[0].zIndex + index;
+  });
+  document.nodes = document.nodes.filter(node => !nodeIds.includes(node.id));
+  return ids;
 }

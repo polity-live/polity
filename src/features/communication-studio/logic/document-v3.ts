@@ -1,5 +1,6 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { z } from 'zod';
+import { dataViewConfigurationSchema } from '@/features/charts/logic/dataViewConfiguration';
 import { chartDataSchema, fontFamilies, mediaCropSchema, tableDataSchema } from './document';
 import { themePaletteRoleSchema } from '@/features/shared/appearance-theme/contract';
 import { DEFAULT_STUDIO_THEME, studioThemeSnapshotSchema } from './theme';
@@ -101,6 +102,7 @@ const nodeBaseShape = {
   overrides: z.array(z.string().min(1).max(120)).max(100).default([]),
   animation: z.enum(['none', 'fade']).default('none'),
   liveBinding: liveBindingSchema.optional(),
+  dataView: dataViewConfigurationSchema.optional(),
   eventTemplateSlot: z.string().max(80).optional(),
   portrait: responsiveOverrideSchema.optional(),
   showAnimation: z

@@ -1,7 +1,8 @@
 import { StudioDataViewDialog } from './StudioDataViewDialog';
 import { StudioLoadingScreen } from './StudioLoadingScreen';
 import { DataViewInsertionError } from '@/features/charts/logic/dataViewInsertion';
-import { insertStudioDataView } from '../logic/data-view-import';
+import { insertStudioDataView, updateStudioDataView } from '../logic/data-view-import';
+import { StudioDatasetEditButton } from './StudioDatasetEditButton';
 import {
   lazy,
   Suspense,
@@ -341,6 +342,8 @@ function StudioEditorReady({
   const [cloneOpen, setCloneOpen] = useState(false);
   const [portraitPreview, setPortraitPreview] = useState(false);
   const [dataViewOpen, setDataViewOpen] = useState(false);
+  const [dataViewEditingIds, setDataViewEditingIds] = useState<string[]>([]);
+  const savedDataView = c.v3Value?.nodes.find(node => node.id === dataViewEditingIds[0])?.dataView;
   const liveStudio = useLiveStudioState(previewDocument ?? c.v3Value, {
     portrait: portraitPreview,
   });
@@ -1162,6 +1165,26 @@ function StudioEditorReady({
           update={change =>
             c.transactV3(document => updateStudioNode(document, activeNode.id, change))
           }
+        />
+      )}
+      {activeNode?.dataView && (
+        <StudioDatasetEditButton
+          data-action-id="communication-studio.dataset.edit.open"
+          data-action-kind="interaction"
+          disabled={disabled || selectionLocked}
+          onEdit={() => {
+            const group = activeNode.groupIds[0];
+            setDataViewEditingIds(
+              c.v3Value?.nodes
+                .filter(
+                  node =>
+                    node.dataView &&
+                    (group ? node.groupIds.includes(group) : node.id === activeNode.id)
+                )
+                .map(node => node.id) ?? []
+            );
+            setDataViewOpen(true);
+          }}
         />
       )}
     </fieldset>
@@ -2045,7 +2068,10 @@ function StudioEditorReady({
             update={c.transactV3}
             portrait={portraitPreview}
             setPortrait={setPortraitPreview}
-            onInsertData={() => setDataViewOpen(true)}
+            onInsertData={() => {
+              setDataViewEditingIds([]);
+              setDataViewOpen(true);
+            }}
             onUpload={c.upload}
             disabled={disabled}
           />
@@ -2057,18 +2083,27 @@ function StudioEditorReady({
             disabled={disabled}
             groupId={groupId ?? c.project?.group_id ?? null}
             userId={c.identity.id}
+            editingElement={savedDataView}
             onInsert={(configuration, projection) => {
               if (disabled)
                 throw new DataViewInsertionError(t('features.studio.dataImport.readOnly'));
               let ids: string[] = [];
               const inserted = c.transactV3(document => {
-                ids = insertStudioDataView(
-                  document,
-                  page.id,
-                  configuration,
-                  projection,
-                  i18n.language
-                );
+                ids = dataViewEditingIds.length
+                  ? updateStudioDataView(
+                      document,
+                      dataViewEditingIds,
+                      configuration,
+                      projection,
+                      i18n.language
+                    )
+                  : insertStudioDataView(
+                      document,
+                      page.id,
+                      configuration,
+                      projection,
+                      i18n.language
+                    );
               });
               if (!inserted)
                 throw new DataViewInsertionError(t('features.studio.dataImport.invalid'));

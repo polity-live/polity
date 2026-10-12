@@ -1,6 +1,7 @@
 import { createStableHash } from '@/server/eurostat/hash';
 import { DatasetProviderFailure, providerResponseFailure } from './providerError';
 import { readLimitedResponseBytes } from './storage';
+import { rawResponseStream } from './rawStream';
 
 export interface GenesisRequestBudget {
   remaining: number;
@@ -40,7 +41,12 @@ function sleep(ms: number, signal: AbortSignal) {
 export async function postGenesis(
   path: string,
   data: Record<string, string | number | boolean>,
-  options: { signal?: AbortSignal; budget?: GenesisRequestBudget; timeoutMs?: number } = {}
+  options: {
+    signal?: AbortSignal;
+    budget?: GenesisRequestBudget;
+    timeoutMs?: number;
+    maxBytes?: number;
+  } = {}
 ): Promise<Response> {
   const token = process.env.GENESIS_API_TOKEN;
   if (!token)
@@ -49,7 +55,7 @@ export async function postGenesis(
     process.env.GENESIS_BASE_URL || 'https://genesis.destatis.de/genesisWS/rest/2020/'
   ).replace(/\/?$/, '/');
   const credential = createStableHash({ base, token });
-  const key = createStableHash({ credential, path, data });
+  const key = createStableHash({ credential, path, data, maxBytes: options.maxBytes });
   const callerSignal = options.signal;
   if (callerSignal?.aborted) throw abortError(callerSignal);
   let flight = flights.get(key);
@@ -109,7 +115,11 @@ export async function postGenesis(
           if (response.ok) {
             // GENESIS work is still active while its response body streams. Keep the queue locked.
             try {
-              const bytes = await readLimitedResponseBytes(response, 'GENESIS response');
+              const bytes = await readLimitedResponseBytes(
+                response,
+                'GENESIS response',
+                options.maxBytes
+              );
               signal.throwIfAborted();
               return new Response(bytes, { status: response.status, headers: response.headers });
             } catch (error) {
@@ -198,6 +208,110 @@ export async function readGenesisJson(response: Response) {
   } catch (error) {
     throw providerResponseFailure(error, 'GENESIS');
   }
+}
+
+/** Downloads share the credential queue, but never buffered flights or response clones. */
+export async function postGenesisStream(
+  path: string,
+  data: Record<string, string | number | boolean>,
+  options: { signal?: AbortSignal; timeoutMs?: number } = {}
+): Promise<Response> {
+  const token = process.env.GENESIS_API_TOKEN;
+  if (!token) throw new DatasetProviderFailure('GENESIS is not configured', 'authentication', 503);
+  const base = (
+    process.env.GENESIS_BASE_URL || 'https://genesis.destatis.de/genesisWS/rest/2020/'
+  ).replace(/\/?$/, '/');
+  const credential = createStableHash({ base, token });
+  const previous = queues.get(credential) ?? Promise.resolve();
+  const controller = new AbortController();
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, controller.signal])
+    : controller.signal;
+  const timer = setTimeout(
+    () => controller.abort(new DatasetProviderFailure('GENESIS request timed out', 'timeout', 504)),
+    options.timeoutMs ?? 120_000
+  );
+  let release!: () => void;
+  const completion = new Promise<void>(done => {
+    release = done;
+  });
+  const tail = previous
+    .catch(() => undefined)
+    .then(() => completion)
+    .finally(() => {
+      if (queues.get(credential) === tail) queues.delete(credential);
+    });
+  queues.set(credential, tail);
+  const pending = previous
+    .catch(() => undefined)
+    .then(async () => {
+      try {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          signal.throwIfAborted();
+          const response = await fetch(`${base}${path}`, {
+            method: 'POST',
+            signal,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              username: token,
+            },
+            body: new URLSearchParams(
+              Object.fromEntries(Object.entries(data).map(([key, value]) => [key, String(value)]))
+            ),
+          });
+          if (response.ok) {
+            clearTimeout(timer);
+            return new Response(
+              rawResponseStream(response, {
+                signal,
+                onFinish: release,
+                onAbort: () => controller.abort(),
+              }),
+              { headers: response.headers }
+            );
+          }
+          await response.body?.cancel();
+          if ([401, 403].includes(response.status))
+            throw new DatasetProviderFailure(
+              'GENESIS authentication failed',
+              'authentication',
+              503
+            );
+          if (attempt === 0 && [500, 502, 503, 504].includes(response.status)) {
+            await sleep(300, signal);
+            continue;
+          }
+          throw new DatasetProviderFailure('GENESIS download is unavailable', 'unavailable');
+        }
+        throw new DatasetProviderFailure('GENESIS download is unavailable', 'unavailable');
+      } catch (error) {
+        clearTimeout(timer);
+        release();
+        if (signal.aborted) throw signal.reason;
+        if (error instanceof DatasetProviderFailure) throw error;
+        throw new DatasetProviderFailure('GENESIS connection failed', 'unavailable');
+      }
+    });
+  // A timed-out or cancelled waiter exits immediately, while its queue position waits for predecessors.
+  return new Promise<Response>((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      release();
+      reject(signal.reason);
+    };
+    signal.addEventListener('abort', abort, { once: true });
+    pending.then(
+      response => {
+        signal.removeEventListener('abort', abort);
+        resolve(response);
+      },
+      error => {
+        signal.removeEventListener('abort', abort);
+        reject(error);
+      }
+    );
+    if (signal.aborted) abort();
+  });
 }
 
 export function assertGenesisStatus(body: unknown, strictFilters = false) {

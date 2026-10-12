@@ -1,3 +1,6 @@
+import { parseDatasetNumber } from '@/features/charts/logic/datasetNumbers';
+export { parseDatasetNumber } from '@/features/charts/logic/datasetNumbers';
+import { encodeAppError } from '@/features/shared/errors/app-error';
 import { parse } from 'csv-parse/sync';
 import {
   type DataAggregation,
@@ -94,30 +97,6 @@ export function parseDatasetCsv(text: string, options?: { maxRows?: number }): D
   return { columns, rows };
 }
 
-export function parseDatasetNumber(rawValue: string) {
-  const normalized = rawValue.trim();
-  if (!normalized) return Number.NaN;
-
-  const withoutPercent = normalized.replace(/%$/, '').trim();
-  const withoutSpaces = withoutPercent.replace(/\s+/g, '');
-  const commaCount = (withoutSpaces.match(/,/g) ?? []).length;
-  const dotCount = (withoutSpaces.match(/\./g) ?? []).length;
-  let numericText = withoutSpaces;
-
-  if (commaCount > 0 && dotCount > 0) {
-    numericText =
-      withoutSpaces.lastIndexOf(',') > withoutSpaces.lastIndexOf('.')
-        ? withoutSpaces.replace(/\./g, '').replace(',', '.')
-        : withoutSpaces.replace(/,/g, '');
-  } else if (commaCount === 1 && dotCount === 0) {
-    numericText = withoutSpaces.replace(',', '.');
-  } else if (commaCount > 1 && dotCount === 0) {
-    numericText = withoutSpaces.replace(/,/g, '');
-  }
-
-  return Number(numericText);
-}
-
 function isDateValue(value: string) {
   const normalized = value.trim();
   if (/^(?:19|20)\d{2}$/.test(normalized)) return true;
@@ -172,6 +151,8 @@ export function profileDatasetColumns(table: DatasetTable): DatasetColumnProfile
       'city',
       'stadt',
       'geo',
+      'gebiet',
+      'area',
     ]);
     const type =
       timeHint || dateRatio >= 0.8
@@ -181,16 +162,15 @@ export function profileDatasetColumns(table: DatasetTable): DatasetColumnProfile
           : distinctValues.size <= Math.max(20, Math.min(200, Math.ceil(rowCount * 0.5)))
             ? 'category'
             : 'text';
-    const role =
-      type === 'number'
+    const role = geoHint
+      ? 'geo'
+      : type === 'number'
         ? 'measure'
         : type === 'date'
           ? 'time'
-          : geoHint
-            ? 'geo'
-            : type === 'category'
-              ? 'dimension'
-              : 'label';
+          : type === 'category'
+            ? 'dimension'
+            : 'label';
     const sortedTextValues = [...distinctValues].sort((left, right) => left.localeCompare(right));
     const sortedNumericValues = [...numericValues].sort((left, right) => left - right);
 
@@ -220,6 +200,10 @@ export function profileDatasetColumns(table: DatasetTable): DatasetColumnProfile
 export function aggregateDatasetValues(values: readonly number[], aggregation: DataAggregation) {
   if (aggregation === 'count') return values.length;
   if (values.length === 0) return null;
+  if (aggregation === 'none') {
+    if (values.length > 1) throw new Error(encodeAppError('dataset_observations_ambiguous'));
+    return values[0];
+  }
   const sorted = [...values].sort((left, right) => left - right);
   const sum = sorted.reduce((total, value) => total + value, 0);
 
