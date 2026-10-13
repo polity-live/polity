@@ -160,6 +160,19 @@ afterEach(() => {
 });
 
 describe('useMessagesPage branch contract', () => {
+  it.each<SetupOptions & { persistSelection: boolean }>([
+    { search: {}, isLoading: false, persistSelection: true },
+    { search: { conversationId: 'conversation-1' }, isLoading: false, persistSelection: false },
+    { search: { conversationId: 'conversation-1' }, isLoading: true, persistSelection: true },
+    { search: { conversationId: 'missing' }, isLoading: false, persistSelection: true },
+  ])('coalesces selection persistence only for a ready authorized URL target: %j', options => {
+    setup({ ...options, conversations: [conversation()] });
+    renderHook(() => useMessagesPage());
+    expect(mocks.useConversationSelection).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ persistSelection: options.persistSelection })
+    );
+  });
   it('preserves history when clearing a signed-out compose intent without a selection', () => {
     setup({ search: { new: '1', keep: 'yes' }, user: null });
     renderHook(() => useMessagesPage());

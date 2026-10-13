@@ -111,6 +111,30 @@ describe('useConversationSelection exhaustive branches', () => {
     }
     window.history.replaceState({}, '', '/');
   });
+
+  it('defers only the explicit URL target to its caller and persists other selections', () => {
+    window.history.replaceState({ customState: true }, '', '/messages?conversationId=selected');
+    const replace = vi.spyOn(window.history, 'replaceState');
+    const hook = renderHook(() =>
+      useConversationSelection([conversation('selected'), conversation('other')], {
+        viewerID: 'owner',
+        restoreOnNavigation: true,
+        persistSelection: false,
+        initialConversationID: 'selected',
+      })
+    );
+    expect(hook.result.current.selectedConversationId).toBe('selected');
+    expect(replace).not.toHaveBeenCalled();
+    act(() => hook.result.current.setSelectedConversationId('other'));
+    expect(replace).toHaveBeenCalledOnce();
+    expect(window.history.state).toMatchObject({
+      customState: true,
+      polityMessageSelection: { viewerID: 'owner', conversationID: 'other' },
+    });
+    hook.unmount();
+    replace.mockRestore();
+    window.history.replaceState({}, '', '/');
+  });
   it('does not auto-select without an actionable assistant intent', () => {
     const { result, rerender } = renderHook(
       ({ conversations, options }) => useConversationSelection(conversations, options),
