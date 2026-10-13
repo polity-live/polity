@@ -1,5 +1,5 @@
 import { CollectionPreferencesProvider } from '@/features/shared/ui/collections/CollectionPreferencesProvider';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
 import { NavigationCommandDialog } from '@/features/navigation/command-dialog.tsx';
@@ -86,13 +86,17 @@ function SearchPreloadDemand({ pathname }: { pathname: string }) {
   return null;
 }
 
-function AuthenticatedShellContent({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: state => state.location.pathname });
-  const { currentUser, isLoading: userLoading } = useUserState();
+const GlobalSync = memo(function GlobalSync() {
   usePreferenceSync();
   useAppearanceThemeSync();
   useToastSettingsSync();
   useGlobalZeroPreloads();
+  return null;
+});
+
+function AuthenticatedShellContent({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: state => state.location.pathname });
+  const { currentUser, isLoading: userLoading } = useUserState();
   usePrimaryRouteIdlePreloads(Boolean(currentUser) && !userLoading);
 
   const navigate = useNavigate();
@@ -190,6 +194,7 @@ function AuthenticatedShellContent({ children }: { children: ReactNode }) {
           </WorkspacePreviewProvider>
         </CollectionPreferencesProvider>
       </I18nSyncProvider>
+      <GlobalSync />
     </>
   );
 }
