@@ -66112,7 +66112,8 @@
         "src/features/search/__tests__/global-search.component-flow.test.tsx",
         "src/features/search/__tests__/projectedSearchActions.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
-        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx"
+        "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx"
       ]
     },
     {
@@ -66256,6 +66257,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
+      "domain": "features:search",
+      "owner": "polity/features:search",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
       "domain": "features:search",
       "owner": "polity/features:search",
@@ -66306,6 +66317,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66341,6 +66353,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66376,6 +66389,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66411,6 +66425,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66446,6 +66461,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66481,6 +66497,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66516,6 +66533,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66551,6 +66569,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]
@@ -66586,6 +66605,7 @@
         "src/features/search/hooks/__tests__/useSearchFilters.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchPage.component.test.tsx",
+        "src/features/search/hooks/__tests__/useSearchPage.null-count.browser-component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.branch-a06.component.test.tsx",
         "src/features/search/hooks/__tests__/useSearchURL.component.test.tsx"
       ]

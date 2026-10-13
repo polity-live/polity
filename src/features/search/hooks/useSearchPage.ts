@@ -164,10 +164,11 @@ export function useSearchPage() {
     totalResultsState.contextKey === resultsContextKey ? totalResultsState.total : null;
   const setTotalResults = useCallback(
     (total: number | null) => {
-      // A virtual list can report its count again after a layout update. Keep
-      // identical reports idempotent instead of feeding another parent render.
+      // An unknown count remains unknown across contexts. Keep null reports
+      // idempotent, while exact counts still belong to their search context.
       setTotalResultsState(current =>
-        current.contextKey === resultsContextKey && current.total === total
+        current.total === total &&
+        (current.contextKey === resultsContextKey || current.total === null)
           ? current
           : { contextKey: resultsContextKey, total }
       );
