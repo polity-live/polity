@@ -135855,6 +135855,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/atomic-report.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -136155,6 +136175,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/__tests__/navigation-history-adapter.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -136176,6 +136206,16 @@
     },
     {
       "path": "tools/e2e/zero-performance/__tests__/plan-artifacts.unit.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/__tests__/query-timeline.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -136232,6 +136272,78 @@
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/absolute-confirmation.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+          "project": "unit",
+          "caseId": "confirms an absolute-only outlier once and preserves the original report"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+          "project": "unit",
+          "caseId": "reuses relative confirmation without duplicate execution and keeps sustained failures"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not confirm invalid results, missing samples, authentication or infrastructure failures"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+          "project": "unit",
+          "caseId": "skips insufficient budget and contains diagnostic exceptions"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects mismatched identities and client group reuse"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/analyze-artifacts.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "retains the historical single outlier and successful repeat separately"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "distinguishes sustained slowness, invalid telemetry and wrong results"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not treat absent or invalid confirmation as recovery"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "compares only matching source, harness and workload while recording different runners"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+          "project": "unit",
+          "caseId": "reads aggregate reports once, retains original frames and reports corrupt artifacts"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -137048,6 +137160,32 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/zero-performance/navigation-attribution.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+          "project": "unit",
+          "caseId": "attributes replay functions with verified local maps and labels absent evidence"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts only bounded same-origin public source map URLs"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+          "project": "unit",
+          "caseId": "cuts the back replay on one trace clock without attributing missing marks"
+        }
+      ],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/zero-performance/navigation-history-adapter.mjs",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -137116,6 +137254,27 @@
       "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/zero-performance/query-timeline.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [
+        {
+          "file": "tools/e2e/zero-performance/__tests__/query-timeline.unit.test.ts",
+          "project": "unit",
+          "caseId": "separates measured elapsed and SDK hydration without inventing missing events"
+        },
+        {
+          "file": "tools/e2e/zero-performance/__tests__/query-timeline.unit.test.ts",
+          "project": "unit",
+          "caseId": "binds timeline API evidence only by measurement and client correlation"
+        }
+      ],
       "suggestedTestRefs": []
     },
     {
@@ -138901,6 +139060,16 @@
     },
     {
       "path": "tools/testing/accountability/workspace-ux.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/zero-performance-diagnostics.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

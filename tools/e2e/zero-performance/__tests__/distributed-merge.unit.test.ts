@@ -284,6 +284,25 @@ async function outcome(value: Awaited<ReturnType<typeof fixture>>) {
 }
 
 describe('distributed artifact merger', () => {
+  it('keeps original gate failures when diagnostic confirmation succeeds or is invalid', async () => {
+    const value = await fixture();
+    const runnerFile = path.join(value.artifacts, 'queries-1/runner.json');
+    const runner = JSON.parse(await readFile(runnerFile, 'utf8'));
+    runner.failures.push('Original absolute budget failure');
+    await writeJSON(runnerFile, runner);
+    const before = await outcome(value);
+    await writeJSON(path.join(value.artifacts, 'queries-1/absolute-confirmation.json'), {
+      format: 'zero-absolute-confirmation/v1',
+      findings: [{ status: 'not-exceeded-again' }, { status: 'invalid' }],
+    });
+    await writeJSON(
+      path.join(value.artifacts, 'queries-1/head/absolute-confirmation/report.json'),
+      { diagnostic: 'Not a gate phase' }
+    );
+    const after = await outcome(value);
+    expect(after.passed).toBe(false);
+    expect(after.failures).toEqual(before.failures);
+  });
   it('merges unique complete parts after the full product validator accepts them', async () => {
     const result = await outcome(await fixture());
     expect(result.passed).toBe(true);

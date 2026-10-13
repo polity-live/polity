@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "tools/e2e/zero-performance/query-timeline.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/query-timeline.unit.test.ts",
+        "project": "unit",
+        "caseId": "separates measured elapsed and SDK hydration without inventing missing events"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/query-timeline.unit.test.ts",
+        "project": "unit",
+        "caseId": "binds timeline API evidence only by measurement and client correlation"
+      }
+    ],
+    "tools/e2e/zero-performance/absolute-confirmation.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+        "project": "unit",
+        "caseId": "confirms an absolute-only outlier once and preserves the original report"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+        "project": "unit",
+        "caseId": "reuses relative confirmation without duplicate execution and keeps sustained failures"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not confirm invalid results, missing samples, authentication or infrastructure failures"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+        "project": "unit",
+        "caseId": "skips insufficient budget and contains diagnostic exceptions"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/absolute-confirmation.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects mismatched identities and client group reuse"
+      }
+    ],
+    "tools/e2e/zero-performance/navigation-attribution.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+        "project": "unit",
+        "caseId": "attributes replay functions with verified local maps and labels absent evidence"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+        "project": "unit",
+        "caseId": "accepts only bounded same-origin public source map URLs"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/navigation-attribution.unit.test.ts",
+        "project": "unit",
+        "caseId": "cuts the back replay on one trace clock without attributing missing marks"
+      }
+    ],
+    "tools/e2e/zero-performance/analyze-artifacts.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains the historical single outlier and successful repeat separately"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "distinguishes sustained slowness, invalid telemetry and wrong results"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not treat absent or invalid confirmation as recovery"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "compares only matching source, harness and workload while recording different runners"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/analyze-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads aggregate reports once, retains original frames and reports corrupt artifacts"
+      }
+    ]
+  }
+}

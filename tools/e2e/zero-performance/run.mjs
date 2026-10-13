@@ -122,8 +122,31 @@ function run(command, argv, options = {}) {
     }),
   };
 }
-async function command(argv, label) {
-  await run(process.execPath, argv, { label }).done;
+async function command(argv, label, diagnosticTimeoutMs) {
+  if (
+    diagnosticTimeoutMs !== undefined &&
+    (!Number.isFinite(diagnosticTimeoutMs) || diagnosticTimeoutMs < 10_000)
+  )
+    throw new Error('Invalid diagnostic timeout');
+  const task = run(process.execPath, argv, { label });
+  let timeout, force;
+  if (diagnosticTimeoutMs !== undefined) {
+    timeout = setTimeout(() => {
+      if (process.platform === 'win32' && task.child.pid) {
+        spawnSync('taskkill', ['/PID', String(task.child.pid), '/T', '/F'], {
+          windowsHide: true,
+          stdio: 'ignore',
+        });
+      } else task.child.kill('SIGTERM');
+      force = setTimeout(() => task.child.kill('SIGKILL'), 5_000);
+    }, diagnosticTimeoutMs - 5_000);
+  }
+  try {
+    await task.done;
+  } finally {
+    clearTimeout(timeout);
+    clearTimeout(force);
+  }
 }
 async function portFree(port) {
   return new Promise(resolve => {
@@ -268,7 +291,11 @@ async function copySource() {
       if (removeNavigationHistoryDiagnostic(adapted.source) !== source)
         throw new Error('Navigation diagnostic changed revision-owned source');
       const modules = {};
-      for (const file of ['navigation-history-adapter.mjs', 'navigation-history-diagnostic.ts'])
+      for (const file of [
+        'navigation-history-adapter.mjs',
+        'navigation-history-diagnostic.ts',
+        'navigation-attribution.ts',
+      ])
         modules[file] = createHash('sha256')
           .update(await readFile(path.join(sandbox, 'tools/e2e/zero-performance', file)))
           .digest('hex');
@@ -1040,7 +1067,11 @@ ${storageBuckets}
           let code = 0;
           const measuredAt = performance.now();
           try {
-            await command(['--import', 'tsx', 'tools/e2e/zero-performance/collect.ts'], 'measure');
+            await command(
+              ['--import', 'tsx', 'tools/e2e/zero-performance/collect.ts'],
+              'measure',
+              request.diagnosticTimeoutMs
+            );
           } catch (error) {
             code = 1;
             console.error(String(error));

@@ -2,6 +2,7 @@ export const mechanics = [
   'run.mjs',
   'collect.ts',
   'measure.ts',
+  'query-timeline.ts',
   'authoritative-order-diagnostic.ts',
   'fresh-client-cleanup.ts',
   'metrics.ts',
@@ -9,6 +10,7 @@ export const mechanics = [
   'browser-navigation.ts',
   'navigation-history-adapter.mjs',
   'navigation-history-diagnostic.ts',
+  'navigation-attribution.ts',
   'journey-metrics.ts',
   'report.ts',
   'plan-artifacts.ts',
@@ -65,6 +67,7 @@ export async function mechanicsDigest(directory) {
     'distributed-report.ts',
     'distributed-io.ts',
     'distributed-timing.ts',
+    'absolute-confirmation.ts',
     'shard-weights.json',
     'stage-artifacts.mjs',
   ];

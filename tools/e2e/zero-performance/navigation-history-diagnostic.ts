@@ -5,6 +5,11 @@ import path from 'node:path';
 import { installNavigationProbe, type NavigationTarget } from './browser-navigation';
 import type { ViewClientSamples } from './journey-metrics';
 import { required, withDeadline } from './required';
+import {
+  attributeNavigationProfile,
+  attributeBackTrace,
+  diagnosticSourceMapURL,
+} from './navigation-attribution';
 
 const IDLE_MS = 5_100;
 const SCOPE = 'post-acceptance-fresh-context-history-diagnostic';
@@ -93,6 +98,16 @@ function validateAssetSize(body: Uint8Array, retainedBytes: number) {
   if (retainedBytes + body.length > 32 * 1024 * 1024)
     throw new Error('Assets exceed retention limit');
 }
+function validateSourceMap(response: APIResponse, payload?: any) {
+  if (!response.ok()) throw new Error('Source map unavailable');
+  if (
+    payload !== undefined &&
+    (payload.version !== 3 ||
+      !Array.isArray(payload.sources) ||
+      typeof payload.mappings !== 'string')
+  )
+    throw new Error('Invalid source map');
+}
 
 /** Never appends acceptance results, changes fixtures, or instruments their page. */
 export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions) {
@@ -124,6 +139,8 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
   const assets: { path: string; file: string; bytes: number; sha256: string }[] = [];
   const assetErrors: { path: string; error: { stage: string; kind: string } }[] = [];
   const stylePaths = new Set<string>();
+  const sourceMaps = new Map<string, any>();
+  const retainedMaps: { asset: string; file: string; sha256: string }[] = [];
   try {
     if (!diagnosticAssetPath(new URL('/assets/probe.js', options.appURL).href, options.appURL))
       throw new Error('Navigation history diagnostic requires a local application origin');
@@ -353,6 +370,45 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
             bytes: body.length,
             sha256: createHash('sha256').update(body).digest('hex'),
           });
+          if (assetPath.endsWith('.js')) {
+            const reference = body.toString('utf8').match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1];
+            const assetURL = new URL(assetPath, options.appURL).href;
+            const mapURL = reference && diagnosticSourceMapURL(reference, assetURL, options.appURL);
+            if (mapURL) {
+              try {
+                const mapResponse = await run(
+                  () => required(context).request.get(mapURL.href, { maxRedirects: 0 }),
+                  'Diagnostic source map request',
+                  true,
+                  6_000
+                );
+                validateSourceMap(mapResponse);
+                const mapBody = await run(
+                  () => mapResponse.body(),
+                  'Diagnostic source map body',
+                  true,
+                  6_000
+                );
+                validateAssetSize(mapBody, retainedBytes);
+                const payload = JSON.parse(mapBody.toString('utf8'));
+                validateSourceMap(mapResponse, payload);
+                const mapFile = path.posix.basename(mapURL.pathname);
+                await writeFile(path.join(directory, mapFile), mapBody);
+                retainedBytes += mapBody.length;
+                sourceMaps.set(assetURL, payload);
+                retainedMaps.push({
+                  asset: assetPath,
+                  file: mapFile,
+                  sha256: createHash('sha256').update(mapBody).digest('hex'),
+                });
+              } catch (error) {
+                assetErrors.push({
+                  path: assetPath,
+                  error: diagnosticError(error, 'Source map retention'),
+                });
+              }
+            }
+          }
         } catch (error) {
           assetErrors.push({ path: assetPath, error: diagnosticError(error, 'Asset retention') });
         }
@@ -383,6 +439,14 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
       await mkdir(directory, { recursive: true });
       if (profile)
         await writeFile(path.join(directory, 'navigation.cpuprofile'), JSON.stringify(profile));
+      if (profile)
+        await writeFile(
+          path.join(directory, 'navigation-attribution.json'),
+          JSON.stringify({
+            ...attributeNavigationProfile(profile, sourceMaps),
+            backNavigations: attributeBackTrace(timeline),
+          })
+        );
       await writeFile(
         path.join(directory, 'navigation-timeline.json'),
         JSON.stringify({ scope: SCOPE, events: timeline })
@@ -399,6 +463,7 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
           deadlineMs: TOTAL_DEADLINE_MS,
           records: records.length,
           assets,
+          sourceMaps: retainedMaps,
           assetErrors,
           errors,
         })

@@ -22,6 +22,7 @@ import {
 } from './distributed-io';
 import { ACTIVE_BUDGET_MS, type Execution, type Manifest, type Revision } from './sharding';
 import type { Report } from './report';
+import { confirmAbsolute } from './absolute-confirmation';
 
 export interface ShardRun {
   revision: Revision;
@@ -172,7 +173,12 @@ export async function runShard(manifest: Manifest, id: string, directory: string
   }, measurementDeadlineMs(priorSetupMs));
   process.once('SIGINT', signal);
   process.once('SIGTERM', signal);
-  const measure = async (revision: Revision, phase: Execution['phase'], selected: string[]) => {
+  const measure = async (
+    revision: Revision,
+    phase: Execution['phase'],
+    selected: string[],
+    diagnosticTimeoutMs?: number
+  ) => {
     if (abort.signal.aborted) throw new Error('Runner measurement deadline interrupted execution');
     const sourceSHA = revision === 'head' ? manifest.headSHA : manifest.baseSHA;
     if (!sourceSHA) throw new Error('Missing revision source SHA');
@@ -185,10 +191,11 @@ export async function runShard(manifest: Manifest, id: string, directory: string
       runnerID,
       phase,
     };
-    const executionFile = path.join(root, `${revision}-${phase}-execution.json`);
+    const artifactPhase = diagnosticTimeoutMs ? 'absolute-confirmation' : phase;
+    const executionFile = path.join(root, `${revision}-${artifactPhase}-execution.json`);
     await writeJSON(executionFile, execution);
     const selectionFile = selected.length
-      ? path.join(root, `${revision}-${phase}-selection.json`)
+      ? path.join(root, `${revision}-${artifactPhase}-selection.json`)
       : undefined;
     if (selectionFile) await writeJSON(selectionFile, selected);
     if (abort.signal.aborted) throw new Error('Runner measurement deadline interrupted setup');
@@ -226,12 +233,17 @@ export async function runShard(manifest: Manifest, id: string, directory: string
       result.setupMs += performance.now() - setupAt;
     }
     if (abort.signal.aborted) throw new Error('Runner measurement deadline interrupted activation');
-    const destination = path.join(root, revision, phase);
+    const destination = path.join(
+      root,
+      revision,
+      diagnosticTimeoutMs ? 'absolute-confirmation' : phase
+    );
     session.child.send({
       type: 'measure',
       output: destination,
       executionFile,
       layer: shard.layer,
+      ...(diagnosticTimeoutMs ? { diagnosticTimeoutMs } : {}),
       ...(selectionFile
         ? {
             [shard.layer === 'security' ? 'securitySelectionFile' : 'selectionFile']: selectionFile,
@@ -239,24 +251,30 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         : {}),
     });
     const completed = await session.event('measured');
-    result.runs.push({
-      revision,
-      phase,
-      output: path.relative(root, destination).replaceAll('\\', '/'),
-      selected,
-      code: completed.code,
-      elapsedMs: completed.elapsedMs,
-    });
-    if (completed.code !== 0 && !(revision === 'base' && completed.code === 1))
+    if (!diagnosticTimeoutMs)
+      result.runs.push({
+        revision,
+        phase,
+        output: path.relative(root, destination).replaceAll('\\', '/'),
+        selected,
+        code: completed.code,
+        elapsedMs: completed.elapsedMs,
+      });
+    if (
+      !diagnosticTimeoutMs &&
+      completed.code !== 0 &&
+      !(revision === 'base' && completed.code === 1)
+    )
       result.failures.push(`${revision}/${phase}: Measurement process exited ${completed.code}`);
     if (phase === 'confirmation') result.confirmationMs += completed.elapsedMs;
     else result.measurementMs += completed.elapsedMs;
     const report = await readPerformanceReport(path.join(destination, 'report.json'));
-    result.failures.push(
-      ...partialReportFailures(report, manifest, shard, revision, phase, runnerID, selected).map(
-        failure => `${revision}/${phase}: ${failure}`
-      )
-    );
+    if (!diagnosticTimeoutMs)
+      result.failures.push(
+        ...partialReportFailures(report, manifest, shard, revision, phase, runnerID, selected).map(
+          failure => `${revision}/${phase}: ${failure}`
+        )
+      );
     return report;
   };
   try {
@@ -354,6 +372,23 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         second,
         bootstrap: manifest.bootstrap,
       });
+      if (shard.layer === 'queries' && reports.head) {
+        try {
+          const diagnostic = await confirmAbsolute({
+            original: reports.head,
+            relativeSelection: selected,
+            relativeConfirmation: headConfirmation,
+            initialMs:
+              result.runs.find(run => run.revision === 'head' && run.phase === 'initial')
+                ?.elapsedMs ?? NaN,
+            remainingMs: measurementDeadlineMs(priorSetupMs) - (performance.now() - started),
+            measure: (keys, timeoutMs) => measure('head', 'confirmation', keys, timeoutMs),
+          });
+          await writeJSON(path.join(root, 'absolute-confirmation.json'), diagnostic);
+        } catch (error) {
+          console.warn(`Absolute confirmation diagnostic unavailable: ${String(error)}`);
+        }
+      }
     }
   } catch (error) {
     result.failures.push(String(error));

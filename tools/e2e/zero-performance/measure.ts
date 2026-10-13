@@ -41,6 +41,13 @@ import { selectKeys, securityKey } from './sharding';
 import type { MutationBrowserResult } from './mutation-browser';
 import { mutationBrowserFailures } from './mutation-browser-metrics';
 import { deleteFreshBenchmarkClient } from './fresh-client-cleanup';
+import {
+  queryTimeline,
+  timelineTotals,
+  correlateTimelines,
+  QUERY_TIMELINE_FORMAT,
+  type QueryTimeline,
+} from './query-timeline';
 
 (globalThis as any).TESTING ??= false;
 
@@ -61,6 +68,7 @@ const fixtures = new Fixtures(sql);
 const contexts = { owner: OWNER, outsider: OUTSIDER, anonymous: { userID: 'anon', email: '' } };
 const tokens: Partial<Record<keyof typeof contexts, string>> = {};
 const results: Measurement[] = [];
+const queryTimelines: QueryTimeline[] = [];
 const infrastructure: string[] = [];
 const layer = process.env.ZERO_PERFORMANCE_LAYER ?? 'all';
 const failFast =
@@ -240,20 +248,34 @@ async function measure(
         zero = connection.value.zero;
         const activatedAt = Date.now();
         const start = performance.now();
+        const timeline = queryTimeline(
+          measurement.key,
+          iteration,
+          required(clientCorrelations.get(zero)),
+          execution
+        );
+        timeline.events.materializeStart = start;
+        queryTimelines.push(timeline);
         view = zero.materialize(
           entry.noArgs ? (entry.query as any)() : (entry.query as any)(entry.args),
           { ttl: 'none' }
         );
+        timeline.events.materializeEnd = performance.now();
         const data = await deadline(
           new Promise<unknown>((resolve, reject) => {
+            timeline.events.listenerStart = performance.now();
             required(view).addListener((data, type, error) => {
+              timeline.events.firstCallback ??= performance.now();
+              if (type === 'complete') timeline.events.completeCallback = performance.now();
               if (type === 'complete') resolve(data);
               if (type === 'error') reject(new Error(`Query rejected: ${JSON.stringify(error)}`));
             });
+            timeline.events.listenerEnd = performance.now();
           }),
           measurement.key
         );
         const elapsed = performance.now() - start;
+        timeline.elapsedMs = elapsed;
         measurement.observedIDs.push(resultIDs(data, ast.table));
         if (related) {
           const roots = Array.isArray(data) ? data : data ? [data] : [];
@@ -293,6 +315,7 @@ async function measure(
           stats.hydrateTotal == null
         )
           throw new Error('Missing client/server/total hydration metrics');
+        timelineTotals(timeline, elapsed, stats.hydrateTotal);
         measurement.samples.push({
           clientCorrelationID: required(clientCorrelations.get(zero)),
           queryID: stats.id,
@@ -452,6 +475,7 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
       }
     });
     correlateQueryAPI(results, diagnostics.apiDiagnostics as any[]);
+    correlateTimelines(queryTimelines, results);
     for (const result of results) result.failures = checkBudgets(result);
     await writeFile(
       path.join(output, 'measurements.ndjson'),
@@ -459,6 +483,19 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
     );
   }
   await mkdir(output, { recursive: true });
+  try {
+    await writeAtomicReport(
+      path.join(output, 'query-timeline.json'),
+      JSON.stringify({
+        format: QUERY_TIMELINE_FORMAT,
+        execution,
+        scope: 'original-measured-query',
+        samples: queryTimelines,
+      })
+    );
+  } catch {
+    console.warn('Query timeline diagnostic export unavailable');
+  }
   const target = path.join(output, final ? 'report.json' : 'progress.json');
   await writeAtomicReport(
     target,

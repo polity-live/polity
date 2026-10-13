@@ -33,6 +33,9 @@ describe('original CI artifact staging', () => {
     const paths = [
       'runner.json',
       'comparison.json',
+      'absolute-confirmation.json',
+      'head/absolute-confirmation/report.json',
+      'head/initial/workers/001/query-timeline.json',
       'head/initial/report.json',
       'head/initial/mutations.csv',
       'head/initial/delivery.log',
@@ -52,6 +55,8 @@ describe('original CI artifact staging', () => {
       'head/initial/workers/journeys/navigation-history-diagnostic/manifest.json',
       'head/initial/workers/journeys/navigation-history-diagnostic/router-runtime-hash.js',
       'head/initial/workers/journeys/navigation-history-diagnostic/styles-hash.css',
+      'head/initial/workers/journeys/navigation-history-diagnostic/router-runtime-hash.js.map',
+      'head/initial/workers/journeys/navigation-history-diagnostic/navigation-attribution.json',
     ];
     for (const relative of paths) await save(relative, `original\r\n${relative}\r\n`);
     const staged = await stageArtifacts(source, target);
