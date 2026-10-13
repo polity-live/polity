@@ -153,6 +153,12 @@ describe('Studio toolbar workflows', () => {
         name: 'Renamed element',
       })
     );
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: `delete: ${set.name}` })).toHaveProperty(
+        'disabled',
+        false
+      )
+    );
     fireEvent.click(within(dialog).getByRole('button', { name: `delete: ${set.name}` }));
     await waitFor(() =>
       expect(io.request).toHaveBeenCalledWith('elementSetArchive', { setId: set.id })
