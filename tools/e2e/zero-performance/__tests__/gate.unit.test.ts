@@ -1766,9 +1766,15 @@ describe('Zero performance gate', () => {
         SUPABASE_URL: 'https://production',
         VITE_APP_URL: 'https://production',
         HOME: 'runtime',
+        PNPM_HOME: '/home/runner/setup-pnpm/node_modules/.bin',
         PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright',
       })
-    ).toEqual({ PATH: 'tools', HOME: 'runtime', PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright' });
+    ).toEqual({
+      PATH: 'tools',
+      HOME: 'runtime',
+      PNPM_HOME: '/home/runner/setup-pnpm/node_modules/.bin',
+      PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright',
+    });
     expect(() => assertOutputDirectory(process.cwd(), process.cwd())).toThrow();
     expect(() =>
       assertOutputDirectory(process.cwd(), 'output/zero-performance/../outside')

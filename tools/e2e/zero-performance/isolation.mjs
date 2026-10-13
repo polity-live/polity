@@ -207,6 +207,7 @@ export function safeEnvironment(source) {
     'ProgramFiles(x86)',
     'PATHEXT',
     'CI',
+    'PNPM_HOME',
     'DOCKER_HOST',
     'DOCKER_CONTEXT',
     'PLAYWRIGHT_BROWSERS_PATH',
