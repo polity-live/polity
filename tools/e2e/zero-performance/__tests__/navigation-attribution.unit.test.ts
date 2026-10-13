@@ -3,6 +3,7 @@ import {
   attributeNavigationProfile,
   attributeBackTrace,
   diagnosticSourceMapURL,
+  originalScriptLocation,
 } from '../navigation-attribution';
 
 it('attributes replay functions with verified local maps and labels absent evidence', () => {
@@ -56,4 +57,26 @@ it('cuts the back replay on one trace clock without attributing missing marks', 
   expect(cuts[0]).toMatchObject({ status: 'observed', index: 1 });
   expect(cuts[0].events[0]).toMatchObject({ durationMs: 0.5, overlapMs: 0.2 });
   expect(cuts[1]).toMatchObject({ status: 'unknown', events: [] });
+});
+it('maps original frame script positions without replacing original timing evidence', () => {
+  const sourceURL = 'http://localhost:3000/assets/router.js';
+  const bundles = new Map([
+    [
+      sourceURL,
+      {
+        code: 'function b() {}',
+        payload: { version: 3, sources: ['router.ts'], names: ['renderRoute'], mappings: 'AAAAA' },
+      },
+    ],
+  ]);
+  const script = { sourceURL, sourceCharPosition: 0, duration: 43.1 };
+  expect(originalScriptLocation(script, bundles)).toMatchObject({
+    status: 'mapped',
+    source: { name: 'renderRoute', file: 'router.ts' },
+  });
+  expect(script.duration).toBe(43.1);
+  expect(originalScriptLocation(script, new Map()).status).toBe('unavailable');
+  expect(originalScriptLocation({ ...script, sourceCharPosition: -1 }, bundles).status).toBe(
+    'invalid-offset'
+  );
 });

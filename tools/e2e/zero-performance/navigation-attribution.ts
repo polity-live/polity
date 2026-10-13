@@ -126,3 +126,36 @@ export function diagnosticSourceMapURL(reference: string, assetURL: string, appU
     return undefined;
   }
 }
+
+/** Resolve an original script location against hash-verified bytes from the same build. */
+export function originalScriptLocation(
+  script: any,
+  bundles: Map<string, { code: string; payload: any }>
+) {
+  const bundle = bundles.get(script.sourceURL);
+  if (!bundle) return { scope: 'original-script-location', status: 'unavailable', source: null };
+  const offset = script.sourceCharPosition;
+  if (!Number.isInteger(offset) || offset < 0 || offset >= bundle.code.length)
+    return { scope: 'original-script-location', status: 'invalid-offset', source: null };
+  const lines = bundle.code.slice(0, offset).split('\n');
+  try {
+    const origin = new SourceMap(bundle.payload).findOrigin(
+      lines.length,
+      lines[lines.length - 1].length + 1
+    );
+    if ('fileName' in origin)
+      return {
+        scope: 'original-script-location',
+        status: 'mapped',
+        source: {
+          file: origin.fileName,
+          line: origin.lineNumber,
+          column: origin.columnNumber,
+          name: origin.name ?? null,
+        },
+      };
+  } catch {
+    /* Missing attribution cannot replace the original measurement. */
+  }
+  return { scope: 'original-script-location', status: 'unmapped', source: null };
+}

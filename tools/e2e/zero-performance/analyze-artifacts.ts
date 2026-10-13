@@ -2,7 +2,11 @@ import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BUDGETS, checkBudgets, median, type Measurement } from './metrics';
-import { attributeNavigationProfile, attributeBackTrace } from './navigation-attribution';
+import {
+  attributeNavigationProfile,
+  attributeBackTrace,
+  originalScriptLocation,
+} from './navigation-attribution';
 import { createHash } from 'node:crypto';
 import { localTimelineSegments } from './query-timeline';
 
@@ -176,6 +180,7 @@ export async function analyzeArtifacts(root: string) {
   const timelines: any[] = [];
   const absoluteConfirmations: any[] = [];
   const navigationAttributions: any[] = [];
+  const verifiedBundles = new Map<string, Map<string, { code: string; payload: any }>>();
   for (const file of inventory) {
     try {
       if (path.basename(file) === 'query-timeline.json') {
@@ -202,6 +207,7 @@ export async function analyzeArtifacts(root: string) {
         const directory = path.dirname(file),
           maps = new Map<string, any>();
         const profile = await json(file);
+        const bundles = new Map<string, { code: string; payload: any }>();
         const manifestFile = path.join(directory, 'manifest.json');
         if (inventory.includes(manifestFile)) {
           const manifest = await json(manifestFile);
@@ -225,16 +231,21 @@ export async function analyzeArtifacts(root: string) {
             )
               throw new Error('Source map bundle digest mismatch');
             // Resolve URLs from CPU frames, using the retained bundle's pathname.
+            const payload = await json(mapFile);
+            const code = await readFile(path.join(directory, asset.file), 'utf8');
             for (const node of profile.nodes ?? []) {
               try {
-                if (new URL(node.callFrame.url).pathname === map.asset)
-                  maps.set(node.callFrame.url, await json(mapFile));
+                if (new URL(node.callFrame.url).pathname === map.asset) {
+                  maps.set(node.callFrame.url, payload);
+                  bundles.set(node.callFrame.url, { code, payload });
+                }
               } catch {
                 /* Non-asset frame. */
               }
             }
           }
         }
+        verifiedBundles.set(directory, bundles);
         navigationAttributions.push({
           ...attributeNavigationProfile(profile, maps),
           backNavigations: inventory.includes(path.join(directory, 'navigation-timeline.json'))
@@ -308,6 +319,20 @@ export async function analyzeArtifacts(root: string) {
           .filter(Boolean)
           .map(line => JSON.parse(line))
           .filter(row => row.scope === 'original-measured-navigation');
+        const bundles =
+          verifiedBundles.get(
+            path.join(path.dirname(framesFile), 'navigation-history-diagnostic')
+          ) ?? new Map();
+        frames = frames.map(group => ({
+          ...group,
+          frames: (group.frames ?? []).map((frame: any) => ({
+            ...frame,
+            scripts: (frame.scripts ?? []).map((script: any) => ({
+              ...script,
+              sourceMap: originalScriptLocation(script, bundles),
+            })),
+          })),
+        }));
       }
       const journeys = (report.journeys ?? []).map((journey: any) => ({
         route: journey.route,
@@ -505,6 +530,14 @@ export function readableReport(analysis: Awaited<ReturnType<typeof analyzeArtifa
         `  ${journey.route}/${journey.visit}: cached=${journey.cachedDisplayMs}ms; original frame groups=${journey.originalFrames.length}`,
         ...journey.findings.map((finding: Finding) => `    ${finding.category}: ${finding.message}`)
       );
+    for (const journey of report.journeys.filter((journey: any) => journey.findings.length)) {
+      for (const group of journey.originalFrames)
+        for (const frame of group.frames ?? [])
+          for (const script of frame.scripts ?? [])
+            lines.push(
+              `    Original script ${script.sourceFunctionName ?? '(anonymous)'}: duration=${script.duration}ms; layout=${script.forcedStyleAndLayoutDuration ?? 'unknown'}ms; mapping=${JSON.stringify(script.sourceMap)}`
+            );
+    }
     lines.push(
       ...report.findings.map((finding: Finding) => `  ${finding.category}: ${finding.message}`),
       ...report.mutationFindings.map(
