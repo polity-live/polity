@@ -23,6 +23,7 @@ strictPeerDependencies: true
 # Binary timestamp COPY also retains the precision of text replication so equal timestamps keep their ID ordering.
 patchedDependencies:
   '@rocicorp/zero@1.10.0': patches/@rocicorp__zero@1.10.0.patch
+  '@rocicorp/zero-virtual@0.6.4': patches/@rocicorp__zero-virtual@0.6.4.patch
 
 # Keep only transitive security fixes that the current direct dependency graph
 # does not resolve on its own. Re-check these with `pnpm why` on upgrades.

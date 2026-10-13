@@ -41,6 +41,9 @@ overrides:
   pptxgenjs>image-size: 2.0.4
 
 patchedDependencies:
+  '@rocicorp/zero-virtual@0.6.4':
+    hash: ed18d5104b255c510c6d9f72a2d1b3af0ee330c9863a8fc2aca8f7dabfcf0089
+    path: patches/@rocicorp__zero-virtual@0.6.4.patch
   '@rocicorp/zero@1.10.0':
     hash: 23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a
     path: patches/@rocicorp__zero@1.10.0.patch
@@ -288,7 +291,7 @@ importers:
         version: 1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0))
       '@rocicorp/zero-virtual':
         specifier: 0.6.4
-        version: 0.6.4(@rocicorp/zero@1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 0.6.4(patch_hash=ed18d5104b255c510c6d9f72a2d1b3af0ee330c9863a8fc2aca8f7dabfcf0089)(@rocicorp/zero@1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -12911,7 +12914,7 @@ snapshots:
     dependencies:
       node-gyp-build: 4.8.4
 
-  '@rocicorp/zero-virtual@0.6.4(@rocicorp/zero@1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@rocicorp/zero-virtual@0.6.4(patch_hash=ed18d5104b255c510c6d9f72a2d1b3af0ee330c9863a8fc2aca8f7dabfcf0089)(@rocicorp/zero@1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0)))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     optionalDependencies:
       '@rocicorp/zero': 1.10.0(patch_hash=23cd10d4bd68993ff09ead6b9fb7b63b8db7244589e89dc1b9639085691bff3a)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.0))
       react: 19.3.0

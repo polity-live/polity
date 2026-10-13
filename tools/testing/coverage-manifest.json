@@ -1835,6 +1835,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "patches/@rocicorp__zero-virtual@0.6.4.patch",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "asset",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "patches/@rocicorp__zero@1.10.0.patch",
       "domain": "platform",
       "owner": "polity/platform",
@@ -91654,7 +91664,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -91685,7 +91696,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -91716,7 +91728,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -91747,7 +91760,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -91778,7 +91792,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -91843,6 +91858,16 @@
     },
     {
       "path": "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
       "kind": "test-infrastructure",
@@ -92006,7 +92031,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -92037,7 +92063,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
@@ -92068,7 +92095,8 @@
         "src/features/shared/virtualization/__tests__/grid-views.component.test.tsx",
         "src/features/shared/virtualization/__tests__/restored-grid-boundaries.browser-component.test.tsx",
         "src/features/shared/virtualization/__tests__/use-zero-grid-virtualizer.branches.unit.test.ts",
-        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx"
+        "src/features/shared/virtualization/__tests__/usePolityZeroList.component.test.tsx",
+        "src/features/shared/virtualization/__tests__/zero-virtual-restored-paging.browser-component.test.tsx"
       ]
     },
     {
