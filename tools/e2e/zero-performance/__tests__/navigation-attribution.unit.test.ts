@@ -18,9 +18,16 @@ it('attributes replay functions with verified local maps and labels absent evide
   expect(absent.functions[0]).toMatchObject({ sampledSelfMs: 3, sourceMapStatus: 'unavailable' });
   const mapped = attributeNavigationProfile(
     profile,
-    new Map([[url, { version: 3, sources: ['router.ts'], names: [], mappings: 'AAAA' }]])
+    new Map([
+      [url, { version: 3, sources: ['router.ts'], names: ['originalRoute'], mappings: 'AAAAA' }],
+    ])
   );
-  expect(mapped.functions[0].source).toMatchObject({ file: 'router.ts', line: 1, column: 1 });
+  expect(mapped.functions[0].source).toMatchObject({
+    file: 'router.ts',
+    line: 1,
+    column: 1,
+    name: 'originalRoute',
+  });
   expect(mapped.scope).toBe('post-acceptance-fresh-context-history-diagnostic');
   expect(
     attributeNavigationProfile(profile, new Map([[url, {}]])).functions[0].sourceMapStatus

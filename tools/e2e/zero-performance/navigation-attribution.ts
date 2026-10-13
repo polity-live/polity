@@ -32,20 +32,21 @@ export function attributeNavigationProfile(profile: any, maps: Map<string, any>)
         if (payload) {
           try {
             const entry =
-              decoded.get(frame.url)?.findEntry(frame.lineNumber, frame.columnNumber) ?? {};
+              decoded.get(frame.url)?.findOrigin(frame.lineNumber + 1, frame.columnNumber + 1) ??
+              {};
             if (
-              'originalSource' in entry &&
-              typeof entry.originalSource === 'string' &&
-              'originalLine' in entry &&
-              typeof entry.originalLine === 'number' &&
-              'originalColumn' in entry &&
-              typeof entry.originalColumn === 'number'
+              'fileName' in entry &&
+              typeof entry.fileName === 'string' &&
+              'lineNumber' in entry &&
+              typeof entry.lineNumber === 'number' &&
+              'columnNumber' in entry &&
+              typeof entry.columnNumber === 'number'
             )
               source = {
-                file: entry.originalSource,
-                line: entry.originalLine + 1,
-                column: entry.originalColumn + 1,
-                name: null,
+                file: entry.fileName,
+                line: entry.lineNumber,
+                column: entry.columnNumber,
+                name: 'name' in entry && typeof entry.name === 'string' ? entry.name : null,
               };
           } catch {
             /* Invalid maps are unavailable evidence, not a function attribution. */
