@@ -104,6 +104,7 @@ describe('shared vote success observation adapter', () => {
       'distributed-report.ts',
       'distributed-io.ts',
       'distributed-timing.ts',
+      'absolute-confirmation.ts',
       'shard-weights.json',
       'stage-artifacts.mjs',
     ];
