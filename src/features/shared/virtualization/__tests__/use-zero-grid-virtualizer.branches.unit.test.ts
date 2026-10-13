@@ -262,7 +262,10 @@ describe('useZeroGridVirtualizer branch contracts', () => {
   });
 
   it('dispatches reach and estimate transitions for all completion states', () => {
-    run({ rows: { ...baseRows(), atStart: true, atEnd: true, rowsLength: 3 } });
+    run({
+      paging: { ...basePaging(), estimatedTotal: 1 },
+      rows: { ...baseRows(), atStart: true, atEnd: true, rowsLength: 3 },
+    });
     expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'REACHED_START' });
     expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'REACHED_END' });
     expect(mocks.dispatch).toHaveBeenCalledWith({
@@ -299,6 +302,35 @@ describe('useZeroGridVirtualizer branch contracts', () => {
     run({ paging: { ...basePaging(), hasReachedEnd: true }, rows });
     expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'REACHED_START' });
     expect(mocks.dispatch).not.toHaveBeenCalledWith({ type: 'REACHED_END' });
+  });
+
+  it('skips only estimate reports that the reducer would already leave unchanged', () => {
+    const rows = { ...baseRows(), atStart: true, atEnd: true, rowsLength: 3 };
+    for (const estimatedTotal of [3, 10]) {
+      const call = run({ paging: { ...basePaging(), estimatedTotal }, rows });
+      expect(mocks.dispatch).not.toHaveBeenCalledWith({
+        type: 'UPDATE_ESTIMATED_TOTAL',
+        newTotal: 3,
+      });
+      expect(call.result.total).toBe(3);
+      expect(call.config.count).toBe(3);
+    }
+    const empty = run({
+      paging: { ...basePaging(), estimatedTotal: 0 },
+      rows: { ...rows, rowsLength: 0, rowsEmpty: true },
+    });
+    expect(mocks.dispatch).not.toHaveBeenCalledWith({
+      type: 'UPDATE_ESTIMATED_TOTAL',
+      newTotal: 0,
+    });
+    expect(empty.result.total).toBe(0);
+    expect(empty.result.rowsEmpty).toBe(true);
+    expect(empty.config.count).toBe(0);
+
+    for (const estimatedTotal of [NaN, undefined]) {
+      run({ paging: { ...basePaging(), estimatedTotal }, rows });
+      expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'UPDATE_ESTIMATED_TOTAL', newTotal: 3 });
+    }
   });
 
   it('applies pending scroll adjustments and every row-window correction', () => {

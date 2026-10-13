@@ -10,6 +10,7 @@ const fixture = vi.hoisted(() => ({
   renders: 0,
   childRenders: 0,
   actions: [] as { type: string; previous: boolean }[],
+  estimates: [] as { previous: unknown; newTotal: unknown }[],
 }));
 
 vi.mock('@/zero/observed-query', () => ({
@@ -23,7 +24,10 @@ vi.mock('../grid-runtime/paging-reducer', async importOriginal => {
     ) => Record<string, unknown>;
   }>();
   return {
-    pagingReducer: (state: Record<string, unknown>, action: { type: string }) => {
+    pagingReducer: (
+      state: Record<string, unknown>,
+      action: { type: string; newTotal?: unknown }
+    ) => {
       if (action.type === 'REACHED_START' || action.type === 'REACHED_END') {
         fixture.actions.push({
           type: action.type,
@@ -31,6 +35,9 @@ vi.mock('../grid-runtime/paging-reducer', async importOriginal => {
             action.type === 'REACHED_START' ? state.hasReachedStart : state.hasReachedEnd
           ),
         });
+      }
+      if (action.type === 'UPDATE_ESTIMATED_TOTAL') {
+        fixture.estimates.push({ previous: state.estimatedTotal, newTotal: action.newTotal });
       }
       return original.pagingReducer(state, action);
     },
@@ -118,6 +125,8 @@ beforeEach(() => {
   fixture.renders = 0;
   fixture.childRenders = 0;
   fixture.actions = [];
+  fixture.estimates = [];
+  fixture.rows = [{ id: 'cached' }];
 });
 afterEach(cleanup);
 
@@ -130,6 +139,66 @@ it('renders a restored cached grid once without reporting already reached bounda
   expect(fixture.actions).toEqual([]);
   expect(fixture.renders).toBe(1);
   expect(fixture.childRenders).toBe(1);
+});
+
+it('renders an authoritative restored grid once when its estimate is already current', async () => {
+  fixture.result = { type: 'complete' };
+  render(<Grid />);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  expect(screen.getByText('cached')).toBeVisible();
+  expect(fixture.estimates).toEqual([]);
+  expect(fixture.renders).toBe(1);
+  expect(fixture.childRenders).toBe(1);
+});
+
+it('keeps a larger restored estimate while showing only the smaller current result', async () => {
+  fixture.result = { type: 'complete' };
+  const onScrollStateChange = vi.fn();
+  render(
+    <Grid
+      scrollState={{ ...restoredState, estimatedTotal: 2 }}
+      onScrollStateChange={onScrollStateChange}
+    />
+  );
+  expect(fixture.estimates).toEqual([]);
+  expect(fixture.renders).toBe(1);
+  expect(fixture.childRenders).toBe(1);
+  expect(screen.getByText('cached')).toBeVisible();
+  expect(screen.getByTestId('grid').firstElementChild).toHaveStyle({ height: '40px' });
+  await waitFor(() =>
+    expect(onScrollStateChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ estimatedTotal: 2 })
+    )
+  );
+});
+
+it('shows an empty authoritative result without repeatedly reporting zero', async () => {
+  fixture.result = { type: 'complete' };
+  fixture.rows = [];
+  render(<Grid scrollState={{ ...restoredState, estimatedTotal: 0 }} />);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  expect(fixture.estimates).toEqual([]);
+  expect(fixture.renders).toBe(1);
+  expect(fixture.childRenders).toBe(1);
+  expect(screen.getByTestId('grid').firstElementChild).toHaveStyle({ height: '0px' });
+  expect(screen.queryByText('cached')).not.toBeInTheDocument();
+});
+
+it('updates the estimate when authoritative rows grow after restoration', async () => {
+  fixture.result = { type: 'complete' };
+  const onScrollStateChange = vi.fn();
+  const view = render(<Grid onScrollStateChange={onScrollStateChange} />);
+  expect(fixture.estimates).toEqual([]);
+  fixture.rows = [{ id: 'cached' }, { id: 'new cached row' }];
+  view.rerender(<Grid onScrollStateChange={onScrollStateChange} />);
+  expect(fixture.estimates).toEqual([{ previous: 1, newTotal: 2 }]);
+  expect(screen.getByText('new cached row')).toBeVisible();
+  expect(screen.getByTestId('grid').firstElementChild).toHaveStyle({ height: '80px' });
+  await waitFor(() =>
+    expect(onScrollStateChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ estimatedTotal: 2 })
+    )
+  );
 });
 
 it('reports real start and end transitions as cached data becomes authoritative', async () => {
