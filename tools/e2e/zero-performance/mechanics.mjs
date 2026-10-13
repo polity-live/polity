@@ -67,6 +67,7 @@ export async function mechanicsDigest(directory) {
     'distributed-report.ts',
     'distributed-io.ts',
     'distributed-timing.ts',
+    'ci-job-timings.ts',
     'absolute-confirmation.ts',
     'shard-weights.json',
     'stage-artifacts.mjs',
