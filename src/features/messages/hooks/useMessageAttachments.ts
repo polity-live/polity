@@ -87,7 +87,9 @@ export function useMessageAttachments(resetKey?: string, catalogEnabled = true) 
   );
 
   useEffect(() => {
-    setSelectedAttachments([]);
+    setSelectedAttachments(currentAttachments =>
+      currentAttachments.length > 0 ? [] : currentAttachments
+    );
   }, [resetKey]);
 
   const addAttachment = useCallback((option: AssistantAttachmentOption) => {
@@ -105,7 +107,9 @@ export function useMessageAttachments(resetKey?: string, catalogEnabled = true) 
   }, []);
 
   const clearAttachments = useCallback(() => {
-    setSelectedAttachments([]);
+    setSelectedAttachments(currentAttachments =>
+      currentAttachments.length > 0 ? [] : currentAttachments
+    );
   }, []);
 
   const addUploadedFiles = useCallback(

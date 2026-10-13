@@ -51591,6 +51591,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
+      "domain": "features:messages",
+      "owner": "polity/features:messages",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
       "domain": "features:messages",
       "owner": "polity/features:messages",
@@ -51744,11 +51754,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -51780,11 +51790,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -51816,11 +51826,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -51857,11 +51867,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -51893,11 +51903,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -51979,11 +51989,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -52025,11 +52035,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -52061,11 +52071,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -52097,11 +52107,11 @@
         "src/features/messages/hooks/__tests__/useConversationSelection.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useConversationSelection.history.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations-rest.branch-a06.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessageMutations.finalization.component.test.tsx",
         "src/features/messages/hooks/__tests__/useMessagesPage.branch-a06.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx",
-        "src/features/messages/hooks/__tests__/useNewConversationDialogController.component.test.tsx"
+        "src/features/messages/hooks/__tests__/useNewAiConversationIntent.component.test.tsx"
       ]
     },
     {
@@ -88760,6 +88770,7 @@
       "suggestedTestRefs": [
         "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-win32.png",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
@@ -88768,8 +88779,7 @@
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
       ]
     },
     {
@@ -105666,6 +105676,7 @@
       "suggestedTestRefs": [
         "src/features/messages/__tests__/contextAttachments.unit.test.ts",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/lib/ai/__tests__/chatTitle.unit.test.ts",
         "src/lib/ai/__tests__/entityHref.unit.test.ts",
         "src/lib/ai/__tests__/errors.unit.test.ts",
@@ -105674,8 +105685,7 @@
         "src/lib/ai/__tests__/models.unit.test.ts",
         "src/lib/ai/__tests__/prompts.unit.test.ts",
         "src/lib/ai/__tests__/schemas.unit.test.ts",
-        "src/server/project-chat/__tests__/attachments.unit.test.ts",
-        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+        "src/server/project-chat/__tests__/attachments.unit.test.ts"
       ]
     },
     {
@@ -115194,6 +115204,7 @@
       "suggestedTestRefs": [
         "src/features/messages/__tests__/contextAttachments.unit.test.ts",
         "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.empty-reset.browser-component.test.tsx",
         "src/server/project-chat/__tests__/attachments.unit.test.ts",
         "src/server/project-chat/__tests__/context.unit.test.ts",
         "src/server/project-chat/__tests__/editor-context.unit.test.ts",
@@ -115202,8 +115213,7 @@
         "src/server/project-chat/__tests__/revisions.unit.test.ts",
         "src/server/project-chat/__tests__/run-boundaries.database-integration.test.ts",
         "src/server/project-chat/__tests__/run.database-integration.test.ts",
-        "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts",
-        "src/server/project-chat/__tests__/starter-tools.unit.test.ts"
+        "src/server/project-chat/__tests__/starter-ai-access.unit.test.ts"
       ]
     },
     {
