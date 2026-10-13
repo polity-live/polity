@@ -84,6 +84,78 @@ function report(values = [1090.9, 41.9, 50.2, 48.5, 95.5], prefix = 'initial'): 
 }
 
 describe('diagnostic absolute confirmation', () => {
+  it('confirms the exact revoked-role security case and retains correlated slow-query evidence', async () => {
+    const original = report([133.48, 272.6, 224.55, 138.56, 141.6]);
+    original.layer = 'security';
+    const candidate = original.measurements[0];
+    candidate.key = 'events.agendaItemsFull/security-election-role-revoked-owner/security/owner';
+    candidate.name = 'events.agendaItemsFull';
+    candidate.samples.forEach((sample, index) => {
+      sample.serverMs = [38.29, 120.78, 51.17, 40.38, 41.07][index];
+    });
+    original.expectedSecurityCases = [{ key: candidate.key, expectedIDs: [] }];
+    original.serverWarnings = [
+      JSON.stringify({
+        level: 'WARN',
+        message: 'Slow query',
+        queryName: candidate.name,
+        clientGroupID: candidate.samples[1].clientGroupID,
+      }),
+    ];
+    const repeated = report([40, 41, 42, 43, 44], 'security-repeat');
+    repeated.layer = 'security';
+    repeated.expectedSecurityCases = structuredClone(original.expectedSecurityCases);
+    repeated.measurements[0].key = candidate.key;
+    repeated.measurements[0].name = candidate.name;
+    const measure = vi.fn(async () => repeated);
+    const before = structuredClone(original);
+    const result = await confirmAbsolute({
+      original,
+      relativeSelection: [],
+      initialMs: 20_000,
+      remainingMs: 200_000,
+      measure,
+    });
+    expect(measure).toHaveBeenCalledExactlyOnceWith([candidate.key], 40_000);
+    expect(result.findings[0]).toMatchObject({
+      status: 'not-exceeded-again',
+      originalWarnings: original.serverWarnings,
+    });
+    expect(original).toEqual(before);
+    const reused = await confirmAbsolute({
+      original,
+      relativeSelection: [candidate.key],
+      relativeConfirmation: repeated,
+      initialMs: 20_000,
+      remainingMs: 200_000,
+      measure,
+    });
+    expect(reused.findings[0].reusedRelative).toBe(true);
+    expect(measure).toHaveBeenCalledTimes(1);
+    original.expectedSecurityCases[0].expectedIDs = ['forbidden'];
+    expect(absoluteCandidates(original)).toEqual([]);
+  });
+  it('rejects malformed warnings and keeps repeated warnings as diagnostic evidence', () => {
+    const original = report();
+    original.serverWarnings = ['not-json'];
+    expect(absoluteCandidates(original)).toEqual([]);
+    original.serverWarnings = [];
+    const repeated = report([1100, 1200, 1300, 1400, 1500], 'repeat');
+    repeated.serverWarnings = [
+      JSON.stringify({
+        level: 'WARN',
+        message: 'Slow query',
+        queryName: repeated.measurements[0].name,
+        clientGroupID: repeated.measurements[0].samples[0].clientGroupID,
+      }),
+    ];
+    expect(absoluteStatus(original, repeated, original.measurements[0])).toMatchObject({
+      status: 'exceeded-again',
+      confirmationWarnings: repeated.serverWarnings,
+    });
+    repeated.measurements[0].observedIDs[0] = ['forbidden'];
+    expect(absoluteStatus(original, repeated, original.measurements[0]).status).toBe('invalid');
+  });
   it('confirms an absolute-only outlier once and preserves the original report', async () => {
     const original = report(),
       before = structuredClone(original);

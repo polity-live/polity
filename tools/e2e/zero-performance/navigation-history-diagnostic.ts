@@ -140,7 +140,7 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
   const assetErrors: { path: string; error: { stage: string; kind: string } }[] = [];
   const stylePaths = new Set<string>();
   const sourceMaps = new Map<string, any>();
-  const retainedMaps: { asset: string; file: string; sha256: string }[] = [];
+  const retainedMaps: { asset: string; file: string; sha256: string; assetSha256: string }[] = [];
   try {
     if (!diagnosticAssetPath(new URL('/assets/probe.js', options.appURL).href, options.appURL))
       throw new Error('Navigation history diagnostic requires a local application origin');
@@ -371,7 +371,9 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
             sha256: createHash('sha256').update(body).digest('hex'),
           });
           if (assetPath.endsWith('.js')) {
-            const reference = body.toString('utf8').match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1];
+            const reference =
+              body.toString('utf8').match(/[#@]\s*sourceMappingURL=([^\s*]+)/)?.[1] ??
+              `${filename}.map`;
             const assetURL = new URL(assetPath, options.appURL).href;
             const mapURL = reference && diagnosticSourceMapURL(reference, assetURL, options.appURL);
             if (mapURL) {
@@ -400,6 +402,7 @@ export async function runNavigationHistoryDiagnostic(options: DiagnosticOptions)
                   asset: assetPath,
                   file: mapFile,
                   sha256: createHash('sha256').update(mapBody).digest('hex'),
+                  assetSha256: createHash('sha256').update(body).digest('hex'),
                 });
               } catch (error) {
                 assetErrors.push({

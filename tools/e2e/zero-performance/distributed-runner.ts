@@ -372,7 +372,7 @@ export async function runShard(manifest: Manifest, id: string, directory: string
         second,
         bootstrap: manifest.bootstrap,
       });
-      if (shard.layer === 'queries' && reports.head) {
+      if (['queries', 'security'].includes(shard.layer) && reports.head) {
         try {
           const diagnostic = await confirmAbsolute({
             original: reports.head,

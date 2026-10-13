@@ -1,21 +1,57 @@
 import { checkBudgets, type Measurement } from './metrics';
-import type { Report } from './report';
+import { serverWarningFailures, type Report } from './report';
+import { isDeepStrictEqual } from 'node:util';
 import { freshGroupFailures } from './distributed-report';
 
 export const PURE_TIMING =
   /^(Total exceeds \d+ ms|Client exceeds \d+ ms|Server materialization exceeds \d+ ms)$/;
 export const workloadKey = (key: string) => key.split('/').slice(0, 2).join('/');
+const diagnosticTimingFailure = (failure: string) =>
+  PURE_TIMING.test(failure) || /^\d+ slow-query warnings$/.test(failure);
+const selectionKey = (report: Report, key: string) =>
+  report.layer === 'security' ? key : workloadKey(key);
+export function warningEvidence(report: Report, row: Measurement) {
+  return (report.serverWarnings ?? []).filter(line => {
+    try {
+      const warning = JSON.parse(line);
+      return (
+        warning.queryName === row.name &&
+        row.samples.some(sample => sample.clientGroupID === warning.clientGroupID)
+      );
+    } catch {
+      return false;
+    }
+  });
+}
 export function absoluteCandidates(report?: Report): Measurement[] {
   if (
     !report ||
-    report.layer !== 'queries' ||
+    !['queries', 'security'].includes(report.layer) ||
     report.infrastructure.length ||
-    report.serverWarnings?.length
+    serverWarningFailures(report, false).length
   )
     return [];
   return report.measurements.filter(row => {
     const failures = checkBudgets(row);
-    return failures.length > 0 && failures.every(failure => PURE_TIMING.test(failure));
+    const expectation = (report.expectedSecurityCases ?? []).find(item => item.key === row.key);
+    if (
+      report.layer === 'security' &&
+      (!expectation ||
+        !isDeepStrictEqual(expectation.expectedIDs, row.expectedIDs) ||
+        (expectation.related &&
+          !isDeepStrictEqual(
+            expectation.related,
+            row.relatedChecks && {
+              rootID: row.relatedChecks.rootID,
+              relations: row.relatedChecks.expected,
+            }
+          )))
+    )
+      return false;
+    return (
+      (failures.length > 0 || warningEvidence(report, row).length > 0) &&
+      failures.every(diagnosticTimingFailure)
+    );
   });
 }
 export function diagnosticReservation(initialMs: number, remainingMs: number) {
@@ -60,13 +96,21 @@ export function absoluteStatus(
     row.execution?.phase !== 'confirmation' ||
     row.revision !== candidate.revision ||
     row.reason !== candidate.reason ||
-    JSON.stringify(row.args) !== JSON.stringify(candidate.args) ||
-    JSON.stringify(row.expectedIDs) !== JSON.stringify(candidate.expectedIDs) ||
+    !isDeepStrictEqual(row.args, candidate.args) ||
+    !isDeepStrictEqual(row.expectedIDs, candidate.expectedIDs) ||
+    !isDeepStrictEqual(row.relatedChecks?.expected, candidate.relatedChecks?.expected) ||
+    row.relatedChecks?.rootID !== candidate.relatedChecks?.rootID ||
+    original.layer !== confirmation.layer ||
+    (original.layer === 'security' &&
+      !isDeepStrictEqual(
+        (original.expectedSecurityCases ?? []).find(item => item.key === candidate.key),
+        (confirmation.expectedSecurityCases ?? []).find(item => item.key === candidate.key)
+      )) ||
     confirmation.infrastructure.length > 0 ||
-    Boolean(confirmation.serverWarnings?.length) ||
-    failures.some(failure => !PURE_TIMING.test(failure)) ||
+    serverWarningFailures(confirmation, false).length > 0 ||
+    failures.some(failure => !diagnosticTimingFailure(failure)) ||
     confirmation.measurements.some(item =>
-      checkBudgets(item).some(failure => !PURE_TIMING.test(failure))
+      checkBudgets(item).some(failure => !diagnosticTimingFailure(failure))
     ) ||
     freshGroupFailures([original, confirmation]).length > 0;
   return {
@@ -76,6 +120,8 @@ export function absoluteStatus(
       ? 'Invalid identity, workload, results, telemetry or reused client groups'
       : 'Original gate failure remains unchanged',
     failures,
+    originalWarnings: warningEvidence(original, candidate),
+    confirmationWarnings: row ? warningEvidence(confirmation, row) : [],
   };
 }
 
@@ -89,8 +135,12 @@ export async function confirmAbsolute(options: {
   measure: (selection: string[], timeoutMs: number) => Promise<Report>;
 }) {
   const candidates = absoluteCandidates(options.original);
-  const reused = candidates.filter(row => options.relativeSelection.includes(workloadKey(row.key)));
-  const extra = candidates.filter(row => !options.relativeSelection.includes(workloadKey(row.key)));
+  const reused = candidates.filter(row =>
+    options.relativeSelection.includes(selectionKey(options.original, row.key))
+  );
+  const extra = candidates.filter(
+    row => !options.relativeSelection.includes(selectionKey(options.original, row.key))
+  );
   const reservation = diagnosticReservation(options.initialMs, options.remainingMs);
   const findings: any[] = reused.map(row => ({
     ...absoluteStatus(options.original, options.relativeConfirmation, row),
@@ -108,7 +158,7 @@ export async function confirmAbsolute(options: {
   } else {
     try {
       const report = await options.measure(
-        [...new Set(extra.map(row => workloadKey(row.key)))].sort(),
+        [...new Set(extra.map(row => selectionKey(options.original, row.key)))].sort(),
         reservation.reservedMs
       );
       findings.push(...extra.map(row => absoluteStatus(options.original, report, row)));

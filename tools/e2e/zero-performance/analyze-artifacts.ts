@@ -214,6 +214,16 @@ export async function analyzeArtifacts(root: string) {
                 .digest('hex') !== map.sha256
             )
               throw new Error('Retained source map digest mismatch');
+            const asset = (manifest.assets ?? []).find((item: any) => item.path === map.asset);
+            if (
+              !asset ||
+              path.basename(asset.file) !== asset.file ||
+              (map.assetSha256 && map.assetSha256 !== asset.sha256) ||
+              createHash('sha256')
+                .update(await readFile(path.join(directory, asset.file)))
+                .digest('hex') !== asset.sha256
+            )
+              throw new Error('Source map bundle digest mismatch');
             // Resolve URLs from CPU frames, using the retained bundle's pathname.
             for (const node of profile.nodes ?? []) {
               try {

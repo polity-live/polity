@@ -108,6 +108,52 @@ beforeEach(() => {
 });
 
 describe('fresh-context navigation history diagnostic', () => {
+  it('retains hidden source maps bound to the actual profiled bundle bytes', async () => {
+    const f = fixture();
+    const url = 'http://127.0.0.1:15620/assets/router.js';
+    const profile = {
+      nodes: [{ id: 1, callFrame: { url, functionName: 'route', lineNumber: 0, columnNumber: 0 } }],
+      samples: [1],
+      timeDeltas: [1000],
+    };
+    f.session.send.mockImplementation(async (command: string) =>
+      command === 'Profiler.stop' ? { profile } : ({} as any)
+    );
+    f.context.request.get.mockImplementation(async (address: string) => ({
+      ok: () => true,
+      headers: () => ({ 'content-type': 'application/javascript' }),
+      body: async () =>
+        Buffer.from(
+          address.endsWith('.map')
+            ? JSON.stringify({
+                version: 3,
+                file: 'router.js',
+                sources: ['router.ts'],
+                names: [],
+                mappings: 'AAAA',
+              })
+            : 'function route() {}'
+        ),
+    }));
+    await runNavigationHistoryDiagnostic(f.options as any);
+    expect(f.context.request.get).toHaveBeenCalledWith(`${url}.map`, { maxRedirects: 0 });
+    const manifest = JSON.parse(
+      String(
+        vi
+          .mocked(writeFile)
+          .mock.calls.find(([name]) => String(name).endsWith('manifest.json'))?.[1]
+      )
+    );
+    expect(manifest.sourceMaps[0].assetSha256).toBe(manifest.assets[0].sha256);
+    const attribution = JSON.parse(
+      String(
+        vi
+          .mocked(writeFile)
+          .mock.calls.find(([name]) => String(name).endsWith('navigation-attribution.json'))?.[1]
+      )
+    );
+    expect(attribution.functions[0].sourceMapStatus).toBe('mapped');
+  });
   it('preserves route identities and arguments in the original first/back order', () => {
     const routes = [{ path: '/a', search: { q: 'a' } }, { path: '/b' }];
     const plan = historyDiagnosticItinerary(routes);

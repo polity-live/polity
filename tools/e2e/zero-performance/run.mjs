@@ -746,7 +746,13 @@ ${storageBuckets}
         );
       const buildAt = Date.now();
       await command(
-        [path.join(sandbox, 'node_modules/vite/bin/vite.js'), 'build', '--mode', 'production'],
+        [
+          path.join(sandbox, 'node_modules/vite/bin/vite.js'),
+          'build',
+          '--mode',
+          'production',
+          ...(args.includes('--profile-navigation') ? ['--sourcemap', 'hidden'] : []),
+        ],
         'build'
       );
       startup.buildMs = Date.now() - buildAt;
