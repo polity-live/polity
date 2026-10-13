@@ -105452,6 +105452,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/layout/__tests__/authenticated-shell.search-demand.component.test.tsx",
+      "domain": "src:layout",
+      "owner": "polity/src:layout",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/layout/__tests__/page-frame.component.test.tsx",
       "domain": "src:layout",
       "owner": "polity/src:layout",
@@ -105554,7 +105564,10 @@
           "caseId": "registers search demand on the search route"
         }
       ],
-      "suggestedTestRefs": ["src/layout/__tests__/authenticated-shell.component.test.tsx"]
+      "suggestedTestRefs": [
+        "src/layout/__tests__/authenticated-shell.component.test.tsx",
+        "src/layout/__tests__/authenticated-shell.search-demand.component.test.tsx"
+      ]
     },
     {
       "path": "src/layout/page-frame.tsx",
