@@ -286,6 +286,21 @@ describe('useZeroGridVirtualizer branch contracts', () => {
     run({ rows: { ...baseRows(), complete: false, atStart: true, atEnd: true } });
   });
 
+  it('reports only newly reached boundaries and retains restored boundary flags', () => {
+    const rows = { ...baseRows(), atStart: true, atEnd: true };
+    run({ paging: { ...basePaging(), hasReachedStart: true, hasReachedEnd: true }, rows });
+    expect(mocks.dispatch).not.toHaveBeenCalledWith({ type: 'REACHED_START' });
+    expect(mocks.dispatch).not.toHaveBeenCalledWith({ type: 'REACHED_END' });
+
+    run({ paging: { ...basePaging(), hasReachedStart: true }, rows });
+    expect(mocks.dispatch).not.toHaveBeenCalledWith({ type: 'REACHED_START' });
+    expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'REACHED_END' });
+
+    run({ paging: { ...basePaging(), hasReachedEnd: true }, rows });
+    expect(mocks.dispatch).toHaveBeenCalledWith({ type: 'REACHED_START' });
+    expect(mocks.dispatch).not.toHaveBeenCalledWith({ type: 'REACHED_END' });
+  });
+
   it('applies pending scroll adjustments and every row-window correction', () => {
     const call = run({
       paging: { ...basePaging(), pendingScrollAdjustment: 2 },

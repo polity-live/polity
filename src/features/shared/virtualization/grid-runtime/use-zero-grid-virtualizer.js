@@ -310,15 +310,15 @@ function useZeroGridVirtualizerImplementation({
     listContextParams,
   ]);
   useEffect(() => {
-    if (atStart) {
+    if (atStart && hasReachedStart !== true) {
       dispatch({ type: 'REACHED_START' });
     }
-  }, [atStart]);
+  }, [atStart, hasReachedStart]);
   useEffect(() => {
-    if (atEnd) {
+    if (atEnd && hasReachedEnd !== true) {
       dispatch({ type: 'REACHED_END' });
     }
-  }, [atEnd]);
+  }, [atEnd, hasReachedEnd]);
   useEffect(() => {
     if (complete) {
       if (atStart && atEnd) {
