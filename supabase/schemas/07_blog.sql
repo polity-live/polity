@@ -1,74 +1,78 @@
--- =============================================================================
--- 07_blog.sql — Blogs and bloggers
--- Blog support votes moved to 20_vote.sql
--- =============================================================================
+-- 07_blog.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Blog table
 CREATE TABLE public.blog (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT,
-  description TEXT,
-  content JSONB,
-  date TEXT,
-  image_url TEXT,
-  video_url TEXT,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  subscriber_count INTEGER NOT NULL DEFAULT 0,
-  supporter_count INTEGER NOT NULL DEFAULT 0,
-  like_count INTEGER NOT NULL DEFAULT 0,
-  comment_count INTEGER NOT NULL DEFAULT 0,
-  upvotes INTEGER NOT NULL DEFAULT 0,
-  downvotes INTEGER NOT NULL DEFAULT 0,
-  editing_mode TEXT,
-  discussions JSONB,
-  group_id UUID,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT blog_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text,
+    description text,
+    content jsonb,
+    date text,
+    image_url text,
+    video_url text,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    subscriber_count integer DEFAULT 0 NOT NULL,
+    supporter_count integer DEFAULT 0 NOT NULL,
+    like_count integer DEFAULT 0 NOT NULL,
+    comment_count integer DEFAULT 0 NOT NULL,
+    upvotes integer DEFAULT 0 NOT NULL,
+    downvotes integer DEFAULT 0 NOT NULL,
+    editing_mode text,
+    discussions jsonb,
+    group_id uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tutorial_run_id uuid,
+    CONSTRAINT blog_single_primary_media_check CHECK (((image_url IS NULL) OR (video_url IS NULL))),
+    CONSTRAINT blog_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_blog_group ON public.blog (group_id);
-CREATE INDEX idx_zero_blog_group_created_id
-  ON public.blog (group_id, created_at DESC, id DESC);
-CREATE INDEX idx_zero_blog_created_id
-  ON public.blog (created_at DESC, id DESC);
+CREATE TABLE public.blog_blogger (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    blog_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role_id uuid,
+    status text,
+    visibility text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT blog_blogger_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.blog_support_vote (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    blog_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    vote integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT blog_support_vote_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.blog ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.blog FOR ALL TO service_role USING (true);
-
--- Blog blogger table
-CREATE TABLE public.blog_blogger (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  status TEXT,
-  visibility TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_blog_blogger_blog ON public.blog_blogger (blog_id);
-CREATE INDEX idx_blog_blogger_user ON public.blog_blogger (user_id);
-CREATE INDEX idx_zero_blog_blogger_user_status_blog
-  ON public.blog_blogger (user_id, status, blog_id);
-CREATE INDEX idx_zero_blog_blogger_user_blog
-  ON public.blog_blogger (user_id, blog_id);
 
 ALTER TABLE public.blog_blogger ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.blog_blogger FOR ALL TO service_role USING (true);
-
--- Blog support vote table
-CREATE TABLE public.blog_support_vote (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote INTEGER,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_blog_support_vote_blog ON public.blog_support_vote (blog_id);
-CREATE INDEX idx_blog_support_vote_user ON public.blog_support_vote (user_id);
 
 ALTER TABLE public.blog_support_vote ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.blog_support_vote FOR ALL TO service_role USING (true);
 
+CREATE INDEX blog_tutorial_run_id_idx ON public.blog USING btree (tutorial_run_id);
+
+CREATE INDEX idx_blog_blogger_blog ON public.blog_blogger USING btree (blog_id);
+
+CREATE INDEX idx_blog_blogger_user ON public.blog_blogger USING btree (user_id);
+
+CREATE INDEX idx_blog_group ON public.blog USING btree (group_id);
+
+CREATE INDEX idx_blog_support_vote_blog ON public.blog_support_vote USING btree (blog_id);
+
+CREATE INDEX idx_blog_support_vote_user ON public.blog_support_vote USING btree (user_id);
+
+CREATE INDEX idx_zero_blog_blogger_user_blog ON public.blog_blogger USING btree (user_id, blog_id);
+
+CREATE INDEX idx_zero_blog_blogger_user_status_blog ON public.blog_blogger USING btree (user_id, status, blog_id);
+
+CREATE INDEX idx_zero_blog_created_id ON public.blog USING btree (created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_blog_group_created_id ON public.blog USING btree (group_id, created_at DESC, id DESC);
+
+CREATE POLICY service_role_all ON public.blog TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.blog_blogger TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.blog_support_vote TO service_role USING (true);

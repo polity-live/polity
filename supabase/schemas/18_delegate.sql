@@ -1,63 +1,61 @@
--- =============================================================================
--- 18_delegate.sql — Event delegates and group delegate allocations
--- Depends on: 01_user (user), 03_event (event)
--- =============================================================================
+-- 18_delegate.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Event delegate table
-CREATE TABLE public.event_delegate (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  group_id UUID,
-  status TEXT,
-  seat_count INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_event_delegate_event ON public.event_delegate (event_id);
-CREATE INDEX idx_event_delegate_user ON public.event_delegate (user_id);
-
-ALTER TABLE public.event_delegate ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.event_delegate FOR ALL TO service_role USING (true);
-
--- Group delegate allocation table
-CREATE TABLE public.group_delegate_allocation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
-  group_id UUID,
-  allocated_seats INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_group_delegate_allocation_event ON public.group_delegate_allocation (event_id);
-
-ALTER TABLE public.group_delegate_allocation ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_delegate_allocation FOR ALL TO service_role USING (true);
-
--- Open delegate-election work that a source group must satisfy for a target
--- delegate assembly.
 CREATE TABLE public.delegate_election_assignment (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  target_event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
-  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  allocation_id UUID REFERENCES public.group_delegate_allocation (id) ON DELETE SET NULL,
-  required_seats INTEGER NOT NULL DEFAULT 0,
-  confirmed_seats INTEGER NOT NULL DEFAULT 0,
-  linked_event_id UUID REFERENCES public.event (id) ON DELETE SET NULL,
-  status TEXT NOT NULL DEFAULT 'open'
-    CHECK (status IN ('open', 'scheduled', 'complete', 'cancelled')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (target_event_id, source_group_id)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    target_event_id uuid NOT NULL,
+    source_group_id uuid NOT NULL,
+    allocation_id uuid,
+    required_seats integer DEFAULT 0 NOT NULL,
+    confirmed_seats integer DEFAULT 0 NOT NULL,
+    linked_event_id uuid,
+    status text DEFAULT 'open'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT delegate_election_assignment_status_check CHECK ((status = ANY (ARRAY['open'::text, 'scheduled'::text, 'complete'::text, 'cancelled'::text]))),
+    CONSTRAINT delegate_election_assignment_pkey PRIMARY KEY (id),
+    CONSTRAINT delegate_election_assignment_target_event_id_source_group_i_key UNIQUE (target_event_id, source_group_id)
 );
 
-CREATE INDEX idx_delegate_election_assignment_target_event
-  ON public.delegate_election_assignment (target_event_id, status);
-CREATE INDEX idx_delegate_election_assignment_source_group
-  ON public.delegate_election_assignment (source_group_id, status);
-CREATE INDEX idx_delegate_election_assignment_linked_event
-  ON public.delegate_election_assignment (linked_event_id);
+CREATE TABLE public.event_delegate (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    group_id uuid,
+    status text,
+    seat_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_delegate_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.group_delegate_allocation (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id uuid NOT NULL,
+    group_id uuid,
+    allocated_seats integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_delegate_allocation_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.delegate_election_assignment ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.delegate_election_assignment
-  FOR ALL TO service_role USING (true);
+
+ALTER TABLE public.event_delegate ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_delegate_allocation ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_delegate_election_assignment_linked_event ON public.delegate_election_assignment USING btree (linked_event_id);
+
+CREATE INDEX idx_delegate_election_assignment_source_group ON public.delegate_election_assignment USING btree (source_group_id, status);
+
+CREATE INDEX idx_delegate_election_assignment_target_event ON public.delegate_election_assignment USING btree (target_event_id, status);
+
+CREATE INDEX idx_event_delegate_event ON public.event_delegate USING btree (event_id);
+
+CREATE INDEX idx_event_delegate_user ON public.event_delegate USING btree (user_id);
+
+CREATE INDEX idx_group_delegate_allocation_event ON public.group_delegate_allocation USING btree (event_id);
+
+CREATE POLICY service_role_all ON public.delegate_election_assignment TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.event_delegate TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_delegate_allocation TO service_role USING (true);

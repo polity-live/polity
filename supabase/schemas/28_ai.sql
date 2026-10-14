@@ -1,202 +1,181 @@
--- =============================================================================
--- 28_ai.sql — AI skills and secure provider credentials
--- =============================================================================
-
-CREATE TABLE public.ai_skill (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  slug TEXT NOT NULL,
-  name TEXT NOT NULL,
-  aliases TEXT NOT NULL DEFAULT '',
-  system_prompt TEXT NOT NULL,
-  enabled BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX idx_ai_skill_user_slug
-  ON public.ai_skill (user_id, slug);
-CREATE INDEX idx_ai_skill_user
-  ON public.ai_skill (user_id);
-
-ALTER TABLE public.ai_skill ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_skill FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_skill TO service_role;
-
-CREATE TABLE public.ai_tool (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  tool_name TEXT NOT NULL,
-  enabled BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX idx_ai_tool_user_name
-  ON public.ai_tool (user_id, tool_name);
-CREATE INDEX idx_ai_tool_user
-  ON public.ai_tool (user_id);
-
-ALTER TABLE public.ai_tool ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_tool FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_tool TO service_role;
-
-CREATE TABLE public.ai_provider_credential (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  provider TEXT NOT NULL,
-  encrypted_key TEXT NOT NULL,
-  key_hint TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_used_at TIMESTAMPTZ
-);
-
-CREATE UNIQUE INDEX idx_ai_provider_credential_user_provider
-  ON public.ai_provider_credential (user_id, provider);
-CREATE INDEX idx_ai_provider_credential_user
-  ON public.ai_provider_credential (user_id);
-
-ALTER TABLE public.ai_provider_credential ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_provider_credential FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_provider_credential TO service_role;
-
--- Project-chat execution state. Runs and change-set summaries are replicated by
--- Zero, while provider messages, resolved configuration, tool inputs/results,
--- snapshots and inverse values remain server-only columns/tables.
-CREATE TABLE public.ai_run (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
-  actor_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  request_id UUID NOT NULL,
-  status TEXT NOT NULL DEFAULT 'running'
-    CHECK (status IN ('running', 'interrupted', 'completed', 'cancelled')),
-  model JSONB NOT NULL DEFAULT '{}'::jsonb,
-  editor_context JSONB NOT NULL DEFAULT '{}'::jsonb,
-  configuration JSONB NOT NULL DEFAULT '{}'::jsonb,
-  request_hash TEXT NOT NULL,
-  messages JSONB NOT NULL DEFAULT '[]'::jsonb,
-  step INTEGER NOT NULL DEFAULT 0 CHECK (step >= 0),
-  lease_token UUID NOT NULL,
-  lease_expires_at BIGINT NOT NULL,
-  partial_text TEXT NOT NULL DEFAULT '',
-  streaming_text TEXT NOT NULL DEFAULT '',
-  error_code TEXT,
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  UNIQUE (conversation_id, request_id)
-);
-
-CREATE INDEX idx_ai_run_conversation_created
-  ON public.ai_run (conversation_id, created_at DESC, id DESC);
-CREATE INDEX idx_ai_run_actor
-  ON public.ai_run (actor_id);
-CREATE INDEX idx_ai_run_active_lease
-  ON public.ai_run (lease_expires_at)
-  WHERE status = 'running';
-CREATE UNIQUE INDEX idx_ai_run_one_active_per_conversation
-  ON public.ai_run (conversation_id)
-  WHERE status = 'running';
-
-ALTER TABLE public.ai_run ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_run FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_run TO service_role;
-
-CREATE TABLE public.ai_tool_call (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  run_id UUID NOT NULL REFERENCES public.ai_run (id) ON DELETE CASCADE,
-  tool_call_id TEXT NOT NULL,
-  tool_name TEXT NOT NULL,
-  input_hash TEXT NOT NULL,
-  input JSONB NOT NULL,
-  result JSONB,
-  status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'failed', 'completed')),
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  UNIQUE (run_id, tool_call_id)
-);
-
-CREATE INDEX idx_ai_tool_call_run_status_created
-  ON public.ai_tool_call (run_id, status, created_at, id);
-
-ALTER TABLE public.ai_tool_call ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_tool_call FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_tool_call TO service_role;
-
-CREATE TABLE public.ai_context_snapshot (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  run_id UUID NOT NULL REFERENCES public.ai_run (id) ON DELETE CASCADE,
-  resource_kind TEXT NOT NULL
-    CHECK (resource_kind IN ('studio', 'amendment_text', 'city_design')),
-  resource_id UUID NOT NULL,
-  branch_id UUID,
-  revision TEXT NOT NULL,
-  value JSONB NOT NULL,
-  references_json JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at BIGINT NOT NULL
-);
-
-CREATE INDEX idx_ai_context_snapshot_run_created
-  ON public.ai_context_snapshot (run_id, created_at DESC, id DESC);
-
-ALTER TABLE public.ai_context_snapshot ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_context_snapshot FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_context_snapshot TO service_role;
+-- 28_ai.sql: canonical current definitions; historical upgrades are not replayed.
 
 CREATE TABLE public.ai_change_set (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
-  run_id UUID NOT NULL REFERENCES public.ai_run (id) ON DELETE CASCADE,
-  tool_call_id TEXT NOT NULL,
-  actor_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  resource_kind TEXT NOT NULL
-    CHECK (resource_kind IN ('studio', 'amendment_text', 'city_design')),
-  resource_id UUID NOT NULL,
-  branch_id UUID,
-  summary TEXT NOT NULL,
-  status TEXT NOT NULL
-    CHECK (status IN ('proposed', 'applied', 'undone')),
-  before_value JSONB NOT NULL,
-  after_value JSONB NOT NULL,
-  proposal_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
-  created_at BIGINT NOT NULL,
-  undone_at BIGINT,
-  UNIQUE (run_id, tool_call_id)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    run_id uuid NOT NULL,
+    tool_call_id text NOT NULL,
+    actor_id uuid NOT NULL,
+    resource_kind text NOT NULL,
+    resource_id uuid NOT NULL,
+    branch_id uuid,
+    summary text NOT NULL,
+    status text NOT NULL,
+    before_value jsonb NOT NULL,
+    after_value jsonb NOT NULL,
+    proposal_ids jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at bigint NOT NULL,
+    undone_at bigint,
+    CONSTRAINT ai_change_set_resource_kind_check CHECK ((resource_kind = ANY (ARRAY['studio'::text, 'amendment_text'::text, 'city_design'::text]))),
+    CONSTRAINT ai_change_set_status_check CHECK ((status = ANY (ARRAY['proposed'::text, 'applied'::text, 'undone'::text]))),
+    CONSTRAINT ai_change_set_pkey PRIMARY KEY (id),
+    CONSTRAINT ai_change_set_run_id_tool_call_id_key UNIQUE (run_id, tool_call_id)
 );
 
-CREATE INDEX idx_ai_change_set_conversation_created
-  ON public.ai_change_set (conversation_id, created_at DESC, id DESC);
-CREATE INDEX idx_ai_change_set_actor
-  ON public.ai_change_set (actor_id);
-CREATE INDEX idx_ai_change_set_resource
-  ON public.ai_change_set (resource_kind, resource_id, branch_id);
+CREATE TABLE public.ai_context_snapshot (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    run_id uuid NOT NULL,
+    resource_kind text NOT NULL,
+    resource_id uuid NOT NULL,
+    branch_id uuid,
+    revision text NOT NULL,
+    value jsonb NOT NULL,
+    references_json jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at bigint NOT NULL,
+    CONSTRAINT ai_context_snapshot_resource_kind_check CHECK ((resource_kind = ANY (ARRAY['studio'::text, 'amendment_text'::text, 'city_design'::text]))),
+    CONSTRAINT ai_context_snapshot_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_provider_credential (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    provider text NOT NULL,
+    encrypted_key text NOT NULL,
+    key_hint text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone,
+    CONSTRAINT ai_provider_credential_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_run (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    actor_id uuid NOT NULL,
+    request_id uuid NOT NULL,
+    status text DEFAULT 'running'::text NOT NULL,
+    model jsonb DEFAULT '{}'::jsonb NOT NULL,
+    editor_context jsonb DEFAULT '{}'::jsonb NOT NULL,
+    configuration jsonb DEFAULT '{}'::jsonb NOT NULL,
+    request_hash text NOT NULL,
+    messages jsonb DEFAULT '[]'::jsonb NOT NULL,
+    step integer DEFAULT 0 NOT NULL,
+    lease_token uuid NOT NULL,
+    lease_expires_at bigint NOT NULL,
+    partial_text text DEFAULT ''::text NOT NULL,
+    streaming_text text DEFAULT ''::text NOT NULL,
+    error_code text,
+    created_at bigint NOT NULL,
+    updated_at bigint NOT NULL,
+    CONSTRAINT ai_run_status_check CHECK ((status = ANY (ARRAY['running'::text, 'interrupted'::text, 'completed'::text, 'cancelled'::text]))),
+    CONSTRAINT ai_run_step_check CHECK ((step >= 0)),
+    CONSTRAINT ai_run_conversation_id_request_id_key UNIQUE (conversation_id, request_id),
+    CONSTRAINT ai_run_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_skill (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    slug text NOT NULL,
+    name text NOT NULL,
+    aliases text DEFAULT ''::text NOT NULL,
+    system_prompt text NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ai_skill_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_tool (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    tool_name text NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ai_tool_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.ai_tool_call (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    run_id uuid NOT NULL,
+    tool_call_id text NOT NULL,
+    tool_name text NOT NULL,
+    input_hash text NOT NULL,
+    input jsonb NOT NULL,
+    result jsonb,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at bigint NOT NULL,
+    updated_at bigint NOT NULL,
+    CONSTRAINT ai_tool_call_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'failed'::text, 'completed'::text]))),
+    CONSTRAINT ai_tool_call_pkey PRIMARY KEY (id),
+    CONSTRAINT ai_tool_call_run_id_tool_call_id_key UNIQUE (run_id, tool_call_id)
+);
 
 ALTER TABLE public.ai_change_set ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.ai_change_set FOR ALL TO service_role USING (true);
-GRANT ALL ON TABLE public.ai_change_set TO service_role;
 
--- Revision fencing must also cover writes that do not pass through a Zero
--- mutator (imports, service jobs and administrative SQL).
-CREATE FUNCTION public.project_content_revision()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path = public
-AS $$
+ALTER TABLE public.ai_context_snapshot ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.ai_provider_credential ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.ai_run ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.ai_skill ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.ai_tool ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.ai_tool_call ENABLE ROW LEVEL SECURITY;
+
+CREATE FUNCTION public.project_content_revision() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
 BEGIN
   NEW.content_revision := OLD.content_revision + 1;
   RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER document_content_revision
-  BEFORE UPDATE OF content ON public.document
-  FOR EACH ROW
-  WHEN (OLD.content IS DISTINCT FROM NEW.content)
-  EXECUTE FUNCTION public.project_content_revision();
+CREATE INDEX idx_ai_change_set_actor ON public.ai_change_set USING btree (actor_id);
 
-CREATE TRIGGER amendment_city_design_content_revision
-  BEFORE UPDATE OF design_state ON public.amendment_city_design
-  FOR EACH ROW
-  WHEN (OLD.design_state IS DISTINCT FROM NEW.design_state)
-  EXECUTE FUNCTION public.project_content_revision();
+CREATE INDEX idx_ai_change_set_conversation_created ON public.ai_change_set USING btree (conversation_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_ai_change_set_resource ON public.ai_change_set USING btree (resource_kind, resource_id, branch_id);
+
+CREATE INDEX idx_ai_context_snapshot_run_created ON public.ai_context_snapshot USING btree (run_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_ai_provider_credential_user ON public.ai_provider_credential USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_provider_credential_user_provider ON public.ai_provider_credential USING btree (user_id, provider);
+
+CREATE INDEX idx_ai_run_active_lease ON public.ai_run USING btree (lease_expires_at) WHERE (status = 'running'::text);
+
+CREATE INDEX idx_ai_run_actor ON public.ai_run USING btree (actor_id);
+
+CREATE INDEX idx_ai_run_conversation_created ON public.ai_run USING btree (conversation_id, created_at DESC, id DESC);
+
+CREATE UNIQUE INDEX idx_ai_run_one_active_per_conversation ON public.ai_run USING btree (conversation_id) WHERE (status = 'running'::text);
+
+CREATE INDEX idx_ai_skill_user ON public.ai_skill USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_skill_user_slug ON public.ai_skill USING btree (user_id, slug);
+
+CREATE INDEX idx_ai_tool_call_run_status_created ON public.ai_tool_call USING btree (run_id, status, created_at, id);
+
+CREATE INDEX idx_ai_tool_user ON public.ai_tool USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_tool_user_name ON public.ai_tool USING btree (user_id, tool_name);
+
+CREATE POLICY service_role_all ON public.ai_change_set TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_context_snapshot TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_provider_credential TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_run TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_skill TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_tool TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.ai_tool_call TO service_role USING (true);

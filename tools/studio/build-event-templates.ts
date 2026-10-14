@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +6,7 @@ import {
   createEventTemplate,
   eventTemplateTypes,
 } from '../../src/features/communication-studio/logic/event-templates';
-const file = 'supabase/schemas/75_event_studio.sql';
+const file = 'supabase/schemas/99_event_templates.sql';
 export function eventTemplateSqlRows() {
   return eventTemplateTypes
     .map(kind => {
@@ -28,7 +28,7 @@ export function eventTemplateSqlRows() {
         const stable = `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
         json = json.replaceAll(id, stable);
       });
-      return `INSERT INTO public.studio_event_template(kind,document) VALUES('${kind}',$template$${json}$template$::jsonb);`;
+      return `INSERT INTO public.studio_event_template(kind,document) VALUES('${kind}',$template$${json}$template$::jsonb) ON CONFLICT(kind) DO UPDATE SET document=EXCLUDED.document;`;
     })
     .join('\n');
 }
@@ -41,13 +41,10 @@ if (
     : entryPath === modulePath)
 ) {
   const rows = eventTemplateSqlRows();
-  const schema = readFileSync(file, 'utf8')
-    .replace(/\r\n/g, '\n')
-    .replace(
-      /-- EVENT_TEMPLATE_ROWS[\s\S]*?\n\nCREATE TABLE public.studio_live_source/,
-      `-- EVENT_TEMPLATE_ROWS\n${rows}\n\nCREATE TABLE public.studio_live_source`
-    );
-  writeFileSync(file, schema);
-  if (!process.argv.includes('--schema-only'))
-    writeFileSync('supabase/migrations/20261011010000_event_studio.sql', schema);
+  // Edit the canonical source only. Migration delivery must follow the reviewed
+  // schema workflow; rebuilding templates must never resurrect old migrations.
+  writeFileSync(
+    file,
+    `-- MANUAL_SQL: Required Event Studio template rows; schema diffs never emit DML.\n-- EVENT_TEMPLATE_ROWS\n${rows}\n`
+  );
 }

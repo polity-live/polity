@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   buildQuery,
@@ -67,7 +67,10 @@ const canonical = (value: any): any =>
 
 describe('indexed network endpoint selection', () => {
   it('requires the validated canonical request pair and its composite unique index for a single pair lookup', () => {
-    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    const migration = readFileSync(
+      `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
+      'utf8'
+    );
     expect(migration).toContain(
       'add constraint "group_connection_request_canonical_pair_check" CHECK ((group_a_id < group_b_id)) not valid;'
     );
@@ -91,7 +94,7 @@ describe('indexed network endpoint selection', () => {
         )!;
         const args = entry.args as { groupId: string; groupAId: string; groupBId: string };
         const migration = readFileSync(
-          'supabase/migrations/20260922043912_initial_reset.sql',
+          `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
           'utf8'
         );
         const fields = ['group_a_id', 'group_b_id', 'from_group_id', 'to_group_id'];
@@ -173,7 +176,10 @@ describe('indexed network endpoint selection', () => {
     );
   }
   it('requires validated group foreign keys for every equivalent PK lookup', () => {
-    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    const migration = readFileSync(
+      `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
+      'utf8'
+    );
     for (const [, table, , , firstField, secondField] of selectors) {
       for (const field of [firstField, secondField]) {
         expect(migration).toContain(`FOREIGN KEY (${field}) REFERENCES public."group"(id)`);

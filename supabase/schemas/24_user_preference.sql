@@ -1,30 +1,31 @@
--- =============================================================================
--- 24_user_preference.sql — User preferences (form style, etc.)
--- =============================================================================
+-- 24_user_preference.sql: canonical current definitions; historical upgrades are not replayed.
 
 CREATE TABLE public.user_preference (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE UNIQUE,
-  create_form_style TEXT NOT NULL DEFAULT 'carousel',
-  theme TEXT NOT NULL DEFAULT 'system',
-  language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('de', 'en')),
-  display_currency TEXT NOT NULL DEFAULT 'EUR'
-    CONSTRAINT user_preference_display_currency_check
-    CHECK (display_currency ~ '^[A-Z]{3}$'),
-  navigation_view TEXT NOT NULL DEFAULT 'asButtonList',
-  workspace_preferences JSONB NOT NULL DEFAULT '{"favorites":[],"display":{}}'::jsonb
-    CHECK (jsonb_typeof(workspace_preferences) = 'object'),
-  group_network_layouts JSONB NOT NULL DEFAULT '{}'::jsonb,
-  decision_terminal_dashboard JSONB NOT NULL DEFAULT '{}'::jsonb,
-  app_tutorial_completed_at TIMESTAMPTZ,
-  appearance_theme_id UUID REFERENCES public.appearance_theme (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    create_form_style text DEFAULT 'carousel'::text NOT NULL,
+    theme text DEFAULT 'system'::text NOT NULL,
+    language text DEFAULT 'en'::text NOT NULL,
+    display_currency text DEFAULT 'EUR'::text NOT NULL,
+    navigation_view text DEFAULT 'asButtonList'::text NOT NULL,
+    workspace_preferences jsonb DEFAULT '{"display": {}, "favorites": []}'::jsonb NOT NULL,
+    group_network_layouts jsonb DEFAULT '{}'::jsonb NOT NULL,
+    decision_terminal_dashboard jsonb DEFAULT '{}'::jsonb NOT NULL,
+    app_tutorial_completed_at timestamp with time zone,
+    appearance_theme_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_preference_display_currency_check CHECK ((display_currency ~ '^[A-Z]{3}$'::text)),
+    CONSTRAINT user_preference_language_check CHECK ((language = ANY (ARRAY['de'::text, 'en'::text]))),
+    CONSTRAINT user_preference_workspace_preferences_check CHECK ((jsonb_typeof(workspace_preferences) = 'object'::text)),
+    CONSTRAINT user_preference_pkey PRIMARY KEY (id),
+    CONSTRAINT user_preference_user_id_key UNIQUE (user_id)
 );
 
-CREATE INDEX idx_user_preference_user ON public.user_preference (user_id);
-CREATE INDEX idx_user_preference_appearance_theme
-  ON public.user_preference (appearance_theme_id);
-
 ALTER TABLE public.user_preference ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.user_preference FOR ALL TO service_role USING (true);
+
+CREATE INDEX idx_user_preference_appearance_theme ON public.user_preference USING btree (appearance_theme_id);
+
+CREATE INDEX idx_user_preference_user ON public.user_preference USING btree (user_id);
+
+CREATE POLICY service_role_all ON public.user_preference TO service_role USING (true);

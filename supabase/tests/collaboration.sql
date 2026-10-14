@@ -1,4 +1,4 @@
--- @covers schema 37_collaboration.sql
+-- @covers schema 49_studio_zero.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(6);

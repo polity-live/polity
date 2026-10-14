@@ -115,11 +115,18 @@ describe('reviewed amendment catalog', () => {
   });
   it('matches actual CR FK parents and distinguishes the UUID-only polymorphic source', () => {
     const sql = fs.readFileSync('supabase/schemas/14_change_request.sql', 'utf8');
-    expect(sql).toMatch(/amendment_id UUID NOT NULL REFERENCES public\.amendment/);
-    expect(sql).toMatch(/user_id UUID NOT NULL REFERENCES public\."user"/);
-    expect(sql).toMatch(/process_branch_id UUID REFERENCES public\.amendment_process_branch/);
-    expect(sql).toMatch(/source_id UUID,/);
-    expect(sql).not.toMatch(/source_id UUID[^,]*REFERENCES/);
+    const foreignKeys = fs.readFileSync('supabase/schemas/90_foreign_keys.sql', 'utf8');
+    expect(sql).toMatch(/amendment_id UUID NOT NULL/i);
+    expect(sql).toMatch(/user_id UUID NOT NULL/i);
+    for (const [column, parent] of [
+      ['amendment_id', 'amendment'],
+      ['user_id', '"user"'],
+      ['process_branch_id', 'amendment_process_branch'],
+    ]) {
+      expect(foreignKeys).toContain(`FOREIGN KEY (${column}) REFERENCES public.${parent}(id)`);
+    }
+    expect(sql).toMatch(/source_id UUID,/i);
+    expect(foreignKeys).not.toMatch(/change_request[^;]*FOREIGN KEY \(source_id\)/);
   });
   it('grants a scoped active role before writer preload and revokes it before subject invocation', async () => {
     const url = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';

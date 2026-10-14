@@ -1,7 +1,6 @@
--- @covers security all
 -- @covers schema 31_service_role_grants.sql
 -- @covers schema 35_security.sql
--- @covers schema 61_canvas_function_permissions.sql
+-- @covers security all
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

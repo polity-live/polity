@@ -1,4 +1,5 @@
 -- @covers schema 76_group_email_invitations.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(10);

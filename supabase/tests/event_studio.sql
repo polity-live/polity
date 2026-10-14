@@ -1,4 +1,8 @@
 -- @covers schema 75_event_studio.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
+-- @covers schema 98_publications.sql
+-- @covers schema 99_event_templates.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(23);

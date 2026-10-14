@@ -1,9 +1,7 @@
 -- @covers schema 49_studio_zero.sql
 -- @covers schema 50_studio_editor_actions.sql
--- @covers schema 51_retire_collaboration_functions.sql
--- @covers schema 52_studio_function_permissions.sql
--- @covers schema 53_studio_editor_claim.sql
--- @covers schema 62_studio_document_v3.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 98_publications.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(13);

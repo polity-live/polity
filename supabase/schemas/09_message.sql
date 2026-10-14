@@ -1,92 +1,61 @@
--- =============================================================================
--- 09_message.sql — Conversations, participants, messages
--- =============================================================================
+-- 09_message.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Conversation table
 CREATE TABLE public.conversation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type TEXT,
-  name TEXT,
-  status TEXT,
-  pinned BOOLEAN,
-  last_message_at TIMESTAMPTZ,
-  last_message_id UUID,
-  last_message_preview TEXT,
-  assistant_for_user_id UUID REFERENCES public."user" (id) ON DELETE CASCADE,
-  group_id UUID,
-  event_id UUID REFERENCES public.event (id) ON DELETE CASCADE,
-  requested_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  amendment_id UUID REFERENCES public.amendment (id) ON DELETE CASCADE,
-  studio_project_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    type text,
+    name text,
+    status text,
+    pinned boolean,
+    last_message_at timestamp with time zone,
+    last_message_id uuid,
+    last_message_preview text,
+    assistant_for_user_id uuid,
+    group_id uuid,
+    event_id uuid,
+    requested_by_id uuid,
+    amendment_id uuid,
+    studio_project_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tutorial_run_id uuid,
+    CONSTRAINT conversation_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_conversation_group ON public.conversation (group_id);
-CREATE INDEX idx_conversation_group_id ON public.conversation (group_id, id);
-CREATE INDEX idx_conversation_event ON public.conversation (event_id);
-CREATE INDEX idx_conversation_event_id ON public.conversation (event_id, id);
-CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
-CREATE INDEX idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
-CREATE INDEX idx_conversation_amendment ON public.conversation (amendment_id);
-CREATE INDEX idx_conversation_studio_project ON public.conversation (studio_project_id);
-CREATE INDEX idx_conversation_last_message
-  ON public.conversation (last_message_at DESC, id DESC);
+CREATE TABLE public.conversation_participant (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    joined_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_read_at timestamp with time zone,
+    left_at timestamp with time zone,
+    unread_count integer DEFAULT 0 NOT NULL,
+    project_surface text,
+    CONSTRAINT conversation_participant_project_surface_check CHECK ((project_surface = ANY (ARRAY['amendment_text'::text, 'city_design'::text]))),
+    CONSTRAINT conversation_participant_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.message (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    sender_id uuid NOT NULL,
+    content text,
+    context_json text DEFAULT '[]'::text NOT NULL,
+    is_read boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT message_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.conversation ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.conversation FOR ALL TO service_role USING (true);
-
--- Conversation participant table
-CREATE TABLE public.conversation_participant (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_read_at TIMESTAMPTZ,
-  left_at TIMESTAMPTZ,
-  unread_count INTEGER NOT NULL DEFAULT 0,
-  project_surface TEXT CHECK (project_surface IN ('amendment_text', 'city_design'))
-);
-
-CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);
-CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant (conversation_id, id);
-CREATE INDEX idx_conversation_participant_user ON public.conversation_participant (user_id);
-CREATE INDEX idx_conversation_participant_user_id ON public.conversation_participant (user_id, id);
-CREATE UNIQUE INDEX idx_conversation_participant_unique_membership
-  ON public.conversation_participant (conversation_id, user_id);
-CREATE INDEX idx_conversation_participant_user_left
-  ON public.conversation_participant (user_id, left_at, conversation_id);
 
 ALTER TABLE public.conversation_participant ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.conversation_participant FOR ALL TO service_role USING (true);
-
--- Message table
-CREATE TABLE public.message (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
-  sender_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  content TEXT,
-  context_json TEXT NOT NULL DEFAULT '[]',
-  is_read BOOLEAN NOT NULL DEFAULT false,
-  deleted_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_message_conversation ON public.message (conversation_id);
-CREATE INDEX idx_message_sender ON public.message (sender_id);
-CREATE INDEX idx_message_conversation_created_id
-  ON public.message (conversation_id, created_at DESC, id DESC);
-CREATE INDEX idx_message_content_trgm
-  ON public.message USING gin (content gin_trgm_ops);
 
 ALTER TABLE public.message ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.message FOR ALL TO service_role USING (true);
 
-CREATE OR REPLACE FUNCTION public.refresh_conversation_rollups(target_conversation_id UUID)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.refresh_conversation_rollups(target_conversation_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 DECLARE
   latest RECORD;
 BEGIN
@@ -118,11 +87,10 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.refresh_conversation_rollups_from_message()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.refresh_conversation_rollups_from_message() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 BEGIN
   IF TG_OP IN ('UPDATE', 'DELETE') THEN
     PERFORM public.refresh_conversation_rollups(OLD.conversation_id);
@@ -137,11 +105,10 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.refresh_conversation_rollups_from_participant()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.refresh_conversation_rollups_from_participant() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
     PERFORM public.refresh_conversation_rollups(OLD.conversation_id);
@@ -153,10 +120,48 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trg_message_refresh_conversation_rollups
-AFTER INSERT OR UPDATE OR DELETE ON public.message
-FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_message();
+CREATE INDEX conversation_tutorial_run_id_idx ON public.conversation USING btree (tutorial_run_id);
 
-CREATE TRIGGER trg_participant_refresh_conversation_rollups
-AFTER INSERT OR UPDATE OF last_read_at, left_at, user_id OR DELETE ON public.conversation_participant
-FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_participant();
+CREATE INDEX idx_conversation_amendment ON public.conversation USING btree (amendment_id);
+
+CREATE INDEX idx_conversation_assistant_for_user ON public.conversation USING btree (assistant_for_user_id);
+
+CREATE INDEX idx_conversation_event ON public.conversation USING btree (event_id);
+
+CREATE INDEX idx_conversation_event_id ON public.conversation USING btree (event_id, id);
+
+CREATE INDEX idx_conversation_group ON public.conversation USING btree (group_id);
+
+CREATE INDEX idx_conversation_group_id ON public.conversation USING btree (group_id, id);
+
+CREATE INDEX idx_conversation_last_message ON public.conversation USING btree (last_message_at DESC, id DESC);
+
+CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant USING btree (conversation_id);
+
+CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant USING btree (conversation_id, id);
+
+CREATE UNIQUE INDEX idx_conversation_participant_unique_membership ON public.conversation_participant USING btree (conversation_id, user_id);
+
+CREATE INDEX idx_conversation_participant_user ON public.conversation_participant USING btree (user_id);
+
+CREATE INDEX idx_conversation_participant_user_id ON public.conversation_participant USING btree (user_id, id);
+
+CREATE INDEX idx_conversation_participant_user_left ON public.conversation_participant USING btree (user_id, left_at, conversation_id);
+
+CREATE INDEX idx_conversation_requested_by ON public.conversation USING btree (requested_by_id);
+
+CREATE INDEX idx_conversation_studio_project ON public.conversation USING btree (studio_project_id);
+
+CREATE INDEX idx_message_content_trgm ON public.message USING gin (content public.gin_trgm_ops);
+
+CREATE INDEX idx_message_conversation ON public.message USING btree (conversation_id);
+
+CREATE INDEX idx_message_conversation_created_id ON public.message USING btree (conversation_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_message_sender ON public.message USING btree (sender_id);
+
+CREATE POLICY service_role_all ON public.conversation TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.conversation_participant TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.message TO service_role USING (true);

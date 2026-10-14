@@ -1,4 +1,4 @@
--- @covers schema 23_storage.sql
+-- @covers schema 92_managed_policies.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
@@ -16,6 +16,8 @@ EXCEPTION WHEN OTHERS THEN
   RETURN SQLSTATE;
 END;
 $$;
+-- Test helpers also follow the new explicit-execute default privilege contract.
+GRANT EXECUTE ON FUNCTION pg_temp.capture_sqlstate(TEXT) TO anon, authenticated;
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES

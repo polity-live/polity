@@ -2,6 +2,7 @@
 -- @covers schema 02_group.sql
 -- @covers schema 03_event.sql
 -- @covers schema 05_2_amendment.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

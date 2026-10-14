@@ -1,5 +1,7 @@
 -- @covers schema 05_2_amendment.sql
 -- @covers schema 33_app_tutorial.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

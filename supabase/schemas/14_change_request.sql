@@ -1,60 +1,58 @@
--- =============================================================================
--- 14_change_request.sql — Change requests for amendments
--- Depends on: 01_user (user), 04_amendment (amendment)
--- =============================================================================
+-- 14_change_request.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Change request table
 CREATE TABLE public.change_request (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
-  suggestion_id TEXT,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  title TEXT,
-  description TEXT,
-  status TEXT,
-  reason TEXT,
-  source_type TEXT,
-  source_id UUID,
-  source_title TEXT,
-  change_type TEXT,
-  original_text TEXT,
-  new_text TEXT,
-  original_properties JSONB,
-  new_properties JSONB,
-  changed_character_count INTEGER NOT NULL DEFAULT 0,
-  votes_for INTEGER NOT NULL DEFAULT 0,
-  votes_against INTEGER NOT NULL DEFAULT 0,
-  votes_abstain INTEGER NOT NULL DEFAULT 0,
-  voting_status TEXT NOT NULL DEFAULT 'open',
-  voting_deadline TIMESTAMPTZ,
-  voting_majority_type TEXT,
-  quorum_required INTEGER,
-  branch_sequence_number INTEGER,
-  created_in_mode TEXT,
-  resolved_in_mode TEXT,
-  resolution_method TEXT,
-  visibility_scope TEXT NOT NULL DEFAULT 'public',
-  obsolete_reason TEXT,
-  obsolete_at TIMESTAMPTZ,
-  obsolete_by_vote_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    process_branch_id uuid,
+    suggestion_id text,
+    user_id uuid NOT NULL,
+    title text,
+    description text,
+    status text,
+    reason text,
+    source_type text,
+    source_id uuid,
+    source_title text,
+    change_type text,
+    original_text text,
+    new_text text,
+    original_properties jsonb,
+    new_properties jsonb,
+    changed_character_count integer DEFAULT 0 NOT NULL,
+    votes_for integer DEFAULT 0 NOT NULL,
+    votes_against integer DEFAULT 0 NOT NULL,
+    votes_abstain integer DEFAULT 0 NOT NULL,
+    voting_status text DEFAULT 'open'::text NOT NULL,
+    voting_deadline timestamp with time zone,
+    voting_majority_type text,
+    quorum_required integer,
+    branch_sequence_number integer,
+    created_in_mode text,
+    resolved_in_mode text,
+    resolution_method text,
+    visibility_scope text DEFAULT 'public'::text NOT NULL,
+    obsolete_reason text,
+    obsolete_at timestamp with time zone,
+    obsolete_by_vote_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT change_request_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_change_request_amendment ON public.change_request (amendment_id);
-CREATE INDEX idx_change_request_process_branch ON public.change_request (process_branch_id);
-CREATE INDEX idx_change_request_suggestion_id
-  ON public.change_request (suggestion_id)
-  WHERE suggestion_id IS NOT NULL;
-CREATE INDEX idx_change_request_user ON public.change_request (user_id);
-CREATE INDEX idx_change_request_changed_character_count ON public.change_request (changed_character_count);
-CREATE UNIQUE INDEX idx_change_request_branch_sequence
-  ON public.change_request (amendment_id, process_branch_id, branch_sequence_number)
-  WHERE branch_sequence_number IS NOT NULL AND process_branch_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_change_request_main_sequence
-  ON public.change_request (amendment_id, branch_sequence_number)
-  WHERE branch_sequence_number IS NOT NULL AND process_branch_id IS NULL;
-
 ALTER TABLE public.change_request ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.change_request FOR ALL TO service_role USING (true);
+
+CREATE INDEX idx_change_request_amendment ON public.change_request USING btree (amendment_id);
+
+CREATE UNIQUE INDEX idx_change_request_branch_sequence ON public.change_request USING btree (amendment_id, process_branch_id, branch_sequence_number) WHERE ((branch_sequence_number IS NOT NULL) AND (process_branch_id IS NOT NULL));
+
+CREATE INDEX idx_change_request_changed_character_count ON public.change_request USING btree (changed_character_count);
+
+CREATE UNIQUE INDEX idx_change_request_main_sequence ON public.change_request USING btree (amendment_id, branch_sequence_number) WHERE ((branch_sequence_number IS NOT NULL) AND (process_branch_id IS NULL));
+
+CREATE INDEX idx_change_request_process_branch ON public.change_request USING btree (process_branch_id);
+
+CREATE INDEX idx_change_request_suggestion_id ON public.change_request USING btree (suggestion_id) WHERE (suggestion_id IS NOT NULL);
+
+CREATE INDEX idx_change_request_user ON public.change_request USING btree (user_id);
+
+CREATE POLICY service_role_all ON public.change_request TO service_role USING (true);

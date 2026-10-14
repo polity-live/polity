@@ -1,10 +1,9 @@
 -- @covers schema 36_communication_studio.sql
 -- @covers schema 63_studio_v4_themes_elements.sql
--- @covers schema 64_studio_document_v5.sql
--- @covers schema 65_studio_export_mime_types.sql
 -- @covers schema 67_personal_studio_collaborators.sql
 -- @covers schema 68_group_studio_project_rights.sql
 -- @covers schema 69_retire_whiteboards.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(23);

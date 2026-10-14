@@ -1,18 +1,18 @@
--- =============================================================================
--- 26_voting_password.sql — User voting passwords (4-digit PIN, stored hashed)
--- Depends on: 01_user
--- =============================================================================
+-- 26_voting_password.sql: canonical current definitions; historical upgrades are not replayed.
 
 CREATE TABLE public.voting_password (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE UNIQUE,
-  password_hash TEXT NOT NULL,
-  last_verified_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    password_hash text NOT NULL,
+    last_verified_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT voting_password_pkey PRIMARY KEY (id),
+    CONSTRAINT voting_password_user_id_key UNIQUE (user_id)
 );
 
-CREATE INDEX idx_voting_password_user ON public.voting_password (user_id);
-
 ALTER TABLE public.voting_password ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.voting_password FOR ALL TO service_role USING (true);
+
+CREATE INDEX idx_voting_password_user ON public.voting_password USING btree (user_id);
+
+CREATE POLICY service_role_all ON public.voting_password TO service_role USING (true);

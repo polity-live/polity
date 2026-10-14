@@ -63836,6 +63836,7 @@
         "src/features/project-chat/logic/__tests__/context-boundaries.unit.test.ts",
         "src/features/project-chat/logic/__tests__/studio-actions.unit.test.ts",
         "src/features/project-chat/logic/__tests__/text-actions.unit.test.ts",
+        "supabase/tests/baseline_contract.sql",
         "supabase/tests/permissions_contract.sql",
         "supabase/tests/schema_contract.sql",
         "tools/email/__tests__/template-cli-contracts.unit.test.ts",
@@ -133902,7 +133903,7 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/migrations/20260922043912_initial_reset.sql",
+      "path": "supabase/migrations/20261014064625_initial.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -133912,217 +133913,7 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/migrations/20260923003620_studio_v4_themes_elements.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923010000_operational_permissions_and_jobs.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923020000_studio_document_v5.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923030000_studio_export_mime_types.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923040000_group_studio_internal_modes.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923050000_personal_studio_collaborators.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923060000_group_studio_project_rights.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923061000_retire_whiteboards.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260923062000_studio_visibility_discovery.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260924010000_studio_ai_suggestions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260924011000_studio_ai_private_access.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20260927010000_studio_ai_source_provenance.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261005010000_studio_personal_procedures.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261006010000_ai_traces.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261007010000_studio_zero_commands.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011010000_event_studio.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011020000_studio_source_auth_permissions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011030000_event_intro.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011040000_group_email_invitations.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011050000_group_email_invitation_names.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011060000_studio_show_audio_rules.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/migrations/20261011070000_conversation_projection_indexes.sql",
+      "path": "supabase/migrations/20261014064626_initial_manual.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -134332,36 +134123,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/schemas/20_2_election_candidate_vote.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/20_3_indicative_amendment_choice_vote.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/20_4_indicative_election_candidate_vote.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "supabase/schemas/20_5_agenda_item_change_request.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -134403,16 +134164,6 @@
     },
     {
       "path": "supabase/schemas/23_appearance_theme.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/23_storage.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -134552,126 +134303,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/schemas/37_collaboration.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/38_collaboration_workspaces.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/39_collaboration_ballots.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/40_collaboration_migration_attempts.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/41_collaboration_compatibility.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/42_collaboration_transaction_initialization.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/43_collaboration_authority.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/44_collaboration_integrity.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/45_collaboration_legacy_fences.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/46_collaboration_ballot_guards.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/47_collaboration_tutorial.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/48_studio_only_collaboration.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "supabase/schemas/49_studio_zero.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -134683,36 +134314,6 @@
     },
     {
       "path": "supabase/schemas/50_studio_editor_actions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/51_retire_collaboration_functions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/52_studio_function_permissions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/53_studio_editor_claim.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -134752,26 +134353,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/schemas/57_canvas_private_assets.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/58_canvas_recipient_presence.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "supabase/schemas/59_canvas_zero_workspaces.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -134782,67 +134363,7 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/schemas/60_canvas_conflict_resolution.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/61_canvas_function_permissions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/62_studio_document_v3.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "supabase/schemas/63_studio_v4_themes_elements.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/64_studio_document_v5.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/65_studio_export_mime_types.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/66_group_studio_internal_modes.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -134892,26 +134413,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "supabase/schemas/71_studio_ai_suggestions.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "supabase/schemas/72_studio_personal_procedures.sql",
-      "domain": "database",
-      "owner": "polity/database",
-      "kind": "declarative",
-      "verification": "database-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "supabase/schemas/73_ai_traces.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -134943,6 +134444,56 @@
     },
     {
       "path": "supabase/schemas/76_group_email_invitations.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/90_foreign_keys.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/91_triggers.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/92_managed_policies.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/98_publications.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/99_event_templates.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -135033,6 +134584,16 @@
     },
     {
       "path": "supabase/tests/auth_assistant.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/tests/baseline_contract.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "test-infrastructure",
@@ -135357,6 +134918,16 @@
       "owner": "polity/platform",
       "kind": "configuration",
       "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/database/__tests__/baseline.static-contract.test.ts",
+      "domain": "tools:database",
+      "owner": "polity/tools:database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []

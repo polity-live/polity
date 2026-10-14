@@ -1,449 +1,412 @@
--- =============================================================================
--- 04_amendment.sql — Amendments, collaborators, paths, support confirmations
--- Vote tables moved to 20_vote.sql
--- Change request tables moved to 14_change_request.sql
--- =============================================================================
+-- 05_2_amendment.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Amendment table
 CREATE TABLE public.amendment (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT,
-  title TEXT,
-  reason TEXT,
-  category TEXT,
-  preamble TEXT,
-  created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  group_id UUID,
-  event_id UUID,
-  clone_source_id UUID,
-  origin_amendment_id UUID,
-  document_id UUID REFERENCES public.document (id) ON DELETE SET NULL,
-  country TEXT,
-  region TEXT,
-  post_code TEXT,
-  city TEXT,
-  street TEXT,
-  house_number TEXT,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  location_kind TEXT,
-  location_place_id TEXT,
-  location_boundary_source TEXT,
-  location_geometry JSONB,
-  location_bounds JSONB,
-  upvotes INTEGER NOT NULL DEFAULT 0,
-  downvotes INTEGER NOT NULL DEFAULT 0,
-  tags JSONB,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  subscriber_count INTEGER NOT NULL DEFAULT 0,
-  clone_count INTEGER NOT NULL DEFAULT 0,
-  change_request_count INTEGER NOT NULL DEFAULT 0,
-  internal_cr_voting_close_trigger TEXT NOT NULL DEFAULT 'all_collaborators_voted',
-  internal_cr_voting_duration_minutes INTEGER,
-  internal_cr_resolution_visibility TEXT NOT NULL DEFAULT 'public',
-  discussions JSONB,
-  comment_count INTEGER NOT NULL DEFAULT 0,
-  collaborator_count INTEGER NOT NULL DEFAULT 0,
-  image_url TEXT,
-  video_url TEXT,
-  x TEXT,
-  youtube TEXT,
-  linkedin TEXT,
-  website TEXT,
-  current_process_run_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT amendment_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text,
+    title text,
+    reason text,
+    category text,
+    preamble text,
+    created_by_id uuid NOT NULL,
+    group_id uuid,
+    event_id uuid,
+    clone_source_id uuid,
+    origin_amendment_id uuid,
+    document_id uuid,
+    country text,
+    region text,
+    post_code text,
+    city text,
+    street text,
+    house_number text,
+    latitude double precision,
+    longitude double precision,
+    location_kind text,
+    location_place_id text,
+    location_boundary_source text,
+    location_geometry jsonb,
+    location_bounds jsonb,
+    upvotes integer DEFAULT 0 NOT NULL,
+    downvotes integer DEFAULT 0 NOT NULL,
+    tags jsonb,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    subscriber_count integer DEFAULT 0 NOT NULL,
+    clone_count integer DEFAULT 0 NOT NULL,
+    change_request_count integer DEFAULT 0 NOT NULL,
+    internal_cr_voting_close_trigger text DEFAULT 'all_collaborators_voted'::text NOT NULL,
+    internal_cr_voting_duration_minutes integer,
+    internal_cr_resolution_visibility text DEFAULT 'public'::text NOT NULL,
+    discussions jsonb,
+    comment_count integer DEFAULT 0 NOT NULL,
+    collaborator_count integer DEFAULT 0 NOT NULL,
+    image_url text,
+    video_url text,
+    x text,
+    youtube text,
+    linkedin text,
+    website text,
+    current_process_run_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    tutorial_run_id uuid,
+    CONSTRAINT amendment_single_primary_media_check CHECK (((image_url IS NULL) OR (video_url IS NULL))),
+    CONSTRAINT amendment_pkey PRIMARY KEY (id)
 );
-
-CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);
-CREATE INDEX idx_amendment_group ON public.amendment (group_id);
-CREATE INDEX idx_amendment_event ON public.amendment (event_id);
-CREATE INDEX idx_amendment_origin ON public.amendment (origin_amendment_id);
-CREATE INDEX idx_zero_amendment_group_created_id
-  ON public.amendment (group_id, created_at DESC, id DESC);
-CREATE INDEX idx_zero_amendment_creator_created_id
-  ON public.amendment (created_by_id, created_at DESC, id DESC);
-CREATE INDEX idx_zero_amendment_clone_source_created_id
-  ON public.amendment (clone_source_id, created_at DESC, id DESC);
 
 CREATE TABLE public.amendment_activity (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  actor_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  actor_type TEXT NOT NULL DEFAULT 'user' CHECK (actor_type IN ('user', 'system')),
-  subject_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  action TEXT NOT NULL CHECK (action IN (
-    'created', 'updated', 'collaborator_added', 'collaborator_updated',
-    'collaborator_removed', 'change_request_created', 'change_request_updated',
-    'change_request_resolved', 'process_started', 'process_updated',
-    'process_task_updated', 'process_replanned', 'group_decision_updated',
-    'support_confirmation_updated', 'implementation_updated'
-  )),
-  severity TEXT NOT NULL CHECK (severity IN ('normal', 'high')),
-  changes JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (jsonb_typeof(changes) = 'array'),
-  context JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(context) = 'object'),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    actor_id uuid,
+    actor_type text DEFAULT 'user'::text NOT NULL,
+    subject_user_id uuid,
+    action text NOT NULL,
+    severity text NOT NULL,
+    changes jsonb DEFAULT '[]'::jsonb NOT NULL,
+    context jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_activity_action_check CHECK ((action = ANY (ARRAY['created'::text, 'updated'::text, 'collaborator_added'::text, 'collaborator_updated'::text, 'collaborator_removed'::text, 'change_request_created'::text, 'change_request_updated'::text, 'change_request_resolved'::text, 'process_started'::text, 'process_updated'::text, 'process_task_updated'::text, 'process_replanned'::text, 'group_decision_updated'::text, 'support_confirmation_updated'::text, 'implementation_updated'::text]))),
+    CONSTRAINT amendment_activity_actor_type_check CHECK ((actor_type = ANY (ARRAY['user'::text, 'system'::text]))),
+    CONSTRAINT amendment_activity_changes_check CHECK ((jsonb_typeof(changes) = 'array'::text)),
+    CONSTRAINT amendment_activity_context_check CHECK ((jsonb_typeof(context) = 'object'::text)),
+    CONSTRAINT amendment_activity_severity_check CHECK ((severity = ANY (ARRAY['normal'::text, 'high'::text]))),
+    CONSTRAINT amendment_activity_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_amendment_activity_created
-  ON public.amendment_activity (amendment_id, created_at DESC, id DESC);
-CREATE INDEX idx_amendment_activity_severity_created
-  ON public.amendment_activity (amendment_id, severity, created_at DESC, id DESC);
-
-ALTER TABLE public.amendment_activity ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_activity
-  FOR ALL TO service_role USING (true);
-
-ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);
-
--- Amendment collaborator table
-CREATE TABLE public.amendment_collaborator (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  status TEXT,
-  visibility TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_collaborator_amendment ON public.amendment_collaborator (amendment_id);
-CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator (user_id);
-CREATE INDEX idx_zero_amendment_collaborator_user_status_amendment
-  ON public.amendment_collaborator (user_id, status, amendment_id);
-CREATE INDEX idx_zero_amendment_collaborator_user_created_id
-  ON public.amendment_collaborator (user_id, created_at DESC, id DESC);
-CREATE INDEX idx_zero_amendment_collaborator_amendment_created_id
-  ON public.amendment_collaborator (amendment_id, created_at DESC, id DESC);
-
-ALTER TABLE public.amendment_collaborator ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_collaborator FOR ALL TO service_role USING (true);
-
--- Amendment city design table
 CREATE TABLE public.amendment_city_design (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  title TEXT,
-  bbox JSONB,
-  center_lat NUMERIC,
-  center_lon NUMERIC,
-  osm_snapshot JSONB,
-  design_state JSONB,
-  content_revision INTEGER NOT NULL DEFAULT 0 CHECK (content_revision >= 0),
-  currency TEXT NOT NULL DEFAULT 'EUR',
-  estimated_total_cost_minor INTEGER NOT NULL DEFAULT 0,
-  cost_catalog_version TEXT,
-  cost_summary JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    created_by_id uuid NOT NULL,
+    title text,
+    bbox jsonb,
+    center_lat numeric,
+    center_lon numeric,
+    osm_snapshot jsonb,
+    design_state jsonb,
+    content_revision integer DEFAULT 0 NOT NULL,
+    currency text DEFAULT 'EUR'::text NOT NULL,
+    estimated_total_cost_minor integer DEFAULT 0 NOT NULL,
+    cost_catalog_version text,
+    cost_summary jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_city_design_content_revision_check CHECK ((content_revision >= 0)),
+    CONSTRAINT amendment_city_design_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_amendment_city_design_amendment
-  ON public.amendment_city_design (amendment_id);
-CREATE INDEX idx_amendment_city_design_created_by
-  ON public.amendment_city_design (created_by_id);
-CREATE INDEX idx_amendment_city_design_updated_at
-  ON public.amendment_city_design (updated_at DESC);
-
-ALTER TABLE public.amendment_city_design ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all"
-  ON public.amendment_city_design FOR ALL TO service_role USING (true);
-
--- Amendment path table
-CREATE TABLE public.amendment_path (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  process_run_id UUID,
-  title TEXT,
-  workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE public.amendment_collaborator (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role_id uuid,
+    status text,
+    visibility text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_collaborator_pkey PRIMARY KEY (id)
 );
-
-CREATE INDEX idx_amendment_path_amendment ON public.amendment_path (amendment_id);
-
-ALTER TABLE public.amendment_path ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_path FOR ALL TO service_role USING (true);
-
--- Amendment path segment table
-CREATE TABLE public.amendment_path_segment (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  path_id UUID NOT NULL REFERENCES public.amendment_path (id) ON DELETE CASCADE,
-  process_branch_id UUID,
-  process_step_run_id UUID,
-  group_id UUID,
-  event_id UUID,
-  order_index INTEGER,
-  status TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_path_segment_path ON public.amendment_path_segment (path_id);
-
-ALTER TABLE public.amendment_path_segment ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_path_segment FOR ALL TO service_role USING (true);
-
--- Support confirmation table
-CREATE TABLE public.support_confirmation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  process_run_id UUID,
-  process_step_run_id UUID,
-  process_task_id UUID,
-  group_id UUID,
-  event_id UUID,
-  confirmed_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  status TEXT,
-  confirmed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_support_confirmation_amendment ON public.support_confirmation (amendment_id);
-CREATE INDEX idx_support_confirmation_user ON public.support_confirmation (confirmed_by_id);
-
-ALTER TABLE public.support_confirmation ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.support_confirmation FOR ALL TO service_role USING (true);
-
--- Workflow runtime process execution
-CREATE TABLE public.amendment_process_run (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  root_workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
-  selected_source_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  selected_target_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  selected_target_workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
-  active_branch_id UUID,
-  terminal_step_run_id UUID,
-  status TEXT NOT NULL DEFAULT 'pending_event',
-  evaluation_mode TEXT,
-  evaluation_date TIMESTAMPTZ,
-  evaluation_offset_months INTEGER,
-  evaluation_offset_years INTEGER,
-  implementation_status TEXT,
-  created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_process_run_amendment ON public.amendment_process_run (amendment_id);
-CREATE INDEX idx_amendment_process_run_status ON public.amendment_process_run (status);
-
-ALTER TABLE public.amendment_process_run ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_process_run FOR ALL TO service_role USING (true);
-
-CREATE TABLE public.amendment_process_branch (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
-  parent_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
-  merged_into_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
-  source_step_run_id UUID,
-  document_version_id UUID REFERENCES public.document_version (id) ON DELETE SET NULL,
-  document_id UUID REFERENCES public.document (id) ON DELETE SET NULL,
-  discussions JSONB,
-  title TEXT,
-  status TEXT NOT NULL DEFAULT 'pending_event',
-  editing_mode TEXT NOT NULL DEFAULT 'edit',
-  resolution TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT amendment_process_branch_editing_mode_check
-    CHECK (editing_mode IN (
-      'edit',
-      'view',
-      'suggest_internal',
-      'suggest_event',
-      'vote_internal',
-      'event_final_closing_vote',
-      'passed',
-      'rejected'
-    ))
-);
-
-CREATE INDEX idx_amendment_process_branch_run ON public.amendment_process_branch (process_run_id);
-CREATE INDEX idx_amendment_process_branch_parent ON public.amendment_process_branch (parent_branch_id);
-CREATE INDEX idx_amendment_process_branch_status ON public.amendment_process_branch (status);
-CREATE INDEX idx_amendment_process_branch_editing_mode ON public.amendment_process_branch (editing_mode);
-CREATE INDEX idx_amendment_process_branch_document ON public.amendment_process_branch (document_id);
-
-ALTER TABLE public.amendment_process_branch ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_process_branch FOR ALL TO service_role USING (true);
-
-CREATE TABLE public.amendment_process_step_run (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
-  branch_id UUID NOT NULL REFERENCES public.amendment_process_branch (id) ON DELETE CASCADE,
-  workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
-  workflow_step_id UUID REFERENCES public.group_workflow_step (id) ON DELETE SET NULL,
-  step_kind TEXT NOT NULL DEFAULT 'group_vote',
-  selection_mode TEXT,
-  merge_strategy TEXT,
-  status TEXT NOT NULL DEFAULT 'pending_event',
-  source_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  target_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  event_id UUID REFERENCES public.event (id) ON DELETE SET NULL,
-  agenda_item_id UUID,
-  vote_id UUID,
-  support_confirmation_id UUID REFERENCES public.support_confirmation (id) ON DELETE SET NULL,
-  decision_status TEXT,
-  order_index INTEGER NOT NULL DEFAULT 0,
-  starts_at TIMESTAMPTZ,
-  ends_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_process_step_run_process
-  ON public.amendment_process_step_run (process_run_id);
-CREATE INDEX idx_amendment_process_step_run_branch
-  ON public.amendment_process_step_run (branch_id);
-CREATE INDEX idx_amendment_process_step_run_status
-  ON public.amendment_process_step_run (status);
-CREATE INDEX idx_amendment_process_step_run_event
-  ON public.amendment_process_step_run (event_id);
-
-ALTER TABLE public.amendment_process_step_run ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_process_step_run FOR ALL TO service_role USING (true);
-
-CREATE TABLE public.process_task (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
-  branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE CASCADE,
-  step_run_id UUID REFERENCES public.amendment_process_step_run (id) ON DELETE CASCADE,
-  task_type TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'open',
-  title TEXT,
-  description TEXT,
-  group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  target_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  event_id UUID REFERENCES public.event (id) ON DELETE SET NULL,
-  agenda_item_id UUID,
-  support_confirmation_id UUID REFERENCES public.support_confirmation (id) ON DELETE SET NULL,
-  due_at TIMESTAMPTZ,
-  resolved_at TIMESTAMPTZ,
-  metadata JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_process_task_process_run ON public.process_task (process_run_id);
-CREATE INDEX idx_process_task_group ON public.process_task (group_id);
-CREATE INDEX idx_process_task_status ON public.process_task (status);
-CREATE INDEX idx_process_task_type ON public.process_task (task_type);
-CREATE INDEX idx_process_task_due_at ON public.process_task (due_at);
-
-ALTER TABLE public.process_task ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.process_task FOR ALL TO service_role USING (true);
 
 CREATE TABLE public.amendment_group_decision (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  process_run_id UUID REFERENCES public.amendment_process_run (id) ON DELETE SET NULL,
-  process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
-  process_step_run_id UUID REFERENCES public.amendment_process_step_run (id) ON DELETE SET NULL,
-  status TEXT NOT NULL,
-  decided_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    process_run_id uuid,
+    process_branch_id uuid,
+    process_step_run_id uuid,
+    status text NOT NULL,
+    decided_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_group_decision_pkey PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX idx_amendment_group_decision_unique
-  ON public.amendment_group_decision (amendment_id, group_id);
-CREATE INDEX idx_amendment_group_decision_group
-  ON public.amendment_group_decision (group_id);
-CREATE INDEX idx_amendment_group_decision_process_run
-  ON public.amendment_group_decision (process_run_id);
-CREATE INDEX idx_amendment_group_decision_status
-  ON public.amendment_group_decision (status);
+CREATE TABLE public.amendment_path (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    process_run_id uuid,
+    title text,
+    workflow_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_path_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_path_segment (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    path_id uuid NOT NULL,
+    process_branch_id uuid,
+    process_step_run_id uuid,
+    group_id uuid,
+    event_id uuid,
+    order_index integer,
+    status text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_path_segment_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_process_branch (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    process_run_id uuid NOT NULL,
+    parent_branch_id uuid,
+    merged_into_branch_id uuid,
+    source_step_run_id uuid,
+    document_version_id uuid,
+    document_id uuid,
+    discussions jsonb,
+    title text,
+    status text DEFAULT 'pending_event'::text NOT NULL,
+    editing_mode text DEFAULT 'edit'::text NOT NULL,
+    resolution text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_process_branch_editing_mode_check CHECK ((editing_mode = ANY (ARRAY['edit'::text, 'view'::text, 'suggest_internal'::text, 'suggest_event'::text, 'vote_internal'::text, 'event_final_closing_vote'::text, 'passed'::text, 'rejected'::text]))),
+    CONSTRAINT amendment_process_branch_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_process_run (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    root_workflow_id uuid,
+    selected_source_group_id uuid,
+    selected_target_group_id uuid,
+    selected_target_workflow_id uuid,
+    active_branch_id uuid,
+    terminal_step_run_id uuid,
+    status text DEFAULT 'pending_event'::text NOT NULL,
+    evaluation_mode text,
+    evaluation_date timestamp with time zone,
+    evaluation_offset_months integer,
+    evaluation_offset_years integer,
+    implementation_status text,
+    created_by_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_process_run_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_process_step_run (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    process_run_id uuid NOT NULL,
+    branch_id uuid NOT NULL,
+    workflow_id uuid,
+    workflow_step_id uuid,
+    step_kind text DEFAULT 'group_vote'::text NOT NULL,
+    selection_mode text,
+    merge_strategy text,
+    status text DEFAULT 'pending_event'::text NOT NULL,
+    source_group_id uuid,
+    target_group_id uuid,
+    event_id uuid,
+    agenda_item_id uuid,
+    vote_id uuid,
+    support_confirmation_id uuid,
+    decision_status text,
+    order_index integer DEFAULT 0 NOT NULL,
+    starts_at timestamp with time zone,
+    ends_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_process_step_run_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_support_vote (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    vote integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_support_vote_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.amendment_vote_entry (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    vote integer,
+    is_indication boolean DEFAULT false NOT NULL,
+    indicated_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT amendment_vote_entry_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.process_task (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    process_run_id uuid NOT NULL,
+    branch_id uuid,
+    step_run_id uuid,
+    task_type text NOT NULL,
+    status text DEFAULT 'open'::text NOT NULL,
+    title text,
+    description text,
+    group_id uuid,
+    target_group_id uuid,
+    event_id uuid,
+    agenda_item_id uuid,
+    support_confirmation_id uuid,
+    due_at timestamp with time zone,
+    resolved_at timestamp with time zone,
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT process_task_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.support_confirmation (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    amendment_id uuid NOT NULL,
+    process_run_id uuid,
+    process_step_run_id uuid,
+    process_task_id uuid,
+    group_id uuid,
+    event_id uuid,
+    confirmed_by_id uuid NOT NULL,
+    status text,
+    confirmed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT support_confirmation_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.amendment_activity ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.amendment_city_design ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.amendment_collaborator ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.amendment_group_decision ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_group_decision FOR ALL TO service_role USING (true);
 
-ALTER TABLE public.amendment
-  ADD CONSTRAINT amendment_current_process_run_fk
-  FOREIGN KEY (current_process_run_id) REFERENCES public.amendment_process_run (id)
-  ON DELETE SET NULL;
+ALTER TABLE public.amendment_path ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.amendment_path
-  ADD CONSTRAINT amendment_path_process_run_fk
-  FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run (id)
-  ON DELETE SET NULL;
+ALTER TABLE public.amendment_path_segment ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.amendment
-  ADD CONSTRAINT amendment_origin_amendment_fk
-  FOREIGN KEY (origin_amendment_id) REFERENCES public.amendment (id)
-  ON DELETE SET NULL;
+ALTER TABLE public.amendment_process_branch ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.amendment_path_segment
-  ADD CONSTRAINT amendment_path_segment_process_branch_fk
-  FOREIGN KEY (process_branch_id) REFERENCES public.amendment_process_branch (id)
-  ON DELETE SET NULL;
+ALTER TABLE public.amendment_process_run ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.amendment_path_segment
-  ADD CONSTRAINT amendment_path_segment_process_step_run_fk
-  FOREIGN KEY (process_step_run_id) REFERENCES public.amendment_process_step_run (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.support_confirmation
-  ADD CONSTRAINT support_confirmation_process_run_fk
-  FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.support_confirmation
-  ADD CONSTRAINT support_confirmation_process_step_run_fk
-  FOREIGN KEY (process_step_run_id) REFERENCES public.amendment_process_step_run (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.support_confirmation
-  ADD CONSTRAINT support_confirmation_process_task_fk
-  FOREIGN KEY (process_task_id) REFERENCES public.process_task (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.amendment_process_run
-  ADD CONSTRAINT amendment_process_run_active_branch_fk
-  FOREIGN KEY (active_branch_id) REFERENCES public.amendment_process_branch (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.amendment_process_run
-  ADD CONSTRAINT amendment_process_run_terminal_step_fk
-  FOREIGN KEY (terminal_step_run_id) REFERENCES public.amendment_process_step_run (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.amendment_process_branch
-  ADD CONSTRAINT amendment_process_branch_source_step_fk
-  FOREIGN KEY (source_step_run_id) REFERENCES public.amendment_process_step_run (id)
-  ON DELETE SET NULL;
-
--- Amendment support vote table
-CREATE TABLE public.amendment_support_vote (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote INTEGER,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_support_vote_amendment ON public.amendment_support_vote (amendment_id);
-CREATE INDEX idx_amendment_support_vote_user ON public.amendment_support_vote (user_id);
+ALTER TABLE public.amendment_process_step_run ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.amendment_support_vote ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_support_vote FOR ALL TO service_role USING (true);
-
--- Amendment vote entry table (inline upvote/downvote)
-CREATE TABLE public.amendment_vote_entry (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote INTEGER,
-  is_indication BOOLEAN NOT NULL DEFAULT false,
-  indicated_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_amendment_vote_entry_amendment ON public.amendment_vote_entry (amendment_id);
-CREATE INDEX idx_amendment_vote_entry_user ON public.amendment_vote_entry (user_id);
 
 ALTER TABLE public.amendment_vote_entry ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.amendment_vote_entry FOR ALL TO service_role USING (true);
+
+ALTER TABLE public.process_task ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.support_confirmation ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX amendment_tutorial_run_id_idx ON public.amendment USING btree (tutorial_run_id);
+
+CREATE INDEX idx_amendment_activity_created ON public.amendment_activity USING btree (amendment_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_amendment_activity_severity_created ON public.amendment_activity USING btree (amendment_id, severity, created_at DESC, id DESC);
+
+CREATE INDEX idx_amendment_city_design_amendment ON public.amendment_city_design USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_city_design_created_by ON public.amendment_city_design USING btree (created_by_id);
+
+CREATE INDEX idx_amendment_city_design_updated_at ON public.amendment_city_design USING btree (updated_at DESC);
+
+CREATE INDEX idx_amendment_collaborator_amendment ON public.amendment_collaborator USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator USING btree (user_id);
+
+CREATE INDEX idx_amendment_created_by ON public.amendment USING btree (created_by_id);
+
+CREATE INDEX idx_amendment_event ON public.amendment USING btree (event_id);
+
+CREATE INDEX idx_amendment_group ON public.amendment USING btree (group_id);
+
+CREATE INDEX idx_amendment_group_decision_group ON public.amendment_group_decision USING btree (group_id);
+
+CREATE INDEX idx_amendment_group_decision_process_run ON public.amendment_group_decision USING btree (process_run_id);
+
+CREATE INDEX idx_amendment_group_decision_status ON public.amendment_group_decision USING btree (status);
+
+CREATE UNIQUE INDEX idx_amendment_group_decision_unique ON public.amendment_group_decision USING btree (amendment_id, group_id);
+
+CREATE INDEX idx_amendment_origin ON public.amendment USING btree (origin_amendment_id);
+
+CREATE INDEX idx_amendment_path_amendment ON public.amendment_path USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_path_segment_path ON public.amendment_path_segment USING btree (path_id);
+
+CREATE INDEX idx_amendment_process_branch_document ON public.amendment_process_branch USING btree (document_id);
+
+CREATE INDEX idx_amendment_process_branch_editing_mode ON public.amendment_process_branch USING btree (editing_mode);
+
+CREATE INDEX idx_amendment_process_branch_parent ON public.amendment_process_branch USING btree (parent_branch_id);
+
+CREATE INDEX idx_amendment_process_branch_run ON public.amendment_process_branch USING btree (process_run_id);
+
+CREATE INDEX idx_amendment_process_branch_status ON public.amendment_process_branch USING btree (status);
+
+CREATE INDEX idx_amendment_process_run_amendment ON public.amendment_process_run USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_process_run_status ON public.amendment_process_run USING btree (status);
+
+CREATE INDEX idx_amendment_process_step_run_branch ON public.amendment_process_step_run USING btree (branch_id);
+
+CREATE INDEX idx_amendment_process_step_run_event ON public.amendment_process_step_run USING btree (event_id);
+
+CREATE INDEX idx_amendment_process_step_run_process ON public.amendment_process_step_run USING btree (process_run_id);
+
+CREATE INDEX idx_amendment_process_step_run_status ON public.amendment_process_step_run USING btree (status);
+
+CREATE INDEX idx_amendment_support_vote_amendment ON public.amendment_support_vote USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_support_vote_user ON public.amendment_support_vote USING btree (user_id);
+
+CREATE INDEX idx_amendment_vote_entry_amendment ON public.amendment_vote_entry USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_vote_entry_user ON public.amendment_vote_entry USING btree (user_id);
+
+CREATE INDEX idx_process_task_due_at ON public.process_task USING btree (due_at);
+
+CREATE INDEX idx_process_task_group ON public.process_task USING btree (group_id);
+
+CREATE INDEX idx_process_task_process_run ON public.process_task USING btree (process_run_id);
+
+CREATE INDEX idx_process_task_status ON public.process_task USING btree (status);
+
+CREATE INDEX idx_process_task_type ON public.process_task USING btree (task_type);
+
+CREATE INDEX idx_support_confirmation_amendment ON public.support_confirmation USING btree (amendment_id);
+
+CREATE INDEX idx_support_confirmation_user ON public.support_confirmation USING btree (confirmed_by_id);
+
+CREATE INDEX idx_zero_amendment_clone_source_created_id ON public.amendment USING btree (clone_source_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_amendment_collaborator_amendment_created_id ON public.amendment_collaborator USING btree (amendment_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_amendment_collaborator_user_created_id ON public.amendment_collaborator USING btree (user_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_amendment_collaborator_user_status_amendment ON public.amendment_collaborator USING btree (user_id, status, amendment_id);
+
+CREATE INDEX idx_zero_amendment_creator_created_id ON public.amendment USING btree (created_by_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_amendment_group_created_id ON public.amendment USING btree (group_id, created_at DESC, id DESC);
+
+CREATE POLICY service_role_all ON public.amendment TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_activity TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_city_design TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_collaborator TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_group_decision TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_path TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_path_segment TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_process_branch TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_process_run TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_process_step_run TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_support_vote TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.amendment_vote_entry TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.process_task TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.support_confirmation TO service_role USING (true);

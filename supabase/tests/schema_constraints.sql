@@ -8,6 +8,7 @@
 -- @covers schema 20_0_amendment_vote.sql
 -- @covers schema 25_currency.sql
 -- @covers schema 26_voting_password.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

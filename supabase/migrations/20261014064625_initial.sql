@@ -1,5 +1,3 @@
-create extension if not exists "pg_cron" with schema "pg_catalog";
-
 create extension if not exists "pg_trgm" with schema "public";
 
 
@@ -554,6 +552,7 @@ alter table "public"."appearance_theme" enable row level security;
     "light_palette" jsonb not null,
     "dark_palette" jsonb not null,
     "fonts" jsonb not null,
+    "text_styles" jsonb not null default '[]'::jsonb,
     "created_by_id" uuid,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now(),
@@ -717,7 +716,13 @@ alter table "public"."canvas_library" enable row level security;
     "deadline" bigint,
     "created_at" bigint not null,
     "updated_at" bigint not null,
-    "resolves_id" uuid
+    "resolves_id" uuid,
+    "origin" text not null default 'human'::text,
+    "ai_mode" text,
+    "ai_status" text not null default 'ready'::text,
+    "ai_request_key" text,
+    "ai_sources" jsonb not null default '[]'::jsonb,
+    "ai_warnings" jsonb not null default '[]'::jsonb
       );
 
 
@@ -1343,6 +1348,53 @@ alter table "public"."event_participant" enable row level security;
 alter table "public"."event_participant_role" enable row level security;
 
 
+  create table "public"."event_presentation" (
+    "event_id" uuid not null,
+    "project_id" uuid not null,
+    "mode" text not null default 'studio'::text,
+    "frame_id" uuid,
+    "follow_agenda" boolean not null default true,
+    "results_visible" boolean not null default true,
+    "running" boolean not null default false,
+    "revision" integer not null default 0,
+    "cue_id" uuid,
+    "cue_at" bigint,
+    "controller_id" uuid,
+    "controller_device_id" uuid,
+    "lease_until" bigint,
+    "audio_device_id" uuid,
+    "audio" jsonb not null default '{}'::jsonb,
+    "updated_at" bigint not null
+      );
+
+
+alter table "public"."event_presentation" enable row level security;
+
+
+  create table "public"."event_presentation_device" (
+    "id" uuid not null,
+    "event_id" uuid not null,
+    "user_id" uuid,
+    "name" text not null,
+    "last_seen" bigint not null
+      );
+
+
+alter table "public"."event_presentation_device" enable row level security;
+
+
+  create table "public"."event_presentation_operation" (
+    "id" uuid not null,
+    "event_id" uuid not null,
+    "actor_id" uuid not null,
+    "input_hash" text not null,
+    "created_at" bigint not null
+      );
+
+
+alter table "public"."event_presentation_operation" enable row level security;
+
+
   create table "public"."file" (
     "id" uuid not null default gen_random_uuid(),
     "path" text,
@@ -1668,7 +1720,8 @@ alter table "public"."group_membership_origin" enable row level security;
     "role_id" uuid not null,
     "assigned_at" timestamp with time zone not null default now(),
     "assigned_by_id" uuid,
-    "created_at" timestamp with time zone not null default now()
+    "created_at" timestamp with time zone not null default now(),
+    "group_id" uuid not null
       );
 
 
@@ -2514,6 +2567,21 @@ alter table "public"."stripe_subscription" enable row level security;
 alter table "public"."studio_asset" enable row level security;
 
 
+  create table "public"."studio_command_receipt" (
+    "id" uuid not null,
+    "actor_id" uuid not null,
+    "project_id" uuid,
+    "command" text not null,
+    "input_hash" text not null,
+    "result" jsonb not null,
+    "created_at" bigint not null,
+    "expires_at" bigint
+      );
+
+
+alter table "public"."studio_command_receipt" enable row level security;
+
+
   create table "public"."studio_editor_action" (
     "id" uuid not null,
     "project_id" uuid not null,
@@ -2523,11 +2591,66 @@ alter table "public"."studio_asset" enable row level security;
     "input" jsonb not null,
     "result" jsonb,
     "created_at" bigint not null,
-    "claimed_by" uuid
+    "claimed_by" uuid,
+    "pending" boolean not null default true
       );
 
 
 alter table "public"."studio_editor_action" enable row level security;
+
+
+  create table "public"."studio_element_set" (
+    "id" uuid not null default gen_random_uuid(),
+    "owner_id" uuid,
+    "group_id" uuid,
+    "name" text not null,
+    "current_revision_id" uuid,
+    "archived_at" timestamp with time zone,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."studio_element_set" enable row level security;
+
+
+  create table "public"."studio_element_set_asset" (
+    "id" uuid not null default gen_random_uuid(),
+    "revision_id" uuid not null,
+    "source_asset_id" uuid not null,
+    "name" text not null,
+    "mime_type" text not null,
+    "byte_size" bigint not null,
+    "storage_path" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."studio_element_set_asset" enable row level security;
+
+
+  create table "public"."studio_element_set_revision" (
+    "id" uuid not null default gen_random_uuid(),
+    "set_id" uuid not null,
+    "version" integer not null,
+    "snapshot" jsonb not null,
+    "width" double precision not null,
+    "height" double precision not null,
+    "created_by_id" uuid,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."studio_element_set_revision" enable row level security;
+
+
+  create table "public"."studio_event_template" (
+    "kind" text not null,
+    "document" jsonb not null
+      );
+
+
+alter table "public"."studio_event_template" enable row level security;
 
 
   create table "public"."studio_export" (
@@ -2550,6 +2673,24 @@ alter table "public"."studio_editor_action" enable row level security;
 
 
 alter table "public"."studio_export" enable row level security;
+
+
+  create table "public"."studio_live_source" (
+    "source_type" text not null,
+    "source_id" uuid not null,
+    "event_id" uuid,
+    "agenda_item_id" uuid,
+    "vote_id" uuid,
+    "election_id" uuid,
+    "amendment_id" uuid,
+    "user_id" uuid,
+    "group_id" uuid,
+    "payload" jsonb not null,
+    "updated_at" bigint not null
+      );
+
+
+alter table "public"."studio_live_source" enable row level security;
 
 
   create table "public"."studio_operation" (
@@ -2576,11 +2717,38 @@ alter table "public"."studio_operation" enable row level security;
     "version" integer not null default 1,
     "created_at" bigint not null,
     "updated_at" bigint not null,
-    "document_schema_version" integer not null default 3
+    "document_schema_version" integer not null default 6,
+    "visibility" text not null default 'private'::text,
+    "source_references" jsonb not null default '[]'::jsonb,
+    "event_id" uuid
       );
 
 
 alter table "public"."studio_project" enable row level security;
+
+
+  create table "public"."studio_project_collaborator" (
+    "id" uuid not null,
+    "project_id" uuid not null,
+    "user_id" uuid not null,
+    "invited_by_id" uuid not null,
+    "status" text not null,
+    "created_at" bigint not null,
+    "updated_at" bigint not null
+      );
+
+
+alter table "public"."studio_project_collaborator" enable row level security;
+
+
+  create table "public"."studio_published_media_archive" (
+    "id" uuid not null,
+    "storage_path" text not null,
+    "file_name" text not null
+      );
+
+
+alter table "public"."studio_published_media_archive" enable row level security;
 
 
   create table "public"."studio_reset_storage_manifest" (
@@ -2615,6 +2783,16 @@ alter table "public"."studio_revision" enable row level security;
 
 
 alter table "public"."studio_state" enable row level security;
+
+
+  create table "public"."studio_whiteboard_storage_manifest" (
+    "bucket_id" text not null default 'studio'::text,
+    "storage_path" text not null,
+    "removed_at" bigint
+      );
+
+
+alter table "public"."studio_whiteboard_storage_manifest" enable row level security;
 
 
   create table "public"."subscriber" (
@@ -3038,6 +3216,8 @@ CREATE UNIQUE INDEX canvas_history_project_id_revision_key ON public.canvas_hist
 
 CREATE UNIQUE INDEX canvas_library_pkey ON public.canvas_library USING btree (id);
 
+CREATE UNIQUE INDEX canvas_proposal_ai_request_key ON public.canvas_proposal USING btree (ai_request_key) WHERE (ai_request_key IS NOT NULL);
+
 CREATE UNIQUE INDEX canvas_proposal_pkey ON public.canvas_proposal USING btree (id);
 
 CREATE INDEX canvas_proposal_project ON public.canvas_proposal USING btree (project_id, created_at);
@@ -3122,6 +3302,14 @@ CREATE UNIQUE INDEX event_participant_role_pkey ON public.event_participant_role
 
 CREATE UNIQUE INDEX event_pkey ON public.event USING btree (id);
 
+CREATE UNIQUE INDEX event_presentation_device_pkey ON public.event_presentation_device USING btree (id);
+
+CREATE UNIQUE INDEX event_presentation_operation_pkey ON public.event_presentation_operation USING btree (id);
+
+CREATE UNIQUE INDEX event_presentation_pkey ON public.event_presentation USING btree (event_id);
+
+CREATE UNIQUE INDEX event_presentation_project_id_key ON public.event_presentation USING btree (project_id);
+
 CREATE INDEX event_tutorial_run_id_idx ON public.event USING btree (tutorial_run_id);
 
 CREATE UNIQUE INDEX file_pkey ON public.file USING btree (id);
@@ -3183,6 +3371,8 @@ CREATE UNIQUE INDEX group_membership_pkey ON public.group_membership USING btree
 CREATE UNIQUE INDEX group_membership_role_group_membership_id_role_id_key ON public.group_membership_role USING btree (group_membership_id, role_id);
 
 CREATE UNIQUE INDEX group_membership_role_pkey ON public.group_membership_role USING btree (id);
+
+CREATE INDEX group_membership_role_studio_rights ON public.group_membership_role USING btree (group_id, role_id);
 
 CREATE UNIQUE INDEX group_membership_rule_connection_id_key ON public.group_membership_rule USING btree (connection_id);
 
@@ -3422,15 +3612,23 @@ CREATE INDEX idx_conversation_assistant_for_user ON public.conversation USING bt
 
 CREATE INDEX idx_conversation_event ON public.conversation USING btree (event_id);
 
+CREATE INDEX idx_conversation_event_id ON public.conversation USING btree (event_id, id);
+
 CREATE INDEX idx_conversation_group ON public.conversation USING btree (group_id);
+
+CREATE INDEX idx_conversation_group_id ON public.conversation USING btree (group_id, id);
 
 CREATE INDEX idx_conversation_last_message ON public.conversation USING btree (last_message_at DESC, id DESC);
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant USING btree (conversation_id);
 
+CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant USING btree (conversation_id, id);
+
 CREATE UNIQUE INDEX idx_conversation_participant_unique_membership ON public.conversation_participant USING btree (conversation_id, user_id);
 
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant USING btree (user_id);
+
+CREATE INDEX idx_conversation_participant_user_id ON public.conversation_participant USING btree (user_id, id);
 
 CREATE INDEX idx_conversation_participant_user_left ON public.conversation_participant USING btree (user_id, left_at, conversation_id);
 
@@ -4248,9 +4446,35 @@ CREATE UNIQUE INDEX studio_asset_storage_path_key ON public.studio_asset USING b
 
 CREATE INDEX studio_asset_workspace ON public.studio_asset USING btree (workspace_id) WHERE (workspace_id IS NOT NULL);
 
+CREATE INDEX studio_command_receipt_actor ON public.studio_command_receipt USING btree (actor_id, created_at);
+
+CREATE INDEX studio_command_receipt_expiry ON public.studio_command_receipt USING btree (expires_at) WHERE (expires_at IS NOT NULL);
+
+CREATE UNIQUE INDEX studio_command_receipt_pkey ON public.studio_command_receipt USING btree (id);
+
+CREATE INDEX studio_editor_action_pending_actor ON public.studio_editor_action USING btree (actor_id, project_id, created_at) WHERE pending;
+
 CREATE UNIQUE INDEX studio_editor_action_pkey ON public.studio_editor_action USING btree (id);
 
 CREATE UNIQUE INDEX studio_editor_action_request_id_key ON public.studio_editor_action USING btree (request_id);
+
+CREATE UNIQUE INDEX studio_element_set_asset_pkey ON public.studio_element_set_asset USING btree (id);
+
+CREATE UNIQUE INDEX studio_element_set_asset_revision_id_source_asset_id_key ON public.studio_element_set_asset USING btree (revision_id, source_asset_id);
+
+CREATE UNIQUE INDEX studio_element_set_asset_storage_path_key ON public.studio_element_set_asset USING btree (storage_path);
+
+CREATE INDEX studio_element_set_group_active ON public.studio_element_set USING btree (group_id, updated_at DESC) WHERE (archived_at IS NULL);
+
+CREATE INDEX studio_element_set_owner_active ON public.studio_element_set USING btree (owner_id, updated_at DESC) WHERE (archived_at IS NULL);
+
+CREATE UNIQUE INDEX studio_element_set_pkey ON public.studio_element_set USING btree (id);
+
+CREATE UNIQUE INDEX studio_element_set_revision_pkey ON public.studio_element_set_revision USING btree (id);
+
+CREATE UNIQUE INDEX studio_element_set_revision_set_id_version_key ON public.studio_element_set_revision USING btree (set_id, version);
+
+CREATE UNIQUE INDEX studio_event_template_pkey ON public.studio_event_template USING btree (kind);
 
 CREATE UNIQUE INDEX studio_export_pkey ON public.studio_export USING btree (id);
 
@@ -4258,9 +4482,21 @@ CREATE INDEX studio_export_project ON public.studio_export USING btree (project_
 
 CREATE INDEX studio_export_queue ON public.studio_export USING btree (status, created_at);
 
+CREATE INDEX studio_live_source_event ON public.studio_live_source USING btree (event_id);
+
+CREATE UNIQUE INDEX studio_live_source_pkey ON public.studio_live_source USING btree (source_type, source_id);
+
 CREATE UNIQUE INDEX studio_operation_pkey ON public.studio_operation USING btree (id);
 
 CREATE INDEX studio_operation_project ON public.studio_operation USING btree (project_id, created_at);
+
+CREATE UNIQUE INDEX studio_project_collaborator_pkey ON public.studio_project_collaborator USING btree (id);
+
+CREATE UNIQUE INDEX studio_project_collaborator_project_id_user_id_key ON public.studio_project_collaborator USING btree (project_id, user_id);
+
+CREATE INDEX studio_project_collaborator_user_status ON public.studio_project_collaborator USING btree (user_id, status);
+
+CREATE UNIQUE INDEX studio_project_event_id_key ON public.studio_project USING btree (event_id);
 
 CREATE INDEX studio_project_group ON public.studio_project USING btree (group_id, updated_at);
 
@@ -4268,13 +4504,17 @@ CREATE INDEX studio_project_owner ON public.studio_project USING btree (owner_id
 
 CREATE UNIQUE INDEX studio_project_pkey ON public.studio_project USING btree (id);
 
-CREATE INDEX studio_project_v3_group ON public.studio_project USING btree (document_schema_version, group_id, updated_at DESC);
+CREATE INDEX studio_project_v4_group ON public.studio_project USING btree (document_schema_version, group_id, updated_at DESC);
+
+CREATE UNIQUE INDEX studio_published_media_archive_pkey ON public.studio_published_media_archive USING btree (id);
 
 CREATE UNIQUE INDEX studio_reset_storage_manifest_pkey ON public.studio_reset_storage_manifest USING btree (bucket_id, storage_path);
 
 CREATE UNIQUE INDEX studio_revision_pkey ON public.studio_revision USING btree (id);
 
 CREATE UNIQUE INDEX studio_state_pkey ON public.studio_state USING btree (project_id);
+
+CREATE UNIQUE INDEX studio_whiteboard_storage_manifest_pkey ON public.studio_whiteboard_storage_manifest USING btree (bucket_id, storage_path);
 
 CREATE UNIQUE INDEX subscriber_pkey ON public.subscriber USING btree (id);
 
@@ -4468,6 +4708,12 @@ alter table "public"."event_participant" add constraint "event_participant_pkey"
 
 alter table "public"."event_participant_role" add constraint "event_participant_role_pkey" PRIMARY KEY using index "event_participant_role_pkey";
 
+alter table "public"."event_presentation" add constraint "event_presentation_pkey" PRIMARY KEY using index "event_presentation_pkey";
+
+alter table "public"."event_presentation_device" add constraint "event_presentation_device_pkey" PRIMARY KEY using index "event_presentation_device_pkey";
+
+alter table "public"."event_presentation_operation" add constraint "event_presentation_operation_pkey" PRIMARY KEY using index "event_presentation_operation_pkey";
+
 alter table "public"."file" add constraint "file_pkey" PRIMARY KEY using index "file_pkey";
 
 alter table "public"."final_candidate_selection" add constraint "final_candidate_selection_pkey" PRIMARY KEY using index "final_candidate_selection_pkey";
@@ -4610,19 +4856,37 @@ alter table "public"."stripe_subscription" add constraint "stripe_subscription_p
 
 alter table "public"."studio_asset" add constraint "studio_asset_pkey" PRIMARY KEY using index "studio_asset_pkey";
 
+alter table "public"."studio_command_receipt" add constraint "studio_command_receipt_pkey" PRIMARY KEY using index "studio_command_receipt_pkey";
+
 alter table "public"."studio_editor_action" add constraint "studio_editor_action_pkey" PRIMARY KEY using index "studio_editor_action_pkey";
 
+alter table "public"."studio_element_set" add constraint "studio_element_set_pkey" PRIMARY KEY using index "studio_element_set_pkey";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_pkey" PRIMARY KEY using index "studio_element_set_asset_pkey";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_pkey" PRIMARY KEY using index "studio_element_set_revision_pkey";
+
+alter table "public"."studio_event_template" add constraint "studio_event_template_pkey" PRIMARY KEY using index "studio_event_template_pkey";
+
 alter table "public"."studio_export" add constraint "studio_export_pkey" PRIMARY KEY using index "studio_export_pkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_pkey" PRIMARY KEY using index "studio_live_source_pkey";
 
 alter table "public"."studio_operation" add constraint "studio_operation_pkey" PRIMARY KEY using index "studio_operation_pkey";
 
 alter table "public"."studio_project" add constraint "studio_project_pkey" PRIMARY KEY using index "studio_project_pkey";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_pkey" PRIMARY KEY using index "studio_project_collaborator_pkey";
+
+alter table "public"."studio_published_media_archive" add constraint "studio_published_media_archive_pkey" PRIMARY KEY using index "studio_published_media_archive_pkey";
 
 alter table "public"."studio_reset_storage_manifest" add constraint "studio_reset_storage_manifest_pkey" PRIMARY KEY using index "studio_reset_storage_manifest_pkey";
 
 alter table "public"."studio_revision" add constraint "studio_revision_pkey" PRIMARY KEY using index "studio_revision_pkey";
 
 alter table "public"."studio_state" add constraint "studio_state_pkey" PRIMARY KEY using index "studio_state_pkey";
+
+alter table "public"."studio_whiteboard_storage_manifest" add constraint "studio_whiteboard_storage_manifest_pkey" PRIMARY KEY using index "studio_whiteboard_storage_manifest_pkey";
 
 alter table "public"."subscriber" add constraint "subscriber_pkey" PRIMARY KEY using index "subscriber_pkey";
 
@@ -5082,11 +5346,11 @@ alter table "public"."appearance_theme" validate constraint "appearance_theme_gr
 
 alter table "public"."appearance_theme" add constraint "appearance_theme_group_slug_unique" UNIQUE using index "appearance_theme_group_slug_unique";
 
-alter table "public"."appearance_theme" add constraint "appearance_theme_kind_check" CHECK ((kind = ANY (ARRAY['builtin'::text, 'group'::text]))) not valid;
+alter table "public"."appearance_theme" add constraint "appearance_theme_kind_check" CHECK ((kind = ANY (ARRAY['builtin'::text, 'personal'::text, 'group'::text]))) not valid;
 
 alter table "public"."appearance_theme" validate constraint "appearance_theme_kind_check";
 
-alter table "public"."appearance_theme" add constraint "appearance_theme_scope_check" CHECK ((((kind = 'builtin'::text) AND (group_id IS NULL)) OR ((kind = 'group'::text) AND (group_id IS NOT NULL)))) not valid;
+alter table "public"."appearance_theme" add constraint "appearance_theme_scope_check" CHECK ((((kind = 'builtin'::text) AND (group_id IS NULL)) OR ((kind = 'personal'::text) AND (group_id IS NULL) AND (created_by_id IS NOT NULL)) OR ((kind = 'group'::text) AND (group_id IS NOT NULL)))) not valid;
 
 alter table "public"."appearance_theme" validate constraint "appearance_theme_scope_check";
 
@@ -5200,6 +5464,14 @@ alter table "public"."canvas_library" add constraint "canvas_library_project_id_
 
 alter table "public"."canvas_library" validate constraint "canvas_library_project_id_fkey";
 
+alter table "public"."canvas_proposal" add constraint "canvas_proposal_ai_mode_check" CHECK ((ai_mode = ANY (ARRAY['template'::text, 'free'::text]))) not valid;
+
+alter table "public"."canvas_proposal" validate constraint "canvas_proposal_ai_mode_check";
+
+alter table "public"."canvas_proposal" add constraint "canvas_proposal_ai_status_check" CHECK ((ai_status = ANY (ARRAY['generating'::text, 'ready'::text]))) not valid;
+
+alter table "public"."canvas_proposal" validate constraint "canvas_proposal_ai_status_check";
+
 alter table "public"."canvas_proposal" add constraint "canvas_proposal_application_check" CHECK ((application = ANY (ARRAY['pending'::text, 'applied'::text, 'conflict'::text, 'not_applicable'::text, 'superseded'::text]))) not valid;
 
 alter table "public"."canvas_proposal" validate constraint "canvas_proposal_application_check";
@@ -5207,6 +5479,10 @@ alter table "public"."canvas_proposal" validate constraint "canvas_proposal_appl
 alter table "public"."canvas_proposal" add constraint "canvas_proposal_decision_check" CHECK ((decision = ANY (ARRAY['accepted'::text, 'rejected'::text]))) not valid;
 
 alter table "public"."canvas_proposal" validate constraint "canvas_proposal_decision_check";
+
+alter table "public"."canvas_proposal" add constraint "canvas_proposal_origin_check" CHECK ((origin = ANY (ARRAY['human'::text, 'ai'::text]))) not valid;
+
+alter table "public"."canvas_proposal" validate constraint "canvas_proposal_origin_check";
 
 alter table "public"."canvas_proposal" add constraint "canvas_proposal_owner_id_fkey" FOREIGN KEY (owner_id) REFERENCES public."user"(id) not valid;
 
@@ -5659,6 +5935,44 @@ alter table "public"."event_participant_role" add constraint "event_participant_
 alter table "public"."event_participant_role" add constraint "event_participant_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
 
 alter table "public"."event_participant_role" validate constraint "event_participant_role_role_id_fkey";
+
+alter table "public"."event_presentation" add constraint "event_presentation_controller_id_fkey" FOREIGN KEY (controller_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."event_presentation" validate constraint "event_presentation_controller_id_fkey";
+
+alter table "public"."event_presentation" add constraint "event_presentation_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation" validate constraint "event_presentation_event_id_fkey";
+
+alter table "public"."event_presentation" add constraint "event_presentation_mode_check" CHECK ((mode = ANY (ARRAY['studio'::text, 'agenda'::text, 'speakers'::text]))) not valid;
+
+alter table "public"."event_presentation" validate constraint "event_presentation_mode_check";
+
+alter table "public"."event_presentation" add constraint "event_presentation_project_id_fkey" FOREIGN KEY (project_id) REFERENCES public.studio_project(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation" validate constraint "event_presentation_project_id_fkey";
+
+alter table "public"."event_presentation" add constraint "event_presentation_project_id_key" UNIQUE using index "event_presentation_project_id_key";
+
+alter table "public"."event_presentation_device" add constraint "event_presentation_device_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation_device" validate constraint "event_presentation_device_event_id_fkey";
+
+alter table "public"."event_presentation_device" add constraint "event_presentation_device_name_check" CHECK (((length(name) >= 1) AND (length(name) <= 100))) not valid;
+
+alter table "public"."event_presentation_device" validate constraint "event_presentation_device_name_check";
+
+alter table "public"."event_presentation_device" add constraint "event_presentation_device_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation_device" validate constraint "event_presentation_device_user_id_fkey";
+
+alter table "public"."event_presentation_operation" add constraint "event_presentation_operation_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation_operation" validate constraint "event_presentation_operation_actor_id_fkey";
+
+alter table "public"."event_presentation_operation" add constraint "event_presentation_operation_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_presentation_operation" validate constraint "event_presentation_operation_event_id_fkey";
 
 alter table "public"."final_candidate_selection" add constraint "final_candidate_selection_candidate_id_fkey" FOREIGN KEY (candidate_id) REFERENCES public.election_candidate(id) ON DELETE CASCADE not valid;
 
@@ -6700,6 +7014,10 @@ alter table "public"."studio_asset" add constraint "studio_asset_workspace_id_fk
 
 alter table "public"."studio_asset" validate constraint "studio_asset_workspace_id_fkey";
 
+alter table "public"."studio_command_receipt" add constraint "studio_command_receipt_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_command_receipt" validate constraint "studio_command_receipt_actor_id_fkey";
+
 alter table "public"."studio_editor_action" add constraint "studio_editor_action_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."studio_editor_action" validate constraint "studio_editor_action_actor_id_fkey";
@@ -6709,6 +7027,64 @@ alter table "public"."studio_editor_action" add constraint "studio_editor_action
 alter table "public"."studio_editor_action" validate constraint "studio_editor_action_project_id_fkey";
 
 alter table "public"."studio_editor_action" add constraint "studio_editor_action_request_id_key" UNIQUE using index "studio_editor_action_request_id_key";
+
+alter table "public"."studio_element_set" add constraint "studio_element_set_current_revision_fkey" FOREIGN KEY (current_revision_id) REFERENCES public.studio_element_set_revision(id) ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED not valid;
+
+alter table "public"."studio_element_set" validate constraint "studio_element_set_current_revision_fkey";
+
+alter table "public"."studio_element_set" add constraint "studio_element_set_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_element_set" validate constraint "studio_element_set_group_id_fkey";
+
+alter table "public"."studio_element_set" add constraint "studio_element_set_name_check" CHECK (((char_length(name) >= 1) AND (char_length(name) <= 120))) not valid;
+
+alter table "public"."studio_element_set" validate constraint "studio_element_set_name_check";
+
+alter table "public"."studio_element_set" add constraint "studio_element_set_owner_id_fkey" FOREIGN KEY (owner_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_element_set" validate constraint "studio_element_set_owner_id_fkey";
+
+alter table "public"."studio_element_set" add constraint "studio_element_set_scope_check" CHECK ((((owner_id IS NOT NULL) AND (group_id IS NULL)) OR ((owner_id IS NULL) AND (group_id IS NOT NULL)))) not valid;
+
+alter table "public"."studio_element_set" validate constraint "studio_element_set_scope_check";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_byte_size_check" CHECK ((byte_size > 0)) not valid;
+
+alter table "public"."studio_element_set_asset" validate constraint "studio_element_set_asset_byte_size_check";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_mime_type_check" CHECK ((mime_type = ANY (ARRAY['image/png'::text, 'image/jpeg'::text, 'image/webp'::text, 'video/mp4'::text]))) not valid;
+
+alter table "public"."studio_element_set_asset" validate constraint "studio_element_set_asset_mime_type_check";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_revision_id_fkey" FOREIGN KEY (revision_id) REFERENCES public.studio_element_set_revision(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_element_set_asset" validate constraint "studio_element_set_asset_revision_id_fkey";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_revision_id_source_asset_id_key" UNIQUE using index "studio_element_set_asset_revision_id_source_asset_id_key";
+
+alter table "public"."studio_element_set_asset" add constraint "studio_element_set_asset_storage_path_key" UNIQUE using index "studio_element_set_asset_storage_path_key";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."studio_element_set_revision" validate constraint "studio_element_set_revision_created_by_id_fkey";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_height_check" CHECK ((height > (0)::double precision)) not valid;
+
+alter table "public"."studio_element_set_revision" validate constraint "studio_element_set_revision_height_check";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_set_id_fkey" FOREIGN KEY (set_id) REFERENCES public.studio_element_set(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_element_set_revision" validate constraint "studio_element_set_revision_set_id_fkey";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_set_id_version_key" UNIQUE using index "studio_element_set_revision_set_id_version_key";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_version_check" CHECK ((version > 0)) not valid;
+
+alter table "public"."studio_element_set_revision" validate constraint "studio_element_set_revision_version_check";
+
+alter table "public"."studio_element_set_revision" add constraint "studio_element_set_revision_width_check" CHECK ((width > (0)::double precision)) not valid;
+
+alter table "public"."studio_element_set_revision" validate constraint "studio_element_set_revision_width_check";
 
 alter table "public"."studio_export" add constraint "studio_export_format_check" CHECK ((format = ANY (ARRAY['png'::text, 'pdf'::text, 'pptx'::text, 'canva'::text, 'mp4'::text, 'xlsx'::text, 'zip'::text]))) not valid;
 
@@ -6734,6 +7110,38 @@ alter table "public"."studio_export" add constraint "studio_export_status_check"
 
 alter table "public"."studio_export" validate constraint "studio_export_status_check";
 
+alter table "public"."studio_live_source" add constraint "studio_live_source_agenda_item_id_fkey" FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_agenda_item_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_amendment_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_election_id_fkey" FOREIGN KEY (election_id) REFERENCES public.election(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_election_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_event_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_group_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_source_type_check" CHECK ((source_type = ANY (ARRAY['event'::text, 'agenda_item'::text, 'vote'::text, 'election'::text, 'amendment'::text, 'user'::text, 'group'::text]))) not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_source_type_check";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_user_id_fkey";
+
+alter table "public"."studio_live_source" add constraint "studio_live_source_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_live_source" validate constraint "studio_live_source_vote_id_fkey";
+
 alter table "public"."studio_operation" add constraint "studio_operation_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) not valid;
 
 alter table "public"."studio_operation" validate constraint "studio_operation_actor_id_fkey";
@@ -6742,15 +7150,21 @@ alter table "public"."studio_operation" add constraint "studio_operation_project
 
 alter table "public"."studio_operation" validate constraint "studio_operation_project_id_fkey";
 
-alter table "public"."studio_project" add constraint "studio_project_document_schema_version_check" CHECK ((document_schema_version = ANY (ARRAY[2, 3]))) not valid;
+alter table "public"."studio_project" add constraint "studio_project_document_schema_version_check" CHECK ((document_schema_version = ANY (ARRAY[2, 3, 4, 5, 6]))) not valid;
 
 alter table "public"."studio_project" validate constraint "studio_project_document_schema_version_check";
+
+alter table "public"."studio_project" add constraint "studio_project_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_project" validate constraint "studio_project_event_id_fkey";
+
+alter table "public"."studio_project" add constraint "studio_project_event_id_key" UNIQUE using index "studio_project_event_id_key";
 
 alter table "public"."studio_project" add constraint "studio_project_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."studio_project" validate constraint "studio_project_group_id_fkey";
 
-alter table "public"."studio_project" add constraint "studio_project_kind_check" CHECK ((kind = ANY (ARRAY['single'::text, 'event'::text, 'carousel'::text, 'story'::text, 'video'::text, 'campaign'::text, 'whiteboard'::text]))) not valid;
+alter table "public"."studio_project" add constraint "studio_project_kind_check" CHECK ((kind = ANY (ARRAY['single'::text, 'event'::text, 'carousel'::text, 'story'::text, 'video'::text, 'campaign'::text, 'presentation'::text]))) not valid;
 
 alter table "public"."studio_project" validate constraint "studio_project_kind_check";
 
@@ -6758,9 +7172,35 @@ alter table "public"."studio_project" add constraint "studio_project_owner_id_fk
 
 alter table "public"."studio_project" validate constraint "studio_project_owner_id_fkey";
 
+alter table "public"."studio_project" add constraint "studio_project_source_references_check" CHECK ((jsonb_typeof(source_references) = 'array'::text)) not valid;
+
+alter table "public"."studio_project" validate constraint "studio_project_source_references_check";
+
 alter table "public"."studio_project" add constraint "studio_project_title_check" CHECK (((length(title) >= 1) AND (length(title) <= 200))) not valid;
 
 alter table "public"."studio_project" validate constraint "studio_project_title_check";
+
+alter table "public"."studio_project" add constraint "studio_project_visibility_check" CHECK ((visibility = ANY (ARRAY['public'::text, 'authenticated'::text, 'private'::text]))) not valid;
+
+alter table "public"."studio_project" validate constraint "studio_project_visibility_check";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_invited_by_id_fkey" FOREIGN KEY (invited_by_id) REFERENCES public."user"(id) not valid;
+
+alter table "public"."studio_project_collaborator" validate constraint "studio_project_collaborator_invited_by_id_fkey";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_project_id_fkey" FOREIGN KEY (project_id) REFERENCES public.studio_project(id) ON DELETE CASCADE not valid;
+
+alter table "public"."studio_project_collaborator" validate constraint "studio_project_collaborator_project_id_fkey";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_project_id_user_id_key" UNIQUE using index "studio_project_collaborator_project_id_user_id_key";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_status_check" CHECK ((status = ANY (ARRAY['invited'::text, 'active'::text, 'declined'::text]))) not valid;
+
+alter table "public"."studio_project_collaborator" validate constraint "studio_project_collaborator_status_check";
+
+alter table "public"."studio_project_collaborator" add constraint "studio_project_collaborator_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) not valid;
+
+alter table "public"."studio_project_collaborator" validate constraint "studio_project_collaborator_user_id_fkey";
 
 alter table "public"."studio_revision" add constraint "studio_revision_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) not valid;
 
@@ -7010,20 +7450,20 @@ CREATE OR REPLACE FUNCTION public.canvas_capability(actor uuid, pid uuid, cap te
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- SELECT EXISTS(SELECT 1 FROM studio_project p WHERE p.id=pid AND studio_access(actor,pid,false) AND
+ SELECT EXISTS(SELECT 1 FROM public.studio_project p WHERE p.id=pid
+ AND public.studio_collaboration_access(actor,pid) AND
  CASE WHEN cap='read' THEN true
- WHEN cap='edit' THEN studio_access(actor,pid,true)
- WHEN cap='manage' THEN canvas_manage(actor,pid)
- WHEN cap IN ('suggest','comment','vote') THEN
-  (p.group_id IS NOT NULL OR cap='comment') AND NOT EXISTS(
-   SELECT 1 FROM group_membership m
-   JOIN group_membership_role mr ON mr.group_membership_id=m.id
-   JOIN role r ON r.id=mr.role_id AND r.group_id=p.group_id
-   JOIN canvas_role_capability c ON c.role_id=r.id
+ WHEN cap='edit' THEN public.studio_access(actor,pid,true)
+ WHEN cap='manage' THEN public.canvas_manage(actor,pid)
+ WHEN cap IN ('suggest','comment','vote') AND p.group_id IS NULL THEN true
+ WHEN cap IN ('suggest','comment','vote') THEN NOT EXISTS(
+   SELECT 1 FROM public.group_membership m
+   JOIN public.group_membership_role mr ON mr.group_membership_id=m.id
+   JOIN public.role r ON r.id=mr.role_id AND r.group_id=p.group_id
+   JOIN public.canvas_role_capability c ON c.role_id=r.id
    WHERE m.group_id=p.group_id AND m.user_id=actor AND m.status IN ('active','member','admin')
    AND c.capability=cap AND NOT c.allowed
-  )
- ELSE false END);
+ ) ELSE false END);
 $function$
 ;
 
@@ -7045,27 +7485,21 @@ CREATE OR REPLACE FUNCTION public.canvas_manage(actor uuid, pid uuid)
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- SELECT EXISTS(SELECT 1 FROM studio_project p WHERE p.id=pid AND
- ((p.group_id IS NULL AND p.owner_id=actor) OR EXISTS(SELECT 1 FROM "group" g WHERE g.id=p.group_id AND g.owner_id=actor)
- OR EXISTS(SELECT 1 FROM group_membership m WHERE m.group_id=p.group_id AND m.user_id=actor AND m.status IN ('active','member','admin') AND
- (m.status='admin' OR EXISTS(SELECT 1 FROM group_membership_role mr JOIN action_right a ON a.role_id=mr.role_id WHERE mr.group_membership_id=m.id AND a.group_id=p.group_id AND a.action='manage' AND a.resource IN ('groups','communicationStudio'))))));
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
+ ELSE canvas_manage_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid),false);
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.canvas_presence_access(topic text)
+CREATE OR REPLACE FUNCTION public.canvas_manage_without_events(actor uuid, pid uuid)
  RETURNS boolean
- LANGUAGE plpgsql
+ LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-DECLARE parts text[];
-BEGIN
- IF topic !~ '^canvas-user:[0-9a-f-]{36}:(main|[0-9a-f-]{36}):[0-9a-f-]{36}$' THEN RETURN false; END IF;
- parts:=string_to_array(topic,':');
- IF parts[4]::uuid IS DISTINCT FROM auth.uid() OR NOT studio_access(auth.uid(),parts[2]::uuid,false) THEN RETURN false; END IF;
- RETURN parts[3]='main' OR canvas_proposal_access(auth.uid(),parts[3]::uuid);
-EXCEPTION WHEN invalid_text_representation THEN RETURN false;
-END $function$
+ SELECT EXISTS(SELECT 1 FROM public.studio_project p WHERE p.id=pid AND
+   ((p.group_id IS NULL AND p.owner_id=actor) OR
+    (p.group_id IS NOT NULL AND (p.owner_id=actor OR public.studio_group_access(actor,p.group_id,true)))));
+$function$
 ;
 
 CREATE OR REPLACE FUNCTION public.canvas_proposal_access(actor uuid, wid uuid)
@@ -7074,8 +7508,11 @@ CREATE OR REPLACE FUNCTION public.canvas_proposal_access(actor uuid, wid uuid)
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- SELECT EXISTS(SELECT 1 FROM canvas_proposal w WHERE w.id=wid AND studio_access(actor,w.project_id,false) AND
- (w.checksum IS NOT NULL OR w.owner_id=actor OR actor=ANY(w.shared_ids)));
+ SELECT EXISTS(SELECT 1 FROM public.canvas_proposal w
+ JOIN public.studio_project p ON p.id=w.project_id
+ WHERE w.id=wid AND public.studio_collaboration_access(actor,w.project_id)
+ AND (w.checksum IS NOT NULL OR w.owner_id=actor OR actor=ANY(w.shared_ids)
+   OR (w.origin='ai' AND p.group_id IS NULL AND public.canvas_manage(actor,w.project_id))));
 $function$
 ;
 
@@ -7255,6 +7692,21 @@ BEGIN
   IF NEW.status <> 'active' THEN
     DELETE FROM public.search_document
     WHERE id = public.search_document_id('dataset', NEW.id);
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.delete_message_ai_trace()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'ai_diagnostics'
+AS $function$
+BEGIN
+  IF NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
+    DELETE FROM ai_diagnostics.ai_trace WHERE origin_message_id=NEW.id OR response_message_id=NEW.id;
   END IF;
   RETURN NEW;
 END;
@@ -7553,6 +8005,36 @@ BEGIN
 
   RETURN NEW;
 END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.event_studio_can_manage(actor uuid, eid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT actor IS NOT NULL AND event_studio_can_read(actor,eid) AND EXISTS(SELECT 1 FROM event e WHERE e.id=eid AND (e.creator_id=actor
+ OR EXISTS(SELECT 1 FROM event_participant ep JOIN event_participant_role pr ON pr.event_participant_id=ep.id
+ JOIN role r ON r.id=pr.role_id AND r.scope='event' AND r.event_id=e.id JOIN action_right ar ON ar.role_id=pr.role_id WHERE ep.event_id=e.id AND ep.user_id=actor
+ AND ep.status IN ('active','confirmed','member','admin') AND ar.event_id=e.id AND ar.resource IN ('events','agendaItems') AND ar.action='manage')));
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.event_studio_can_read(actor uuid, eid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT EXISTS(SELECT 1 FROM event e WHERE e.id=eid AND (e.tutorial_run_id IS NULL OR EXISTS(SELECT 1 FROM app_tutorial_run tr WHERE tr.id=e.tutorial_run_id AND tr.user_id=actor AND tr.status IN ('active','paused'))) AND (
+ e.visibility='public' OR (actor IS NOT NULL AND (e.visibility='authenticated' OR e.creator_id=actor
+ OR EXISTS(SELECT 1 FROM "group" g WHERE g.id=e.group_id AND (g.owner_id=actor
+  OR EXISTS(SELECT 1 FROM group_membership m WHERE m.group_id=g.id AND m.user_id=actor AND m.status IN ('active','member','admin'))
+  OR EXISTS(SELECT 1 FROM group_guest_access ga WHERE ga.group_id=g.id AND ga.user_id=actor AND ga.status='active')))
+ OR EXISTS(SELECT 1 FROM event_participant ep JOIN event_participant_role pr ON pr.event_participant_id=ep.id
+ JOIN role r ON r.id=pr.role_id AND r.scope='event' AND r.event_id=e.id JOIN action_right ar ON ar.role_id=pr.role_id WHERE ep.event_id=e.id AND ep.user_id=actor
+ AND ep.status IN ('active','confirmed','member','admin','invited') AND ar.event_id=e.id AND ar.resource='events' AND ar.action IN ('view','manage','moderate','manage_members','manage_roles','manage_participants','manage_speakers','manage_votes','speak'))))));
 $function$
 ;
 
@@ -8796,6 +9278,54 @@ END;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.refresh_studio_search_acl()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE gid uuid;
+DECLARE old_gid uuid;
+DECLARE pid uuid;
+BEGIN
+  IF TG_TABLE_NAME='studio_project' THEN
+    IF TG_OP<>'DELETE' THEN PERFORM public.sync_studio_search_acl(NEW.id); END IF;
+  ELSIF TG_TABLE_NAME='studio_project_collaborator' THEN
+    IF TG_OP<>'INSERT' THEN PERFORM public.sync_studio_search_acl(OLD.project_id); END IF;
+    IF TG_OP<>'DELETE' THEN PERFORM public.sync_studio_search_acl(NEW.project_id); END IF;
+  ELSE
+    IF TG_TABLE_NAME='group_membership' THEN
+      gid := CASE WHEN TG_OP='DELETE' THEN OLD.group_id ELSE NEW.group_id END;
+      IF TG_OP='UPDATE' THEN old_gid := OLD.group_id; END IF;
+    ELSIF TG_TABLE_NAME='group_membership_role' THEN
+      SELECT group_id INTO gid FROM public.group_membership
+      WHERE id=CASE WHEN TG_OP='DELETE' THEN OLD.group_membership_id ELSE NEW.group_membership_id END;
+      IF TG_OP='UPDATE' THEN
+        SELECT group_id INTO old_gid FROM public.group_membership WHERE id=OLD.group_membership_id;
+      END IF;
+    ELSIF TG_TABLE_NAME='action_right' THEN
+      gid := CASE WHEN TG_OP='DELETE' THEN OLD.group_id ELSE NEW.group_id END;
+      IF TG_OP='UPDATE' THEN old_gid := OLD.group_id; END IF;
+    ELSIF TG_TABLE_NAME='group' THEN
+      gid := NEW.id;
+    END IF;
+    IF gid IS NOT NULL THEN
+      FOR pid IN SELECT id FROM public.studio_project WHERE group_id=gid AND visibility='private' LOOP
+        PERFORM public.sync_studio_search_acl(pid);
+      END LOOP;
+    END IF;
+    IF old_gid IS NOT NULL AND old_gid IS DISTINCT FROM gid THEN
+      FOR pid IN SELECT id FROM public.studio_project WHERE group_id=old_gid AND visibility='private' LOOP
+        PERFORM public.sync_studio_search_acl(pid);
+      END LOOP;
+    END IF;
+  END IF;
+  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.refresh_user_search_document_topics_from_hashtag()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -9166,10 +9696,216 @@ CREATE OR REPLACE FUNCTION public.studio_access(actor uuid, pid uuid, edit boole
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- SELECT EXISTS(SELECT 1 FROM public.studio_project p WHERE p.id=pid AND
- ((p.group_id IS NULL AND p.owner_id=actor) OR
- (p.group_id IS NOT NULL AND public.studio_group_access(actor,p.group_id,false)
- AND (NOT edit OR p.owner_id=actor OR public.studio_group_access(actor,p.group_id,true)))));
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN CASE WHEN edit THEN event_studio_can_manage(actor,p.event_id) ELSE event_studio_can_read(actor,p.event_id) END
+ ELSE studio_access_without_events(actor,pid,edit) END FROM studio_project p WHERE p.id=pid),false);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_access_without_events(actor uuid, pid uuid, edit boolean DEFAULT false)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT EXISTS (
+   SELECT 1 FROM public.studio_project p WHERE p.id=pid AND
+   CASE WHEN edit THEN
+     actor IS NOT NULL AND (
+       p.owner_id=actor OR
+       (p.group_id IS NULL AND EXISTS (
+         SELECT 1 FROM public.studio_project_collaborator c
+         WHERE c.project_id=p.id AND c.user_id=actor AND c.status='active')) OR
+       (p.group_id IS NOT NULL AND public.studio_group_access(actor,p.group_id,true)))
+   ELSE
+     p.visibility='public' OR
+     (actor IS NOT NULL AND (
+       p.visibility='authenticated' OR p.owner_id=actor OR
+       (p.group_id IS NULL AND EXISTS (
+         SELECT 1 FROM public.studio_project_collaborator c
+         WHERE c.project_id=p.id AND c.user_id=actor AND c.status='active')) OR
+       (p.group_id IS NOT NULL AND public.studio_group_access(actor,p.group_id,false))))
+   END
+ );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_agenda_audio_activation()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE fid uuid; eid uuid; aid uuid;
+BEGIN
+ IF TG_TABLE_NAME='event' THEN
+  IF NEW.current_agenda_item_id IS NOT DISTINCT FROM OLD.current_agenda_item_id THEN RETURN NULL; END IF;
+  eid:=NEW.id; aid:=NEW.current_agenda_item_id;
+ ELSE
+  IF NEW.status IS NOT DISTINCT FROM OLD.status OR NEW.status<>'active' THEN RETURN NULL; END IF;
+  eid:=NEW.event_id; aid:=NEW.id;
+ END IF;
+ SELECT ep.frame_id INTO fid FROM event_presentation ep JOIN studio_state st ON st.project_id=ep.project_id
+ WHERE ep.event_id=eid AND EXISTS(SELECT 1 FROM jsonb_array_elements(st.document->'nodes') n WHERE n->>'id'=ep.frame_id::text AND n#>>'{eventSource,id}'=aid::text);
+ IF fid IS NOT NULL THEN PERFORM studio_fire_show_cue(eid,fid,'activate'); END IF;
+ RETURN NULL;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_clone_event_nodes(kind_name text, source uuid, frame_position integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE value text; token text;
+ BEGIN
+ SELECT document->'nodes' INTO value FROM studio_event_template WHERE kind=kind_name;
+ IF value IS NULL THEN SELECT document->'nodes' INTO value FROM studio_event_template WHERE kind='discussion'; END IF;
+ FOR token IN SELECT DISTINCT m[1] FROM regexp_matches(value,'"id": "([0-9a-f-]{36})"','g') m LOOP
+  IF token<>'00000000-0000-4000-8000-000000000000' THEN value:=replace(value,token,gen_random_uuid()::text); END IF;
+ END LOOP;
+ value:=replace(value,'00000000-0000-4000-8000-000000000000',source::text);
+ RETURN jsonb_set(jsonb_set(value::jsonb,'{0,zIndex}',to_jsonb(frame_position)), '{0,transform,x}',to_jsonb(frame_position*2080));
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_collaboration_access(actor uuid, pid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
+ ELSE studio_collaboration_access_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid),false);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_collaboration_access_without_events(actor uuid, pid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT actor IS NOT NULL AND EXISTS (
+   SELECT 1 FROM public.studio_project p WHERE p.id=pid AND (
+     p.owner_id=actor OR
+     (p.group_id IS NULL AND EXISTS (
+       SELECT 1 FROM public.studio_project_collaborator c
+       WHERE c.project_id=p.id AND c.user_id=actor AND c.status='active')) OR
+     (p.group_id IS NOT NULL AND public.studio_group_access(actor,p.group_id,false)))
+ );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_editor_action_pending()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN NEW.pending := (NEW.result IS NULL); RETURN NEW; END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_election_payload(eid uuid)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+ SELECT jsonb_build_object('id',e.id,'title',e.title,'status',e.status,'majority_type',e.majority_type,'election_mode',coalesce(e.election_mode,'single'), 'seat_count',e.seat_count,'max_votes',e.max_votes,
+ 'eligible',(SELECT count(*) FROM elector WHERE election_id=eid AND participation_channel='online')+e.offline_electorate_size,
+ 'options',coalesce((SELECT jsonb_agg(jsonb_build_object('id',c.id,'label',coalesce(nullif(c.name,''),concat_ws(' ',u.first_name,u.last_name)),'image_url',c.image_url,
+ 'indicative',(SELECT count(*) FROM indicative_candidate_selection WHERE election_id=eid AND candidate_id=c.id)+coalesce((SELECT sum(count) FROM election_offline_tally WHERE election_id=eid AND candidate_id=c.id AND phase='indicative'),0),
+ 'final',(SELECT count(*) FROM final_candidate_selection WHERE election_id=eid AND candidate_id=c.id)+coalesce((SELECT sum(count) FROM election_offline_tally WHERE election_id=eid AND candidate_id=c.id AND phase='final'),0)) ORDER BY c.order_index,c.id) FROM election_candidate c JOIN "user" u ON u.id=c.user_id WHERE c.election_id=eid AND c.status<>'withdrawn'),'[]')) FROM election e WHERE e.id=eid;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_event_access_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ DECLARE r jsonb; prior jsonb; eid uuid; pid uuid; ids uuid[]:=ARRAY[]::uuid[];
+ BEGIN
+ r:=CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
+ prior:=CASE WHEN TG_OP='INSERT' THEN '{}'::jsonb ELSE to_jsonb(OLD) END;
+ ids:=array_append(array_append(ids,(r->>'event_id')::uuid),(prior->>'event_id')::uuid);
+ IF TG_TABLE_NAME='event_participant_role' THEN
+  SELECT event_id INTO eid FROM event_participant WHERE id=(r->>'event_participant_id')::uuid; ids:=array_append(ids,eid);
+  SELECT event_id INTO eid FROM event_participant WHERE id=(prior->>'event_participant_id')::uuid; ids:=array_append(ids,eid);
+ END IF;
+ FOR pid IN SELECT id FROM studio_project WHERE event_id=ANY(ids) LOOP PERFORM sync_studio_search_acl(pid); END LOOP;
+ RETURN NULL;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_event_document_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ DECLARE eid uuid; item jsonb;
+ BEGIN
+ SELECT event_id INTO eid FROM studio_project WHERE id=NEW.project_id;
+ IF eid IS NULL OR current_setting('polity.event_studio_sync',true)=NEW.project_id::text THEN RETURN NEW; END IF;
+ FOR item IN SELECT v FROM jsonb_array_elements(OLD.document->'nodes') v WHERE v ? 'eventSource' LOOP
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(NEW.document->'nodes') v WHERE v->>'id'=item->>'id' AND v->'eventSource'=item->'eventSource') THEN RAISE EXCEPTION 'Event frames are managed by their agenda. Hide the frame or duplicate it instead.'; END IF;
+ END LOOP;
+ FOR item IN SELECT v FROM jsonb_array_elements(NEW.document->'nodes') v WHERE v ? 'eventSource' LOOP
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(OLD.document->'nodes') v WHERE v->>'id'=item->>'id' AND v->'eventSource'=item->'eventSource') THEN RAISE EXCEPTION 'Event frame provenance cannot be changed'; END IF;
+ END LOOP;
+ RETURN NEW;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_event_project_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ BEGIN
+ IF OLD.event_id IS NOT NULL AND EXISTS(SELECT 1 FROM event WHERE id=OLD.event_id) THEN
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Delete the event to remove its presentation project'; END IF;
+  IF NEW.event_id IS DISTINCT FROM OLD.event_id OR NEW.owner_id IS DISTINCT FROM (SELECT creator_id FROM event WHERE id=OLD.event_id) OR NEW.group_id IS DISTINCT FROM (SELECT group_id FROM event WHERE id=OLD.event_id) OR NEW.visibility IS DISTINCT FROM (SELECT visibility FROM event WHERE id=OLD.event_id) THEN RAISE EXCEPTION 'Event presentation access is inherited'; END IF;
+ END IF;
+ RETURN CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_event_structure_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ BEGIN
+ IF TG_TABLE_NAME='event' THEN PERFORM studio_sync_event(NEW.id);
+ ELSE
+  IF TG_OP<>'INSERT' AND OLD.event_id IS NOT NULL THEN PERFORM studio_sync_event(OLD.event_id); END IF;
+  IF TG_OP<>'DELETE' AND NEW.event_id IS NOT NULL AND (TG_OP='INSERT' OR NEW.event_id IS DISTINCT FROM OLD.event_id) THEN PERFORM studio_sync_event(NEW.event_id); END IF;
+ END IF;
+ RETURN NULL;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_fire_show_cue(eid uuid, fid uuid, trigger_name text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE ep event_presentation; resolved jsonb; now_ms bigint;
+BEGIN
+ SELECT * INTO ep FROM event_presentation WHERE event_id=eid FOR UPDATE;
+ IF ep.mode<>'studio' OR ep.frame_id IS DISTINCT FROM fid OR NOT ep.running THEN RETURN; END IF;
+ now_ms:=(extract(epoch FROM clock_timestamp())*1000)::bigint;
+ resolved:=studio_resolve_show_audio(eid,fid,ARRAY[trigger_name],ep.audio,now_ms);
+ IF resolved IS DISTINCT FROM ep.audio THEN
+  UPDATE event_presentation SET audio=resolved,cue_at=now_ms,cue_id=gen_random_uuid(),updated_at=now_ms,revision=revision+1 WHERE event_id=eid;
+ END IF;
+END;
 $function$
 ;
 
@@ -9180,22 +9916,369 @@ CREATE OR REPLACE FUNCTION public.studio_group_access(actor uuid, gid uuid, edit
  SET search_path TO 'public'
 AS $function$
  SELECT EXISTS(SELECT 1 FROM public."group" g WHERE g.id=gid AND g.owner_id=actor)
- OR EXISTS(SELECT 1 FROM public.group_membership m WHERE m.group_id=gid AND m.user_id=actor
- AND m.status IN ('active','member','admin') AND (NOT edit OR m.status='admin'
- OR EXISTS(SELECT 1 FROM public.group_membership_role mr JOIN public.action_right ar ON ar.role_id=mr.role_id
- WHERE mr.group_membership_id=m.id AND ar.group_id=gid AND
- ((ar.resource='groups' AND ar.action='manage') OR (ar.resource='communicationStudio' AND ar.action IN ('manage','update'))))));
+ OR EXISTS(SELECT 1 FROM public.group_membership m
+   WHERE m.group_id=gid AND m.user_id=actor AND m.status IN ('active','member','admin')
+   AND EXISTS(SELECT 1 FROM public.group_membership_role mr
+     JOIN public.action_right ar ON ar.role_id=mr.role_id
+     WHERE mr.group_membership_id=m.id AND ar.group_id=gid
+       AND ar.resource='projects'
+       AND ar.action IN ('manage', CASE WHEN edit THEN 'manage' ELSE 'view' END)));
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.studio_realtime_access(topic text)
+CREATE OR REPLACE FUNCTION public.studio_leave_intro_audio()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE d jsonb; previous jsonb; incoming boolean; now_ms bigint;
+BEGIN
+ IF OLD.mode<>'studio' OR (NEW.mode='studio' AND NEW.frame_id IS NOT DISTINCT FROM OLD.frame_id)
+    OR NEW.audio IS DISTINCT FROM OLD.audio OR NEW.audio->>'status'<>'playing' THEN RETURN NEW; END IF;
+ SELECT document INTO d FROM studio_state WHERE project_id=NEW.project_id;
+ SELECT n INTO previous FROM jsonb_array_elements(d->'nodes') n WHERE n->>'id'=OLD.frame_id::text;
+ IF previous IS NULL OR NOT(previous ? 'intro' OR previous#>>'{eventSource,template}'='cover') THEN RETURN NEW; END IF;
+ SELECT EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(d#>'{show,cues}','[]')) c
+  JOIN studio_asset a ON a.id=(c->>'assetId')::uuid AND a.project_id=NEW.project_id AND a.ready
+   AND a.workspace_id IS NULL AND a.mime_type IN ('audio/mpeg','audio/wav')
+  WHERE c->>'frameId'=NEW.frame_id::text AND c->>'trigger' IN ('enter','activate') AND NEW.mode='studio') INTO incoming;
+ IF incoming THEN RETURN NEW; END IF;
+ now_ms:=(extract(epoch FROM clock_timestamp())*1000)::bigint;
+ NEW.audio:=NEW.audio || jsonb_build_object('status','stopped','position',0,'fadeSeconds',1,'at',now_ms);
+ RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_membership_group_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ UPDATE public.group_membership_role SET group_id=NEW.group_id WHERE group_membership_id=NEW.id;
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_membership_role_group()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ SELECT group_id INTO NEW.group_id FROM public.group_membership WHERE id=NEW.group_membership_id;
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_presence_channel_access(topic text)
  RETURNS boolean
- LANGUAGE sql
+ LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
- SELECT CASE WHEN topic ~ '^studio:[0-9a-f-]{36}$' THEN studio_access(auth.uid(),substring(topic from 8)::uuid,false)
- WHEN topic ~ '^canvas-proposal:[0-9a-f-]{36}$' THEN canvas_proposal_access(auth.uid(),substring(topic from 17)::uuid) ELSE false END;
+DECLARE parts text[];
+BEGIN
+  IF topic !~ '^presence:studio:[0-9a-f-]{36}:(main|[0-9a-f-]{36})$' THEN RETURN false; END IF;
+  parts := string_to_array(topic, ':');
+  IF NOT public.studio_collaboration_access(auth.uid(), parts[3]::uuid) THEN RETURN false; END IF;
+  IF parts[4]='main' THEN RETURN true; END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.canvas_proposal p WHERE p.id=parts[4]::uuid AND p.project_id=parts[3]::uuid
+      AND public.canvas_proposal_access(auth.uid(), p.id)
+  );
+EXCEPTION WHEN invalid_text_representation THEN RETURN false;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_presentation_audio_rules()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE now_ms bigint; names text[]:='{}'; d jsonb; previous jsonb; incoming jsonb; resolved jsonb; entering boolean; leaving boolean; explicit_music boolean;
+BEGIN
+ now_ms:=(extract(epoch FROM clock_timestamp())*1000)::bigint;
+ entering:=NEW.running AND NEW.mode='studio' AND NEW.frame_id IS NOT NULL AND
+  (OLD.frame_id IS DISTINCT FROM NEW.frame_id OR OLD.mode<>'studio' OR NOT OLD.running);
+ leaving:=OLD.mode='studio' AND (NEW.mode<>'studio' OR OLD.frame_id IS DISTINCT FROM NEW.frame_id OR NOT NEW.running);
+ explicit_music:=(NEW.audio-'transition'-'_cueFired') IS DISTINCT FROM (OLD.audio-'transition'-'_cueFired');
+ SELECT document INTO d FROM studio_state WHERE project_id=NEW.project_id;
+ IF entering THEN
+  names:=ARRAY['enter'];
+  SELECT n INTO incoming FROM jsonb_array_elements(d->'nodes') n WHERE n->>'id'=NEW.frame_id::text;
+  IF NEW.follow_agenda AND incoming#>>'{eventSource,type}'='agenda_item' AND
+   incoming#>>'{eventSource,id}'=(SELECT current_agenda_item_id::text FROM event WHERE id=NEW.event_id) THEN names:=ARRAY['activate','enter']; END IF;
+ END IF;
+ IF NEW.running AND NEW.mode='studio' AND NEW.results_visible AND NOT OLD.results_visible THEN names:=array_append(names,'reveal'); END IF;
+ IF leaving AND NOT explicit_music AND OLD.audio->>'status'='playing' THEN
+  SELECT n INTO previous FROM jsonb_array_elements(d->'nodes') n WHERE n->>'id'=OLD.frame_id::text;
+  IF OLD.audio->>'ownerFrameId'=OLD.frame_id::text OR previous ? 'intro' OR previous#>>'{eventSource,template}'='cover' THEN
+   NEW.audio:=NEW.audio||jsonb_build_object('status','stopped','position',0,'at',now_ms,
+    'fadeSeconds',coalesce(OLD.audio->'fadeOutSeconds',OLD.audio->'fadeSeconds','1'::jsonb));
+  END IF;
+ END IF;
+ IF cardinality(names)>0 THEN
+  -- The evaluator reads OLD persisted running; starting a presentation must be eligible too.
+  IF NOT OLD.running AND NEW.running THEN
+   PERFORM set_config('polity.show_starting',NEW.event_id::text,true);
+  END IF;
+  resolved:=studio_resolve_show_audio(NEW.event_id,NEW.frame_id,names,NEW.audio,now_ms);
+  PERFORM set_config('polity.show_starting','',true);
+  IF explicit_music THEN resolved:=(NEW.audio-'transition')||CASE WHEN resolved ? 'transition' THEN jsonb_build_object('transition',resolved->'transition') ELSE '{}' END; END IF;
+  NEW.audio:=resolved;
+  NEW.cue_id:=gen_random_uuid(); NEW.cue_at:=now_ms;
+ END IF;
+ IF NOT NEW.running AND NEW.audio<>'{}'::jsonb THEN
+  NEW.audio:=NEW.audio||jsonb_build_object('status','stopped');
+  IF NEW.audio ? 'transition' THEN NEW.audio:=jsonb_set(NEW.audio,'{transition,status}','"stopped"'); END IF;
+ END IF;
+ RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_refresh_source(kind_name text, sid uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ DECLARE p jsonb; eid uuid; aid uuid; vid uuid; elid uuid; amid uuid; uid uuid; gid uuid; row_data jsonb; selected_result jsonb;
+ BEGIN
+ IF sid IS NULL THEN RETURN; END IF;
+ CASE kind_name
+ WHEN 'event' THEN
+  SELECT jsonb_build_object('title',e.title,'status',e.status,'start_time',extract(epoch FROM e.start_date)*1000,'end_time',extract(epoch FROM e.end_date)*1000,'timezone',coalesce(e.timezone,'Europe/Berlin'),'location',concat_ws(' · ',e.location_name,e.city,e.location_type),'organizer',coalesce(g.name,concat_ws(' ',u.first_name,u.last_name)),'image_url',e.image_url,'current_agenda_item_id',e.current_agenda_item_id,'details',e.event_type) INTO p FROM event e LEFT JOIN "group" g ON g.id=e.group_id LEFT JOIN "user" u ON u.id=e.creator_id WHERE e.id=sid;
+  eid:=sid;
+ WHEN 'agenda_item' THEN
+  aid:=sid;
+  SELECT a.event_id,to_jsonb(a) INTO eid,row_data FROM agenda_item a WHERE a.id=sid;
+  IF row_data IS NOT NULL THEN
+   SELECT studio_vote_payload(v.id) INTO selected_result FROM vote v LEFT JOIN agenda_item_change_request cr ON cr.vote_id=v.id AND cr.agenda_item_id=sid WHERE v.agenda_item_id=sid OR cr.agenda_item_id=sid
+   ORDER BY CASE WHEN v.status IN ('indicative','final') THEN 0 WHEN cr.status IN ('in-progress','active') THEN 1 WHEN v.purpose='closing' THEN 2 ELSE 3 END,cr.order_index,v.created_at DESC LIMIT 1;
+   IF selected_result IS NULL THEN SELECT studio_election_payload(id) INTO selected_result FROM election WHERE agenda_item_id=sid ORDER BY created_at DESC LIMIT 1; END IF;
+   SELECT jsonb_build_object('title',row_data->>'title','status',row_data->>'status','type',row_data->>'type','order_index',row_data->'order_index','duration',row_data->'duration',
+   'start_time',coalesce(extract(epoch FROM (row_data->>'activated_at')::timestamptz)*1000,extract(epoch FROM (row_data->>'start_time')::timestamptz)*1000,extract(epoch FROM e.start_date)*1000+coalesce((SELECT sum(coalesce(duration,30))*60000 FROM agenda_item a WHERE a.event_id=eid AND a.order_index<(row_data->>'order_index')::int AND coalesce(a.status,'') NOT IN ('withdrawn','cancelled')),0)),
+   'end_time',coalesce(extract(epoch FROM (row_data->>'completed_at')::timestamptz)*1000,extract(epoch FROM (row_data->>'end_time')::timestamptz)*1000),
+   'timezone',coalesce(e.timezone,'Europe/Berlin'),'result_source_id',selected_result->>'id','result_source_type',CASE WHEN selected_result ? 'election_mode' THEN 'election' WHEN selected_result IS NOT NULL THEN 'vote' ELSE NULL END,'details',coalesce(row_data->>'description',''),
+   'speakers',coalesce((SELECT jsonb_agg(jsonb_build_object('name',concat_ws(' ',u.first_name,u.last_name),'completed',s.completed,'time',s.time,'start_time',extract(epoch FROM s.start_time)*1000,'end_time',extract(epoch FROM s.end_time)*1000) ORDER BY s.order_index,s.id) FROM speaker_list s JOIN "user" u ON u.id=s.user_id WHERE s.agenda_item_id=sid),'[]')) INTO p FROM event e WHERE e.id=eid;
+   p:=jsonb_set(p,'{end_time}',coalesce(nullif(p->'end_time','null'),to_jsonb((p->>'start_time')::numeric+coalesce((row_data->>'duration')::numeric,30)*60000),'null'::jsonb));
+  END IF;
+ WHEN 'vote' THEN
+  vid:=sid; SELECT agenda_item_id INTO aid FROM vote WHERE id=sid; SELECT event_id INTO eid FROM agenda_item WHERE id=aid;
+  p:=jsonb_build_object('results',studio_vote_payload(sid)); SELECT p||jsonb_build_object('title',title,'status',status,'description',description) INTO p FROM vote WHERE id=sid;
+ WHEN 'election' THEN
+  elid:=sid; SELECT agenda_item_id INTO aid FROM election WHERE id=sid; SELECT event_id INTO eid FROM agenda_item WHERE id=aid;
+  p:=jsonb_build_object('results',studio_election_payload(sid)); SELECT p||jsonb_build_object('title',title,'status',status,'description',description) INTO p FROM election WHERE id=sid;
+ WHEN 'amendment' THEN amid:=sid; SELECT jsonb_build_object('title',a.title,'status',d.editing_mode,'description',a.reason) INTO p FROM amendment a LEFT JOIN document d ON d.id=a.document_id WHERE a.id=sid;
+ WHEN 'user' THEN uid:=sid; SELECT jsonb_build_object('title',concat_ws(' ',first_name,last_name),'image_url',avatar,'description',handle) INTO p FROM "user" WHERE id=sid;
+ WHEN 'group' THEN gid:=sid; SELECT jsonb_build_object('title',name,'description',description,'image_url',image_url) INTO p FROM "group" WHERE id=sid;
+ END CASE;
+ IF p IS NULL THEN DELETE FROM studio_live_source WHERE source_type=kind_name AND source_id=sid; RETURN; END IF;
+ -- Legacy votes and elections may carry an agenda identifier without a parent row.
+ -- Keep their source payload available while linking only existing agenda items.
+ IF aid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM agenda_item WHERE id=aid) THEN aid:=NULL; END IF;
+ IF eid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM event WHERE id=eid) THEN eid:=NULL; END IF;
+ INSERT INTO studio_live_source(source_type,source_id,event_id,agenda_item_id,vote_id,election_id,amendment_id,user_id,group_id,payload,updated_at)
+ VALUES(kind_name,sid,eid,aid,vid,elid,amid,uid,gid,p,(extract(epoch FROM clock_timestamp())*1000)::bigint)
+ ON CONFLICT(source_type,source_id) DO UPDATE SET event_id=excluded.event_id,agenda_item_id=excluded.agenda_item_id,vote_id=excluded.vote_id,election_id=excluded.election_id,amendment_id=excluded.amendment_id,user_id=excluded.user_id,group_id=excluded.group_id,payload=excluded.payload,updated_at=excluded.updated_at;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_resolve_show_audio(eid uuid, fid uuid, names text[], base jsonb, now_ms bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE d jsonb; pid uuid; cue jsonb; lane text; out_audio jsonb:=base;
+        fired jsonb:=coalesce(base->'_cueFired','{}'); event_key text; fresh text[]:=ARRAY[]::text[]; name text; result jsonb; pos double precision;
+BEGIN
+ SELECT ep.project_id,st.document INTO pid,d FROM event_presentation ep JOIN studio_state st ON st.project_id=ep.project_id
+ WHERE ep.event_id=eid AND (ep.running OR current_setting('polity.show_starting',true)=eid::text) AND ep.lease_until>now_ms;
+ IF d IS NULL THEN RETURN base; END IF;
+ FOREACH name IN ARRAY names LOOP
+  event_key:=txid_current()::text||':'||fid::text||':'||name;
+  IF fired->>name IS DISTINCT FROM event_key THEN fresh:=array_append(fresh,name); END IF;
+  fired:=jsonb_set(fired,ARRAY[name],to_jsonb(event_key));
+ END LOOP;
+ IF cardinality(fresh)=0 THEN RETURN base; END IF;
+ FOREACH lane IN ARRAY ARRAY['music','transition'] LOOP
+  SELECT c INTO cue FROM jsonb_array_elements(coalesce(d#>'{show,cues}','[]')) WITH ORDINALITY cs(c,ord)
+  WHERE coalesce(c->>'channel','music')=lane AND c->>'trigger'=ANY(fresh)
+   AND ((coalesce(c->>'scope','frame')='frame' AND c->>'frameId'=fid::text)
+    OR (lane='transition' AND c->>'scope'='global' AND c->>'trigger'='enter'))
+   AND (coalesce(c->>'action','play') IN ('pause','stop') OR
+    c->>'builtin' IN ('test-tone','cinematic-thriller','cinematic-atmosphere','cinematic-hope','cinematic-sequence') OR
+    EXISTS(SELECT 1 FROM studio_asset a WHERE a.id::text=c->>'assetId' AND a.project_id=pid AND a.ready
+     AND a.workspace_id IS NULL AND a.mime_type IN ('audio/mpeg','audio/wav')))
+  ORDER BY CASE WHEN c->>'scope'='global' THEN 1 ELSE 0 END,array_position(fresh,c->>'trigger'),ord LIMIT 1;
+  IF cue IS NULL THEN CONTINUE; END IF;
+  IF coalesce(cue->>'action','play') IN ('pause','stop') THEN
+   pos:=coalesce((base->>'position')::double precision,0)+CASE WHEN base->>'status'='playing' THEN greatest(0,(now_ms-coalesce((base->>'at')::bigint,now_ms))/1000.0) ELSE 0 END;
+   result:=(out_audio-'transition')||jsonb_build_object('status',CASE WHEN cue->>'action'='pause' THEN 'paused' ELSE 'stopped' END,
+    'position',CASE WHEN cue->>'action'='pause' THEN pos ELSE 0 END,'at',now_ms,
+    'fadeOutSeconds',coalesce(cue->'fadeOutSeconds',cue->'fadeSeconds','1'::jsonb));
+  ELSE
+   result:=jsonb_strip_nulls(jsonb_build_object('assetId',cue->'assetId','builtin',cue->'builtin','status','playing',
+    'position',0,'volume',coalesce(cue->'volume','0.65'::jsonb),
+    'loop',CASE WHEN lane='transition' OR cue->>'builtin'='test-tone' THEN false ELSE coalesce((cue->>'loop')::boolean,cue ? 'builtin') END,
+    'fadeSeconds',coalesce(cue->'fadeSeconds','1'::jsonb),
+    'fadeInSeconds',coalesce(cue->'fadeInSeconds',cue->'fadeSeconds','1'::jsonb),
+    'fadeOutSeconds',coalesce(cue->'fadeOutSeconds',cue->'fadeSeconds','1'::jsonb),
+    'durationSeconds',CASE WHEN lane='transition' THEN coalesce(cue->'durationSeconds','3'::jsonb) ELSE NULL END,
+    'ownerFrameId',fid,'cueId',gen_random_uuid(),'at',now_ms));
+  END IF;
+  IF lane='transition' THEN out_audio:=jsonb_set(out_audio,'{transition}',result);
+  ELSE out_audio:=result||CASE WHEN out_audio ? 'transition' THEN jsonb_build_object('transition',out_audio->'transition') ELSE '{}' END; END IF;
+ END LOOP;
+ RETURN out_audio||jsonb_build_object('_cueFired',fired);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_source_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+ DECLARE r jsonb; prev jsonb; sid uuid; aid uuid; eid uuid; kind_name text; fid uuid;
+ BEGIN
+ r:=CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
+ IF TG_TABLE_NAME='document' THEN FOR sid IN SELECT id FROM public.amendment WHERE document_id=(r->>'id')::uuid LOOP PERFORM public.studio_refresh_source('amendment',sid); END LOOP; RETURN NULL; END IF;
+ IF TG_TABLE_NAME IN ('event','agenda_item','vote','election','amendment','user','group') THEN
+  kind_name:=TG_TABLE_NAME; sid:=(r->>'id')::uuid;
+ ELSE
+  IF r ? 'vote_id' THEN kind_name:='vote'; sid:=(r->>'vote_id')::uuid;
+  ELSIF r ? 'election_id' THEN kind_name:='election'; sid:=(r->>'election_id')::uuid;
+  ELSE kind_name:='agenda_item'; sid:=(r->>'agenda_item_id')::uuid; END IF;
+ END IF;
+ PERFORM public.studio_refresh_source(kind_name,sid);
+ IF kind_name='vote' THEN SELECT agenda_item_id INTO aid FROM public.vote WHERE id=sid;
+ ELSIF kind_name='election' THEN SELECT agenda_item_id INTO aid FROM public.election WHERE id=sid;
+ ELSIF kind_name='agenda_item' THEN aid:=sid;
+ END IF;
+ IF aid IS NOT NULL THEN PERFORM public.studio_refresh_source('agenda_item',aid); END IF;
+ IF TG_TABLE_NAME='event' OR TG_TABLE_NAME='agenda_item' THEN
+  eid:=CASE WHEN TG_TABLE_NAME='event' THEN sid ELSE (r->>'event_id')::uuid END;
+  FOR aid IN SELECT id FROM public.agenda_item WHERE event_id=eid LOOP PERFORM public.studio_refresh_source('agenda_item',aid); END LOOP;
+ END IF;
+ IF TG_OP='UPDATE' AND TG_TABLE_NAME IN ('vote','election') AND to_jsonb(OLD)->>'status' IS DISTINCT FROM r->>'status' THEN
+  SELECT a.event_id,ep.frame_id INTO eid,fid FROM public.agenda_item a JOIN public.event_presentation ep ON ep.event_id=a.event_id JOIN public.studio_state st ON st.project_id=ep.project_id WHERE a.id=aid AND EXISTS(SELECT 1 FROM jsonb_array_elements(st.document->'nodes') n WHERE n->>'id'=ep.frame_id::text AND n#>>'{eventSource,id}'=aid::text);
+  IF fid IS NOT NULL AND (SELECT payload->>'result_source_id' FROM public.studio_live_source WHERE source_type='agenda_item' AND source_id=aid)=sid::text THEN PERFORM public.studio_fire_show_cue(eid,fid,r->>'status'); END IF;
+ END IF;
+ IF TG_TABLE_NAME IN ('user','group') THEN
+  FOR eid IN SELECT id FROM public.event WHERE (kind_name='group' AND group_id=sid) OR (kind_name='user' AND creator_id=sid) LOOP PERFORM public.studio_refresh_source('event',eid); END LOOP;
+  IF kind_name='user' THEN
+   FOR aid IN SELECT DISTINCT agenda_item_id FROM public.speaker_list WHERE user_id=sid LOOP PERFORM public.studio_refresh_source('agenda_item',aid); END LOOP;
+   FOR eid IN SELECT DISTINCT election_id FROM public.election_candidate WHERE user_id=sid LOOP PERFORM public.studio_refresh_source('election',eid); SELECT agenda_item_id INTO aid FROM public.election WHERE id=eid; PERFORM public.studio_refresh_source('agenda_item',aid); END LOOP;
+  END IF;
+ END IF;
+ IF TG_OP='UPDATE' AND TG_TABLE_NAME NOT IN ('event','agenda_item','vote','election','amendment','user','group') THEN
+  prev:=to_jsonb(OLD);
+  IF prev->>'vote_id' IS DISTINCT FROM r->>'vote_id' THEN PERFORM public.studio_refresh_source('vote',(prev->>'vote_id')::uuid); END IF;
+  IF prev->>'election_id' IS DISTINCT FROM r->>'election_id' THEN PERFORM public.studio_refresh_source('election',(prev->>'election_id')::uuid); END IF;
+ END IF;
+ RETURN NULL;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_sync_event(eid uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+ DECLARE e event; pid uuid; d jsonb; n jsonb; a agenda_item; added jsonb; fid text; keep_ids text[]; now_ms bigint; idx integer:=1; changed boolean:=false; ordered jsonb; previous_frame uuid; next_frame uuid; fallback_frame uuid; part jsonb;
+ BEGIN
+ PERFORM pg_advisory_xact_lock(1886351981);
+ SELECT * INTO e FROM event WHERE id=eid;
+ IF NOT FOUND THEN RETURN; END IF;
+ now_ms:=(extract(epoch from clock_timestamp())*1000)::bigint;
+ SELECT id INTO pid FROM studio_project WHERE event_id=eid;
+ IF pid IS NULL THEN
+  pid:=gen_random_uuid();
+  SELECT document INTO d FROM studio_event_template WHERE kind='cover';
+  d:=jsonb_set(d,'{nodes}',studio_clone_event_nodes('cover',eid,0));
+  d:=jsonb_set(d,'{title}',to_jsonb(left(coalesce(nullif(e.title,''),'Event'),200)));
+  INSERT INTO studio_project(id,owner_id,group_id,event_id,title,kind,visibility,document_schema_version,created_at,updated_at)
+  VALUES(pid,e.creator_id,e.group_id,eid,d->>'title','event',e.visibility,6,now_ms,now_ms);
+  INSERT INTO studio_state(project_id,document,updated_at) VALUES(pid,d,now_ms);
+  INSERT INTO event_presentation(event_id,project_id,frame_id,updated_at) VALUES(eid,pid,(d#>>'{nodes,0,id}')::uuid,now_ms);
+ END IF;
+ SELECT document INTO d FROM studio_state WHERE project_id=pid FOR UPDATE;
+ keep_ids:=ARRAY[eid::text];
+ FOR a IN SELECT * FROM agenda_item WHERE event_id=eid AND coalesce(status,'') NOT IN ('withdrawn','cancelled') ORDER BY order_index NULLS LAST,id LOOP
+  keep_ids:=array_append(keep_ids,a.id::text);
+  SELECT item->>'id' INTO fid FROM jsonb_array_elements(d->'nodes') item WHERE item#>>'{eventSource,id}'=a.id::text;
+  IF fid IS NULL THEN
+   added:=studio_clone_event_nodes(coalesce(a.type,'discussion'),a.id,idx);
+   added:=jsonb_set(added,'{0,name}',to_jsonb(left(coalesce(nullif(a.title,''),a.type,'TOP'),200)));
+   d:=jsonb_set(d,'{nodes}',(d->'nodes')||added); changed:=true;
+  ELSE
+   IF EXISTS(SELECT 1 FROM jsonb_array_elements(d->'nodes') item WHERE item->>'id'=fid AND item#>>'{eventSource,template}' IS DISTINCT FROM coalesce(a.type,'discussion')) THEN
+    added:=studio_clone_event_nodes(coalesce(a.type,'discussion'),a.id,idx);
+    SELECT jsonb_agg(item) INTO ordered FROM jsonb_array_elements(d->'nodes') item WHERE NOT(coalesce(item->>'parentFrameId'=fid,false) AND item ? 'eventTemplateSlot' AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(added) fresh WHERE fresh->>'eventTemplateSlot'=item->>'eventTemplateSlot'));
+    d:=jsonb_set(d,'{nodes}',ordered);
+    FOR part IN SELECT item FROM jsonb_array_elements(added) item WHERE item->>'type'<>'frame' LOOP
+     IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(d->'nodes') item WHERE item->>'parentFrameId'=fid AND item->>'eventTemplateSlot'=part->>'eventTemplateSlot') THEN d:=jsonb_set(d,'{nodes}',d->'nodes'||jsonb_build_array(jsonb_set(part,'{parentFrameId}',to_jsonb(fid)))); END IF;
+    END LOOP;
+    changed:=true;
+   END IF;
+   SELECT jsonb_agg(CASE WHEN item->>'id'=fid THEN jsonb_set(item,'{eventSource,template}',to_jsonb(coalesce(a.type,'discussion'))) ELSE item END) INTO ordered FROM jsonb_array_elements(d->'nodes') item;
+   IF ordered IS DISTINCT FROM d->'nodes' THEN d:=jsonb_set(d,'{nodes}',ordered); changed:=true; END IF;
+  END IF;
+  idx:=idx+1;
+ END LOOP;
+ FOR n IN SELECT item FROM jsonb_array_elements(d->'nodes') item WHERE item ? 'eventSource' AND NOT(item#>>'{eventSource,id}'=ANY(keep_ids)) LOOP
+  fid:=n->>'id';
+  -- Include nested frames and all descendants, not just immediate children.
+  WITH RECURSIVE removed(id) AS (SELECT fid UNION ALL SELECT item->>'id' FROM jsonb_array_elements(d->'nodes') item JOIN removed r ON item->>'parentFrameId'=r.id)
+  SELECT coalesce(jsonb_agg(item),'[]') INTO ordered FROM jsonb_array_elements(d->'nodes') item WHERE item->>'id' NOT IN(SELECT id FROM removed);
+  d:=jsonb_set(d,'{nodes}',ordered);
+  d:=jsonb_set(d,'{show,cues}',coalesce((SELECT jsonb_agg(c) FROM jsonb_array_elements(coalesce(d#>'{show,cues}','[]')) c WHERE c->>'frameId' IS DISTINCT FROM fid),'[]'));
+  d:=jsonb_set(d,'{deliverables}',coalesce((SELECT jsonb_agg(jsonb_set(v,'{frameIds}',ids)) FROM jsonb_array_elements(d->'deliverables') v CROSS JOIN LATERAL (SELECT coalesce(jsonb_agg(x),'[]') ids FROM jsonb_array_elements(v->'frameIds') x WHERE x#>>'{}'<>fid) f WHERE jsonb_array_length(ids)>0),'[]'));
+  changed:=true;
+ END LOOP;
+ IF coalesce(d#>>'{show,order}','agenda')='agenda' THEN
+  SELECT jsonb_agg(CASE WHEN item ? 'eventSource' THEN jsonb_set(item,'{zIndex}',to_jsonb(CASE WHEN item#>>'{eventSource,type}'='event' THEN 0 ELSE coalesce((SELECT row_no::int FROM (SELECT id,row_number() OVER(ORDER BY order_index NULLS LAST,id) row_no FROM agenda_item WHERE event_id=eid AND coalesce(status,'') NOT IN ('withdrawn','cancelled')) seq WHERE seq.id::text=item#>>'{eventSource,id}'),0) END)) ELSE item END) INTO ordered FROM jsonb_array_elements(d->'nodes') item;
+  IF ordered IS DISTINCT FROM d->'nodes' THEN d:=jsonb_set(d,'{nodes}',ordered); changed:=true; END IF;
+ END IF;
+ IF changed THEN
+  PERFORM set_config('polity.event_studio_sync',pid::text,true);
+  UPDATE studio_state SET document=d,content_revision=content_revision+1,updated_at=now_ms WHERE project_id=pid;
+  PERFORM set_config('polity.event_studio_sync','',true);
+ END IF;
+ UPDATE studio_project SET owner_id=e.creator_id,visibility=e.visibility,group_id=e.group_id,updated_at=now_ms WHERE id=pid;
+ SELECT (candidate->>'id')::uuid INTO fallback_frame FROM jsonb_array_elements(d->'nodes') candidate WHERE candidate->>'type'='frame' AND candidate->>'parentFrameId' IS NULL AND coalesce((candidate->>'visible')::boolean,true) ORDER BY CASE WHEN candidate#>>'{eventSource,type}'='event' THEN 0 ELSE 1 END,(candidate->>'zIndex')::int LIMIT 1;
+ SELECT frame_id INTO previous_frame FROM event_presentation WHERE event_id=eid;
+ UPDATE event_presentation SET frame_id=CASE WHEN follow_agenda THEN coalesce((SELECT (item->>'id')::uuid FROM jsonb_array_elements(d->'nodes') item WHERE item#>>'{eventSource,id}'=e.current_agenda_item_id::text AND coalesce((item->>'visible')::boolean,true)), fallback_frame)
+ ELSE CASE WHEN EXISTS(SELECT 1 FROM jsonb_array_elements(d->'nodes') item WHERE item->>'id'=frame_id::text) THEN frame_id ELSE fallback_frame END END,
+ running=running AND coalesce(e.status,'')<>'cancelled',audio=CASE WHEN e.status='cancelled' THEN '{}' ELSE audio END,
+ revision=revision+1,updated_at=now_ms WHERE event_id=eid RETURNING frame_id INTO next_frame;
+ IF previous_frame IS DISTINCT FROM next_frame THEN
+  PERFORM studio_fire_show_cue(eid,next_frame,'enter');
+  PERFORM studio_fire_show_cue(eid,next_frame,'activate');
+ END IF;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.studio_vote_payload(vid uuid)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+ SELECT jsonb_build_object('id',v.id,'title',v.title,'status',v.status,'majority_type',v.majority_type,
+ 'eligible',(SELECT count(*) FROM voter WHERE vote_id=vid AND participation_channel='online')+v.offline_electorate_size,
+ 'options',coalesce((SELECT jsonb_agg(jsonb_build_object('id',c.id,'label',c.label,
+ 'indicative',(SELECT count(*) FROM indicative_choice_decision WHERE vote_id=vid AND choice_id=c.id)+coalesce((SELECT sum(count) FROM vote_offline_tally WHERE vote_id=vid AND choice_id=c.id AND phase='indicative'),0),
+ 'final',(SELECT count(*) FROM final_choice_decision WHERE vote_id=vid AND choice_id=c.id)+coalesce((SELECT sum(count) FROM vote_offline_tally WHERE vote_id=vid AND choice_id=c.id AND phase='final'),0)) ORDER BY c.order_index,c.id) FROM vote_choice c WHERE c.vote_id=vid),'[]')) FROM vote v WHERE v.id=vid;
 $function$
 ;
 
@@ -9672,6 +10755,54 @@ BEGIN
     public.search_document_id('statement', target_statement_id),
     topics
   );
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.sync_studio_search_acl(pid uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ DECLARE eid uuid; doc_id text:=public.search_document_id('studio',pid);
+ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM search_document WHERE id=doc_id) THEN RETURN; END IF;
+ SELECT event_id INTO eid FROM studio_project WHERE id=pid;
+ IF eid IS NULL THEN PERFORM sync_studio_search_acl_without_events(pid); RETURN; END IF;
+ DELETE FROM search_document_acl WHERE document_id=doc_id;
+ INSERT INTO search_document_acl(document_id,user_id) SELECT doc_id,u.id FROM "user" u WHERE event_studio_can_read(u.id,eid) AND (SELECT visibility FROM studio_project WHERE id=pid)='private' ON CONFLICT(document_id,user_id) DO NOTHING;
+ END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.sync_studio_search_acl_without_events(pid uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE doc_id text := public.search_document_id('studio',pid);
+BEGIN
+  DELETE FROM public.search_document_acl WHERE document_id=doc_id;
+  INSERT INTO public.search_document_acl(document_id,user_id)
+  SELECT doc_id,candidates.user_id FROM (
+    SELECT p.owner_id AS user_id FROM public.studio_project p WHERE p.id=pid AND p.visibility='private'
+    UNION
+    SELECT g.owner_id FROM public."group" g
+    JOIN public.studio_project p ON p.group_id=g.id
+    WHERE p.id=pid AND p.visibility='private'
+    UNION
+    SELECT c.user_id FROM public.studio_project_collaborator c
+    JOIN public.studio_project p ON p.id=c.project_id
+    WHERE c.project_id=pid AND c.status='active' AND p.group_id IS NULL AND p.visibility='private'
+    UNION
+    SELECT m.user_id FROM public.group_membership m
+    JOIN public.studio_project p ON p.group_id=m.group_id
+    WHERE p.id=pid AND p.visibility='private' AND m.status IN ('active','member','admin')
+      AND public.studio_group_access(m.user_id,p.group_id,false)
+  ) candidates
+  ON CONFLICT (document_id,user_id) DO NOTHING;
 END;
 $function$
 ;
@@ -10332,6 +11463,38 @@ BEGIN
     trending_score = EXCLUDED.trending_score;
 
   PERFORM public.sync_statement_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.upsert_studio_search_document()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+BEGIN
+  IF TG_OP='DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id=public.search_document_id('studio',OLD.id);
+    RETURN OLD;
+  END IF;
+  IF NEW.document_schema_version<>6 THEN RETURN NEW; END IF;
+  INSERT INTO public.search_document (
+    id,entity_type,entity_id,title,subtitle,search_text,visibility,
+    owner_user_id,group_id,card_payload,created_at,updated_at
+  ) VALUES (
+    public.search_document_id('studio',NEW.id),'studio',NEW.id,NEW.title,NEW.kind,
+    concat_ws(' ',NEW.title,NEW.kind),NEW.visibility,NEW.owner_id,NEW.group_id,
+    jsonb_build_object('type','studio','kind',NEW.kind),
+    to_timestamp(NEW.created_at/1000.0),to_timestamp(NEW.updated_at/1000.0)
+  ) ON CONFLICT (id) DO UPDATE SET
+    title=EXCLUDED.title,subtitle=EXCLUDED.subtitle,search_text=EXCLUDED.search_text,
+    visibility=EXCLUDED.visibility,owner_user_id=EXCLUDED.owner_user_id,
+    group_id=EXCLUDED.group_id,card_payload=EXCLUDED.card_payload,
+    updated_at=EXCLUDED.updated_at;
+  UPDATE public.search_document SET tutorial_run_id=(SELECT e.tutorial_run_id FROM public.event e WHERE e.id=NEW.event_id) WHERE id=public.search_document_id('studio',NEW.id);
   RETURN NEW;
 END;
 $function$
@@ -11625,6 +12788,48 @@ grant truncate on table "public"."event_participant_role" to "service_role";
 
 grant update on table "public"."event_participant_role" to "service_role";
 
+grant delete on table "public"."event_presentation" to "service_role";
+
+grant insert on table "public"."event_presentation" to "service_role";
+
+grant references on table "public"."event_presentation" to "service_role";
+
+grant select on table "public"."event_presentation" to "service_role";
+
+grant trigger on table "public"."event_presentation" to "service_role";
+
+grant truncate on table "public"."event_presentation" to "service_role";
+
+grant update on table "public"."event_presentation" to "service_role";
+
+grant delete on table "public"."event_presentation_device" to "service_role";
+
+grant insert on table "public"."event_presentation_device" to "service_role";
+
+grant references on table "public"."event_presentation_device" to "service_role";
+
+grant select on table "public"."event_presentation_device" to "service_role";
+
+grant trigger on table "public"."event_presentation_device" to "service_role";
+
+grant truncate on table "public"."event_presentation_device" to "service_role";
+
+grant update on table "public"."event_presentation_device" to "service_role";
+
+grant delete on table "public"."event_presentation_operation" to "service_role";
+
+grant insert on table "public"."event_presentation_operation" to "service_role";
+
+grant references on table "public"."event_presentation_operation" to "service_role";
+
+grant select on table "public"."event_presentation_operation" to "service_role";
+
+grant trigger on table "public"."event_presentation_operation" to "service_role";
+
+grant truncate on table "public"."event_presentation_operation" to "service_role";
+
+grant update on table "public"."event_presentation_operation" to "service_role";
+
 grant delete on table "public"."file" to "service_role";
 
 grant insert on table "public"."file" to "service_role";
@@ -12619,6 +13824,20 @@ grant truncate on table "public"."studio_asset" to "service_role";
 
 grant update on table "public"."studio_asset" to "service_role";
 
+grant delete on table "public"."studio_command_receipt" to "service_role";
+
+grant insert on table "public"."studio_command_receipt" to "service_role";
+
+grant references on table "public"."studio_command_receipt" to "service_role";
+
+grant select on table "public"."studio_command_receipt" to "service_role";
+
+grant trigger on table "public"."studio_command_receipt" to "service_role";
+
+grant truncate on table "public"."studio_command_receipt" to "service_role";
+
+grant update on table "public"."studio_command_receipt" to "service_role";
+
 grant delete on table "public"."studio_editor_action" to "service_role";
 
 grant insert on table "public"."studio_editor_action" to "service_role";
@@ -12633,6 +13852,62 @@ grant truncate on table "public"."studio_editor_action" to "service_role";
 
 grant update on table "public"."studio_editor_action" to "service_role";
 
+grant delete on table "public"."studio_element_set" to "service_role";
+
+grant insert on table "public"."studio_element_set" to "service_role";
+
+grant references on table "public"."studio_element_set" to "service_role";
+
+grant select on table "public"."studio_element_set" to "service_role";
+
+grant trigger on table "public"."studio_element_set" to "service_role";
+
+grant truncate on table "public"."studio_element_set" to "service_role";
+
+grant update on table "public"."studio_element_set" to "service_role";
+
+grant delete on table "public"."studio_element_set_asset" to "service_role";
+
+grant insert on table "public"."studio_element_set_asset" to "service_role";
+
+grant references on table "public"."studio_element_set_asset" to "service_role";
+
+grant select on table "public"."studio_element_set_asset" to "service_role";
+
+grant trigger on table "public"."studio_element_set_asset" to "service_role";
+
+grant truncate on table "public"."studio_element_set_asset" to "service_role";
+
+grant update on table "public"."studio_element_set_asset" to "service_role";
+
+grant delete on table "public"."studio_element_set_revision" to "service_role";
+
+grant insert on table "public"."studio_element_set_revision" to "service_role";
+
+grant references on table "public"."studio_element_set_revision" to "service_role";
+
+grant select on table "public"."studio_element_set_revision" to "service_role";
+
+grant trigger on table "public"."studio_element_set_revision" to "service_role";
+
+grant truncate on table "public"."studio_element_set_revision" to "service_role";
+
+grant update on table "public"."studio_element_set_revision" to "service_role";
+
+grant delete on table "public"."studio_event_template" to "service_role";
+
+grant insert on table "public"."studio_event_template" to "service_role";
+
+grant references on table "public"."studio_event_template" to "service_role";
+
+grant select on table "public"."studio_event_template" to "service_role";
+
+grant trigger on table "public"."studio_event_template" to "service_role";
+
+grant truncate on table "public"."studio_event_template" to "service_role";
+
+grant update on table "public"."studio_event_template" to "service_role";
+
 grant delete on table "public"."studio_export" to "service_role";
 
 grant insert on table "public"."studio_export" to "service_role";
@@ -12646,6 +13921,20 @@ grant trigger on table "public"."studio_export" to "service_role";
 grant truncate on table "public"."studio_export" to "service_role";
 
 grant update on table "public"."studio_export" to "service_role";
+
+grant delete on table "public"."studio_live_source" to "service_role";
+
+grant insert on table "public"."studio_live_source" to "service_role";
+
+grant references on table "public"."studio_live_source" to "service_role";
+
+grant select on table "public"."studio_live_source" to "service_role";
+
+grant trigger on table "public"."studio_live_source" to "service_role";
+
+grant truncate on table "public"."studio_live_source" to "service_role";
+
+grant update on table "public"."studio_live_source" to "service_role";
 
 grant delete on table "public"."studio_operation" to "service_role";
 
@@ -12674,6 +13963,34 @@ grant trigger on table "public"."studio_project" to "service_role";
 grant truncate on table "public"."studio_project" to "service_role";
 
 grant update on table "public"."studio_project" to "service_role";
+
+grant delete on table "public"."studio_project_collaborator" to "service_role";
+
+grant insert on table "public"."studio_project_collaborator" to "service_role";
+
+grant references on table "public"."studio_project_collaborator" to "service_role";
+
+grant select on table "public"."studio_project_collaborator" to "service_role";
+
+grant trigger on table "public"."studio_project_collaborator" to "service_role";
+
+grant truncate on table "public"."studio_project_collaborator" to "service_role";
+
+grant update on table "public"."studio_project_collaborator" to "service_role";
+
+grant delete on table "public"."studio_published_media_archive" to "service_role";
+
+grant insert on table "public"."studio_published_media_archive" to "service_role";
+
+grant references on table "public"."studio_published_media_archive" to "service_role";
+
+grant select on table "public"."studio_published_media_archive" to "service_role";
+
+grant trigger on table "public"."studio_published_media_archive" to "service_role";
+
+grant truncate on table "public"."studio_published_media_archive" to "service_role";
+
+grant update on table "public"."studio_published_media_archive" to "service_role";
 
 grant delete on table "public"."studio_reset_storage_manifest" to "service_role";
 
@@ -12716,6 +14033,20 @@ grant trigger on table "public"."studio_state" to "service_role";
 grant truncate on table "public"."studio_state" to "service_role";
 
 grant update on table "public"."studio_state" to "service_role";
+
+grant delete on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant insert on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant references on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant select on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant trigger on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant truncate on table "public"."studio_whiteboard_storage_manifest" to "service_role";
+
+grant update on table "public"."studio_whiteboard_storage_manifest" to "service_role";
 
 grant delete on table "public"."subscriber" to "service_role";
 
@@ -14137,6 +15468,33 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."studio_element_set"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."studio_element_set_asset"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."studio_element_set_revision"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."subscriber"
   as permissive
   for all
@@ -14281,9 +15639,23 @@ using (true);
 
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public.action_right FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
 
+CREATE TRIGGER studio_event_access_changed AFTER INSERT OR DELETE OR UPDATE ON public.action_right FOR EACH ROW EXECUTE FUNCTION public.studio_event_access_changed();
+
 CREATE TRIGGER trg_zz_search_document_acl_action_right AFTER INSERT OR DELETE OR UPDATE ON public.action_right FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
 
 CREATE TRIGGER trg_zz_search_document_acl_action_right_entity_discovery AFTER INSERT OR DELETE OR UPDATE ON public.action_right FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();
+
+CREATE TRIGGER trg_zz_studio_search_acl_action_right AFTER INSERT OR DELETE OR UPDATE ON public.action_right FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
+
+CREATE CONSTRAINT TRIGGER agenda_studio_structure AFTER INSERT OR DELETE OR UPDATE ON public.agenda_item DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_event_structure_changed();
+
+CREATE CONSTRAINT TRIGGER studio_agenda_audio_activation AFTER UPDATE ON public.agenda_item DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_agenda_audio_activation();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.agenda_item DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.agenda_item_change_request DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.amendment DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
 
 CREATE TRIGGER trg_search_document_amendment AFTER INSERT OR DELETE OR UPDATE ON public.amendment FOR EACH ROW EXECUTE FUNCTION public.upsert_amendment_search_document();
 
@@ -14327,11 +15699,27 @@ CREATE TRIGGER trg_dataset_snapshot_touch_dataset AFTER INSERT OR DELETE OR UPDA
 
 CREATE TRIGGER document_content_revision BEFORE UPDATE OF content ON public.document FOR EACH ROW WHEN ((old.content IS DISTINCT FROM new.content)) EXECUTE FUNCTION public.project_content_revision();
 
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.document DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.election DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
 CREATE TRIGGER trg_search_document_election AFTER INSERT OR DELETE OR UPDATE ON public.election FOR EACH ROW EXECUTE FUNCTION public.upsert_election_search_document();
 
 CREATE TRIGGER trg_zz_search_document_acl_election AFTER INSERT OR UPDATE ON public.election FOR EACH ROW EXECUTE FUNCTION public.sync_search_document_acl_entity_trigger();
 
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.election_candidate DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.election_offline_tally DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.elector DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
 CREATE TRIGGER trg_zz_search_document_acl_elector AFTER INSERT OR DELETE OR UPDATE ON public.elector FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE CONSTRAINT TRIGGER event_studio_structure AFTER INSERT OR UPDATE ON public.event DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_event_structure_changed();
+
+CREATE CONSTRAINT TRIGGER studio_agenda_audio_activation AFTER UPDATE ON public.event DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_agenda_audio_activation();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.event DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
 
 CREATE TRIGGER trg_search_document_event AFTER INSERT OR DELETE OR UPDATE ON public.event FOR EACH ROW EXECUTE FUNCTION public.upsert_event_search_document();
 
@@ -14341,17 +15729,31 @@ CREATE TRIGGER zz_tag_event_tutorial_search_document AFTER INSERT OR UPDATE OF t
 
 CREATE TRIGGER trg_search_document_event_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.event_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_event_search_document_topics_from_hashtag();
 
+CREATE TRIGGER studio_event_access_changed AFTER INSERT OR DELETE OR UPDATE ON public.event_participant FOR EACH ROW EXECUTE FUNCTION public.studio_event_access_changed();
+
 CREATE TRIGGER trg_zz_search_document_acl_event_participant AFTER INSERT OR DELETE OR UPDATE ON public.event_participant FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER studio_event_access_changed AFTER INSERT OR DELETE OR UPDATE ON public.event_participant_role FOR EACH ROW EXECUTE FUNCTION public.studio_event_access_changed();
 
 CREATE TRIGGER trg_zz_search_document_acl_event_participant_role_discovery AFTER INSERT OR DELETE OR UPDATE ON public.event_participant_role FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();
 
+CREATE TRIGGER studio_presentation_audio_rules BEFORE UPDATE OF frame_id, mode, running, results_visible, audio ON public.event_presentation FOR EACH ROW EXECUTE FUNCTION public.studio_presentation_audio_rules();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.final_candidate_selection DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.final_choice_decision DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public."group" FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public."group" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
 
 CREATE TRIGGER trg_search_document_group AFTER INSERT OR DELETE OR UPDATE ON public."group" FOR EACH ROW EXECUTE FUNCTION public.upsert_group_search_document();
 
 CREATE TRIGGER trg_search_document_group_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds ON public."group" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_group_location();
 
 CREATE TRIGGER trg_zz_search_document_acl_group AFTER INSERT OR UPDATE ON public."group" FOR EACH ROW EXECUTE FUNCTION public.sync_search_document_acl_entity_trigger();
+
+CREATE TRIGGER trg_zz_studio_search_acl_group AFTER UPDATE OF owner_id ON public."group" FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
 
 CREATE TRIGGER zz_tag_group_tutorial_search_document AFTER INSERT OR UPDATE OF tutorial_run_id ON public."group" FOR EACH ROW EXECUTE FUNCTION public.tag_app_tutorial_search_document('group');
 
@@ -14363,11 +15765,25 @@ CREATE TRIGGER trg_search_document_group_hashtag AFTER INSERT OR DELETE OR UPDAT
 
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public.group_membership FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
 
+CREATE TRIGGER studio_membership_group_changed AFTER UPDATE OF group_id ON public.group_membership FOR EACH ROW WHEN ((old.group_id IS DISTINCT FROM new.group_id)) EXECUTE FUNCTION public.studio_membership_group_changed();
+
 CREATE TRIGGER trg_zz_search_document_acl_group_membership AFTER INSERT OR DELETE OR UPDATE ON public.group_membership FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER trg_zz_studio_search_acl_membership AFTER INSERT OR DELETE OR UPDATE ON public.group_membership FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
 
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public.group_membership_role FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
 
+CREATE TRIGGER studio_membership_role_group BEFORE INSERT OR UPDATE OF group_membership_id, group_id ON public.group_membership_role FOR EACH ROW EXECUTE FUNCTION public.studio_membership_role_group();
+
 CREATE TRIGGER trg_zz_search_document_acl_group_membership_role AFTER INSERT OR DELETE OR UPDATE ON public.group_membership_role FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER trg_zz_studio_search_acl_membership_role AFTER INSERT OR DELETE OR UPDATE ON public.group_membership_role FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.indicative_candidate_selection DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.indicative_choice_decision DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE TRIGGER delete_message_ai_trace AFTER UPDATE OF deleted_at ON public.message FOR EACH ROW EXECUTE FUNCTION public.delete_message_ai_trace();
 
 CREATE TRIGGER trg_message_refresh_conversation_rollups AFTER INSERT OR DELETE OR UPDATE ON public.message FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_message();
 
@@ -14375,11 +15791,15 @@ CREATE TRIGGER notification_enqueue_push AFTER INSERT ON public.notification FOR
 
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public.role FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
 
+CREATE TRIGGER studio_event_access_changed AFTER INSERT OR DELETE OR UPDATE ON public.role FOR EACH ROW EXECUTE FUNCTION public.studio_event_access_changed();
+
 CREATE TRIGGER trg_zz_search_document_acl_role AFTER INSERT OR DELETE OR UPDATE ON public.role FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
 
 CREATE TRIGGER trg_zz_search_document_acl_role_entity_discovery AFTER INSERT OR DELETE OR UPDATE ON public.role FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();
 
 CREATE TRIGGER trg_search_document_populate_location BEFORE INSERT OR UPDATE ON public.search_document FOR EACH ROW EXECUTE FUNCTION public.populate_search_document_location();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.speaker_list DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
 
 CREATE TRIGGER trg_search_document_statement AFTER INSERT OR DELETE OR UPDATE ON public.statement FOR EACH ROW EXECUTE FUNCTION public.upsert_statement_search_document();
 
@@ -14389,9 +15809,21 @@ CREATE TRIGGER zz_tag_statement_tutorial_search_document AFTER INSERT OR UPDATE 
 
 CREATE TRIGGER trg_search_document_statement_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.statement_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_statement_search_document_topics_from_hashtag();
 
+CREATE TRIGGER studio_editor_action_pending BEFORE INSERT OR UPDATE OF result ON public.studio_editor_action FOR EACH ROW EXECUTE FUNCTION public.studio_editor_action_pending();
+
 CREATE TRIGGER canvas_authority_lock BEFORE INSERT OR DELETE OR UPDATE ON public.studio_project FOR EACH STATEMENT EXECUTE FUNCTION public.canvas_lock_authority();
 
+CREATE TRIGGER studio_event_project_guard BEFORE DELETE OR UPDATE ON public.studio_project FOR EACH ROW EXECUTE FUNCTION public.studio_event_project_guard();
+
+CREATE TRIGGER trg_search_document_studio AFTER INSERT OR DELETE OR UPDATE ON public.studio_project FOR EACH ROW EXECUTE FUNCTION public.upsert_studio_search_document();
+
+CREATE TRIGGER trg_zz_studio_search_acl_project AFTER INSERT OR UPDATE OF visibility, owner_id, group_id ON public.studio_project FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
+
+CREATE TRIGGER trg_zz_studio_search_acl_collaborator AFTER INSERT OR DELETE OR UPDATE ON public.studio_project_collaborator FOR EACH ROW EXECUTE FUNCTION public.refresh_studio_search_acl();
+
 CREATE TRIGGER canvas_record_revision AFTER INSERT OR UPDATE ON public.studio_state FOR EACH ROW EXECUTE FUNCTION public.canvas_record_revision();
+
+CREATE TRIGGER studio_event_document_guard BEFORE UPDATE OF document ON public.studio_state FOR EACH ROW EXECUTE FUNCTION public.studio_event_document_guard();
 
 CREATE TRIGGER trg_search_document_support_confirmation AFTER INSERT OR DELETE OR UPDATE ON public.support_confirmation FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_from_support();
 
@@ -14409,6 +15841,8 @@ CREATE TRIGGER zz_tag_todo_tutorial_search_document AFTER INSERT OR UPDATE OF tu
 
 CREATE TRIGGER trg_zz_search_document_acl_todo_assignment AFTER INSERT OR DELETE OR UPDATE ON public.todo_assignment FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
 
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public."user" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
 CREATE TRIGGER trg_search_document_user AFTER INSERT OR DELETE OR UPDATE ON public."user" FOR EACH ROW EXECUTE FUNCTION public.upsert_user_search_document();
 
 CREATE TRIGGER trg_search_document_user_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds ON public."user" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_user_location();
@@ -14421,6 +15855,386 @@ CREATE TRIGGER trg_search_document_user_hashtag AFTER INSERT OR DELETE OR UPDATE
 
 CREATE TRIGGER on_user_preference_newsletter_language_changed AFTER UPDATE OF language ON public.user_preference FOR EACH ROW EXECUTE FUNCTION public.handle_newsletter_language_change();
 
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.vote DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.vote_choice DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.vote_offline_tally DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+CREATE CONSTRAINT TRIGGER studio_source_changed AFTER INSERT OR DELETE OR UPDATE ON public.voter DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.studio_source_changed();
+
+create schema if not exists "ai_diagnostics";
+
+
+  create table "ai_diagnostics"."ai_trace" (
+    "id" uuid not null,
+    "actor_id" uuid not null,
+    "conversation_id" uuid,
+    "origin_message_id" uuid,
+    "response_message_id" uuid,
+    "studio_project_id" uuid,
+    "amendment_id" uuid,
+    "document_id" uuid,
+    "surface" text not null,
+    "invocation" text not null,
+    "prompt" jsonb not null,
+    "created_at" bigint not null
+      );
+
+
+alter table "ai_diagnostics"."ai_trace" enable row level security;
+
+
+  create table "ai_diagnostics"."ai_trace_operation" (
+    "id" uuid not null,
+    "trace_id" uuid not null,
+    "parent_operation_id" uuid,
+    "kind" text not null,
+    "name" text not null,
+    "status" text not null,
+    "tool_call_id" text,
+    "attempt" integer not null default 1,
+    "input" jsonb,
+    "output" jsonb,
+    "error" jsonb,
+    "metadata" jsonb not null default '{}'::jsonb,
+    "created_at" bigint not null,
+    "finished_at" bigint
+      );
+
+
+alter table "ai_diagnostics"."ai_trace_operation" enable row level security;
+
+CREATE INDEX ai_trace_actor ON ai_diagnostics.ai_trace USING btree (actor_id, created_at DESC);
+
+CREATE INDEX ai_trace_conversation ON ai_diagnostics.ai_trace USING btree (conversation_id, created_at DESC);
+
+CREATE INDEX ai_trace_document ON ai_diagnostics.ai_trace USING btree (actor_id, document_id, created_at DESC);
+
+CREATE UNIQUE INDEX ai_trace_operation_pkey ON ai_diagnostics.ai_trace_operation USING btree (id);
+
+CREATE INDEX ai_trace_operations ON ai_diagnostics.ai_trace_operation USING btree (trace_id, created_at, id);
+
+CREATE INDEX ai_trace_origin ON ai_diagnostics.ai_trace USING btree (origin_message_id);
+
+CREATE UNIQUE INDEX ai_trace_pkey ON ai_diagnostics.ai_trace USING btree (id);
+
+CREATE INDEX ai_trace_response ON ai_diagnostics.ai_trace USING btree (response_message_id);
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_pkey" PRIMARY KEY using index "ai_trace_pkey";
+
+alter table "ai_diagnostics"."ai_trace_operation" add constraint "ai_trace_operation_pkey" PRIMARY KEY using index "ai_trace_operation_pkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_actor_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_amendment_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_conversation_id_fkey" FOREIGN KEY (conversation_id) REFERENCES public.conversation(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_conversation_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_document_id_fkey" FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_document_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_origin_message_id_fkey" FOREIGN KEY (origin_message_id) REFERENCES public.message(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_origin_message_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_response_message_id_fkey" FOREIGN KEY (response_message_id) REFERENCES public.message(id) ON DELETE SET NULL not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_response_message_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace" add constraint "ai_trace_studio_project_id_fkey" FOREIGN KEY (studio_project_id) REFERENCES public.studio_project(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace" validate constraint "ai_trace_studio_project_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace_operation" add constraint "ai_trace_operation_parent_operation_id_fkey" FOREIGN KEY (parent_operation_id) REFERENCES ai_diagnostics.ai_trace_operation(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace_operation" validate constraint "ai_trace_operation_parent_operation_id_fkey";
+
+alter table "ai_diagnostics"."ai_trace_operation" add constraint "ai_trace_operation_status_check" CHECK ((status = ANY (ARRAY['running'::text, 'completed'::text, 'failed'::text, 'cancelled'::text, 'queued'::text]))) not valid;
+
+alter table "ai_diagnostics"."ai_trace_operation" validate constraint "ai_trace_operation_status_check";
+
+alter table "ai_diagnostics"."ai_trace_operation" add constraint "ai_trace_operation_trace_id_fkey" FOREIGN KEY (trace_id) REFERENCES ai_diagnostics.ai_trace(id) ON DELETE CASCADE not valid;
+
+alter table "ai_diagnostics"."ai_trace_operation" validate constraint "ai_trace_operation_trace_id_fkey";
+
+grant delete on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant insert on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant references on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant select on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant trigger on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant truncate on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant update on table "ai_diagnostics"."ai_trace" to "service_role";
+
+grant delete on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant insert on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant references on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant select on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant trigger on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant truncate on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+grant update on table "ai_diagnostics"."ai_trace_operation" to "service_role";
+
+
+  create policy "service_role_all"
+  on "ai_diagnostics"."ai_trace"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "ai_diagnostics"."ai_trace_operation"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+create schema if not exists "group_invitations";
+
+
+  create table "group_invitations"."group_email_invitation" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_id" uuid not null,
+    "email" text not null,
+    "first_name" text,
+    "last_name" text,
+    "invited_by_id" uuid not null,
+    "token_hash" text not null,
+    "language" text not null,
+    "role_count" integer not null,
+    "state" text not null default 'pending'::text,
+    "expires_at" timestamp with time zone not null,
+    "accepted_at" timestamp with time zone,
+    "revoked_at" timestamp with time zone,
+    "accepted_by_id" uuid,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "group_invitations"."group_email_invitation" enable row level security;
+
+
+  create table "group_invitations"."group_email_invitation_batch" (
+    "id" uuid not null,
+    "requested_by_id" uuid not null,
+    "group_id" uuid not null,
+    "idempotency_key" uuid not null,
+    "fingerprint" text not null,
+    "result" jsonb not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "group_invitations"."group_email_invitation_batch" enable row level security;
+
+
+  create table "group_invitations"."group_email_invitation_delivery" (
+    "id" uuid not null default gen_random_uuid(),
+    "invitation_id" uuid,
+    "batch_id" uuid,
+    "resend_email_id" text,
+    "status" text not null default 'sending'::text,
+    "error_code" text,
+    "attempted_at" timestamp with time zone not null default now(),
+    "event_at" timestamp with time zone
+      );
+
+
+alter table "group_invitations"."group_email_invitation_delivery" enable row level security;
+
+
+  create table "group_invitations"."group_email_invitation_role" (
+    "invitation_id" uuid not null,
+    "role_id" uuid not null
+      );
+
+
+alter table "group_invitations"."group_email_invitation_role" enable row level security;
+
+CREATE UNIQUE INDEX group_email_invitation_batch_pkey ON group_invitations.group_email_invitation_batch USING btree (id);
+
+CREATE UNIQUE INDEX group_email_invitation_batch_requested_by_id_idempotency_ke_key ON group_invitations.group_email_invitation_batch USING btree (requested_by_id, idempotency_key);
+
+CREATE UNIQUE INDEX group_email_invitation_delivery_batch_id_invitation_id_key ON group_invitations.group_email_invitation_delivery USING btree (batch_id, invitation_id);
+
+CREATE INDEX group_email_invitation_delivery_budget ON group_invitations.group_email_invitation_delivery USING btree (attempted_at);
+
+CREATE INDEX group_email_invitation_delivery_invitation ON group_invitations.group_email_invitation_delivery USING btree (invitation_id, attempted_at DESC);
+
+CREATE UNIQUE INDEX group_email_invitation_delivery_pkey ON group_invitations.group_email_invitation_delivery USING btree (id);
+
+CREATE UNIQUE INDEX group_email_invitation_delivery_resend_email_id_key ON group_invitations.group_email_invitation_delivery USING btree (resend_email_id);
+
+CREATE UNIQUE INDEX group_email_invitation_pending ON group_invitations.group_email_invitation USING btree (group_id, email) WHERE (state = 'pending'::text);
+
+CREATE UNIQUE INDEX group_email_invitation_pkey ON group_invitations.group_email_invitation USING btree (id);
+
+CREATE UNIQUE INDEX group_email_invitation_role_pkey ON group_invitations.group_email_invitation_role USING btree (invitation_id, role_id);
+
+CREATE UNIQUE INDEX group_email_invitation_token_hash_key ON group_invitations.group_email_invitation USING btree (token_hash);
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_pkey" PRIMARY KEY using index "group_email_invitation_pkey";
+
+alter table "group_invitations"."group_email_invitation_batch" add constraint "group_email_invitation_batch_pkey" PRIMARY KEY using index "group_email_invitation_batch_pkey";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_pkey" PRIMARY KEY using index "group_email_invitation_delivery_pkey";
+
+alter table "group_invitations"."group_email_invitation_role" add constraint "group_email_invitation_role_pkey" PRIMARY KEY using index "group_email_invitation_role_pkey";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_accepted_by_id_fkey" FOREIGN KEY (accepted_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_accepted_by_id_fkey";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_email_check" CHECK ((email = lower(btrim(email)))) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_email_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_first_name_check" CHECK (((first_name IS NULL) OR ((first_name = btrim(first_name)) AND ((char_length(first_name) >= 1) AND (char_length(first_name) <= 100))))) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_first_name_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_group_id_fkey";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_invited_by_id_fkey" FOREIGN KEY (invited_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_invited_by_id_fkey";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_language_check" CHECK ((language = ANY (ARRAY['de'::text, 'en'::text]))) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_language_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_last_name_check" CHECK (((last_name IS NULL) OR ((last_name = btrim(last_name)) AND ((char_length(last_name) >= 1) AND (char_length(last_name) <= 100))))) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_last_name_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_role_count_check" CHECK ((role_count > 0)) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_role_count_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_state_check" CHECK ((state = ANY (ARRAY['pending'::text, 'accepted'::text, 'revoked'::text, 'expired'::text]))) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_state_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_token_hash_check" CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text)) not valid;
+
+alter table "group_invitations"."group_email_invitation" validate constraint "group_email_invitation_token_hash_check";
+
+alter table "group_invitations"."group_email_invitation" add constraint "group_email_invitation_token_hash_key" UNIQUE using index "group_email_invitation_token_hash_key";
+
+alter table "group_invitations"."group_email_invitation_batch" add constraint "group_email_invitation_batch_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation_batch" validate constraint "group_email_invitation_batch_group_id_fkey";
+
+alter table "group_invitations"."group_email_invitation_batch" add constraint "group_email_invitation_batch_requested_by_id_fkey" FOREIGN KEY (requested_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation_batch" validate constraint "group_email_invitation_batch_requested_by_id_fkey";
+
+alter table "group_invitations"."group_email_invitation_batch" add constraint "group_email_invitation_batch_requested_by_id_idempotency_ke_key" UNIQUE using index "group_email_invitation_batch_requested_by_id_idempotency_ke_key";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_batch_id_fkey" FOREIGN KEY (batch_id) REFERENCES group_invitations.group_email_invitation_batch(id) ON DELETE SET NULL not valid;
+
+alter table "group_invitations"."group_email_invitation_delivery" validate constraint "group_email_invitation_delivery_batch_id_fkey";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_batch_id_invitation_id_key" UNIQUE using index "group_email_invitation_delivery_batch_id_invitation_id_key";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_invitation_id_fkey" FOREIGN KEY (invitation_id) REFERENCES group_invitations.group_email_invitation(id) ON DELETE SET NULL not valid;
+
+alter table "group_invitations"."group_email_invitation_delivery" validate constraint "group_email_invitation_delivery_invitation_id_fkey";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_resend_email_id_key" UNIQUE using index "group_email_invitation_delivery_resend_email_id_key";
+
+alter table "group_invitations"."group_email_invitation_delivery" add constraint "group_email_invitation_delivery_status_check" CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text, 'unknown'::text]))) not valid;
+
+alter table "group_invitations"."group_email_invitation_delivery" validate constraint "group_email_invitation_delivery_status_check";
+
+alter table "group_invitations"."group_email_invitation_role" add constraint "group_email_invitation_role_invitation_id_fkey" FOREIGN KEY (invitation_id) REFERENCES group_invitations.group_email_invitation(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation_role" validate constraint "group_email_invitation_role_invitation_id_fkey";
+
+alter table "group_invitations"."group_email_invitation_role" add constraint "group_email_invitation_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "group_invitations"."group_email_invitation_role" validate constraint "group_email_invitation_role_role_id_fkey";
+
+grant delete on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant insert on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant references on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant select on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant trigger on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant truncate on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant update on table "group_invitations"."group_email_invitation" to "service_role";
+
+grant delete on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant insert on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant references on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant select on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant trigger on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant truncate on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant update on table "group_invitations"."group_email_invitation_batch" to "service_role";
+
+grant delete on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant insert on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant references on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant select on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant trigger on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant truncate on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant update on table "group_invitations"."group_email_invitation_delivery" to "service_role";
+
+grant delete on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant insert on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant references on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant select on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant trigger on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant truncate on table "group_invitations"."group_email_invitation_role" to "service_role";
+
+grant update on table "group_invitations"."group_email_invitation_role" to "service_role";
+
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 CREATE TRIGGER on_auth_user_deleted AFTER DELETE ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_deleted_user();
@@ -14428,33 +16242,6 @@ CREATE TRIGGER on_auth_user_deleted AFTER DELETE ON auth.users FOR EACH ROW EXEC
 CREATE TRIGGER on_auth_user_newsletter_changed AFTER INSERT OR UPDATE OF email, email_confirmed_at ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_auth_user_newsletter_change();
 
 CREATE TRIGGER on_auth_user_newsletter_deleted BEFORE DELETE ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_auth_user_newsletter_delete();
-
-
-  create policy "canvas_recipient_presence_read"
-  on "realtime"."messages"
-  as permissive
-  for select
-  to authenticated
-using (public.canvas_presence_access(realtime.topic()));
-
-
-
-  create policy "studio_presence_read"
-  on "realtime"."messages"
-  as permissive
-  for select
-  to authenticated
-using (public.studio_realtime_access(realtime.topic()));
-
-
-
-  create policy "studio_presence_write"
-  on "realtime"."messages"
-  as permissive
-  for insert
-  to authenticated
-with check (public.studio_realtime_access(realtime.topic()));
-
 
 
   create policy "avatars_auth_delete"
@@ -14553,6 +16340,24 @@ using ((bucket_id = 'uploads'::text));
   for select
   to public
 using ((bucket_id = 'uploads'::text));
+
+
+
+  create policy "studio_direct_presence_read"
+  on "realtime"."messages"
+  as permissive
+  for select
+  to authenticated
+using (public.studio_presence_channel_access(realtime.topic()));
+
+
+
+  create policy "studio_direct_presence_write"
+  on "realtime"."messages"
+  as permissive
+  for insert
+  to authenticated
+with check (public.studio_presence_channel_access(realtime.topic()));
 
 
 

@@ -18,7 +18,7 @@ describe('user contact email schema contract', () => {
       'utf8'
     );
 
-    expect(migration).toMatch(/contact_email\s+TEXT\s*,/);
+    expect(migration).toMatch(/contact_email\s+TEXT\s*,/i);
     expect(migration).not.toMatch(/contact_email\s+TEXT\s+(?:NOT NULL|DEFAULT)/i);
     expect(migration).not.toMatch(/SET\s+contact_email\s*=\s*email/i);
   });

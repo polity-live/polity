@@ -1,4 +1,5 @@
 -- @covers schema 70_studio_visibility_discovery.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(22);

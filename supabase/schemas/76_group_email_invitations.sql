@@ -1,57 +1,77 @@
--- Private server-managed invitations; deliberately excluded from Zero replication.
+-- 76_group_email_invitations.sql: canonical current definitions; historical upgrades are not replayed.
+
 CREATE SCHEMA group_invitations;
-REVOKE ALL ON SCHEMA group_invitations FROM PUBLIC;
-GRANT USAGE ON SCHEMA group_invitations TO service_role;
+
 CREATE TABLE group_invitations.group_email_invitation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group"(id) ON DELETE CASCADE,
-  email TEXT NOT NULL CHECK (email = lower(btrim(email))),
-  first_name TEXT CHECK (first_name IS NULL OR (first_name = btrim(first_name) AND char_length(first_name) BETWEEN 1 AND 100)),
-  last_name TEXT CHECK (last_name IS NULL OR (last_name = btrim(last_name) AND char_length(last_name) BETWEEN 1 AND 100)),
-  invited_by_id UUID NOT NULL REFERENCES public."user"(id) ON DELETE CASCADE,
-  token_hash TEXT NOT NULL UNIQUE CHECK (token_hash ~ '^[0-9a-f]{64}$'),
-  language TEXT NOT NULL CHECK (language IN ('de', 'en')),
-  role_count INTEGER NOT NULL CHECK (role_count > 0),
-  state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'accepted', 'revoked', 'expired')),
-  expires_at TIMESTAMPTZ NOT NULL,
-  accepted_at TIMESTAMPTZ,
-  revoked_at TIMESTAMPTZ,
-  accepted_by_id UUID REFERENCES public."user"(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    email text NOT NULL,
+    first_name text,
+    last_name text,
+    invited_by_id uuid NOT NULL,
+    token_hash text NOT NULL,
+    language text NOT NULL,
+    role_count integer NOT NULL,
+    state text DEFAULT 'pending'::text NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    accepted_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    accepted_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_email_invitation_email_check CHECK ((email = lower(btrim(email)))),
+    CONSTRAINT group_email_invitation_first_name_check CHECK (((first_name IS NULL) OR ((first_name = btrim(first_name)) AND ((char_length(first_name) >= 1) AND (char_length(first_name) <= 100))))),
+    CONSTRAINT group_email_invitation_language_check CHECK ((language = ANY (ARRAY['de'::text, 'en'::text]))),
+    CONSTRAINT group_email_invitation_last_name_check CHECK (((last_name IS NULL) OR ((last_name = btrim(last_name)) AND ((char_length(last_name) >= 1) AND (char_length(last_name) <= 100))))),
+    CONSTRAINT group_email_invitation_role_count_check CHECK ((role_count > 0)),
+    CONSTRAINT group_email_invitation_state_check CHECK ((state = ANY (ARRAY['pending'::text, 'accepted'::text, 'revoked'::text, 'expired'::text]))),
+    CONSTRAINT group_email_invitation_token_hash_check CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text)),
+    CONSTRAINT group_email_invitation_pkey PRIMARY KEY (id),
+    CONSTRAINT group_email_invitation_token_hash_key UNIQUE (token_hash)
 );
-CREATE UNIQUE INDEX group_email_invitation_pending ON group_invitations.group_email_invitation(group_id, email) WHERE state = 'pending';
-CREATE TABLE group_invitations.group_email_invitation_role (
-  invitation_id UUID NOT NULL REFERENCES group_invitations.group_email_invitation(id) ON DELETE CASCADE,
-  role_id UUID NOT NULL REFERENCES public.role(id) ON DELETE CASCADE,
-  PRIMARY KEY (invitation_id, role_id)
-);
+
 CREATE TABLE group_invitations.group_email_invitation_batch (
-  id UUID PRIMARY KEY,
-  requested_by_id UUID NOT NULL REFERENCES public."user"(id) ON DELETE CASCADE,
-  group_id UUID NOT NULL REFERENCES public."group"(id) ON DELETE CASCADE,
-  idempotency_key UUID NOT NULL,
-  fingerprint TEXT NOT NULL,
-  result JSONB NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (requested_by_id, idempotency_key)
+    id uuid NOT NULL,
+    requested_by_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    idempotency_key uuid NOT NULL,
+    fingerprint text NOT NULL,
+    result jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_email_invitation_batch_pkey PRIMARY KEY (id),
+    CONSTRAINT group_email_invitation_batch_requested_by_id_idempotency_ke_key UNIQUE (requested_by_id, idempotency_key)
 );
+
 CREATE TABLE group_invitations.group_email_invitation_delivery (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  -- Retain the anonymous budget ledger when a group or inviter is deleted.
-  invitation_id UUID REFERENCES group_invitations.group_email_invitation(id) ON DELETE SET NULL,
-  batch_id UUID REFERENCES group_invitations.group_email_invitation_batch(id) ON DELETE SET NULL,
-  resend_email_id TEXT UNIQUE,
-  status TEXT NOT NULL DEFAULT 'sending' CHECK (status IN ('sending', 'sent', 'delivered', 'bounced', 'complained', 'failed', 'unknown')),
-  error_code TEXT,
-  attempted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  event_at TIMESTAMPTZ,
-  UNIQUE (batch_id, invitation_id)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    invitation_id uuid,
+    batch_id uuid,
+    resend_email_id text,
+    status text DEFAULT 'sending'::text NOT NULL,
+    error_code text,
+    attempted_at timestamp with time zone DEFAULT now() NOT NULL,
+    event_at timestamp with time zone,
+    CONSTRAINT group_email_invitation_delivery_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text, 'unknown'::text]))),
+    CONSTRAINT group_email_invitation_delivery_batch_id_invitation_id_key UNIQUE (batch_id, invitation_id),
+    CONSTRAINT group_email_invitation_delivery_pkey PRIMARY KEY (id),
+    CONSTRAINT group_email_invitation_delivery_resend_email_id_key UNIQUE (resend_email_id)
 );
-CREATE INDEX group_email_invitation_delivery_budget ON group_invitations.group_email_invitation_delivery(attempted_at);
-CREATE INDEX group_email_invitation_delivery_invitation ON group_invitations.group_email_invitation_delivery(invitation_id, attempted_at DESC);
+
+CREATE TABLE group_invitations.group_email_invitation_role (
+    invitation_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    CONSTRAINT group_email_invitation_role_pkey PRIMARY KEY (invitation_id, role_id)
+);
+
 ALTER TABLE group_invitations.group_email_invitation ENABLE ROW LEVEL SECURITY;
-ALTER TABLE group_invitations.group_email_invitation_role ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE group_invitations.group_email_invitation_batch ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE group_invitations.group_email_invitation_delivery ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON group_invitations.group_email_invitation, group_invitations.group_email_invitation_role, group_invitations.group_email_invitation_batch, group_invitations.group_email_invitation_delivery FROM anon, authenticated;
-GRANT ALL ON group_invitations.group_email_invitation, group_invitations.group_email_invitation_role, group_invitations.group_email_invitation_batch, group_invitations.group_email_invitation_delivery TO service_role;
+
+ALTER TABLE group_invitations.group_email_invitation_role ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX group_email_invitation_delivery_budget ON group_invitations.group_email_invitation_delivery USING btree (attempted_at);
+
+CREATE INDEX group_email_invitation_delivery_invitation ON group_invitations.group_email_invitation_delivery USING btree (invitation_id, attempted_at DESC);
+
+CREATE UNIQUE INDEX group_email_invitation_pending ON group_invitations.group_email_invitation USING btree (group_id, email) WHERE (state = 'pending'::text);
