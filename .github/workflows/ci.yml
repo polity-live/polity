@@ -82,7 +82,9 @@ jobs:
     name: Zero measurements / ${{ matrix.shard }}
     needs: [test-selection, zero-performance-prepare]
     if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
-    runs-on: ubuntu-24.04
+    # Standard public ARM64 runners use Cobalt 100 CPUs. Keep both revisions
+    # and every unchanged acceptance budget on the same native Linux worker.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 15
     strategy:
       fail-fast: false

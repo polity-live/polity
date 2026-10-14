@@ -2,7 +2,7 @@
 
 ## Distributed GitHub CI (protocol v12)
 
-CI uses standard `ubuntu-24.04` runners: sixty-four catalog parts, eight security parts, one uninterrupted browser job and one control/integrity job. The seventy-four assignments run with a maximum of twenty concurrent jobs. Every runner owns a private Supabase/Zero/application stack. Other CI jobs retain their existing start conditions and compete for GitHub's available slots. Query activations and analyzer calls remain sequential inside each stack. Local `pnpm test:zero:performance` remains the full serial diagnostic command.
+CI uses standard `ubuntu-24.04-arm` measurement runners (preparation and merging use `ubuntu-24.04`): sixty-four catalog parts, eight security parts, one uninterrupted browser job and one control/integrity job. The seventy-four assignments run with a maximum of twenty concurrent jobs. Every measurement runner owns a private Supabase/Zero/application stack. These public ARM64 runners use Cobalt 100 CPUs and require no paid runner upgrade. Both revisions run on the same worker and retain every original budget; architecture is recorded in each runtime fingerprint. See the [GitHub runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners). Other CI jobs retain their existing start conditions and compete for GitHub's available slots. Query activations and analyzer calls remain sequential inside each stack. Local `pnpm test:zero:performance` remains the full serial diagnostic command.
 
 ```sh
 pnpm zero:performance:prepare --baseline-ref origin/master --output output/zero-performance/ci/preparation
