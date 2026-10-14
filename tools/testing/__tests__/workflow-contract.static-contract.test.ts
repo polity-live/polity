@@ -290,16 +290,20 @@ describe('GitHub workflow contracts', () => {
     expect(serviceIntegration).toContain('markers=$marker_count/2');
   });
 
-  it('runs four isolated coverage shards and gates the merged report', () => {
+  it('runs eight isolated coverage shards and gates the complete merged report', () => {
     const ci = workflow('ci.yml');
+    const shards = ci.slice(ci.indexOf('  coverage-shards:'), ci.indexOf('  coverage-ratchet:'));
     const ratchet = ci.slice(ci.indexOf('  coverage-ratchet:'), ci.indexOf('  security-tests:'));
 
     expect(ci).toContain('coverage-shards:');
-    expect(ci).toContain('shard: [1, 2, 3, 4]');
+    expect(shards).toContain('shard: [1, 2, 3, 4, 5, 6, 7, 8]');
+    expect(shards).toContain('timeout-minutes: 20');
+    expect(shards).toContain('COVERAGE_SHARD_MAX_WORKERS: "2"');
     expect(ci).toContain('COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"');
     expect(ci).not.toContain('COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}');
-    expect(ci).toContain('pnpm run test:coverage:shard "${{ matrix.shard }}/4"');
-    expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-4.json');
+    expect(ci).toContain('pnpm run test:coverage:shard "${{ matrix.shard }}/8"');
+    expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-8.json');
+    expect(shards).toContain('polity-coverage-shards/${{ matrix.shard }}-of-8/');
     expect(ci).not.toContain('\n  coverage-tests:');
     expect(ratchet).toContain('name: Coverage Ratchet');
     expect(ratchet).toContain('if: always()');
@@ -318,6 +322,8 @@ describe('GitHub workflow contracts', () => {
     expect(ratchet).toContain('node tools/testing/merge-coverage-projects.mjs coverage');
     expect(ratchet).toContain('fetch-depth: 0');
     expect(ratchet).toContain('--merge-reports "$RUNNER_TEMP/coverage-blobs"');
+    expect(ratchet).toContain("-name 'blob-*-8.json'");
+    expect(ratchet).toContain('if [[ "$blob_count" -ne 8 ]]');
     expect(ratchet).toContain('"--coverage.reportsDirectory=coverage"');
     expect(ratchet).toContain('node tools/testing/check-coverage-ratchet.mjs');
     expect(ratchet).toContain('pnpm run test:coverage:branches:check');

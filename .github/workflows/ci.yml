@@ -375,7 +375,7 @@ jobs:
           path: coverage-browser/coverage-final.json
 
   coverage-shards:
-    name: Coverage Shard ${{ matrix.shard }} of 4
+    name: Coverage Shard ${{ matrix.shard }} of 8
     needs: [test-selection]
     if: fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
     runs-on: ubuntu-latest
@@ -383,7 +383,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     env:
       COVERAGE_SHARD_MAX_WORKERS: "2"
     steps:
@@ -392,7 +392,7 @@ jobs:
       - name: Run isolated instrumented shard
         run: >-
           COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"
-          pnpm run test:coverage:shard "${{ matrix.shard }}/4"
+          pnpm run test:coverage:shard "${{ matrix.shard }}/8"
       - name: Upload coverage blob
         if: always()
         uses: actions/upload-artifact@v7
@@ -400,7 +400,7 @@ jobs:
           name: coverage-blob-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
-          path: .vitest-reports/blob-${{ matrix.shard }}-4.json
+          path: .vitest-reports/blob-${{ matrix.shard }}-8.json
       - name: Upload shard diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -408,7 +408,7 @@ jobs:
           name: coverage-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: ignore
           retention-days: 14
-          path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-4/
+          path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-8/
 
   coverage-ratchet:
     name: Coverage Ratchet
@@ -443,9 +443,9 @@ jobs:
           merge-multiple: true
       - name: Verify complete shard set
         run: |
-          blob_count="$(find "$RUNNER_TEMP/coverage-blobs" -maxdepth 1 -type f -name 'blob-*-4.json' | wc -l)"
-          if [[ "$blob_count" -ne 4 ]]; then
-            echo "Expected four coverage blobs, received $blob_count"
+          blob_count="$(find "$RUNNER_TEMP/coverage-blobs" -maxdepth 1 -type f -name 'blob-*-8.json' | wc -l)"
+          if [[ "$blob_count" -ne 8 ]]; then
+            echo "Expected eight coverage blobs, received $blob_count"
             exit 1
           fi
       - name: Merge coverage shards
