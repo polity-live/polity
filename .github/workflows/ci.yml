@@ -111,11 +111,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: zero-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+          key: zero-chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       - name: Install Chromium with bounded Ubuntu mirror access
         if: matrix.layer == 'journeys'
         run: |
-          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          if [[ "$RUNNER_ARCH" == "ARM64" ]]; then
+            zero_ubuntu_mirror='https://ports.ubuntu.com/ubuntu-ports'
+          else
+            zero_ubuntu_mirror='https://archive.ubuntu.com/ubuntu'
+          fi
+          printf '%s\n' "$zero_ubuntu_mirror" | sudo tee /etc/apt/apt-mirrors.txt
           printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
           pnpm exec playwright install --with-deps chromium
       - name: Measure assigned cases and confirm regressions on this runner
