@@ -81,6 +81,6 @@ it.each(['', 'anon'])('denies project conversation replication for identity %s',
   expect(harness.lastQuery('conversation').calls).toContainEqual([
     'where',
     'id',
-    '__unauthorized__',
+    '00000000-0000-0000-0000-000000000000',
   ]);
 });

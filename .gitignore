@@ -150,6 +150,7 @@ test-output.txt
 /e2e-results/
 /.playwright-cli/
 /output/
+/outputs/
 /.react-email/
 /emails/out/
 
@@ -172,6 +173,7 @@ test-output.txt
 
 # AI .text files
 *.txt
+!tools/e2e/zero-performance/__tests__/fixtures/journeys-base.fixture.txt
 
 # zero SQLite WAL-Mode Files
 *.db

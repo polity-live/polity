@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { consumePendingSignInRedirect } from '../logic/authRedirects';
 import {
   translate as translateText,
   useTranslation,
@@ -46,7 +47,7 @@ export function useVerifyFormController() {
       if (result.isNewUser) {
         sessionStorage.setItem('polity_onboarding', 'true');
       }
-      navigate({ to: '/' });
+      navigate({ to: consumePendingSignInRedirect() });
     } else {
       setVerificationError(result.error || t('features.auth.errors.verificationFailed'));
     }

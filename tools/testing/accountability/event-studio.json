@@ -1,0 +1,1111 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/agendas/hooks/useAnimatedStudioDocument.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
+        "project": "component",
+        "caseId": "honors reduced motion while presenting live tally changes and missing documents"
+      }
+    ],
+    "src/features/agendas/hooks/usePresentationAudio.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/usePresentationAudio.component.test.tsx",
+        "project": "component",
+        "caseId": "activates only the selected output, seeks to shared time and silences disconnected screens"
+      }
+    ],
+    "src/features/agendas/logic/getWinningCandidateIds.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-live.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses the agenda majority and election tie semantics"
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations"
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers"
+      }
+    ],
+    "src/features/communication-studio/logic/event-templates.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-live.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates content and chart counts without modifying the editable design"
+      }
+    ],
+    "src/features/communication-studio/logic/live-contract.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates entity bindings and bounded shared show commands and music cues"
+      }
+    ],
+    "src/features/communication-studio/logic/live-projection.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-live.unit.test.ts",
+        "project": "unit",
+        "caseId": "updates content and chart counts without modifying the editable design"
+      }
+    ],
+    "src/features/communication-studio/logic/live-snapshot.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-live.unit.test.ts",
+        "project": "unit",
+        "caseId": "captures every overflow page and freezes data, bindings, animations and music"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues"
+      }
+    ],
+    "src/routes/_authed/event/$id/presentation.tsx": [
+      {
+        "file": "src/routes/__tests__/event-presentation-route.component.test.tsx",
+        "project": "component",
+        "caseId": "opens event presentation deep links and validates explicit show and controller modes",
+        "evidence": {
+          "relation": "direct"
+        }
+      }
+    ],
+    "src/server/studio/presentation.ts": [
+      {
+        "file": "src/server/studio/__tests__/event-presentation.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "creates, couples, removes and protects event frames transactionally; preserves manual layouts and manages one controller"
+      },
+      {
+        "file": "src/server/studio/__tests__/presentation.unit.test.ts",
+        "project": "unit",
+        "caseId": "enforces exclusive control and revision checks and retains music settings across pause commands"
+      }
+    ],
+    "src/zero/communication-studio/presentation-schema.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/event-live-contract.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates entity bindings and bounded shared show commands and music cues"
+      }
+    ],
+    "src/zero/communication-studio/useEventPresentation.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
+        "project": "component",
+        "caseId": "registers viewer heartbeats, submits commands and queues a static presentation snapshot"
+      }
+    ],
+    "src/zero/communication-studio/useLiveStudioState.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/event-live-hooks.component.test.tsx",
+        "project": "component",
+        "caseId": "reactively resolves entity bindings and countdowns in editable wide and portrait layouts"
+      }
+    ],
+    "tools/studio/build-event-templates.ts": [
+      {
+        "file": "tools/studio/__tests__/event-template-catalog.unit.test.ts",
+        "project": "unit",
+        "caseId": "generates deterministic valid SQL templates for every supported agenda type"
+      }
+    ],
+    "src/features/communication-studio/logic/event-intro.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-intro.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a seamless 90-second phase after a day and validates background configuration"
+      }
+    ],
+    "src/features/communication-studio/logic/event-intro-player.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-intro-player.component.test.tsx",
+        "project": "component",
+        "caseId": "uses one animation loop through a simulated day and cleans up on hidden tabs and unmount"
+      }
+    ],
+    "src/features/communication-studio/logic/event-intro-renderer.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/event-intro-renderer.component.test.tsx",
+        "project": "component",
+        "caseId": "renders the same themed scene across loop boundaries and releases every GPU allocation"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioIntroBackground.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioIntroBackground.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the scene alive across live document and clock updates and disposes it on actual changes"
+      }
+    ],
+    "src/features/communication-studio/logic/democracy-intro.ts": [
+      {
+        "project": "component",
+        "file": "src/features/communication-studio/logic/__tests__/democracy-intro.component.test.tsx",
+        "caseId": "animates sculpted symbols, restores context and releases every unique GPU resource"
+      }
+    ],
+    "src/features/communication-studio/logic/democracy-cinematic.ts": [
+      {
+        "project": "component",
+        "file": "src/features/communication-studio/logic/__tests__/democracy-intro.component.test.tsx",
+        "caseId": "animates sculpted symbols, restores context and releases every unique GPU resource"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "clears removed entities and source changes and rejects stale query rows"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "disables template edits for read-only documents"
+      }
+    ],
+    "src/features/communication-studio/logic/presentation-audio.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/presentation-audio.unit.test.ts",
+        "project": "unit",
+        "caseId": "ships original music with verified bytes, complete attribution and only allowlisted local sources"
+      }
+    ],
+    "src/features/communication-studio/ui/PresentationAudioOptions.tsx": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers $title without uploads, resumes paused music and keeps its credits visible"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioShowTools.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the slide context and commits add/edit once, with source and target fully editable"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "cancels drafts, prevents duplicate rules and restores a removed rule"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "creates a global transition, preserves it on other slides and disables test tone looping"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits background scenes as drafts, preserves cover content and removes the fallback explicitly"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "supports source-free pause rules and marks missing files rather than saving an invalid source"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps previews available but disables editing in read-only projects"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows every slide, selects layers in the canvas and highlights the selected row"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "reuses the image dropzone for audio, validates files and only saves the new source on confirmation"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "does not assign an upload finishing after its editor has been cancelled to a different rule"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the upload draft open while the editor becomes temporarily busy"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioShowTools.component.test.tsx",
+        "project": "component",
+        "caseId": "shows playback failures as a Polity danger notice and clears them when editing the source"
+      }
+    ],
+    "src/features/communication-studio/logic/presentation-audio-player.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/usePresentationAudio.component.test.tsx",
+        "project": "component",
+        "caseId": "activates only the selected output, seeks to shared time and silences disconnected screens"
+      },
+      {
+        "file": "src/features/agendas/hooks/__tests__/usePresentationAudio.component.test.tsx",
+        "project": "component",
+        "caseId": "preserves browser activation while unlocking takes longer than the mixer timer"
+      }
+    ],
+    "src/features/communication-studio/logic/show-cues.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/show-cues.unit.test.ts",
+        "project": "unit",
+        "caseId": "scales both fades for short clips and ends rather than repeating a transition"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/agendas/ui/EventPresentation.tsx#agendas.event-presentation.act": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.activate": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows audio readiness as status and offers a single retry for blocking or media errors",
+        "scenarios": ["idle", "success", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.claim": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.controls": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.editor.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.export": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.export.download": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.follow": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.fullscreen": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.input1.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.next": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.previous": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.release": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.reveal": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.running": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.select1.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.select2.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.select3.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.select4.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and activates this output in one gesture and supports Play here without extra clicks",
+        "scenarios": ["selected", "unselected", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.select5.change": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.viewer.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "controls the shared show, captures snapshots, changes modes and handles rejected operations",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "renders audience screens without management controls and handles loading and reconnecting",
+        "scenarios": ["loading", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.bind": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.detach": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.input1.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.input2.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.input3.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.input4.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.insert": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select1.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select10.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select2.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select3.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select5.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select6.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select7.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select8.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.select9.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.live.source.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.show.cue.add": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.show.cue.remove": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts and detaches entity variables, edits portrait layouts and manages presentation cues",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "requires a source to save music while offering integrated music without uploads",
+        "scenarios": ["disabled", "unselected"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#event.show.agenda.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#event.show.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#event.show.regie.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#event.show.speakers.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#event.show.studio.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentationLauncher.tsx#agendas.event-agenda.live-focus.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers the three event screens and restricts the controller link to managers",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.intro.mode.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits intro intensity and video selection without changing cover layout or bindings",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.intro.video.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits intro intensity and video selection without changing cover layout or bindings",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.intro.intensity.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits intro intensity and video selection without changing cover layout or bindings",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.intro.preview": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits intro intensity and video selection without changing cover layout or bindings",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.loop": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "allows uploaded music to loop but keeps the built-in test sound one-shot",
+        "scenarios": ["selected", "unselected", "keyboard", "focus", "disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx#studio.intro.scene.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.component.test.tsx",
+        "project": "component",
+        "caseId": "edits intro intensity and video selection without changing cover layout or bindings",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx#studio.live.template": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "clears removed entities and source changes and rejects stale query rows",
+        "scenarios": ["disabled", "unselected", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "disables template edits for read-only documents",
+        "scenarios": ["disabled", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx#studio.live.select4.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "clears removed entities and source changes and rejects stale query rows",
+        "scenarios": ["disabled", "unselected", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "disables template edits for read-only documents",
+        "scenarios": ["disabled", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx#studio.template.source.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "clears removed entities and source changes and rejects stale query rows",
+        "scenarios": ["disabled", "unselected", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "disables template edits for read-only documents",
+        "scenarios": ["disabled", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx#studio.template.entity.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source",
+        "scenarios": ["idle", "success", "selected", "unselected", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "clears removed entities and source changes and rejects stale query rows",
+        "scenarios": ["disabled", "unselected", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "disables template edits for read-only documents",
+        "scenarios": ["disabled", "unauthorized"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioFrameTemplates.tsx#studio.template.keyboard": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioFrameTemplates.component.test.tsx",
+        "project": "component",
+        "caseId": "creates themed templates with the selected %s source",
+        "scenarios": ["keyboard", "focus", "idle", "success"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.credits.copy": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "copies all three music credits without a control lease and reports clipboard failures",
+        "scenarios": ["idle", "success", "error", "keyboard", "focus", "unauthorized"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.credit.source": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers $title without uploads, resumes paused music and keeps its credits visible",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.credit.license": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "offers $title without uploads, resumes paused music and keeps its credits visible",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx#event.show.audio.here": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "selects and activates this output in one gesture and supports Play here without extra clicks",
+        "scenarios": ["idle", "success", "error", "unauthorized", "loading"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.component.test.tsx",
+        "project": "component",
+        "caseId": "disables local output switching while offline or checking the connection",
+        "scenarios": ["disabled"]
+      },
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.audio-start.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "starts native audio automatically or with one blocked-browser click and switches exclusive outputs",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ]
+  },
+  "sourceReferenceAdditions": {
+    "src/features/communication-studio/ui/KonvaStudioCanvas.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps canonical slide positions when an entering animation crosses responsive layouts"
+      }
+    ],
+    "src/features/agendas/hooks/usePresentationAudio.ts": [
+      {
+        "file": "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "decodes the original $title, repeats across its ending and resumes only the selected output"
+      },
+      {
+        "file": "src/features/agendas/hooks/__tests__/usePresentationAudio.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "crossfades actual MP3s in the selected sequence output and restores the cyclic overlap after two days"
+      }
+    ],
+    "src/features/agendas/ui/EventPresentation.tsx": [
+      {
+        "file": "src/features/agendas/ui/__tests__/EventPresentation.audio-controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "shows themed director controls and complete sequence credits on $name"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioLiveTools.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioLiveTools.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "uses themed music sequence controls with native keyboard access on $name"
+      }
+    ]
+  }
+}

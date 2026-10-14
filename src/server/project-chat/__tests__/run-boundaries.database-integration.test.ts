@@ -106,7 +106,7 @@ async function withFixture(work: (fixture: Fixture) => Promise<void>, studio = f
     ]);
     if (studio) {
       await sql.query(
-        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Run boundaries','single',5,$3,$3)",
+        "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Run boundaries','single',6,$3,$3)",
         [scopeId, actor, Date.now()]
       );
       await sql.query(

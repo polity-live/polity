@@ -121,6 +121,7 @@ describe('search virtualizer controller branch matrix', () => {
     });
     mocks.usePolityZeroGrid.mockImplementation(() => ({
       virtualizer: {
+        scrollOffset: null,
         getVirtualItems: () => [
           { key: 'first', index: 0, start: 5, lane: undefined },
           { key: 'missing', index: 1, start: 10, lane: 1 },

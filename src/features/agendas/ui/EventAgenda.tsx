@@ -532,10 +532,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { event: streamDelegateTargetEvent } = useEventById(
     streamDelegateAssignmentMeta?.targetEventId
   );
-  const streamForwardingContext = useAgendaItemForwardingContext(
-    streamAgendaItem?.amendment_id ? streamAgendaItem.id : undefined
-  );
-  const crVoting = useAgendaItemCRVoting(streamAgendaItem?.id ?? '', user?.id);
+  const streamAmendmentAgendaItemId = streamAgendaItem?.amendment_id
+    ? streamAgendaItem.id
+    : undefined;
+  const streamForwardingContext = useAgendaItemForwardingContext(streamAmendmentAgendaItemId);
+  const crVoting = useAgendaItemCRVoting(streamAmendmentAgendaItemId, user?.id);
   const votingRepairAttemptedAgendaIdsRef = useRef(new Set<string>());
   useEffect(() => {
     const agendaItemId = streamAgendaItem?.id;

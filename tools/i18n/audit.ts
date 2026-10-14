@@ -74,6 +74,7 @@ const SKIPPED_DIRECTORIES = new Set([
 ]);
 const SKIPPED_FILE_PATTERNS = [
   /\.d\.ts$/,
+  /\.fixture\.[cm]?[jt]sx?$/,
   /\.stories\.[cm]?[jt]sx?$/,
   /generated\.ts$/,
   /plate-editor\.tsx$/,

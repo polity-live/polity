@@ -88,6 +88,53 @@ describe('useConversationSelection exhaustive branches', () => {
     other.unmount();
     window.history.replaceState({}, '', '/');
   });
+  it('does not replace history for an identical restored selection, including an empty thread', () => {
+    for (const selected of ['selected', null]) {
+      const state = {
+        __TSR_index: 7,
+        customState: { retained: true },
+        polityMessageSelection: { viewerID: 'owner', conversationID: selected },
+      };
+      window.history.replaceState(state, '', '/messages');
+      const replace = vi.spyOn(window.history, 'replaceState');
+      const hook = renderHook(() =>
+        useConversationSelection([conversation('selected')], {
+          restoreOnNavigation: true,
+          viewerID: 'owner',
+        })
+      );
+      expect(hook.result.current.selectedConversationId).toBe(selected);
+      expect(replace).not.toHaveBeenCalled();
+      expect(window.history.state).toEqual(state);
+      hook.unmount();
+      replace.mockRestore();
+    }
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('defers only the explicit URL target to its caller and persists other selections', () => {
+    window.history.replaceState({ customState: true }, '', '/messages?conversationId=selected');
+    const replace = vi.spyOn(window.history, 'replaceState');
+    const hook = renderHook(() =>
+      useConversationSelection([conversation('selected'), conversation('other')], {
+        viewerID: 'owner',
+        restoreOnNavigation: true,
+        persistSelection: false,
+        initialConversationID: 'selected',
+      })
+    );
+    expect(hook.result.current.selectedConversationId).toBe('selected');
+    expect(replace).not.toHaveBeenCalled();
+    act(() => hook.result.current.setSelectedConversationId('other'));
+    expect(replace).toHaveBeenCalledOnce();
+    expect(window.history.state).toMatchObject({
+      customState: true,
+      polityMessageSelection: { viewerID: 'owner', conversationID: 'other' },
+    });
+    hook.unmount();
+    replace.mockRestore();
+    window.history.replaceState({}, '', '/');
+  });
   it('does not auto-select without an actionable assistant intent', () => {
     const { result, rerender } = renderHook(
       ({ conversations, options }) => useConversationSelection(conversations, options),

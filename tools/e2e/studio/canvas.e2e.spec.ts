@@ -82,7 +82,7 @@ test.beforeAll(async () => {
   await sql`insert into group_membership(id,group_id,user_id,status) values(${memberId},${group},${users[1].id},'admin')`;
   await sql`insert into group_membership_role(group_membership_id,role_id) values(${memberId},${editorRole})`;
   const doc = createStudioTemplateDocumentV5('single', 'Canvas acceptance', defaultBrand);
-  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${users[0].id},${group},${doc.title},${doc.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${users[0].id},${group},${doc.title},${doc.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
 });
 test.afterAll(async () => {
@@ -170,7 +170,7 @@ test('Layers order controls shape–text–shape coverage before and during inli
   });
   const above = shape('Above text', '#FF0000', 2);
   document.nodes.push(behind, text, above);
-  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${users[0].id},${group},${document.title},${document.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${users[0].id},${group},${document.title},${document.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(document)))},0)`;
   const context = await browser.newContext({
     storageState: users[0].state,
@@ -421,7 +421,7 @@ test('ten real accounts preserve concurrent drawings and undo only their own ope
     await sql`insert into group_membership_role(group_membership_id,role_id) values(${membershipId},${editorRole})`;
   }
   const doc = createStudioTemplateDocumentV5('single', 'Canvas acceptance', defaultBrand);
-  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${users[0].id},${group},${doc.title},${doc.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${users[0].id},${group},${doc.title},${doc.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
   const contexts = await Promise.all(
     users.map(u =>

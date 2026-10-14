@@ -14,6 +14,7 @@ import {
 } from '@/features/communication-studio/logic/operations';
 import { internalVoteResult } from '@/zero/change-requests/vote-result';
 import { validateStudioAssetsInTransaction } from './assets';
+import { studioNodeAssetIds } from '@/features/communication-studio/logic/event-intro';
 import type postgres from 'postgres';
 
 const inputSchema = z.object({
@@ -112,15 +113,9 @@ async function applyDecision(sql: Sql, proposal: postgres.Row, control: postgres
     return;
   }
   await validateAssets(sql, proposal.project_id, merged.value, proposal.id);
-  const assetIds = [
-    ...merged.value.nodes.flatMap(node =>
-      node.type === 'media'
-        ? [node.assetId]
-        : node.type === 'chart' && node.sourceAssetId
-          ? [node.sourceAssetId]
-          : []
-    ),
-  ].filter((id): id is string => !!id);
+  const assetIds = [...merged.value.nodes.flatMap(studioNodeAssetIds)].filter(
+    (id): id is string => !!id
+  );
   if (assetIds.length)
     await sql`update studio_asset set workspace_id=null where workspace_id=${proposal.id} and id in ${sql(assetIds)}`;
   await sql`select set_config('polity.canvas_command',${proposal.project_id},true)`;
@@ -195,7 +190,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
     const { projectId, action, workspaceId } = input;
     await assertStudioCollaborationAccess(actor, projectId, sql);
     const [project] =
-      await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=5 for update`;
+      await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=6 for update`;
     const [control] =
       await sql`select * from canvas_control where project_id=${projectId} for update`;
     const [canonical] =

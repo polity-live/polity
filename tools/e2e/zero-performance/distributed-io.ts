@@ -1,8 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { mechanics, applicationMechanics } from './mechanics.mjs';
+import { mechanicsDigest } from './mechanics.mjs';
 
 export const harnessRoot = path.resolve('tools/e2e/zero-performance');
 export const option = (name: string) => {
@@ -26,22 +25,7 @@ export function git(...args: string[]) {
   return result.stdout.trim();
 }
 export async function harnessDigest() {
-  const hash = createHash('sha256');
-  const files = [
-    ...mechanics,
-    'distributed.ts',
-    'distributed-runner.ts',
-    'distributed-merge.ts',
-    'distributed-report.ts',
-    'distributed-io.ts',
-    'distributed-timing.ts',
-    'shard-weights.json',
-    'stage-artifacts.mjs',
-  ];
-  for (const file of files.sort())
-    hash.update(file).update(await readFile(path.join(harnessRoot, file)));
-  for (const file of applicationMechanics) hash.update(file).update(await readFile(file));
-  return hash.digest('hex');
+  return mechanicsDigest(harnessRoot);
 }
 export function command(args: string[], env = process.env, signal?: AbortSignal) {
   return new Promise<number>((resolve, reject) => {

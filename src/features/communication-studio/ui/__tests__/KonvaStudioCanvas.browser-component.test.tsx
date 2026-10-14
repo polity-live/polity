@@ -12,6 +12,66 @@ import KonvaStudioCanvas, { type StudioCanvasHandle } from '../KonvaStudioCanvas
 import { StudioLayersPanel } from '../StudioLayersPanel';
 import { StudioPanel } from '../StudioPanel';
 import { openStudioPanel } from '../../logic/panel-events';
+import Konva from 'konva';
+import { createEventTemplate } from '../../logic/event-templates';
+import { projectLiveDocument } from '../../logic/live-projection';
+
+it('keeps canonical slide positions when an entering animation crosses responsive layouts', async () => {
+  const id = crypto.randomUUID();
+  const document = createEventTemplate('speech', id);
+  const frame = document.nodes.find(n => n.type === 'frame')!;
+  const title = document.nodes.find(n => n.liveBinding?.field === 'title')!;
+  const sources = [
+    { source_type: 'agenda_item' as const, source_id: id, payload: { title: 'Responsive speech' } },
+  ];
+  const props = {
+    activeFrameId: frame.id,
+    assets: [],
+    selected: [],
+    editable: false,
+    fit: 'contain' as const,
+    showCue: 'enter',
+  };
+  const wide = projectLiveDocument(document, sources);
+  const portrait = projectLiveDocument(document, sources, { portrait: true });
+  const r = render(
+    <div style={{ width: 1280, height: 720 }}>
+      <KonvaStudioCanvas {...props} document={wide} />
+    </div>
+  );
+  const node = () => Konva.stages.find(s => s.findOne(`#${title.id}`))?.findOne(`#${title.id}`);
+  await waitFor(() => expect(node()).toBeTruthy());
+  r.rerender(
+    <div style={{ width: 390, height: 844 }}>
+      <KonvaStudioCanvas {...props} document={portrait} />
+    </div>
+  );
+  r.rerender(
+    <div style={{ width: 1280, height: 720 }}>
+      <KonvaStudioCanvas {...props} document={wide} />
+    </div>
+  );
+  // The real 800 ms tween also has a stagger delay and shares browser frames
+  // with the other coverage tests. Wait for completion beyond the default 1 s.
+  await waitFor(
+    () =>
+      expect(
+        Konva.stages
+          .find(s => s.findOne(`#${title.id}-show`))
+          ?.findOne(`#${title.id}-show`)
+          ?.opacity()
+      ).toBe(1),
+    { timeout: 5_000 }
+  );
+  expect(node()?.x()).toBe(title.transform.x + title.transform.width / 2);
+  expect(node()?.y()).toBe(title.transform.y + title.transform.height / 2);
+  expect(
+    Konva.stages
+      .find(s => s.findOne(`#${title.id}-show`))
+      ?.findOne(`#${title.id}-show`)
+      ?.x()
+  ).toBe(0);
+});
 
 function fixture() {
   const document = createStudioTemplateDocumentV5('single', 'Layered text', defaultBrand);
@@ -193,7 +253,7 @@ it('focuses a new text node as soon as it reaches the canvas document', async ()
   await waitFor(() => expect(editor).toHaveTextContent('Hallo'));
 });
 
-it('lets a user type into an existing text node after one click', async () => {
+it('selects existing text with one click and lets a user type after a double click', async () => {
   const { document: initial, frame, title } = fixture();
   let zoom = 1;
   function Harness() {
@@ -241,6 +301,8 @@ it('lets a user type into an existing text node after one click', async () => {
     (titleBounds.top + 30 - (frameBounds.top + frameBounds.bottom) / 2) * zoom;
   await userEvent.click(surface, { position: { x, y } } as never);
   expect(screen.getByTestId('selected-ids')).toHaveTextContent(title.id);
+  expect(screen.queryByLabelText('Text')).toBeNull();
+  await userEvent.dblClick(surface, { position: { x, y } } as never);
   const editor = await screen.findByLabelText('Text');
   await waitFor(() => expect(document.activeElement).toBe(editor));
   await userEvent.keyboard('Hallo');

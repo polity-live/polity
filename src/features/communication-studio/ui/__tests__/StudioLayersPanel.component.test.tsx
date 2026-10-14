@@ -37,6 +37,7 @@ function setup() {
     disabled: false,
     tr: (key: string) => key,
     onSelect: vi.fn(),
+    onFocus: vi.fn(),
     onRename: vi.fn(),
     onSetVisibility: vi.fn(),
     onSetLocked: vi.fn(),
@@ -50,11 +51,118 @@ const nameInput = () =>
   screen.getByRole('textbox', { name: 'layerName: First' }) as HTMLInputElement;
 const start = () => fireEvent.click(screen.getByRole('button', { name: 'rename: First' }));
 
+it('collapses descendants with mouse and keyboard without changing selection, even read-only', async () => {
+  const user = userEvent.setup();
+  const { props, rerender } = setup();
+  const next = structuredClone(props.document);
+  const nested = createFrameNode('square', { name: 'Nested', parentFrameId: next.nodes[0].id });
+  const child = createStudioNodeFromElement(element('rect'), nested.id, 0);
+  child.name = 'Child';
+  next.nodes.push(nested, child);
+  next.nodes[0].locked = true;
+  rerender(<StudioLayersPanel {...props} document={next} selectedNodeIds={[child.id]} disabled />);
+  expect(screen.getByRole('tree').getAttribute('aria-multiselectable')).toBe('true');
+  const row = screen.getByRole('button', { name: 'First' }).closest('[role="treeitem"]')!;
+  expect(row.getAttribute('aria-expanded')).toBe('true');
+  expect(
+    screen
+      .getByRole('button', { name: 'Child' })
+      .closest('[role="treeitem"]')
+      ?.hasAttribute('aria-expanded')
+  ).toBe(false);
+  await user.click(screen.getByRole('button', { name: 'collapseLayer: Nested' }));
+  expect(screen.queryByRole('button', { name: 'Child' })).toBeNull();
+  const collapse = screen.getByRole('button', { name: 'collapseLayer: First' });
+  collapse.focus();
+  await user.keyboard('{Enter}');
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+  expect(screen.queryByRole('button', { name: 'Nested' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Second' })).toBeTruthy();
+  await user.keyboard(' ');
+  expect(row.getAttribute('aria-expanded')).toBe('true');
+  expect(screen.getByRole('button', { name: 'expandLayer: Nested' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Child' })).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'expandLayer: Nested' }));
+  expect(
+    screen.getByRole('treeitem', { selected: true }).getAttribute('data-studio-layer-id')
+  ).toBe(child.id);
+  expect(props.onSelect).not.toHaveBeenCalled();
+  expect(props.onRename).not.toHaveBeenCalled();
+  expect(props.onSetVisibility).not.toHaveBeenCalled();
+  expect(props.onMove).not.toHaveBeenCalled();
+});
+
+it('temporarily expands search matches and restores collapsed branches after clearing the query', async () => {
+  const user = userEvent.setup();
+  const { props, rerender } = setup();
+  const next = structuredClone(props.document);
+  const child = createStudioNodeFromElement(element('rect'), next.nodes[0].id, 0);
+  child.name = 'Needle';
+  next.nodes.push(child);
+  rerender(<StudioLayersPanel {...props} document={next} />);
+  await user.click(screen.getByRole('button', { name: 'collapseLayer: First' }));
+  const search = screen.getByRole('searchbox');
+  await user.type(search, 'needle');
+  expect(screen.getByRole('button', { name: 'Needle' })).toBeTruthy();
+  expect(
+    screen.getByRole<HTMLButtonElement>('button', { name: 'collapseLayer: First' }).disabled
+  ).toBe(true);
+  expect(
+    screen
+      .getByRole('button', { name: 'First' })
+      .closest('[role="treeitem"]')
+      ?.getAttribute('aria-expanded')
+  ).toBe('true');
+  await user.clear(search);
+  expect(screen.queryByRole('button', { name: 'Needle' })).toBeNull();
+  expect(
+    screen.getByRole<HTMLButtonElement>('button', { name: 'expandLayer: First' }).disabled
+  ).toBe(false);
+  rerender(<StudioLayersPanel {...props} document={structuredClone(next)} />);
+  expect(screen.queryByRole('button', { name: 'Needle' })).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'expandLayer: First' }));
+  expect(screen.getByRole('button', { name: 'Needle' })).toBeTruthy();
+});
+
+it('passes Shift clicks as additive while normal clicks and renaming select a single layer', () => {
+  const { props, rerender } = setup();
+  const next = structuredClone(props.document);
+  next.nodes[0].visible = false;
+  next.nodes[1].locked = true;
+  next.nodes.forEach(node => {
+    node.groupIds = ['shared-group'];
+  });
+  rerender(<StudioLayersPanel {...props} document={next} selectedNodeIds={[next.nodes[1].id]} />);
+  fireEvent.click(screen.getByRole('button', { name: 'First' }), { shiftKey: true });
+  fireEvent.click(screen.getByRole('button', { name: 'Second' }), { shiftKey: true });
+  fireEvent.click(screen.getByRole('button', { name: 'First' }));
+  expect(props.onSelect.mock.calls).toEqual([
+    [next.nodes[0], next.nodes[0].id, true],
+    [next.nodes[1], next.nodes[1].id, true],
+    [next.nodes[0], next.nodes[0].id, false],
+  ]);
+  fireEvent.doubleClick(screen.getByRole('button', { name: 'First' }), { shiftKey: true });
+  expect(screen.queryByRole('textbox')).toBeNull();
+  expect(props.onSelect).toHaveBeenCalledTimes(3);
+  expect(props.onFocus).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'rename: First' }), { shiftKey: true });
+  expect(props.onSelect).toHaveBeenLastCalledWith(next.nodes[0], next.nodes[0].id);
+  expect(props.onFocus).not.toHaveBeenCalled();
+});
+
 describe('Studio layer renaming', () => {
+  it('starts renaming from the pencil without focusing the canvas', () => {
+    const { props } = setup();
+    start();
+    expect(document.activeElement).toBe(nameInput());
+    expect(props.onFocus).not.toHaveBeenCalled();
+  });
+
   it('selects the layer, focuses and selects its name, and commits once on Enter plus blur', () => {
     const { props } = setup();
     fireEvent.doubleClick(screen.getByRole('button', { name: 'First' }));
     const input = nameInput();
+    expect(props.onFocus.mock.calls).toEqual([[props.document.nodes[0].id]]);
     expect(props.onSelect).toHaveBeenCalledWith(
       props.document.nodes[0],
       props.document.nodes[0].id
@@ -154,6 +262,7 @@ describe('Studio layer renaming', () => {
     fireEvent.doubleClick(screen.getByRole('button', { name: 'First' }));
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(props.onRename).not.toHaveBeenCalled();
+    expect(props.onFocus.mock.calls).toEqual([[next.nodes[0].id]]);
   });
 
   it.each(['deleted', 'locked', 'read-only', 'renamed'])(
@@ -212,7 +321,8 @@ it('searches layers, selects a row and clears the search with native keyboard fo
   await user.keyboard('{Enter}');
   expect(props.onSelect).toHaveBeenCalledExactlyOnceWith(
     props.document.nodes[1],
-    props.document.nodes[1].id
+    props.document.nodes[1].id,
+    false
   );
   expect(document.activeElement).toBe(name);
   rerender(<StudioLayersPanel {...props} selectedNodeIds={[props.document.nodes[1].id]} />);
@@ -295,7 +405,7 @@ it.each(['locked', 'read-only'] as const)(
     const select = screen.getByRole<HTMLButtonElement>('button', { name: 'First' });
     select.focus();
     await user.keyboard('{Enter}');
-    expect(props.onSelect).toHaveBeenCalledExactlyOnceWith(next.nodes[0], next.nodes[0].id);
+    expect(props.onSelect).toHaveBeenCalledExactlyOnceWith(next.nodes[0], next.nodes[0].id, false);
     expect(document.activeElement).toBe(select);
   }
 );

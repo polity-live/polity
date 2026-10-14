@@ -140,7 +140,7 @@ describe('Project starter handoffs and native Studio creation', () => {
         sql.startsWith('insert into studio_state')
       )![1][1];
       expect(studioDocumentV5Schema.safeParse(persisted).success).toBe(true);
-      expect(persisted.schemaVersion).toBe(5);
+      expect(persisted.schemaVersion).toBe(6);
       expect(persisted.deliverables).toHaveLength(1);
       expect(io.createChat).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -115,7 +115,7 @@ export async function waitForZeroHealth(options = {}) {
   const wait =
     options.wait ??
     (milliseconds => new Promise(resolveWait => setTimeout(resolveWait, milliseconds)));
-  const timeout = options.timeout ?? 180_000;
+  const timeout = options.timeout ?? 600_000;
   const interval = options.interval ?? 5_000;
   const start = now();
   let lastError = '';
@@ -231,9 +231,11 @@ export async function runDeployCli(options = {}) {
       if (health.healthy) {
         reporter.success('zero-cache is healthy');
       } else {
-        reporter.warn('zero-cache did not become healthy within 180s — continuing anyway');
-        if (health.lastError) reporter.warn(`Last error: ${health.lastError}`);
-        reporter.info(`Check Fly.io logs: ${flyBin} logs`);
+        throw new Error(
+          `zero-cache did not become healthy within 600s. App deployment aborted.${
+            health.lastError ? ` Last error: ${health.lastError}.` : ''
+          } Check Fly.io logs: ${flyBin} logs`
+        );
       }
     }
   } else {

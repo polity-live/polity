@@ -3,6 +3,9 @@ import type { SecurityCaseExpectation } from './security';
 import type { MutationExpectation } from './mutation-metrics';
 
 export const SHARD_FORMAT = 2;
+export const QUERY_SHARD_COUNT = 64;
+export const SECURITY_SHARD_COUNT = 2;
+export const TOTAL_SHARD_COUNT = QUERY_SHARD_COUNT + SECURITY_SHARD_COUNT + 2;
 export const ACTIVE_BUDGET_MS = { prepare: 180_000, runner: 900_000, merge: 120_000 };
 export const PROFILE_KEYS = [
   'empty/owner',
@@ -163,7 +166,7 @@ export function createManifest(
         ),
       };
     }),
-    16
+    QUERY_SHARD_COUNT
   );
   const security = [
     ...new Set(
@@ -178,7 +181,7 @@ export function createManifest(
       members: [key],
       weight: weight(key) * (securityCopies.get(key) ?? 0),
     })),
-    2
+    SECURITY_SHARD_COUNT
   );
   const shard = (id: string, layer: Shard['layer'], members: string[]): Shard => ({
     id,
@@ -231,10 +234,10 @@ export function validateManifest(manifest: Manifest) {
   )
     throw new Error('Invalid or modified shard manifest');
   if (
-    manifest.shards.length !== 20 ||
-    new Set(manifest.shards.map(shard => shard.id)).size !== 20 ||
-    manifest.shards.filter(shard => shard.layer === 'queries').length !== 16 ||
-    manifest.shards.filter(shard => shard.layer === 'security').length !== 2 ||
+    manifest.shards.length !== TOTAL_SHARD_COUNT ||
+    new Set(manifest.shards.map(shard => shard.id)).size !== TOTAL_SHARD_COUNT ||
+    manifest.shards.filter(shard => shard.layer === 'queries').length !== QUERY_SHARD_COUNT ||
+    manifest.shards.filter(shard => shard.layer === 'security').length !== SECURITY_SHARD_COUNT ||
     manifest.shards.filter(shard => shard.layer === 'journeys').length !== 1 ||
     manifest.shards.filter(shard => shard.layer === 'diagnostics').length !== 1
   )
@@ -246,11 +249,9 @@ export function validateManifest(manifest: Manifest) {
   for (const layer of ['queries', 'security'] as const) {
     const assignments = new Map<string, string>();
     for (const shard of manifest.shards.filter(shard => shard.layer === layer)) {
-      if (
-        !new RegExp(`^${layer}-([1-9]|1[0-6])$`).test(shard.id) ||
-        (layer === 'security' && !['security-1', 'security-2'].includes(shard.id))
-      )
-        throw new Error('Invalid shard identity');
+      const identity = new RegExp(`^${layer}-([1-9][0-9]*)$`).exec(shard.id);
+      const count = layer === 'queries' ? QUERY_SHARD_COUNT : SECURITY_SHARD_COUNT;
+      if (!identity || Number(identity[1]) > count) throw new Error('Invalid shard identity');
       for (const key of [...shard.head, ...shard.base]) {
         const group = layer === 'queries' ? catalogGroup(key) : key;
         if (assignments.has(group) && assignments.get(group) !== shard.id)

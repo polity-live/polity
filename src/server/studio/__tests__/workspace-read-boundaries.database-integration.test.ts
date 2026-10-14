@@ -60,9 +60,9 @@ beforeAll(async () => {
   await sql`insert into action_right (resource,action,role_id,group_id) values ('projects','view',${role},${group})`;
   await sql`insert into group_membership_role (group_membership_id,role_id) values (${membership},${role})`;
   await sql`insert into studio_project (id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at)
-    values (${personal},${owner},null,'Personal snapshot','single','private',5,0,0),
-      (${grouped},${owner},${group},'Group snapshot','single','public',5,0,0),
-      (${missingState},${owner},null,'State absent','single','private',5,0,0)`;
+    values (${personal},${owner},null,'Personal snapshot','single','private',6,0,0),
+      (${grouped},${owner},${group},'Group snapshot','single','public',6,0,0),
+      (${missingState},${owner},null,'State absent','single','private',6,0,0)`;
   for (const id of [personal, grouped])
     await sql`insert into studio_state (project_id,document,updated_at) values (${id},${sql.json(encodedDocument)},0)`;
   await sql`insert into studio_project_collaborator (id,project_id,user_id,invited_by_id,status,created_at,updated_at)

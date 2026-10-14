@@ -274,7 +274,7 @@ if (command === 'clone') {
   });
   child.unref();
   let ready = false;
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < 1200; i++) {
     const s = await control('status');
     if (s?.services?.every(x => x.ready)) {
       ready = true;

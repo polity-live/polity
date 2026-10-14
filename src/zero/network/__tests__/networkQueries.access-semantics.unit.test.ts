@@ -161,6 +161,41 @@ function fixture(): Rows {
   };
 }
 
+const pairGroupA = 'aaaaaaaa-0000-4000-8000-000000000001';
+const pairGroupB = 'bbbbbbbb-0000-4000-8000-000000000002';
+const pairInitiator = 'cccccccc-0000-4000-8000-000000000003';
+function requestPairFixture(accessField = 'group_a_id'): Rows {
+  const data = fixture();
+  data.group = [pairGroupA, pairGroupB, pairInitiator].map(id => ({
+    id,
+    visibility: 'private',
+    owner_id: 'other',
+    tutorial_run_id: null,
+  }));
+  data.group_connection_request = [
+    {
+      id: 'pair-request',
+      group_a_id: pairGroupA,
+      group_b_id: pairGroupB,
+      initiator_group_id: pairInitiator,
+      status: 'pending',
+      updated_at: 2,
+    },
+    {
+      id: 'other-pair',
+      group_a_id: pairGroupA,
+      group_b_id: pairInitiator,
+      initiator_group_id: pairGroupA,
+      status: 'pending',
+      updated_at: 1,
+    },
+  ];
+  const permittedGroup = data.group_connection_request[0][accessField];
+  data.group_membership[0].group_id = permittedGroup;
+  data.role[0].group_id = permittedGroup;
+  return data;
+}
+
 const derived = [
   ['hierarchyPathsByGroup', 'group_hierarchy_path', 'ancestor_group_id', 'descendant_group_id'],
   ['effectiveRightsByGroup', 'group_effective_right', 'holder_group_id', 'scope_group_id'],
@@ -174,6 +209,75 @@ const derived = [
 ] as const;
 
 describe('network query access semantics with real Zero predicates', () => {
+  it.each([
+    ['forward', pairGroupA, pairGroupB],
+    ['reversed', pairGroupB, pairGroupA],
+    ['uppercase', pairGroupA.toUpperCase(), pairGroupB.toUpperCase()],
+    ['mixed case reversed', pairGroupB.toUpperCase(), pairGroupA],
+  ])(
+    'selects the canonical request pair with two indexed equalities for %s input',
+    (_label, groupAId, groupBId) => {
+      const data = requestPairFixture();
+      const ast = query('groupConnectionRequestsByPair', { groupAId, groupBId }, 'member');
+      expect(select(ast, data).map(row => row.id)).toEqual(['pair-request']);
+      expect(ast.where.type).toBe('and');
+      expect(ast.where.conditions.filter((condition: any) => condition.type === 'simple')).toEqual([
+        {
+          type: 'simple',
+          left: { type: 'column', name: 'group_a_id' },
+          op: '=',
+          right: { type: 'literal', value: pairGroupA },
+        },
+        {
+          type: 'simple',
+          left: { type: 'column', name: 'group_b_id' },
+          op: '=',
+          right: { type: 'literal', value: pairGroupB },
+        },
+      ]);
+    }
+  );
+
+  it.each([pairGroupA, pairGroupA.toUpperCase()])(
+    'returns no request for equal UUID endpoints %s',
+    groupBId => {
+      expect(
+        select(
+          query('groupConnectionRequestsByPair', { groupAId: pairGroupA, groupBId }, 'member'),
+          requestPairFixture()
+        )
+      ).toEqual([]);
+    }
+  );
+
+  it.each(['group_a_id', 'group_b_id', 'initiator_group_id'])(
+    'retains %s authorization, nested group discovery, and membership revocation for canonical pairs',
+    accessField => {
+      const data = requestPairFixture(accessField);
+      const args = { groupAId: pairGroupB, groupBId: pairGroupA };
+      const ast = query('groupConnectionRequestsByPair', args, 'member');
+      const request = data.group_connection_request[0];
+      expect(select(ast, data).map(row => row.id)).toEqual(['pair-request']);
+      expect(select(query('groupConnectionRequestsByPair', args, 'outsider'), data)).toEqual([]);
+      expect(select(query('groupConnectionRequestsByPair', args), data)).toEqual([]);
+      for (const name of ['group_a', 'group_b', 'initiator_group']) {
+        expect(correlated(relation(ast, name), request, data).map(row => row.id)).toEqual(
+          `${name}_id` === accessField ? [request[accessField]] : []
+        );
+      }
+      expect(ast.related?.map(related => related.subquery.alias)).toEqual([
+        'group_a',
+        'group_b',
+        'initiator_group',
+        'active_connection',
+        'grant_requests',
+        'membership_rule_requests',
+      ]);
+      data.group_membership[0].status = 'revoked';
+      expect(select(ast, data)).toEqual([]);
+    }
+  );
+
   it('bounds EXISTS planning in all network roots and nested relations', () => {
     const args = {
       groupId: 'private',

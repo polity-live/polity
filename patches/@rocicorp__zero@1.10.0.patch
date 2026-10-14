@@ -1,0 +1,31 @@
+diff --git a/out/zero-cache/src/services/change-streamer/replica-poller.js b/out/zero-cache/src/services/change-streamer/replica-poller.js
+--- a/out/zero-cache/src/services/change-streamer/replica-poller.js
++++ b/out/zero-cache/src/services/change-streamer/replica-poller.js
+@@ -31,7 +31,7 @@ var ReplicaPoller = class {
+ 		return this.#stream;
+ 	}
+ 	#pollReplica = () => {
+-		const db = new Database(this.#lc, this.#replicaFile);
++		const db = new Database(this.#lc, this.#replicaFile, { readonly: true });
+ 		try {
+ 			const { stateVersion } = getReplicationState(new StatementRunner(db));
+ 			if (stateVersion !== this.#lastWatermark) {
+diff --git a/out/zero-cache/src/db/pg-copy-binary.js b/out/zero-cache/src/db/pg-copy-binary.js
+--- a/out/zero-cache/src/db/pg-copy-binary.js
++++ b/out/zero-cache/src/db/pg-copy-binary.js
+@@ -198,11 +198,12 @@
+-* Uses Number arithmetic (avoiding BigInt) for speed. The microsecond value
+-* fits safely in a Number for all practical dates (up to ~year 285,000).
++* Decompose integer microseconds before rounding to Number, matching the
++* quotient/remainder arithmetic used by timestampToFpMillis.
+ */
+ function decodeTimestamp(buf) {
+ 	const hi = buf.readInt32BE(0);
+ 	const lo = buf.readUInt32BE(4);
+ 	if (hi === PG_TIMESTAMP_INF_HI && lo === PG_TIMESTAMP_INF_LO) return Infinity;
+ 	if (hi === PG_TIMESTAMP_NEG_INF_HI && lo === PG_TIMESTAMP_NEG_INF_LO) return -Infinity;
+-	return (hi * 4294967296 + lo) / 1e3 + PG_EPOCH_UNIX_MILLIS;
++	const micros = (BigInt(hi) << 32n) + BigInt(lo) + BigInt(PG_EPOCH_UNIX_MILLIS) * 1000n;
++	return Number(micros / 1000n) + Number((micros % 1000n) * 1000n) * 1e-6;
+ }
+ /**

@@ -220,7 +220,7 @@ describe('deployment CLI contracts', () => {
     expect(execute).toHaveBeenCalledTimes(1);
   });
 
-  it('executes live targets and handles healthy and unhealthy Fly checks', async () => {
+  it('executes live targets after a healthy Fly check', async () => {
     const execute = vi.fn(command => (String(command).startsWith('git ') ? 'deploy\n' : ''));
     await expect(
       runDeployCli({
@@ -234,26 +234,6 @@ describe('deployment CLI contracts', () => {
     ).resolves.toMatchObject({ deployed: true });
     expect(execute).toHaveBeenCalledWith('fly deploy --yes', { stdio: 'inherit' });
 
-    const unhealthyReporter = reporter();
-    await runDeployCli({
-      args: ['--skip-supabase', '--skip-vercel'],
-      execute: vi.fn(command => (String(command).startsWith('git ') ? 'master\n' : '')),
-      commandAvailable: vi.fn(() => true),
-      checkHealth: vi.fn().mockResolvedValue({ healthy: false, lastError: 'HTTP 503' }),
-      reporter: unhealthyReporter,
-    });
-    expect(unhealthyReporter.warn).toHaveBeenCalledWith('Last error: HTTP 503');
-
-    const emptyErrorReporter = reporter();
-    await runDeployCli({
-      args: ['--skip-supabase', '--skip-vercel'],
-      execute: vi.fn(command => (String(command).startsWith('git ') ? 'master\n' : '')),
-      commandAvailable: vi.fn(() => true),
-      checkHealth: vi.fn().mockResolvedValue({ healthy: false, lastError: '' }),
-      reporter: emptyErrorReporter,
-    });
-    expect(emptyErrorReporter.info).toHaveBeenCalledWith(expect.stringContaining('logs'));
-
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     await expect(
       runDeployCli({
@@ -264,6 +244,27 @@ describe('deployment CLI contracts', () => {
       })
     ).resolves.toMatchObject({ deployed: true });
   });
+
+  it.each(['HTTP 503', ''])(
+    'blocks app deployment when Zero is unhealthy (%s)',
+    async lastError => {
+      const execute = vi.fn(command => (String(command).startsWith('git ') ? 'master\n' : ''));
+      await expect(
+        runDeployCli({
+          args: ['--skip-supabase'],
+          execute,
+          commandAvailable: vi.fn(() => true),
+          projectLinked: true,
+          checkHealth: vi.fn().mockResolvedValue({ healthy: false, lastError }),
+          reporter: reporter(),
+        })
+      ).rejects.toThrow('App deployment aborted');
+      expect(execute).toHaveBeenCalledWith('flyctl deploy --yes', { stdio: 'inherit' });
+      expect(execute.mock.calls.some(([command]) => String(command).startsWith('vercel '))).toBe(
+        false
+      );
+    }
+  );
 
   it('reports top-level errors through an injectable process boundary', () => {
     const logger = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };

@@ -134,7 +134,10 @@ describe('dataset storage utilities and Supabase boundary', () => {
 
   it('downloads text and reports download errors', async () => {
     await expect(downloadSnapshotText('one.csv')).resolves.toBe('stored');
-    expect(mocks.download).toHaveBeenCalledWith('one.csv');
+    expect(mocks.download).toHaveBeenCalledWith('one.csv', {}, undefined);
+    const controller = new AbortController();
+    await downloadSnapshotText('one.csv', controller.signal);
+    expect(mocks.download).toHaveBeenLastCalledWith('one.csv', {}, { signal: controller.signal });
 
     mocks.download.mockResolvedValueOnce({ data: null, error: { message: 'download failed' } });
     await expect(downloadSnapshotText('missing.csv')).rejects.toThrow('download failed');

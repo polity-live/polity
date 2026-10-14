@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
     rowsEmpty: true,
     rowAt: vi.fn(),
     virtualizer: {
+      scrollOffset: null as number | null,
       getVirtualItems: vi.fn(() => [] as any[]),
       getTotalSize: vi.fn(() => 0),
       measureElement: vi.fn(),
@@ -86,6 +87,7 @@ beforeEach(() => {
     rowsEmpty: true,
     rowAt: vi.fn(),
     virtualizer: {
+      scrollOffset: null,
       getVirtualItems: vi.fn(() => []),
       getTotalSize: vi.fn(() => 0),
       measureElement: vi.fn(),
@@ -249,6 +251,7 @@ describe('responsive grid views', () => {
       rowsEmpty: false,
       rowAt: vi.fn((index: number) => (index === 0 ? { id: 'row' } : undefined)),
       virtualizer: {
+        scrollOffset: null,
         getVirtualItems: vi.fn(() => [
           { key: 'row', index: 0, lane: 1, start: 10 },
           { key: 'skeleton', index: 1, lane: undefined, start: 120 },
@@ -320,17 +323,20 @@ describe('responsive grid views', () => {
   });
 });
 
-it('remeasures compact rows and keeps the visible entity as anchor when changing lanes', () => {
+it('restores the observed visible anchor across lane and compact changes without reading outgoing DOM layout', () => {
   mocks.zeroResult.rowsEmpty = false;
+  mocks.zeroResult.virtualizer.scrollOffset = 350;
   mocks.zeroResult.virtualizer.getVirtualItems.mockReturnValue([
     { key: 'row', index: 12, lane: 0, start: 100, end: 220 },
+    { key: 'second', index: 13, lane: 1, start: 220, end: 340 },
+    { key: 'third', index: 14, lane: 2, start: 340, end: 460 },
   ] as any);
   mocks.zeroResult.rowAt.mockReturnValue({ id: 'anchor' });
   const props = {
     context: { scope: 'same-filter' },
     historyKey: 'anchor',
     estimateSize: 300,
-    getLanes: () => 3,
+    getLanes: (width: number) => (width >= 600 ? 3 : 2),
     getRowKey: (row: { id: string }) => row.id,
     toStartRow: (row: { id: string }) => row,
     getPageQuery: () => null,
@@ -339,12 +345,35 @@ it('remeasures compact rows and keeps the visible entity as anchor when changing
     renderSkeleton: () => null,
     renderEmpty: () => null,
   };
-  const { rerender } = render(<PolityZeroGridView {...props} layoutKey="cards" />);
+  const view = render(<PolityZeroGridView {...props} layoutKey="cards" />);
+  const viewport = view.container.firstElementChild as HTMLElement;
+  Object.defineProperty(viewport, 'scrollTop', {
+    configurable: true,
+    get() {
+      throw new Error('Outgoing grid layout must not be read');
+    },
+  });
   mocks.zeroResult.virtualizer.measure.mockClear();
-  rerender(<PolityZeroGridView {...props} layoutKey="compact" />);
+  mocks.zeroResult.virtualizer.scrollToIndex.mockClear();
+  act(() =>
+    resizeCallback?.([{ contentRect: { width: 900 } } as ResizeObserverEntry], {} as ResizeObserver)
+  );
+  expect(mocks.zeroOptions.lanes).toBe(3);
+  expect(mocks.zeroResult.virtualizer.measure).toHaveBeenCalledOnce();
+  expect(mocks.zeroResult.virtualizer.scrollToIndex).toHaveBeenCalledExactlyOnceWith(14, {
+    align: 'start',
+  });
+
+  mocks.zeroResult.virtualizer.scrollOffset = 125;
+  mocks.zeroResult.virtualizer.measure.mockClear();
+  mocks.zeroResult.virtualizer.scrollToIndex.mockClear();
+  view.rerender(<PolityZeroGridView {...props} layoutKey="compact" />);
   expect(mocks.zeroOptions.lanes).toBe(1);
   expect(mocks.zeroOptions.estimateSize()).toBe(92);
   expect(mocks.zeroResult.virtualizer.measure).toHaveBeenCalledOnce();
-  expect(mocks.zeroResult.virtualizer.scrollToIndex).toHaveBeenCalledWith(12, { align: 'start' });
+  expect(mocks.zeroResult.virtualizer.scrollToIndex).toHaveBeenCalledExactlyOnceWith(12, {
+    align: 'start',
+  });
   expect(mocks.zeroOptions.listContextParams).toEqual({ scope: 'same-filter' });
+  expect(() => view.unmount()).not.toThrow();
 });

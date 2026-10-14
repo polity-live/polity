@@ -371,6 +371,105 @@ describe('mutation performance budgets', () => {
   });
 });
 describe('mutation raw API reconciliation', () => {
+  it('retains retries and mixed batch validation with unrelated indexed requests', () => {
+    const row = measurement();
+    const records = api(row);
+    const firstRequest = records.filter(record => record.requestID === 'request-0');
+    records.push(
+      ...structuredClone(firstRequest).map(record => ({ ...record, requestID: 'retry' }))
+    );
+    row.samples[0].completionRequestIDs = ['request-0', 'retry'];
+    for (const fields of [
+      { clientGroupID: 'unrelated-group' },
+      { clientID: 'unrelated-client' },
+      { name: 'users.updateAvatar' },
+    ]) {
+      const unrelated = structuredClone(firstRequest);
+      for (const record of unrelated) {
+        record.requestID = `unrelated-${Object.keys(fields)[0]}`;
+        if (record.identities)
+          record.identities = record.identities.map(identity => ({ ...identity, ...fields }));
+        if (record.identity) record.identity = { ...record.identity, ...fields };
+      }
+      records.push(...unrelated);
+    }
+    correlateMutationAPI([row], records);
+    expect(row.samples[0].attempts.map(attempt => attempt.requestID)).toEqual([
+      'request-0',
+      'retry',
+    ]);
+    expect(mutationReportFailures([row.expectation], [row], records)).toEqual([]);
+
+    // A matching batch still validates every phase identity, even one that
+    // claims an otherwise unrelated client/name in the candidate index.
+    records.push({
+      ...records[2],
+      identity: { ...records[2].identity!, clientID: 'not-in-arrival' },
+    });
+    correlateMutationAPI([row], records);
+    expect(row.samples[0].attempts).toEqual([]);
+    expect(row.samples[0].mutationID).toBeUndefined();
+  });
+  it.each(['clientGroupID', 'clientID', 'name'] as const)(
+    'does not manufacture correlation from a mismatched indexed %s',
+    field => {
+      const row = measurement();
+      const records = api(row);
+      records[0].identities![0][field] = 'different';
+      correlateMutationAPI([row], records);
+      expect(row.samples[0].attempts).toEqual([]);
+      expect(row.samples[0].mutationID).toBeUndefined();
+      expect(row.samples.slice(1).every(sample => sample.attempts.length === 1)).toBe(true);
+    }
+  );
+  it.each(['duplicate-arrival', 'missing-response'])(
+    'retains invalid candidate detection for %s among unrelated requests',
+    variant => {
+      const row = measurement();
+      const records = api(row);
+      if (variant === 'duplicate-arrival') records.push(structuredClone(records[0]));
+      else
+        records.splice(
+          records.findIndex(
+            record => record.requestID === 'request-0' && record.phase === 'response'
+          ),
+          1
+        );
+      correlateMutationAPI([row], records);
+      expect(row.samples[0].attempts).toEqual([]);
+      expect(row.samples[0].mutationID).toBeUndefined();
+      expect(row.samples.slice(1).every(sample => sample.attempts.length === 1)).toBe(true);
+    }
+  );
+  it.each(['matching-request', 'unrelated-request'])(
+    'retains malformed null identity failure from a %s without losing its request',
+    variant => {
+      const row = measurement();
+      const records = api(row);
+      if (variant === 'matching-request') records[0].identities!.push(null as never);
+      else
+        records.push({ ...records[0], requestID: 'unrelated-null', identities: [null as never] });
+      expect(() => correlateMutationAPI([row], records)).toThrow(TypeError);
+      expect(row.samples[0].attempts).toEqual([]);
+      expect(row.samples[0].mutationID).toBeUndefined();
+    }
+  );
+  it('preserves strict identity comparisons for empty, missing and nonstring group values', () => {
+    for (const value of [undefined, null, '', 0, false, Number.NaN]) {
+      const row = measurement();
+      row.samples[0].clientGroupID = value as never;
+      const records = api(row);
+      correlateMutationAPI([row], records);
+      // Map accepts NaN as a key; the retained === matcher must still reject it.
+      expect(row.samples[0].attempts).toHaveLength(Number.isNaN(value) ? 0 : 1);
+    }
+    const row = measurement();
+    const records = api(row);
+    row.samples[0].clientGroupID = undefined as never;
+    records[0].identities![0].clientGroupID = null as never;
+    correlateMutationAPI([row], records);
+    expect(row.samples[0].attempts).toEqual([]);
+  });
   it('does not manufacture measuring-process completion proof from raw server response diagnostics', () => {
     const row = measurement(),
       records = api(row);

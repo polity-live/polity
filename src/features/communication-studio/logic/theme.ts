@@ -195,7 +195,12 @@ export function applyThemeSnapshot(document: StudioDocumentV3, next: StudioTheme
     if (node.type !== 'richText') continue;
     const styleId = node.typography.textStyleId;
     const oldStyle = styleId ? oldStyles.get(styleId) : undefined;
-    const nextStyle = styleId ? newStyles.get(styleId) : undefined;
+    const nextStyle = styleId
+      ? (newStyles.get(styleId) ??
+        (node.liveBinding
+          ? next.textStyles.find(style => style.name === oldStyle?.name)
+          : undefined))
+      : undefined;
     const typographyOverridden = node.overrides.some(key => key.startsWith('typography.'));
     // Compare the existing runs before replacing their bound style with the new revision.
     const updateTypography =
@@ -222,6 +227,22 @@ export function applyThemeSnapshot(document: StudioDocumentV3, next: StudioTheme
       applyTextStyleToNode(node, nextStyle, newPalette);
       node.style.fillBinding = nextStyle.color;
       node.style.fill = paletteColor(newPalette, nextStyle.color);
+    } else if (node.liveBinding && nextStyle && !typographyOverridden) {
+      // Event layouts keep their responsive sizing while inheriting the theme's font.
+      node.typography.fontFamily = themeFontFamily(nextStyle.font);
+      node.content = node.content.map(block => ({
+        ...block,
+        children: block.children.map(child =>
+          'text' in child
+            ? {
+                ...child,
+                fontFamily: themeFontFamily(nextStyle.font),
+                colorBinding: nextStyle.color,
+                color: paletteColor(newPalette, nextStyle.color),
+              }
+            : child
+        ),
+      }));
     }
   }
   document.theme = studioThemeSnapshotSchema.parse(next);

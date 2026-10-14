@@ -44,7 +44,7 @@ describe('viewer-scoped RBAC queries', () => {
     expect(harness.lastQuery('group_membership').calls).toContainEqual([
       'where',
       'id',
-      '__unauthorized__',
+      '00000000-0000-0000-0000-000000000000',
     ]);
 
     harness.reset();
@@ -55,7 +55,7 @@ describe('viewer-scoped RBAC queries', () => {
     expect(harness.lastQuery('group_guest_access').calls).toContainEqual([
       'where',
       'id',
-      '__unauthorized__',
+      '00000000-0000-0000-0000-000000000000',
     ]);
   });
 

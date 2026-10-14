@@ -6,6 +6,9 @@ import { user, file } from './users/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
 import {
   studioProject,
+  studioLiveSource,
+  eventPresentation,
+  eventPresentationDevice,
   studioProjectCollaborator,
   studioExport,
   studioState,
@@ -93,6 +96,7 @@ export const studioStateRelationships = relationships(studioState, ({ one }) => 
   project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
 }));
 export const studioProjectRelationships = relationships(studioProject, ({ one, many }) => ({
+  event: one({ sourceField: ['event_id'], destField: ['id'], destSchema: event }),
   owner: one({ sourceField: ['owner_id'], destField: ['id'], destSchema: user }),
   control: one({ sourceField: ['id'], destField: ['project_id'], destSchema: canvasControl }),
   group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
@@ -102,6 +106,25 @@ export const studioProjectRelationships = relationships(studioProject, ({ one, m
     destSchema: studioProjectCollaborator,
   }),
 }));
+export const studioLiveSourceRelationships = relationships(studioLiveSource, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destField: ['id'], destSchema: event }),
+  agenda_item: one({ sourceField: ['agenda_item_id'], destField: ['id'], destSchema: agendaItem }),
+  vote: one({ sourceField: ['vote_id'], destField: ['id'], destSchema: vote }),
+  election: one({ sourceField: ['election_id'], destField: ['id'], destSchema: election }),
+  amendment: one({ sourceField: ['amendment_id'], destField: ['id'], destSchema: amendment }),
+  user: one({ sourceField: ['user_id'], destField: ['id'], destSchema: user }),
+  group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
+}));
+export const eventPresentationRelationships = relationships(eventPresentation, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destField: ['id'], destSchema: event }),
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const eventPresentationDeviceRelationships = relationships(
+  eventPresentationDevice,
+  ({ one }) => ({
+    event: one({ sourceField: ['event_id'], destField: ['id'], destSchema: event }),
+  })
+);
 export const studioProjectCollaboratorRelationships = relationships(
   studioProjectCollaborator,
   ({ one }) => ({
@@ -2789,6 +2812,9 @@ export const allRelationships = [
   studioOperationRelationships,
   canvasProposalRelationships,
   studioProjectRelationships,
+  studioLiveSourceRelationships,
+  eventPresentationRelationships,
+  eventPresentationDeviceRelationships,
   studioProjectCollaboratorRelationships,
   studioExportRelationships,
   appearanceThemeRevisionRelationships,

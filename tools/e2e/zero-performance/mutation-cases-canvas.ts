@@ -181,7 +181,7 @@ function canvasCase(action: Action, actor: Actor, mode: Mode = 'normal'): Mutati
         title: canonical.title,
         kind: 'single',
         visibility: 'private',
-        document_schema_version: 5,
+        document_schema_version: 6,
         created_at: 0,
         updated_at: 0,
       });
@@ -773,7 +773,7 @@ export function studioApplyConflictCases(): MutationCase[] {
           title: current.title,
           kind: 'single',
           visibility: 'private',
-          document_schema_version: 5,
+          document_schema_version: 6,
           created_at: 0,
           updated_at: 0,
         });

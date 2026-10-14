@@ -108,7 +108,7 @@ describe('active Zero CI budget', () => {
       true
     );
   });
-  it('keeps the required gate name, 20 isolated standard runners and independent CI jobs', () => {
+  it('keeps the required gate name, twenty-runner concurrency cap and independent CI jobs', () => {
     const workflow = parse(readFileSync('.github/workflows/ci.yml', 'utf8'));
     const prepare = workflow.jobs['zero-performance-prepare'],
       runners = workflow.jobs['zero-performance-shards'],
@@ -130,7 +130,9 @@ describe('active Zero CI budget', () => {
       prepare['timeout-minutes'],
       runners['timeout-minutes'],
       gate['timeout-minutes'],
-    ]).toEqual([3, 15, 2]);
+    ]).toEqual([3, 15, 3]);
+    expect(activeTiming(0, 0, 120_000).failed).toBe(false);
+    expect(activeTiming(0, 0, 120_001).failed).toBe(true);
     for (const [key, value] of Object.entries(workflow.jobs) as [string, any][])
       if (!key.startsWith('zero-'))
         expect(JSON.stringify(value.needs ?? [])).not.toContain('zero-');

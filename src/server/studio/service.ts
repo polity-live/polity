@@ -1,5 +1,6 @@
 import { copyStudioAsset, removeFailedStudioCopies } from './storage';
 import { studioId } from './context';
+import { studioNodeAssetIds } from '@/features/communication-studio/logic/event-intro';
 import { rows, type SqlTransaction } from '@/server/transaction';
 import { assertCanvasWorkspace } from './workspace-access';
 import { createClient } from '@/lib/supabase/server';
@@ -90,7 +91,7 @@ export async function createProjectFromSelection(
     const [template] = await sql`
       select s.document,p.source_references
       from studio_project p join studio_state s on s.project_id=p.id
-      where p.id=${input.template.id} and p.is_template=true and p.document_schema_version=5`;
+      where p.id=${input.template.id} and p.is_template=true and p.document_schema_version=6`;
     if (!template) throw new StudioError('Studio template not found', 404);
     document = studioDocumentV3Schema.parse(structuredClone(template.document));
     sourceReferences = template.source_references ?? [];
@@ -137,7 +138,17 @@ export async function createProjectFromSelection(
       }
       if (node.type === 'chart' && node.sourceAssetId)
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
+      if (node.type === 'frame' && node.intro?.mode === 'video' && node.intro.assetId) {
+        node.intro.assetId = replacements.get(node.intro.assetId) ?? null;
+        if (!node.intro.assetId) node.intro.mode = 'static';
+      }
       return true;
+    });
+    document.show?.cues.forEach(c => {
+      if (c.assetId) c.assetId = replacements.get(c.assetId) ?? c.assetId;
+    });
+    document.nodes.forEach(n => {
+      if (n.type === 'frame') delete n.eventSource;
     });
     studioDocumentV3Schema.parse(document);
     const now = Date.now();
@@ -157,7 +168,7 @@ export async function createProjectFromSelection(
           tx
         );
       }
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},${input.visibility},5,${tx.json(JSON.parse(JSON.stringify(sourceReferences)))},${now},${now})`;
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},${input.visibility},6,${tx.json(JSON.parse(JSON.stringify(sourceReferences)))},${now},${now})`;
       for (const asset of copied)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
@@ -176,22 +187,22 @@ export async function validateAssets(projectId: string, doc: StudioDocumentV3) {
   const ids = [
     ...new Set(
       [
-        ...doc.nodes.flatMap(node =>
-          node.type === 'media'
-            ? [node.assetId]
-            : node.type === 'chart' && node.sourceAssetId
-              ? [node.sourceAssetId]
-              : []
-        ),
+        ...(doc.show?.cues.map(c => c.assetId) ?? []),
+        ...doc.nodes.flatMap(studioNodeAssetIds),
       ].filter((x): x is string => !!x)
     ),
   ];
   if (!ids.length) return;
   const sql = studioSql();
   const rows =
-    await sql`select id from studio_asset where project_id=${projectId} and workspace_id is null and ready=true and id in ${sql(ids)}`;
+    await sql`select id,mime_type from studio_asset where project_id=${projectId} and workspace_id is null and ready=true and id in ${sql(ids)}`;
   if (rows.length !== ids.length)
     throw new StudioError('A media file is missing or belongs to another project');
+  const videoIds = new Set(
+    doc.nodes.flatMap(n => (n.type === 'frame' ? studioNodeAssetIds(n) : []))
+  );
+  if (rows.some(a => videoIds.has(String(a.id)) && a.mime_type !== 'video/mp4'))
+    throw new StudioError('Background media must be a video');
 }
 export async function createProject(
   userId: string,
@@ -205,13 +216,17 @@ export async function createProject(
   const now = Date.now();
   await studioTransaction(async tx => {
     if (groupId) await assertStudioGroup(userId, groupId, tx, true);
-    await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${userId},${groupId},${document.title},${document.kind},5,${now},${now})`;
+    await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${userId},${groupId},${document.title},${document.kind},6,${now},${now})`;
     await tx`insert into studio_state(project_id,document,updated_at) values(${id},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
   });
   return { id };
 }
 
 export function detectMime(bytes: Buffer) {
+  if (bytes.toString('ascii', 0, 3) === 'ID3' || (bytes[0] === 255 && (bytes[1] & 0xe0) === 0xe0))
+    return 'audio/mpeg';
+  if (bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WAVE')
+    return 'audio/wav';
   if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
     return 'image/png';
   if (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) return 'image/jpeg';
@@ -312,7 +327,7 @@ export async function duplicateProject(
     visibility
   );
   const [source] =
-    await sql`select p.group_id,p.source_references,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
+    await sql`select p.group_id,p.source_references,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=6`;
   if (!source) throw new StudioError('Studio project not found', 404);
   const value = studioDocumentV3Schema.parse(source.document);
   const projectId = destinationId;
@@ -345,7 +360,17 @@ export async function duplicateProject(
       }
       if (node.type === 'chart' && node.sourceAssetId)
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
+      if (node.type === 'frame' && node.intro?.mode === 'video' && node.intro.assetId) {
+        node.intro.assetId = replacements.get(node.intro.assetId) ?? null;
+        if (!node.intro.assetId) node.intro.mode = 'static';
+      }
       return true;
+    });
+    value.show?.cues.forEach(c => {
+      if (c.assetId) c.assetId = replacements.get(c.assetId) ?? c.assetId;
+    });
+    value.nodes.forEach(n => {
+      if (n.type === 'frame') delete n.eventSource;
     });
     await assertStudioAccess(userId, id);
     const now = Date.now();
@@ -364,7 +389,7 @@ export async function duplicateProject(
         visibility,
         tx
       );
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${destinationGroupId},${value.title},${value.kind},${visibility},5,${tx.json(JSON.parse(JSON.stringify(source.source_references ?? [])))},${now},${now})`;
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,source_references,created_at,updated_at) values(${projectId},${userId},${destinationGroupId},${value.title},${value.kind},${visibility},6,${tx.json(JSON.parse(JSON.stringify(source.source_references ?? [])))},${now},${now})`;
       for (const asset of copies)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(value)))},${now})`;

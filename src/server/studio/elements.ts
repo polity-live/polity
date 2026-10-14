@@ -10,6 +10,7 @@ import {
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { assertStudioAccess, studioSql, studioTransaction, StudioError } from './db';
 import { assertCanvasWorkspace } from './workspace-access';
+import { studioNodeAssetIds } from '@/features/communication-studio/logic/event-intro';
 const bucket = 'studio';
 
 async function requireSet(userId: string, setId: string, edit: boolean) {
@@ -79,7 +80,7 @@ export async function createElementSet(
   const sql = studioSql();
   const [project] = await sql`
     select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id
-    where p.id=${input.projectId} and p.document_schema_version=5`;
+    where p.id=${input.projectId} and p.document_schema_version=6`;
   if (!project || project.group_id !== input.groupId)
     throw new StudioError('Elements library scope does not match the project', 403);
   if (input.groupId) {
@@ -275,7 +276,7 @@ export async function publishElementSetRevision(
   const sql = studioSql();
   const [project] = await sql`
     select s.document from studio_project p join studio_state s on s.project_id=p.id
-    where p.id=${input.projectId} and p.document_schema_version=5`;
+    where p.id=${input.projectId} and p.document_schema_version=6`;
   if (!project) throw new StudioError('Studio project not found', 404);
   const document = studioDocumentV3Schema.parse(project.document);
   const instance = document.componentInstances.find(item => item.id === input.instanceId);
@@ -358,7 +359,7 @@ export async function synchronizeProjectElementInstances(userId: string, project
       const [row] = await tx`
         select s.document,s.content_revision
         from studio_state s join studio_project p on p.id=s.project_id
-        where s.project_id=${projectId} and p.document_schema_version=5 for update`;
+        where s.project_id=${projectId} and p.document_schema_version=6 for update`;
       if (!row) throw new StudioError('Studio project not found', 404);
       const document = studioDocumentV3Schema.parse(row.document);
       if (!document.componentInstances.length) return null;
@@ -400,19 +401,18 @@ export async function synchronizeProjectElementInstances(userId: string, project
         const instanceNodes = new Map(document.nodes.map(node => [node.id, node]));
         const assetRemap = new Map<string, string>();
         for (const node of next.nodes) {
-          if (node.type !== 'media') continue;
           const localId = instance.sourceToInstance[node.id];
           const local = localId ? instanceNodes.get(localId) : undefined;
-          if (local?.type === 'media') assetRemap.set(node.assetId, local.assetId);
+          // Only reuse an unchanged library reference; a new video must be copied.
+          const previousNode = previous.nodes.find(item => item.id === node.id);
+          const sourceId = studioNodeAssetIds(node)[0];
+          const previousId = previousNode && studioNodeAssetIds(previousNode)[0];
+          const localAssetId = local && studioNodeAssetIds(local)[0];
+          if (sourceId && sourceId === previousId && localAssetId)
+            assetRemap.set(sourceId, localAssetId);
         }
-        for (const node of next.nodes) {
-          if (node.type !== 'media') continue;
-          const existingAssetId = assetRemap.get(node.assetId);
-          if (existingAssetId) {
-            node.assetId = existingAssetId;
-            continue;
-          }
-          const sourceAssetId = node.assetId;
+        for (const sourceAssetId of new Set(next.nodes.flatMap(studioNodeAssetIds))) {
+          if (assetRemap.has(sourceAssetId)) continue;
           const source = libraryAssetBySource.get(sourceAssetId);
           if (!source) throw new StudioError('An element media file is unavailable', 422);
           const size = Number(source.byte_size);
@@ -427,9 +427,17 @@ export async function synchronizeProjectElementInstances(userId: string, project
             insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at)
             values(${assetId},${projectId},${source.name},${source.mime_type},${size},${path},true,${Date.now()})`;
           assetRemap.set(sourceAssetId, assetId);
-          node.assetId = assetId;
           assetCount += 1;
           assetBytes += size;
+        }
+        // Every referenced ID in this parsed snapshot was reused or copied above;
+        // unavailable library assets fail before this remapping pass.
+        for (const node of next.nodes) {
+          if (node.type === 'media') node.assetId = assetRemap.get(node.assetId) as string;
+          if (node.type === 'chart' && node.sourceAssetId)
+            node.sourceAssetId = assetRemap.get(node.sourceAssetId) as string;
+          if (node.type === 'frame' && node.intro?.assetId)
+            node.intro.assetId = assetRemap.get(node.intro.assetId) as string;
         }
         mergeElementSetRevision(document, instance.id, previous, next, set.current_revision_id);
         changed = true;

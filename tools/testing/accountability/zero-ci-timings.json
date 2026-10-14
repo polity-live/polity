@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "tools/e2e/zero-performance/ci-job-timings.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/ci-job-timings.unit.test.ts",
+        "project": "unit",
+        "caseId": "recovers a transient 502 on page two without duplicating page one or changing attempt"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/ci-job-timings.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails after three transient requests without inventing timing success"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/ci-job-timings.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not sleep past the remaining merge budget"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/ci-job-timings.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects a changed job inventory between pages"
+      }
+    ]
+  },
+  "actionReferences": {},
+  "actionDeclarations": {}
+}

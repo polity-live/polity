@@ -205,6 +205,56 @@ it('shows the automatically created chat when it arrives in the conversation que
   expect(state.mutate).toHaveBeenCalledTimes(1);
 });
 
+it('withholds an optimistic first conversation until the server acknowledges its creation', async () => {
+  let acknowledge!: (value: { type: 'success' }) => void;
+  state.mutate.mockReturnValueOnce({
+    client: Promise.resolve(),
+    server: new Promise(resolve => {
+      acknowledge = resolve;
+    }),
+  });
+  const ui = render(
+    <ProjectChatPanel scope={scope} context={{ surface: 'studio' }} initiallyOpen />
+  );
+  const created = state.mutate.mock.calls[0][0] as { id: string };
+  state.conversations = [{ id: created.id, name: 'Pending chat' }];
+  ui.rerender(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} initiallyOpen />);
+
+  expect(screen.queryByTestId('project-conversation')).toBeNull();
+  expect(screen.queryByRole('option', { name: 'Pending chat' })).toBeNull();
+  expect(screen.getByRole('status')).toBeTruthy();
+
+  await act(async () => acknowledge({ type: 'success' }));
+  expect(screen.getByTestId('project-conversation').textContent).toBe(`Conversation ${created.id}`);
+  expect(screen.getByRole<HTMLSelectElement>('combobox').value).toBe(created.id);
+});
+
+it('keeps the existing conversation usable while a new optimistic conversation awaits confirmation', async () => {
+  state.conversations = [{ id: 'one', name: 'Existing chat' }];
+  let acknowledge!: (value: { type: 'success' }) => void;
+  state.mutate.mockReturnValueOnce({
+    client: Promise.resolve(),
+    server: new Promise(resolve => {
+      acknowledge = resolve;
+    }),
+  });
+  const ui = render(
+    <ProjectChatPanel scope={scope} context={{ surface: 'studio' }} initiallyOpen />
+  );
+  const content = screen.getByTestId('project-conversation');
+  fireEvent.click(screen.getByRole('button', { name: 'new' }));
+  const created = state.mutate.mock.calls[0][0] as { id: string };
+  state.conversations = [{ id: created.id, name: 'Pending chat' }, ...state.conversations];
+  ui.rerender(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} initiallyOpen />);
+
+  expect(screen.getByTestId('project-conversation')).toBe(content);
+  expect(content.textContent).toBe('Conversation one');
+  expect(screen.queryByRole('option', { name: 'Pending chat' })).toBeNull();
+
+  await act(async () => acknowledge({ type: 'success' }));
+  expect(screen.getByTestId('project-conversation').textContent).toBe(`Conversation ${created.id}`);
+});
+
 it('opens, selects a conversation and minimizes by keyboard while preserving the mounted chat', async () => {
   const user = userEvent.setup();
   state.conversations = [

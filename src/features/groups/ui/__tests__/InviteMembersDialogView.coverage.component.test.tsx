@@ -53,6 +53,7 @@ vi.mock('@/features/create/ui/inputs/UserSearchInput', () => ({
   UserSearchInput: () => <div>users</div>,
 }));
 vi.mock('../RoleTag', () => ({ RoleTag: ({ roleName }: any) => <span>{roleName}</span> }));
+vi.mock('../EmailInvitationInput', () => ({ EmailInvitationInput: () => <div>addresses</div> }));
 vi.mock('../GroupConflictPanel', () => ({ GroupConflictDialog: () => <div>conflict</div> }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({ translate: (key: string) => key }));
 
@@ -106,6 +107,44 @@ const base = {
 };
 
 describe('InviteMembersDialogView branches', () => {
+  it('switches user/email modes, displays email recipient counts and locks the sending state', () => {
+    const composer = {
+      t: (key: string) => key,
+      mode: 'users',
+      setMode: vi.fn(),
+      readyCount: 3,
+      sending: false,
+    } as any;
+    const view = render(<InviteMembersDialogView {...base} emailComposer={composer} />);
+    fireEvent.click(
+      document.querySelectorAll('[data-action-id="groups.email-invitations.mode"]')[1]
+    );
+    expect(composer.setMode).toHaveBeenCalledWith('email');
+    view.rerender(
+      <InviteMembersDialogView {...base} emailComposer={{ ...composer, mode: 'email' }} />
+    );
+    expect(document.body.textContent).toContain('addresses');
+    expect(
+      document.querySelector('[data-action-id="groups.invitations.dialog.submit"]')?.textContent
+    ).toContain('(3)');
+    view.rerender(
+      <InviteMembersDialogView
+        {...base}
+        emailComposer={{ ...composer, mode: 'email', sending: true }}
+        inviteDisabled
+      />
+    );
+    expect(
+      document.querySelector('[data-action-id="groups.invitations.dialog.submit"]')?.textContent
+    ).toContain('sending');
+    expect(
+      (
+        document.querySelector(
+          '[data-action-id="groups.invitations.dialog.submit"]'
+        ) as HTMLButtonElement
+      ).disabled
+    ).toBe(true);
+  });
   it('renders disabled tooltip, role fallbacks/defaults, conflicts and invokes actions', () => {
     const toggle = vi.fn(),
       close = vi.fn(),

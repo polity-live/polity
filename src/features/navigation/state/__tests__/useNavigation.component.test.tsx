@@ -31,6 +31,17 @@ const mocks = vi.hoisted(() => ({
   unauthenticatedItems: [{ id: 'public', label: 'Public' }] as any[],
   amendmentOptions: vi.fn(),
   entityUnreadCalls: [] as [string, string][],
+  eventStudioProject: undefined as
+    { id: string; event_id: string; group_id: string | null } | undefined,
+  eventProjectQuery: vi.fn(),
+}));
+
+vi.mock('@/zero/observed-query', () => ({
+  useQuery: () => [mocks.eventStudioProject],
+}));
+
+vi.mock('@/zero/queries', () => ({
+  queries: { studio: { eventProject: mocks.eventProjectQuery } },
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -154,6 +165,8 @@ describe('useNavigation', () => {
     mocks.branchTargetIds = new Set();
     mocks.amendmentOptions.mockClear();
     mocks.entityUnreadCalls = [];
+    mocks.eventStudioProject = undefined;
+    mocks.eventProjectQuery.mockClear();
   });
 
   it('returns anonymous primary navigation with cleared badges and no entity context', () => {
@@ -309,6 +322,48 @@ describe('useNavigation', () => {
     expect(args[15]).toBe(true);
     expect(args[16]).toBe(true);
     expect(args[17]).toBe(true);
+  });
+
+  it.each([
+    [null, '/studio/project-1'],
+    ['group-1', '/group/group-1/studio/project-1'],
+  ])('opens the linked event Studio project in its scope (%s)', (groupId, href) => {
+    mocks.location = { pathname: '/event/event-1/agenda' };
+    mocks.secondaryItems = [
+      { id: 'overview', href: '/event/event-1' },
+      { id: 'agenda', href: '/event/event-1/agenda' },
+      { id: 'network', href: '/event/event-1/network' },
+    ];
+    const { result, rerender } = renderHook(() => useNavigation());
+    expect(result.current.secondaryNavItems?.map(item => item.id)).toEqual([
+      'overview',
+      'agenda',
+      'network',
+    ]);
+    expect(mocks.eventProjectQuery).toHaveBeenLastCalledWith({ eventId: 'event-1' });
+
+    mocks.eventStudioProject = { id: 'project-1', event_id: 'event-1', group_id: groupId };
+    rerender();
+    expect(result.current.secondaryNavItems?.map(item => item.id)).toEqual([
+      'overview',
+      'agenda',
+      'studio',
+      'network',
+    ]);
+    const studio = result.current.secondaryNavItems?.find(item => item.id === 'studio');
+    expect(studio).toMatchObject({
+      label: 'translated:navigation.primary.studio',
+      href,
+      preloadTarget: { href },
+    });
+    act(() => studio?.onClick?.());
+    expect(mocks.navigate).toHaveBeenLastCalledWith({ to: href });
+    expect(mocks.secondaryItems).toHaveLength(3);
+
+    mocks.location = { pathname: '/event/event-2/agenda' };
+    rerender();
+    expect(result.current.secondaryNavItems?.some(item => item.id === 'studio')).toBe(false);
+    expect(mocks.eventProjectQuery).toHaveBeenLastCalledWith({ eventId: 'event-2' });
   });
 
   it('handles event administration and notification access independently', () => {

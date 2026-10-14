@@ -35,8 +35,6 @@ import {
 import { legacyDocumentToV3, v3DocumentToLegacy } from '../../logic/v3-adapter';
 import { StudioWorkspace } from '../StudioWorkspace';
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
-const change = (name: string, v: string) =>
-  fireEvent.change(screen.getByLabelText(name, { exact: true }), { target: { value: v } });
 const menuNames = new Set([
   'project',
   'frame',
@@ -52,6 +50,7 @@ const menuNames = new Set([
   'text',
   'font',
   'alignment',
+  'preview',
 ]);
 const panel = (name: string) => {
   if (menuNames.has(name)) {
@@ -153,6 +152,12 @@ describe('Studio toolbar workflows', () => {
         setId: set.id,
         name: 'Renamed element',
       })
+    );
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: `delete: ${set.name}` })).toHaveProperty(
+        'disabled',
+        false
+      )
     );
     fireEvent.click(within(dialog).getByRole('button', { name: `delete: ${set.name}` }));
     await waitFor(() =>
@@ -1049,8 +1054,9 @@ describe('Studio toolbar workflows', () => {
     });
     await show();
     panel('exports');
-    expect(screen.getByRole('option', { name: 'ALL' }).getAttribute('value')).toBe('zip');
-    const list = screen.getByRole('group', { name: 'exportFrames' });
+    const exportsDialog = within(screen.getByRole('dialog', { name: 'exports' }));
+    expect(exportsDialog.getByRole('option', { name: 'ALL' }).getAttribute('value')).toBe('zip');
+    const list = exportsDialog.getByRole('group', { name: 'exportFrames' });
     expect(within(list).getAllByRole('checkbox')).toHaveLength(ydoc.pages.length);
     expect(
       within(list)
@@ -1058,27 +1064,32 @@ describe('Studio toolbar workflows', () => {
         .every(box => (box as HTMLInputElement).checked)
     ).toBe(true);
     expect(
-      (screen.getByRole('button', { name: 'markSelectedFrame' }) as HTMLButtonElement).disabled
+      (exportsDialog.getByRole('button', { name: 'markSelectedFrame' }) as HTMLButtonElement)
+        .disabled
     ).toBe(true);
-    change('searchExportFrames', 'Export frame 2');
+    fireEvent.change(exportsDialog.getByLabelText('searchExportFrames', { exact: true }), {
+      target: { value: 'Export frame 2' },
+    });
     expect(within(list).getAllByRole('checkbox')).toHaveLength(1);
     fireEvent.click(within(list).getByRole('checkbox'));
-    change('searchExportFrames', '');
+    fireEvent.change(exportsDialog.getByLabelText('searchExportFrames', { exact: true }), {
+      target: { value: '' },
+    });
     expect((within(list).getAllByRole('checkbox')[1] as HTMLInputElement).checked).toBe(false);
-    click('markAllFrames');
+    fireEvent.click(exportsDialog.getByRole('button', { name: 'markAllFrames' }));
     expect(
       within(list)
         .getAllByRole('checkbox')
         .every(box => (box as HTMLInputElement).checked)
     ).toBe(true);
     for (const box of within(list).getAllByRole('checkbox')) fireEvent.click(box);
-    expect((screen.getByRole('button', { name: 'export' }) as HTMLButtonElement).disabled).toBe(
-      true
-    );
+    expect(
+      (exportsDialog.getByRole('button', { name: 'export' }) as HTMLButtonElement).disabled
+    ).toBe(true);
     act(() => io.canvasProps.selectExact([ydoc.pages[1].id]));
-    click('markSelectedFrame');
+    fireEvent.click(exportsDialog.getByRole('button', { name: 'markSelectedFrame' }));
     expect((within(list).getAllByRole('checkbox')[1] as HTMLInputElement).checked).toBe(true);
-    click('export');
+    fireEvent.click(exportsDialog.getByRole('button', { name: 'export' }));
     await waitFor(() =>
       expect(io.request).toHaveBeenCalledWith(
         'export',
@@ -1274,7 +1285,8 @@ describe('Studio toolbar workflows', () => {
     input.remove();
     click('Undo');
     expect(io.editor.undo).toHaveBeenCalled();
-    click('preview');
+    const previewMenu = panel('preview');
+    fireEvent.click(within(previewMenu).getByRole('menuitem', { name: 'startPreview' }));
     expect(screen.getByRole('dialog', { name: 'previewTitle' })).toBeTruthy();
     click('closePreview');
     expect(screen.queryByRole('dialog', { name: 'previewTitle' })).toBeNull();
@@ -1479,7 +1491,11 @@ it('shows project loading before a document arrives and activates the editor aft
   Object.defineProperty(io.editor, 'v3Value', { get: () => null });
   io.loading = true;
   await show();
-  expect(screen.getByRole('status').textContent).toBe('loading');
+  expect(screen.getByRole('status').textContent).toBe('Polityloading');
+  expect(screen.getByRole('status').classList.contains('polity-presentation-loading-page')).toBe(
+    true
+  );
+  expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
   expect(screen.queryByTestId('canvas')).toBeNull();
   Object.defineProperty(io.editor, 'value', valueDescriptor);
   Object.defineProperty(io.editor, 'v3Value', canonicalDescriptor);

@@ -291,6 +291,21 @@ export const commonTranslations = {
     gender_quota_expected_female: 'Die nächste Person auf der Redeliste muss weiblich sein.',
     gender_quota_blocked: 'Du kannst dieser quotierten Redeliste gerade nicht beitreten.',
     dataset_operation_failed: 'Die Dataset-Aktion konnte nicht abgeschlossen werden.',
+    dataset_provider_authentication:
+      'Die Datenquelle konnte nicht authentifiziert werden. Bitte die Serverkonfiguration prüfen.',
+    dataset_provider_timeout:
+      'Die Datenquelle antwortet gerade zu langsam. Bitte erneut versuchen.',
+    dataset_provider_unavailable:
+      'Die Datenquelle ist vorübergehend nicht verfügbar. Bitte erneut versuchen.',
+    dataset_provider_invalid_response: 'Die Datenquelle hat eine ungültige Antwort geliefert.',
+    dataset_scope_unavailable:
+      'Das gewählte Gebiet, der Zeitraum oder die Kombination ist nicht verfügbar. Bitte die Auswahl anpassen.',
+    dataset_observations_ambiguous:
+      'Mehrere Beobachtungen gehören zu demselben Punkt. Bitte weitere Filter setzen oder ausdrücklich eine Berechnung wählen.',
+    dataset_non_additive:
+      'Prozentwerte und Indizes können nicht summiert werden. Bitte Originalwerte oder eine passende Berechnung wählen.',
+    dataset_scope_too_large:
+      'Der Datensatz ist für diesen Import zu groß. Bitte Gebiet, Zeitraum oder weitere Merkmale einschränken.',
     external_service_failed: 'Ein externer Dienst ist derzeit nicht verfügbar.',
     push_operation_failed: 'Die Push-Benachrichtigungsaktion konnte nicht abgeschlossen werden.',
     tutorial_operation_failed: 'Die Tutorial-Aktion konnte nicht abgeschlossen werden.',

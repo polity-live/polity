@@ -38,6 +38,7 @@ interface NewsletterConfig {
 }
 
 export interface NewsletterServiceDeps {
+  processInvitationEvent?: (event: WebhookEventPayload) => Promise<void>;
   supabase?: SupabaseClient;
   resend?: Resend;
   config?: Partial<NewsletterConfig>;
@@ -488,6 +489,13 @@ export async function handleResendWebhook(
   if (insertError) throw new Error(insertError.message);
 
   try {
+    if (event.type.startsWith('email.') && 'email_id' in event.data) {
+      if (deps.processInvitationEvent) await deps.processInvitationEvent(event);
+      else {
+        const { processInvitationWebhook } = await import('./group-email-invitations');
+        await processInvitationWebhook(event);
+      }
+    }
     await processContactWebhook(event, supabase, resend, config);
   } catch (error) {
     await table(supabase, 'resend_webhook_event').delete().eq('svix_id', input.svixId);

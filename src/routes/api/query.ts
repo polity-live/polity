@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { handleQueryRequest, type TransformQueryFunction } from '@rocicorp/zero/server';
+import { handleQueryRequest, type QueryRequestHandler } from '@rocicorp/zero/server';
 import { mustGetQuery } from '@rocicorp/zero';
 import { queries } from '@/zero/queries';
 import { schema } from '@/zero/schema';
@@ -19,10 +19,10 @@ export const Route = createFileRoute('/api/query')({
           const ctx = await getAuthFromRequest(request);
           queryDiagnostic('auth', authAt);
           interface DynamicQuery {
-            fn: (input: { args: unknown; ctx: typeof ctx }) => ReturnType<TransformQueryFunction>;
+            fn: (input: { args: unknown; ctx: typeof ctx }) => ReturnType<QueryRequestHandler>;
           }
 
-          const transformQuery: TransformQueryFunction = (name, args) => {
+          const transformQuery: QueryRequestHandler = (name, args) => {
             const query = mustGetQuery(queries as never, name) as DynamicQuery;
             const started = performance.now();
             const result = query.fn({ args, ctx });

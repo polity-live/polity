@@ -14,7 +14,8 @@ import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { buildQuery, loadCases, OWNER, OUTSIDER, type BenchmarkCase } from './catalog';
 import { Fixtures } from './fixtures';
 import { expectedRootIDs, queryAST, resultIDs, relatedResultIDs } from './oracle';
-import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
+import { assertAuthoritativeRootResult } from './authoritative-order-diagnostic';
+import { BUDGETS, REPETITIONS, checkBudgets, type Measurement, type Sample } from './metrics';
 import { measureJourneys } from './journeys';
 import {
   securityScenarios,
@@ -26,14 +27,29 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
+  captureQueryAPILogBoundary,
+  parseQueryAPILog,
   measuredServerWarnings,
 } from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
+import {
+  scanStatusCursor,
+  writeScanStatusArtifact,
+  type ScanStatusArtifact,
+} from './scan-status-artifacts';
 import { measurementSummary, resultsCSV } from './results';
 import { executionMetadata, runtimeMetadata } from './execution';
 import { selectKeys, securityKey } from './sharding';
 import type { MutationBrowserResult } from './mutation-browser';
 import { mutationBrowserFailures } from './mutation-browser-metrics';
+import { deleteFreshBenchmarkClient } from './fresh-client-cleanup';
+import {
+  queryTimeline,
+  timelineTotals,
+  correlateTimelines,
+  QUERY_TIMELINE_FORMAT,
+  type QueryTimeline,
+} from './query-timeline';
 
 (globalThis as any).TESTING ??= false;
 
@@ -54,6 +70,7 @@ const fixtures = new Fixtures(sql);
 const contexts = { owner: OWNER, outsider: OUTSIDER, anonymous: { userID: 'anon', email: '' } };
 const tokens: Partial<Record<keyof typeof contexts, string>> = {};
 const results: Measurement[] = [];
+const queryTimelines: QueryTimeline[] = [];
 const infrastructure: string[] = [];
 const layer = process.env.ZERO_PERFORMANCE_LAYER ?? 'all';
 const failFast =
@@ -151,7 +168,7 @@ async function client(actor: keyof typeof contexts, warnings: string[]) {
       throw new Error('Inspector authentication rejected');
     return zero;
   } catch (error) {
-    await zero.close();
+    await deleteFreshBenchmarkClient(zero);
     throw error;
   }
 }
@@ -208,7 +225,7 @@ async function measure(
         const clientGroupID = await deadline(zero.clientGroupID, 'Client group identity');
         return { zero, clientGroupID, connectionMs: performance.now() - connectionAt };
       } catch (error) {
-        await deadline(zero.close(), 'Closing failed connection');
+        await deadline(deleteFreshBenchmarkClient(zero), 'Deleting failed connection storage');
         throw error;
       }
     })
@@ -233,20 +250,34 @@ async function measure(
         zero = connection.value.zero;
         const activatedAt = Date.now();
         const start = performance.now();
+        const timeline = queryTimeline(
+          measurement.key,
+          iteration,
+          required(clientCorrelations.get(zero)),
+          execution
+        );
+        timeline.events.materializeStart = start;
+        queryTimelines.push(timeline);
         view = zero.materialize(
           entry.noArgs ? (entry.query as any)() : (entry.query as any)(entry.args),
           { ttl: 'none' }
         );
+        timeline.events.materializeEnd = performance.now();
         const data = await deadline(
           new Promise<unknown>((resolve, reject) => {
+            timeline.events.listenerStart = performance.now();
             required(view).addListener((data, type, error) => {
+              timeline.events.firstCallback ??= performance.now();
+              if (type === 'complete') timeline.events.completeCallback = performance.now();
               if (type === 'complete') resolve(data);
               if (type === 'error') reject(new Error(`Query rejected: ${JSON.stringify(error)}`));
             });
+            timeline.events.listenerEnd = performance.now();
           }),
           measurement.key
         );
         const elapsed = performance.now() - start;
+        timeline.elapsedMs = elapsed;
         measurement.observedIDs.push(resultIDs(data, ast.table));
         if (related) {
           const roots = Array.isArray(data) ? data : data ? [data] : [];
@@ -261,10 +292,21 @@ async function measure(
           required(measurement.relatedChecks).observed.push(observed);
           assert.deepEqual(observed, related.relations, 'Unexpected authorized related results');
         }
-        assert.deepEqual(
-          resultIDs(data, ast.table),
+        await assertAuthoritativeRootResult(
+          sql,
+          ast,
+          fixtures.columns,
+          data,
           expected,
-          `${measurement.key}: unexpected authoritative result`
+          `${measurement.key}: unexpected authoritative result`,
+          diagnostic =>
+            writeFile(
+              path.join(
+                output,
+                `authoritative-order-failure-${entry.name.replaceAll('.', '-')}-${entry.variant}-${profile}-${actor}-${iteration}.json`
+              ),
+              JSON.stringify({ execution, key: measurement.key, iteration, diagnostic }, null, 2)
+            )
         );
         const inspection = await deadline(zero.inspector.client.queries(), 'Query metrics');
         const stats = inspection.find(item => item.name === entry.name);
@@ -275,7 +317,8 @@ async function measure(
           stats.hydrateTotal == null
         )
           throw new Error('Missing client/server/total hydration metrics');
-        measurement.samples.push({
+        timelineTotals(timeline, elapsed, stats.hydrateTotal);
+        const sample: Sample = {
           clientCorrelationID: required(clientCorrelations.get(zero)),
           queryID: stats.id,
           activatedAt,
@@ -286,14 +329,20 @@ async function measure(
           clientGroupID,
           clientID: zero.clientID,
           connectionMs,
-        });
+        };
+        measurement.samples.push(sample);
+        sample.apiLogBoundary = await captureQueryAPILogBoundary(measurement.name, sample, signal =>
+          readFile(path.join(logOutput, 'app.log'), { signal })
+        );
         if (iteration === 0) {
           // Retain this real view for analysis, but complete every fresh-client
           // timing before any analyzer or join-plan export can load the stack.
           releaseAnalysisView = view.destroy.bind(view);
           view = undefined;
           analyze = async () => {
+            const scanStatusArtifacts: ScanStatusArtifact[] = [];
             for (let repeat = 0; repeat < REPETITIONS.warmup + REPETITIONS.analyze; repeat++) {
+              const cursor = await scanStatusCursor();
               const analyzed = await deadline(
                 stats.analyze({ joinPlans: false }),
                 'Query analyzer'
@@ -305,6 +354,15 @@ async function measure(
                 analyzed.sqlitePlans == null
               )
                 throw new Error('Incomplete analyzer result');
+              scanStatusArtifacts.push(
+                await writeScanStatusArtifact(
+                  planOutput,
+                  `${measurement.key}/analyze/${repeat}`,
+                  cursor,
+                  analyzed.dbScansByQuery,
+                  analyzed.sqlitePlans
+                )
+              );
               if (repeat >= REPETITIONS.warmup) measurement.analyzeMs.push(analyzed.elapsed);
               measurement.readRows = analyzed.readRowCount;
               const scanCounts = Object.values(analyzed.dbScansByQuery).flatMap(counts =>
@@ -324,24 +382,39 @@ async function measure(
                 readsByQuery: analyzed.readRowCountsByQuery,
                 serverZQL: stats.serverZQL,
                 clientZQL: stats.clientZQL,
+                scanStatusArtifacts: [...scanStatusArtifacts],
               };
               measurement.warnings.push(...analyzed.warnings.filter(w => /Slow query/i.test(w)));
             }
             // Export the expensive join trace once, after the diagnostic analysis.
             // Timings remain the unmodified elapsed values from Zero's analyzer.
+            const exportCursor = await scanStatusCursor();
             const exportAt = performance.now();
             const exported = await deadline(
               stats.analyze({ joinPlans: true }),
               'Query plan export'
             );
-            if (exported.joinPlans == null || exported.sqlitePlans == null)
+            if (
+              exported.joinPlans == null ||
+              exported.sqlitePlans == null ||
+              exported.dbScansByQuery == null
+            )
               throw new Error('Incomplete query plan export');
+            const exportMs = performance.now() - exportAt;
+            const scanStatusExportArtifact = await writeScanStatusArtifact(
+              planOutput,
+              `${measurement.key}/export`,
+              exportCursor,
+              exported.dbScansByQuery,
+              exported.sqlitePlans
+            );
             measurement.plans = {
               ...(measurement.plans as Record<string, unknown>),
               sqlite: exported.sqlitePlans,
               joins: exported.joinPlans,
-              exportMs: performance.now() - exportAt,
+              exportMs,
               exportMode: 'separate',
+              scanStatusExportArtifact,
             };
             measurement.warnings.push(...exported.warnings.filter(w => /Slow query/i.test(w)));
           };
@@ -365,7 +438,10 @@ async function measure(
     const closing = await Promise.allSettled(
       connections.map(connection =>
         connection.status === 'fulfilled'
-          ? deadline(connection.value.zero.close(), 'Closing benchmark client')
+          ? deadline(
+              deleteFreshBenchmarkClient(connection.value.zero),
+              'Deleting benchmark client storage'
+            )
           : Promise.resolve()
       )
     );
@@ -393,18 +469,11 @@ async function measure(
 async function save(extra: Record<string, unknown> = {}, final = false) {
   Object.assign(diagnostics, extra);
   if (final) {
-    const log = await readFile(path.join(logOutput, 'app.log'), 'utf8');
-    diagnostics.apiDiagnostics = log.split('\n').flatMap(line => {
-      const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
-      if (start < 0) return [];
-      try {
-        return [JSON.parse(line.slice(start))];
-      } catch {
-        infrastructure.push('Invalid query API diagnostic record');
-        return [];
-      }
-    });
+    const parsed = parseQueryAPILog(await readFile(path.join(logOutput, 'app.log')));
+    diagnostics.apiDiagnostics = parsed.records;
+    infrastructure.push(...parsed.errors);
     correlateQueryAPI(results, diagnostics.apiDiagnostics as any[]);
+    correlateTimelines(queryTimelines, results);
     for (const result of results) result.failures = checkBudgets(result);
     await writeFile(
       path.join(output, 'measurements.ndjson'),
@@ -412,6 +481,19 @@ async function save(extra: Record<string, unknown> = {}, final = false) {
     );
   }
   await mkdir(output, { recursive: true });
+  try {
+    await writeAtomicReport(
+      path.join(output, 'query-timeline.json'),
+      JSON.stringify({
+        format: QUERY_TIMELINE_FORMAT,
+        execution,
+        scope: 'original-measured-query',
+        samples: queryTimelines,
+      })
+    );
+  } catch {
+    console.warn('Query timeline diagnostic export unavailable');
+  }
   const target = path.join(output, final ? 'report.json' : 'progress.json');
   await writeAtomicReport(
     target,
@@ -490,7 +572,9 @@ try {
       let anchor: string | undefined;
       try {
         if (profile === 'minimal') anchor = await fixtures.seed(queryAST(buildQuery(entry)));
-        await waitForZeroReady();
+        // The WAL barrier is unchanged; poll fixture replication more frequently
+        // before timing so runner time is spent measuring rather than sleeping.
+        await waitForZeroReady({ pollIntervalMs: 100 });
         await measure(entry, profile, 'owner', anchor);
         if (profile === 'minimal') {
           await measure(entry, profile, 'outsider');

@@ -90,6 +90,38 @@ afterEach(() => {
 });
 
 describe('studio editing workflows', () => {
+  it.each([
+    ['audio/mpeg', false],
+    ['image/png', true],
+  ] as const)(
+    'uploads %s background assets without creating a foreground element',
+    async (mime, background) => {
+      const hook = renderHook(() => useStudioController(null, 'project', vi.fn()));
+      const before = structuredClone(ydoc);
+      const assetId = crypto.randomUUID();
+      io.upload.mockResolvedValue({ id: assetId, mime });
+      let asset;
+      await act(async () => {
+        asset = await hook.result.current.upload(
+          new File(['asset'], 'background', { type: mime }),
+          background
+        );
+      });
+      expect(asset).toEqual({ id: assetId, name: 'background', mime });
+      expect(io.editor.refreshAssets).toHaveBeenCalledOnce();
+      expect(ydoc).toEqual(before);
+    }
+  );
+
+  it('sends an explicitly requested portrait presentation snapshot with the committed export', async () => {
+    const hook = renderHook(() => useStudioController(null, 'project', vi.fn()));
+    io.request.mockResolvedValue({ id: 'snapshot-export' });
+    await act(() => hook.result.current.exportMedia({ portrait: true, presentation: true }));
+    expect(io.request).toHaveBeenCalledWith(
+      'export',
+      expect.objectContaining({ snapshot: { portrait: true, presentation: true }, revision: 0 })
+    );
+  });
   it('inserts the chosen table size and selects the new element', () => {
     const hook = renderHook(() => useStudioController(null, 'project', vi.fn()));
     let id: string | null = null;

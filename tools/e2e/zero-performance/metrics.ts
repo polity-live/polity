@@ -4,6 +4,8 @@ export const BUDGETS = Object.freeze({ totalMs: 1_000, clientMs: 50, serverMs: 1
 export const REPETITIONS = Object.freeze({ materialize: 5, warmup: 0, analyze: 1 });
 export interface Sample {
   clientCorrelationID?: string;
+  /** Captured after hydration metrics close, before any analyzer can issue a request. */
+  apiLogBoundary?: { source: 'app.log'; byteEnd: number };
   api?: {
     requestID: string;
     clientCorrelationID: string;
@@ -63,45 +65,49 @@ export function median(values: readonly number[]) {
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
+export function validQueryAPISample(sample: Sample) {
+  const api = sample.api;
+  return !(
+    !sample.queryID ||
+    !sample.clientCorrelationID ||
+    sample.apiLogBoundary?.source !== 'app.log' ||
+    !Number.isSafeInteger(sample.apiLogBoundary.byteEnd) ||
+    sample.apiLogBoundary.byteEnd < 0 ||
+    !Number.isFinite(sample.activatedAt) ||
+    !Number.isFinite(sample.authoritativeAt) ||
+    !api?.requestID ||
+    api.clientCorrelationID !== sample.clientCorrelationID ||
+    api.clock !== 'api-server' ||
+    !api.structure ||
+    [
+      api.authMs,
+      api.transformMs,
+      api.requestMs,
+      api.arrivalAt,
+      api.responseAt,
+      api.structure.bytes,
+      api.structure.queries,
+      api.structure.conditions,
+      api.structure.maxQueryDepth,
+    ].some(value => !Number.isFinite(value) || value < 0) ||
+    api.structure.bytes < 1 ||
+    api.structure.queries < 1 ||
+    api.structure.maxQueryDepth < 1 ||
+    api.authMs > api.requestMs ||
+    api.transformMs > api.requestMs ||
+    api.requestMs > sample.totalMs ||
+    (sample.authoritativeAt ?? NaN) < (sample.activatedAt ?? NaN) ||
+    // API epochs belong to the server; client and server wall clocks can differ.
+    // All budgets continue to use their original monotonic elapsed measurements.
+    api.responseAt < api.arrivalAt
+  );
+}
 export function checkBudgets(measurement: Measurement, requireAPI = true): string[] {
   const failures: string[] = [...measurement.failures];
-  if (requireAPI) {
-    for (const sample of measurement.samples) {
-      const api = sample.api;
-      if (
-        !sample.queryID ||
-        !sample.clientCorrelationID ||
-        !Number.isFinite(sample.activatedAt) ||
-        !Number.isFinite(sample.authoritativeAt) ||
-        !api?.requestID ||
-        api.clientCorrelationID !== sample.clientCorrelationID ||
-        api.clock !== 'api-server' ||
-        !api.structure ||
-        [
-          api.authMs,
-          api.transformMs,
-          api.requestMs,
-          api.arrivalAt,
-          api.responseAt,
-          api.structure.bytes,
-          api.structure.queries,
-          api.structure.conditions,
-          api.structure.maxQueryDepth,
-        ].some(value => !Number.isFinite(value) || value < 0) ||
-        api.structure.bytes < 1 ||
-        api.structure.queries < 1 ||
-        api.structure.maxQueryDepth < 1 ||
-        api.authMs > api.requestMs ||
-        api.transformMs > api.requestMs ||
-        api.requestMs > sample.totalMs ||
-        (sample.authoritativeAt ?? NaN) < (sample.activatedAt ?? NaN) ||
-        // API epochs belong to the server; client and server wall clocks can differ.
-        // All budgets continue to use their original monotonic elapsed measurements.
-        api.responseAt < api.arrivalAt
-      )
+  if (requireAPI)
+    for (const sample of measurement.samples)
+      if (!validQueryAPISample(sample))
         failures.push('Missing or invalid correlated Auth/API/transform timings');
-    }
-  }
   if (
     measurement.observedIDs.length !== REPETITIONS.materialize ||
     measurement.observedIDs.some(

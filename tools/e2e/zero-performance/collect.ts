@@ -1,7 +1,6 @@
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile, stat, link, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { writeAtomicReport } from './atomic-report';
-import { constants } from 'node:fs';
 import path from 'node:path';
 import { loadCases } from './catalog';
 import { securityCaseManifest } from './security';
@@ -10,6 +9,7 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
+  parseQueryAPILog,
   isAbsoluteBudgetFailure,
   measuredServerWarnings,
   type Report,
@@ -23,7 +23,7 @@ import {
 import { required } from './required';
 import { waitForZeroReady } from '../../../e2e/fixtures/zero-readiness';
 import { closeDb } from '../../../e2e/fixtures/db';
-import { isJoinPlanArtifact } from './plan-artifacts';
+import { retainMeasurementArtifacts } from './plan-artifacts';
 import { resultsCSV } from './results';
 import { executionMetadata, runtimeMetadata } from './execution';
 import { schema } from '../../../src/zero/schema';
@@ -281,19 +281,8 @@ async function worker(label: string, workerLayer: string, selected?: string[]) {
   if (!Array.isArray(report.measurements)) throw new Error(`${label}: Missing worker measurements`);
   await mkdir(path.join(output, 'plans'), { recursive: true });
   for (const row of report.measurements) {
-    const ref = (row.plans as { joinsArtifact?: unknown } | null)?.joinsArtifact;
-    if (!ref) continue;
     try {
-      if (!isJoinPlanArtifact(ref)) throw new Error('Invalid worker plan reference');
-      const source = path.join(directory, ref.path),
-        target = path.join(output, ref.path);
-      try {
-        await link(source, target);
-      } catch (error) {
-        if (!['EXDEV', 'EPERM', 'ENOTSUP'].includes((error as NodeJS.ErrnoException).code ?? ''))
-          throw error;
-        await copyFile(source, target, constants.COPYFILE_EXCL);
-      }
+      await retainMeasurementArtifacts(directory, output, row.plans);
     } catch (error) {
       infrastructure.push(`${label}/${row.key}: Cannot retain plan: ${String(error)}`);
     }
@@ -341,7 +330,8 @@ try {
   infrastructure.push(String(error));
 } finally {
   await closeDb();
-  const appLog = await readFile(path.join(logOutput, 'app.log'), 'utf8');
+  const appLogBuffer = await readFile(path.join(logOutput, 'app.log'));
+  const appLog = appLogBuffer.toString('utf8');
   mutationDiagnostics = appLog.split('\n').flatMap(line => {
     const start = line.indexOf('{"benchmark":"mutation-api"');
     if (start < 0) return [];
@@ -354,16 +344,9 @@ try {
   });
   correlateMutationAPI(mutations, mutationDiagnostics);
   for (const row of mutations) row.failures = mutationFailures(row);
-  const apiDiagnostics = appLog.split('\n').flatMap(line => {
-    const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
-    if (start < 0) return [];
-    try {
-      return [JSON.parse(line.slice(start))];
-    } catch {
-      infrastructure.push('Invalid query API diagnostic record');
-      return [];
-    }
-  });
+  const parsed = parseQueryAPILog(appLogBuffer);
+  const apiDiagnostics = parsed.records;
+  infrastructure.push(...parsed.errors);
   correlateQueryAPI(measurements, apiDiagnostics);
   for (const row of measurements) row.failures = checkBudgets(row);
   const warningLog = measuredServerWarnings(

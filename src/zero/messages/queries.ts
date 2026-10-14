@@ -179,14 +179,13 @@ export const messageQueries = {
         })
   ),
 
-  // Conversations with full relations (group, requested_by, participants→user, messages→sender)
+  // Directory relations; requester identity is already carried by requested_by_id.
   conversationsWithRelations: defineQuery(
     z.object({ limit: z.number().optional() }),
     ({ args: { limit }, ctx: { userID } }) => {
       let q = conversationAccessFilter(zql.conversation, userID, true)
         .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
-        .related('requested_by')
         .related('participants', q => q.related('user'))
         .related('messages', q =>
           q.orderBy('created_at', 'desc').orderBy('id', 'desc').limit(1).related('sender')
@@ -211,7 +210,6 @@ export const messageQueries = {
       let q: any = conversationAccessFilter(zql.conversation, userID, true)
         .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('event')
-        .related('requested_by')
         .related('participants', (participant: any) => participant.related('user'))
         .related('messages', (message: any) =>
           message.orderBy('created_at', 'desc').orderBy('id', 'desc').limit(1).related('sender')

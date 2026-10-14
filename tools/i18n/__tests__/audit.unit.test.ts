@@ -347,9 +347,20 @@ describe('repository i18n audit', () => {
     const root = temporaryRoot();
     writeValidRuntimeFiles(root);
     write(root, 'src/index.ts', `export const value = 1;`);
+    write(root, 'src/test/example.fixture.ts', `export const data = { title: 'Fixture title' };`);
     write(root, 'emails/index.ts', `export const value = 1;`);
 
     expect(auditRepository(root)).toEqual([]);
+  });
+
+  it('keeps ordinary source beside fixtures subject to the production copy guard', () => {
+    const root = temporaryRoot();
+    writeValidRuntimeFiles(root);
+    write(root, 'src/test/example.fixture.ts', `export const data = { title: 'Fixture title' };`);
+    write(root, 'src/test/example.ts', `export const data = { title: 'Untranslated title' };`);
+    expect(auditRepository(root)).toMatchObject([
+      { kind: 'copy-prop', value: 'Untranslated title' },
+    ]);
   });
 });
 

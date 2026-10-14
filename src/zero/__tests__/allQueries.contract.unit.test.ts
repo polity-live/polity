@@ -48,6 +48,8 @@ const broadArgs = {
   recipient_id: 'user-1',
   sender_id: 'user-2',
   groupId: 'group-1',
+  groupAId: 'aaaaaaaa-0000-4000-8000-000000000001',
+  groupBId: 'bbbbbbbb-0000-4000-8000-000000000002',
   groupIds: ['group-1', 'group-2'],
   group_id: 'group-1',
   eventId: 'event-1',

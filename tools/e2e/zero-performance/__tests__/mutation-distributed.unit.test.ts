@@ -155,16 +155,25 @@ describe('mutation CI scheduling and confirmation', () => {
       externalFailures(partialReportFailures(partial, plan, shard, 'head', 'initial', 'runner'))
     ).toContain('Mutation external delivery failed');
   });
-  it('covers queries and mutations on sixteen catalog jobs while distributing independent nested variants', () => {
+  it('covers queries and mutations on sixty-four catalog jobs while distributing independent nested variants', () => {
     const plan = manifest();
-    expect(plan.shards).toHaveLength(20);
-    expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(16);
-    const assigned = plan.shards
-      .flatMap(shard => (shard.layer === 'queries' ? shard.head : []))
-      .sort();
-    expect(assigned).toEqual(
-      [...workload().queries, ...workload().mutations.map(row => row.key)].sort()
-    );
+    expect(plan.shards).toHaveLength(68);
+    expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(64);
+    for (const revision of ['head', 'base'] as const) {
+      const assigned = plan.shards
+        .flatMap(shard => (shard.layer === 'queries' ? shard[revision] : []))
+        .sort();
+      expect(assigned).toEqual(
+        [...workload().queries, ...workload().mutations.map(row => row.key)].sort()
+      );
+    }
+    const { format: _format, shards: _shards, digest: _digest, ...input } = structuredClone(plan);
+    for (const revision of ['head', 'base'] as const) {
+      input.workloads[revision]!.queries.reverse();
+      input.workloads[revision]!.security.reverse();
+      input.workloads[revision]!.mutations.reverse();
+    }
+    expect(createManifest(input, {}).shards).toEqual(plan.shards);
     const studio = plan.shards.filter(shard =>
       shard.head.some(key => key.includes('studio.canvas.command'))
     );

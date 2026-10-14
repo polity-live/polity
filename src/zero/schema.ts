@@ -139,6 +139,9 @@ import { dataset, datasetSnapshot } from './datasets/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
 import {
   studioProject,
+  studioLiveSource,
+  eventPresentation,
+  eventPresentationDevice,
   studioProjectCollaborator,
   studioExport,
   studioState,
@@ -353,6 +356,9 @@ const zeroTables = [
   studioElementSet,
   studioElementSetRevision,
   studioProject,
+  studioLiveSource,
+  eventPresentation,
+  eventPresentationDevice,
   studioProjectCollaborator,
   studioExport,
   // Live tutorial

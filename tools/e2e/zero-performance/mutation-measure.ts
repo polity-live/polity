@@ -19,10 +19,16 @@ import {
 } from './mutation-metrics';
 import type { Execution } from './sharding';
 import { required } from './required';
-import { watchMutationSnapshot, waitForRollback } from './mutation-snapshot';
+import {
+  watchMutationSnapshot,
+  waitForRollback,
+  waitForReadOnlyRollbackProof,
+} from './mutation-snapshot';
 import { MutationRequestCompletion } from './mutation-request-completion';
 import { mutationErrorShape, mutationSDKErrorDiagnostic } from './mutation-error-diagnostics';
 import { watchMutationObservation as watch } from './mutation-observation';
+import { rollbackDiagnostics } from './mutation-rollback-diagnostics';
+import { writeAtomicReport } from './atomic-report';
 
 interface View {
   addListener: (callback: (data: unknown, type: string) => void) => () => void;
@@ -226,12 +232,13 @@ export async function measureMutations(
         let requestsSettled = true;
         let stage = 'client setup';
         let fixtureReadiness: ReturnType<typeof watch>['readiness'] | undefined;
+        const rollbackTrace = rollbackDiagnostics(sql);
         const additionalWriterBaselines: { read: () => unknown; baseline: unknown }[] = [];
         try {
           writer = await client(actor);
           stage = 'fixture setup';
           prepared = await entry.prepare({
-            sql,
+            sql: rollbackTrace.sql,
             id: randomUUID(),
             ownerID: OWNER.userID,
             outsiderID: OUTSIDER.userID,
@@ -449,7 +456,14 @@ export async function measureMutations(
           sample.databaseVerified = true;
           stage = 'optimistic rollback verification';
           if (sample.outcome !== 'success') {
-            if (prepared.verifyRollback) await prepared.verifyRollback(writer);
+            const verifyRollback = prepared.verifyRollback;
+            if (verifyRollback)
+              await waitForReadOnlyRollbackProof(entry.variant, () =>
+                entry.variant === 'delegated-authority-revoked-after-preload' ||
+                entry.variant === 'secret-manager-authority-revoked-after-preload'
+                  ? rollbackTrace.verify(writer, verifyRollback)
+                  : verifyRollback(writer)
+              );
             else if (prepared.observe) {
               await waitForRollback(() => writerCurrent, writerBaseline);
               for (const baseline of additionalWriterBaselines)
@@ -468,6 +482,47 @@ export async function measureMutations(
                 ? ` (${JSON.stringify(fixtureReadiness)})`
                 : '')
           );
+          if (stage === 'optimistic rollback verification' && writer && sample) {
+            // The sample already failed with its original assertion and deadline.
+            // Keep failure evidence separate from the acceptance report protocol.
+            try {
+              const diagnostic = await rollbackTrace.failure(
+                error,
+                writer,
+                process.env.ZERO_ADMIN_PASSWORD,
+                {
+                  clientGroupID: sample.clientGroupID,
+                  databaseURL: process.env.E2E_DATABASE_URL,
+                  cvrDatabaseURL: process.env.ZERO_CVR_DB,
+                  // The isolated runner strips inherited Zero configuration;
+                  // both pinned SDKs default to app.id='zero', shard.num=0.
+                  appID: process.env.ZERO_APP_ID ?? 'zero',
+                  shardNum: process.env.ZERO_SHARD_NUM ?? '0',
+                }
+              );
+              if (diagnostic)
+                await writeAtomicReport(
+                  path.join(
+                    required(process.env.ZERO_PERFORMANCE_OUTPUT),
+                    `rollback-failure-${repeat + 1}-${writer.clientID}.json`
+                  ),
+                  JSON.stringify(
+                    {
+                      execution,
+                      key: row.key,
+                      sample: repeat + 1,
+                      clientID: writer.clientID,
+                      clientGroupID: sample.clientGroupID,
+                      diagnostic,
+                    },
+                    null,
+                    2
+                  )
+                );
+            } catch {
+              console.warn('Rollback failure diagnostic could not be retained');
+            }
+          }
         } finally {
           cancellations.forEach(cancel => cancel());
           views.forEach(view => view.destroy());

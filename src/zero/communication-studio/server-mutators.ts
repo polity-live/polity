@@ -1,4 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
+import { presentationCommandSchema } from './presentation-schema';
+import { applyPresentationCommand } from '@/server/studio/presentation';
 import { studioOperationSchema } from '@/features/communication-studio/logic/operations';
 import { applyStudioOperation } from '@/server/studio/operations';
 import { studioCommandSchemas, canvasCommandSchema } from './commands';
@@ -43,6 +45,9 @@ function command<
   });
 }
 export const studioServerMutators = {
+  presentation: defineMutator(presentationCommandSchema, async ({ tx, ctx, args }) => {
+    await applyPresentationCommand(tx, ctx.userID, args);
+  }),
   create: command('create', studioCommandSchemas.create, (actor, args) =>
     createProjectFromSelection(actor, args, args.id)
   ),
@@ -83,7 +88,15 @@ export const studioServerMutators = {
     finishUpload(actor, args.id, true)
   ),
   requestExport: command('requestExport', studioCommandSchemas.requestExport, (actor, args) =>
-    queueCommittedExport(actor, args.projectId, args.format, args.pageIds, args.revision, args.id)
+    queueCommittedExport(
+      actor,
+      args.projectId,
+      args.format,
+      args.pageIds,
+      args.revision,
+      args.id,
+      args.snapshot
+    )
   ),
   cancelExport: command('cancelExport', studioCommandSchemas.cancelExport, (actor, args) =>
     cancelStudioExport(actor, args.id)

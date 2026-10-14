@@ -4,11 +4,11 @@ import { element } from '@/features/communication-studio/logic/document';
 import { createFrameNode } from '@/features/communication-studio/logic/document-v3';
 import { legacyDocumentToV3 } from '@/features/communication-studio/logic/v3-adapter';
 
-const io = vi.hoisted(() => ({ query: vi.fn() }));
+const io = vi.hoisted(() => ({ query: vi.fn(), run: vi.fn() }));
 vi.mock('@/server/zero-mutate', () => ({
   createZeroContext: () => ({}),
   executeZeroTransaction: async (_context: unknown, work: (tx: unknown) => Promise<unknown>) =>
-    work({}),
+    work({ run: io.run }),
 }));
 vi.mock('@/server/transaction', async original => ({
   ...(await original<typeof import('@/server/transaction')>()),
@@ -23,6 +23,7 @@ legacy.pages[0].elements.push(element('rect', { x: 3000, y: 3000 }));
 const document = legacyDocumentToV3(legacy);
 
 beforeEach(() => {
+  io.run.mockReset();
   io.query.mockReset();
   io.query.mockImplementation(async (statement: string) => {
     if (statement.startsWith('select studio_access')) return [{ allowed: true }];
@@ -34,6 +35,65 @@ beforeEach(() => {
 });
 
 describe('Studio export queue validation', () => {
+  it.each([false, true, undefined])(
+    'captures authorized live sources and presentation results visibility=%s',
+    async resultsVisible => {
+      const value = structuredClone(document);
+      const sourceId = crypto.randomUUID(),
+        resultId = crypto.randomUUID();
+      const node = value.nodes.find(node => node.type === 'richText')!;
+      node.liveBinding = { sourceType: 'agenda_item', sourceId, field: 'title', format: 'text' };
+      io.run
+        .mockResolvedValueOnce([
+          {
+            source_type: 'agenda_item',
+            source_id: sourceId,
+            payload: {
+              title: 'Captured live title',
+              result_source_type: 'vote',
+              result_source_id: resultId,
+            },
+          },
+        ])
+        .mockResolvedValueOnce([{ source_type: 'vote', source_id: resultId, payload: {} }]);
+      const original = io.query.getMockImplementation()!;
+      io.query.mockImplementation(async (sql: string, ...args: unknown[]) =>
+        sql.startsWith('select document,content_revision')
+          ? [{ document: value, content_revision: 7 }]
+          : sql.startsWith('select results_visible')
+            ? resultsVisible === undefined
+              ? []
+              : [{ results_visible: resultsVisible }]
+            : original(sql, ...args)
+      );
+      await queueCommittedExport(actorId, projectId, 'png', [], 7, undefined, {
+        presentation: true,
+      });
+      expect(io.run).toHaveBeenCalledTimes(2);
+      const captured = io.query.mock.calls.find(([sql]) =>
+        sql.startsWith('insert into studio_revision')
+      )![1][2];
+      expect(JSON.stringify(captured)).toContain('Captured live title');
+      expect(captured.nodes.find((n: any) => n.id === node.id).liveBinding).toBeUndefined();
+    }
+  );
+  it('rechecks the operation receipt after snapshot validation to avoid a concurrent duplicate', async () => {
+    const operationId = crypto.randomUUID();
+    const original = io.query.getMockImplementation()!;
+    let checks = 0;
+    io.query.mockImplementation(async (sql: string, ...args: unknown[]) =>
+      sql.startsWith('select id from studio_export')
+        ? ++checks === 1
+          ? []
+          : [{ id: operationId }]
+        : original(sql, ...args)
+    );
+    await expect(
+      queueCommittedExport(actorId, projectId, 'png', [], 7, operationId)
+    ).resolves.toEqual({ id: operationId, revision: 7 });
+    expect(checks).toBe(2);
+    expect(io.query.mock.calls.some(([sql]) => sql.startsWith('insert'))).toBe(false);
+  });
   function overrideRow(prefix: string, result: unknown[]) {
     const original = io.query.getMockImplementation()!;
     io.query.mockImplementation(async (statement: string, ...args: unknown[]) =>

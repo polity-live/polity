@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { datasetRowConditionsSchema } from '@/features/charts/logic/datasetRowConditions';
 
 export const datasetProjectionRequestSchema = z.object({
   view: z.enum(['chart', 'table', 'stat']),
@@ -6,7 +7,17 @@ export const datasetProjectionRequestSchema = z.object({
   dimensionColumn: z.string().nullable().optional(),
   seriesColumn: z.string().nullable().optional(),
   filters: z.record(z.string(), z.string()).default({}),
-  aggregation: z.enum(['sum', 'mean', 'median', 'min', 'max', 'count']).default('sum'),
+  rowConditions: datasetRowConditionsSchema.optional(),
+  timeRange: z
+    .object({
+      column: z.string().min(1),
+      startYear: z.number().int().min(1800).max(2199),
+      endYear: z.number().int().min(1800).max(2199),
+    })
+    .refine(value => value.startYear <= value.endYear)
+    .nullable()
+    .optional(),
+  aggregation: z.enum(['none', 'sum', 'mean', 'median', 'min', 'max', 'count']).default('sum'),
   layout: z.enum(['long', 'wide', 'multi']).optional(),
   valueColumns: z.array(z.string()).max(50).optional(),
   columns: z.array(z.string()).max(50).optional(),

@@ -251,6 +251,25 @@
   "actionReferences": {},
   "actionDeclarations": {},
   "sourceReferenceAdditions": {
+    "tools/e2e/zero-performance/mutation-rollback-diagnostics.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+        "project": "unit",
+        "caseId": "reads the pinned SDK physical row contract with exact parameters"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-snapshot.unit.test.ts",
+        "project": "unit",
+        "caseId": "performs no CVR SQL for success or an unretained failure"
+      }
+    ],
+    "src/zero/messages/queries.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains full conversation detail while omitting unused requester objects from directories"
+      }
+    ],
     "tools/e2e/zero-performance/mutation-timestamp.ts": [
       {
         "file": "tools/e2e/zero-performance/__tests__/mutation-timestamp.unit.test.ts",
@@ -267,6 +286,16 @@
     ],
     "tools/e2e/zero-performance/sharding.ts": [
       {
+        "file": "tools/e2e/zero-performance/__tests__/sharding.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects omitted, repeated and out-of-range assignments even with recomputed digests"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
+        "project": "unit",
+        "caseId": "covers queries and mutations on sixty-four catalog jobs while distributing independent nested variants"
+      },
+      {
         "file": "tools/e2e/zero-performance/__tests__/mutation-distributed.unit.test.ts",
         "project": "unit",
         "caseId": "weights each revision actually measured, including a mutation-only bootstrap"
@@ -279,7 +308,24 @@
         "caseId": "matches collector and worker fingerprints and detects changed revision dependencies"
       }
     ],
+    "tools/e2e/zero-performance/linux-runtime.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the direct runtime identity while installing only the owned Docker scan adapter"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/runtime-metadata.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects unavailable Docker runtime identity %s"
+      }
+    ],
     "tools/e2e/zero-performance/isolation.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
+        "project": "unit",
+        "caseId": "finds exact pnpm pins in action-setup, npm global and direct JavaScript bin layouts"
+      },
       {
         "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
         "project": "unit",
@@ -295,14 +341,14 @@
       {
         "file": "tools/e2e/zero-performance/__tests__/gate.unit.test.ts",
         "project": "unit",
-        "caseId": "preserves every authorized event metadata projection while querying the agenda separately"
+        "caseId": "preserves authorized agenda metadata and participant permissions while omitting unused event roles"
       }
     ],
     "src/zero/events/useEventState.ts": [
       {
         "file": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
         "project": "component",
-        "caseId": "loads permitted agenda metadata without the duplicate agenda tree and clears revoked data"
+        "caseId": "loads permitted agenda metadata without unused event roles or the duplicate agenda tree and clears revoked data"
       }
     ],
     "src/zero/preloads/route-manifests.ts": [
@@ -324,6 +370,33 @@
         "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
         "project": "unit",
         "caseId": "requires validated group foreign keys for every equivalent PK lookup"
+      },
+      {
+        "file": "src/zero/network/__tests__/networkEndpointPlanning.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires the validated canonical request pair and its composite unique index for a single pair lookup"
+      },
+      {
+        "file": "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
+        "project": "unit",
+        "caseId": "selects the canonical request pair with two indexed equalities for %s input"
+      },
+      {
+        "file": "src/zero/network/__tests__/networkQueries.access-semantics.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains %s authorization, nested group discovery, and membership revocation for canonical pairs"
+      }
+    ],
+    "tools/e2e/zero-performance/measure.ts": [
+      {
+        "file": "tools/e2e/__tests__/zero-readiness.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps the captured WAL barrier when polling query and security fixtures every 100 ms"
+      },
+      {
+        "file": "tools/e2e/__tests__/zero-readiness.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the full default readiness deadline when fixture polling is every 100 ms"
       }
     ],
     "src/features/agendas/hooks/useAgendaItems.ts": [
@@ -338,6 +411,57 @@
         "file": "src/zero/appearance-themes/__tests__/query-planning.unit.test.ts",
         "project": "unit",
         "caseId": "the candidate set cannot remove any builtin, personal or permitted group result"
+      }
+    ],
+    "tools/e2e/zero-performance/sqlite-scan-status.mjs": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "excludes only unavailable non-loop sentinels while retaining actual sort work"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "matches duplicate names by ordered complete identity"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/sqlite-scan-status.unit.test.ts",
+        "project": "unit",
+        "caseId": "clears the snapshot on each native reset and leaves EXPLAIN intact"
+      }
+    ],
+    "tools/e2e/zero-performance/scan-status-artifacts.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "exports only fresh cursor executions and validates exact zero-row analysis evidence"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects raw telemetry alterations even when the artifact hash is recomputed"
+      }
+    ],
+    "tools/e2e/zero-performance/plan-artifacts.ts": [
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains every worker analysis/export artifact in the published collector report"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects missing report evidence %s"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects reuse of one execution as another analysis or export"
+      },
+      {
+        "file": "tools/e2e/zero-performance/__tests__/scan-status-artifacts.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects wrong associated runtime %s"
       }
     ],
     "tools/e2e/zero-performance/fixtures.ts": [

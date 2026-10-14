@@ -310,24 +310,26 @@ function useZeroGridVirtualizerImplementation({
     listContextParams,
   ]);
   useEffect(() => {
-    if (atStart) {
+    if (atStart && hasReachedStart !== true) {
       dispatch({ type: 'REACHED_START' });
     }
-  }, [atStart]);
+  }, [atStart, hasReachedStart]);
   useEffect(() => {
-    if (atEnd) {
+    if (atEnd && hasReachedEnd !== true) {
       dispatch({ type: 'REACHED_END' });
     }
-  }, [atEnd]);
+  }, [atEnd, hasReachedEnd]);
   useEffect(() => {
     if (complete) {
       if (atStart && atEnd) {
-        dispatch({ type: 'UPDATE_ESTIMATED_TOTAL', newTotal: rowsLength });
+        if (Math.max(estimatedTotal, rowsLength) !== estimatedTotal) {
+          dispatch({ type: 'UPDATE_ESTIMATED_TOTAL', newTotal: rowsLength });
+        }
       } else if (newEstimatedTotal > estimatedTotal) {
         dispatch({ type: 'UPDATE_ESTIMATED_TOTAL', newTotal: newEstimatedTotal });
       }
     }
-  }, [estimatedTotal, complete, atStart, atEnd, newEstimatedTotal]);
+  }, [estimatedTotal, complete, atStart, atEnd, rowsLength, newEstimatedTotal]);
   // Apply scroll adjustments synchronously with layout to prevent visual jumps
   useLayoutEffect(() => {
     if (pendingScrollAdjustment !== 0) {

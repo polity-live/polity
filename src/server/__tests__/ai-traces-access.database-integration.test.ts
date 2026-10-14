@@ -46,7 +46,7 @@ beforeAll(async () => {
     amendment,
   ]);
   await query(
-    "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Trace access','single',5,0,0)",
+    "insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values($1,$2,'Trace access','single',6,0,0)",
     [project, actor]
   );
   await query("insert into conversation(id,type,assistant_for_user_id) values($1,'assistant',$2)", [

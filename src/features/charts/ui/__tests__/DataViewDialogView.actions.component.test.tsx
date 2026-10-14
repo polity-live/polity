@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 
 import type { DataViewDialogModel } from '../../hooks/useDataViewDialogModel';
 import { DataViewDialogView } from '../DataViewDialogView';
@@ -139,7 +140,18 @@ vi.mock('@/features/shared/ui/ui/popover', () => ({
 }));
 
 vi.mock('@/features/shared/ui/ui/collapsible', () => ({
-  Collapsible: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Collapsible: ({
+    children,
+    onOpenChange,
+  }: {
+    children: ReactNode;
+    onOpenChange?: (open: boolean) => void;
+  }) => (
+    <div>
+      {children}
+      <button data-testid="expand-other" onClick={() => onOpenChange?.(true)} />
+    </div>
+  ),
   CollapsibleContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CollapsibleTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -221,6 +233,385 @@ vi.mock('@/features/shared/ui/ui/tabs', async () => {
   };
 });
 
+it('activates search recovery and time-range removal from focused native buttons', async () => {
+  const user = userEvent.setup();
+  const finder = model({
+    searchQuery: 'population 2025 Germany',
+    searchResults: [],
+    selectedResult: null,
+    providers: ['EUROSTAT'],
+    error: 'unauthorized',
+    providerErrors: [{ provider: 'GOVDATA', message: 'offline' }],
+  });
+  const view = render(<DataViewDialogView model={finder} />);
+  const activate = async (button: HTMLElement) => {
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    await user.keyboard('{Enter}');
+  };
+  for (const id of [
+    'charts.data-view.search.retry',
+    'charts.data-view.search.relax-period',
+    'charts.data-view.search.relax-area',
+    'charts.data-view.search.expand-sources',
+  ]) {
+    await activate(view.container.querySelector(`[data-action-id="${id}"]`)!);
+  }
+  await activate(view.getAllByRole('button', { name: 'plateJs.dataView.retrySearch' }).at(-1)!);
+  expect(finder.retrySearch).toHaveBeenCalledTimes(2);
+  expect(finder.setProviders).toHaveBeenCalledWith([
+    'EUROSTAT',
+    'GENESIS_DESTATIS',
+    'GOVDATA',
+    'UPLOAD',
+  ]);
+  const updates = vi
+    .mocked(finder.setSearchFilters)
+    .mock.calls.map(([update]: any[]) =>
+      update({ area: 'Germany', period: { start: 2025, end: 2025 } })
+    );
+  expect(updates).toContainEqual({ area: 'Germany', period: null });
+  expect(updates).toContainEqual({ area: null, period: { start: 2025, end: 2025 } });
+  const builder = model({
+    stage: 'build',
+    query: { ...model().query, timeRange: { startYear: 2024, endYear: 2025 } },
+  });
+  view.rerender(<DataViewDialogView model={builder} />);
+  await activate(view.getByRole('button', { name: 'plateJs.dataView.removeSearchPeriod' }));
+  expect(builder.setQuery.mock.calls[0][0](builder.query).timeRange).toBeNull();
+});
+
+it('cancels import preparation by keyboard and renders import busy, invalid, error and unauthorized states', async () => {
+  const user = userEvent.setup();
+  const base = {
+    stage: 'prepare',
+    preparation: { title: 'Population', dimensions: [], estimatedBytes: 100, importAllowed: true },
+    importFilters: {},
+    restrictImport: false,
+    cancelPreparation: vi.fn(),
+  };
+  const prepared = model(base);
+  const view = render(<DataViewDialogView model={prepared} />);
+  const back = view.getByRole('button', { name: 'plateJs.dataView.backToResults' });
+  back.focus();
+  expect(document.activeElement).toBe(back);
+  await user.keyboard('{Enter}');
+  expect(prepared.cancelPreparation).toHaveBeenCalledOnce();
+  const confirm = view.getByRole('button', { name: 'plateJs.dataView.importSelection' });
+  confirm.focus();
+  await user.keyboard('{Enter}');
+  expect(prepared.useSelectedDataset).toHaveBeenCalledOnce();
+  for (const error of ['Dataset failed', 'unauthorized']) {
+    view.rerender(<DataViewDialogView model={model({ ...base, error })} />);
+    expect(view.getByText(error)).toBeTruthy();
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({ ...base, importFilters: { period: { start: 2026, end: 2025 } } })}
+    />
+  );
+  expect(
+    (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+      .disabled
+  ).toBe(true);
+  view.rerender(<DataViewDialogView model={model({ ...base, preparing: true })} />);
+  expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+});
+it('edits scoped area, year boundaries and classifying selectors without discarding other filters', () => {
+  let filters: Record<string, any> = {};
+  let deferUpdate = false;
+  let deferred: ((current: Record<string, any>) => Record<string, any>) | undefined;
+  const setImportFilters = vi.fn(update => {
+    if (deferUpdate) deferred = update;
+    else filters = update(filters);
+  });
+  const setRestrictImport = vi.fn();
+  const preparation = {
+    title: 'Population',
+    dimensions: [
+      { id: 'geo', label: 'Country', values: [{ id: 'DE', label: 'Germany' }, { id: 'FR' }] },
+      { id: 'time', label: 'Time', values: [{ id: '2025' }] },
+      { id: 'unit', label: 'Unit', values: [{ id: 'NR', label: 'Number' }, { id: 'PC' }] },
+      { id: 'single', label: 'Only', values: [{ id: 'ONE' }] },
+    ],
+    geoDimension: 'geo',
+    timeDimension: 'time',
+    estimatedBytes: null,
+    importAllowed: true,
+  };
+  const view = render(
+    <DataViewDialogView
+      model={model({
+        stage: 'prepare',
+        preparation,
+        restrictImport: true,
+        importFilters: filters,
+        setImportFilters,
+        setRestrictImport,
+      })}
+    />
+  );
+  const input = (id: string, value: string) => {
+    deferUpdate = true;
+    fireEvent.change(view.container.querySelector(`#${id}`)!, { target: { value } });
+    // React may restore a controlled input before evaluating its queued updater.
+    expect(deferred).toBeTypeOf('function');
+    filters = deferred?.(filters) ?? filters;
+    deferred = undefined;
+    deferUpdate = false;
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'prepare',
+          preparation,
+          restrictImport: true,
+          importFilters: filters,
+          setImportFilters,
+          setRestrictImport,
+        })}
+      />
+    );
+  };
+  input('import-area', 'Germany');
+  expect(filters.area).toBe('Germany');
+  input('import-area', '');
+  expect(filters.area).toBeNull();
+  input('import-start', '2024');
+  expect(filters.period).toEqual({ start: 2024, end: 2024 });
+  input('import-end', '2025');
+  expect(filters.period).toEqual({ start: 2024, end: 2025 });
+  input('import-start', '2023');
+  expect(filters.period).toEqual({ start: 2023, end: 2025 });
+  input('import-end', '');
+  expect(filters.period).toBeNull();
+  input('import-end', '2025');
+  expect(filters.period).toEqual({ start: 2025, end: 2025 });
+  input('import-start', '');
+  expect(filters.period).toBeNull();
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: 'NR' } });
+  filters.dimensions.other = 'KEEP';
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: '__all__' } });
+  expect(filters.dimensions).toEqual({ other: 'KEEP' });
+  filters.dimensions = undefined;
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: '__all__' } });
+  expect(filters.dimensions).toEqual({});
+  fireEvent.change(view.getByRole('combobox', { name: 'plateJs.dataView.prepareTitle' }), {
+    target: { value: 'full' },
+  });
+  expect(setRestrictImport).toHaveBeenCalledWith(false);
+  fireEvent.change(view.getByRole('combobox', { name: 'plateJs.dataView.prepareTitle' }), {
+    target: { value: 'scope' },
+  });
+  expect(setRestrictImport).toHaveBeenCalledWith(true);
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'prepare',
+        preparation,
+        restrictImport: true,
+        importFilters: {
+          area: 'DE',
+          period: { start: 2025, end: 2025 },
+          dimensions: { unit: 'PC' },
+        },
+        setImportFilters,
+      })}
+    />
+  );
+  expect((view.getByRole('combobox', { name: 'Unit' }) as HTMLSelectElement).value).toBe('PC');
+});
+it('handles missing preparations, invalid year limits and providers that require scoped imports', () => {
+  const view = render(
+    <DataViewDialogView model={model({ stage: 'prepare', preparation: null })} />
+  );
+  expect(view.queryByText('plateJs.dataView.prepareHint')).toBeNull();
+  const preparation = {
+    title: 'Unknown-size data',
+    dimensions: [],
+    estimatedBytes: 0,
+    importAllowed: false,
+  };
+  for (const period of [
+    { start: 1700, end: 2025 },
+    { start: 2025, end: 2200 },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'prepare',
+          preparation,
+          restrictImport: true,
+          importFilters: { period },
+        })}
+      />
+    );
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.importSelection' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true);
+    expect(view.queryByRole('option', { name: 'plateJs.dataView.fullImport' })).toBeNull();
+  }
+});
+it('requires provider dimensions in the builder and preserves existing query filters on selection', () => {
+  const builder = model({
+    stage: 'build',
+    requiredSelections: [
+      { id: 'unit', label: 'Unit', values: [{ id: 'NR', label: 'Number' }, { id: 'PC' }] },
+    ],
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  fireEvent.change(view.getByRole('combobox', { name: 'Unit' }), { target: { value: 'NR' } });
+  expect(builder.setQuery.mock.calls.at(-1)![0](builder.query).filters).toEqual({
+    Year: '2025',
+    unit: 'NR',
+  });
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        ...builder,
+        query: { ...builder.query, filters: { unit: 'PC' } },
+        snapshot: { ...builder.snapshot, provenance: { importScope: { unit: ['PC'] } } },
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.scopedSnapshot')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        ...builder,
+        snapshot: { ...builder.snapshot, provenance: { importScope: {} } },
+      })}
+    />
+  );
+  expect(view.queryByText('plateJs.dataView.scopedSnapshot')).toBeNull();
+});
+it('displays precise coverage evidence, unconfirmed periods and the absence of confirmed matches', () => {
+  const view = render(<DataViewDialogView model={model()} />);
+  const cases = [
+    {
+      group: 'matching',
+      area: { label: 'Germany', source: 'text', status: 'match' },
+      period: { start: 2024, end: 2025, source: 'text', status: 'match' },
+    },
+    {
+      group: 'other',
+      area: { source: 'unknown', status: 'different' },
+      period: { start: 2024, source: 'metadata', status: 'different' },
+    },
+    {
+      group: 'other',
+      area: { source: 'metadata', status: 'unknown' },
+      period: { end: 2025, source: 'text', status: 'unknown' },
+    },
+    {
+      group: 'matching',
+      area: { source: 'unknown', status: 'unknown' },
+      period: { source: 'unknown', status: 'unknown' },
+    },
+  ];
+  for (const [index, searchMatch] of cases.entries()) {
+    const source = { ...result, searchMatch };
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          searchQuery: 'Population',
+          searchResults: [source],
+          selectedResult: source,
+          searchIntent: {
+            topic: 'Population',
+            area: index === 0 ? 'Germany' : null,
+            period:
+              index === 0
+                ? { start: 2024, end: 2025 }
+                : index === 3
+                  ? { start: 2025, end: 2025 }
+                  : null,
+          },
+        })}
+      />
+    );
+    expect(view.getAllByText(/plateJs.dataView.searchArea/).length).toBeGreaterThan(0);
+    if (searchMatch.group === 'other') {
+      expect(view.getByText('plateJs.dataView.noConfirmedMatches')).toBeTruthy();
+      fireEvent.click(view.getByTestId('expand-other'));
+    }
+    if (index === 2) expect(view.getByText('plateJs.dataView.periodUnconfirmed')).toBeTruthy();
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        searchResults: [{ ...result, searchMatch: cases[0] }],
+        selectedResult: null,
+        searchIntent: { topic: 'Population', area: null, period: null },
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.matchingSearch')).toBeTruthy();
+});
+it('shows source selection, pending lookup and missing-topic states while reporting incomplete metadata', () => {
+  const view = render(
+    <DataViewDialogView model={model({ providers: [], selectedResult: null })} />
+  );
+  expect(view.getByText('plateJs.dataView.chooseSearchSource')).toBeTruthy();
+  view.rerender(<DataViewDialogView model={model({ searching: true, selectedResult: null })} />);
+  expect(view.getByText('plateJs.dataView.searchingDatasets')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        searchQuery: 'Germany 2025',
+        searchIntent: { topic: '', area: 'Germany', period: { start: 2025, end: 2025 } },
+        searchResults: [],
+        selectedResult: null,
+        providerErrors: [
+          { provider: 'EUROSTAT', message: 'Incomplete', code: 'incomplete_metadata' },
+        ],
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.addSearchTopic')).toBeTruthy();
+  expect(view.getByText('plateJs.dataView.coverageIncomplete')).toBeTruthy();
+});
+it('clears an inferred time range when an explicit observation filter replaces it', () => {
+  const builder = model({
+    stage: 'build',
+    filterableProfiles: [{ ...dimensionProfile, role: 'time' }],
+    query: { ...model().query, timeRange: { column: 'Year', startYear: 2024, endYear: 2025 } },
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  fireEvent.change(view.container.querySelector('#filter-Year')!, { target: { value: '2024' } });
+  expect(builder.setQuery.mock.calls.at(-1)![0](builder.query)).toMatchObject({
+    timeRange: null,
+    filters: { Year: '2024' },
+  });
+});
+
+it('opens scoped import from keyboard and retains busy and failed authorization feedback', async () => {
+  const user = userEvent.setup();
+  const source = { ...result, provider: 'EUROSTAT', providerDatasetId: 'population' };
+  const finder = model({ selectedResult: source, searchResults: [source] });
+  const view = render(<DataViewDialogView model={finder} />);
+  const scope = view.getByRole('button', { name: 'plateJs.dataView.restrictImport' });
+  scope.focus();
+  expect(document.activeElement).toBe(scope);
+  await user.keyboard('{Enter}');
+  expect(finder.useSelectedDataset).toHaveBeenCalledWith(true);
+  for (const error of ['Dataset failed', 'unauthorized']) {
+    view.rerender(<DataViewDialogView model={model({ selectedResult: source, error })} />);
+    expect(view.getByText(error)).toBeTruthy();
+    expect(
+      (view.getByRole('button', { name: 'plateJs.dataView.restrictImport' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+  }
+  view.rerender(<DataViewDialogView model={model({ selectedResult: source, preparing: true })} />);
+  expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+  expect(view.queryByRole('button', { name: 'plateJs.dataView.restrictImport' })).toBeNull();
+});
+
 vi.mock('@/features/shared/ui/ui/toggle-group', async () => {
   const { createContext, useContext } = await import('react');
   const ToggleContext = createContext<(value: string) => void>(() => undefined);
@@ -262,6 +653,13 @@ vi.mock('@/features/file-upload/ui/FileDropzone', () => ({
     onFilesSelected: (files: File[]) => void;
   }) => (
     <div data-testid="file-dropzone">
+      <button
+        data-testid="reject-file"
+        type="button"
+        onClick={() =>
+          onFilesRejected([{ code: 'file-size', file: new File(['a,b'], 'rejected.csv') } as any])
+        }
+      />
       <button data-testid="select-no-file" type="button" onClick={() => onFilesSelected([])} />
       {['file-size', 'too-many-files', 'file-invalid-type'].map(code => (
         <button
@@ -285,6 +683,30 @@ vi.mock('../DataViewAttribution', () => ({
 
 vi.mock('../ManualChartTableEditor', () => ({
   ManualChartTableEditor: () => <div data-testid="manual-table" />,
+}));
+
+vi.mock('../DatasetExplorer', () => ({
+  DatasetExplorer: ({
+    title,
+    onApply,
+    onBack,
+  }: {
+    title: string;
+    onApply: (selection: any) => void;
+    onBack: () => void;
+  }) => (
+    <div data-testid="dataset-explorer">
+      <p data-testid="explorer-title">{title}</p>
+      <button onClick={onBack}>Back to builder</button>
+      <button
+        onClick={() =>
+          onApply({ filters: {}, rowFilters: {}, rowConditions: [], columns: ['Year'] })
+        }
+      >
+        Apply table
+      </button>
+    </div>
+  ),
 }));
 
 afterEach(cleanup);
@@ -370,6 +792,9 @@ function model(overrides: Record<string, unknown> = {}): TestDataViewDialogModel
     },
     save: vi.fn(),
     searchQuery: '',
+    searchFilters: {},
+    setSearchFilters: vi.fn(),
+    retrySearch: vi.fn(),
     searchResults: [result],
     searching: false,
     selectedResult: result,
@@ -418,6 +843,7 @@ function model(overrides: Record<string, unknown> = {}): TestDataViewDialogModel
     uploadOpen: true,
     uploadTitle: 'Data',
     useSelectedDataset: vi.fn(),
+    openDatasetExplorer: vi.fn(),
     view: 'chart',
     ...overrides,
   } as unknown as TestDataViewDialogModel;
@@ -430,6 +856,180 @@ function actionIds(container: HTMLElement) {
     )
   );
 }
+
+it('requires explicit metric choices, hides their redundant selectors and removes replaced predicates', () => {
+  const options = [
+    { id: 'count', label: 'People', unit: 'Number', filters: { value_unit: 'Number' } },
+    { id: 'rate', label: 'Rate', unit: 'Percent', filters: { value_unit: 'Percent' } },
+  ];
+  const dimensions = [
+    { id: 'value_unit', label: 'Unit', values: [{ id: 'Number' }] },
+    { id: 'Region', label: 'Region', values: [{ id: 'DE', label: 'Germany' }] },
+  ];
+  const builder = model({
+    stage: 'build',
+    needsMeasure: true,
+    measureOptions: options,
+    chooseMeasure: vi.fn(),
+    requiredSelections: dimensions,
+    query: {
+      ...model().query,
+      rowConditions: [
+        { column: 'Year', operator: 'empty' },
+        { column: 'Region', operator: 'empty' },
+      ],
+    },
+  });
+  const view = render(<DataViewDialogView model={builder} />);
+  expect(view.getByText('plateJs.dataView.chooseMeasureRequired')).toBeTruthy();
+  expect(view.queryByLabelText('Unit')).toBeNull();
+  fireEvent.change(view.getByLabelText('plateJs.dataView.measureAndUnit'), {
+    target: { value: 'rate' },
+  });
+  expect(builder.chooseMeasure).toHaveBeenCalledWith('rate');
+  fireEvent.change(view.container.querySelector('#filter-Year')!, { target: { value: '2024' } });
+  const updated = builder.setQuery.mock.lastCall?.[0](builder.query);
+  expect(updated.rowConditions).toEqual([{ column: 'Region', operator: 'empty' }]);
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'build',
+        measureOptions: options,
+        selectedMeasure: options[0],
+        requiredSelections: dimensions,
+      })}
+    />
+  );
+  expect(view.getAllByText('People · Number').length).toBeGreaterThan(0);
+});
+
+it('exposes recovery downloads for finder, projection, builder and upload errors', () => {
+  const recoverable = { ...result, providerDatasetId: 'package', providerResourceId: 'csv' };
+  const view = render(
+    <DataViewDialogView
+      model={model({
+        selectedResult: recoverable,
+        sampleDownloadAvailable: true,
+        dataPreviewError: 'Sample failed',
+      })}
+    />
+  );
+  expect(view.getByRole('button', { name: 'plateJs.dataView.rawDownload.full' })).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        selectedResult: { ...recoverable, byteSize: 60 * 1024 * 1024 },
+        dataPreviewError: 'Sample failed',
+      })}
+    />
+  );
+  expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        stage: 'build',
+        selectedResult: recoverable,
+        projectionError: 'Projection failed',
+        projectionDownloadAvailable: true,
+        dataPreviewError: 'Sample failed',
+        sampleDownloadAvailable: true,
+        error: 'Import failed',
+        errorDownloadAvailable: true,
+      })}
+    />
+  );
+  expect(view.getAllByRole('button', { name: 'plateJs.dataView.rawDownload.full' })).toHaveLength(
+    3
+  );
+  const rejectUploadFile = vi.fn();
+  const rejected = model({ rejectUploadFile });
+  view.rerender(<DataViewDialogView model={rejected} />);
+  fireEvent.click(view.getByTestId('reject-file'));
+  expect(rejectUploadFile).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'rejected.csv' }),
+    'plateJs.dataView.fileTooLarge'
+  );
+  fireEvent.click(view.getByTestId('reject-file-size'));
+  expect(rejectUploadFile).toHaveBeenCalledWith(null, 'plateJs.dataView.fileTooLarge');
+  for (const files of [
+    { rejectedUploadFile: new File(['x'], 'rejected.csv'), uploadFile: null },
+    { rejectedUploadFile: null, uploadFile: new File(['x'], 'selected.csv') },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({ uploadError: 'File failed', uploadDownloadAvailable: true, ...files })}
+      />
+    );
+    expect(
+      view.getByRole('button', { name: 'plateJs.dataView.rawDownload.original' })
+    ).toBeTruthy();
+  }
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        uploadError: 'File failed',
+        uploadDownloadAvailable: true,
+        rejectedUploadFile: null,
+        uploadFile: null,
+      })}
+    />
+  );
+  expect(view.queryByRole('button', { name: 'plateJs.dataView.rawDownload.original' })).toBeNull();
+});
+
+it('renders preview attribution for open-ended and explicit periods', () => {
+  const view = render(<DataViewDialogView model={model({ stage: 'build' })} />);
+  for (const timeRange of [
+    { column: 'Year', startYear: 1800, endYear: 2199 },
+    { column: 'Year', startYear: 2024, endYear: 2025 },
+  ]) {
+    view.rerender(
+      <DataViewDialogView
+        model={model({
+          stage: 'build',
+          query: { ...model().query, timeRange },
+          snapshot: { ...model().snapshot, provenance: { sourceUpdatedAt: '2026-01-01' } },
+          projection: { view: 'chart', points: [], rowCount: 0, snapshotId: 'snapshot-1' },
+        })}
+      />
+    );
+    expect(view.getByTestId('attribution')).toBeTruthy();
+  }
+  view.rerender(<DataViewDialogView model={model({ editingElement: { type: 'data_view' } })} />);
+  expect(view.getByRole('heading', { name: 'plateJs.dataView.editTitle' })).toBeTruthy();
+});
+
+it('opens the explorer with and without a selected title and applies or closes its table selection', () => {
+  const applyDatasetExplorer = vi.fn();
+  const closeDatasetExplorer = vi.fn();
+  const explorer = model({
+    datasetExplorerOpen: true,
+    explorerRequest: { provider: 'EUROSTAT', providerDatasetId: 'demo' },
+    applyDatasetExplorer,
+    closeDatasetExplorer,
+  });
+  const view = render(<DataViewDialogView model={explorer} />);
+  expect(view.getByTestId('explorer-title').textContent).toBe('Employment');
+  fireEvent.click(view.getByRole('button', { name: 'Apply table' }));
+  expect(applyDatasetExplorer).toHaveBeenCalledWith({
+    filters: {},
+    rowFilters: {},
+    rowConditions: [],
+    columns: ['Year'],
+  });
+  fireEvent.click(view.getByRole('button', { name: 'Back to builder' }));
+  expect(closeDatasetExplorer).toHaveBeenCalledOnce();
+  view.rerender(
+    <DataViewDialogView
+      model={model({
+        datasetExplorerOpen: true,
+        explorerRequest: { provider: 'EUROSTAT' },
+        selectedResult: null,
+      })}
+    />
+  );
+  expect(view.getByTestId('explorer-title').textContent).toBe('');
+});
 
 describe('DataViewDialogView action contracts', () => {
   it('exposes and drives stable finder and source actions across result states', () => {
@@ -465,7 +1065,7 @@ describe('DataViewDialogView action contracts', () => {
     fireEvent.click(
       view.container.querySelector('[data-action-id="charts.data-view.use-dataset"]')!
     );
-    expect(finder.useSelectedDataset).toHaveBeenCalledOnce();
+    expect(finder.openDatasetExplorer).toHaveBeenCalledOnce();
 
     const noResults = model({ searchQuery: 'missing', searchResults: [], selectedResult: null });
     view.rerender(<DataViewDialogView model={noResults} />);
@@ -569,7 +1169,7 @@ describe('DataViewDialogView action contracts', () => {
     const finder = model({
       providerErrors: [{ provider: 'GOVDATA', error: 'offline' }],
       providers: ['EUROSTAT'],
-      searching: true,
+      searching: false,
       searchResults: [richResult, sparseResult, endOnlyResult],
       selectedResult: richResult,
     });
@@ -597,7 +1197,10 @@ describe('DataViewDialogView action contracts', () => {
       selectedResult: { ...richResult, byteSize: 60 * 1024 * 1024 },
     });
     view.rerender(<DataViewDialogView model={details} />);
-    expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
+    expect(view.getByRole('status').getAttribute('aria-busy')).toBe('true');
+    expect(view.getByText('plateJs.dataView.loading')).toBeTruthy();
+    expect(view.container.querySelector('.polity-presentation-loading-arc')).toBeTruthy();
+    expect(view.queryByText('plateJs.dataView.tooLarge')).toBeNull();
     view.rerender(
       <DataViewDialogView
         model={model({
@@ -607,6 +1210,7 @@ describe('DataViewDialogView action contracts', () => {
         })}
       />
     );
+    expect(view.getByText('plateJs.dataView.tooLarge')).toBeTruthy();
 
     view.rerender(
       <DataViewDialogView

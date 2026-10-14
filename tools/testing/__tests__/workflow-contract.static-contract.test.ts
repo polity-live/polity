@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
 const root = path.resolve(import.meta.dirname, '../../..');
@@ -114,10 +116,10 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('run: pnpm run build:e2e');
     expect(e2e).toContain('timeout-minutes: 25');
     expect(e2e).toContain('for attempt in 1 2 3; do');
-    expect(e2e).toContain('if supabase db reset --local --no-seed; then');
-    expect(e2e).toContain('Supabase reset failed after $attempt attempts');
+    expect(e2e).toContain('if supabase start && supabase db reset --local --no-seed; then');
+    expect(e2e).toContain('Supabase start/reset failed after $attempt attempts');
     expect(e2e).toContain('supabase stop --no-backup || true');
-    expect(e2e).toMatch(/supabase stop --no-backup \|\| true[\s\S]*supabase start/u);
+    expect(e2e).toContain('sleep "$delay_seconds"');
     expect(e2e).toContain('- id: e2e');
     expect(e2e).toContain('name: Upload shard blob report');
     expect(e2e).toContain("if: always() && steps.e2e.outcome != 'skipped'");
@@ -131,6 +133,138 @@ describe('GitHub workflow contracts', () => {
     expect(gate).toContain('E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}');
     expect(gate).toContain('if [[ "$E2E_SHARDS_RESULT" != "success" ]]');
   });
+
+  it.each([
+    {
+      name: 'immediate success',
+      startFailures: 0,
+      resetFailures: 0,
+      expected: ['start', 'db reset --local --no-seed'],
+      status: 0,
+    },
+    {
+      name: 'transient initial start failure',
+      startFailures: 1,
+      resetFailures: 0,
+      expected: ['start', 'stop --no-backup', 'sleep 10', 'start', 'db reset --local --no-seed'],
+      status: 0,
+    },
+    {
+      name: 'transient reset failure',
+      startFailures: 0,
+      resetFailures: 1,
+      expected: [
+        'start',
+        'db reset --local --no-seed',
+        'stop --no-backup',
+        'sleep 10',
+        'start',
+        'db reset --local --no-seed',
+      ],
+      status: 0,
+    },
+    {
+      name: 'start then reset failure',
+      startFailures: 1,
+      resetFailures: 1,
+      expected: [
+        'start',
+        'stop --no-backup',
+        'sleep 10',
+        'start',
+        'db reset --local --no-seed',
+        'stop --no-backup',
+        'sleep 20',
+        'start',
+        'db reset --local --no-seed',
+      ],
+      status: 0,
+    },
+    {
+      name: 'permanent start failure',
+      startFailures: 3,
+      resetFailures: 0,
+      expected: [
+        'start',
+        'stop --no-backup',
+        'sleep 10',
+        'start',
+        'stop --no-backup',
+        'sleep 20',
+        'start',
+      ],
+      status: 1,
+    },
+    {
+      name: 'permanent reset failure',
+      startFailures: 0,
+      resetFailures: 3,
+      expected: [
+        'start',
+        'db reset --local --no-seed',
+        'stop --no-backup',
+        'sleep 10',
+        'start',
+        'db reset --local --no-seed',
+        'stop --no-backup',
+        'sleep 20',
+        'start',
+        'db reset --local --no-seed',
+      ],
+      status: 1,
+    },
+  ])(
+    'keeps Supabase setup bounded and fail-closed: $name',
+    ({ startFailures, resetFailures, expected, status }) => {
+      const ci = parse(workflow('ci.yml'));
+      const setup = ci.jobs['e2e-tests'].steps.find(
+        (step: { name?: string }) => step.name === 'Start and reset isolated Supabase stack'
+      );
+      const bash =
+        process.platform === 'win32'
+          ? path.join(process.env.ProgramFiles ?? 'C:/Program Files', 'Git/bin/bash.exe')
+          : '/bin/bash';
+      // Execute the actual workflow body under GitHub's errexit/pipefail semantics.
+      // Stub only external effects; never start containers or bind local application ports.
+      const result = spawnSync(
+        bash,
+        [
+          '--noprofile',
+          '--norc',
+          '-e',
+          '-o',
+          'pipefail',
+          '-c',
+          `
+      starts=0
+      resets=0
+      supabase() {
+        printf 'CALL %s\n' "$*"
+        case "$*" in
+          start) starts=$(( starts + 1 )); [[ "$starts" -gt ${startFailures} ]] ;;
+          'db reset --local --no-seed') resets=$(( resets + 1 )); [[ "$resets" -gt ${resetFailures} ]] ;;
+          'stop --no-backup') return 0 ;;
+          *) return 99 ;;
+        esac
+      }
+      sleep() { printf 'CALL sleep %s\n' "$1"; }
+      ${setup.run}
+      printf 'SETUP_READY\n'
+    `,
+        ],
+        { encoding: 'utf8', timeout: 5000 }
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(status);
+      expect(
+        result.stdout
+          .split(/\r?\n/u)
+          .filter(line => line.startsWith('CALL '))
+          .map(line => line.slice(5))
+      ).toEqual(expected);
+      expect(result.stdout.includes('SETUP_READY')).toBe(status === 0);
+    }
+  );
 
   it('gates component flows and service integrations through fail-closed matrices', () => {
     const ci = workflow('ci.yml');

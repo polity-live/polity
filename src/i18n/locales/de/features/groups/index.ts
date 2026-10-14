@@ -1,4 +1,6 @@
+import { emailInvitations } from './emailInvitations';
 export const groupsTranslations = {
+  emailInvitations,
   actionRights: {
     manageTodos: 'Aufgaben verwalten',
     viewTodos: 'Aufgaben anzeigen',

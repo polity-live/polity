@@ -4,6 +4,18 @@ import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 import {
+  applyEventQueryAccess,
+  applyEventStudioManagerQueryAccess,
+  applyAmendmentQueryAccess,
+  applyGroupQueryAccess,
+  applyUserQueryAccess,
+  applyVoteQueryAccess,
+  applyElectionQueryAccess,
+  denyAllRows,
+  isAuthenticatedUserId,
+} from '../rbac/query-access';
+import { politySourceTypes } from '@/features/communication-studio/logic/live-contract';
+import {
   groupProjectsAccess,
   studioProjectCollaborativeAccess,
   studioProjectReadAccess,
@@ -13,31 +25,39 @@ const requireQueryUser = (userID: string | undefined | null) =>
   userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
 
 function projects(actor: string | null) {
-  return studioProjectReadAccess(zql.studio_project.where('document_schema_version', 5), actor);
+  return studioProjectReadAccess(zql.studio_project.where('document_schema_version', 6), actor);
 }
 
 function relatedProject<T>(project: T, actor: string | null): T {
-  return studioProjectReadAccess((project as any).where('document_schema_version', 5), actor);
+  return studioProjectReadAccess((project as any).where('document_schema_version', 6), actor);
 }
 
 function collaborativeProject<T>(project: T, actor: string): T {
   return studioProjectCollaborativeAccess(
-    (project as any).where('document_schema_version', 5),
+    (project as any).where('document_schema_version', 6),
     actor
   );
 }
 
 function canvasWorkspaces(actor: string, projectId: string) {
-  return zql.canvas_proposal
-    .where('project_id', projectId)
-    .whereExists('project', (project: any) => collaborativeProject(project, actor))
-    .where(({ or, cmp, exists }) =>
-      or(
-        cmp('checksum', 'IS NOT', null),
-        cmp('owner_id', actor),
-        exists('readers', reader => reader.where('user_id', actor))
+  return (
+    zql.canvas_proposal
+      .where('project_id', projectId)
+      // The root's project_id and this foreign key identify one project. Resolve
+      // that primary-key endpoint before planning workspace access across projects.
+      .whereExists(
+        'project',
+        (project: any) => collaborativeProject(project.where('id', projectId), actor),
+        { flip: true }
       )
-    );
+      .where(({ or, cmp, exists }) =>
+        or(
+          cmp('checksum', 'IS NOT', null),
+          cmp('owner_id', actor),
+          exists('readers', reader => reader.where('user_id', actor))
+        )
+      )
+  );
 }
 
 function workspaceReadAccess<T>(query: T, actor: string): T {
@@ -66,6 +86,94 @@ function elementSets(actor: string, groupId: string | null) {
     .orderBy('updated_at', 'desc');
 }
 export const studioQueries = {
+  eventProject: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    studioProjectReadAccess(
+      zql.studio_project.where('event_id', args.eventId),
+      ctx.userID ?? null
+    ).one()
+  ),
+  eventPresentation: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    zql.event_presentation
+      .where('event_id', args.eventId)
+      .whereExists('event', e => applyEventQueryAccess(e, ctx.userID))
+      .one()
+  ),
+  eventManager: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
+    applyEventStudioManagerQueryAccess(zql.event.where('id', args.eventId), ctx.userID).one()
+  ),
+  presentationDevices: defineQuery(
+    z.object({ eventId: z.string().uuid(), deviceId: z.string().uuid().optional() }),
+    ({ args, ctx }) =>
+      zql.event_presentation_device
+        .where('event_id', args.eventId)
+        .where(({ or, and, cmp, exists }) =>
+          or(
+            exists('event', e => applyEventStudioManagerQueryAccess(e, ctx.userID)),
+            and(
+              cmp('id', args.deviceId ?? '00000000-0000-0000-0000-000000000000'),
+              ctx.userID && ctx.userID !== 'anon'
+                ? cmp('user_id', ctx.userID)
+                : cmp('user_id', 'IS', null),
+              exists('event', e => applyEventQueryAccess(e, ctx.userID))
+            )
+          )
+        )
+        .orderBy('last_seen', 'desc')
+  ),
+  liveSources: defineQuery(
+    z.object({
+      refs: z.array(z.object({ type: z.enum(politySourceTypes), id: z.string().uuid() })).max(2000),
+      type: z.enum(politySourceTypes).optional(),
+      eventId: z.string().uuid().optional(),
+    }),
+    ({ args, ctx }) => {
+      if (!args.refs.length && !args.type && !args.eventId)
+        return denyAllRows(zql.studio_live_source)
+          .orderBy('source_type', 'asc')
+          .orderBy('source_id', 'asc');
+      // A selected source kind cannot satisfy another kind's authorization
+      // branch. Keep only the relevant parent predicates in the query plan.
+      const selectedTypes = new Set<string>(
+        args.refs.length
+          ? args.refs.map(ref => ref.type)
+          : args.type
+            ? [args.type]
+            : politySourceTypes
+      );
+      let q: any = zql.studio_live_source.where(({ or, cmp, and }: any) =>
+        args.refs.length
+          ? or(...args.refs.map(ref => and(cmp('source_type', ref.type), cmp('source_id', ref.id))))
+          : args.type
+            ? cmp('source_type', args.type)
+            : cmp('event_id', args.eventId)
+      );
+      const parentAccess = [
+        { types: ['event', 'agenda_item'], relation: 'event', access: applyEventQueryAccess },
+        { types: ['vote'], relation: 'vote', access: applyVoteQueryAccess },
+        { types: ['election'], relation: 'election', access: applyElectionQueryAccess },
+        { types: ['amendment'], relation: 'amendment', access: applyAmendmentQueryAccess },
+        { types: ['user'], relation: 'user', access: applyUserQueryAccess },
+        { types: ['group'], relation: 'group', access: applyGroupQueryAccess },
+      ]
+        .map(parent => ({ ...parent, types: parent.types.filter(type => selectedTypes.has(type)) }))
+        .filter(parent => parent.types.length);
+      q = q.where(({ or, and, cmp, exists }: any) =>
+        or(
+          ...parentAccess.map(parent =>
+            and(
+              parent.types.length === 1
+                ? cmp('source_type', parent.types[0])
+                : cmp('source_type', 'IN', parent.types),
+              exists(parent.relation, (query: any) => parent.access(query, ctx.userID), {
+                flip: false,
+              })
+            )
+          )
+        )
+      );
+      return q.orderBy('source_type', 'asc').orderBy('source_id', 'asc');
+    }
+  ),
   commandReceipt: defineQuery(z.object({ operationId: z.string().uuid() }), ({ args, ctx }) =>
     zql.studio_command_receipt
       .where('id', args.operationId)
@@ -100,6 +208,7 @@ export const studioQueries = {
     collaborativeProject(zql.studio_project, requireQueryUser(ctx.userID))
       .where('id', args.projectId)
       .related('owner')
+      .related('event', e => applyEventStudioManagerQueryAccess(e, ctx.userID))
       .related('collaborators', c => c.where('status', 'active').related('user'))
       .related('group', g =>
         applyGroupDiscoveryQueryAccess(g, ctx.userID)
@@ -129,10 +238,19 @@ export const studioQueries = {
             cmp('workspace_id', '=', args.workspaceId ?? '00000000-0000-0000-0000-000000000000')
           )
         )
-        .whereExists('project', project =>
-          args.workspaceId
-            ? collaborativeProject(project, requireQueryUser(ctx.userID))
-            : relatedProject(project, ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null)
+        .whereExists(
+          'project',
+          project =>
+            args.workspaceId
+              ? collaborativeProject(
+                  project.where('id', args.projectId),
+                  requireQueryUser(ctx.userID)
+                )
+              : relatedProject(
+                  project.where('id', args.projectId),
+                  ctx.userID && ctx.userID !== 'anon' ? ctx.userID : null
+                ),
+          { flip: true }
         )
         .where(({ or, cmp, exists }) =>
           or(
@@ -146,7 +264,7 @@ export const studioQueries = {
       .where('project_id', args.projectId)
       .whereExists('project', project =>
         project
-          .where('document_schema_version', 5)
+          .where('document_schema_version', 6)
           .where('group_id', 'IS', null)
           .where('owner_id', requireQueryUser(ctx.userID))
       )
@@ -158,28 +276,37 @@ export const studioQueries = {
       .where('user_id', requireQueryUser(ctx.userID))
       .where('status', 'invited')
       .whereExists('project', p =>
-        p.where('document_schema_version', 5).where('group_id', 'IS', null)
+        p.where('document_schema_version', 6).where('group_id', 'IS', null)
       )
       .related('project', p => p.related('owner'))
       .orderBy('updated_at', 'desc')
   ),
-  themes: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) =>
-    zql.appearance_theme
+  themes: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) => {
+    if (!isAuthenticatedUserId(ctx.userID))
+      return denyAllRows(zql.appearance_theme)
+        .related('current_revision')
+        .orderBy('kind', 'asc')
+        .orderBy('name', 'asc');
+    return zql.appearance_theme
       .whereExists('current_revision', r => r.where('status', 'published'))
       .where(({ or, and, cmp, exists }) =>
         or(
           and(cmp('kind', 'personal'), cmp('created_by_id', requireQueryUser(ctx.userID))),
-          and(
-            cmp('kind', 'group'),
-            cmp('group_id', '=', args.groupId ?? '00000000-0000-0000-0000-000000000000'),
-            exists('group', g => groupProjectsAccess(g, requireQueryUser(ctx.userID)))
-          )
+          ...(args.groupId === null
+            ? []
+            : [
+                and(
+                  cmp('kind', 'group'),
+                  cmp('group_id', '=', args.groupId),
+                  exists('group', g => groupProjectsAccess(g, requireQueryUser(ctx.userID)))
+                ),
+              ])
         )
       )
       .related('current_revision')
       .orderBy('kind', 'asc')
-      .orderBy('name', 'asc')
-  ),
+      .orderBy('name', 'asc');
+  }),
   elementSets: defineQuery(z.object({ groupId: z.string().uuid().nullable() }), ({ args, ctx }) =>
     elementSets(requireQueryUser(ctx.userID), args.groupId)
   ),
@@ -195,7 +322,12 @@ export const studioQueries = {
   comments: defineQuery(projectInput, ({ args, ctx }) =>
     zql.canvas_comment
       .where('project_id', args.projectId)
-      .whereExists('project', p => collaborativeProject(p, requireQueryUser(ctx.userID)))
+      // Authorize the requested parent once before retrieving its comments.
+      .whereExists(
+        'project',
+        p => collaborativeProject(p.where('id', args.projectId), requireQueryUser(ctx.userID)),
+        { flip: true }
+      )
       .where(({ or, cmp, exists }) =>
         or(
           cmp('proposal_id', 'IS', null),

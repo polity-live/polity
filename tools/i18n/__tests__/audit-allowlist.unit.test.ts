@@ -9,6 +9,10 @@ describe('i18n audit allowlist', () => {
     expect(isAllowlistedAuditValue('24h')).toBe(true);
     expect(isAllowlistedAuditValue('gpt-5.6')).toBe(true);
     expect(isAllowlistedAuditValue('https://www.polity.live')).toBe(true);
+    for (const title of ['The Complex', 'Impact Prelude', 'Eternal Hope']) {
+      expect(isAllowlistedAuditValue(title)).toBe(true);
+      expect(isAllowlistedAuditValue(`${title} is playing`)).toBe(false);
+    }
     expect(isAllowlistedAuditValue('This is untranslated product copy')).toBe(false);
     expect(I18N_AUDIT_VALUE_ALLOWLIST.every(entry => entry.reason.trim().length > 0)).toBe(true);
   });

@@ -59,10 +59,7 @@ describe('Playwright run budgets', () => {
     expect(config.webServer).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          command:
-            process.platform === 'linux'
-              ? 'node tools/zero/run-e2e-cache.mjs'
-              : 'pnpm exec zero-cache',
+          command: 'node tools/zero/run-cache.mjs',
           url: 'http://127.0.0.1:4948/keepalive',
           env: expect.objectContaining({
             ZERO_ADMIN_PASSWORD: 'polity-e2e-local-only',

@@ -74,6 +74,19 @@ beforeEach(() => {
 });
 
 describe('useOnboarding local state and navigation', () => {
+  it('skips membership requests for the group already accepted through an email invitation', async () => {
+    const groupId = crypto.randomUUID();
+    sessionStorage.setItem('polity_invitation_onboarding_destination', `/group/${groupId}`);
+    const { result } = renderHook(() => useOnboarding());
+    act(() => {
+      result.current.toggleSelectedGroup({ ...alpha, id: groupId });
+      result.current.toggleSelectedGroup(beta);
+    });
+    await act(() => result.current.sendMembershipRequests());
+    expect(mocks.joinGroup).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ group_id: beta.id })
+    );
+  });
   it('normalizes, deduplicates and limits interests while preserving display spelling', () => {
     const { result } = renderHook(() => useOnboarding());
 

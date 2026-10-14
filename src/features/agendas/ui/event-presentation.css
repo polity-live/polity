@@ -1,0 +1,58 @@
+.polity-event-screen:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+}
+.polity-presentation-buttons {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+.polity-presentation-buttons[data-visible='false'] {
+  opacity: 0;
+  pointer-events: none;
+}
+.polity-show-fade,
+.polity-show-reveal {
+  animation: polity-show-fade 0.8s ease both;
+}
+.polity-show-slide,
+.polity-show-stagger {
+  animation: polity-show-slide 0.8s ease both;
+}
+.polity-show-pulse {
+  animation: polity-show-pulse 8s ease-in-out infinite;
+}
+@keyframes polity-show-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes polity-show-slide {
+  from {
+    opacity: 0;
+    transform: translateY(2%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes polity-show-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .polity-presentation-buttons {
+    transition: none;
+  }
+  .polity-event-screen [class*='polity-show-'] {
+    animation: none !important;
+  }
+}

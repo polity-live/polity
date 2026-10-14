@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import assert from 'node:assert/strict';
 import type { MutationCase } from '../mutation-case-types';
 import type { MutationExpectation, MutationMeasurement } from '../mutation-metrics';
 
@@ -20,6 +21,8 @@ const harness = vi.hoisted(() => ({
   authenticate: vi.fn(async (_user: unknown) => undefined),
   invoke: vi.fn(),
   ready: vi.fn(async () => undefined),
+  rollbackFailure: vi.fn(),
+  writeReport: vi.fn(async (_file: string, _contents: string) => undefined),
   requestCompletion: vi.fn(async () => ({
     requestIDs: ['request'],
     observedAt: performance.now(),
@@ -30,6 +33,22 @@ vi.mock('../mutation-request-completion', () => ({
     wait = harness.requestCompletion;
   },
 }));
+vi.mock('../atomic-report', () => ({ writeAtomicReport: harness.writeReport }));
+vi.mock('../mutation-rollback-diagnostics', async importOriginal => {
+  const actual = await importOriginal<typeof import('../mutation-rollback-diagnostics')>();
+  return {
+    ...actual,
+    rollbackDiagnostics: (...args: Parameters<typeof actual.rollbackDiagnostics>) => {
+      const trace = actual.rollbackDiagnostics(...args);
+      const failure = trace.failure.bind(trace);
+      trace.failure = (...parameters) => {
+        harness.rollbackFailure(...parameters);
+        return failure(...parameters);
+      };
+      return trace;
+    },
+  };
+});
 vi.mock('postgres', () => ({ default: vi.fn(() => Object.assign(vi.fn(), { end: harness.end })) }));
 vi.mock('../../../../src/zero/schema', () => ({ schema: {} }));
 vi.mock('../../../../src/zero/mutators', () => ({
@@ -50,7 +69,8 @@ vi.mock('../catalog', () => ({
 vi.mock('../../../../e2e/fixtures/zero-readiness', () => ({
   waitForZeroReady: harness.ready,
 }));
-vi.mock('../mutation-snapshot', () => ({
+vi.mock('../mutation-snapshot', async importOriginal => ({
+  ...(await importOriginal<typeof import('../mutation-snapshot')>()),
   watchMutationSnapshot: () => ({
     promise: Promise.resolve({ at: performance.now(), mutationID: 1 }),
     cancel: vi.fn(),
@@ -126,10 +146,10 @@ vi.mock('@rocicorp/zero', () => ({
 import { measureMutations } from '../mutation-measure';
 import { mutationFailures } from '../mutation-metrics';
 
-function fixture() {
+function fixture(variant = 'authorized') {
   const entry: MutationCase = {
     name: 'fixture.update',
-    variant: 'authorized',
+    variant,
     actor: 'owner',
     outcome: 'success',
     observer: { query: 'fixture.byId' },
@@ -148,7 +168,7 @@ function fixture() {
     })),
   };
   const expectation: MutationExpectation = {
-    key: 'mutation/fixture.update/authorized/owner',
+    key: `mutation/fixture.update/${variant}/owner`,
     name: entry.name,
     variant: entry.variant,
     actor: entry.actor,
@@ -185,6 +205,9 @@ beforeEach(() => {
   vi.stubEnv('VITE_ZERO_CACHE_URL', 'http://mock.invalid');
   vi.stubEnv('VITE_APP_URL', 'http://mock.invalid');
   vi.stubEnv('ZERO_PERFORMANCE_OUTPUT', 'unit-output');
+  vi.stubEnv('ZERO_APP_ID', undefined);
+  vi.stubEnv('ZERO_SHARD_NUM', undefined);
+  vi.stubEnv('ZERO_CVR_DB', undefined);
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -192,6 +215,129 @@ afterEach(() => {
 });
 
 describe('mutation measurement engine lifecycle', () => {
+  it.each([
+    {
+      appID: undefined,
+      shardNum: undefined,
+      expectedAppID: 'zero',
+      expectedShardNum: '0',
+      retentionFailure: false,
+    },
+    {
+      appID: 'declared_app',
+      shardNum: '2',
+      expectedAppID: 'declared_app',
+      expectedShardNum: '2',
+      retentionFailure: false,
+    },
+    {
+      appID: undefined,
+      shardNum: undefined,
+      expectedAppID: 'zero',
+      expectedShardNum: '0',
+      retentionFailure: true,
+    },
+  ])(
+    'passes the exact declared CVR binding after the original rollback deadline and preserves diagnostic retention failure=$retentionFailure',
+    async configuration => {
+      vi.stubEnv('ZERO_APP_ID', configuration.appID);
+      vi.stubEnv('ZERO_SHARD_NUM', configuration.shardNum);
+      vi.stubEnv('ZERO_CVR_DB', process.env.E2E_DATABASE_URL);
+      const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      if (configuration.retentionFailure)
+        harness.writeReport.mockRejectedValueOnce(new Error('SECRET diagnostic retention details'));
+      harness.mode = 'client-result-error';
+      const { entry, rows, run } = fixture('delegated-authority-revoked-after-preload');
+      const prepare = entry.prepare;
+      const original = new assert.AssertionError({ message: 'Rollback row proof: action_right' });
+      const verifyRollback = vi.fn(async () => {
+        throw original;
+      });
+      entry.prepare = async context => ({ ...(await prepare(context)), verifyRollback });
+      const measurement = run();
+      await vi.advanceTimersByTimeAsync(14_999);
+      expect(harness.rollbackFailure).not.toHaveBeenCalled();
+      expect(harness.writeReport).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(60_002);
+      await measurement;
+      expect(harness.rollbackFailure).toHaveBeenCalledTimes(5);
+      expect(harness.writeReport).toHaveBeenCalledTimes(5);
+      for (let index = 0; index < 5; index++) {
+        const sample = rows[0].samples[index];
+        expect(harness.rollbackFailure.mock.calls[index]).toEqual([
+          original,
+          harness.clients[index * 2],
+          process.env.ZERO_ADMIN_PASSWORD,
+          {
+            clientGroupID: sample.clientGroupID,
+            databaseURL: process.env.E2E_DATABASE_URL,
+            cvrDatabaseURL: process.env.ZERO_CVR_DB,
+            appID: configuration.expectedAppID,
+            shardNum: configuration.expectedShardNum,
+          },
+        ]);
+        const [file, contents] = harness.writeReport.mock.calls[index];
+        expect(file).toContain(`rollback-failure-${index + 1}-${sample.clientID}.json`);
+        expect(JSON.parse(contents)).toMatchObject({
+          sample: index + 1,
+          clientID: sample.clientID,
+          clientGroupID: sample.clientGroupID,
+          diagnostic: {
+            assertion: { proof: 'Rollback row proof: action_right' },
+            cvrRow: { status: 'unavailable' },
+          },
+        });
+        expect(sample.outcome).toBe('client-error');
+        expect(sample.confirmedAt).toBeUndefined();
+        expect(sample.rollbackVerified).toBe(false);
+        expect(sample.databaseVerified).toBe(true);
+        expect(sample.restored).toBe(true);
+      }
+      expect(rows[0].failures).toHaveLength(5);
+      expect(
+        rows[0].failures.every(failure =>
+          failure.includes(
+            'optimistic rollback verification failed (Rollback row proof: action_right)'
+          )
+        )
+      ).toBe(true);
+      expect(harness.verify).toHaveBeenCalledTimes(5);
+      expect(harness.restore).toHaveBeenCalledTimes(5);
+      expect(JSON.stringify(rows)).not.toContain('SECRET');
+      if (configuration.retentionFailure)
+        expect(warning).toHaveBeenCalledExactlyOnceWith(
+          'Rollback failure diagnostic could not be retained'
+        );
+      else expect(warning).not.toHaveBeenCalled();
+      warning.mockRestore();
+    }
+  );
+  it.each([
+    'delegated-authority-revoked-after-preload',
+    'secret-manager-authority-revoked-after-preload',
+  ])(
+    'awaits the original read-only rollback callback after authority eviction for %s',
+    async variant => {
+      harness.mode = 'client-result-error';
+      const { entry, rows, run } = fixture(variant);
+      const prepare = entry.prepare;
+      const verifyRollback = vi.fn(async () => undefined);
+      verifyRollback.mockRejectedValueOnce(
+        new assert.AssertionError({ message: 'Rollback row proof: action_right' })
+      );
+      entry.prepare = async context => ({ ...(await prepare(context)), verifyRollback });
+      const measurement = run();
+      await vi.advanceTimersByTimeAsync(50);
+      await measurement;
+      expect(verifyRollback).toHaveBeenCalledTimes(6);
+      expect(rows[0].samples.every(sample => sample.rollbackVerified)).toBe(true);
+      expect(
+        rows[0].failures.some(failure => failure.includes('rollback verification failed'))
+      ).toBe(false);
+      expect(harness.verify).toHaveBeenCalledTimes(5);
+      expect(harness.restore).toHaveBeenCalledTimes(5);
+    }
+  );
   it('reports only schema labels from database assertion failures', async () => {
     harness.verify.mockRejectedValueOnce(
       new Error('Database field proof: vote.closing_type\nSECRET SQL row and credentials')
@@ -310,6 +456,8 @@ describe('mutation measurement engine lifecycle', () => {
     ).toBe(true);
     for (const client of harness.clients) expect(client.close).toHaveBeenCalledOnce();
     expect(harness.end).toHaveBeenCalledOnce();
+    expect(harness.rollbackFailure).not.toHaveBeenCalled();
+    expect(harness.writeReport).not.toHaveBeenCalled();
   });
   it('records resolved client error results as errors and fails a success expectation', async () => {
     harness.mode = 'client-result-error';

@@ -43,7 +43,7 @@ for (const personal of [false, true]) {
       from group_membership_role membership_role
       where membership_role.group_membership_id = ${reviewerMembershipId}
     `;
-      await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${e2eRun.actorId},${personal ? null : seed.groupId},${document.title},${document.kind},5,${Date.now()},${Date.now()})`;
+      await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${e2eRun.actorId},${personal ? null : seed.groupId},${document.title},${document.kind},6,${Date.now()},${Date.now()})`;
       await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},${Date.now()})`;
       if (personal)
         await sql`insert into studio_project_collaborator(id,project_id,user_id,invited_by_id,status,created_at,updated_at)
@@ -102,13 +102,13 @@ for (const personal of [false, true]) {
         .click();
       await expect(projectTitle(reviewerPage)).toBeEnabled();
       await projectTitle(reviewerPage).fill('Voted group design');
-      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+      await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await reviewerPage.getByRole('button', { name: 'Remove this accent', exact: true }).click();
       await expect(
         reviewerPage.locator(`[data-studio-layer-id="${removalTarget.id}"]`)
       ).toHaveAttribute('aria-selected', 'true');
       // Close Layers without invoking the canvas Escape shortcut, which clears selection.
-      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+      await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await expect(reviewerPage.getByRole('tree')).toBeHidden();
       await reviewerPage.keyboard.press('Delete');
       await expect(
@@ -127,7 +127,7 @@ for (const personal of [false, true]) {
         })
         .toBe(false);
       if (await reviewerPage.getByRole('tree').isVisible())
-        await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+        await reviewerPage.getByRole('button', { name: /^(Layers|Ebenen)$/i }).click();
       await reviewerPage.getByRole('button', { name: 'Frame', exact: true }).click();
       const squareFrame = reviewerPage.getByRole('menuitem', { name: /square/i });
       await expect(squareFrame).toBeEnabled({ timeout: 10_000 });

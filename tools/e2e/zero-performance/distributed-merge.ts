@@ -33,27 +33,7 @@ import {
 import type { ShardResult } from './distributed-runner';
 import { resultsCSV } from './results';
 import { mutationResultsCSV, externalMutationDelivery } from './mutation-report';
-
-async function ciJobs() {
-  if (!process.env.GITHUB_ACTIONS) return undefined;
-  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-  if (!token || !process.env.GITHUB_REPOSITORY || !process.env.GITHUB_RUN_ID)
-    throw new Error('Missing read-only CI timing context');
-  const jobs: any[] = [];
-  for (let page = 1; ; page++) {
-    const response = await fetch(
-      `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}/attempts/${process.env.GITHUB_RUN_ATTEMPT ?? '1'}/jobs?per_page=100&page=${page}`,
-      {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-        signal: AbortSignal.timeout(15_000),
-      }
-    );
-    if (!response.ok) throw new Error(`Cannot read CI job timings: HTTP ${response.status}`);
-    const result: any = await response.json();
-    jobs.push(...result.jobs);
-    if (result.jobs.length < 100) return jobs;
-  }
-}
+import { ciJobs } from './ci-job-timings';
 
 export async function mergeShards(
   manifest: Manifest,
@@ -330,12 +310,14 @@ export async function mergeShards(
     );
     if (prepare.manifestDigest !== manifest.digest)
       throw new Error('Mismatched preparation timing');
-    const jobs = await ciJobs();
     const jobStartFile = option('--job-start-file');
-    const mergeMs = jobStartFile
-      ? os.uptime() * 1000 -
-        Number(await (await import('node:fs/promises')).readFile(jobStartFile, 'utf8')) * 1000
-      : performance.now() - started;
+    const jobStarted = jobStartFile
+      ? Number(await (await import('node:fs/promises')).readFile(jobStartFile, 'utf8')) * 1000
+      : undefined;
+    const mergeElapsed = () =>
+      jobStarted !== undefined ? os.uptime() * 1000 - jobStarted : performance.now() - started;
+    const jobs = await ciJobs(ACTIVE_BUDGET_MS.merge - mergeElapsed());
+    const mergeMs = mergeElapsed();
     const measured = jobs
       ? nativeTiming(
           jobs,

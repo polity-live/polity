@@ -9,9 +9,34 @@ vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
 
 import { SummaryStep } from '../SummaryStep';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  sessionStorage.clear();
+});
 
 describe('SummaryStep destinations', () => {
+  it('returns an invited account to its group after onboarding and clears the stored destination', () => {
+    const groupId = crypto.randomUUID();
+    sessionStorage.setItem('polity_invitation_onboarding_destination', `/group/${groupId}`);
+    const onComplete = vi.fn();
+    render(
+      <SummaryStep
+        firstName="Ada"
+        lastName="Lovelace"
+        selectedGroups={[]}
+        selectedInterestTags={[]}
+        activeGroupId={null}
+        membershipRequestSentGroupIds={[]}
+        userId="user"
+        onComplete={onComplete}
+      />
+    );
+    const back = screen.getByRole('link', { name: /features.groups.emailInvitations.back/ });
+    expect(back.getAttribute('href')).toBe(`/group/${groupId}`);
+    fireEvent.click(back);
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(sessionStorage.getItem('polity_invitation_onboarding_destination')).toBeNull();
+  });
   it('offers exactly the three onboarding paths and marks the guided path recommended', () => {
     const onComplete = vi.fn();
     render(

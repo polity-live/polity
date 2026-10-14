@@ -3,10 +3,19 @@ import { createWriteStream } from 'node:fs';
 import { cp, mkdir, readFile, writeFile, symlink, access, open, unlink } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
-import { randomUUID, createECDH } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { randomUUID, createECDH, createHash } from 'node:crypto';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYAML } from 'yaml';
-import { mechanics, applicationMechanics } from './mechanics.mjs';
+import { mechanics, applicationMechanics, mechanicsDigest } from './mechanics.mjs';
+import {
+  adaptVoteSuccessObserver,
+  bindVoteObservation,
+  voteObservationPolicy,
+} from './mutation-browser-observation-adapter.mjs';
+import {
+  adaptNavigationHistoryDiagnostic,
+  removeNavigationHistoryDiagnostic,
+} from './navigation-history-adapter.mjs';
 import {
   assertOutputDirectory,
   isolatedPorts,
@@ -17,6 +26,7 @@ import {
   verifyBuildAssets,
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
+  installedPNPMEntryPoint,
   shouldCopyBenchmarkSource,
   validateBenchmarkArguments,
 } from './isolation.mjs';
@@ -79,7 +89,7 @@ function run(command, argv, options = {}) {
   const log = createWriteStream(path.join(artifactRoot, `${label}.log`), { flags: 'a' });
   const child = spawn(command, argv, {
     cwd: sandbox,
-    env: environment,
+    env: options.env ?? environment,
     shell: false,
     windowsHide: true,
   });
@@ -112,8 +122,31 @@ function run(command, argv, options = {}) {
     }),
   };
 }
-async function command(argv, label) {
-  await run(process.execPath, argv, { label }).done;
+async function command(argv, label, diagnosticTimeoutMs) {
+  if (
+    diagnosticTimeoutMs !== undefined &&
+    (!Number.isFinite(diagnosticTimeoutMs) || diagnosticTimeoutMs < 10_000)
+  )
+    throw new Error('Invalid diagnostic timeout');
+  const task = run(process.execPath, argv, { label });
+  let timeout, force;
+  if (diagnosticTimeoutMs !== undefined) {
+    timeout = setTimeout(() => {
+      if (process.platform === 'win32' && task.child.pid) {
+        spawnSync('taskkill', ['/PID', String(task.child.pid), '/T', '/F'], {
+          windowsHide: true,
+          stdio: 'ignore',
+        });
+      } else task.child.kill('SIGTERM');
+      force = setTimeout(() => task.child.kill('SIGKILL'), 5_000);
+    }, diagnosticTimeoutMs - 5_000);
+  }
+  try {
+    await task.done;
+  } finally {
+    clearTimeout(timeout);
+    clearTimeout(force);
+  }
 }
 async function portFree(port) {
   return new Promise(resolve => {
@@ -221,6 +254,68 @@ async function copySource() {
       await cp(path.resolve(harnessRoot, '../../..', file), target);
     }
   }
+  if (harnessRoot || !sourceRef) {
+    const commonDirectory = path.resolve(
+      harnessRoot ?? path.dirname(fileURLToPath(import.meta.url))
+    );
+    const digest = await mechanicsDigest(commonDirectory);
+    const executionFile = option('--execution-file');
+    const execution = executionFile ? JSON.parse(await readFile(executionFile, 'utf8')) : undefined;
+    const observationSource = path.join(sandbox, voteObservationPolicy.path);
+    const observation = adaptVoteSuccessObserver(await readFile(observationSource));
+    const observationModules = {};
+    for (const file of [
+      'mutation-browser-observation.ts',
+      'mutation-browser-observation-adapter.mjs',
+    ]) {
+      observationModules[file] = createHash('sha256')
+        .update(await readFile(path.join(sandbox, 'tools/e2e/zero-performance', file)))
+        .digest('hex');
+    }
+    const observationReceipt = bindVoteObservation(
+      observation.provenance,
+      observationModules,
+      digest,
+      execution,
+      sourceRef
+    );
+    await writeFile(observationSource, observation.source);
+    await writeFile(
+      path.join(artifactRoot, 'mutation-browser-observation.ndjson'),
+      JSON.stringify(observationReceipt) + '\n'
+    );
+    if (args.includes('--profile-navigation')) {
+      const target = 'tools/e2e/zero-performance/journeys.ts';
+      const source = await readFile(path.join(sandbox, target), 'utf8');
+      const adapted = adaptNavigationHistoryDiagnostic(source);
+      if (removeNavigationHistoryDiagnostic(adapted.source) !== source)
+        throw new Error('Navigation diagnostic changed revision-owned source');
+      const modules = {};
+      for (const file of [
+        'navigation-history-adapter.mjs',
+        'navigation-history-diagnostic.ts',
+        'navigation-attribution.ts',
+      ])
+        modules[file] = createHash('sha256')
+          .update(await readFile(path.join(sandbox, 'tools/e2e/zero-performance', file)))
+          .digest('hex');
+      await writeFile(path.join(sandbox, target), adapted.source);
+      await writeFile(
+        path.join(artifactRoot, 'navigation-history-adaptation.ndjson'),
+        JSON.stringify({
+          adapter: 'post-acceptance-fresh-context-history-diagnostic',
+          sourceIdentity: 'original-revision-with-declared-diagnostic-insertion',
+          target,
+          inputSHA256: adapted.inputSHA256,
+          outputSHA256: adapted.outputSHA256,
+          harnessDigest: digest,
+          execution,
+          sourceRef,
+          modules,
+        }) + '\n'
+      );
+    }
+  }
   const rootLock = await readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8');
   const copiedLock = await readFile(path.join(sandbox, 'pnpm-lock.yaml'), 'utf8');
   const locked = parseYAML(copiedLock).packages;
@@ -265,12 +360,16 @@ async function copySource() {
   );
   if (rootLock !== copiedLock || unpinned.length || args.includes('--frozen-dependencies')) {
     const dependenciesAt = Date.now();
-    const corepack = corepackPNPMEntryPoint(process.execPath);
+    const packageManager = JSON.parse(
+      await readFile(path.join(sandbox, 'package.json'), 'utf8')
+    ).packageManager;
+    const pnpm =
+      installedPNPMEntryPoint(packageManager) ?? corepackPNPMEntryPoint(process.execPath);
     await command(
-      [corepack, 'install', '--frozen-lockfile', '--ignore-scripts'],
+      [pnpm, 'install', '--frozen-lockfile', '--ignore-scripts'],
       'dependencies-install'
     );
-    await command([corepack, 'rebuild', '@rocicorp/zero-sqlite3'], 'dependencies-native');
+    await command([pnpm, 'rebuild', '@rocicorp/zero-sqlite3'], 'dependencies-native');
     startup.dependenciesMs = Date.now() - dependenciesAt;
     startup.replacedUnpinnedDependencies = unpinned;
   } else {
@@ -527,8 +626,18 @@ ${storageBuckets}
       ZERO_QUERY_ALLOWED_CLIENT_HEADERS: 'x-zero-performance-client-id',
       ZERO_MUTATE_URL: `${appURL}/api/mutate`,
       ZERO_PORT: String(start + 1),
+      // A default SDK nanoid can start with '-' and be misparsed as another flag
+      // when propagated to child workers. Both revisions get a unique safe ID.
+      ZERO_TASK_ID: `polity-benchmark-${runID}`,
       ZERO_REPLICA_FILE: path.join(artifactRoot, 'replica.db'),
       ZERO_NUM_SYNC_WORKERS: '1',
+      // Binary COPY and WAL can round the same sub-millisecond timestamp differently.
+      // Both revisions use the supported text transport before any timed activation.
+      ZERO_INITIAL_SYNC_TEXT_COPY: 'true',
+      // Zero 1.9 can mistake a cooperative yield for a row in an OR-branch delete.
+      // Priority work quarters this option: both modes stay >= the 1000-ms total budget.
+      // All original latency budgets and the SDK's advancement reset limits still apply.
+      ZERO_YIELD_THRESHOLD_MS: '4000',
       ZERO_ADMIN_PASSWORD: `benchmark-${runID}`,
       ZERO_LOG_FORMAT: 'json',
       ZERO_QUERY_HYDRATION_STATS: 'true',
@@ -637,7 +746,13 @@ ${storageBuckets}
         );
       const buildAt = Date.now();
       await command(
-        [path.join(sandbox, 'node_modules/vite/bin/vite.js'), 'build', '--mode', 'production'],
+        [
+          path.join(sandbox, 'node_modules/vite/bin/vite.js'),
+          'build',
+          '--mode',
+          'production',
+          ...(args.includes('--profile-navigation') ? ['--sourcemap', 'hidden'] : []),
+        ],
         'build'
       );
       startup.buildMs = Date.now() - buildAt;
@@ -739,10 +854,29 @@ ${storageBuckets}
       startup.verifiedAssets = await verifyBuildAssets(appURL);
       startup.appMs = Date.now() - appAt;
       const zeroAt = Date.now();
-      const zeroArgs =
-        process.platform === 'linux'
+      const maintenanceStartup = path.join(sandbox, 'tools/zero/run-cache.mjs');
+      let hasMaintenanceStartup = true;
+      try {
+        await access(maintenanceStartup);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        hasMaintenanceStartup = false;
+      }
+      const zeroArgs = hasMaintenanceStartup
+        ? [maintenanceStartup]
+        : process.platform === 'linux'
           ? ['tools/zero/run-e2e-cache.mjs']
           : [path.join(sandbox, 'node_modules/@rocicorp/zero/out/zero/src/cli.js')];
+      environment.ZERO_PERFORMANCE_SCAN_STATUS_LOG = path.join(
+        artifactRoot,
+        'sqlite-scan-status.ndjson'
+      );
+      const zeroEnvironmentOverrides = {
+        ZERO_PERFORMANCE_SCAN_STATUS: '1',
+        ZERO_PERFORMANCE_SCAN_STATUS_LOG: environment.ZERO_PERFORMANCE_SCAN_STATUS_LOG,
+        NODE_OPTIONS: `--import=${pathToFileURL(path.join(sandbox, 'tools/e2e/zero-performance/sqlite-scan-preload.mjs')).href}`,
+      };
+      environment.ZERO_PERFORMANCE_SCAN_STATUS_RUNTIME_ID = randomUUID();
       let zero;
       if (image) {
         runtimeContainer = `polity-zero-performance-runtime-${runID}`;
@@ -767,8 +901,21 @@ ${storageBuckets}
           `127.0.0.1:${start + 1}:${start + 1}`,
           '--tmpfs',
           '/replica',
+          '--mount',
+          `type=bind,source=${artifactRoot},target=/benchmark`,
+          '--mount',
+          `type=bind,source=${path.join(sandbox, 'tools/e2e/zero-performance')},target=/scan-adapter,readonly`,
         ];
-        const zeroEnvironment = linuxEnvironment(environment);
+        const zeroEnvironment = linuxEnvironment(environment, { scanStatus: true });
+        if (hasMaintenanceStartup) {
+          dockerArgs.push(
+            '--mount',
+            `type=bind,source=${path.join(sandbox, 'tools/zero')},target=/app/tools/zero,readonly`,
+            '--mount',
+            `type=bind,source=${path.join(sandbox, 'tools/shared/run-cli-if-main.mjs')},target=/app/tools/shared/run-cli-if-main.mjs,readonly`
+          );
+          zeroEnvironment.POLITY_ZERO_CLI = '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js';
+        }
         if (appContainer) {
           dockerArgs.push('--network', `supabase_network_polity-zero-performance-${runID}`);
           zeroEnvironment.ZERO_QUERY_URL = `http://${appContainer}:${start}/api/query`;
@@ -782,9 +929,19 @@ ${storageBuckets}
         }
         for (const [key, value] of Object.entries(zeroEnvironment))
           dockerArgs.push('--env', `${key}=${value}`);
-        dockerArgs.push(image, 'node', '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js');
+        dockerArgs.push(
+          image,
+          'node',
+          hasMaintenanceStartup
+            ? '/app/tools/zero/run-cache.mjs'
+            : '/app/node_modules/@rocicorp/zero/out/zero/src/cli.js'
+        );
         zero = run('docker', dockerArgs, { label: 'zero' });
-      } else zero = run(process.execPath, zeroArgs, { label: 'zero' });
+      } else
+        zero = run(process.execPath, zeroArgs, {
+          label: 'zero',
+          env: { ...environment, ...zeroEnvironmentOverrides },
+        });
       zero.done.catch(() => {
         /* Readiness and child exit checks report service failures. */
       });
@@ -916,7 +1073,11 @@ ${storageBuckets}
           let code = 0;
           const measuredAt = performance.now();
           try {
-            await command(['--import', 'tsx', 'tools/e2e/zero-performance/collect.ts'], 'measure');
+            await command(
+              ['--import', 'tsx', 'tools/e2e/zero-performance/collect.ts'],
+              'measure',
+              request.diagnosticTimeoutMs
+            );
           } catch (error) {
             code = 1;
             console.error(String(error));

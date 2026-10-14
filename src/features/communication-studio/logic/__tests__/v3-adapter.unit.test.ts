@@ -55,7 +55,7 @@ it('validates public canonical document boundaries and rejects incomplete record
   expect(isStudioDocumentV3(document)).toBe(true);
   expect(requireStudioDocumentV3(document)).toEqual(document);
   expect(isStudioDocumentV3({ schemaVersion: 3 })).toBe(false);
-  expect(() => requireStudioDocumentV3({ schemaVersion: 5 })).toThrow();
+  expect(() => requireStudioDocumentV3({ schemaVersion: 6 })).toThrow();
 });
 
 it.each(Object.keys(formats) as (keyof typeof formats)[])(

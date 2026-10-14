@@ -1,5 +1,5 @@
 import { CollectionPreferencesProvider } from '@/features/shared/ui/collections/CollectionPreferencesProvider';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
 import { NavigationCommandDialog } from '@/features/navigation/command-dialog.tsx';
@@ -75,20 +75,28 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
 
 const EMPTY_SEARCH = {};
 
-function AuthenticatedShellContent({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: state => state.location.pathname });
+function SearchPreloadDemand({ pathname }: { pathname: string }) {
   const search = useSearch({
     strict: false,
     select: search => (pathname === '/search' ? search : EMPTY_SEARCH),
   });
-  const { currentUser, isLoading: userLoading } = useUserState();
+  // Keep validated search updates local to the preload demand. Publishing the
+  // matched search must not render the whole navigation frame a second time.
+  useSearchPreloads(search, pathname === '/search');
+  return null;
+}
+
+const GlobalSync = memo(function GlobalSync() {
   usePreferenceSync();
   useAppearanceThemeSync();
   useToastSettingsSync();
   useGlobalZeroPreloads();
-  // Register visible search demand before EnsureUser releases its child route.
-  // Its exact validated arguments match the visible page and share the preload.
-  useSearchPreloads(search, pathname === '/search');
+  return null;
+});
+
+function AuthenticatedShellContent({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: state => state.location.pathname });
+  const { currentUser, isLoading: userLoading } = useUserState();
   usePrimaryRouteIdlePreloads(Boolean(currentUser) && !userLoading);
 
   const navigate = useNavigate();
@@ -179,12 +187,14 @@ function AuthenticatedShellContent({ children }: { children: ReactNode }) {
             <SecondaryNavigationVisibleContext.Provider
               value={isSecondaryNavVisible && secondaryItems.length > 0}
             >
+              <SearchPreloadDemand pathname={pathname} />
               {content}
               <AppTutorialSessionGate pathname={pathname} />
             </SecondaryNavigationVisibleContext.Provider>
           </WorkspacePreviewProvider>
         </CollectionPreferencesProvider>
       </I18nSyncProvider>
+      <GlobalSync />
     </>
   );
 }

@@ -4,11 +4,15 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { createManifest, type Execution, type Manifest, type Shard } from '../sharding';
 import { shardMeasurementKeys } from '../distributed-report';
-import { correlateQueryAPI, type Report } from '../report';
+import { correlateQueryAPI, parseQueryAPILog, type Report } from '../report';
 import { writeJoinPlanArtifact } from '../plan-artifacts';
 import { writeJSON } from '../distributed-io';
 import { mergeShards } from '../distributed-merge';
 import type { ShardResult } from '../distributed-runner';
+import { randomUUID } from 'node:crypto';
+import { writeScanStatusArtifact } from '../scan-status-artifacts';
+import { SCAN_STATUS_PROTOCOL } from '../sqlite-scan-status.mjs';
+import { REPETITIONS } from '../metrics';
 
 const context = vi.hoisted(() => ({ manifestPath: '' }));
 vi.mock('../distributed-io', async importOriginal => ({
@@ -55,6 +59,16 @@ async function partial(
     phase,
   };
   const apiDiagnostics: any[] = [];
+  const runtime = {
+    initialSyncCopyFormat: 'text',
+    ivmYieldThresholdMs: 4000,
+    ivmPriorityYieldThresholdMs: 1000,
+    zero: '1.10.0',
+    node: 'v24.18.0',
+    sqliteDriver: 'fixture-driver',
+    scanStatusSourceSHA256: 'a'.repeat(64),
+    scanStatusRuntimeID: randomUUID(),
+  };
   const measurements = await Promise.all(
     shardMeasurementKeys(shard, 'head').map(async (key, row) => {
       const samples = Array.from({ length: 5 }, (_, index) => {
@@ -79,6 +93,7 @@ async function partial(
         return {
           queryID: 'query',
           clientCorrelationID: identity.clientCorrelationID,
+          apiLogBoundary: { source: 'app.log' as const, byteEnd: 0 },
           activatedAt: 100,
           authoritativeAt: 200,
           totalMs: 100,
@@ -90,6 +105,48 @@ async function partial(
         };
       });
       const joinsArtifact = await writeJoinPlanArtifact(destination, key, []);
+      const querySQL = 'SELECT id FROM user WHERE id = ?';
+      const sqlite = { [querySQL]: ['SEARCH user USING INDEX user_pkey (id=?)'] };
+      const scansByQuery = { user: { [querySQL]: 0 } };
+      const node = {
+        index: 0,
+        name: 'user_pkey',
+        nativeNameType: 'string',
+        explain: sqlite[querySQL][0],
+        selectID: 1,
+        parentID: 0,
+      };
+      const log = path.join(destination, `scan-fixture-${row}.ndjson`);
+      const artifacts = [];
+      for (let epoch = 0; epoch <= REPETITIONS.analyze + REPETITIONS.warmup; epoch++) {
+        const record = {
+          kind: 'statement',
+          protocol: SCAN_STATUS_PROTOCOL,
+          runtimeID: runtime.scanStatusRuntimeID,
+          sdkVersion: runtime.zero,
+          driverVersion: runtime.sqliteDriver,
+          nodeVersion: runtime.node,
+          tableSourceSHA256: runtime.scanStatusSourceSHA256,
+          pid: 1,
+          statementID: row,
+          epoch,
+          sql: querySQL,
+          rawTotal: 0,
+          total: 0,
+          nodes: [{ ...node, rawVisits: 0, correctedVisits: 0, loopIndex: 0 }],
+          loops: [{ ...node, visits: 0 }],
+        };
+        await writeFile(log, JSON.stringify(record) + '\n');
+        artifacts.push(
+          await writeScanStatusArtifact(
+            destination,
+            `${key}/scan/${epoch}`,
+            { file: log, offset: 0 },
+            scansByQuery,
+            sqlite
+          )
+        );
+      }
       return {
         key,
         execution,
@@ -108,9 +165,11 @@ async function partial(
         scannedRows: 0,
         syncedRows: 0,
         plans: {
-          sqlite: {},
+          sqlite,
           joinsArtifact,
-          scansByQuery: {},
+          scansByQuery,
+          scanStatusArtifacts: artifacts.slice(0, -1),
+          scanStatusExportArtifact: artifacts.at(-1),
           readsByQuery: {},
           exportMode: 'separate',
           exportMs: 1,
@@ -120,8 +179,18 @@ async function partial(
       };
     })
   );
-  correlateQueryAPI(measurements, apiDiagnostics);
+  const log = Buffer.from(
+    apiDiagnostics
+      .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+      .join('')
+  );
+  const parsed = parseQueryAPILog(log);
+  for (const row of measurements)
+    for (const sample of row.samples)
+      sample.apiLogBoundary = { source: 'app.log', byteEnd: log.length };
+  correlateQueryAPI(measurements, parsed.records);
   return {
+    runtime,
     format: 12,
     expectedMutations: [],
     mutations: [],
@@ -138,9 +207,9 @@ async function partial(
     measurements,
     infrastructure: [],
     serverWarnings: [],
-    apiDiagnostics,
+    apiDiagnostics: parsed.records,
     journeys: [],
-  };
+  } as Report;
 }
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), 'zero-distributed-test-'));
@@ -225,6 +294,25 @@ async function outcome(value: Awaited<ReturnType<typeof fixture>>) {
 }
 
 describe('distributed artifact merger', () => {
+  it('keeps original gate failures when diagnostic confirmation succeeds or is invalid', async () => {
+    const value = await fixture();
+    const runnerFile = path.join(value.artifacts, 'queries-1/runner.json');
+    const runner = JSON.parse(await readFile(runnerFile, 'utf8'));
+    runner.failures.push('Original absolute budget failure');
+    await writeJSON(runnerFile, runner);
+    const before = await outcome(value);
+    await writeJSON(path.join(value.artifacts, 'queries-1/absolute-confirmation.json'), {
+      format: 'zero-absolute-confirmation/v1',
+      findings: [{ status: 'not-exceeded-again' }, { status: 'invalid' }],
+    });
+    await writeJSON(
+      path.join(value.artifacts, 'queries-1/head/absolute-confirmation/report.json'),
+      { diagnostic: 'Not a gate phase' }
+    );
+    const after = await outcome(value);
+    expect(after.passed).toBe(false);
+    expect(after.failures).toEqual(before.failures);
+  });
   it('merges unique complete parts after the full product validator accepts them', async () => {
     const result = await outcome(await fixture());
     expect(result.passed).toBe(true);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChartTypeSelector } from '@/features/charts/ui/ChartTypeSelector';
 import { InlineCheckbox } from '@/features/shared/ui/form/InlineCheckbox';
 import type { StudioElement } from '../logic/document';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -185,26 +186,18 @@ export function StudioDataProperties({
       )}
       {chart && (
         <>
-          <select
-            aria-label={tr('chartType')}
+          <ChartTypeSelector
             value={chart.kind}
-            onChange={ev => {
-              const kind = ev.target.value as typeof chart.kind;
+            onValueChange={kind => {
               editChart(chart, c => {
                 c.kind = kind;
                 if (kind === 'pie') {
                   c.series = c.series.slice(0, 1);
-                  c.series[0].values = c.series[0].values.map(v => Math.max(1, v));
+                  c.series[0].values = c.series[0].values.map(v => Math.max(1, v ?? 0));
                 }
               });
             }}
-          >
-            {['bar', 'line', 'pie'].map(v => (
-              <option key={v} value={v}>
-                {tr(v)}
-              </option>
-            ))}
-          </select>
+          />
           <label className="flex items-center gap-2">
             <InlineCheckbox
               data-action-id="studio.data.chart.legend.toggle"
@@ -213,6 +206,27 @@ export function StudioDataProperties({
             />
             {tr('legend')}
           </label>
+          {(['grid', 'donut'] as const)
+            .filter(key => key === 'grid' || chart.kind === 'pie')
+            .map(key => (
+              <label key={key} className="flex items-center gap-2">
+                <InlineCheckbox
+                  checked={chart[key] ?? false}
+                  onCheckedChange={value => editChart(chart, c => (c[key] = value === true))}
+                />
+                {tr(key === 'grid' ? 'chartGrid' : key)}
+              </label>
+            ))}
+          {chart.kind !== 'pie' &&
+            (['xAxisLabel', 'yAxisLabel'] as const).map(key => (
+              <label key={key}>
+                {tr(key)}
+                <input
+                  value={chart[key] ?? ''}
+                  onChange={ev => editChart(chart, c => (c[key] = ev.target.value))}
+                />
+              </label>
+            ))}
           {chart.series.map((s, j) => (
             <div key={s.id}>
               <input
@@ -274,10 +288,11 @@ export function StudioDataProperties({
                   aria-label={`${s.name} ${label}`}
                   className="w-20 min-w-0"
                   type="number"
-                  value={s.values[i]}
+                  value={s.values[i] ?? ''}
                   onChange={ev => {
                     const n = ev.target.valueAsNumber;
-                    if (Number.isFinite(n))
+                    if (!ev.target.value) editChart(chart, c => (c.series[j].values[i] = null));
+                    else if (Number.isFinite(n))
                       editChart(
                         chart,
                         c => (c.series[j].values[i] = c.kind === 'pie' ? Math.max(0.01, n) : n)

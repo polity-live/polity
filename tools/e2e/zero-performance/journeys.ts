@@ -107,6 +107,9 @@ export async function measureJourneys(
   const clientSamples: ViewClientSamples = new Map();
   const warnings: string[] = [];
   const errorCounts = { page: 0, console: 0, react: {} as Record<string, number> };
+  // Six destinations across first/back/repeat. Data-update and revocation use
+  // separate non-navigation clocks and are not represented by these cuts.
+  const originalNavigationFrames: unknown[] = [];
   const countReactError = (message: string) => {
     const code = message.match(/Minified React error #(\d+)/)?.[1];
     if (code) errorCounts.react[code] = (errorCounts.react[code] ?? 0) + 1;
@@ -365,11 +368,18 @@ export async function measureJourneys(
             page.evaluate(() => ({
               preloads: (globalThis as any).__zeroPerformancePreloadEvents,
               views: (globalThis as any).__zeroPerformanceViewEvents,
+              navigationFrames: (globalThis as any).__snapshotBenchmarkNavigationFrames(),
             })),
             'Browser evaluate'
           );
           record.preloadEvents = events.preloads;
           record.viewEvents = events.views;
+          originalNavigationFrames.push({
+            scope: 'original-measured-navigation',
+            route: record.route,
+            visit: record.visit,
+            ...events.navigationFrames,
+          });
           for (const query of record.queries) {
             record.failures.push(
               ...queryObservationFailures(query).map(failure => `Query ${query.name}: ${failure}`)
@@ -513,6 +523,44 @@ export async function measureJourneys(
           );
           await withDeadline(
             page.evaluate(index => performance.mark(`zero-route-${index}-end`), index),
+            'Browser evaluate'
+          );
+        }
+        // Back navigation has its own browser/router work. Replay the real
+        // history traversal too, after the acceptance samples are complete.
+        // First leave the last destination, just as the timed back itinerary does.
+        const departure = required(routes[0]);
+        await navigate(page, departure.path, departure.search ?? {}, departure);
+        await page.waitForFunction(
+          () => {
+            const state = (globalThis as any).__benchmarkPaint;
+            return state?.displayed != null && state?.authoritative != null;
+          },
+          undefined,
+          { timeout: 15_000 }
+        );
+        for (const [index, route] of [...routes.entries()].reverse()) {
+          await withDeadline(
+            page.evaluate(
+              ({ index, target }) => {
+                performance.mark(`zero-back-route-${index}-start`);
+                (globalThis as any).__beginBenchmarkNavigation(target);
+                history.back();
+              },
+              { index, target: route }
+            ),
+            'Browser evaluate'
+          );
+          await page.waitForFunction(
+            () => {
+              const state = (globalThis as any).__benchmarkPaint;
+              return state?.displayed != null && state?.authoritative != null;
+            },
+            undefined,
+            { timeout: 15_000 }
+          );
+          await withDeadline(
+            page.evaluate(index => performance.mark(`zero-back-route-${index}-end`), index),
             'Browser evaluate'
           );
         }
@@ -920,6 +968,10 @@ export async function measureJourneys(
     }
     return records;
   } finally {
+    await writeFile(
+      path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'navigation-original-frames.ndjson'),
+      originalNavigationFrames.map(frame => JSON.stringify(frame)).join('\n') + '\n'
+    );
     await writeFile(
       path.join(required(process.env.ZERO_PERFORMANCE_OUTPUT), 'browser-error-counts.json'),
       JSON.stringify(errorCounts)

@@ -71,6 +71,19 @@ function buildZip(entries: ZipEntry[]) {
 }
 
 describe('unzipFirstTextFile', () => {
+  it('rejects an oversized declared uncompressed entry before decompression', () => {
+    const bytes = buildZip([{ name: 'data.csv', text: 'small', method: 8 }]);
+    const view = new DataView(bytes.buffer);
+    const central = view.getUint32(bytes.length - 22 + 16, true);
+    view.setUint32(central + 24, 50 * 1024 * 1024 + 1, true);
+    expect(() => unzipFirstTextFile(bytes)).toThrow('50 MiB');
+  });
+  it('limits the decompressed sample independently of the 50 MiB snapshot limit', () => {
+    const bytes = buildZip([
+      { name: 'sample.csv', text: 'x'.repeat(2 * 1024 * 1024 + 1), method: 8 },
+    ]);
+    expect(() => unzipFirstTextFile(bytes, 2 * 1024 * 1024)).toThrow('2 MiB');
+  });
   it('returns plain input when no ZIP end signature exists', () => {
     expect(unzipFirstTextFile(new TextEncoder().encode('plain text'))).toBe('plain text');
   });

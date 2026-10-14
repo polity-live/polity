@@ -47,6 +47,8 @@ export async function createStudioProject(page: Page, title: string): Promise<st
     await page.getByRole('textbox', { name: /^Title(?:\s*\*)?$/ }).fill(title);
     await page.locator('[data-create-action="submit"]').click();
     await expect(page).toHaveURL(/\/studio\/[a-f0-9-]{36}\/?$/, { timeout: 60_000 });
+    // The shell readiness marker does not cover the new route's Studio query.
+    await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor({ state: 'visible' });
     expect(obsoleteRequests).toEqual([]);
     return new URL(page.url()).pathname.split('/').filter(Boolean).at(-1)!;
   } finally {

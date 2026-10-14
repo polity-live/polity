@@ -2,7 +2,7 @@
   "version": 1,
   "sourceReferences": {},
   "actionReferences": {
-    "src/features/auth/onboarding/SummaryStep.tsx#/messages?openAriaKai=true": [
+    "src/features/auth/onboarding/SummaryStep.tsx#auth.summary-step.navigate.onboarding": [
       {
         "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
@@ -16,7 +16,7 @@
         }
       }
     ],
-    "src/features/auth/onboarding/SummaryStep.tsx#/onboarding": [
+    "src/features/auth/onboarding/SummaryStep.tsx#auth.summary-step.navigate.messages-open-aria-kai-true": [
       {
         "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
@@ -30,7 +30,7 @@
         }
       }
     ],
-    "src/features/auth/onboarding/SummaryStep.tsx#/search": [
+    "src/features/auth/onboarding/SummaryStep.tsx#auth.summary-step.navigate.search": [
       {
         "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
@@ -45,15 +45,5 @@
       }
     ]
   },
-  "actionDeclarations": {
-    "src/features/auth/onboarding/SummaryStep.tsx#/messages?openAriaKai=true": {
-      "actionId": "auth.summary-step.navigate.messages-open-aria-kai-true"
-    },
-    "src/features/auth/onboarding/SummaryStep.tsx#/onboarding": {
-      "actionId": "auth.summary-step.navigate.onboarding"
-    },
-    "src/features/auth/onboarding/SummaryStep.tsx#/search": {
-      "actionId": "auth.summary-step.navigate.search"
-    }
-  }
+  "actionDeclarations": {}
 }

@@ -585,14 +585,13 @@ export const networkQueries = {
 
   groupConnectionRequestsByPair: defineQuery(
     z.object({ groupAId: z.string(), groupBId: z.string() }),
-    ({ args: { groupAId, groupBId }, ctx: { userID } }) =>
-      applyGroupConnectionRequestAccess(zql.group_connection_request, userID)
-        .where(({ and, cmp, or }) =>
-          or(
-            and(cmp('group_a_id', '=', groupAId), cmp('group_b_id', '=', groupBId)),
-            and(cmp('group_a_id', '=', groupBId), cmp('group_b_id', '=', groupAId))
-          )
-        )
+    ({ args: { groupAId, groupBId }, ctx: { userID } }) => {
+      // The validated canonical-pair CHECK and UNIQUE index admit only this
+      // UUID order. Equal endpoints still select no rows rather than throwing.
+      const [groupA, groupB] = [groupAId.toLowerCase(), groupBId.toLowerCase()].sort();
+      return applyGroupConnectionRequestAccess(zql.group_connection_request, userID)
+        .where('group_a_id', groupA)
+        .where('group_b_id', groupB)
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('group_b', group => applyGroupDiscoveryQueryAccess(group, userID))
         .related('initiator_group', group => applyGroupDiscoveryQueryAccess(group, userID))
@@ -618,7 +617,8 @@ export const networkQueries = {
             )
             .orderBy('updated_at', 'desc')
         )
-        .orderBy('updated_at', 'desc')
+        .orderBy('updated_at', 'desc');
+    }
   ),
 
   groupConnectionRequestById: defineQuery(

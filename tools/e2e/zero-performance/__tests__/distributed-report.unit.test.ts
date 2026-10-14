@@ -8,7 +8,13 @@ import {
   partialReportFailures,
   shardMeasurementKeys,
 } from '../distributed-report';
-import { correlateQueryAPI, REPORT_FORMAT, MEASUREMENT_PROTOCOL, type Report } from '../report';
+import {
+  correlateQueryAPI,
+  parseQueryAPILog,
+  REPORT_FORMAT,
+  MEASUREMENT_PROTOCOL,
+  type Report,
+} from '../report';
 import type { Measurement } from '../metrics';
 import { resultsCSV } from '../results';
 
@@ -112,7 +118,14 @@ function report(
     warnings: [],
     failures: [],
   }));
-  correlateQueryAPI(measurements, records);
+  const log = Buffer.from(
+    records.map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n').join('')
+  );
+  const parsed = parseQueryAPILog(log);
+  for (const row of measurements)
+    for (const sample of row.samples)
+      sample.apiLogBoundary = { source: 'app.log', byteEnd: log.length };
+  correlateQueryAPI(measurements, parsed.records);
   return {
     format: REPORT_FORMAT,
     expectedMutations: [],
@@ -127,7 +140,7 @@ function report(
     ),
     infrastructure: [],
     measurements,
-    apiDiagnostics: records,
+    apiDiagnostics: parsed.records,
     serverWarnings: [],
     execution,
     fixturePreflight: { expected: shard[revision], completed: shard[revision], failures: [] },

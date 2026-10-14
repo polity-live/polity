@@ -13,7 +13,7 @@ export const EUROSTAT_VALUE_FIELDS = [EUROSTAT_DEFAULT_VALUE_FIELD] as const;
 
 export type ChartType = 'line' | 'bar' | 'area' | 'pie';
 export type DataViewKind = 'chart' | 'table' | 'stat';
-export type DataAggregation = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count';
+export type DataAggregation = 'none' | 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count';
 export type DataSortDirection = 'asc' | 'desc';
 export type DatasetColumnType = 'number' | 'date' | 'category' | 'text';
 export type DatasetColumnRole = 'measure' | 'time' | 'geo' | 'dimension' | 'label';
@@ -64,6 +64,8 @@ export interface GovDataCatalogueEntry {
   publisher?: string | null;
   organizationTitle?: string | null;
   modified?: string | null;
+  timeCoverage?: DatasetSearchResult['timeCoverage'];
+  spatialCoverage?: DatasetSearchResult['spatialCoverage'];
   resources: GovDataResourceSummary[];
 }
 
@@ -83,6 +85,7 @@ export interface GovDataProvenance {
 }
 
 export interface DatasetColumnProfile {
+  technical?: boolean;
   name: string;
   label: string;
   type: DatasetColumnType;
@@ -93,11 +96,78 @@ export interface DatasetColumnProfile {
   max?: number | string | null;
 }
 
+export interface DatasetMeasureOption {
+  id: string;
+  label: string;
+  unit: string;
+  filters: Record<string, string>;
+}
+
+export interface DatasetSelectionIdentity {
+  provider: DatasetProviderId;
+  providerDatasetId?: string | null;
+  providerResourceId?: string | null;
+  snapshotId?: string | null;
+  datasetId?: string | null;
+}
+
+/** Download identity only: display and import filters deliberately have no place here. */
+export interface DatasetRawDownloadRequest extends DatasetSelectionIdentity {
+  language?: 'de' | 'en' | 'fr';
+}
+export interface DatasetRawDownloadPreparation {
+  url: string;
+  fileName: string;
+  kind: 'provider' | 'snapshot';
+  fullDataset: boolean;
+}
+
+export interface DatasetPreviewRequest extends DatasetSelectionIdentity {
+  language?: string;
+  filters?: DatasetImportFilters;
+  rowFilters?: Record<string, string>;
+  timeRange?: DataViewQuery['timeRange'];
+  rowConditions?: DatasetRowCondition[];
+  page?: { offset: number; limit: number };
+  sort?: DataViewQuery['sort'];
+}
+
+export type DatasetRowCondition =
+  | { column: string; operator: 'in'; values: string[] }
+  | { column: string; operator: 'contains'; value: string }
+  | { column: string; operator: 'range'; min?: string; max?: string; numeric?: boolean }
+  | { column: string; operator: 'empty' };
+
+export interface DatasetTableSelection {
+  filters: DatasetImportFilters;
+  rowFilters: Record<string, string>;
+  rowConditions: DatasetRowCondition[];
+  timeRange?: DataViewQuery['timeRange'];
+  columns: string[];
+  sort?: DataViewQuery['sort'];
+}
+
+export interface DatasetPreview {
+  identity: DatasetSelectionIdentity;
+  columns: DatasetColumnProfile[];
+  rows: Record<string, string>[];
+  appliedFilters: DatasetImportFilters;
+  rowFilters: Record<string, string>;
+  timeRange?: DataViewQuery['timeRange'];
+  sampled: boolean;
+  sampledRowCount: number;
+  metadata?: Record<string, unknown>;
+  page?: { offset: number; limit: number; total: number; nextOffset: number | null };
+  facets?: Record<string, { values: string[]; complete: boolean }>;
+}
+
 export interface DataViewQuery {
   measureColumn?: string | null;
   dimensionColumn?: string | null;
   seriesColumn?: string | null;
   filters: Record<string, string>;
+  rowConditions?: DatasetRowCondition[];
+  timeRange?: { column: string; startYear: number; endYear: number } | null;
   aggregation: DataAggregation;
   layout?: 'long' | 'wide' | 'multi';
   valueColumns?: string[];
@@ -153,6 +223,8 @@ export interface GovDataImportResult {
 export type DatasetProviderId = 'EUROSTAT' | 'GENESIS_DESTATIS' | 'GOVDATA' | 'UPLOAD';
 
 export interface DatasetChartSource {
+  sourceUpdatedAt?: string | null;
+  dataPeriod?: { start?: string | null; end?: string | null } | null;
   kind: 'dataset';
   provider: DatasetProviderId;
   datasetId: string;
@@ -212,6 +284,7 @@ export interface EurostatDatasetDetails extends EurostatCatalogueEntry {
   sampleRowBytes: number;
   estimatedBytes: number;
   importAllowed: boolean;
+  coverageRegions?: { included: boolean; values: Record<string, string[]> }[];
 }
 
 export interface EurostatImportProgress {
@@ -266,11 +339,62 @@ export interface DatasetSearchResult {
   spatialCoverage?: string[] | Record<string, unknown> | null;
   metadata?: Record<string, unknown>;
   entry?: unknown;
+  searchMatch?: DatasetSearchMatch;
+}
+
+export interface DatasetSearchFilters {
+  period?: { start: number; end: number } | null;
+  area?: string | null;
+}
+
+export interface DatasetSearchIntent {
+  query: string;
+  topic: string;
+  period: { start: number; end: number } | null;
+  area: string | null;
+  isCode: boolean;
+}
+
+export interface DatasetSearchMatch {
+  group: 'matching' | 'other';
+  area: {
+    status: 'match' | 'unknown' | 'different';
+    label?: string;
+    source: 'metadata' | 'text' | 'unknown';
+  };
+  period: {
+    status: 'match' | 'unknown' | 'different';
+    start?: number;
+    end?: number;
+    source: 'metadata' | 'text' | 'unknown';
+  };
 }
 
 export interface DatasetProviderError {
   provider: DatasetProviderId;
   message: string;
+  code?: 'authentication' | 'timeout' | 'unavailable' | 'invalid_response' | 'incomplete_metadata';
+}
+
+export interface DatasetImportFilters {
+  area?: string | null;
+  period?: { start: number; end: number } | null;
+  dimensions?: Record<string, string>;
+}
+
+export interface DatasetPreparation {
+  provider: 'EUROSTAT' | 'GENESIS_DESTATIS';
+  code: string;
+  title: string;
+  dimensions: EurostatDimension[];
+  geoDimension?: string | null;
+  timeDimension?: string | null;
+  estimatedBytes: number | null;
+  importAllowed: boolean;
+  suggestedFilters: DatasetImportFilters;
+  spatialCoverage?: DatasetSearchResult['spatialCoverage'];
+  timeCoverage?: DatasetSearchResult['timeCoverage'];
+  coverageRegions?: EurostatDatasetDetails['coverageRegions'];
 }
 
 export interface DatasetProviderSearchResponse {
@@ -279,10 +403,12 @@ export interface DatasetProviderSearchResponse {
 }
 
 export interface DatasetSnapshotImportResult {
+  providerDatasetId?: string | null;
   datasetId: string;
   snapshotId: string;
   snapshotKey: string;
   provider: DatasetProviderId;
+  providerResourceId?: string | null;
   title: string;
   publisher?: string | null;
   sourceUrl?: string | null;

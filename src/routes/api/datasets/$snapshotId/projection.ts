@@ -4,6 +4,7 @@ import { getSession } from '@/lib/supabase/server';
 import { datasetProjectionRequestSchema } from '@/server/datasets/projectionRequest';
 import { createDatasetProjection } from '@/server/datasets/service';
 import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
+import { datasetProviderErrorResponse } from '@/server/datasets/providerError';
 
 export const Route = createFileRoute('/api/datasets/$snapshotId/projection')({
   server: {
@@ -19,10 +20,13 @@ export const Route = createFileRoute('/api/datasets/$snapshotId/projection')({
           return Response.json(
             await createDatasetProjection(
               { snapshotId: params.snapshotId, ...body },
-              session.user.id
+              session.user.id,
+              request.signal
             )
           );
         } catch (error) {
+          const providerResponse = datasetProviderErrorResponse(error);
+          if (providerResponse) return providerResponse;
           const status = error instanceof z.ZodError ? 400 : 422;
           return Response.json(
             error instanceof z.ZodError

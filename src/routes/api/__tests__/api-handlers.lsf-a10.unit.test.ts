@@ -52,15 +52,12 @@ vi.mock('@/zero/db-provider', () => ({ dbProvider: {} }));
 vi.mock('@/zero/queries', () => ({ queries: {} }));
 vi.mock('@/zero/schema', () => ({ schema: {} }));
 vi.mock('@rocicorp/zero/server', () => ({
-  PushProcessor: class {
-    process(...args: unknown[]) {
-      return mocks.process(...args);
-    }
-  },
+  handleMutateRequest: (...args: unknown[]) => mocks.process(...args),
   handleQueryRequest: (...args: unknown[]) => mocks.handleQuery(...args),
 }));
 vi.mock('@rocicorp/zero', () => ({
   mustGetQuery: () => ({ fn: mocks.queryFn }),
+  mustGetMutator: () => ({ fn: vi.fn() }),
 }));
 
 import { Route as ChatRoute } from '../ai/chat';

@@ -5,6 +5,7 @@ import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import type { GroupConflictResponse } from '../logic/groupConflict';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useEmailInvitationComposer } from '../hooks/useEmailInvitationComposer';
 
 interface InviteMembersDialogProps<TRole extends ParticipationRoleLike> {
   isOpen: boolean;
@@ -37,6 +38,7 @@ interface InviteMembersDialogProps<TRole extends ParticipationRoleLike> {
   submitDisabledReason?: string;
   submitConflictResponse?: GroupConflictResponse | null;
   submitConflictLoading?: boolean;
+  emailGroupId?: string;
 }
 import { InviteMembersDialogView } from './InviteMembersDialogView';
 export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
@@ -80,7 +82,10 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   submitDisabledReason,
   submitConflictResponse,
   submitConflictLoading = false,
+  emailGroupId,
 }: InviteMembersDialogProps<TRole>) {
+  const emailComposer = useEmailInvitationComposer(emailGroupId, isOpen, selectedRoleIds);
+  const emailMode = !!emailGroupId && emailComposer.mode === 'email';
   const actionSubmission = useActionSubmission('invite');
   const defaultRoleId = useMemo(
     () =>
@@ -113,11 +118,10 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   };
 
   const inviteDisabled =
-    selectedUsers.length === 0 ||
+    (emailMode ? !emailComposer.canSend : selectedUsers.length === 0) ||
     isInviting ||
     selectedRoleIds.length === 0 ||
-    submitDisabled ||
-    submitConflictLoading;
+    (!emailMode && (submitDisabled || submitConflictLoading));
 
   const triggerButton = (
     <Button data-action-id="groups.invitations.open.members-dialog" disabled={disabled}>
@@ -127,6 +131,10 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   );
 
   const handleInvite = () => {
+    if (emailMode) {
+      void emailComposer.send();
+      return;
+    }
     void actionSubmission
       .runActionWithSubmission(async () => onInvite(), {
         onSuccess: () => {
@@ -139,6 +147,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
 
   return (
     <InviteMembersDialogView
+      emailComposer={emailGroupId ? emailComposer : undefined}
       actionSubmission={actionSubmission}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
@@ -150,7 +159,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
       selectedRoleIds={selectedRoleIds}
       onSelectedRoleIdsChange={onSelectedRoleIdsChange}
       onInvite={handleInvite}
-      isInviting={isInviting}
+      isInviting={isInviting || emailComposer.sending}
       disabled={disabled}
       disabledReason={disabledReason}
       triggerLabel={triggerLabel}
@@ -165,11 +174,13 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
       defaultInviteLabel={defaultInviteLabel}
       emptyRolesLabel={emptyRolesLabel}
       cancelLabel={cancelLabel}
-      inviteLabel={inviteLabel}
+      inviteLabel={
+        emailMode ? emailComposer.t('features.groups.emailInvitations.send') : inviteLabel
+      }
       submitDisabled={submitDisabled}
       submitDisabledReason={submitDisabledReason}
-      submitConflictResponse={submitConflictResponse}
-      submitConflictLoading={submitConflictLoading}
+      submitConflictResponse={emailMode ? undefined : submitConflictResponse}
+      submitConflictLoading={!emailMode && submitConflictLoading}
       defaultRoleId={defaultRoleId}
       toggleRoleSelection={toggleRoleSelection}
       inviteDisabled={inviteDisabled}

@@ -1,4 +1,4 @@
-import { applyTutorialRunOwnerQueryAccess } from '../rbac/query-access';
+import { applyTutorialRunOwnerQueryAccess, denyAllRows } from '../rbac/query-access';
 import { studioProjectCollaborativeAccess } from '../communication-studio/access';
 import { whereAnyOf } from '../shared/query-conditions';
 
@@ -63,11 +63,17 @@ export function projectConversationAccess<T>(
 ): T {
   const q = target as any;
   const plan = planPerConversation ? { flip: false } : undefined;
-  if (!userID || userID === 'anon') return q.where('id', '__unauthorized__');
-  return q.where('type', 'project_ai').where(({ or, exists }: any) =>
+  if (!userID || userID === 'anon') return denyAllRows(q);
+  return q.where('type', 'project_ai').where(({ or, and, cmp, exists }: any) =>
     or(
-      exists('studio_project', (p: any) => studioChatAccess(p, userID), plan),
-      exists('amendment', (a: any) => amendmentChatAccess(a, userID, planPerConversation), plan)
+      and(
+        cmp('studio_project_id', 'IS NOT', null),
+        exists('studio_project', (p: any) => studioChatAccess(p, userID), plan)
+      ),
+      and(
+        cmp('amendment_id', 'IS NOT', null),
+        exists('amendment', (a: any) => amendmentChatAccess(a, userID, planPerConversation), plan)
+      )
     )
   );
 }

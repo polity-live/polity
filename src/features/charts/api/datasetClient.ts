@@ -5,8 +5,39 @@ import type {
   DatasetProviderSearchResponse,
   DatasetSearchResult,
   DatasetSnapshotImportResult,
+  DatasetSearchFilters,
+  DatasetImportFilters,
+  DatasetPreparation,
+  DatasetPreviewRequest,
+  DatasetPreview,
 } from '../types';
 import { toAppError } from '@/features/shared/errors/app-error';
+import type { DatasetRawDownloadRequest, DatasetRawDownloadPreparation } from '../types';
+
+export async function prepareDatasetRawDownload(
+  request: DatasetRawDownloadRequest,
+  accessToken?: string | null,
+  signal?: AbortSignal
+) {
+  // Whitelist identity fields even when a caller passes a preview object containing filters.
+  const { provider, providerDatasetId, providerResourceId, datasetId, snapshotId, language } =
+    request;
+  return readJson<DatasetRawDownloadPreparation>(
+    await fetch('/api/datasets/raw-download', {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      signal,
+      body: JSON.stringify({
+        provider,
+        providerDatasetId,
+        providerResourceId,
+        datasetId,
+        snapshotId,
+        language,
+      }),
+    })
+  );
+}
 
 async function readJson<T>(response: Response): Promise<T> {
   const body = (await response.json()) as T & { error?: unknown };
@@ -29,6 +60,8 @@ export async function searchDatasets({
   language,
   accessToken,
   includeExternal,
+  filters,
+  signal,
 }: {
   query: string;
   providers: readonly DatasetProviderId[];
@@ -36,17 +69,23 @@ export async function searchDatasets({
   language?: string;
   accessToken?: string | null;
   includeExternal?: boolean;
+  filters?: DatasetSearchFilters;
+  signal?: AbortSignal;
 }) {
   const params = new URLSearchParams({ q: query });
   if (providers.length > 0) params.set('providers', providers.join(','));
   if (groupId) params.set('groupId', groupId);
   if (language) params.set('lang', language);
   if (includeExternal) params.set('includeExternal', 'true');
+  if (filters) params.set('filters', JSON.stringify(filters));
 
   const headers = new Headers();
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return readJson<DatasetSearchResult[]>(
-    await fetch(`/api/datasets/search?${params.toString()}`, { headers })
+    await fetch(`/api/datasets/search?${params.toString()}`, {
+      headers,
+      ...(signal ? { signal } : {}),
+    })
   );
 }
 
@@ -56,44 +95,85 @@ export async function searchDatasetCatalog({
   groupId,
   language,
   accessToken,
+  filters,
+  signal,
 }: {
   query: string;
   providers: readonly DatasetProviderId[];
   groupId?: string | null;
   language?: string;
   accessToken?: string | null;
+  filters?: DatasetSearchFilters;
+  signal?: AbortSignal;
 }) {
   const params = new URLSearchParams({ q: query, withStatus: 'true' });
   if (providers.length > 0) params.set('providers', providers.join(','));
   if (groupId) params.set('groupId', groupId);
   if (language) params.set('lang', language);
   if (groupId) params.set('includeExternal', 'true');
+  if (filters) params.set('filters', JSON.stringify(filters));
   const headers = new Headers();
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return readJson<DatasetProviderSearchResponse>(
-    await fetch(`/api/datasets/search?${params.toString()}`, { headers })
+    await fetch(`/api/datasets/search?${params.toString()}`, {
+      headers,
+      ...(signal ? { signal } : {}),
+    })
   );
 }
 
 export async function createProviderSnapshot(
   request:
-    | { provider: 'EUROSTAT'; code: string; language: 'en' | 'de' | 'fr' }
+    | {
+        provider: 'EUROSTAT';
+        code: string;
+        language: 'en' | 'de' | 'fr';
+        filters?: DatasetImportFilters;
+      }
     | { provider: 'GOVDATA'; packageId: string; resourceId: string }
-    | { provider: 'GENESIS_DESTATIS'; code: string; language: 'en' | 'de' },
-  accessToken?: string | null
+    | {
+        provider: 'GENESIS_DESTATIS';
+        code: string;
+        language: 'en' | 'de';
+        filters?: DatasetImportFilters;
+      },
+  accessToken?: string | null,
+  signal?: AbortSignal
 ) {
   return readJson<DatasetSnapshotImportResult>(
     await fetch('/api/datasets/snapshots', {
       method: 'POST',
       headers: authHeaders(accessToken),
       body: JSON.stringify(request),
+      signal,
+    })
+  );
+}
+
+export async function prepareProviderDataset(
+  request: {
+    provider: 'EUROSTAT' | 'GENESIS_DESTATIS';
+    code: string;
+    language: string;
+    filters?: DatasetImportFilters;
+  },
+  accessToken?: string | null,
+  signal?: AbortSignal
+) {
+  return readJson<DatasetPreparation>(
+    await fetch('/api/datasets/prepare', {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify(request),
+      signal,
     })
   );
 }
 
 export async function createDataViewProjection(
   request: DataViewProjectionRequest,
-  accessToken?: string | null
+  accessToken?: string | null,
+  signal?: AbortSignal
 ) {
   const { snapshotId, ...body } = request;
   return readJson<DataViewProjection>(
@@ -101,6 +181,7 @@ export async function createDataViewProjection(
       method: 'POST',
       headers: authHeaders(accessToken),
       body: JSON.stringify(body),
+      signal,
     })
   );
 }
@@ -119,11 +200,34 @@ export async function loadDatasetColumnValues(
   );
 }
 
-export async function loadDatasetDetails(datasetId: string, accessToken?: string | null) {
+export async function loadDatasetDetails(
+  datasetId: string,
+  accessToken?: string | null,
+  snapshotId?: string | null,
+  signal?: AbortSignal
+) {
   const headers = new Headers();
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return readJson<DatasetSearchResult & { snapshots: unknown[] }>(
-    await fetch(`/api/datasets/${encodeURIComponent(datasetId)}/details`, { headers })
+    await fetch(
+      `/api/datasets/${encodeURIComponent(datasetId)}/details${snapshotId ? `?snapshotId=${encodeURIComponent(snapshotId)}` : ''}`,
+      { headers, signal }
+    )
+  );
+}
+
+export async function loadDatasetPreview(
+  request: DatasetPreviewRequest,
+  accessToken?: string | null,
+  signal?: AbortSignal
+) {
+  return readJson<DatasetPreview>(
+    await fetch('/api/datasets/preview', {
+      method: 'POST',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify(request),
+      signal,
+    })
   );
 }
 

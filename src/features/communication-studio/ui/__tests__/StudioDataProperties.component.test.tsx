@@ -10,6 +10,9 @@ import { StudioDataProperties } from '../StudioDataProperties';
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key.split('.').at(-1) }),
 }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key.split('.').at(-1) }),
+}));
 afterEach(cleanup);
 function show(type: 'table' | 'chart', initial = element(type)) {
   let current = initial;
@@ -32,6 +35,59 @@ function show(type: 'table' | 'chart', initial = element(type)) {
   return () => current;
 }
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+const selectChartType = (name: string) => fireEvent.click(screen.getByRole('radio', { name }));
+it('edits area charts, axis labels and grid while retaining missing values', () => {
+  const initial = element('chart');
+  initial.chart!.series[0].values[1] = null;
+  const value = show('chart', initial);
+  selectChartType('area');
+  expect(screen.getByRole('radio', { name: 'area' }).getAttribute('aria-checked')).toBe('true');
+  expect(screen.getByRole('radio', { name: 'bar' }).getAttribute('aria-checked')).toBe('false');
+  selectChartType('area');
+  expect(value().chart!.kind).toBe('area');
+  fireEvent.click(screen.getByRole('checkbox', { name: 'chartGrid' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'xAxisLabel' }), {
+    target: { value: 'Year' },
+  });
+  fireEvent.change(screen.getByRole('textbox', { name: 'yAxisLabel' }), {
+    target: { value: 'People' },
+  });
+  expect(value().chart).toMatchObject({
+    kind: 'area',
+    grid: true,
+    xAxisLabel: 'Year',
+    yAxisLabel: 'People',
+  });
+  expect(value().chart!.series[0].values[1]).toBeNull();
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Series A' }), { target: { value: '' } });
+  expect(value().chart!.series[0].values[0]).toBeNull();
+});
+it('toggles native donut rendering', () => {
+  const value = show('chart');
+  selectChartType('pie');
+  fireEvent.click(screen.getByRole('checkbox', { name: 'donut' }));
+  expect(value().chart).toMatchObject({ kind: 'pie', donut: true });
+});
+
+it('converts missing and non-positive bar values into visible pie slices', () => {
+  const initial = element('chart');
+  initial.chart!.series[0].values = [null, 0, -3, 4];
+  initial.chart!.labels = ['Missing', 'Zero', 'Negative', 'Positive'];
+  const value = show('chart', initial);
+  selectChartType('pie');
+  expect(value().chart!.series[0].values).toEqual([1, 1, 1, 4]);
+  expect(value().chart!.kind).toBe('pie');
+});
+
+it('rejects a numeric edit whose native number conversion is unavailable', () => {
+  const value = show('chart');
+  const before = structuredClone(value());
+  const input = screen.getByRole('spinbutton', { name: 'Series A' }) as HTMLInputElement;
+  const conversion = vi.spyOn(input, 'valueAsNumber', 'get').mockReturnValue(NaN);
+  fireEvent.change(input, { target: { value: '3' } });
+  expect(value()).toEqual(before);
+  conversion.mockRestore();
+});
 it.each(['addRow', 'removeRow', 'addColumn', 'removeColumn'])(
   'changes table dimensions with %s through keyboard focus while preserving surviving cell identities',
   async action => {
@@ -92,20 +148,20 @@ it.each(['table', 'chart'] as const)(
     expect(selected()).toBe(before);
   }
 );
-it('rejects out-of-range column widths and nonnumeric chart values and supports line charts', () => {
+it('rejects out-of-range column widths and allows missing values in line charts', () => {
   const table = show('table');
   const width = table().table!.widths[0];
   fireEvent.change(screen.getByLabelText('columnWidth 1'), { target: { value: '0' } });
   expect(table().table!.widths[0]).toBe(width);
   cleanup();
   const chart = show('chart');
-  fireEvent.change(screen.getByLabelText('chartType'), { target: { value: 'line' } });
+  selectChartType('line');
   expect(chart().chart!.kind).toBe('line');
   const values = [...chart().chart!.series[0].values];
   fireEvent.change(screen.getByLabelText(`${chart().chart!.series[0].name} A`), {
     target: { value: '' },
   });
-  expect(chart().chart!.series[0].values).toEqual(values);
+  expect(chart().chart!.series[0].values).toEqual([null, ...values.slice(1)]);
 });
 it('edits cells and selected row or column structure while keeping stable identities', () => {
   const value = show('table'),
@@ -164,7 +220,7 @@ it('edits chart data and legend while keeping pie constraints and minimum dimens
   click('addSeries');
   expect(value().chart!.series).toHaveLength(2);
   click('removeSeries');
-  fireEvent.change(screen.getByLabelText('chartType'), { target: { value: 'pie' } });
+  selectChartType('pie');
   expect((screen.getByRole('button', { name: 'addSeries' }) as HTMLButtonElement).disabled).toBe(
     true
   );

@@ -1,3 +1,8 @@
+import { StudioDataViewDialog } from './StudioDataViewDialog';
+import { StudioLoadingScreen } from './StudioLoadingScreen';
+import { DataViewInsertionError } from '@/features/charts/logic/dataViewInsertion';
+import { insertStudioDataView, updateStudioDataView } from '../logic/data-view-import';
+import { StudioDatasetEditButton } from './StudioDatasetEditButton';
 import {
   lazy,
   Suspense,
@@ -92,6 +97,9 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover';
 import { StudioDataProperties } from './StudioDataProperties';
+import { StudioLiveTools } from './StudioLiveTools';
+import { StudioFrameTemplates, useStudioFrameTemplateSelection } from './StudioFrameTemplates';
+import { useLiveStudioState } from '@/zero/communication-studio/useLiveStudioState';
 import { StudioCanonicalProperties } from './StudioCanonicalProperties';
 import type { StudioTextSelectionEditor } from './StudioTextEditor';
 import type { useStudioController } from '../hooks/useStudioController';
@@ -107,7 +115,11 @@ import {
   selectionUnits,
   type ArrangementReference,
 } from '../logic/selection-geometry';
-import { emptyStudioSelection, type StudioSelectionState } from '../logic/studio-selection';
+import {
+  emptyStudioSelection,
+  layerSelection,
+  type StudioSelectionState,
+} from '../logic/studio-selection';
 import { applyStudioSelectionTextStyle } from '../logic/studio-text-style';
 import { selectStudioEditorTheme, insertStudioEditorTable } from '../logic/studio-editor-commands';
 import { renameStudioNode } from '../logic/rename-studio-node';
@@ -127,6 +139,7 @@ import {
   changeStudioCanvasText,
   formatStudioCanvasText,
 } from '../logic/studio-canvas-commands';
+import { assignDraggedStudioNodesToFrames } from '../logic/canvas-frame-assignment';
 import {
   alignStudioSelection,
   distributeStudioSelection,
@@ -138,6 +151,7 @@ import { useStudioViewportStore, type StudioTool } from '../state/studio-viewpor
 import type {
   StudioCanvasHandle,
   StudioCanvasNodeChange,
+  StudioCanvasChangeContext,
   StudioCanvasState,
   StudioCanvasChangeRequestMarker,
 } from './KonvaStudioCanvas';
@@ -323,8 +337,16 @@ function StudioEditorReady({
   onChangeRequestSelect?: (id: string) => void;
   tr: (key: string) => string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const frameTemplateSelection = useStudioFrameTemplateSelection();
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [portraitPreview, setPortraitPreview] = useState(false);
+  const [dataViewOpen, setDataViewOpen] = useState(false);
+  const [dataViewEditingIds, setDataViewEditingIds] = useState<string[]>([]);
+  const savedDataView = c.v3Value?.nodes.find(node => node.id === dataViewEditingIds[0])?.dataView;
+  const liveStudio = useLiveStudioState(previewDocument ?? c.v3Value, {
+    portrait: portraitPreview,
+  });
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const disabled = !c.canEdit || c.busy || !!previewDocument || editingAllowed === false;
   const studioPresence = useMemo(
@@ -337,7 +359,8 @@ function StudioEditorReady({
       : ['error', 'offline', 'unavailable', 'conflict'].includes(c.status)
         ? 'error'
         : 'saved';
-  const activeNode = c.v3Value?.nodes.find(node => node.id === c.selected[0]);
+  const canonicalDocument = c.v3Value;
+  const activeNode = canonicalDocument?.nodes.find(node => node.id === c.selected[0]);
   const masterFrame = c.v3Value?.nodes.find(
     (node): node is FrameNode =>
       node.type === 'frame' && node.id === c.v3Value?.masterLayout.frameId
@@ -352,7 +375,7 @@ function StudioEditorReady({
   const [reference, setReference] = useState<ArrangementReference>('selection');
   const textEditor = useRef<StudioTextSelectionEditor | null>(null);
   const uploadInput = useRef<HTMLInputElement | null>(null);
-  const previewButton = useRef<HTMLElement | null>(null);
+  const previewButton = useRef<HTMLButtonElement | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [elementQuery, setElementQuery] = useState('');
   const [exportQuery, setExportQuery] = useState('');
@@ -585,7 +608,10 @@ function StudioEditorReady({
       <DropdownMenuSeparator />
     </>
   );
-  const applyCanvasChanges = (changes: StudioCanvasNodeChange[]) => {
+  const applyCanvasChanges = (
+    changes: StudioCanvasNodeChange[],
+    context?: StudioCanvasChangeContext
+  ) => {
     if (!changes.length) return;
     c.transactV3(document => {
       const movedFrames = changes.flatMap(change => {
@@ -596,7 +622,18 @@ function StudioEditorReady({
         let node = document.nodes.find(candidate => candidate.id === change.nodeId);
         if (!node || node.locked) continue;
         const originalNode = node;
-        if (
+        if (portraitPreview && change.transform) {
+          const transform = node.portrait?.transform ?? node.transform;
+          node.portrait = {
+            ...node.portrait,
+            transform: {
+              x: transform.x + change.transform.dx,
+              y: transform.y + change.transform.dy,
+              width: Math.max(1, change.transform.width),
+              height: Math.max(1, change.transform.height),
+            },
+          };
+        } else if (
           change.transform &&
           !movedFrames.some(
             frameId =>
@@ -646,6 +683,11 @@ function StudioEditorReady({
           node.overrides = [...overrides];
         }
       }
+      if (context?.source === 'drag' && !portraitPreview)
+        assignDraggedStudioNodesToFrames(
+          document,
+          changes.filter(change => change.transform).map(change => change.nodeId)
+        );
     });
   };
   const pasteV3Clipboard = (payload: StudioClipboardV2Payload, targetFrameId: string | null) => {
@@ -681,8 +723,10 @@ function StudioEditorReady({
       points,
       transact: c.transactV3,
     });
-  const changeCanvasText = (id: string, content: StudioPlateElement[]) =>
+  const changeCanvasText = (id: string, content: StudioPlateElement[]) => {
+    if (c.v3Value?.nodes.find(n => n.id === id)?.liveBinding) return;
     changeStudioCanvasText({ id, content, transact: c.transactV3 });
+  };
   const canvasClipboard = (action: 'copy' | 'cut' | 'paste') =>
     executeStudioCanvasClipboard({
       action,
@@ -1124,9 +1168,29 @@ function StudioEditorReady({
           }
         />
       )}
+      {activeNode?.dataView && canonicalDocument && (
+        <StudioDatasetEditButton
+          data-action-id="communication-studio.dataset.edit.open"
+          data-action-kind="interaction"
+          disabled={disabled || selectionLocked}
+          onEdit={() => {
+            const group = activeNode.groupIds[0];
+            setDataViewEditingIds(
+              canonicalDocument.nodes
+                .filter(
+                  node =>
+                    node.dataView &&
+                    (group ? node.groupIds.includes(group) : node.id === activeNode.id)
+                )
+                .map(node => node.id)
+            );
+            setDataViewOpen(true);
+          }}
+        />
+      )}
     </fieldset>
   );
-  const canvasDocument = previewDocument ?? c.v3Value;
+  const canvasDocument = liveStudio.projected ?? previewDocument ?? c.v3Value;
   const selectedGroupId =
     selectedNodes.length > 1 ? selectedNodes[0].groupIds[selectionState.groupDepth] : null;
   const completeGroupSelected =
@@ -1357,6 +1421,17 @@ function StudioEditorReady({
               icon={<Frame />}
               onSelect={() => canvasCommand('tool', 'frame')}
             />
+            {c.v3Value && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>{t('features.studio.eventLive.template')}</DropdownMenuLabel>
+                <StudioFrameTemplates
+                  selection={frameTemplateSelection}
+                  update={c.transactV3}
+                  disabled={disabled}
+                />
+              </>
+            )}
           </StudioToolbarMenu>
           <StudioToolbarMenu
             panelKey="shapes"
@@ -1566,7 +1641,7 @@ function StudioEditorReady({
             ref={uploadInput}
             hidden
             type="file"
-            accept="image/png,image/jpeg,image/webp,video/mp4"
+            accept="image/png,image/jpeg,image/webp,video/mp4,audio/mpeg,audio/wav"
             disabled={disabled}
             aria-label={tr('upload')}
             onChange={ev => {
@@ -1579,10 +1654,15 @@ function StudioEditorReady({
           <StudioPanel panelKey="pages" label={tr('layers')} icon={<Layers3 />} compact>
             {c.v3Value && (
               <StudioLayersPanel
+                key={projectId}
                 document={c.v3Value}
                 selectedNodeIds={selectedNodeIds}
                 disabled={disabled}
                 tr={tr}
+                onFocus={nodeId => {
+                  // Unavailable focus targets must not interrupt the layer name draft.
+                  void canvasRef.current?.execute({ type: 'focus', nodeId }).catch(() => undefined);
+                }}
                 onRename={(nodeId, name) =>
                   renameStudioNode({
                     nodeId,
@@ -1591,15 +1671,16 @@ function StudioEditorReady({
                     transact: c.transactV3,
                   })
                 }
-                onSelect={(node, rootFrameId) => {
+                onSelect={(node, rootFrameId, additive) => {
+                  const next = layerSelection(
+                    c.v3Value as StudioDocumentV3,
+                    { ...selectionState, nodeIds: c.selected },
+                    node.id,
+                    additive
+                  );
                   if (rootFrameId) c.setPageId(rootFrameId);
-                  c.selectExact([node.id]);
-                  setSelectionState(current => ({
-                    ...current,
-                    nodeIds: [node.id],
-                    primaryId: node.id,
-                    groupDepth: 0,
-                  }));
+                  c.selectExact(next.nodeIds);
+                  setSelectionState(next);
                 }}
                 onSetVisibility={(node, visible) =>
                   c.transactV3(document =>
@@ -1966,6 +2047,77 @@ function StudioEditorReady({
             </Popover>
           </ToolbarGroup>
         )}
+        {c.v3Value && (
+          <StudioLiveTools
+            document={c.v3Value}
+            frameId={page.id}
+            selectedId={c.selected[0]}
+            selectedNodeIds={selectedNodeIds}
+            onSelect={(node, rootFrameId) => {
+              const next = layerSelection(
+                c.v3Value as StudioDocumentV3,
+                { ...selectionState, nodeIds: c.selected },
+                node.id,
+                false
+              );
+              c.setPageId(rootFrameId);
+              c.selectExact(next.nodeIds);
+              setSelectionState(next);
+            }}
+            sources={liveStudio.sources}
+            assets={c.assets}
+            update={c.transactV3}
+            portrait={portraitPreview}
+            setPortrait={setPortraitPreview}
+            onInsertData={() => {
+              setDataViewEditingIds([]);
+              setDataViewOpen(true);
+            }}
+            onUpload={c.upload}
+            disabled={disabled}
+          />
+        )}
+        {dataViewOpen && (
+          <StudioDataViewDialog
+            open={dataViewOpen}
+            onOpenChange={setDataViewOpen}
+            disabled={disabled}
+            groupId={groupId ?? c.project?.group_id ?? null}
+            userId={c.identity.id}
+            editingElement={savedDataView}
+            onInsert={(configuration, projection) => {
+              if (disabled)
+                throw new DataViewInsertionError(t('features.studio.dataImport.readOnly'));
+              let ids: string[] = [];
+              const inserted = c.transactV3(document => {
+                ids = dataViewEditingIds.length
+                  ? updateStudioDataView(
+                      document,
+                      dataViewEditingIds,
+                      configuration,
+                      projection,
+                      i18n.language
+                    )
+                  : insertStudioDataView(
+                      document,
+                      page.id,
+                      configuration,
+                      projection,
+                      i18n.language
+                    );
+              });
+              if (!inserted)
+                throw new DataViewInsertionError(t('features.studio.dataImport.invalid'));
+              c.selectExact(ids);
+              setSelectionState({
+                ...emptyStudioSelection(),
+                nodeIds: ids,
+                // A valid import always creates its title and data content nodes.
+                primaryId: ids[0],
+              });
+            }}
+          />
+        )}
         <StudioPanel panelKey="theme" label={tr('theme')} toolbarTrigger={false}>
           <section className="space-y-4 p-2">
             <label className="block space-y-1 text-sm">
@@ -2173,18 +2325,58 @@ function StudioEditorReady({
           </section>
         </StudioPanel>
         <ToolbarGroup>
-          <ToolbarButton
-            data-action-kind="interaction"
-            data-action-id="communication-studio.preview.open"
+          <StudioToolbarMenu
+            label={tr(visiblePreviewFrames.length ? 'preview' : 'noVisibleFrames')}
             tooltip={tr(visiblePreviewFrames.length ? 'preview' : 'noVisibleFrames')}
+            icon={<Play />}
+            triggerRef={previewButton}
             disabled={!visiblePreviewFrames.length}
-            onClick={event => {
-              previewButton.current = event.currentTarget as HTMLElement;
-              setPreviewOpen(true);
+            onCloseAutoFocus={event => {
+              if (previewOpen) event.preventDefault();
             }}
           >
-            <Play />
-          </ToolbarButton>
+            <div
+              data-action-id="communication-studio.preview.keyboard"
+              onKeyDown={event => {
+                if (event.key === 'Tab') event.stopPropagation();
+              }}
+            >
+              <fieldset disabled={disabled} className="w-72 max-w-full p-3">
+                <label className="block space-y-1 text-sm">
+                  <span>{t('features.studio.eventLive.order')}</span>
+                  <select
+                    autoFocus={!disabled}
+                    data-action-id="studio.live.select10.change"
+                    className={input + ' w-full'}
+                    value={c.v3Value?.show?.order ?? 'agenda'}
+                    onKeyDown={event => {
+                      if (event.key !== 'Escape') {
+                        event.stopPropagation();
+                      }
+                    }}
+                    onChange={event => {
+                      const order = event.target.value as 'agenda' | 'manual';
+                      c.transactV3(document => {
+                        document.show ??= { order: 'agenda', cues: [] };
+                        document.show.order = order;
+                      });
+                    }}
+                  >
+                    <option value="agenda">{t('features.studio.eventLive.agendaOrder')}</option>
+                    <option value="manual">{t('features.studio.eventLive.manualOrder')}</option>
+                  </select>
+                </label>
+              </fieldset>
+              <DropdownMenuSeparator />
+              <StudioMenuItem
+                data-action-id="communication-studio.preview.open"
+                label={tr('startPreview')}
+                icon={<Play />}
+                tabIndex={0}
+                onSelect={() => setPreviewOpen(true)}
+              />
+            </div>
+          </StudioToolbarMenu>
           <ToolbarButton
             data-action-kind="interaction"
             tooltip={tr('guides')}
@@ -2218,7 +2410,9 @@ function StudioEditorReady({
                     c.exportPreparing ||
                     !c.exportFrameIds.length
                   }
-                  onClick={c.exportMedia}
+                  onClick={() =>
+                    void c.exportMedia(portraitPreview ? { portrait: true } : undefined)
+                  }
                 >
                   {c.exportPreparing ? tr('preparingExport') : tr('export')}
                 </button>
@@ -2466,7 +2660,7 @@ function StudioEditorReady({
           </section>
         )}
         <div className="min-h-0 flex-1">
-          <Suspense fallback={<p>{tr('loading')}</p>}>
+          <Suspense fallback={<StudioLoadingScreen label={tr('loading')} />}>
             <KonvaStudioCanvas
               ref={attachCanvas}
               key={`${projectId}:content`}

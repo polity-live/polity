@@ -2,10 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   archiveDataset,
+  prepareDatasetRawDownload,
   createDataViewProjection,
   createProviderSnapshot,
+  prepareProviderDataset,
   loadDatasetColumnValues,
   loadDatasetDetails,
+  loadDatasetPreview,
   searchDatasetCatalog,
   searchDatasets,
   uploadDataset,
@@ -22,9 +25,87 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
 });
 
+it('loads the selected private snapshot and forwards the complete preview request with cancellation', async () => {
+  const preview = { columns: ['year'], rows: [{ year: 2025 }] };
+  fetchMock.mockResolvedValue(response(preview));
+  const controller = new AbortController();
+  await loadDatasetDetails('dataset/1', 'token', 'snapshot/1', controller.signal);
+  expect(fetchMock.mock.calls[0][0]).toBe(
+    '/api/datasets/dataset%2F1/details?snapshotId=snapshot%2F1'
+  );
+  const request = {
+    provider: 'EUROSTAT' as const,
+    providerDatasetId: 'demo',
+    language: 'de',
+    filters: { area: 'DE' },
+  };
+  await expect(loadDatasetPreview(request, 'token', controller.signal)).resolves.toEqual(preview);
+  const [url, init] = fetchMock.mock.calls[1];
+  expect(url).toBe('/api/datasets/preview');
+  expect(JSON.parse(init.body)).toEqual(request);
+  expect(init.signal).toBe(controller.signal);
+  expect(new Headers(init.headers).get('Authorization')).toBe('Bearer token');
+});
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe('dataset client contracts', () => {
+  it('encodes explicit search scope and cancellation for plain dataset searches', async () => {
+    fetchMock.mockResolvedValue(response([]));
+    const controller = new AbortController();
+    const filters = { area: 'Germany', period: { start: 2024, end: 2025 } };
+    await searchDatasets({
+      query: 'population',
+      providers: [],
+      filters,
+      signal: controller.signal,
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(new URL(url, 'https://polity.test').searchParams.get('filters')!)).toEqual(
+      filters
+    );
+    expect(init.signal).toBe(controller.signal);
+  });
+  it('sends scope and cancellation through preparation and snapshot requests', async () => {
+    fetchMock.mockResolvedValue(response({ ok: true }));
+    const controller = new AbortController();
+    const request = {
+      provider: 'EUROSTAT' as const,
+      code: 'UNE_RT_A',
+      language: 'de' as const,
+      filters: {
+        area: 'Deutschland',
+        period: { start: 2024, end: 2025 },
+        dimensions: { unit: 'THS_PER' },
+      },
+    };
+    await prepareProviderDataset(request, 'token', controller.signal);
+    await createProviderSnapshot(request, 'token', controller.signal);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/datasets/prepare',
+      '/api/datasets/snapshots',
+    ]);
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(JSON.parse(init.body)).toEqual(request);
+      expect(init.signal).toBe(controller.signal);
+    }
+  });
+  it('preserves explicit disabled filters and forwards abort signals', async () => {
+    fetchMock.mockResolvedValue(response({ results: [], errors: [] }));
+    const controller = new AbortController();
+    const filters = { area: 'Recklinghausen', period: null };
+    await searchDatasetCatalog({
+      query: 'Arbeitslose 2025 Deutschland',
+      providers: ['GOVDATA'],
+      filters,
+      signal: controller.signal,
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(new URL(url, 'http://localhost').searchParams.get('filters')!)).toEqual(
+      filters
+    );
+    expect(init.signal).toBe(controller.signal);
+  });
   it('encodes search filters and authentication for result and catalog searches', async () => {
     fetchMock
       .mockResolvedValueOnce(response([{ id: 'dataset-1' }]))
@@ -160,4 +241,34 @@ describe('dataset client contracts', () => {
       'Bearer token'
     );
   });
+});
+
+it('prepares a complete raw download using identity only, with auth and cancellation', async () => {
+  fetchMock.mockResolvedValue(
+    response({
+      url: '/api/datasets/raw-download?ticket=test',
+      fileName: 'data.csv',
+      kind: 'provider',
+      fullDataset: true,
+    })
+  );
+  const controller = new AbortController();
+  const selected = {
+    provider: 'GENESIS_DESTATIS' as const,
+    providerDatasetId: '13211-0002',
+    language: 'de' as const,
+    filters: { area: 'Deutschland' },
+    rowFilters: { metric: 'rate' },
+    timeRange: { startYear: 2025, endYear: 2025 },
+  };
+  await prepareDatasetRawDownload(selected, 'token', controller.signal);
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe('/api/datasets/raw-download');
+  expect(JSON.parse(init.body)).toEqual({
+    provider: 'GENESIS_DESTATIS',
+    providerDatasetId: '13211-0002',
+    language: 'de',
+  });
+  expect(new Headers(init.headers).get('Authorization')).toBe('Bearer token');
+  expect(init.signal).toBe(controller.signal);
 });

@@ -40,7 +40,7 @@ function verifySuites(suites, suffix, expectedTotal) {
 
 verifySuites(manifest.componentFlow, '.component-flow.test.tsx', 87);
 verifySuites(manifest.serviceIntegration, '.service-integration.test.ts', 13);
-verifySuites(manifest.databaseIntegration, '.database-integration.test.ts', 9);
+verifySuites(manifest.databaseIntegration, '.database-integration.test.ts', 12);
 
 let prCount = 0;
 let nightlyCount = 0;
@@ -85,7 +85,7 @@ for (const file of allE2E) {
   if (cases.length > 0) acceptanceFiles.push(file);
   acceptanceCases += cases.length;
 }
-failUnless(acceptanceCases === 10, `expected 10 acceptance flows, found ${acceptanceCases}`);
+failUnless(acceptanceCases === 11, `expected 11 acceptance flows, found ${acceptanceCases}`);
 failUnless(
   JSON.stringify(acceptanceFiles.sort()) === JSON.stringify([...manifest.acceptance].sort()),
   'acceptance flow file set differs from the canonical campaign manifest'
@@ -102,5 +102,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Flow-test campaign audit passed: 87 component flow, 13 service integration, 9 database integration, 20 PR E2E, 10 nightly E2E, and 10 acceptance flows (139 total).'
+  'Flow-test campaign audit passed: 87 component flow, 13 service integration, 12 database integration, 20 PR E2E, 10 nightly E2E, and 11 acceptance flows (143 total).'
 );

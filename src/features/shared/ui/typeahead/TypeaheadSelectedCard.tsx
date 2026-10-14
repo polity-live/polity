@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Badge } from '@/features/shared/ui/ui/badge';
@@ -22,7 +23,9 @@ import { isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx'
 interface TypeaheadSelectedCardProps {
   item: TypeaheadItem;
   variant: 'compact' | 'stacked';
-  onRemove: () => void;
+  onRemove?: () => void;
+  children?: ReactNode;
+  badgeLabel?: ReactNode;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
   disabled?: boolean;
@@ -32,6 +35,8 @@ export function TypeaheadSelectedCard({
   item,
   variant,
   onRemove,
+  children,
+  badgeLabel,
   className,
   onClick,
   disabled = false,
@@ -89,15 +94,16 @@ export function TypeaheadSelectedCard({
                 data-slot="typeahead-entity-badge"
                 className={cn('text-[10px]', toneClasses.badge)}
               >
-                {getTypeaheadEntityLabel(item.entityType)}
+                {badgeLabel ?? getTypeaheadEntityLabel(item.entityType)}
               </Badge>
             </div>
             {item.secondaryLabel ? (
               <p className="text-muted-foreground mt-0.5 truncate text-xs">{item.secondaryLabel}</p>
             ) : null}
           </div>
-          {disabled ? null : (
+          {disabled || !onRemove ? null : (
             <button
+              data-action-id="shared.typeahead-selected-card.activate.button"
               type="button"
               onClick={e => {
                 e.preventDefault();
@@ -140,6 +146,7 @@ export function TypeaheadSelectedCard({
             ))}
           </div>
         ) : null}
+        {children ? <div className="mt-3">{children}</div> : null}
       </div>
     </div>
   );

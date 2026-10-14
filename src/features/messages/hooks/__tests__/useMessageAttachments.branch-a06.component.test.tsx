@@ -172,6 +172,27 @@ describe('useMessageAttachments exhaustive branches', () => {
     expect(result.current.selectedAttachments).toEqual([]);
   });
 
+  it('preserves an already empty selection on mount, clear and conversation changes', () => {
+    let renders = 0;
+    const { result, rerender } = renderHook(
+      ({ resetKey }) => {
+        renders++;
+        return useMessageAttachments(resetKey, false);
+      },
+      { initialProps: { resetKey: 'first' } }
+    );
+    expect(renders).toBe(1);
+    const emptySelection = result.current.selectedAttachments;
+    act(() => result.current.clearAttachments());
+    expect(renders).toBe(1);
+    expect(result.current.selectedAttachments).toBe(emptySelection);
+    rerender({ resetKey: 'second' });
+    expect(renders).toBe(2);
+    expect(result.current.selectedAttachments).toBe(emptySelection);
+    expect(mocks.search).toHaveBeenLastCalledWith('', undefined, false);
+    expect(mocks.voteState).toHaveBeenLastCalledWith({ includeVotesWithDetails: false });
+  });
+
   it('adds successful uploads, tolerates individual failures and leaves all-failure state unchanged', async () => {
     const first = new File(['one'], 'one.txt');
     const second = new File(['two'], 'two.txt');

@@ -438,17 +438,11 @@ export const eventQueries = {
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
-  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→votes+election, roles */
-  /** Event metadata and permitted attendance for the separate full agenda projection. */
+  /** Agenda metadata and permitted attendance, without unused event-level roles. */
   forAgenda: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    buildEventDetailBase(id, userID).related('roles', roleQuery =>
-      roleQuery.whereExists(
-        'event',
-        event => applyEventManagerQueryAccess(event, userID, 'manage_participants'),
-        { flip: false }
-      )
-    )
+    buildEventDetailBase(id, userID)
   ),
+  /** Deep event detail with the complete agenda and protected event-level roles. */
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     buildEventDetailBase(id, userID)
       .related('agenda_items', agendaItemQuery =>
@@ -1124,12 +1118,24 @@ export const eventQueries = {
       let q = zql.group_connection
         .where(({ or, exists }: any) =>
           or(
-            exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('from_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('from_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('to_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            })
           )
         )
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))

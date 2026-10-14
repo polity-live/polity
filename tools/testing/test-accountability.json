@@ -27479,7 +27479,7 @@
       {
         "file": "src/server/datasets/__tests__/genesis.unit.test.ts",
         "project": "unit",
-        "caseId": "does not call GENESIS for blank or one-character terms",
+        "caseId": "skips short queries and requires a configured token",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "direct",
@@ -30360,6 +30360,11 @@
       }
     ],
     "src/zero/rbac/query-access.ts": [
+      {
+        "file": "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies every row including the nil UUID while retaining contradictory primary-key predicates"
+      },
       {
         "file": "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
         "project": "unit",
@@ -36527,6 +36532,64 @@
           "relation": "dynamic-direct",
           "report": "coverage/coverage-final.json"
         }
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": ["loading", "error", "success", "disabled"]
+      }
+    ],
+    "src/features/charts/logic/datasetTableSelection.ts": [
+      {
+        "file": "src/features/charts/logic/__tests__/datasetTableSelection.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains filters on hidden columns and removes axes and series excluded from the selected columns",
+        "scenarios": ["success"]
+      }
+    ],
+    "src/features/charts/logic/datasetPreviewColumns.ts": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "shows names, a separate type row, five samples, missing values and a technical-column toggle",
+        "scenarios": ["success"]
+      }
+    ],
+    "src/features/charts/logic/datasetNumbers.ts": [
+      {
+        "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "project": "unit",
+        "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows",
+        "scenarios": ["success"]
+      },
+      {
+        "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "project": "unit",
+        "caseId": "bounds predicates in API validation and retains them for chart and table requests",
+        "scenarios": ["success", "error"]
+      }
+    ],
+    "src/features/charts/logic/datasetRowConditions.ts": [
+      {
+        "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "project": "unit",
+        "caseId": "combines selected values, numeric ranges, text and existing year filters over all rows",
+        "scenarios": ["success"]
+      },
+      {
+        "file": "src/server/datasets/__tests__/previewRows.unit.test.ts",
+        "project": "unit",
+        "caseId": "bounds predicates in API validation and retains them for chart and table requests",
+        "scenarios": ["success", "error"]
       }
     ]
   },
@@ -47421,6 +47484,576 @@
         "project": "component",
         "caseId": "opens, cancels, and confirms agenda transfer with isolated controller effects",
         "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSamplePreview.tsx#charts.dataset-sample.columns.toggle-technical": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "shows names, a separate type row, five samples, missing values and a technical-column toggle",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetSamplePreview.tsx#charts.dataset-sample.request.retry": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetSamplePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps sample loading, empty and error states independent of a chart",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDatasetEditButton.tsx#communication-studio.dataset.edit.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the saved data editor with keyboard focus and prevents disabled edits",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.dataset.edit.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDatasetEditButton.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the saved data editor with keyboard focus and prevents disabled edits",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.column.sort": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.column.filter": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.operator": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.find-value": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.value": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.contains": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.min": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.max": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.clear": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filter.apply": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.scope.area": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.scope.start": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.scope.end": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.scope.apply": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.columns.open": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.columns.technical": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.columns.toggle": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.filters.clear": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.request.retry": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "recovers from a sample failure and adopts header filters without a required measure or draft quick scope",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.back": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.apply": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "virtualizes and pages the table, filters actual values and adopts columns at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      },
+      {
+        "file": "src/features/charts/ui/__tests__/DataViewDialog.model.component.test.tsx",
+        "project": "component",
+        "caseId": "refuses the adopted selection when access to the saved snapshot is denied",
+        "scenarios": ["unauthorized", "error", "disabled"]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.explore-dataset": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "returns from full-screen exploration to the same Studio dataset without inserting or changing it",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.column.hide": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps filter actions in view for 100 long values and hides a filtered column at width %s",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetExplorer.tsx#charts.dataset-explorer.scope.clear": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetExplorer.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "removes quick scope without removing manual filters and lets a header replace quick geography",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DataViewDialogView.tsx#charts.data-view.dataset-info": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataViewDialog.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "reopens the precise monthly snapshot in Strict Mode at width %s with filtered sample rows",
+        "scenarios": [
+          "idle",
+          "selected",
+          "unselected",
+          "loading",
+          "success",
+          "error",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetProcessingError.tsx#charts.dataset-processing-error.download": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps import and download failures separate, preserves source access, and retries the exact identity",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "selected",
+          "unselected",
+          "keyboard",
+          "focus",
+          "navigation",
+          "authorized",
+          "redirect",
+          "deep-link"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetProcessingError.tsx#charts.dataset-processing-error.retry": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "preserves the original upload File and offers keyboard-operable recovery at width %s",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "selected",
+          "unselected",
+          "keyboard",
+          "focus",
+          "navigation",
+          "authorized",
+          "redirect",
+          "deep-link"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetProcessingError.tsx#charts.dataset-processing-error.source": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "keeps import and download failures separate, preserves source access, and retries the exact identity",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "selected",
+          "unselected",
+          "keyboard",
+          "focus",
+          "navigation",
+          "authorized",
+          "redirect",
+          "deep-link"
+        ]
+      }
+    ],
+    "src/features/charts/ui/DatasetProcessingError.tsx#charts.dataset-processing-error.start-ready": [
+      {
+        "file": "src/features/charts/ui/__tests__/DatasetProcessingError.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "labels stored CSV separately and still provides a native link when popups are blocked",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "selected",
+          "unselected",
+          "keyboard",
+          "focus",
+          "navigation",
+          "authorized",
+          "redirect",
+          "deep-link"
+        ]
       }
     ]
   },

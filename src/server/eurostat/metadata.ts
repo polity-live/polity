@@ -82,18 +82,79 @@ function getDimensionDefinitions(structure: Record<string, any>) {
   );
 }
 
+function timeRangeValues(time: Record<string, any>) {
+  const parsePeriod = (value: unknown) => {
+    const period = String((value as any)?.['#text'] ?? value ?? '');
+    const match = period.match(/^((?:18|19|20|21)\d{2})(?:-(\d{2})|-Q([1-4]))?$/);
+    if (match) {
+      const year = Number(match[1]);
+      if (match[2] && (Number(match[2]) < 1 || Number(match[2]) > 12)) return null;
+      const frequency = match[3] ? 4 : match[2] ? 12 : 1;
+      return { frequency, index: year * frequency + Number(match[3] ?? match[2] ?? 1) - 1 };
+    }
+    if (/^(?:18|19|20|21)\d{2}-\d{2}-\d{2}$/.test(period) && Number.isFinite(Date.parse(period)))
+      return { frequency: 0, index: Date.parse(period) / 86400000 };
+    return null;
+  };
+  const start = parsePeriod(time.StartPeriod);
+  const end = parsePeriod(time.EndPeriod);
+  if (!start || !end || start.frequency !== end.frequency || end.index < start.index) return [];
+  const first =
+    start.index + (String(time.StartPeriod?.['@_isInclusive'] ?? 'true') === 'false' ? 1 : 0);
+  const last =
+    end.index - (String(time.EndPeriod?.['@_isInclusive'] ?? 'true') === 'false' ? 1 : 0);
+  return Array.from({ length: Math.max(0, last - first + 1) }, (_, offset) => {
+    const index = first + offset;
+    if (start.frequency === 0) return new Date(index * 86400000).toISOString().slice(0, 10);
+    const year = Math.floor(index / start.frequency);
+    if (start.frequency === 1) return String(year);
+    return start.frequency === 4
+      ? `${year}-Q${(index % 4) + 1}`
+      : `${year}-${String((index % 12) + 1).padStart(2, '0')}`;
+  });
+}
+
+export function getEurostatConstraintRegions(constraint: Record<string, any>) {
+  return asArray<Record<string, any>>(
+    constraint?.Structure?.Structures?.Constraints?.ContentConstraint
+  )
+    .flatMap(item => asArray<Record<string, any>>(item.CubeRegion))
+    .map(region => {
+      const values = Object.fromEntries(
+        asArray<Record<string, any>>(region.KeyValue).map(key => [
+          String(key['@_id'] ?? ''),
+          asArray<any>(key.Value).map(value => String(value?.['#text'] ?? value)),
+        ])
+      );
+      for (const time of asArray<Record<string, any>>(region.TimeRange)) {
+        values.TIME_PERIOD = [
+          ...new Set([...(values.TIME_PERIOD ?? []), ...timeRangeValues(time)]),
+        ];
+      }
+      return { included: String(region['@_include'] ?? 'true') !== 'false', values };
+    });
+}
+
 function getConstraintDimensions(
   constraint: Record<string, any>,
   definitions: ReturnType<typeof getDimensionDefinitions>,
   codelists: ReturnType<typeof getCodelists>
 ): EurostatDimension[] {
-  const keyValues = asArray<Record<string, any>>(
-    constraint?.Structure?.Structures?.Constraints?.ContentConstraint?.CubeRegion?.KeyValue
-  );
+  const regions = getEurostatConstraintRegions(constraint).filter(item => item.included);
+  const byId = new Map<string, Set<string>>();
+  for (const region of regions) {
+    for (const [id, periods] of Object.entries(region.values)) {
+      if (!id) continue;
+      const values = byId.get(id) ?? new Set<string>();
+      for (const value of periods) values.add(value);
+      byId.set(id, values);
+    }
+  }
+  const keyValues = [...byId].map(([id, values]) => ({ '@_id': id, Value: [...values] }));
 
   return keyValues
     .map((keyValue, index) => {
-      const id = String(keyValue['@_id'] ?? '');
+      const id = keyValue['@_id'];
       const definition = definitions.get(id);
       const codelist = definition?.codelistId ? codelists.get(definition.codelistId) : undefined;
       return {
@@ -170,21 +231,23 @@ export function estimateEurostatDatasetBytes(valueCount: number, sampleRowBytes:
   return Math.ceil(valueCount * (sampleRowBytes + 128) * 1.2);
 }
 
-export async function getEurostatDatasetDetails(code: string, language = 'en') {
+export async function getEurostatDatasetMetadata(
+  code: string,
+  language = 'en',
+  signal?: AbortSignal,
+  entry?: import('@/features/charts/types').EurostatCatalogueEntry
+) {
   const normalizedCode = code.trim().toUpperCase();
-  const cacheKey = `${normalizedCode}:${language}`;
-  const cached = cache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.details;
-  }
-
-  const catalogueEntry = await findEurostatCatalogueEntry(normalizedCode, language);
+  const catalogueEntry =
+    entry ?? (await findEurostatCatalogueEntry(normalizedCode, language, signal));
   const [structureResponse, constraintResponse] = await Promise.all([
     fetch(
-      `${EUROSTAT_BASE_URL}/sdmx/2.1/datastructure/ESTAT/${encodeURIComponent(normalizedCode)}/latest?references=children`
+      `${EUROSTAT_BASE_URL}/sdmx/2.1/datastructure/ESTAT/${encodeURIComponent(normalizedCode)}/latest?references=children`,
+      { signal }
     ),
     fetch(
-      `${EUROSTAT_BASE_URL}/sdmx/2.1/contentconstraint/ESTAT/${encodeURIComponent(normalizedCode)}/latest`
+      `${EUROSTAT_BASE_URL}/sdmx/2.1/contentconstraint/ESTAT/${encodeURIComponent(normalizedCode)}/latest`,
+      { signal }
     ),
   ]);
   if (!structureResponse.ok || !constraintResponse.ok) {
@@ -200,7 +263,7 @@ export async function getEurostatDatasetDetails(code: string, language = 'en') {
     getDimensionDefinitions(structure),
     getCodelists(structure, language)
   );
-  const sample = await sampleDataset(normalizedCode, dimensions);
+  const sample = { attributes: [] as string[], sampleRowBytes: 256 };
   const estimatedBytes = estimateEurostatDatasetBytes(
     catalogueEntry.valueCount,
     sample.sampleRowBytes
@@ -221,11 +284,23 @@ export async function getEurostatDatasetDetails(code: string, language = 'en') {
     sampleRowBytes: sample.sampleRowBytes,
     estimatedBytes,
     importAllowed: estimatedBytes < MAX_EUROSTAT_DATASET_BYTES,
+    coverageRegions: getEurostatConstraintRegions(constraint),
   };
-  cache.set(cacheKey, {
-    details,
-    expiresAt: Date.now() + DETAILS_CACHE_MS,
-  });
+  return details;
+}
+
+/** Legacy importer keeps its sampling interface; shared dataset search uses metadata only. */
+export async function getEurostatDatasetDetails(code: string, language = 'en') {
+  const cacheKey = `${code.trim().toUpperCase()}:${language}`;
+  const cached = cache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.details;
+  const details = await getEurostatDatasetMetadata(code, language);
+  const sample = await sampleDataset(details.code, details.dimensions);
+  details.attributes = sample.attributes;
+  details.sampleRowBytes = sample.sampleRowBytes;
+  details.estimatedBytes = estimateEurostatDatasetBytes(details.valueCount, sample.sampleRowBytes);
+  details.importAllowed = details.estimatedBytes < MAX_EUROSTAT_DATASET_BYTES;
+  cache.set(cacheKey, { details, expiresAt: Date.now() + DETAILS_CACHE_MS });
   return details;
 }
 

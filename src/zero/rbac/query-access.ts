@@ -6,7 +6,10 @@ export function isAuthenticatedUserId(userID: string | undefined | null): userID
 }
 
 export function denyAllRows<T>(q: T): T {
-  return (q as any).where('id', '__unauthorized__') as T;
+  // Keep denial on the primary-key lookup with valid UUID operands. The
+  // contradiction excludes every row, including a row whose ID is the nil UUID.
+  const nilID = '00000000-0000-0000-0000-000000000000';
+  return (q as any).where('id', nilID).where('id', '!=', nilID) as T;
 }
 
 export function requireQueryUser<T>(q: T, userID: string | undefined | null, field = 'user_id'): T {
@@ -493,6 +496,16 @@ export function applyEventManagerQueryAccess<T>(
 ): T {
   const actions = action === 'manage' ? ['manage'] : ['manage', action];
   return applyEventRoleRightAccess(q, userID, actions);
+}
+
+/** Event presentation editing follows the event's agenda administration rights. */
+export function applyEventStudioManagerQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  return applyEventRoleRightAccess(
+    applyEventQueryAccess(q, userID),
+    userID,
+    ['manage'],
+    ['events', 'agendaItems']
+  );
 }
 
 export function applyEventParticipantOrManagerQueryAccess<T>(

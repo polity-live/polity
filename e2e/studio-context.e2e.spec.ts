@@ -112,12 +112,14 @@ test('shows Studio context and changes the subtitle through a reviewed suggestio
       .getByRole('button', { name: title.name, exact: true })
       .click();
     await page.locator('[data-action-id="project-chat.dock.open"]').click();
+    const prompt = page.locator('[data-action-id="messages.assistant.prompt.change"]');
+    // A new chat becomes usable only after its Zero creation is committed.
+    await prompt.waitFor({ state: 'visible' });
     const context = page
       .getByLabel(/Project context|Projektkontext/)
       .filter({ hasText: `Element · ${title.name}` });
     await expect(context).toContainText(/This project|Dieses Projekt/);
     await expect(context).toContainText(`Element · ${title.name}`);
-    const prompt = page.locator('[data-action-id="messages.assistant.prompt.change"]');
     await prompt.fill('@frame@');
     await expect(
       page.locator('[data-action-id="messages.assistant.suggestion.attachment.select"]')

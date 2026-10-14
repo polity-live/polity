@@ -1,23 +1,23 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 188,
-    "columns": 1941,
-    "primaryKeys": 189,
-    "checks": 178,
-    "foreignKeys": 455,
-    "uniqueConstraints": 72,
-    "uniqueIndexes": 30,
-    "uniqueRules": 102,
-    "indexes": 744,
-    "functions": 128,
-    "triggers": 117,
+    "tables": 197,
+    "columns": 2039,
+    "primaryKeys": 198,
+    "checks": 190,
+    "foreignKeys": 479,
+    "uniqueConstraints": 75,
+    "uniqueIndexes": 31,
+    "uniqueRules": 106,
+    "indexes": 764,
+    "functions": 152,
+    "triggers": 122,
     "policies": 169,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 119,
-    "uniqueViolations": 88
+    "checkViolations": 125,
+    "uniqueViolations": 89
   },
   "globalTests": {
     "catalog": "schema_contract.sql",
@@ -399,6 +399,16 @@
       "source": "74_studio_zero_commands.sql",
       "behavior": ["studio_zero_commands.sql"],
       "securityBehavior": ["studio_zero_commands.sql"]
+    },
+    {
+      "source": "76_group_email_invitations.sql",
+      "behavior": ["group_email_invitations.sql"],
+      "securityBehavior": ["group_email_invitations.sql"]
+    },
+    {
+      "source": "75_event_studio.sql",
+      "behavior": ["event_studio.sql"],
+      "securityBehavior": ["event_studio.sql"]
     }
   ]
 }

@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/server/group-email-invitations.tsx": [
+      {
+        "file": "src/server/__tests__/group-email-invitations.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "invites external users, previews without consumption and accepts atomically after registration"
+      },
+      {
+        "file": "src/server/__tests__/group-email-invitations.unit.test.ts",
+        "project": "unit",
+        "caseId": "reserves half the provider quota and subtracts outstanding batches"
+      }
+    ],
+    "src/features/groups/logic/emailInvitations.ts": [
+      {
+        "file": "src/features/groups/logic/__tests__/emailInvitations.unit.test.ts",
+        "project": "unit",
+        "caseId": "splits mixed lists, normalizes comparisons and preserves provider-specific aliases"
+      }
+    ],
+    "src/features/groups/ui/EmailInvitationInput.tsx": [
+      {
+        "file": "src/features/groups/ui/__tests__/EmailInvitationInput.component.test.tsx",
+        "project": "component",
+        "caseId": "shows invalid entries, removed duplicates, skipped members and the exact quota before sending"
+      }
+    ],
+    "src/features/groups/ui/GroupEmailInvitationsPanel.tsx": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "lists email and delivery states, enforces resend cooldown and manages pending invitations"
+      }
+    ],
+    "src/features/groups/ui/GroupInvitationPage.tsx": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "project": "component",
+        "caseId": "requires explicit acceptance and returns a new account to onboarding with its group destination"
+      }
+    ],
+    "src/features/groups/hooks/useEmailInvitationComposer.ts": [
+      {
+        "file": "src/features/groups/hooks/__tests__/useEmailInvitationComposer.component.test.tsx",
+        "project": "component",
+        "caseId": "previews only valid lists, blocks oversized budgets and reuses request keys after uncertain client failures"
+      }
+    ],
+    "emails/group-invitation.tsx": [
+      {
+        "file": "src/server/__tests__/group-invitation-email.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a personal %s invitation without newsletter subscription claims"
+      }
+    ],
+    "src/routes/invite/$token.tsx": [
+      {
+        "file": "src/routes/__tests__/group-invitation-route.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps invitation tokens out of referrers/search indexing and passes the exact route token to the invitation page"
+      },
+      {
+        "file": "e2e/group-email-invitations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "admin invites two new accounts and each explicitly accepts its personal link @acceptance",
+        "evidence": {
+          "relation": "direct",
+          "description": "Opens personal invitation routes and explicitly accepts with two authenticated accounts."
+        }
+      }
+    ],
+    "src/routes/api/groups/$groupId/email-invitations.ts": [
+      {
+        "file": "src/routes/__tests__/group-email-invitation-routes.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the original authenticated %s request and group identity at the invitation boundary",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises GET and POST delegation with the original authorization request and unchanged denied response."
+        }
+      }
+    ],
+    "src/routes/api/invitations/$token.ts": [
+      {
+        "file": "src/routes/__tests__/group-email-invitation-routes.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves the original %s request and personal token at the invitation acceptance boundary",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises GET and POST delegation with the personal token and unchanged expired response."
+        }
+      }
+    ],
+    "src/i18n/locales/de/features/groups/emailInvitations.ts": [
+      {
+        "file": "src/features/groups/logic/__tests__/emailInvitations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps every invitation state and error translated in German and English"
+      }
+    ],
+    "src/i18n/locales/en/features/groups/emailInvitations.ts": [
+      {
+        "file": "src/features/groups/logic/__tests__/emailInvitations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps every invitation state and error translated in German and English"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/groups/ui/GroupInvitationPage.tsx#groups.email-invitations.sign-in": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "project": "component",
+        "caseId": "shows only the masked recipient and preserves the personal link through registration",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupInvitationPage.tsx#groups.email-invitations.sign-up": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "project": "component",
+        "caseId": "shows only the masked recipient and preserves the personal link through registration",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/GroupInvitationPage.tsx#groups.email-invitations.switch-account": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "project": "component",
+        "caseId": "offers account switching for a mismatch and hides acceptance for expired links",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/groups/ui/GroupInvitationPage.tsx#groups.email-invitations.accept": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupInvitationPage.component.test.tsx",
+        "project": "component",
+        "caseId": "requires explicit acceptance and returns a new account to onboarding with its group destination",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/groups/ui/GroupEmailInvitationsPanel.tsx#groups.email-invitations.resend": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "lists email and delivery states, enforces resend cooldown and manages pending invitations",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/groups/ui/GroupEmailInvitationsPanel.tsx#groups.email-invitations.revoke": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "lists email and delivery states, enforces resend cooldown and manages pending invitations",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/groups/ui/GroupEmailInvitationsPanel.tsx#groups.email-invitations.retry": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupEmailInvitationsPanel.component.test.tsx",
+        "project": "component",
+        "caseId": "lists email and delivery states, enforces resend cooldown and manages pending invitations",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/InviteMembersDialogView.tsx#groups.email-invitations.mode": [
+      {
+        "file": "e2e/group-email-invitations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "admin invites two new accounts and each explicitly accepts its personal link @acceptance",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/groups/ui/EmailInvitationInput.tsx#groups.email-invitations.new-list": [
+      {
+        "file": "src/features/groups/ui/__tests__/EmailInvitationInput.component.test.tsx",
+        "project": "component",
+        "caseId": "shows named cards, removes draft recipients and displays mixed sending results without claiming delivery",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/groups/ui/EmailInvitationInput.tsx#groups.email-invitations.list-retry": [
+      {
+        "file": "src/features/groups/ui/__tests__/EmailInvitationInput.component.test.tsx",
+        "project": "component",
+        "caseId": "offers keyboard retry for failed open-list loading and disables duplicate checks until completion",
+        "scenarios": [
+          "idle",
+          "loading",
+          "success",
+          "error",
+          "unauthorized",
+          "disabled",
+          "keyboard",
+          "focus"
+        ]
+      }
+    ]
+  }
+}

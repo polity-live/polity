@@ -6,6 +6,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 export interface UserTableCellProps {
   user?: ParticipationUserLike | null;
   displayName?: string | null;
+  secondaryLabel?: string | null;
   fallbackLabel?: string;
 }
 
@@ -35,11 +36,17 @@ function getInitials(name: string) {
   return initials || 'U';
 }
 
-export function UserTableCell({ user, displayName, fallbackLabel }: UserTableCellProps) {
+export function UserTableCell({
+  user,
+  displayName,
+  secondaryLabel,
+  fallbackLabel,
+}: UserTableCellProps) {
   const { t } = useTranslation();
   const resolvedDisplayName =
     getDisplayName(user, displayName) || fallbackLabel || t('common.unknownUser');
   const linkUserId = user?.id || null;
+  const resolvedSecondaryLabel = secondaryLabel ?? (user?.handle ? `@${user.handle}` : null);
 
   if (linkUserId) {
     return (
@@ -54,8 +61,8 @@ export function UserTableCell({ user, displayName, fallbackLabel }: UserTableCel
         </Avatar>
         <div className="group-hover:underline">
           <div className="font-medium">{resolvedDisplayName}</div>
-          {user?.handle ? (
-            <div className="text-muted-foreground text-sm">@{user.handle}</div>
+          {resolvedSecondaryLabel ? (
+            <div className="text-muted-foreground text-sm">{resolvedSecondaryLabel}</div>
           ) : null}
         </div>
       </Link>
@@ -70,7 +77,9 @@ export function UserTableCell({ user, displayName, fallbackLabel }: UserTableCel
       </Avatar>
       <div>
         <div className="font-medium">{resolvedDisplayName}</div>
-        {user?.handle ? <div className="text-muted-foreground text-sm">@{user.handle}</div> : null}
+        {resolvedSecondaryLabel ? (
+          <div className="text-muted-foreground text-sm">{resolvedSecondaryLabel}</div>
+        ) : null}
       </div>
     </div>
   );

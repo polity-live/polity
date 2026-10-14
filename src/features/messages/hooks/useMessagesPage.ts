@@ -56,6 +56,12 @@ export function useMessagesPage() {
     useConversationSelection(conversations, {
       openAriaKai: shouldOpenAriaKai,
       restoreOnNavigation: true,
+      // Consuming a ready, authorized deep link stores the same selection with
+      // its URL replacement. Avoid a second router notification beforehand.
+      persistSelection:
+        isLoading ||
+        !searchParams.conversationId ||
+        !conversations.some(conversation => conversation.id === searchParams.conversationId),
       viewerID: user?.id,
       initialConversationID: searchParams.conversationId,
     });

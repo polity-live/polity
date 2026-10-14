@@ -2,7 +2,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import './studio-fonts.css';
 import './studio-canvas.css';
 import { canvasFocusTarget, canvasFocusView, freeCanvasRectangle } from '../logic/canvas-focus';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import React from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 const {
@@ -28,7 +28,7 @@ import {
   Transformer,
   Text,
 } from 'react-konva';
-import type Konva from 'konva';
+import Konva from 'konva';
 import { CanvasChangeRequestMarker } from '@/features/shared/ui/change-requests/CanvasChangeRequestMarker';
 import type { StudioChangeRequestAnnotation } from '../logic/change-request-annotations';
 import type { StudioAsset } from '../hooks/useStudioDocument';
@@ -40,6 +40,7 @@ import type {
   FrameNode,
 } from '../logic/document-v3';
 import { studioSceneChildren, studioScenePaintOrder } from '../logic/studio-scene';
+import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import { paintStudioRichText } from '../logic/rich-text-paint';
 import { isDescendantOf, worldBounds, type Bounds } from '../logic/selection-geometry';
 import { studioCanvasSelectionBounds } from '../logic/canvas-selection-bounds';
@@ -76,6 +77,9 @@ import {
 import type { StudioTextSelectionEditor } from './StudioTextEditor';
 import { StudioInlineTextEditor } from './StudioInlineTextEditor';
 import type { StudioTool } from '../state/studio-viewport-store';
+import { StudioIntroBackground } from './StudioIntroBackground';
+import { frameIntro } from '../logic/event-intro';
+import type { StudioThemeSnapshot } from '../logic/theme';
 
 export interface StudioCanvasNodeChange {
   nodeId: string;
@@ -90,6 +94,10 @@ export interface StudioCanvasNodeChange {
     crop?: StudioMediaCrop | null;
   };
   style?: Partial<StudioNode['style']>;
+}
+
+export interface StudioCanvasChangeContext {
+  source: 'drag' | 'transform';
 }
 
 export interface StudioCanvasState {
@@ -130,12 +138,19 @@ export interface StudioCanvasHandle {
 }
 
 interface Props {
+  showCue?: string;
+  /** Local preview timeline; omitted for audience playback. */
+  showPosition?: number;
+  clockOffset?: number;
   document: StudioDocumentV3;
   activeFrameId: string;
   assets: StudioAsset[];
   selected: string[];
   selectExact?: (ids: string[]) => void;
-  applyCanvasChanges?: (changes: StudioCanvasNodeChange[]) => void;
+  applyCanvasChanges?: (
+    changes: StudioCanvasNodeChange[],
+    context?: StudioCanvasChangeContext
+  ) => void;
   onNodeDragMove?: (
     nodeId: string,
     selectedIds: string[],
@@ -247,6 +262,49 @@ function DirectText({ node }: { node: RichTextNode }) {
   );
 }
 
+function DirectData({ node }: { node: Extract<StudioNode, { type: 'chart' | 'table' }> }) {
+  const shape = useRef<Konva.Shape>(null);
+  const element = semanticElement(node) as StudioElement;
+  const family = element.chart?.fontFamily ?? element.font;
+  useEffect(() => {
+    if (!document.fonts) return;
+    let cancelled = false;
+    const redraw = () => {
+      if (!cancelled) shape.current?.getLayer()?.batchDraw();
+    };
+    // Canvas text does not repaint automatically when a web font finishes loading.
+    void Promise.all([
+      document.fonts.load(`400 12px "${family}"`),
+      document.fonts.load(`700 12px "${family}"`),
+    ]).then(redraw, redraw);
+    return () => {
+      cancelled = true;
+    };
+  }, [family]);
+  return (
+    <Shape
+      ref={shape}
+      width={node.transform.width}
+      height={node.transform.height}
+      fill="#000000"
+      sceneFunc={context =>
+        drawStudioElement((context as unknown as { _context: CanvasRenderingContext2D })._context, {
+          ...element,
+          x: 0,
+          y: 0,
+          rotation: 0,
+          opacity: 1,
+        })
+      }
+      hitFunc={(context, item) => {
+        context.beginPath();
+        context.rect(0, 0, node.transform.width, node.transform.height);
+        context.fillStrokeShape(item);
+      }}
+    />
+  );
+}
+
 function DirectMedia({
   node,
   url,
@@ -315,11 +373,17 @@ function NodeContent({
   assets,
   frameBackground,
   cropEditing = false,
+  theme,
+  introAnimate = false,
+  clockOffset,
 }: {
   node: StudioNode;
   assets: StudioAsset[];
   frameBackground: string;
   cropEditing?: boolean;
+  theme?: StudioThemeSnapshot;
+  introAnimate?: boolean;
+  clockOffset?: number;
 }) {
   const { width, height } = node.transform;
   const stroke = node.style.stroke ?? undefined;
@@ -332,16 +396,27 @@ function NodeContent({
         : undefined;
   if (node.type === 'frame')
     return (
-      <Rect
-        width={width}
-        height={height}
-        fill={fill ?? frameBackground}
-        stroke={stroke}
-        strokeWidth={node.style.strokeWidth}
-        dash={dash}
-        cornerRadius={node.style.cornerRadius}
-        listening={false}
-      />
+      <>
+        <Rect
+          width={width}
+          height={height}
+          fill={fill ?? frameBackground}
+          stroke={stroke}
+          strokeWidth={node.style.strokeWidth}
+          dash={dash}
+          cornerRadius={node.style.cornerRadius}
+          listening={false}
+        />
+        {theme && (
+          <StudioIntroBackground
+            frame={node}
+            theme={theme}
+            url={assets.find(asset => asset.id === frameIntro(node)?.assetId)?.url}
+            animate={introAnimate}
+            clockOffset={clockOffset}
+          />
+        )}
+      </>
     );
   if (node.type === 'richText') return <DirectText node={node} />;
   if (node.type === 'media')
@@ -433,25 +508,7 @@ function NodeContent({
       />
     );
   if (node.type === 'table' || node.type === 'chart') {
-    const element = semanticElement(node) as StudioElement;
-    return (
-      <Shape
-        width={width}
-        height={height}
-        fill="#000000"
-        sceneFunc={context =>
-          drawStudioElement(
-            (context as unknown as { _context: CanvasRenderingContext2D })._context,
-            { ...element, x: 0, y: 0, rotation: 0, opacity: 1 }
-          )
-        }
-        hitFunc={(context, item) => {
-          context.beginPath();
-          context.rect(0, 0, width, height);
-          context.fillStrokeShape(item);
-        }}
-      />
-    );
+    return <DirectData node={node} />;
   }
   return (
     <Rect
@@ -620,6 +677,130 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const t = useTranslation().t;
     const host = useRef<HTMLDivElement>(null);
     const stage = useRef<Konva.Stage>(null);
+    useEffect(() => {
+      const frame = props.document.nodes.find(
+        n => n.id === props.activeFrameId && n.type === 'frame'
+      );
+      if (
+        !props.showCue ||
+        props.showPosition !== undefined ||
+        (frame?.type === 'frame' &&
+          frameIntro(frame)?.mode !== undefined &&
+          frameIntro(frame)?.mode !== 'static') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      )
+        return;
+      const tweens: Konva.Tween[] = [];
+      const timers: ReturnType<typeof setTimeout>[] = [];
+      const resets: (() => void)[] = [];
+      const pulses: (() => void)[] = [];
+      const paint = requestAnimationFrame(() => {
+        let animationIndex = 0;
+        props.document.nodes.forEach(node => {
+          if (
+            node.type === 'frame' ||
+            !node.visible ||
+            !node.showAnimation ||
+            node.showAnimation.preset === 'none'
+          )
+            return;
+          const target = stage.current?.findOne(`#${node.id}-show`);
+          if (!target) return;
+          const index = animationIndex++;
+          const original = {
+            x: 0,
+            y: 0,
+            opacity: 1,
+            scaleX: 1,
+            scaleY: 1,
+          };
+          resets.push(() => target.setAttrs(original));
+          const spec = node.showAnimation;
+          const slide = spec.preset === 'slide' || spec.preset === 'stagger';
+          if (spec.preset === 'pulse') {
+            const start = performance.now();
+            let id = 0;
+            const pulse = () => {
+              const phase = (performance.now() - start) / (spec.duration * 1000);
+              target.opacity(
+                original.opacity *
+                  (1 - spec.intensity * 0.25 * (0.5 - 0.5 * Math.cos(phase * Math.PI * 2)))
+              );
+              target.getLayer()?.batchDraw();
+              id = requestAnimationFrame(pulse);
+            };
+            id = requestAnimationFrame(pulse);
+            pulses.push(() => cancelAnimationFrame(id));
+            return;
+          }
+          target.opacity(0);
+          if (slide) target.x(original.x + 80 * spec.intensity);
+          const tween = new Konva.Tween({
+            node: target,
+            duration: spec.duration,
+            easing: Konva.Easings.EaseOut,
+            ...original,
+          });
+          tweens.push(tween);
+          if (spec.preset === 'stagger') timers.push(setTimeout(() => tween.play(), index * 90));
+          else tween.play();
+        });
+      });
+      return () => {
+        cancelAnimationFrame(paint);
+        timers.forEach(clearTimeout);
+        pulses.forEach(stop => stop());
+        tweens.forEach(t => t.destroy());
+        resets.forEach(reset => reset());
+      };
+    }, [props.showCue, props.activeFrameId]);
+    useEffect(() => {
+      if (props.showPosition === undefined || !props.showCue) return;
+      const showPosition = props.showPosition;
+      const frame = props.document.nodes.find(
+        n => n.id === props.activeFrameId && n.type === 'frame'
+      );
+      const suppressed =
+        frame?.type === 'frame' &&
+        frameIntro(frame)?.mode !== undefined &&
+        frameIntro(frame)?.mode !== 'static';
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const paint = requestAnimationFrame(() => {
+        let index = 0;
+        for (const node of props.document.nodes) {
+          const spec = node.showAnimation;
+          if (node.type === 'frame' || !node.visible || !spec || spec.preset === 'none') continue;
+          const target = stage.current?.findOne(`#${node.id}-show`);
+          if (!target) continue;
+          const delay = spec.preset === 'stagger' ? index * 0.09 : 0;
+          index++;
+          const time = Math.max(0, showPosition - delay);
+          const progress =
+            suppressed || reduced ? 1 : Math.min(1, time / Math.max(0.001, spec.duration));
+          const eased = 1 - (1 - progress) ** 3;
+          target.setAttrs({
+            x:
+              spec.preset === 'slide' || spec.preset === 'stagger'
+                ? 80 * spec.intensity * (1 - eased)
+                : 0,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity:
+              spec.preset === 'pulse'
+                ? suppressed || reduced
+                  ? 1
+                  : 1 -
+                    spec.intensity *
+                      0.25 *
+                      (0.5 - 0.5 * Math.cos((time / spec.duration) * Math.PI * 2))
+                : eased,
+          });
+          target.getLayer()?.batchDraw();
+        }
+      });
+      return () => cancelAnimationFrame(paint);
+    }, [props.showPosition, props.showCue, props.activeFrameId, props.document]);
     const lower = useRef<Konva.Layer>(null);
     const upper = useRef<Konva.Layer>(null);
     const controls = useRef<Konva.Layer>(null);
@@ -800,13 +981,85 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       () => new Map(paintOrder.map((node, index) => [node.id, index])),
       [paintOrder]
     );
+    const frameLabelElements = useRef(new Map<string, HTMLSpanElement>());
+    const frameLabels = useMemo(() => {
+      if (props.fit === 'contain') return [];
+      const numbers = new Map(
+        getStudioRootFramesInLayerOrder(props.document)
+          .filter(frame => frame.visible)
+          .map((frame, index) => [frame.id, index + 1])
+      );
+      return paintOrder.flatMap(node => {
+        if (node.type !== 'frame' || node.id === props.document.masterLayout.frameId) return [];
+        const number = numbers.get(node.id);
+        return [{ frame: node, text: number ? `${number} · ${node.name}` : node.name }];
+      });
+    }, [paintOrder, props.document, props.fit]);
+    useLayoutEffect(() => {
+      const stageNode = stage.current;
+      if (!stageNode || !frameLabels.length) return;
+      const targets = frameLabels.map(({ frame }) => ({
+        frame,
+        element: frameLabelElements.current.get(frame.id),
+        rendered: stageNode.findOne(`#${frame.id}`),
+      }));
+      const positionLabels = () => {
+        const placed: { left: number; top: number; right: number; bottom: number }[] = [];
+        for (const { frame, element, rendered } of targets) {
+          if (!element || !rendered) continue;
+          // Use the frame's own corners, not its children, and include live drag/resize transforms.
+          const transform = rendered.getAbsoluteTransform();
+          const corners = [
+            { x: 0, y: 0 },
+            { x: frame.transform.width, y: 0 },
+            { x: 0, y: frame.transform.height },
+            { x: frame.transform.width, y: frame.transform.height },
+          ].map(point => transform.point(point));
+          const left = Math.min(...corners.map(point => point.x));
+          const top = Math.min(...corners.map(point => point.y));
+          const right = Math.max(...corners.map(point => point.x));
+          element.style.left = `${left}px`;
+          element.style.maxWidth = `${Math.max(1, right - left)}px`;
+          const width = element.offsetWidth;
+          const height = element.offsetHeight;
+          let bottom = top - 6;
+          // Parent and nested frames can share an origin. Keep each name on its own line.
+          let overlap;
+          do {
+            overlap = placed.find(
+              label =>
+                left < label.right + 2 &&
+                left + width + 2 > label.left &&
+                bottom - height < label.bottom + 2 &&
+                bottom + 2 > label.top
+            );
+            if (overlap) bottom = overlap.top - 2;
+          } while (overlap);
+          element.style.top = `${bottom}px`;
+          placed.push({ left, top: bottom - height, right: left + width, bottom });
+        }
+      };
+      positionLabels();
+      const layers = [lower.current, upper.current];
+      layers.forEach(layer => layer?.on('draw.frameLabels', positionLabels));
+      return () => {
+        layers.forEach(layer => layer?.off('draw.frameLabels', positionLabels));
+      };
+    }, [frameLabels, zoom, pan.x, pan.y, viewport, editing]);
     const editingNode = props.document.nodes.find(
       node => node.id === editing && node.type === 'richText'
     ) as RichTextNode | undefined;
+    const selectedTextNode =
+      props.selected.length === 1
+        ? props.document.nodes.find(
+            node => node.id === props.selected[0] && node.type === 'richText' && !node.locked
+          )
+        : undefined;
+    const hasContextToolbar = Boolean(props.contextToolbar || selectedTextNode);
     const splitIndex = editingNode ? (paintIndex.get(editingNode.id) ?? -1) : Infinity;
     const refreshContextToolbarBounds = useCallback(() => {
       const stageNode = stage.current;
-      if (!stageNode || !props.contextToolbar || !props.selected.length) {
+      if (!stageNode || !hasContextToolbar || !props.selected.length) {
         setContextToolbarBounds(null);
         return;
       }
@@ -818,7 +1071,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           ? current
           : next
       );
-    }, [props.contextToolbar, props.selected, pan.x, pan.y, zoom]);
+    }, [hasContextToolbar, props.selected, pan.x, pan.y, zoom]);
     useLayoutEffect(() => {
       refreshContextToolbarBounds();
     }, [refreshContextToolbarBounds, props.document, viewport]);
@@ -835,7 +1088,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       const observer = new ResizeObserver(resize);
       observer.observe(toolbar);
       return () => observer.disconnect();
-    }, [props.contextToolbar, contextToolbarBounds]);
+    }, [props.contextToolbar, selectedTextNode, editing, contextToolbarBounds]);
 
     useEffect(() => {
       if (!host.current) return;
@@ -1032,11 +1285,22 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       if (!props.selected.includes(pendingTextEdit)) return;
       const node = props.document.nodes.find(candidate => candidate.id === pendingTextEdit);
       if (node?.type !== 'richText') return;
+      if (node.locked || props.selected.length !== 1) {
+        setPendingTextEdit(null);
+        return;
+      }
       setEditing(pendingTextEdit);
       setPendingTextEdit(null);
     }, [pendingTextEdit, props.document, props.editable, props.selected]);
     useEffect(() => {
-      if (editing && (!editingNode || !props.editable || !props.selected.includes(editing)))
+      if (
+        editing &&
+        (!editingNode ||
+          editingNode.locked ||
+          !props.editable ||
+          props.selected.length !== 1 ||
+          !props.selected.includes(editing))
+      )
         setEditing(null);
     }, [editing, editingNode, props.editable, props.selected]);
     useEffect(() => {
@@ -1108,12 +1372,13 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         const top = Math.min(...bounds.map(item => item.top));
         const right = Math.max(...bounds.map(item => item.right));
         const bottom = Math.max(...bounds.map(item => item.bottom));
+        const padding = props.fit === 'contain' && !props.editable ? 0 : 64;
         const next = Math.max(
           0.05,
           Math.min(
             4,
-            (viewport.width - 64) / Math.max(1, right - left),
-            (viewport.height - 64) / Math.max(1, bottom - top)
+            (viewport.width - padding) / Math.max(1, right - left),
+            (viewport.height - padding) / Math.max(1, bottom - top)
           )
         );
         setZoom(next);
@@ -1122,11 +1387,14 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           y: (viewport.height - (top + bottom) * next) / 2,
         });
       },
-      [paintOrder, props.document, props.selected, viewport]
+      [paintOrder, props.document, props.selected, viewport, props.fit, props.editable]
     );
 
     const fitRef = useRef(fit);
     fitRef.current = fit;
+    const activeFrameTransform = props.document.nodes.find(
+      node => node.id === props.activeFrameId
+    )?.transform;
 
     useEffect(() => {
       if (viewport.width <= 1 || viewport.height <= 1) return;
@@ -1135,7 +1403,14 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         initialFit.current = true;
         fitRef.current('all');
       }
-    }, [props.fit, props.activeFrameId, viewport.width, viewport.height]);
+    }, [
+      props.fit,
+      props.activeFrameId,
+      viewport.width,
+      viewport.height,
+      activeFrameTransform?.width,
+      activeFrameTransform?.height,
+    ]);
 
     const startCrop = useCallback(
       async (nodeId: string) => {
@@ -1337,7 +1612,9 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               (node.type === 'richText' &&
                 flattenText(node).toLowerCase().includes(command.query.toLowerCase()))
           );
-          if (found) props.selectExact?.([found.id]);
+          if (found) {
+            props.selectExact?.([found.id]);
+          }
         },
       }),
       [
@@ -1353,10 +1630,26 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       ]
     );
 
-    const openNode = (node: StudioNode) => {
-      if (node.type === 'richText' && props.editable && !node.locked) {
+    const beginTextEdit = (node: StudioNode) => {
+      if (node.type !== 'richText' || !props.editable || node.locked || cropDraft) return;
+      // Mount and focus the editor within the user gesture so mobile browsers open the keyboard.
+      flushSync(() => {
         props.selectExact?.([node.id]);
         setPendingTextEdit(node.id);
+      });
+    };
+    const finishTextEdit = () => {
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && focused.closest('[data-slate-editor="true"]'))
+        focused.blur();
+      setPendingTextEdit(null);
+      setEditing(null);
+      host.current?.focus({ preventScroll: true });
+    };
+    const openNode = (node: StudioNode) => {
+      if (node.type === 'richText') {
+        if (props.selected.length > 1 || !['selection', 'text'].includes(activeTool)) return;
+        beginTextEdit(node);
       }
       if (
         !cropDraft &&
@@ -1364,16 +1657,40 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
         props.editable &&
         !node.locked &&
         (node.mediaType === 'image' || node.mediaType === 'video')
-      )
+      ) {
         void startCrop(node.id);
+      }
     };
     const selectNode = (id: string, shift: boolean) => {
       props.selectExact?.(canvasSelectionIds(props.document, props.selected, id, shift));
     };
+    const clickNode = (
+      node: StudioNode,
+      event: Konva.KonvaEventObject<MouseEvent | TouchEvent>
+    ) => {
+      event.cancelBubble = true;
+      if (
+        !(event.evt.target instanceof HTMLCanvasElement) ||
+        suppressTextClick.current ||
+        spacePressedRef.current ||
+        touchSuppressed.current
+      )
+        return;
+      if (activeTool === 'eraser') props.onDeleteNodes?.([node.id]);
+      else if (activeTool === 'selection' || (activeTool === 'text' && node.type === 'richText')) {
+        activateNodeFrame(node);
+        if (activeTool === 'text' && !node.locked && !event.evt.shiftKey) beginTextEdit(node);
+        else selectNode(node.id, event.evt.shiftKey);
+      }
+    };
 
+    const dragClientPoint = (event: MouseEvent | TouchEvent) =>
+      'changedTouches' in event ? event.changedTouches[0] : event;
     const dragOptions = (driverId: string, clientX: number, clientY: number) => ({
       document: props.document,
-      selected: props.selected,
+      selected: props.selected.includes(driverId)
+        ? props.selected
+        : canvasSelectionIds(props.document, props.selected, driverId, false),
       stage: stage.current,
       driverId,
       clientX,
@@ -1381,6 +1698,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     });
     const beginDragPreview = (driverId: string, clientX: number, clientY: number) => {
       dragPreview.current = createStudioDragPreview(dragOptions(driverId, clientX, clientY));
+      props.selectExact?.(dragPreview.current.selectedIds);
     };
     const updateDragPreview = (driverId: string, clientX: number, clientY: number) => {
       const preview = updateStudioDragPreview({
@@ -1396,6 +1714,31 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
       clearStudioDragPreview(stage.current, dragPreview.current);
       dragPreview.current = null;
     };
+
+    useEffect(() => {
+      const cancel = (event: Event) => {
+        if (event instanceof KeyboardEvent && event.key !== 'Escape') return;
+        const preview = dragPreview.current;
+        if (!preview) {
+          return;
+        } else {
+          event.preventDefault();
+          ignoredFollowerDrags.current.add(preview.driverId);
+          stage.current?.findOne(`#${preview.driverId}`)?.stopDrag();
+          clearStudioDragPreview(stage.current, preview);
+          dragPreview.current = null;
+          props.onNodeDragEnd?.(preview.driverId, preview.selectedIds, Number.NaN, Number.NaN);
+        }
+      };
+      window.addEventListener('pointercancel', cancel, true);
+      window.addEventListener('keydown', cancel, true);
+      window.addEventListener('blur', cancel);
+      return () => {
+        window.removeEventListener('pointercancel', cancel, true);
+        window.removeEventListener('keydown', cancel, true);
+        window.removeEventListener('blur', cancel);
+      };
+    }, [props.onNodeDragEnd]);
 
     const beginCropGesture = (
       nodeId: string,
@@ -1557,6 +1900,17 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 }
               : node;
           const t = renderedNode.transform;
+          const content = (
+            <NodeContent
+              node={renderedNode}
+              assets={props.assets}
+              frameBackground={frameBackground}
+              cropEditing={cropDraft?.nodeId === node.id}
+              theme={props.document.theme}
+              introAnimate={!props.editable && node.id === props.activeFrameId}
+              clockOffset={props.clockOffset}
+            />
+          );
           return (
             <Group
               key={node.id}
@@ -1616,37 +1970,15 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 event.cancelBubble = true;
                 beginCropGesture(node.id, 'pan', event.evt.clientX, event.evt.clientY);
               }}
-              onClick={event => {
-                event.cancelBubble = true;
-                if (
-                  !(event.evt.target instanceof HTMLCanvasElement) ||
-                  suppressTextClick.current ||
-                  spacePressedRef.current ||
-                  touchSuppressed.current
-                )
-                  return;
-                if (activeTool === 'eraser') props.onDeleteNodes?.([node.id]);
-                else if (
-                  activeTool === 'selection' ||
-                  (activeTool === 'text' && node.type === 'richText')
-                ) {
-                  activateNodeFrame(node);
-                  selectNode(node.id, event.evt.shiftKey);
-                  if (
-                    node.type === 'richText' &&
-                    props.editable &&
-                    !node.locked &&
-                    !event.evt.shiftKey
-                  )
-                    setPendingTextEdit(node.id);
-                }
-              }}
+              onClick={event => clickNode(node, event)}
+              onTap={event => clickNode(node, event)}
               onDblClick={event => {
                 event.cancelBubble = true;
                 if (
                   !(event.evt.target instanceof HTMLCanvasElement) ||
                   suppressTextClick.current ||
                   spacePressedRef.current ||
+                  event.evt.shiftKey ||
                   touchSuppressed.current
                 ) {
                   return;
@@ -1655,9 +1987,12 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 }
               }}
               onDblTap={event => {
+                event.cancelBubble = true;
                 if (
                   !(event.evt.target instanceof HTMLCanvasElement) ||
                   suppressTextClick.current ||
+                  spacePressedRef.current ||
+                  event.evt.shiftKey ||
                   touchSuppressed.current
                 ) {
                   return;
@@ -1672,19 +2007,24 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   return;
                 }
                 ignoredFollowerDrags.current.delete(node.id);
-                beginDragPreview(node.id, event.evt.clientX, event.evt.clientY);
+                const point = dragClientPoint(event.evt);
+                beginDragPreview(node.id, point.clientX, point.clientY);
               }}
               onDragMove={event => {
                 if (event.target !== event.currentTarget) return;
                 if (ignoredFollowerDrags.current.has(node.id)) return;
-                if (touchSuppressed.current) return;
-                const preview = updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
-                props.onNodeDragMove?.(
-                  node.id,
-                  preview.selectedIds,
-                  event.evt.clientX,
-                  event.evt.clientY
-                );
+                if (touchSuppressed.current) {
+                  return;
+                } else {
+                  const point = dragClientPoint(event.evt);
+                  const preview = updateDragPreview(node.id, point.clientX, point.clientY);
+                  props.onNodeDragMove?.(
+                    node.id,
+                    preview.selectedIds,
+                    point.clientX,
+                    point.clientY
+                  );
+                }
               }}
               onDragEnd={event => {
                 if (event.target !== event.currentTarget) return;
@@ -1696,13 +2036,14 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                   event.target.getLayer()?.batchDraw();
                   return;
                 }
-                const preview = updateDragPreview(node.id, event.evt.clientX, event.evt.clientY);
+                const point = dragClientPoint(event.evt);
+                const preview = updateDragPreview(node.id, point.clientX, point.clientY);
                 const { selectedIds: chosen, roots, delta } = preview;
                 const handled = props.onNodeDragEnd?.(
                   node.id,
                   chosen,
-                  event.evt.clientX,
-                  event.evt.clientY
+                  point.clientX,
+                  point.clientY
                 );
                 clearDragPreview();
                 if (handled) return;
@@ -1725,20 +2066,18 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                           },
                         ]
                       : [];
-                  })
+                  }),
+                  { source: 'drag' }
                 );
               }}
             >
               {showSelf &&
                 (node.id === editing ? (
                   <Rect width={t.width} height={t.height} opacity={0} />
+                ) : props.showCue && node.type !== 'frame' ? (
+                  <Group id={`${node.id}-show`}>{content}</Group>
                 ) : (
-                  <NodeContent
-                    node={renderedNode}
-                    assets={props.assets}
-                    frameBackground={frameBackground}
-                    cropEditing={cropDraft?.nodeId === node.id}
-                  />
+                  content
                 ))}
               {showSelf && node.type === 'frame' && props.editable && (
                 <Group>
@@ -1864,15 +2203,13 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               setGesture(null);
               return;
             }
-            setEditing(null);
-            props.selectExact?.([]);
+            if (editing) finishTextEdit();
+            else props.selectExact?.([]);
           }
-          if (
-            event.key === 'Enter' &&
-            props.selected.length === 1 &&
-            props.document.nodes.find(node => node.id === props.selected[0])?.type === 'richText'
-          )
-            setEditing(props.selected[0]);
+          if (event.key === 'Enter' && selectedTextNode && props.editable) {
+            event.preventDefault();
+            beginTextEdit(selectedTextNode);
+          }
         }}
       >
         <Stage
@@ -2075,8 +2412,8 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 const node = props.document.nodes.find(candidate => candidate.id === text.nodeId);
                 if (node?.type === 'richText') {
                   activateNodeFrame(node);
-                  selectNode(node.id, text.shiftKey);
-                  if (props.editable && !node.locked && !text.shiftKey) setPendingTextEdit(node.id);
+                  if (props.editable && !node.locked && !text.shiftKey) beginTextEdit(node);
+                  else selectNode(node.id, text.shiftKey);
                 }
                 setGesture(null);
                 return;
@@ -2131,18 +2468,23 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               props.editable &&
               !['hand', 'selection', 'eraser', 'comment'].includes(activeTool)
             ) {
-              const id = props.onCreateNode?.(
-                activeTool,
-                creationGesture.start,
-                point,
-                rounded,
-                creationGesture.points
-              );
-              if (id) {
-                if (activeTool === 'text') setPendingTextEdit(id);
-                props.selectExact?.([id]);
-                if (!toolLocked) setActiveTool('selection');
-              }
+              const creation = creationGesture;
+              const createNode = () => {
+                const id = props.onCreateNode?.(
+                  activeTool,
+                  creation.start,
+                  point,
+                  rounded,
+                  creation.points
+                );
+                if (id) {
+                  if (activeTool === 'text') setPendingTextEdit(id);
+                  props.selectExact?.([id]);
+                  if (!toolLocked) setActiveTool('selection');
+                }
+              };
+              if (activeTool === 'text') flushSync(createNode);
+              else createNode();
             }
             setGesture(null);
             panPointer.current = null;
@@ -2279,6 +2621,28 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               ))}
           </Layer>
         </Stage>
+        {frameLabels.map(({ frame, text }) => {
+          const bounds = worldBounds(props.document, frame);
+          return (
+            <span
+              key={frame.id}
+              ref={element => {
+                if (element) frameLabelElements.current.set(frame.id, element);
+                else frameLabelElements.current.delete(frame.id);
+              }}
+              className="polity-canvas-frame-label"
+              data-studio-frame-label={frame.id}
+              title={text}
+              style={{
+                left: bounds.left * zoom + pan.x,
+                top: bounds.top * zoom + pan.y - 6,
+                maxWidth: Math.max(1, (bounds.right - bounds.left) * zoom),
+              }}
+            >
+              {text}
+            </span>
+          );
+        })}
         {positionedChangeRequests.map(({ annotation, left, top, width, height, ghost }) => {
           const colors = changeRequestOutlineColors(annotation.tone);
           return (
@@ -2326,7 +2690,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
           );
         })}
         {props.changeRequestOverlay}
-        {props.editable && !cropDraft && props.contextToolbar && contextToolbarBounds && (
+        {props.editable && !cropDraft && hasContextToolbar && contextToolbarBounds && (
           <div
             ref={contextToolbarRef}
             role="toolbar"
@@ -2357,6 +2721,20 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             }}
             onPointerDown={event => event.stopPropagation()}
           >
+            {selectedTextNode && (
+              <button
+                type="button"
+                className="polity-canvas-text-edit-action"
+                data-action-id="communication-studio.context.action.activate"
+                data-context-action={editing ? 'finishTextEditing' : 'startTextEditing'}
+                onClick={() => {
+                  if (editing) finishTextEdit();
+                  else beginTextEdit(selectedTextNode);
+                }}
+              >
+                {t(`features.studio.${editing ? 'finishTextEditing' : 'startTextEditing'}`)}
+              </button>
+            )}
             {props.contextToolbar}
           </div>
         )}
@@ -2374,7 +2752,7 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
                 onKeyDown={event => {
                   if (event.key === 'Escape') {
                     event.stopPropagation();
-                    setEditing(null);
+                    finishTextEdit();
                   }
                 }}
               >

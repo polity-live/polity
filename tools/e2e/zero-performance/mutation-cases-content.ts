@@ -12,6 +12,7 @@ import {
 } from '../../../src/features/communication-studio/logic/document-v3';
 import { POLITY_THEME } from '../../../src/features/shared/appearance-theme';
 import { canvasMutationCases, studioApplyConflictCases } from './mutation-cases-canvas';
+import { presentationMutationCases } from './mutation-cases-presentation';
 import { studioCommandSchemas } from '../../../src/zero/communication-studio/commands';
 
 const epoch = new Date('2030-01-01T00:00:00Z');
@@ -2050,7 +2051,7 @@ function studioCase(action: string, actor: 'owner' | 'outsider' | 'anon'): Mutat
           title: 'Fixture studio',
           kind: 'single',
           visibility: 'private',
-          document_schema_version: 5,
+          document_schema_version: 6,
           created_at: 0,
           updated_at: 0,
         });
@@ -2900,6 +2901,7 @@ export function contentMutationCases(): MutationCase[] {
       action => [statementCase(action, 'public-voter'), blogCase(action, 'public-voter')]
     ),
     ...canvasMutationCases(),
+    ...presentationMutationCases(),
     ...studioApplyConflictCases(),
     ...studioActions
       .filter(action => action !== 'canvas.command')

@@ -15,6 +15,30 @@ export const emptyStudioSelection = (): StudioSelectionState => ({
   touchMode: false,
 });
 
+/** Layers select individual nodes, including hidden and locked group members. */
+export function layerSelection(
+  document: StudioDocumentV3,
+  current: StudioSelectionState,
+  nodeId: string,
+  additive = false
+): StudioSelectionState {
+  const existingIds = new Set(document.nodes.map(node => node.id));
+  if (!existingIds.has(nodeId)) return current;
+  const previous = [...new Set(current.nodeIds.filter(id => existingIds.has(id)))];
+  const removing = additive && previous.includes(nodeId);
+  const nodeIds = !additive
+    ? [nodeId]
+    : removing
+      ? previous.filter(id => id !== nodeId)
+      : [...previous, nodeId];
+  const primaryId = removing
+    ? nodeIds.includes(current.primaryId ?? '')
+      ? current.primaryId
+      : (nodeIds[0] ?? null)
+    : nodeId;
+  return { ...current, nodeIds, primaryId, groupDepth: 0 };
+}
+
 export function selectableNode(node: StudioNode): boolean {
   return node.visible && !node.locked;
 }

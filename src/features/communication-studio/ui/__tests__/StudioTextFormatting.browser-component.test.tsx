@@ -59,7 +59,14 @@ it.each(['native', 'legacy'] as const)(
     const editable = screen.getByRole('textbox', { name: 'Edit text' });
     await userEvent.click(editable);
     await waitFor(() => expect(document.activeElement).toBe(editable));
-    await userEvent.keyboard('{Home}{Shift>}{End}{/Shift}');
+    // Slate defers the initial caret placement. Let it settle before making the
+    // native selection so that autofocus cannot collapse it on a slower runner.
+    await act(async () => {
+      await new Promise<void>(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      );
+    });
+    await userEvent.keyboard('{Control>}a{/Control}');
     await waitFor(() => expect(window.getSelection()?.toString()).toBe('Alpha'));
     await act(async () => {
       await new Promise<void>(resolve =>

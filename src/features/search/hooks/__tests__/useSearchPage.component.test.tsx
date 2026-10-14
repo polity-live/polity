@@ -89,4 +89,74 @@ describe('useSearchPage result totals', () => {
     expect(result.current.totalResults).toBeNull();
     unmount();
   });
+
+  it('does not render again for an unchanged unknown count, including a new context', () => {
+    let searchURLState = makeSearchURLState('K1');
+    mockUseSearchURL.mockImplementation(() => searchURLState);
+    let renders = 0;
+    const { result, rerender, unmount } = renderHook(() => {
+      renders++;
+      return useSearchPage();
+    });
+    const initialRenders = renders;
+    act(() => result.current.setTotalResults(null));
+    expect(renders).toBe(initialRenders);
+    expect(result.current.totalResults).toBeNull();
+
+    searchURLState = makeSearchURLState('K2');
+    rerender();
+    const changedContextRenders = renders;
+    act(() => result.current.setTotalResults(null));
+    expect(renders).toBe(changedContextRenders);
+    expect(result.current.totalResults).toBeNull();
+    unmount();
+  });
+
+  it('clears an earlier exact count when a different context reports unknown', () => {
+    let searchURLState = makeSearchURLState('K1');
+    mockUseSearchURL.mockImplementation(() => searchURLState);
+    const { result, rerender, unmount } = renderHook(() => useSearchPage());
+    act(() => result.current.setTotalResults(12));
+    expect(result.current.totalResults).toBe(12);
+    searchURLState = makeSearchURLState('K2');
+    rerender();
+    expect(result.current.totalResults).toBeNull();
+    act(() => result.current.setTotalResults(null));
+    searchURLState = makeSearchURLState('K1');
+    rerender();
+    expect(result.current.totalResults).toBeNull();
+    unmount();
+  });
+
+  it('binds the same exact count to a different context and accepts zero', () => {
+    let searchURLState = makeSearchURLState('K1');
+    mockUseSearchURL.mockImplementation(() => searchURLState);
+    const { result, rerender, unmount } = renderHook(() => useSearchPage());
+    act(() => result.current.setTotalResults(12));
+    searchURLState = makeSearchURLState('K2');
+    rerender();
+    expect(result.current.totalResults).toBeNull();
+    act(() => result.current.setTotalResults(12));
+    expect(result.current.totalResults).toBe(12);
+    act(() => result.current.setTotalResults(0));
+    expect(result.current.totalResults).toBe(0);
+    unmount();
+  });
+
+  it('keeps reports from a previous context scoped to that context', () => {
+    let searchURLState = makeSearchURLState('K1');
+    mockUseSearchURL.mockImplementation(() => searchURLState);
+    const { result, rerender, unmount } = renderHook(() => useSearchPage());
+    const previousReport = result.current.setTotalResults;
+    searchURLState = makeSearchURLState('K2');
+    rerender();
+    const currentReport = result.current.setTotalResults;
+    act(() => currentReport(3));
+    expect(result.current.totalResults).toBe(3);
+    act(() => previousReport(12));
+    expect(result.current.totalResults).toBeNull();
+    act(() => currentReport(3));
+    expect(result.current.totalResults).toBe(3);
+    unmount();
+  });
 });

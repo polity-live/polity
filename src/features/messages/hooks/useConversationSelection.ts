@@ -5,6 +5,7 @@ import { isAssistantConversation } from '@/features/assistant/logic/assistantHel
 interface ConversationSelectionOptions {
   openAriaKai?: boolean;
   restoreOnNavigation?: boolean;
+  persistSelection?: boolean;
   viewerID?: string;
   initialConversationID?: string;
 }
@@ -33,6 +34,21 @@ export function useConversationSelection(
 
   useEffect(() => {
     if (!options?.restoreOnNavigation || !options.viewerID) return;
+    // A caller consuming this exact URL target persists it with that navigation.
+    // Other selection changes still need their own history update.
+    if (
+      options.persistSelection === false &&
+      selectedConversationId === options.initialConversationID
+    )
+      return;
+    const previous = window.history.state?.polityMessageSelection;
+    // TanStack observes native replaceState calls as navigation. A restored
+    // selection is already persisted; avoid a redundant router notification.
+    if (
+      previous?.viewerID === options.viewerID &&
+      previous.conversationID === selectedConversationId
+    )
+      return;
     window.history.replaceState(
       {
         ...window.history.state,
@@ -44,7 +60,13 @@ export function useConversationSelection(
       '',
       window.location.href
     );
-  }, [options?.restoreOnNavigation, options?.viewerID, selectedConversationId]);
+  }, [
+    options?.restoreOnNavigation,
+    options?.viewerID,
+    options?.persistSelection,
+    options?.initialConversationID,
+    selectedConversationId,
+  ]);
 
   // Auto-open the assistant conversation once when explicitly requested.
   useEffect(() => {

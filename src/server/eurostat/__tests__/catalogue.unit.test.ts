@@ -26,6 +26,31 @@ afterEach(() => {
 });
 
 describe('getEurostatCatalogue', () => {
+  it('shares the catalogue download across concurrent topic variants and retries a failed load', async () => {
+    let fulfil!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          fulfil = resolve;
+        })
+    );
+    const { searchEurostatCatalogue, getEurostatCatalogue } = await import('../catalogue');
+    const first = searchEurostatCatalogue('unemployment', 'en', 50);
+    const second = searchEurostatCatalogue('unemployment rate', 'en', 50);
+    expect(fetch).toHaveBeenCalledOnce();
+    fulfil(
+      response(
+        catalogueTsv(['dataset\tUNE_RT_A\tAnnual unemployment rate\t\t\t2020\t2025\t1'])
+      ) as unknown as Response
+    );
+    await expect(first).resolves.toHaveLength(1);
+    await expect(second).resolves.toHaveLength(1);
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('offline'));
+    await expect(getEurostatCatalogue('de')).rejects.toThrow('offline');
+    vi.mocked(fetch).mockResolvedValueOnce(response(catalogueTsv([])) as never);
+    await expect(getEurostatCatalogue('de')).resolves.toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
   it('parses, normalizes, filters, and deduplicates real TSV catalogue rows', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       response(
@@ -106,6 +131,17 @@ describe('getEurostatCatalogue', () => {
 });
 
 describe('catalogue search and lookup', () => {
+  it('forwards cancellation and matches separated topic tokens across code and title', async () => {
+    const controller = new AbortController();
+    vi.mocked(fetch).mockResolvedValueOnce(
+      response(catalogueTsv(['dataset\tPOPULATION\tAnnual women\t\t\t\t\t1'])) as never
+    );
+    const { searchEurostatCatalogue } = await import('../catalogue');
+    expect(
+      await searchEurostatCatalogue('population women', 'en', 20, controller.signal)
+    ).toMatchObject([{ code: 'POPULATION' }]);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), { signal: controller.signal });
+  });
   it('scores every match category and applies value/title tie breakers and limits', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       response(

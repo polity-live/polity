@@ -22,7 +22,9 @@ CREATE TABLE public.conversation (
 );
 
 CREATE INDEX idx_conversation_group ON public.conversation (group_id);
+CREATE INDEX idx_conversation_group_id ON public.conversation (group_id, id);
 CREATE INDEX idx_conversation_event ON public.conversation (event_id);
+CREATE INDEX idx_conversation_event_id ON public.conversation (event_id, id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
 CREATE INDEX idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
 CREATE INDEX idx_conversation_amendment ON public.conversation (amendment_id);
@@ -46,7 +48,9 @@ CREATE TABLE public.conversation_participant (
 );
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);
+CREATE INDEX idx_conversation_participant_conversation_id ON public.conversation_participant (conversation_id, id);
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant (user_id);
+CREATE INDEX idx_conversation_participant_user_id ON public.conversation_participant (user_id, id);
 CREATE UNIQUE INDEX idx_conversation_participant_unique_membership
   ON public.conversation_participant (conversation_id, user_id);
 CREATE INDEX idx_conversation_participant_user_left

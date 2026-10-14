@@ -389,6 +389,26 @@ describe('Studio Elements server synchronization', () => {
     });
     expect(io.copy).not.toHaveBeenCalled();
   });
+  it('remaps upstream chart sources and background videos into private project assets', async () => {
+    const { document, previous, next } = fixtures();
+    const chart = createStudioNodeFromElement(element('chart'), next.nodes[0].id, 1);
+    if (chart.type !== 'chart') throw new Error('Chart fixture missing');
+    chart.sourceAssetId = sourceAssetId;
+    const emptyChart = { ...structuredClone(chart), id: crypto.randomUUID(), sourceAssetId: null };
+    const video = createFrameNode('square');
+    video.intro = { mode: 'video', assetId: sourceAssetId, intensity: 0.5 };
+    next.nodes.push(chart, emptyChart, video);
+    mockSync(document, { previous, set: { current_revision_id: nextRevisionId, snapshot: next } });
+    const result = await synchronizeProjectElementInstances('owner', projectId);
+    expect(io.copy).toHaveBeenCalledTimes(1);
+    const media = result!.document.nodes.find(node => node.type === 'media')!;
+    expect(
+      result!.document.nodes.find(node => node.type === 'chart' && node.sourceAssetId)
+    ).toMatchObject({ sourceAssetId: media.assetId });
+    const frame = result!.document.nodes.find(node => node.type === 'frame' && node.intro?.assetId);
+    if (frame?.type !== 'frame') throw new Error('Synced background frame missing');
+    expect(frame.intro?.assetId).toBe(media.assetId);
+  });
   it.each(['missing media', 'byte quota', 'copy error'])(
     'rejects upstream synchronization with %s before exposing the revision',
     async reason => {

@@ -16,6 +16,11 @@ async function fixture() {
   const artifact = await writeJoinPlanArtifact(output, 'users.current/default/empty/owner', joins);
   const file = path.join(output, 'report.json');
   const report = {
+    runtime: {
+      initialSyncCopyFormat: 'text',
+      ivmYieldThresholdMs: 4000,
+      ivmPriorityYieldThresholdMs: 1000,
+    },
     infrastructure: [],
     measurements: [{ key: 'users.current', plans: { joinsArtifact: artifact } }],
   };
@@ -24,6 +29,38 @@ async function fixture() {
 }
 
 describe('external join-plan diagnostics', () => {
+  it.each([
+    ['head', undefined],
+    ['head', 10],
+    ['base', undefined],
+    ['base', 10],
+  ] as const)(
+    'rejects inconsistent %s IVM scheduling %s on artifact ingest',
+    async (revision, threshold) => {
+      const { file, report } = await fixture();
+      const runtime = { ...report.runtime, ivmYieldThresholdMs: threshold };
+      await writeFile(file, JSON.stringify({ ...report, runtime, execution: { revision } }));
+      expect((await readPerformanceReport(file)).infrastructure).toContain(
+        'Missing or inconsistent 4000/1000-ms IVM yield threshold provenance'
+      );
+    }
+  );
+  it.each([
+    ['head', undefined],
+    ['head', 'binary'],
+    ['base', undefined],
+    ['base', 'binary'],
+  ] as const)(
+    'rejects unavailable or inconsistent %s replica transport %s on artifact ingest',
+    async (revision, format) => {
+      const { file, report } = await fixture();
+      report.runtime.initialSyncCopyFormat = format as string;
+      await writeFile(file, JSON.stringify({ ...report, execution: { revision } }));
+      expect((await readPerformanceReport(file)).infrastructure).toContain(
+        'Missing or inconsistent replica text COPY provenance'
+      );
+    }
+  );
   it('verifies complete traces without retaining them in the measurement report', async () => {
     const { file, artifact } = await fixture();
     const report = await readPerformanceReport(file);

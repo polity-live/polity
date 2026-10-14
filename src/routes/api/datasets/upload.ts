@@ -34,7 +34,7 @@ export const Route = createFileRoute('/api/datasets/upload')({
           const uploadedAt = new Date().toISOString();
           const bytes = new Uint8Array(await file.arrayBuffer());
           assertDatasetSize(bytes.byteLength, 'Uploaded dataset');
-          const table = parseDatasetCsv(bytesToText(bytes));
+          const table = parseDatasetCsv(bytesToText(bytes, file.type));
           const result = await persistDatasetSnapshot({
             provider: 'UPLOAD',
             providerDatasetId: file.name,

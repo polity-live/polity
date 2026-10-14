@@ -1,4 +1,10 @@
-import { BUDGETS, checkBudgets, type Measurement } from './metrics';
+import {
+  BUDGETS,
+  checkBudgets,
+  validQueryAPISample,
+  type Measurement,
+  type Sample,
+} from './metrics';
 import { queryObservationFailures, type QueryObservation } from './journey-metrics';
 import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
@@ -27,14 +33,109 @@ export function measuredServerWarnings(log: Buffer, offset: number) {
   return { warnings, errors: [...new Set(errors)] };
 }
 
+/** Preserve complete diagnostics, including analyzer requests, in append-only byte coordinates. */
+export function parseQueryAPILog(log: Buffer) {
+  const records: any[] = [];
+  const errors: string[] = [];
+  let byteStart = 0;
+  while (byteStart < log.length) {
+    const newline = log.indexOf(10, byteStart);
+    const byteEnd = newline < 0 ? log.length : newline + 1;
+    const line = log.subarray(byteStart, byteEnd).toString('utf8');
+    const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
+    if (start >= 0) {
+      try {
+        if (newline < 0) throw new Error('Incomplete diagnostic line');
+        records.push({
+          ...JSON.parse(line.slice(start)),
+          log: { source: 'app.log', byteStart, byteEnd, byteLength: log.length },
+        });
+      } catch {
+        errors.push('Invalid query API diagnostic record');
+      }
+    }
+    byteStart = byteEnd;
+  }
+  return { records, errors };
+}
+
+/** Diagnostic log readiness runs after timing closes and before analyzer traffic. */
+export async function captureQueryAPILogBoundary(
+  name: string,
+  sample: Sample,
+  readLog: (signal: AbortSignal) => Promise<Buffer>
+): Promise<NonNullable<Sample['apiLogBoundary']>> {
+  const controller = new AbortController();
+  const timeout = new Error('Query API log readiness exceeded 1000 ms');
+  const deadline = performance.now() + 1000;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(timeout);
+      controller.abort();
+    }, 1000);
+  });
+  const observe = async () => {
+    let previous = Buffer.alloc(0);
+    while (!controller.signal.aborted) {
+      const log = await readLog(controller.signal);
+      if (controller.signal.aborted || performance.now() >= deadline) throw timeout;
+      if (log.length < previous.length || !log.subarray(0, previous.length).equals(previous))
+        throw new Error('Query API diagnostic log is not append-only');
+      previous = Buffer.from(log);
+      // A temporary EOF in a piped write is pending, never sliced into a JSON record.
+      const prefix = log.subarray(0, log.lastIndexOf(10) + 1);
+      const parsed = parseQueryAPILog(prefix);
+      if (parsed.errors.length) throw new Error(parsed.errors.join('; '));
+      const requests = new Map<string, any[]>();
+      for (const record of parsed.records) {
+        if (record.clientCorrelationID !== sample.clientCorrelationID) continue;
+        if (typeof record.requestID !== 'string' || !record.requestID)
+          throw new Error('Invalid query API diagnostic request identity');
+        const group = requests.get(record.requestID) ?? [];
+        group.push(record);
+        requests.set(record.requestID, group);
+      }
+      const unresolved = [...requests.values()].some(group => {
+        const identities = group.filter(record => record.phase === 'query-identities');
+        return (
+          identities.length !== 1 ||
+          !Array.isArray(identities[0].queries) ||
+          group.filter(record => record.phase === 'response').length !== 1
+        );
+      });
+      const boundary = { source: 'app.log' as const, byteEnd: prefix.length };
+      const observed = { ...sample, apiLogBoundary: boundary };
+      const measurement = { name, samples: [observed], failures: [] } as unknown as Measurement;
+      correlateQueryAPI([measurement], parsed.records);
+      if (performance.now() >= deadline) throw timeout;
+      if (prefix.length === log.length && !unresolved && validQueryAPISample(observed))
+        return boundary;
+      await new Promise<void>(resolve => {
+        const done = () => {
+          clearTimeout(tick);
+          controller.signal.removeEventListener('abort', done);
+          resolve();
+        };
+        const tick = setTimeout(done, 20);
+        controller.signal.addEventListener('abort', done, { once: true });
+      });
+    }
+    throw timeout;
+  };
+  try {
+    return await Promise.race([observe(), expired]);
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
+
 export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
   const byRequest = new Map<string, any[]>();
   const byQuery = new Map<string, any[]>();
   for (const record of records) {
-    if (!record || typeof record.requestID !== 'string') continue;
-    const group = byRequest.get(record.requestID) ?? [];
-    group.push(record);
-    byRequest.set(record.requestID, group);
+    if (!record) continue;
     if (record.phase === 'query-identities' && Array.isArray(record.queries)) {
       for (const query of record.queries) {
         if (!query || typeof query.id !== 'string' || typeof query.name !== 'string') continue;
@@ -44,11 +145,15 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
         byQuery.set(key, identities);
       }
     }
+    if (typeof record.requestID !== 'string') continue;
+    const group = byRequest.get(record.requestID) ?? [];
+    group.push(record);
+    byRequest.set(record.requestID, group);
   }
   for (const measurement of measurements)
     for (const sample of measurement.samples) {
       delete sample.api;
-      const identities = (
+      const candidates = (
         byQuery.get(JSON.stringify([measurement.name, sample.queryID])) ?? []
       ).filter(
         record =>
@@ -59,9 +164,32 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
             (query: any) => query.id === sample.queryID && query.name === measurement.name
           )
       );
+      const boundary = sample.apiLogBoundary;
+      const byteLength = candidates[0]?.log?.byteLength;
+      if (
+        boundary?.source !== 'app.log' ||
+        !Number.isSafeInteger(boundary.byteEnd) ||
+        boundary.byteEnd < 0 ||
+        !Number.isSafeInteger(byteLength) ||
+        boundary.byteEnd > byteLength
+      )
+        continue;
+      const validPosition = (record: any) =>
+        record.log?.source === 'app.log' &&
+        record.log.byteLength === byteLength &&
+        Number.isSafeInteger(record.log.byteStart) &&
+        Number.isSafeInteger(record.log.byteEnd) &&
+        record.log.byteStart >= 0 &&
+        record.log.byteEnd > record.log.byteStart &&
+        record.log.byteEnd <= byteLength;
+      // Invalid coordinates cannot be discarded to manufacture a unique request.
+      if (candidates.some(record => !validPosition(record))) continue;
+      const identities = candidates.filter(record => record.log.byteEnd <= boundary.byteEnd);
       if (identities.length !== 1) continue;
       const identity = identities[0];
       const group = byRequest.get(identity.requestID) ?? [];
+      if (group.some(record => !validPosition(record) || record.log.byteEnd > boundary.byteEnd))
+        continue;
       const one = (phase: string) => {
         const matches = group.filter(record => record.phase === phase);
         return matches.length === 1 ? matches[0] : undefined;
@@ -110,6 +238,7 @@ export function isAbsoluteBudgetFailure(failure: string) {
 }
 
 export interface Report {
+  runtime?: unknown;
   expectedMutations?: import('./mutation-metrics').MutationExpectation[];
   mutations?: import('./mutation-metrics').MutationMeasurement[];
   mutationDiagnostics?: import('./mutation-report').MutationAPIRecord[];
@@ -149,6 +278,26 @@ export interface Report {
       connections?: { clientID: string; state: string; at: number }[];
     };
   }[];
+}
+
+/** The snapshot and WAL must use the same timestamp decoder on both revisions. */
+export function replicaTransportFailures(report: Report) {
+  const runtime = (report as Report & { runtime?: { initialSyncCopyFormat?: unknown } }).runtime;
+  return runtime?.initialSyncCopyFormat === 'text'
+    ? []
+    : ['Missing or inconsistent replica text COPY provenance'];
+}
+
+/** Both revisions must execute with the same bounded cooperative scheduling. */
+export function ivmSchedulingFailures(report: Report) {
+  const runtime = (
+    report as Report & {
+      runtime?: { ivmYieldThresholdMs?: unknown; ivmPriorityYieldThresholdMs?: unknown };
+    }
+  ).runtime;
+  return runtime?.ivmYieldThresholdMs === 4000 && runtime.ivmPriorityYieldThresholdMs === 1000
+    ? []
+    : ['Missing or inconsistent 4000/1000-ms IVM yield threshold provenance'];
 }
 
 function routeQuery(route: string) {

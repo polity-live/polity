@@ -6,6 +6,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
+import { spawnSync } from 'node:child_process';
 import {
   BUDGETS,
   REPETITIONS,
@@ -20,6 +21,11 @@ import {
 import { discoverQueries, loadCases, buildQuery } from '../catalog';
 import { rootSQL, resultIDs, relatedResultIDs, queryAST } from '../oracle';
 import {
+  assertAuthoritativeRootResult,
+  diagnosticRootSQL,
+} from '../authoritative-order-diagnostic';
+import type { Sql } from 'postgres';
+import {
   assertOutputDirectory,
   isolatedPorts,
   safeEnvironment,
@@ -29,6 +35,7 @@ import {
   verifyBuildAssets,
   pipeRuntimeLogLines,
   corepackPNPMEntryPoint,
+  installedPNPMEntryPoint,
   shouldCopyBenchmarkSource,
   validateBenchmarkArguments,
 } from '../isolation.mjs';
@@ -94,6 +101,7 @@ describe('benchmark source isolation', () => {
 import {
   reportFailures,
   correlateQueryAPI,
+  parseQueryAPILog,
   serverWarningFailures,
   securityCoverageFailures,
   navigationMaterializationFailures,
@@ -102,6 +110,9 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   measuredServerWarnings,
+  replicaTransportFailures,
+  ivmSchedulingFailures,
+  type Report,
 } from '../report';
 import { stopOwnedRuntime, stopOwnedSupabase, dependencyVersions } from '../linux-runtime.mjs';
 import { browserTargets, browserTarget } from '../linux-browser.mjs';
@@ -110,11 +121,12 @@ import {
   applyElectionQueryAccessFromAuthorizedAgendaItem,
 } from '../../../../src/zero/rbac/query-access';
 import { zql } from '../../../../src/zero/schema';
-import { conversationAccessFilter } from '../../../../src/zero/messages/queries';
+import { conversationAccessFilter, messageQueries } from '../../../../src/zero/messages/queries';
 import { securityScenarios, securityCaseManifest, SECURITY_SCENARIO_COUNT } from '../security';
 import {
   applyAgendaItemQueryAccess,
   applyEventQueryAccess,
+  applyEventManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteQueryAccessFromAuthorizedAgendaItem,
   applyRoleQueryAccess,
@@ -147,6 +159,7 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
     samples: Array.from({ length: REPETITIONS.materialize }, (_, index) => ({
       queryID: 'query',
       clientCorrelationID: `correlation-${index}`,
+      apiLogBoundary: { source: 'app.log' as const, byteEnd: 1 },
       activatedAt: 1000 + index * 100,
       authoritativeAt: 1100 + index * 100,
       api: {
@@ -186,6 +199,268 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
 }
 
 describe('Zero performance gate', () => {
+  it('locates the stock pnpm v11 to v10 self-update layout from PNPM_HOME and PATH on both platforms', () => {
+    const install = '892-1a1301b7516-79367388ef155078';
+    for (const [platform, home] of [
+      ['linux', '/home/runner/setup-pnpm/node_modules/.bin'],
+      ['win32', 'C:\\setup-pnpm\\node_modules\\.bin'],
+    ] as const) {
+      const paths = platform === 'win32' ? path.win32 : path.posix;
+      const global = paths.join(home, 'global/v11');
+      const packageRoot = paths.join(global, install, 'node_modules/pnpm');
+      const entrypoint = paths.join(packageRoot, 'bin/pnpm.cjs');
+      const missing = () => {
+        throw Object.assign(new Error('missing'), { code: 'ENOENT' });
+      };
+      const inspect = (candidate: string) =>
+        candidate === paths.join(packageRoot, 'package.json')
+          ? { name: 'pnpm', version: '10.34.6', bin: { pnpm: 'bin/pnpm.cjs' } }
+          : missing();
+      const readDirectories = (candidate: string) =>
+        candidate === global ? ['not-an-install', install, '1-a-1111111111111111'] : missing();
+      for (const environment of [{ PNPM_HOME: home }, { PATH: paths.join(home, 'bin') }])
+        expect(
+          installedPNPMEntryPoint(
+            'pnpm@10.34.6',
+            environment,
+            platform,
+            inspect,
+            candidate => candidate === entrypoint,
+            readDirectories
+          )
+        ).toBe(entrypoint);
+    }
+  });
+
+  it('falls back on oversized or ambiguous v11 installs and preserves filesystem failures', () => {
+    const environment = { PNPM_HOME: '/tools/.bin' };
+    const global = '/tools/.bin/global/v11';
+    const missing = () => {
+      throw Object.assign(new Error('missing'), { code: 'ENOENT' });
+    };
+    const valid = { name: 'pnpm', version: '10.34.6', bin: { pnpm: 'bin/pnpm.cjs' } };
+    const inspect = (candidate: string) => (candidate.startsWith(global + '/') ? valid : missing());
+    const names = Array.from({ length: 33 }, (_, i) => `${i.toString(16)}-a-1111111111111111`);
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        inspect,
+        () => true,
+        () => names
+      )
+    ).toBeUndefined();
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        inspect,
+        () => true,
+        candidate => (candidate === global ? names.slice(0, 2) : [])
+      )
+    ).toBeUndefined();
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        missing,
+        () => true,
+        () => names.slice(0, 20)
+      )
+    ).toBeUndefined();
+    for (const code of ['ENOENT', 'ENOTDIR'])
+      expect(
+        installedPNPMEntryPoint(
+          'pnpm@10.34.6',
+          environment,
+          'linux',
+          missing,
+          () => true,
+          () => {
+            throw Object.assign(new Error('missing'), { code });
+          }
+        )
+      ).toBeUndefined();
+    const inaccessible = Object.assign(new Error('access denied'), { code: 'EACCES' });
+    expect(() =>
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        missing,
+        () => true,
+        () => {
+          throw inaccessible;
+        }
+      )
+    ).toThrow(inaccessible);
+  });
+
+  it('finds exact pnpm pins in action-setup, npm global and direct JavaScript bin layouts', () => {
+    const cases = [
+      [
+        'win32',
+        { PNPM_HOME: 'C:\\tools\\node_modules\\.bin' },
+        'C:\\tools\\node_modules\\.bin\\.tools\\pnpm\\10.34.6\\node_modules\\pnpm',
+      ],
+      [
+        'linux',
+        { PNPM_HOME: '/tools/node_modules/.bin' },
+        '/tools/node_modules/.bin/.tools/pnpm/10.34.6/node_modules/pnpm',
+      ],
+      [
+        'linux',
+        { PATH: '/tools/node_modules/.bin/bin' },
+        '/tools/node_modules/.bin/.tools/pnpm/10.34.6/node_modules/pnpm',
+      ],
+      ['linux', { PATH: '/tools/node_modules/.bin' }, '/tools/node_modules/pnpm'],
+      ['win32', { Path: 'C:\\npm' }, 'C:\\npm\\node_modules\\pnpm'],
+      ['linux', { PATH: '/usr/local/bin' }, '/usr/local/lib/node_modules/pnpm'],
+      ['linux', { PATH: '/tools/pnpm/bin' }, '/tools/pnpm'],
+    ] as const;
+    for (const [platform, environment, directory] of cases) {
+      const paths = platform === 'win32' ? path.win32 : path.posix;
+      const entrypoint = paths.join(directory, 'bin/pnpm.cjs');
+      expect(
+        installedPNPMEntryPoint(
+          'pnpm@10.34.6',
+          environment,
+          platform,
+          candidate => {
+            if (candidate !== paths.join(directory, 'package.json'))
+              throw Object.assign(new Error('missing'), { code: 'ENOENT' });
+            return { name: 'pnpm', version: '10.34.6', bin: { pnpm: 'bin/pnpm.cjs' } };
+          },
+          candidate => candidate === entrypoint
+        )
+      ).toBe(entrypoint);
+    }
+  });
+
+  it('rejects mismatched packages, unsafe bins and unavailable installs before Corepack fallback', () => {
+    const environment = { PATH: 'relative::/tools/node_modules/.bin' };
+    for (const manifest of [
+      { name: 'corepack', version: '10.34.6', bin: { pnpm: 'bin/pnpm.cjs' } },
+      { name: 'pnpm', version: '10.34.5', bin: { pnpm: 'bin/pnpm.cjs' } },
+      { name: 'pnpm', version: '10.34.6' },
+      ...['/tmp/pnpm.cjs', '../../pnpm.cjs', '.', 'pnpm.cmd', ''].map(pnpm => ({
+        name: 'pnpm',
+        version: '10.34.6',
+        bin: { pnpm },
+      })),
+      { name: 'pnpm', version: '10.34.6', bin: { pnpm: 1 } },
+    ]) {
+      expect(
+        installedPNPMEntryPoint(
+          'pnpm@10.34.6',
+          environment,
+          'linux',
+          () => manifest,
+          () => true
+        )
+      ).toBeUndefined();
+    }
+    const valid = { name: 'pnpm', version: '10.34.6', bin: { pnpm: 'bin/pnpm.mjs' } };
+    const inspect = vi.fn(() => valid);
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6+sha512.abc123',
+        environment,
+        'linux',
+        inspect,
+        () => true
+      ) ?? corepackPNPMEntryPoint('/tools/node', 'linux', () => true)
+    ).toBe('/tools/node_modules/corepack/dist/pnpm.js');
+    expect(inspect).not.toHaveBeenCalled();
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        () => valid,
+        () => false
+      )
+    ).toBeUndefined();
+    expect(installedPNPMEntryPoint('pnpm@10.34.6', {}, 'linux')).toBeUndefined();
+    for (const code of ['ENOENT', 'ENOTDIR'])
+      expect(
+        installedPNPMEntryPoint('pnpm@10.34.6', environment, 'linux', () => {
+          throw Object.assign(new Error('unavailable'), { code });
+        })
+      ).toBeUndefined();
+    for (const packageManager of [
+      'pnpm@^10.34.6',
+      'npm@10.34.6',
+      'pnpm@10.34.6+garbage',
+      undefined,
+    ])
+      expect(() => installedPNPMEntryPoint(packageManager, environment)).toThrow(
+        'Invalid pinned benchmark package manager'
+      );
+    const inaccessible = Object.assign(new Error('access denied'), { code: 'EACCES' });
+    expect(() =>
+      installedPNPMEntryPoint('pnpm@10.34.6', environment, 'linux', () => {
+        throw inaccessible;
+      })
+    ).toThrow(inaccessible);
+    expect(
+      installedPNPMEntryPoint(
+        'pnpm@10.34.6',
+        environment,
+        'linux',
+        () => valid,
+        () => {
+          throw Object.assign(new Error('missing bin'), { code: 'ENOENT' });
+        }
+      ) ?? corepackPNPMEntryPoint('/tools/node', 'linux', () => true)
+    ).toBe('/tools/node_modules/corepack/dist/pnpm.js');
+  });
+
+  it('executes the verified JavaScript entrypoint with the current pinned Node and literal arguments', () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'zero-pnpm-entrypoint-'));
+    const packageRoot = path.join(directory, 'node_modules/pnpm');
+    const home = path.join(directory, 'node_modules/.bin');
+    mkdirSync(path.join(packageRoot, 'bin'), { recursive: true });
+    mkdirSync(home, { recursive: true });
+    writeFileSync(
+      path.join(packageRoot, 'package.json'),
+      JSON.stringify({
+        name: 'pnpm',
+        version: '10.34.6',
+        bin: { pnpm: 'bin/pnpm.cjs' },
+      })
+    );
+    const entrypoint = path.join(packageRoot, 'bin/pnpm.cjs');
+    writeFileSync(
+      entrypoint,
+      'console.log(JSON.stringify({node:process.execPath,args:process.argv.slice(2)}));'
+    );
+    try {
+      expect(installedPNPMEntryPoint('pnpm@10.34.6', { PNPM_HOME: home })).toBe(entrypoint);
+      const args = ['install', '--frozen-lockfile', '--ignore-scripts', 'literal&value'];
+      const child = spawnSync(process.execPath, [entrypoint, ...args], {
+        shell: false,
+        windowsHide: true,
+        encoding: 'utf8',
+      });
+      expect(child.status).toBe(0);
+      expect(JSON.parse(child.stdout)).toEqual({ node: process.execPath, args });
+      rmSync(entrypoint);
+      expect(installedPNPMEntryPoint('pnpm@10.34.6', { PNPM_HOME: home })).toBeUndefined();
+      writeFileSync(entrypoint, '');
+      writeFileSync(path.join(packageRoot, 'package.json'), '{');
+      expect(() => installedPNPMEntryPoint('pnpm@10.34.6', { PNPM_HOME: home })).toThrow(
+        SyntaxError
+      );
+      expect(() => installedPNPMEntryPoint('pnpm@10.34.6')).not.toThrow();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('locates the installed Corepack in Windows and Linux Node layouts', () => {
     for (const [executable, platform, expected] of [
       [
@@ -217,6 +492,28 @@ describe('Zero performance gate', () => {
         throw inaccessible;
       })
     ).toThrow(inaccessible);
+  });
+
+  it('checks real Corepack files without suppressing unexpected filesystem errors', () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'zero-corepack-entrypoint-'));
+    try {
+      const node = path.join(directory, 'node');
+      expect(() => corepackPNPMEntryPoint(node)).toThrow(
+        'Installed Corepack pnpm entrypoint is missing'
+      );
+      const blocker = path.join(directory, 'blocker');
+      writeFileSync(blocker, '');
+      expect(() => corepackPNPMEntryPoint(path.join(blocker, 'child/node'))).toThrow(
+        'Installed Corepack pnpm entrypoint is missing'
+      );
+      const entrypoint = path.join(directory, 'node_modules/corepack/dist/pnpm.js');
+      mkdirSync(path.dirname(entrypoint), { recursive: true });
+      writeFileSync(entrypoint, '');
+      expect(corepackPNPMEntryPoint(node)).toBe(entrypoint);
+      expect(() => corepackPNPMEntryPoint(path.join(directory, 'invalid\0/node'))).toThrow();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it('keeps a large warning intact when stdout and stderr arrive in interleaved chunks', () => {
@@ -282,7 +579,7 @@ describe('Zero performance gate', () => {
   });
   it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
     const item = measurement();
-    const records = item.samples.flatMap((sample, index) =>
+    const rawRecords = item.samples.flatMap((sample, index) =>
       [
         { requestID: `request-${index}`, phase: 'arrival', at: 1001 + index * 100 },
         { requestID: `request-${index}`, phase: 'auth', elapsed: 10 },
@@ -296,6 +593,13 @@ describe('Zero performance gate', () => {
         { requestID: `request-${index}`, phase: 'response', at: 1021 + index * 100, elapsed: 20 },
       ].map(record => ({ ...record, clientCorrelationID: sample.clientCorrelationID }))
     );
+    const log = Buffer.from(
+      rawRecords
+        .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+        .join('')
+    );
+    const { records } = parseQueryAPILog(log);
+    for (const sample of item.samples) sample.apiLogBoundary!.byteEnd = log.length;
     correlateQueryAPI([item], records);
     expect(item.samples.map(sample => sample.api?.requestID)).toEqual(
       Array.from({ length: 5 }, (_, index) => `request-${index}`)
@@ -315,7 +619,7 @@ describe('Zero performance gate', () => {
   it('keeps raw server clocks separate from client clocks without changing measured budgets', () => {
     for (const offset of [-60_000, 60_000]) {
       const item = measurement();
-      const records = item.samples.flatMap((sample, index) =>
+      const rawRecords = item.samples.flatMap((sample, index) =>
         [
           { phase: 'arrival', at: 1001 + index * 100 + offset },
           { phase: 'auth', elapsed: 10 },
@@ -333,7 +637,14 @@ describe('Zero performance gate', () => {
         }))
       );
       // Keep timestamp epochs valid while their clocks remain deliberately far apart.
-      for (const record of records) if (typeof record.at === 'number') record.at += 100_000;
+      for (const record of rawRecords) if (typeof record.at === 'number') record.at += 100_000;
+      const log = Buffer.from(
+        rawRecords
+          .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+          .join('')
+      );
+      const { records } = parseQueryAPILog(log);
+      for (const sample of item.samples) sample.apiLogBoundary!.byteEnd = log.length;
       correlateQueryAPI([item], records);
       expect(checkBudgets(item)).toEqual([]);
       expect(item.samples.map(sample => sample.totalMs)).toEqual([100, 100, 100, 100, 100]);
@@ -356,7 +667,7 @@ describe('Zero performance gate', () => {
     expect(owner.where.conditions[0].left.name).toBe('id');
     expect(owner.where.conditions[1].conditions[0].left.name).toBe('creator_id');
   });
-  it('preserves every authorized event metadata projection while querying the agenda separately', () => {
+  it('preserves authorized agenda metadata and participant permissions while omitting unused event roles', () => {
     const cases = loadCases();
     const fullCase = cases.find(
       entry => entry.name === 'events.byIdFull' && entry.variant === 'default'
@@ -373,10 +684,77 @@ describe('Zero performance gate', () => {
       expect(
         full.related.filter((relation: any) => relation.subquery.alias === 'agenda_items')
       ).toHaveLength(1);
+      const eventRoles = full.related.filter(
+        (relation: any) => relation.subquery.alias === 'roles'
+      );
+      expect(eventRoles).toHaveLength(1);
+      expect(eventRoles[0].subquery.table).toBe('role');
+      expect(eventRoles[0].subquery.where).toEqual(
+        queryAST(
+          zql.role.whereExists(
+            'event',
+            event =>
+              applyEventManagerQueryAccess(
+                event,
+                userID === 'anon' ? undefined : userID,
+                'manage_participants'
+              ),
+            { flip: false }
+          )
+        ).where
+      );
       full.related = full.related.filter(
-        (relation: any) => relation.subquery.alias !== 'agenda_items'
+        (relation: any) => !['agenda_items', 'roles'].includes(relation.subquery.alias)
       );
       expect(detail).toEqual(full);
+    }
+  });
+
+  it('retains full conversation detail while omitting unused requester objects from directories', () => {
+    for (const userID of ['owner', 'outsider', 'anon']) {
+      const ctx = { userID, email: '' };
+      const full = queryAST(
+        messageQueries.conversationById.fn({ args: { id: 'conversation' }, ctx })
+      );
+      if (!full.related) throw new Error('Expected full conversation detail relations');
+      expect(
+        full.related.filter((relation: any) => relation.subquery.alias === 'requested_by')
+      ).toHaveLength(1);
+      const directoryRelations = full.related.filter(
+        (relation: any) => relation.subquery.alias !== 'requested_by'
+      );
+      for (const limit of [undefined, 20]) {
+        const directory = queryAST(
+          messageQueries.conversationsWithRelations.fn({ args: { limit }, ctx })
+        );
+        expect(directory.related).toEqual(directoryRelations);
+        expect(directory.where).toEqual(
+          queryAST(conversationAccessFilter(zql.conversation, userID, true)).where
+        );
+        expect(directory.orderBy).toEqual([['last_message_at', 'desc']]);
+        expect(directory.limit).toBe(limit);
+      }
+      for (const filter of ['all', 'direct', 'group', 'event', 'ai'] as const) {
+        for (const dir of ['forward', 'backward'] as const) {
+          const start =
+            dir === 'backward' ? { id: 'cursor', pinned: false, last_message_at: 123 } : null;
+          const page = queryAST(
+            messageQueries.conversationPage.fn({
+              args: { filter, query: '  search  ', limit: 51, start, dir },
+              ctx,
+            })
+          );
+          expect(page.related).toEqual(directoryRelations);
+          expect(page.limit).toBe(51);
+          const direction = dir === 'forward' ? 'desc' : 'asc';
+          expect(page.orderBy).toEqual([
+            ['pinned', direction],
+            ['last_message_at', direction],
+            ['id', direction],
+          ]);
+          expect(page.start).toEqual(start ? { row: start, exclusive: true } : undefined);
+        }
+      }
     }
   });
 
@@ -1404,9 +1782,15 @@ describe('Zero performance gate', () => {
         SUPABASE_URL: 'https://production',
         VITE_APP_URL: 'https://production',
         HOME: 'runtime',
+        PNPM_HOME: '/home/runner/setup-pnpm/node_modules/.bin',
         PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright',
       })
-    ).toEqual({ PATH: 'tools', HOME: 'runtime', PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright' });
+    ).toEqual({
+      PATH: 'tools',
+      HOME: 'runtime',
+      PNPM_HOME: '/home/runner/setup-pnpm/node_modules/.bin',
+      PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright',
+    });
     expect(() => assertOutputDirectory(process.cwd(), process.cwd())).toThrow();
     expect(() =>
       assertOutputDirectory(process.cwd(), 'output/zero-performance/../outside')
@@ -1688,6 +2072,230 @@ describe('Zero performance gate', () => {
     );
     expect(query('asc', null, false).text).toContain('t0."id" IS NOT DISTINCT FROM');
     expect(query('desc', 'name').values).toEqual(['name', 'name', 'cursor-id']);
+  });
+  it('VERIFY:ZERO:AUTHORITATIVE-ORDER-DIAGNOSTIC preserves predicates, cursor, ordering, limit and exact timestamp inputs', async () => {
+    const columns = new Map([
+      ['user', new Map([['created_at', { type: 'timestamp with time zone' }]])],
+    ]);
+    const ast = {
+      table: 'user',
+      where: {
+        type: 'simple',
+        left: { type: 'column', name: 'visibility' },
+        op: '=',
+        right: { type: 'literal', value: 'public' },
+      },
+      orderBy: [['created_at', 'desc']] as const,
+      start: { row: { created_at: 1791773154029.5706, id: 'cursor' }, exclusive: true },
+      limit: 2,
+    };
+    const original = rootSQL(ast, columns);
+    const diagnostic = diagnosticRootSQL(ast, columns);
+    expect(diagnostic.values).toEqual(original.values);
+    expect(diagnostic.text.slice(diagnostic.text.indexOf(' FROM public.'))).toBe(
+      original.text.slice(original.text.indexOf(' FROM public.'))
+    );
+    expect(diagnostic.text).toContain('t0."created_at"::text AS "created_at__timestamp"');
+    expect(diagnostic.text).toContain(
+      '(extract(epoch from t0."created_at") * 1000)::text AS "created_at__epoch_ms_exact"'
+    );
+    expect(diagnostic.text).toContain(
+      '(extract(epoch from t0."created_at") * 1000)::double precision AS "created_at"'
+    );
+    const sqlRows = [
+      {
+        id: 'two',
+        created_at__timestamp: '2026-10-12 04:05:54.029571+00',
+        created_at__epoch_ms_exact: '1791773154029.571000',
+        created_at: 1791773154029.571,
+      },
+    ];
+    const unsafe = vi.fn().mockResolvedValue(sqlRows);
+    const save = vi.fn().mockResolvedValue(undefined);
+    const actual = [
+      { id: 'one', created_at: 1791773154029.5706, privateField: 'omit' },
+      { id: 'two', created_at: 1791773154029.571 },
+    ];
+    await expect(
+      assertAuthoritativeRootResult(
+        { unsafe } as unknown as Sql,
+        ast,
+        columns,
+        actual,
+        ['two', 'one'],
+        'Original ordered assertion',
+        save
+      )
+    ).rejects.toThrow('Original ordered assertion');
+    expect(unsafe).toHaveBeenCalledWith(diagnostic.text, diagnostic.values);
+    expect(save).toHaveBeenCalledWith({
+      protocol: 'zero-authoritative-order-diagnostic/v1',
+      ast,
+      query: diagnostic,
+      expectedIDs: ['two', 'one'],
+      actualIDs: ['one', 'two'],
+      actualRows: actual.map(({ privateField: _private, ...row }) => row),
+      sqlRows,
+    });
+  });
+  it('VERIFY:ZERO:REPLICA-TEXT-COPY keeps equal captured snapshot and WAL timestamps tied without weakening the oracle', async () => {
+    const unixMicros = 1791835039551486n;
+    // The pinned SDKs use these distinct binary-COPY and WAL decoding paths.
+    const binaryMillis = Number(unixMicros - 946684800000000n) / 1000 + 946684800000;
+    const textMillis = Number(unixMicros / 1000n) + Number(unixMicros % 1000n) / 1000;
+    expect(binaryMillis).toBe(1791835039551.4858);
+    expect(textMillis).toBe(1791835039551.486);
+    const owner = 'user:20000000-0000-4000-8000-000000000002';
+    const assistant = 'user:a12a0000-0000-4000-a000-000000000001';
+    const ast = {
+      table: 'search_document',
+      orderBy: [
+        ['created_at', 'desc'],
+        ['id', 'desc'],
+      ] as const,
+    };
+    const sql = { unsafe: vi.fn().mockResolvedValue([]) } as unknown as Sql;
+    const columns = new Map();
+    const save = vi.fn();
+    const ordered = (snapshotMillis: number) =>
+      [
+        { id: owner, created_at: textMillis },
+        { id: assistant, created_at: snapshotMillis },
+      ].sort((a, b) => b.created_at - a.created_at || b.id.localeCompare(a.id));
+    await expect(
+      assertAuthoritativeRootResult(
+        sql,
+        ast,
+        columns,
+        ordered(binaryMillis),
+        [assistant, owner],
+        'Captured timestamp ordering',
+        save
+      )
+    ).rejects.toThrow('Captured timestamp ordering');
+    await expect(
+      assertAuthoritativeRootResult(
+        sql,
+        ast,
+        columns,
+        ordered(textMillis),
+        [assistant, owner],
+        'Captured timestamp ordering',
+        save
+      )
+    ).resolves.toBeUndefined();
+    expect(save).toHaveBeenCalledOnce();
+  });
+  it('requires explicit replica transport evidence instead of accepting legacy or binary-mode reports', () => {
+    const report = { runtime: { initialSyncCopyFormat: 'text' } } as Report;
+    expect(replicaTransportFailures(report)).toEqual([]);
+    for (const runtime of [undefined, {}, { initialSyncCopyFormat: 'binary' }]) {
+      expect(replicaTransportFailures({ ...report, runtime })).toEqual([
+        'Missing or inconsistent replica text COPY provenance',
+      ]);
+    }
+  });
+  it('VERIFY:ZERO:IVM-YIELD-BOUNDARY preserves deletion checks within the shared scheduling limit and retains all absolute budgets', () => {
+    const report = {
+      runtime: { ivmYieldThresholdMs: 4000, ivmPriorityYieldThresholdMs: 1000 },
+    } as Report;
+    expect(ivmSchedulingFailures(report)).toEqual([]);
+    for (const runtime of [
+      undefined,
+      {},
+      { ivmYieldThresholdMs: 10 },
+      { ivmYieldThresholdMs: '4000', ivmPriorityYieldThresholdMs: 1000 },
+      { ivmYieldThresholdMs: 4000 },
+      { ivmYieldThresholdMs: 4000, ivmPriorityYieldThresholdMs: 250 },
+    ])
+      expect(ivmSchedulingFailures({ ...report, runtime })).toEqual([
+        'Missing or inconsistent 4000/1000-ms IVM yield threshold provenance',
+      ]);
+    // Source reads emit a cooperative marker when elapsedLap() exceeds the option.
+    // Zero 1.9's first() mistakes that marker for a row in its OR-branch delete check.
+    const otherBranch = function* (elapsedMs: number, thresholdMs: number) {
+      if (elapsedMs > thresholdMs) yield 'yield';
+    };
+    const configured = 4000;
+    const thresholds = [Math.max(configured, 2), Math.max(configured / 4, 2)];
+    expect(thresholds).toEqual([4000, 1000]);
+    expect(otherBranch(30, 10).next().value).toBe('yield');
+    for (const threshold of thresholds) {
+      expect(otherBranch(999, threshold).next().value).toBeUndefined();
+      expect(otherBranch(1000, threshold).next().value).toBeUndefined();
+      expect(otherBranch(threshold + 1, threshold).next().value).toBe('yield');
+    }
+    expect(BUDGETS).toEqual({ totalMs: 1000, clientMs: 50, serverMs: 100 });
+    const tooSlow = measurement();
+    tooSlow.samples = tooSlow.samples.map(sample => ({
+      ...sample,
+      totalMs: 1001,
+      clientMs: 51,
+      serverMs: 101,
+    }));
+    expect(checkBudgets(tooSlow)).toEqual(
+      expect.arrayContaining([
+        'Total exceeds 1000 ms',
+        'Client exceeds 50 ms',
+        'Server materialization exceeds 100 ms',
+      ])
+    );
+  });
+  it('does no diagnostic SQL or output for a successful authoritative oracle', async () => {
+    const unsafe = vi.fn();
+    const save = vi.fn();
+    for (const result of [[{ id: 'one' }], { id: 'one' }, null]) {
+      await assertAuthoritativeRootResult(
+        { unsafe } as unknown as Sql,
+        { table: 'user' },
+        new Map(),
+        result,
+        result == null ? [] : ['one'],
+        'Valid oracle',
+        save
+      );
+    }
+    expect(unsafe).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
+  it('retains the original ordered assertion when diagnostic SQL or artifact writing fails', async () => {
+    for (const phase of ['sql', 'artifact']) {
+      const unsafe =
+        phase === 'sql'
+          ? vi.fn().mockRejectedValue(new Error('Diagnostic SQL failed'))
+          : vi.fn().mockResolvedValue([{ id: 'one' }]);
+      const save = vi.fn().mockRejectedValue(new Error('Diagnostic artifact failed'));
+      await expect(
+        assertAuthoritativeRootResult(
+          { unsafe } as unknown as Sql,
+          { table: 'user' },
+          new Map(),
+          { id: 'one' },
+          ['two'],
+          'Keep this assertion',
+          save
+        )
+      ).rejects.toThrow('Keep this assertion');
+      expect(save).toHaveBeenCalledTimes(phase === 'artifact' ? 1 : 0);
+    }
+    const saveEmpty = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      assertAuthoritativeRootResult(
+        { unsafe: vi.fn().mockResolvedValue([{ id: 'missing' }]) } as unknown as Sql,
+        { table: 'user' },
+        new Map(),
+        null,
+        ['missing'],
+        'Missing rows remain a failure',
+        saveEmpty
+      )
+    ).rejects.toThrow('Missing rows remain a failure');
+    expect(saveEmpty.mock.calls[0][0]).toMatchObject({
+      expectedIDs: ['missing'],
+      actualIDs: [],
+      actualRows: [],
+      sqlRows: [{ id: 'missing' }],
+    });
   });
   it('uses parametrized root-result SQL, handles empty IN and rejects unsupported AST shapes', () => {
     const columns = new Map([

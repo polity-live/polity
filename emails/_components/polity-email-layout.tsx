@@ -14,6 +14,7 @@ interface PolityEmailLayoutProps {
   eyebrow: string;
   language: 'de' | 'en';
   previewText: string;
+  invitation?: boolean;
 }
 
 export function PolityEmailLayout({
@@ -21,6 +22,7 @@ export function PolityEmailLayout({
   eyebrow,
   language,
   previewText,
+  invitation = false,
 }: PolityEmailLayoutProps) {
   const footer =
     language === 'de'
@@ -40,6 +42,13 @@ export function PolityEmailLayout({
             'You are receiving this email because your confirmed Polity address is subscribed to the newsletter.',
           unsubscribe: 'Unsubscribe from newsletter',
         };
+
+  if (invitation) {
+    footer.reason =
+      language === 'de'
+        ? 'Du erhältst diese E-Mail, weil dich eine Gruppenverantwortliche oder ein Gruppenverantwortlicher zu Polity eingeladen hat.'
+        : 'You received this email because a group manager invited you to Polity.';
+  }
 
   return (
     <Html lang={language}>
@@ -92,10 +101,18 @@ export function PolityEmailLayout({
               <Link className="polity-footer-link" href={urls.privacy} style={footerLinkStyle}>
                 {footer.privacy}
               </Link>
-              <span style={separatorStyle}>·</span>
-              <Link className="polity-footer-link" href={urls.unsubscribe} style={footerLinkStyle}>
-                {footer.unsubscribe}
-              </Link>
+              {!invitation && (
+                <>
+                  <span style={separatorStyle}>·</span>
+                  <Link
+                    className="polity-footer-link"
+                    href={urls.unsubscribe}
+                    style={footerLinkStyle}
+                  >
+                    {footer.unsubscribe}
+                  </Link>
+                </>
+              )}
             </Text>
             <Text className="polity-address" style={addressStyle}>
               Polity · polity.live

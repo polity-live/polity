@@ -1,4 +1,9 @@
 export const STUDIO_OPEN_PANEL_EVENT = 'studio-open-panel';
+export const STUDIO_CLOSE_PANELS_EVENT = 'studio-close-panels';
+
+export function closeStudioPanels() {
+  window.dispatchEvent(new Event(STUDIO_CLOSE_PANELS_EVENT));
+}
 
 export interface StudioOpenPanelRequest {
   panelKey: string;

@@ -10,9 +10,7 @@ const zeroBaseUrl = process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848';
 const zeroKeepaliveUrl = new URL('/keepalive', zeroBaseUrl).href;
 const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
 const appCommand = process.env.E2E_APP_COMMAND ?? 'pnpm run test:e2e:serve';
-const zeroCommand =
-  process.env.E2E_ZERO_COMMAND ??
-  (process.platform === 'linux' ? 'node tools/zero/run-e2e-cache.mjs' : 'pnpm exec zero-cache');
+const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'node tools/zero/run-cache.mjs';
 const zeroAdminPassword = process.env.ZERO_ADMIN_PASSWORD || 'polity-e2e-local-only';
 // The cache child and global readiness probe must use the same credential.
 process.env.ZERO_ADMIN_PASSWORD = zeroAdminPassword;

@@ -8,6 +8,9 @@ import {
   executionFailures,
   selectKeys,
   securityKey,
+  QUERY_SHARD_COUNT,
+  SECURITY_SHARD_COUNT,
+  TOTAL_SHARD_COUNT,
   type Workload,
 } from '../sharding';
 import { securityScenarios, securityCaseManifest } from '../security';
@@ -53,26 +56,34 @@ describe('distributed Zero workload planning', () => {
   });
   it('covers every query variant, keeps all variants of a query together, and covers security once', () => {
     const result = manifest();
-    expect(result.shards).toHaveLength(20);
-    expect(
-      result.shards
-        .filter(shard => shard.layer === 'queries')
-        .flatMap(shard => shard.head)
-        .sort()
-    ).toEqual(workload().queries.sort());
+    expect(QUERY_SHARD_COUNT).toBe(64);
+    expect(SECURITY_SHARD_COUNT).toBe(2);
+    expect(TOTAL_SHARD_COUNT).toBe(68);
+    expect(result.shards).toHaveLength(68);
+    expect(result.shards.filter(shard => shard.layer === 'queries').map(shard => shard.id)).toEqual(
+      Array.from({ length: 64 }, (_, index) => `queries-${index + 1}`)
+    );
+    for (const revision of ['head', 'base'] as const) {
+      expect(
+        result.shards
+          .filter(shard => shard.layer === 'queries')
+          .flatMap(shard => shard[revision])
+          .sort()
+      ).toEqual(workload().queries.sort());
+      expect(
+        result.shards
+          .filter(shard => shard.layer === 'security')
+          .flatMap(shard => shard[revision])
+          .sort()
+      ).toEqual(
+        workload()
+          .security.map(entry => entry.key)
+          .sort()
+      );
+    }
     const q0 = result.shards.filter(shard => shard.head.includes('q0/default'));
     expect(q0).toHaveLength(1);
     expect(q0[0].head).toContain('q0/search');
-    expect(
-      result.shards
-        .filter(shard => shard.layer === 'security')
-        .flatMap(shard => shard.head)
-        .sort()
-    ).toEqual(
-      workload()
-        .security.map(entry => entry.key)
-        .sort()
-    );
   });
   it('balances longest groups first with deterministic tie-breaking and immutable input', () => {
     const groups = [
@@ -83,6 +94,31 @@ describe('distributed Zero workload planning', () => {
     expect(balancedGroups(groups, 2)).toEqual([['a', 'b'], ['z']]);
     expect(groups[0].key).toBe('z');
     expect(balancedGroups([...groups].reverse(), 2)).toEqual(balancedGroups(groups, 2));
+  });
+
+  it('rejects omitted, repeated and out-of-range assignments even with recomputed digests', () => {
+    const resign = (value: ReturnType<typeof manifest>) => {
+      const { digest: _checksum, ...unsigned } = value;
+      value.digest = digest(unsigned);
+    };
+    const omitted = manifest();
+    omitted.shards = omitted.shards.filter(shard => shard.id !== 'queries-64');
+    resign(omitted);
+    expect(() => validateManifest(omitted)).toThrow('Incomplete shard matrix');
+    const repeated = manifest();
+    repeated.shards.find(shard => shard.id === 'queries-64')!.id = 'queries-63';
+    resign(repeated);
+    expect(() => validateManifest(repeated)).toThrow('Incomplete shard matrix');
+    for (const [valid, invalid] of [
+      ['queries-64', 'queries-65'],
+      ['queries-64', 'queries-064'],
+      ['security-2', 'security-3'],
+    ]) {
+      const value = manifest();
+      value.shards.find(shard => shard.id === valid)!.id = invalid;
+      resign(value);
+      expect(() => validateManifest(value)).toThrow('Invalid shard identity');
+    }
   });
   it('places unknown variants using the largest known weight', () => {
     const head = workload();
@@ -145,7 +181,15 @@ describe('distributed Zero workload planning', () => {
     expect(result.shards[0].head).toEqual(
       expect.arrayContaining(['q0/default', 'q0/search', 'q0/backward'])
     );
-    expect(result.shards[0].head.length).toBeGreaterThan(3);
+    const { format: _format, shards: _shards, digest: _digest, ...input } = result;
+    const withoutSecurityWeights = createManifest(input, {
+      'q0/default': 1,
+      'q0/search': 1,
+      'q30/default': 100,
+    });
+    expect(result.shards.filter(shard => shard.layer === 'queries')).toEqual(
+      withoutSecurityWeights.shards.filter(shard => shard.layer === 'queries')
+    );
   });
   it('rejects edits to the manifest and independently rejects incomplete recomputed manifests', () => {
     const result = manifest();

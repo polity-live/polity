@@ -73,6 +73,34 @@ export function correlateMutationAPI(rows: MutationMeasurement[], records: Mutat
     if (record.benchmark !== 'mutation-api' || typeof record.requestID !== 'string') continue;
     groups.set(record.requestID, [...(groups.get(record.requestID) ?? []), record]);
   }
+  interface RequestGroup {
+    requestID: string;
+    group: MutationAPIRecord[];
+    arrivals: MutationAPIRecord[];
+    order: number;
+  }
+  const candidates = new Map<unknown, Map<unknown, Map<unknown, Set<RequestGroup>>>>();
+  const unkeyed = new Set<RequestGroup>();
+  let order = 0;
+  for (const [requestID, group] of groups) {
+    const arrivals = group.filter(item => item.phase === 'arrival');
+    const request = { requestID, group, arrivals, order: order++ };
+    for (const identity of arrivals.flatMap(item => item.identities ?? [])) {
+      // Malformed null identities must still reach the original matching check
+      // for every sample, in the same request order, rather than disappear.
+      if (identity == null) {
+        unkeyed.add(request);
+        continue;
+      }
+      let clients = candidates.get(identity.clientGroupID);
+      if (!clients) candidates.set(identity.clientGroupID, (clients = new Map()));
+      let names = clients.get(identity.clientID);
+      if (!names) clients.set(identity.clientID, (names = new Map()));
+      let requests = names.get(identity.name);
+      if (!requests) names.set(identity.name, (requests = new Set()));
+      requests.add(request);
+    }
+  }
   for (const row of rows)
     for (const sample of row.samples) {
       sample.attempts = [];
@@ -81,8 +109,12 @@ export function correlateMutationAPI(rows: MutationMeasurement[], records: Mutat
       const found: MutationAttempt[] = [];
       const mutationIDs = new Set<number>();
       let invalid = false;
-      for (const [requestID, group] of groups) {
-        const arrivals = group.filter(item => item.phase === 'arrival');
+      // Index only selects candidates. Keep the exact strict-equality matcher
+      // and all raw request/phase validation, including mixed batches/retries.
+      const indexed =
+        candidates.get(sample.clientGroupID)?.get(sample.clientID)?.get(row.expectation.name) ?? [];
+      const relevant = [...new Set([...indexed, ...unkeyed])].sort((a, b) => a.order - b.order);
+      for (const { requestID, group, arrivals } of relevant) {
         let matching = arrivals
           .flatMap(item => item.identities ?? [])
           .filter(

@@ -39,7 +39,10 @@ vi.mock('../storage', async importOriginal => {
     uploadSnapshotBytes: mocks.uploadBytes,
   };
 });
-vi.mock('../projection', () => ({ buildMultiMeasureProjectionPoints: mocks.multiPoints }));
+vi.mock('../projection', async importOriginal => ({
+  ...(await importOriginal<typeof import('../projection')>()),
+  buildMultiMeasureProjectionPoints: mocks.multiPoints,
+}));
 vi.mock('@/server/govdata/catalogue', () => ({ normalizeGovDataText: mocks.normalizeText }));
 
 import {
@@ -48,6 +51,7 @@ import {
   getDatasetColumnValues,
   loadDatasetDetails,
   loadSnapshotTable,
+  loadRawSnapshotRecord,
   persistDatasetSnapshot,
   searchStoredDatasets,
 } from '../service';
@@ -150,6 +154,52 @@ beforeEach(() => {
   mocks.uploadBytes.mockResolvedValue(undefined);
   mocks.multiPoints.mockReturnValue([{ x: 'A', value: 1, series: null }]);
 });
+it('applies table-selected predicates to charts and tables over the same snapshot', async () => {
+  const rowConditions = [
+    { column: 'value', operator: 'range' as const, min: '2', max: '4', numeric: true },
+  ];
+  queueSnapshotLoad();
+  const chart = await createDatasetProjection(
+    {
+      snapshotId: 'snapshot-1',
+      view: 'chart',
+      filters: {},
+      rowConditions,
+      aggregation: 'none',
+      dimensionColumn: 'category',
+      measureColumn: 'value',
+      seriesColumn: 'series',
+    },
+    'user-1'
+  );
+  expect(chart).toMatchObject({
+    rowCount: 2,
+    points: [
+      { x: 'A', value: 2, series: 'One' },
+      { x: 'A', value: 3, series: 'Two' },
+    ],
+  });
+  queueSnapshotLoad();
+  const selectedTable = await createDatasetProjection(
+    {
+      snapshotId: 'snapshot-1',
+      view: 'table',
+      filters: {},
+      rowConditions,
+      aggregation: 'none',
+      columns: ['value', 'other'],
+      limit: 50,
+    },
+    'user-1'
+  );
+  expect(selectedTable).toMatchObject({
+    rowCount: 2,
+    rows: [
+      { value: '2', other: 'invalid' },
+      { value: '3', other: '30' },
+    ],
+  });
+});
 
 describe('dataset snapshot persistence', () => {
   it('updates a group dataset and reuses a ready snapshot', async () => {
@@ -244,6 +294,64 @@ describe('dataset snapshot persistence', () => {
 });
 
 describe('dataset and snapshot loading', () => {
+  it('uses the dataset source-update timestamp before a snapshot exists', async () => {
+    queue([dataset({ metadata: { sourceUpdatedAt: '2026-01-02' } })], []);
+    expect(await loadDatasetDetails('dataset-1', 'user-1')).toMatchObject({
+      modified: '2026-01-02',
+      snapshotId: null,
+    });
+  });
+  it('recovers the original file record without CSV parsing or requiring ready status', async () => {
+    queue([]);
+    await expect(loadRawSnapshotRecord('missing', 'user-1')).rejects.toThrow(
+      'Dataset snapshot not found'
+    );
+    const pending = { ...snapshot({ status: 'pending' }), dataset: dataset() };
+    queue([pending]);
+    expect(await loadRawSnapshotRecord('snapshot-1', 'user-1')).toBe(pending);
+    expect(mocks.assertRead).toHaveBeenCalledWith('user-1', pending.dataset);
+    expect(mocks.downloadText).not.toHaveBeenCalled();
+    mocks.assertRead.mockRejectedValueOnce(new Error('Dataset access denied'));
+    queue([pending]);
+    await expect(loadRawSnapshotRecord('snapshot-1', 'stranger')).rejects.toThrow(
+      'Dataset access denied'
+    );
+  });
+
+  it.each([null, { ...snapshot(), dataset_id: 'other' }])(
+    'rejects an explicitly selected snapshot belonging to another dataset: %j',
+    async selected => {
+      queue([dataset()], [snapshot()], selected ? [selected] : []);
+      await expect(loadDatasetDetails('dataset-1', 'user-1', 'selected')).rejects.toThrow(
+        'Dataset snapshot identity mismatch'
+      );
+    }
+  );
+
+  it('loads and normalizes an explicit GENESIS snapshot for editing without losing provenance', async () => {
+    const genesis = dataset({ provider: 'GENESIS_DESTATIS', language: 'en' });
+    const selected = {
+      ...snapshot({ metadata: { sourceUpdatedAt: '2026-01-01' } }),
+      dataset: genesis,
+    };
+    queue([genesis], [selected], [selected], [selected]);
+    mocks.downloadText.mockResolvedValue(
+      'time,value,value_variable_code,value_variable_label,value_unit\n2025,42,COUNT,People,Number'
+    );
+    const details = await loadDatasetDetails('dataset-1', 'user-1', 'snapshot-1');
+    expect(details.columns).toContain('observation_period');
+    expect(details.columnProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'observation_period', role: 'time' }),
+        expect.objectContaining({ name: 'value', role: 'measure' }),
+      ])
+    );
+    expect(details.metadata).toMatchObject({
+      sourceUpdatedAt: '2026-01-01',
+      measureOptions: [{ label: 'People', unit: 'Number' }],
+    });
+    expect(details.modified).toBe('2026-01-01');
+  });
   it('rejects absent datasets and maps sparse details without snapshots', async () => {
     queue([]);
     await expect(loadDatasetDetails('missing')).rejects.toThrow('Dataset not found');
@@ -324,6 +432,80 @@ async function project(request: Record<string, unknown>, csv?: string) {
 }
 
 describe('dataset projections', () => {
+  it('sorts time axes numerically in multi and long layouts and labels the official measure series', async () => {
+    const timeProfile = { name: 'category', label: 'Time', type: 'date', role: 'time' };
+    const otherProfile = { name: 'series', label: 'Series', type: 'category', role: 'dimension' };
+    queueSnapshotLoad({ column_profiles: [otherProfile, timeProfile] });
+    mocks.multiPoints.mockReturnValueOnce([
+      { x: '10', value: 10 },
+      { x: '2', value: 2 },
+    ]);
+    expect(
+      await createDatasetProjection(
+        {
+          snapshotId: 'snapshot-1',
+          view: 'chart',
+          layout: 'multi',
+          aggregation: 'sum',
+          filters: {},
+          measureColumn: 'value',
+          dimensionColumn: 'category',
+          valueColumns: ['value'],
+        },
+        'user-1'
+      )
+    ).toMatchObject({
+      points: [
+        { x: '2', value: 2 },
+        { x: '10', value: 10 },
+      ],
+    });
+    queueSnapshotLoad({ column_profiles: [timeProfile, otherProfile] });
+    mocks.downloadText.mockResolvedValueOnce(
+      'category,value,value_variable_label,value_unit\n10,10,People,Number\n2,2,People,Number'
+    );
+    expect(
+      await createDatasetProjection(
+        {
+          snapshotId: 'snapshot-1',
+          view: 'chart',
+          aggregation: 'sum',
+          filters: {},
+          measureColumn: 'value',
+          dimensionColumn: 'category',
+        },
+        'user-1'
+      )
+    ).toMatchObject({
+      points: [
+        { x: '2', value: 2, series: 'People · Number' },
+        { x: '10', value: 10, series: 'People · Number' },
+      ],
+    });
+  });
+  it('filters annual, monthly, quarterly and reference-date rows by year while retaining equality filters', async () => {
+    const result = await project(
+      {
+        view: 'table',
+        columns: ['period', 'region', 'value'],
+        filters: { region: 'DE' },
+        timeRange: { column: 'period', startYear: 2025, endYear: 2025 },
+      },
+      'period,region,value\n2024,DE,1\n2025,DE,2\n2025-02,DE,3\n2025-Q3,DE,4\n31.12.2025,DE,5\n2025,FR,6\n2026,DE,7'
+    );
+    expect(result).toMatchObject({
+      rowCount: 4,
+      rows: [
+        { period: '2025', region: 'DE', value: '2' },
+        { period: '2025-02', region: 'DE', value: '3' },
+        { period: '2025-Q3', region: 'DE', value: '4' },
+        { period: '31.12.2025', region: 'DE', value: '5' },
+      ],
+    });
+    await expect(
+      project({ view: 'table', timeRange: { column: 'missing', startYear: 2025, endYear: 2025 } })
+    ).rejects.toThrow('Unknown dataset column');
+  });
   it('validates filters and supports legacy mappings with optional stats', async () => {
     await expect(project({ view: 'table', filters: { missing: 'x' } })).rejects.toThrow(
       'Unknown dataset column: missing'

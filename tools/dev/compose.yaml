@@ -1,6 +1,9 @@
 services:
   zero:
-    image: rocicorp/zero:1.9.0
+    image: polity-zero:local
+    build:
+      context: ../..
+      dockerfile: Dockerfile.zero
     ports:
       - '127.0.0.1:4848:4848'
     environment:
@@ -12,6 +15,7 @@ services:
       ZERO_REPLICA_FILE: /data/replica.db
       ZERO_LOG_LEVEL: warn
       ZERO_NUM_SYNC_WORKERS: '1'
+      ZERO_CVR_MAX_CONNS: '6'
       ZERO_ADMIN_PASSWORD: ${ZERO_ADMIN_PASSWORD:-local-development}
     tmpfs:
       - /data

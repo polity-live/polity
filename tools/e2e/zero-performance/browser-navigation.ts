@@ -110,6 +110,8 @@ export function installNavigationProbe() {
   };
   scope.__zeroPerformanceViewEvents = [];
   scope.__benchmarkLongTaskObserver?.disconnect();
+  scope.__benchmarkPaint?.frameObserver?.disconnect();
+  if (scope.__benchmarkPaint) scope.__benchmarkPaint.frameObserver = undefined;
   scope.__benchmarkLongTasks = [];
   if (
     typeof PerformanceObserver !== 'undefined' &&
@@ -121,6 +123,94 @@ export function installNavigationProbe() {
     });
     scope.__benchmarkLongTaskObserver.observe({ type: 'longtask', buffered: true });
   }
+  const supportsLongAnimationFrames =
+    typeof PerformanceObserver !== 'undefined' &&
+    PerformanceObserver.supportedEntryTypes?.includes('long-animation-frame');
+  // Export after the measured navigation. Keep native entries until then so
+  // script attribution serialization cannot compete with its paint callback.
+  scope.__snapshotBenchmarkNavigationFrames = () => {
+    const state = scope.__benchmarkPaint;
+    if (state?.frameObserver) {
+      state.longAnimationFrames.push(...state.frameObserver.takeRecords());
+      state.frameObserver.disconnect();
+      state.frameObserver = undefined;
+    }
+    const start = state?.cold?.documentStart ?? state?.start;
+    const end =
+      state?.start != null && state.displayed != null && state.authoritative != null
+        ? state.start + Math.max(state.displayed, state.authoritative)
+        : undefined;
+    const numbers = (entry: any, fields: string[]) =>
+      Object.fromEntries(
+        fields
+          .map(field => [field, entry[field]])
+          .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
+      );
+    const sourceURL = (value: unknown) => {
+      if (typeof value !== 'string') return undefined;
+      if (!value) return value;
+      try {
+        const url = new URL(value);
+        if (url.protocol === 'data:' || url.protocol === 'javascript:') return undefined;
+        url.username = '';
+        url.password = '';
+        url.search = '';
+        url.hash = '';
+        return url.href;
+      } catch {
+        // Opaque attribution has no inferred application source.
+        return undefined;
+      }
+    };
+    return {
+      supported: state?.frameDiagnosticsSupported ?? Boolean(supportsLongAnimationFrames),
+      selection: 'frames-overlapping-measured-window',
+      browserTimeOrigin: performance.timeOrigin,
+      start,
+      end,
+      // Whole native frames may begin before the action and still contain its
+      // script. Preserve all timings and attribution across the window overlap.
+      frames:
+        typeof start === 'number' && typeof end === 'number'
+          ? (state?.longAnimationFrames ?? [])
+              .filter(
+                (entry: PerformanceEntry) =>
+                  entry.startTime <= end && entry.startTime + entry.duration >= start
+              )
+              .map((entry: any) => ({
+                ...numbers(entry, [
+                  'startTime',
+                  'duration',
+                  'blockingDuration',
+                  'renderStart',
+                  'styleAndLayoutStart',
+                  'firstUIEventTimestamp',
+                ]),
+                scripts: Array.from(entry.scripts ?? [], (script: any) => ({
+                  ...numbers(script, [
+                    'startTime',
+                    'duration',
+                    'executionStart',
+                    'pauseDuration',
+                    'forcedStyleAndLayoutDuration',
+                    'sourceCharPosition',
+                  ]),
+                  sourceURL: sourceURL(script.sourceURL),
+                  sourceFunctionName:
+                    typeof script.sourceFunctionName === 'string'
+                      ? script.sourceFunctionName
+                      : undefined,
+                  invokerType:
+                    typeof script.invokerType === 'string' ? script.invokerType : undefined,
+                  windowAttribution:
+                    typeof script.windowAttribution === 'string'
+                      ? script.windowAttribution
+                      : undefined,
+                })),
+              }))
+          : [],
+    };
+  };
   scope.__zeroPerformanceReady = (
     name: string,
     complete: boolean,
@@ -172,6 +262,8 @@ export function installNavigationProbe() {
   ) => {
     const previous = scope.__benchmarkPaint;
     previous?.observer?.disconnect();
+    previous?.frameObserver?.disconnect();
+    if (previous) previous.frameObserver = undefined;
     const state = {
       start: cold ? null : start,
       cold: cold ? { documentStart: start, connectedAt: null, clientID: null } : undefined,
@@ -179,24 +271,84 @@ export function installNavigationProbe() {
       authoritative: null as number | null,
       target,
       observer: undefined as MutationObserver | undefined,
+      frameObserver: undefined as PerformanceObserver | undefined,
+      frameDiagnosticsSupported: Boolean(supportsLongAnimationFrames),
+      longAnimationFrames: [] as PerformanceEntry[],
+      observedContent: null as Element | null,
+      observedAncestors: [] as Node[],
       pendingFrame: false,
       candidates: [] as { node: Node; element: Element }[],
     };
     scope.__benchmarkPaint = state;
-    const inspect = () => {
+    if (supportsLongAnimationFrames) {
+      try {
+        const frameObserver = new PerformanceObserver(list => {
+          if (scope.__benchmarkPaint === state && state.frameObserver === frameObserver)
+            state.longAnimationFrames.push(...list.getEntries());
+        });
+        state.frameObserver = frameObserver;
+        frameObserver.observe({ type: 'long-animation-frame', buffered: true });
+      } catch {
+        state.frameObserver?.disconnect();
+        state.frameObserver = undefined;
+        state.frameDiagnosticsSupported = false;
+      }
+    }
+    const contentRoot = () =>
+      target.contentSelector ? document.querySelector(target.contentSelector) : document.body;
+    const ancestors = (content: Element | null) => {
+      const result: Node[] = [];
+      for (let parent = content?.parentNode; parent; parent = parent.parentNode)
+        result.push(parent);
+      return result;
+    };
+    const sameAncestors = (parents: Node[]) =>
+      parents.length === state.observedAncestors.length &&
+      parents.every((parent, index) => parent === state.observedAncestors[index]);
+    const observeContent = (content: Element | null) => {
+      const parents = ancestors(content);
+      if (state.observedContent === content && sameAncestors(parents)) return;
+      state.observer?.disconnect();
+      state.observedContent = content;
+      state.observedAncestors = parents;
+      if (!content) {
+        state.observer?.observe(document, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+        return;
+      }
+      state.observer?.observe(content, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+      // Watch structural replacements/reparenting without recording text work
+      // in unrelated headers, navigation, sidebars or portals.
+      for (const parent of parents) state.observer?.observe(parent, { childList: true });
+    };
+    const inspect = (inAnimationFrame = false) => {
       if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
-      if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) return;
+      if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) {
+        observeContent(null);
+        return;
+      }
       const search = new URLSearchParams(location.search);
       if (
         Object.entries(target.search ?? {}).some(([key, value]) =>
           target.consumedSearch?.includes(key) ? search.has(key) : search.get(key) !== value
         )
-      )
+      ) {
+        observeContent(null);
         return;
-      if (!document.body) return;
-      const content = target.contentSelector
-        ? document.querySelector(target.contentSelector)
-        : document.body;
+      }
+      if (!document.body) {
+        observeContent(null);
+        return;
+      }
+      const content = contentRoot();
+      observeContent(content);
       if (!content) return;
       const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
       const candidates: { node: Node; element: Element }[] = [];
@@ -252,13 +404,28 @@ export function installNavigationProbe() {
         }
       };
       if (!state.pendingFrame) {
-        state.pendingFrame = true;
-        requestAnimationFrame(paint);
+        // The initial RAF inspection already runs at a real paint opportunity.
+        // Mutation callbacks still schedule their visibility check for a RAF.
+        if (inAnimationFrame) paint();
+        else {
+          state.pendingFrame = true;
+          requestAnimationFrame(paint);
+        }
       }
     };
-    state.observer = new MutationObserver(inspect);
+    state.observer = new MutationObserver(records => {
+      if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
+      const content = contentRoot();
+      if (
+        content !== state.observedContent ||
+        !sameAncestors(ancestors(content)) ||
+        !content ||
+        records.some(record => content.contains(record.target))
+      )
+        inspect();
+    });
     state.observer.observe(document, { childList: true, subtree: true, characterData: true });
     inspect();
-    requestAnimationFrame(inspect);
+    requestAnimationFrame(() => inspect(true));
   };
 }

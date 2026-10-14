@@ -17,7 +17,7 @@ interface ProjectRow {
 async function ownerProject(sql: postgres.TransactionSql, actor: string, projectId: string) {
   const [project] = await sql<ProjectRow[]>`
     select id,title,owner_id,group_id,kind from studio_project
-    where id=${projectId} and document_schema_version=5 for update`;
+    where id=${projectId} and document_schema_version=6 for update`;
   if (!project || project.owner_id !== actor || project.group_id)
     throw new StudioError(
       'Only the owner of a personal Studio project can manage collaborators',

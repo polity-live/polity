@@ -8,6 +8,7 @@ import {
 import { POLITY_THEME } from '@/features/shared/appearance-theme/presets';
 import { createDocument } from '../templates';
 import { legacyDocumentToV3 } from '../v3-adapter';
+import { createEventTemplate } from '../event-templates';
 import {
   activePalette,
   applyTextStyleToNode,
@@ -45,6 +46,32 @@ function styledFixture() {
   nextStyle.size = oldStyle.size + 11;
   return { ...result, oldStyle, nextStyle, next };
 }
+
+it('matches replacement theme styles by name while preserving responsive live text sizing and inline links', () => {
+  const document = createEventTemplate('cover', crypto.randomUUID());
+  const text = document.nodes.find(
+    node => node.type === 'richText' && node.liveBinding?.field === 'title'
+  )!;
+  if (text.type !== 'richText') throw new Error('Missing title');
+  const originalSize = text.typography.fontSize;
+  const link = {
+    id: crypto.randomUUID(),
+    type: 'link' as const,
+    children: [{ id: crypto.randomUUID(), text: 'Reference' }],
+  };
+  text.content[0].children.push(link);
+  const next = structuredClone(document.theme);
+  next.textStyles = next.textStyles.map(style => ({
+    ...style,
+    id: crypto.randomUUID(),
+    font: 'newsreader',
+  }));
+  applyThemeSnapshot(document, next);
+  expect(text.typography.fontFamily).toBe('Newsreader');
+  expect(text.typography.fontSize).toBe(originalSize);
+  expect(text.content[0].children.at(-1)).toEqual(link);
+  expect(document.theme).toEqual(next);
+});
 
 it.each(Object.keys(FONT_FAMILIES) as FontId[])(
   'resolves both persisted and CSS font families for %s',

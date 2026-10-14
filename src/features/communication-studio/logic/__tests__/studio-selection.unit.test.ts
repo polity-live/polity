@@ -6,8 +6,72 @@ import {
   drillIntoGroup,
   emptyStudioSelection,
   groupMembers,
+  layerSelection,
   toggleSelection,
 } from '../studio-selection';
+
+it('restores a primary node after removing an item from a selection with no primary', () => {
+  const document = createStudioDocumentV3('Restored selection');
+  const first = createFrameNode('custom'),
+    second = createFrameNode('custom');
+  document.nodes.push(first, second);
+  const current = { ...emptyStudioSelection(), nodeIds: [first.id, second.id] };
+  expect(layerSelection(document, current, first.id, true)).toMatchObject({
+    nodeIds: [second.id],
+    primaryId: second.id,
+  });
+});
+
+it('selects exact layer IDs across frames, toggles membership and maintains the primary node', () => {
+  const document = createStudioDocumentV3('Layers');
+  const groupId = crypto.randomUUID();
+  const first = createFrameNode('custom', { groupIds: [groupId] });
+  const grouped = createFrameNode('custom', { groupIds: [groupId] });
+  const locked = createFrameNode('custom', { locked: true });
+  const hidden = createFrameNode('custom', { visible: false });
+  document.nodes.push(first, grouped, locked, hidden);
+  const empty = { ...emptyStudioSelection(), groupDepth: 2, touchMode: true };
+  const selected = layerSelection(document, empty, first.id);
+  expect(selected).toEqual({ ...empty, nodeIds: [first.id], primaryId: first.id, groupDepth: 0 });
+  const added = layerSelection(document, selected, locked.id, true);
+  expect(added).toMatchObject({ nodeIds: [first.id, locked.id], primaryId: locked.id });
+  const all = layerSelection(document, added, hidden.id, true);
+  expect(all).toMatchObject({ nodeIds: [first.id, locked.id, hidden.id], primaryId: hidden.id });
+  const removed = layerSelection(document, all, locked.id, true);
+  expect(removed).toMatchObject({ nodeIds: [first.id, hidden.id], primaryId: hidden.id });
+  const fallback = layerSelection(document, removed, hidden.id, true);
+  expect(fallback).toMatchObject({ nodeIds: [first.id], primaryId: first.id });
+  expect(layerSelection(document, fallback, first.id, true)).toMatchObject({
+    nodeIds: [],
+    primaryId: null,
+  });
+  expect(layerSelection(document, all, grouped.id)).toMatchObject({
+    nodeIds: [grouped.id],
+    primaryId: grouped.id,
+  });
+});
+
+it('ignores missing layer targets and drops deleted IDs from an additive selection', () => {
+  const document = createStudioDocumentV3('Layers');
+  const first = createFrameNode('custom');
+  const second = createFrameNode('custom');
+  document.nodes.push(first, second);
+  const missing = crypto.randomUUID();
+  const current = {
+    ...emptyStudioSelection(),
+    nodeIds: [missing, first.id, first.id],
+    primaryId: missing,
+  };
+  expect(layerSelection(document, current, missing, true)).toBe(current);
+  expect(layerSelection(document, current, second.id, true)).toMatchObject({
+    nodeIds: [first.id, second.id],
+    primaryId: second.id,
+  });
+  expect(layerSelection(document, current, first.id, true)).toMatchObject({
+    nodeIds: [],
+    primaryId: null,
+  });
+});
 
 it('ignores disappeared and hidden nodes, selects single objects and drills only actual groups', () => {
   const document = createStudioDocumentV3('Selection guards');

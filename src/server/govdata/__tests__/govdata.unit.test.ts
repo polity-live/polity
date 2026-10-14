@@ -13,8 +13,54 @@ import { createGovDataCsvSnapshot } from '../importer';
 import { assertSafePublicHttpUrl } from '../safety';
 
 describe('GovData utilities', () => {
+  it.each([
+    [{ spatial_text: '"Germany"' }, ['"Germany"']],
+    [{ spatial: { label: 'Germany', code: 'DE' } }, { label: 'Germany', code: 'DE' }],
+    [{ spatial: '' }, undefined],
+  ])('preserves string and object spatial metadata %j', (metadata, expected) => {
+    const entry = normalizeGovDataPackage({
+      id: 'spatial',
+      name: 'spatial',
+      title: 'Dataset',
+      ...metadata,
+      resources: [{ id: 'csv', format: 'CSV', url: 'https://example.com/data.csv' }],
+    });
+    expect(entry?.spatialCoverage).toEqual(expected);
+  });
+  it('forwards caller cancellation to catalogue fetches', async () => {
+    const controller = new AbortController();
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(Response.json({ success: true, result: { results: [] } }));
+    vi.stubGlobal('fetch', fetcher);
+    expect(await searchGovDataCatalogue('population', 20, controller.signal)).toEqual([]);
+    expect(fetcher.mock.calls[0][1]).toEqual({ signal: controller.signal });
+  });
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it.each([
+    { temporal_start: '2023', temporal_end: '2025', spatial_text: '["Deutschland"]' },
+    {
+      extras: [
+        { key: 'temporal_start', value: '2023' },
+        { key: 'temporal_end', value: '2025' },
+        { key: 'spatial_text', value: 'Deutschland' },
+      ],
+    },
+  ])('preserves explicit coverage from root fields and CKAN extras', metadata => {
+    const entry = normalizeGovDataPackage({
+      id: 'coverage',
+      name: 'coverage',
+      title: 'Arbeitslose Berlin 2022',
+      ...metadata,
+      resources: [{ id: 'csv', format: 'CSV', url: 'https://example.com/data.csv' }],
+    });
+    expect(entry).toMatchObject({
+      timeCoverage: { start: '2023', end: '2025' },
+      spatialCoverage: ['Deutschland'],
+    });
   });
 
   it('normalizes packages and keeps only importable CSV resources', () => {

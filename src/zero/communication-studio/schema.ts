@@ -23,6 +23,9 @@ export const createStudioProjectSchema = z.object({
     .default({ weeks: 4, core: 3, stories: 2 }),
 });
 export const exportStudioSchema = z.object({
+  snapshot: z
+    .object({ portrait: z.boolean().optional(), presentation: z.boolean().optional() })
+    .optional(),
   projectId: z.string().uuid(),
   format: z.enum(['png', 'pdf', 'pptx', 'canva', 'mp4', 'xlsx', 'zip']),
   pageIds: z.array(z.string().uuid()).max(300).default([]),

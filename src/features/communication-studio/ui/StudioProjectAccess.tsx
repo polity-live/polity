@@ -11,6 +11,7 @@ import { studioDocumentV3Schema, type StudioDocumentV3 } from '../logic/document
 import { getStudioRootFramesInLayerOrder } from '../logic/frame-order';
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import { StudioWorkspace } from './StudioWorkspace';
+import { StudioLoadingScreen } from './StudioLoadingScreen';
 import { StudioCloneDialog } from './StudioCloneDialog';
 import type { CreateVisibility } from '@/features/create/logic/createVisibility';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -166,8 +167,8 @@ export function StudioProjectAccess({
     );
   if (!snapshot)
     return (
-      <main role="status" className="p-8">
-        {t('features.studio.loading')}
+      <main>
+        <StudioLoadingScreen label={t('features.studio.loading')} fullPage />
       </main>
     );
   if (snapshot.project.canEdit)
@@ -223,7 +224,7 @@ export function StudioProjectAccess({
       </div>
       {frameId && (
         <div className="h-[70dvh] overflow-hidden rounded-lg border bg-[var(--surface-sunken)]">
-          <Suspense fallback={<p className="p-4">{t('features.studio.loading')}</p>}>
+          <Suspense fallback={<StudioLoadingScreen label={t('features.studio.loading')} />}>
             <KonvaStudioCanvas
               ref={setReaderCanvas}
               document={document}

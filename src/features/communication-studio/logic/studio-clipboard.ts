@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { showCueSchema } from './live-contract';
 import {
   deliverableSchema,
   descendantsOf,
@@ -16,6 +17,7 @@ const studioClipboardV2Schema = z.object({
   projectId: z.string().min(1),
   rootNodeIds: z.array(z.string().uuid()).min(1).max(1_000),
   nodes: z.array(studioNodeSchema).min(1).max(50_000),
+  cues: z.array(showCueSchema).max(2000).optional(),
   deliverables: z
     .array(
       z.object({
@@ -78,6 +80,11 @@ export function createStudioV3ClipboardPayload(input: {
     projectId: input.projectId,
     rootNodeIds,
     nodes: jsonClone(nodes),
+    cues: jsonClone(
+      input.document.show?.cues.filter(
+        cue => cue.scope !== 'global' && !!cue.frameId && chosen.has(cue.frameId)
+      ) ?? []
+    ),
     deliverables,
   });
 }
@@ -170,6 +177,15 @@ export function pasteStudioV3Clipboard(input: {
     return copy;
   });
   document.nodes.push(...clones);
+  if (input.payload.cues?.length) {
+    document.show ??= { order: 'agenda', cues: [] };
+    document.show.cues.push(
+      ...input.payload.cues.flatMap(cue => {
+        const frameId = cue.frameId && nodeIds.get(cue.frameId);
+        return frameId ? [{ ...jsonClone(cue), id: crypto.randomUUID(), frameId }] : [];
+      })
+    );
+  }
 
   for (const membership of input.payload.deliverables) {
     const copiedFrames = membership.framePositions.flatMap(position => {

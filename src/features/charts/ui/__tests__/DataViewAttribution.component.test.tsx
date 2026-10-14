@@ -18,13 +18,28 @@ vi.mock('react-i18next', () => ({
     t: (key: string, options?: Record<string, unknown>) =>
       key === 'plateJs.dataView.source'
         ? 'Quelle'
-        : key === 'plateJs.dataView.dataAsOf'
-          ? `Datenstand ${options?.date}`
+        : key === 'plateJs.dataView.importedAt'
+          ? `Importiert am ${options?.date}`
           : key,
   }),
 }));
 
 describe('DataViewAttribution', () => {
+  it.each(['2026', undefined])('shows update date and a period with end %s', end => {
+    render(
+      <DataViewAttribution
+        source={{
+          provider: 'EUROSTAT',
+          sourceUpdatedAt: '2026-10-01T00:00:00.000Z',
+          dataPeriod: { start: '2024', end },
+        }}
+      />
+    );
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain('01.10.2026');
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain(
+      `2024–${end ?? 2024}`
+    );
+  });
   it('shows the group and localized upload date without an external link', () => {
     render(
       <DataViewAttribution
@@ -38,7 +53,7 @@ describe('DataViewAttribution', () => {
     );
 
     expect(screen.getByTestId('data-view-attribution').textContent).toBe(
-      'Quelle: Beispielgruppe · Datenstand 10.07.2026'
+      'Quelle: Beispielgruppe · Importiert am 10.07.2026'
     );
     expect(screen.queryByRole('link')).toBeNull();
   });
@@ -57,7 +72,7 @@ describe('DataViewAttribution', () => {
 
     expect(screen.getByRole('link').textContent).toBe('Wissenschaftsstadt Darmstadt (GovData)');
     expect(screen.getByTestId('data-view-attribution').textContent).toContain(
-      'Datenstand 20.04.2026'
+      'Importiert am 20.04.2026'
     );
 
     rerender(

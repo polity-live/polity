@@ -74,7 +74,7 @@ test('selects mixed Studio objects, distributes and groups root objects across f
     const [row] = await sql`select document from studio_state where project_id=${projectId}`;
     return row.document.nodes as typeof document.nodes;
   };
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},0)`;
   try {
     const pageErrors: string[] = [];
@@ -214,7 +214,7 @@ test('selects mixed Studio objects, distributes and groups root objects across f
 
 test('touch long press enters selection mode and movement cancels it', async ({ page }) => {
   const projectId = crypto.randomUUID();
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${fixture.document.title},${fixture.document.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${fixture.document.title},${fixture.document.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(fixture.document)},0)`;
   try {
     await page.goto(`/studio/${projectId}`);
@@ -280,7 +280,7 @@ test('locked frames are skipped on the canvas and can be unlocked from layers', 
   const frame = document.nodes.find((node: { type: string }) => node.type === 'frame');
   if (!frame) throw new Error('Missing frame fixture');
   frame.locked = true;
-  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${fixture.actor},${document.title},${document.kind},6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(document)},0)`;
   try {
     await page.goto(`/studio/${projectId}`);

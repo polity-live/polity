@@ -5,7 +5,7 @@ import { projectChatServerMutators } from './project-chat/server-mutators';
  *
  * Each domain's overrides live in `src/zero/<domain>/server-mutators.ts`.
  * This file imports them all and composes the final `serverMutators` registry
- * passed to PushProcessor in the /api/mutate endpoint.
+ * dispatched by handleMutateRequest in the /api/mutate endpoint.
  */
 import { defineMutators } from '@rocicorp/zero';
 import { mutators } from './mutators';

@@ -22,7 +22,7 @@ test('personal Studio invitation requires acceptance before a second actor can e
   const invitedPage = await invitedContext.newPage();
   try {
     await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at)
-      values(${projectId},${e2eRun.actorId},null,${document.title},${document.kind},5,${Date.now()},${Date.now()})`;
+      values(${projectId},${e2eRun.actorId},null,${document.title},${document.kind},6,${Date.now()},${Date.now()})`;
     await sql`insert into studio_state(project_id,document,updated_at)
       values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},${Date.now()})`;
     await page.goto(`/studio/${projectId}`);
@@ -77,7 +77,9 @@ test('personal Studio invitation requires acceptance before a second actor can e
     ).toBeVisible({ timeout: 15_000 });
     await invitedPage.goto(`/studio/${projectId}`);
     await waitForAppReady(invitedPage);
+    await invitedPage.bringToFront();
     const title = invitedPage.getByRole('textbox', { name: 'Title', exact: true });
+    await title.waitFor({ state: 'visible' });
     await expect(title).toBeEnabled();
     await expect(
       invitedPage.locator('[data-action-id="studio.collaborator-invite.open"]')

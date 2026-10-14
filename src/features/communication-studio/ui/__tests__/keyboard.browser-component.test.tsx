@@ -8,13 +8,23 @@ import { act, cleanup, render as renderView, screen, waitFor } from '@testing-li
 import { TestRouter } from '@/test/router-wrapper';
 import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { createDocument } from '../../logic/templates';
 import { legacyDocumentToV3 } from '../../logic/v3-adapter';
 import { element } from '../../logic/document';
 const io = vi.hoisted(() => ({ controller: {} as any, canvasExecute: vi.fn() }));
+vi.mock('@/zero/observed-query', () => ({
+  useQuery: () => [[], { type: 'complete' }],
+}));
 vi.mock('../../hooks/useStudioController', () => ({ useStudioController: () => io.controller }));
 vi.mock('../../hooks/useStudioEditorTools', () => ({ useStudioEditorTools: vi.fn() }));
+vi.mock('@/zero/communication-studio/useLiveStudioState', () => ({
+  useLiveStudioState: (document: unknown) => ({
+    projected: document,
+    sources: [],
+    status: { type: 'complete' },
+  }),
+}));
 vi.mock('../StudioProjectOverview', () => ({
   StudioProjectOverview: () => <p>Project overview</p>,
 }));
@@ -153,8 +163,11 @@ async function keyboardControls(container: HTMLElement) {
       continue;
     control.focus();
     expect(document.activeElement).toBe(control);
-    // Menu items use roving focus rather than each becoming a separate Tab stop.
-    if (!control.getAttribute('role')?.startsWith('menuitem'))
+    // Menu items and radiogroups use roving focus instead of separate Tab stops.
+    if (
+      !control.getAttribute('role')?.startsWith('menuitem') &&
+      !control.closest('[role="radiogroup"], [data-slot="toggle-group"]')
+    )
       expect(control.tabIndex).toBeGreaterThanOrEqual(0);
     const changed = vi.fn();
     if (control.tagName === 'BUTTON' || control.getAttribute('role')?.startsWith('menuitem')) {
@@ -433,10 +446,24 @@ it('prevents frame insertion in read-only mode while retaining navigation and dr
   expect(inserts).toHaveLength(10);
   for (const item of inserts) {
     expect(item.getAttribute('aria-disabled')).toBe('true');
-    await userEvent.click(item, { force: true });
+    if (!screen.queryByRole('menu')) {
+      trigger.focus();
+      await userEvent.keyboard('{Enter}');
+      await screen.findByRole('menu');
+    }
+    await page
+      .getByRole('menuitem', { name: item.getAttribute('aria-label')!, exact: true })
+      .click({
+        force: true,
+      });
   }
   expect(controller.insertFrame).not.toHaveBeenCalled();
   expect(controller.insertFrameSet).not.toHaveBeenCalled();
+  if (!screen.queryByRole('menu')) {
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    await screen.findByRole('menu');
+  }
   expect(
     screen.getByRole('menuitem', { name: 'freeFrame' }).getAttribute('aria-disabled')
   ).toBeNull();

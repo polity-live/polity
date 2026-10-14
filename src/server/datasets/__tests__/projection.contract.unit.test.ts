@@ -1,8 +1,57 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildMultiMeasureProjectionPoints } from '../projection';
+import { buildMultiMeasureProjectionPoints, assertProviderProjectionScope } from '../projection';
 
 describe('buildMultiMeasureProjectionPoints contracts', () => {
+  it('allows an unlabelled unit when checking whether summed observations are additive', () => {
+    expect(() =>
+      assertProviderProjectionScope(
+        { columns: ['value'], rows: [{ value: '2' }] },
+        { filters: {}, aggregation: 'sum' }
+      )
+    ).not.toThrow();
+    expect(() =>
+      assertProviderProjectionScope(
+        { columns: ['value'], rows: [{ value: '2' }] },
+        { filters: {}, aggregation: 'sum' },
+        { providerDimensions: [] }
+      )
+    ).not.toThrow();
+  });
+  it('allows plotted categories but enforces one value for unplotted provider dimensions', () => {
+    const table = {
+      columns: ['geo', 'unit'],
+      rows: [
+        { geo: 'DE', unit: 'NR' },
+        { geo: 'FR', unit: 'NR' },
+      ],
+    };
+    const query = {
+      dimensionColumn: 'geo',
+      seriesColumn: null,
+      measureColumn: null,
+      filters: {},
+      aggregation: 'count' as const,
+    };
+    const metadata = {
+      providerDimensions: [
+        { id: 'geo', label: 'Area' },
+        { id: 'unit', label: 'Unit' },
+        { id: 'missing', label: 'Missing' },
+      ],
+    };
+    expect(() => assertProviderProjectionScope(table, query, metadata)).not.toThrow();
+    expect(() =>
+      assertProviderProjectionScope(
+        { columns: ['unit'], rows: [{}, { unit: 'NR' }] },
+        query,
+        metadata
+      )
+    ).toThrow('Choose one value');
+    expect(() =>
+      assertProviderProjectionScope({ columns: ['unit'], rows: [{}, {}] }, query, metadata)
+    ).not.toThrow();
+  });
   it('skips missing dimensions, absent/empty values and non-numeric measures', () => {
     expect(
       buildMultiMeasureProjectionPoints({

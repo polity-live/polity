@@ -1283,7 +1283,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "lets a user type into an existing text node after one click"
+        "caseId": "selects existing text with one click and lets a user type after a double click"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -1454,7 +1454,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "lets a user type into an existing text node after one click"
+        "caseId": "selects existing text with one click and lets a user type after a double click"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -2177,7 +2177,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+        "caseId": "types immediately with the text tool and selects before editing with the selection tool"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -2199,7 +2199,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+        "caseId": "types immediately with the text tool and selects before editing with the selection tool"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -2313,7 +2313,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "lets a user type into an existing text node after one click"
+        "caseId": "selects existing text with one click and lets a user type after a double click"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -2576,7 +2576,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "lets a user type into an existing text node after one click"
+        "caseId": "selects existing text with one click and lets a user type after a double click"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
@@ -3452,7 +3452,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+        "caseId": "edits presentation order and starts the actual preview from its dropdown on $name"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
@@ -3504,7 +3504,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "types immediately after drawing with T and after one click on existing text in either tool"
+        "caseId": "types immediately with the text tool and selects before editing with the selection tool"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
@@ -7659,6 +7659,16 @@
     ],
     "src/zero/communication-studio/access.ts": [
       {
+        "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+        "project": "unit",
+        "caseId": "plans the selected Studio event per project while preserving audience and manager access for %s"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes direct Studio read identity %s to the same public access as null"
+      },
+      {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",
         "caseId": "offers only manageable groups as clone and create targets"
@@ -7712,6 +7722,11 @@
       }
     ],
     "src/zero/communication-studio/server-mutators.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+        "project": "unit",
+        "caseId": "routes every typed command to its domain service and receipt in the supplied transaction"
+      },
       {
         "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
         "project": "unit",
@@ -7814,6 +7829,11 @@
       }
     ],
     "src/zero/communication-studio/shared-mutators.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/server-mutators.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires action-specific canvas inputs and keeps every client write free of canonical changes"
+      },
       {
         "file": "src/zero/__tests__/mutators.contract.unit.test.ts",
         "project": "unit",
@@ -9139,7 +9159,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden"
+        "caseId": "edits presentation order and starts the actual preview from its dropdown on $name"
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
@@ -9406,7 +9426,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "project": "component",
-        "caseId": "rejects out-of-range column widths and nonnumeric chart values and supports line charts"
+        "caseId": "rejects out-of-range column widths and allows missing values in line charts"
       }
     ],
     "src/features/messages/ui/useMessageListController.ts": [
@@ -10711,6 +10731,36 @@
       }
     ],
     "src/zero/communication-studio/queries.ts": [
+      {
+        "file": "src/zero/communication-studio/__tests__/access-plan.unit.test.ts",
+        "project": "unit",
+        "caseId": "plans only the selected %s source parent with the complete existing audience predicates"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "denies an empty source selection even when a visible source has a nil UUID"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains parent authorization and exact source pairs for mixed event and group references"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps a null group scope personal, including when an authorized nil UUID group exists"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains authorized group themes when that exact group is explicitly requested"
+      },
+      {
+        "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "separates presentation viewing from agenda administration for identity %s"
+      },
       {
         "file": "src/zero/communication-studio/__tests__/queries.unit.test.ts",
         "project": "unit",
@@ -15586,8 +15636,8 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioEditor.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "opens the actual preview from its focused native toolbar button and disables preview when every frame is hidden",
-        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+        "caseId": "edits presentation order and starts the actual preview from its dropdown on $name",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.collaboration.comments.open": [
@@ -15708,12 +15758,6 @@
     },
     "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-1675c4b11a": {
       "actionId": "communication-studio.canvas.activate.toolbarbutton-1675c4b11a"
-    },
-    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#DropdownMenuItem-d33bc95769": {
-      "actionId": "communication-studio.toolbar.item.activate"
-    },
-    "src/features/communication-studio/ui/StudioToolbarMenu.tsx#DropdownMenuTrigger-d96926603f": {
-      "actionId": "communication-studio.toolbar.menu.open"
     },
     "src/features/communication-studio/ui/StudioToolbarMenu.tsx#ToolbarButton-e9b3bf1eb8": {
       "actionId": "communication-studio.toolbar.menu.open"

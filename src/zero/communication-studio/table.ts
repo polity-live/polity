@@ -4,6 +4,7 @@ export const studioProject = table('studio_project')
     id: string(),
     owner_id: string(),
     group_id: string().optional(),
+    event_id: string().optional(),
     title: string(),
     kind: string(),
     visibility: string(),
@@ -12,6 +13,50 @@ export const studioProject = table('studio_project')
     document_schema_version: number(),
     created_at: number(),
     updated_at: number(),
+  })
+  .primaryKey('id');
+export const studioLiveSource = table('studio_live_source')
+  .columns({
+    source_type: string(),
+    source_id: string(),
+    event_id: string().optional(),
+    agenda_item_id: string().optional(),
+    vote_id: string().optional(),
+    election_id: string().optional(),
+    amendment_id: string().optional(),
+    user_id: string().optional(),
+    group_id: string().optional(),
+    payload: json<any>(),
+    updated_at: number(),
+  })
+  .primaryKey('source_type', 'source_id');
+export const eventPresentation = table('event_presentation')
+  .columns({
+    event_id: string(),
+    project_id: string(),
+    mode: string(),
+    frame_id: string().optional(),
+    follow_agenda: boolean(),
+    results_visible: boolean(),
+    running: boolean(),
+    revision: number(),
+    cue_id: string().optional(),
+    cue_at: number().optional(),
+    controller_id: string().optional(),
+    controller_device_id: string().optional(),
+    lease_until: number().optional(),
+    audio_device_id: string().optional(),
+    audio: json<any>(),
+    updated_at: number(),
+  })
+  .primaryKey('event_id');
+export const eventPresentationDevice = table('event_presentation_device')
+  .columns({
+    id: string(),
+    event_id: string(),
+    user_id: string().optional(),
+    name: string(),
+    last_seen: number(),
   })
   .primaryKey('id');
 export const studioProjectCollaborator = table('studio_project_collaborator')

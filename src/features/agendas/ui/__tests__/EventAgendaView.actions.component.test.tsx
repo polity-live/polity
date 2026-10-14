@@ -377,6 +377,10 @@ describe('EventAgendaView actions', () => {
       />
     );
 
+    expect(screen.queryByRole('button', { name: 'Present' })).toBeNull();
+    fireEvent.keyDown(document.querySelector('[data-action-id="event.show.open"]')!, {
+      key: 'Enter',
+    });
     for (const [actionId, callback] of [
       ['agendas.event-agenda.live-focus.open', setLiveFocusOpen],
       ['agendas.event-agenda.stream.toggle', setStreamOpen],

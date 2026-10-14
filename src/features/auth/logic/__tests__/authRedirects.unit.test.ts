@@ -5,6 +5,8 @@ import {
   getAuthRedirectUrl,
   getSafeAuthRedirect,
   getSafeSignInRedirect,
+  getInvitationOnboardingDestination,
+  peekPendingInvitationRedirect,
   storePendingSignInRedirect,
 } from '../authRedirects';
 
@@ -14,6 +16,10 @@ afterEach(() => {
 });
 
 describe('getAuthRedirectUrl', () => {
+  it('has no invitation onboarding destination during server rendering', () => {
+    vi.stubGlobal('window', undefined);
+    expect(getInvitationOnboardingDestination()).toBeNull();
+  });
   it('builds an absolute redirect without requiring a browser global', () => {
     expect(getAuthRedirectUrl('/auth/callback')).toMatch(/^https?:\/\/[^/]+\/auth\/callback$/);
   });
@@ -34,6 +40,27 @@ describe('getAuthRedirectUrl', () => {
 });
 
 describe('getSafeAuthRedirect', () => {
+  it('allows exact invitation destinations and propagates them through email/OAuth callbacks', () => {
+    const token = 'a'.repeat(43);
+    expect(getSafeAuthRedirect(`/invite/${token}`)).toBe(`/invite/${token}`);
+    expect(getSafeAuthRedirect(`/invite/${token}?next=https://attacker.invalid`)).toBe('/');
+    expect(getSafeAuthRedirect(`/invite/${token}/other`)).toBe('/');
+    const values = new Map<string, string>();
+    vi.stubGlobal('window', {
+      location: { origin: 'https://www.polity.live' },
+      sessionStorage: {
+        getItem: (key: string) => values.get(key),
+        setItem: (key: string, value: string) => values.set(key, value),
+      },
+    });
+    storePendingSignInRedirect(`/invite/${token}`);
+    expect(new URL(getAuthRedirectUrl('/auth/callback')).searchParams.get('next')).toBe(
+      `/invite/${token}`
+    );
+    expect(getAuthRedirectUrl('/auth/reset-password')).toBe(
+      'https://www.polity.live/auth/reset-password'
+    );
+  });
   it('allows only known internal auth destinations', () => {
     expect(getSafeAuthRedirect('/auth/reset-password')).toBe('/auth/reset-password');
     expect(getSafeAuthRedirect('/')).toBe('/');
@@ -48,6 +75,23 @@ describe('getSafeAuthRedirect', () => {
 });
 
 describe('pending sign-in redirects', () => {
+  it.each([null, '/group/invalid', `/group/${crypto.randomUUID()}`])(
+    'validates a stored onboarding group destination: %s',
+    value => {
+      vi.stubGlobal('window', {});
+      vi.stubGlobal('sessionStorage', { getItem: () => value });
+      expect(getInvitationOnboardingDestination()).toBe(
+        value?.startsWith('/group/') && value.length === 43 ? value : null
+      );
+    }
+  );
+  it.each([null, '/group/abc', '/invite/short'])(
+    'ignores a stored non-invitation redirect: %s',
+    value => {
+      vi.stubGlobal('window', { sessionStorage: { getItem: () => value } });
+      expect(peekPendingInvitationRedirect()).toBeNull();
+    }
+  );
   it('preserves safe local paths, queries and hashes while rejecting unsafe targets', () => {
     vi.stubGlobal('window', { location: { origin: 'https://polity.example' } });
 
@@ -100,6 +144,9 @@ describe('pending sign-in redirects', () => {
 
     expect(() => storePendingSignInRedirect('/settings')).not.toThrow();
     expect(consumePendingSignInRedirect()).toBe('/');
+
+    vi.stubGlobal('sessionStorage', deniedStorage);
+    expect(getInvitationOnboardingDestination()).toBeNull();
 
     vi.stubGlobal('window', undefined);
     expect(() => storePendingSignInRedirect('/settings')).not.toThrow();

@@ -31,7 +31,9 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
   const currentTarget = getAuthGuardRedirectTarget(location);
   const { user, loading: isLoading } = useAuth();
   const isAuthenticated = Boolean(user);
-  const [authInitialized, setAuthInitialized] = useState(false);
+  // The provider has already validated an established session. Remounting a
+  // protected route can open it immediately instead of adding a loading commit.
+  const [authInitialized, setAuthInitialized] = useState(() => !isLoading && Boolean(user));
 
   useEffect(() => {
     if (authInitialized) return;

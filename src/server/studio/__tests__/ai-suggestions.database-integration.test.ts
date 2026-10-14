@@ -231,7 +231,7 @@ it('prepares a group AI draft in edit phase but waits for the suggestion phase t
   projectIds.push(projectId);
   const document = createStudioDocumentV5('Group draft', 'single');
   await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at)
-    values(${projectId},${actor},${group},${document.title},'single',5,0,0)`;
+    values(${projectId},${actor},${group},${document.title},'single',6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at)
     values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},0)`;
   const suggestion = await generateStudioSuggestion(actor, {
@@ -554,7 +554,7 @@ it('edits the real subtitle through a source-bound snapshot, preserves styling, 
   subtitle.name = 'Subtitel';
   title.name = 'Titel';
   const frame = document.nodes.find(node => node.type === 'frame')!;
-  await sql`insert into studio_project(id,owner_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${actor},'t2','single','private',5,0,0)`;
+  await sql`insert into studio_project(id,owner_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${actor},'t2','single','private',6,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},0)`;
   const ctx = createZeroContext(actor);
   await executeZeroTransaction(ctx, async tx => {

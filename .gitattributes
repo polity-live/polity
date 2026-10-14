@@ -1,2 +1,3 @@
 tools/testing/**/*.json text eol=lf
 tools/testing/*.json text eol=lf
+patches/*.patch text eol=lf whitespace=-space-before-tab

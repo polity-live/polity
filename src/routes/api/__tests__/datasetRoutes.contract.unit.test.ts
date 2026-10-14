@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { decodeDatasetText } from '@/server/datasets/text';
+import { DatasetProviderFailure } from '@/server/datasets/providerError';
 
 const mocks = vi.hoisted(() => ({
   archive: vi.fn(),
@@ -10,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   getValues: vi.fn(),
   importEurostat: vi.fn(),
   importGenesis: vi.fn(),
+  prepareEurostat: vi.fn(),
+  prepareGenesis: vi.fn(),
   importGovData: vi.fn(),
   loadDetails: vi.fn(),
   loadGroupName: vi.fn(),
@@ -31,6 +35,7 @@ vi.mock('@/server/datasets/access', () => ({
 vi.mock('@/server/datasets/csv', () => ({ parseDatasetCsv: mocks.parseCsv }));
 vi.mock('@/server/datasets/genesis', () => ({
   importGenesisDatasetSnapshot: mocks.importGenesis,
+  prepareGenesisDataset: mocks.prepareGenesis,
 }));
 vi.mock('@/server/datasets/projectionRequest', () => ({
   datasetProjectionRequestSchema: { parse: mocks.projectionParse },
@@ -39,6 +44,7 @@ vi.mock('@/server/datasets/providers', () => ({
   importEurostatDatasetSnapshot: mocks.importEurostat,
   importGovDataDatasetSnapshot: mocks.importGovData,
   searchDatasetProviders: mocks.searchProviders,
+  prepareEurostatDataset: mocks.prepareEurostat,
 }));
 vi.mock('@/server/datasets/service', () => ({
   archiveDataset: mocks.archive,
@@ -67,6 +73,7 @@ import { Route as ProjectionRoute } from '../datasets/$snapshotId/projection';
 import { Route as ValuesRoute } from '../datasets/$snapshotId/values';
 import { Route as SearchRoute } from '../datasets/search';
 import { Route as SnapshotsRoute } from '../datasets/snapshots';
+import { Route as PrepareRoute } from '../datasets/prepare';
 import { Route as UploadRoute } from '../datasets/upload';
 import { Route as EurostatCatalogueRoute } from '../eurostat/catalogue';
 import { Route as EurostatDetailsRoute } from '../eurostat/details';
@@ -88,6 +95,7 @@ const projection = handler(ProjectionRoute, 'POST');
 const values = handler(ValuesRoute, 'GET');
 const search = handler(SearchRoute, 'GET');
 const snapshots = handler(SnapshotsRoute, 'POST');
+const prepare = handler(PrepareRoute, 'POST');
 const upload = handler(UploadRoute, 'POST');
 const eurostatCatalogue = handler(EurostatCatalogueRoute, 'GET');
 const eurostatDetails = handler(EurostatDetailsRoute, 'GET');
@@ -139,7 +147,149 @@ beforeEach(() => {
 
 afterEach(() => errorSpy.mockRestore());
 
+describe('provider preparation and failure boundaries', () => {
+  it('defaults GENESIS preparation to English and sanitizes unexpected provider errors', async () => {
+    mocks.prepareGenesis.mockResolvedValueOnce({ dimensions: [] });
+    expect(
+      (
+        await prepare({
+          request: jsonRequest('http://localhost/api/datasets/prepare', {
+            provider: 'GENESIS_DESTATIS',
+            code: '12411-0001',
+          }),
+        })
+      ).status
+    ).toBe(200);
+    expect(mocks.prepareGenesis).toHaveBeenCalledWith(
+      '12411-0001',
+      'en',
+      undefined,
+      expect.any(AbortSignal)
+    );
+    mocks.prepareGenesis.mockRejectedValueOnce(new Error('unexpected provider failure'));
+    expect(
+      (
+        await prepare({
+          request: jsonRequest('http://localhost/api/datasets/prepare', {
+            provider: 'GENESIS_DESTATIS',
+            code: '12411-0001',
+          }),
+        })
+      ).status
+    ).toBe(502);
+  });
+  it('returns a classified provider scope error from projection', async () => {
+    mocks.createProjection.mockRejectedValueOnce(
+      new DatasetProviderFailure('Choose one unit', 'invalid_scope', 422)
+    );
+    const response = await projection({
+      request: jsonRequest('http://localhost/api/datasets/snapshot-1/projection', {}),
+      params: { snapshotId: 'snapshot-1' },
+    });
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ error: { code: 'dataset_scope_unavailable' } });
+  });
+  it.each(['EUROSTAT', 'GENESIS_DESTATIS'])(
+    'prepares %s with validated scope without importing observations',
+    async provider => {
+      const api = provider === 'EUROSTAT' ? mocks.prepareEurostat : mocks.prepareGenesis;
+      api.mockResolvedValueOnce({
+        provider,
+        code: '12411-0001',
+        dimensions: [],
+        estimatedBytes: null,
+      });
+      const filters = { area: 'Deutschland', period: { start: 2024, end: 2025 } };
+      const response = await prepare({
+        request: jsonRequest('http://localhost/api/datasets/prepare', {
+          provider,
+          code: '12411-0001',
+          language: 'de',
+          filters,
+        }),
+      });
+      expect(response.status).toBe(200);
+      expect(api).toHaveBeenCalledWith('12411-0001', 'de', filters, expect.any(AbortSignal));
+      expect(mocks.importGenesis).not.toHaveBeenCalled();
+      expect(mocks.importEurostat).not.toHaveBeenCalled();
+    }
+  );
+  it('rejects anonymous preparation and invalid year ranges', async () => {
+    mocks.getSession.mockResolvedValueOnce(null);
+    expect(
+      (await prepare({ request: jsonRequest('http://localhost/api/datasets/prepare', {}) })).status
+    ).toBe(401);
+    expect(
+      (
+        await prepare({
+          request: jsonRequest('http://localhost/api/datasets/prepare', {
+            provider: 'EUROSTAT',
+            code: 'demo',
+            filters: { period: { start: 2025, end: 2020 } },
+          }),
+        })
+      ).status
+    ).toBe(400);
+  });
+  it.each([
+    ['authentication', 503, 'dataset_provider_authentication'],
+    ['timeout', 504, 'dataset_provider_timeout'],
+    ['unavailable', 502, 'dataset_provider_unavailable'],
+    ['invalid_response', 502, 'dataset_provider_invalid_response'],
+    ['invalid_scope', 422, 'dataset_scope_unavailable'],
+    ['too_large', 413, 'dataset_scope_too_large'],
+  ] as const)(
+    'classifies GENESIS %s rather than returning an application 500',
+    async (code, status, expected) => {
+      mocks.importGenesis.mockRejectedValueOnce(
+        new DatasetProviderFailure('Sanitized provider failure', code, status, 500)
+      );
+      const response = await snapshots({
+        request: jsonRequest('http://localhost/api/datasets/snapshots', {
+          provider: 'GENESIS_DESTATIS',
+          code: '12411-0001',
+        }),
+      });
+      expect(response.status).toBe(status);
+      expect(await response.json()).toMatchObject({ error: { code: expected } });
+    }
+  );
+});
+
 describe('dataset upload route', () => {
+  it.each(['text/csv', 'text/csv; charset=iso-8859-1'])(
+    'preserves German headers and cells in uploaded %s',
+    async type => {
+      const csv = 'Veränderung;Stadt\n42;Düsseldorf';
+      mocks.bytesToText.mockImplementationOnce(decodeDatasetText);
+      // Exercise the parser as well as the route's byte/charset handoff.
+      const { parseDatasetCsv: parseActual } =
+        await vi.importActual<typeof import('@/server/datasets/csv')>('@/server/datasets/csv');
+      mocks.parseCsv.mockImplementationOnce(parseActual);
+      const form = new FormData();
+      form.set(
+        'file',
+        new File([Uint8Array.from(Buffer.from(csv, 'latin1'))], 'arbeitslose.csv', { type })
+      );
+      form.set('groupId', 'group-1');
+      const response = await upload({
+        request: new Request('http://localhost/api/datasets/upload', {
+          method: 'POST',
+          body: form,
+        }),
+      });
+      expect(response.status).toBe(200);
+      expect(mocks.persist).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: {
+            columns: ['Veränderung', 'Stadt'],
+            rows: [{ Veränderung: '42', Stadt: 'Düsseldorf' }],
+          },
+        })
+      );
+    }
+  );
+
   it('rejects anonymous, missing-file and missing-group uploads', async () => {
     mocks.getSession.mockResolvedValueOnce(null);
     let response = await upload({
@@ -225,11 +375,13 @@ describe('dataset search and read routes', () => {
     await expect(response.json()).resolves.toEqual([{ id: 'dataset-1' }]);
     expect(mocks.searchProviders).toHaveBeenLastCalledWith({
       query: '',
+      signal: expect.any(AbortSignal),
       providers: [],
       groupId: null,
       userId: undefined,
       language: 'en',
       includeExternal: false,
+      filters: undefined,
     });
 
     response = await search({
@@ -256,6 +408,32 @@ describe('dataset search and read routes', () => {
     expect(response.status).toBe(502);
   });
 
+  it('passes manual search overrides while preserving the legacy array response', async () => {
+    const filters = { period: null, area: 'Bayern' };
+    const response = await search({
+      request: new Request(
+        `http://localhost/api/datasets/search?q=Arbeitslose+2025+Deutschland&filters=${encodeURIComponent(JSON.stringify(filters))}`
+      ),
+    });
+    await expect(response.json()).resolves.toEqual([{ id: 'dataset-1' }]);
+    expect(mocks.searchProviders).toHaveBeenLastCalledWith(
+      expect.objectContaining({ query: 'Arbeitslose 2025 Deutschland', filters })
+    );
+  });
+
+  it.each(['{broken', '{"period":{"start":2026,"end":2025}}', '{"area":42}', 'null'])(
+    'rejects invalid search filters before contacting a provider: %s',
+    async filters => {
+      const response = await search({
+        request: new Request(
+          `http://localhost/api/datasets/search?filters=${encodeURIComponent(filters)}`
+        ),
+      });
+      expect(response.status).toBe(400);
+      expect(mocks.searchProviders).not.toHaveBeenCalled();
+    }
+  );
+
   it('loads public details and distinguishes denied from missing failures', async () => {
     mocks.getSession.mockResolvedValueOnce({});
     let response = await details({
@@ -263,7 +441,12 @@ describe('dataset search and read routes', () => {
       params: { datasetId: 'dataset-1' },
     });
     expect(response.status).toBe(200);
-    expect(mocks.loadDetails).toHaveBeenCalledWith('dataset-1', undefined);
+    expect(mocks.loadDetails).toHaveBeenCalledWith(
+      'dataset-1',
+      undefined,
+      null,
+      expect.any(AbortSignal)
+    );
 
     for (const [failure, status] of [
       [new Error('access denied'), 403],
@@ -407,7 +590,8 @@ describe('dataset mutation routes', () => {
     expect(response.status).toBe(200);
     expect(mocks.createProjection).toHaveBeenCalledWith(
       { snapshotId: 'snapshot-1', filters: {}, mapping: { xColumn: 'year' } },
-      'user-1'
+      'user-1',
+      expect.any(AbortSignal)
     );
 
     const { z } = await import('zod');

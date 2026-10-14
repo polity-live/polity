@@ -46,7 +46,8 @@ export function ProjectChatPanel({
   const [selected, setSelected] = useState(conversationId ?? ''),
     [open, setOpen] = useState(initiallyOpen),
     [error, setError] = useState(''),
-    [creating, setCreating] = useState(false);
+    [creating, setCreating] = useState(false),
+    [pendingConversationId, setPendingConversationId] = useState('');
   const panelId = useId();
   const [size, setSize] = useState<PanelSize | undefined>(undefined);
   const drag = useRef<PanelDrag | null>(null);
@@ -74,7 +75,10 @@ export function ProjectChatPanel({
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [open]);
-  const current = conversations.find(c => c.id === selected)?.id ?? conversations[0]?.id;
+  // Zero exposes a created conversation optimistically. Its composer can send
+  // HTTP requests only after the conversation exists in the server database.
+  const readyConversations = conversations.filter(c => c.id !== pendingConversationId);
+  const current = readyConversations.find(c => c.id === selected)?.id ?? readyConversations[0]?.id;
   const choose = (id: string) => {
     setSelected(id);
     localStorage.setItem(`project-chat:${key}`, id);
@@ -85,6 +89,7 @@ export function ProjectChatPanel({
     setError('');
     try {
       const id = crypto.randomUUID();
+      setPendingConversationId(id);
       await serverConfirmed(
         zero.mutate(
           mutators.projectChat.create({
@@ -98,6 +103,7 @@ export function ProjectChatPanel({
     } catch (e) {
       setError(e instanceof Error ? e.message : tr('failed'));
     } finally {
+      setPendingConversationId('');
       setCreating(false);
     }
   }
@@ -264,7 +270,7 @@ export function ProjectChatPanel({
             <option value="" disabled>
               {tr('choose')}
             </option>
-            {conversations.map((c: { id: string; name?: string | null }) => (
+            {readyConversations.map((c: { id: string; name?: string | null }) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>

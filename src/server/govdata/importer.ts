@@ -3,6 +3,7 @@ import { MAX_MANUAL_CSV_BYTES, type GovDataProvenance } from '@/features/charts/
 import { isGovDataCsvResource, loadGovDataPackage, normalizeGovDataText } from './catalogue';
 import { parseGovDataCsvTable } from './csv';
 import { assertSafePublicHttpUrl } from './safety';
+import { decodeDatasetText } from '@/server/datasets/text';
 
 function text(value: unknown) {
   return String(value ?? '').trim();
@@ -31,11 +32,11 @@ async function readLimitedResponseText(response: Response) {
   }
 
   if (!response.body) {
-    const textBody = await response.text();
-    if (new TextEncoder().encode(textBody).byteLength > MAX_MANUAL_CSV_BYTES) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_MANUAL_CSV_BYTES) {
       throw new Error('CSV_FILE_TOO_LARGE');
     }
-    return textBody;
+    return decodeDatasetText(bytes, response.headers.get('content-type'));
   }
 
   const reader = response.body.getReader();
@@ -61,7 +62,7 @@ async function readLimitedResponseText(response: Response) {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(bytes);
+  return decodeDatasetText(bytes, response.headers.get('content-type'));
 }
 
 export async function createGovDataCsvSnapshot(

@@ -1,4 +1,9 @@
 import { whereAnyOf } from '../shared/query-conditions';
+import {
+  applyEventStudioManagerQueryAccess,
+  applyEventQueryAccess,
+  isAuthenticatedUserId,
+} from '../rbac/query-access';
 
 const activeMemberships = ['active', 'member', 'admin'];
 
@@ -32,7 +37,7 @@ export function groupProjectsAccess<T>(group: T, actor: string, edit = false): T
   ) as T;
 }
 
-function collaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
+function nonEventCollaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
   return or(
     and(
       cmp('group_id', 'IS', null),
@@ -55,18 +60,39 @@ function collaborativePredicate(actor: string, { or, and, cmp, exists }: any) {
   );
 }
 
+function collaborativePredicate(actor: string, helpers: any) {
+  return helpers.or(
+    helpers.exists('event', (event: any) => applyEventStudioManagerQueryAccess(event, actor), {
+      flip: false,
+    }),
+    helpers.and(helpers.cmp('event_id', 'IS', null), nonEventCollaborativePredicate(actor, helpers))
+  );
+}
+
 /** Internal workspaces, export jobs and AI conversations are never public. */
 export function studioProjectCollaborativeAccess<T>(project: T, actor: string): T {
   return (project as any).where((helpers: any) => collaborativePredicate(actor, helpers)) as T;
 }
 
 export function studioProjectReadAccess<T>(project: T, actor: string | null): T {
+  const viewer = isAuthenticatedUserId(actor) ? actor : null;
   return (project as any).where((helpers: any) =>
     helpers.or(
-      helpers.cmp('visibility', 'public'),
-      ...(actor
-        ? [helpers.cmp('visibility', 'authenticated'), collaborativePredicate(actor, helpers)]
-        : [])
+      helpers.exists('event', (event: any) => applyEventQueryAccess(event, viewer), {
+        flip: false,
+      }),
+      helpers.and(
+        helpers.cmp('event_id', 'IS', null),
+        helpers.or(
+          helpers.cmp('visibility', 'public'),
+          ...(viewer
+            ? [
+                helpers.cmp('visibility', 'authenticated'),
+                nonEventCollaborativePredicate(viewer, helpers),
+              ]
+            : [])
+        )
+      )
     )
   ) as T;
 }

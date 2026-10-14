@@ -284,6 +284,19 @@ export const commonTranslations = {
     gender_quota_expected_female: 'The next speaker must be female.',
     gender_quota_blocked: 'You cannot join this gender-quoted speaker list right now.',
     dataset_operation_failed: 'The dataset operation could not be completed.',
+    dataset_provider_authentication:
+      'The data source could not be authenticated. Please check the server configuration.',
+    dataset_provider_timeout: 'The data source is taking too long to respond. Please try again.',
+    dataset_provider_unavailable: 'The data source is temporarily unavailable. Please try again.',
+    dataset_provider_invalid_response: 'The data source returned an invalid response.',
+    dataset_scope_unavailable:
+      'The selected area, period or combination is unavailable. Please adjust the selection.',
+    dataset_observations_ambiguous:
+      'Several observations belong to the same point. Add filters or explicitly choose a calculation.',
+    dataset_non_additive:
+      'Percentages and indices cannot be summed. Choose original values or an appropriate calculation.',
+    dataset_scope_too_large:
+      'The dataset is too large for this import. Please narrow the area, period or other dimensions.',
     external_service_failed: 'An external service is currently unavailable.',
     push_operation_failed: 'The push notification operation could not be completed.',
     tutorial_operation_failed: 'The tutorial operation could not be completed.',
