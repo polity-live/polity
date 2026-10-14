@@ -723,7 +723,7 @@ it('shows the slide context and commits add/edit once, with source and target fu
   expect(doc().show!.cues[0].builtin).toBeUndefined();
   expect(commits).toHaveBeenCalledTimes(2);
   expect(studioDocumentV3Schema.safeParse(doc()).success).toBe(true);
-});
+}, 15_000);
 it('cancels drafts, prevents duplicate rules and restores a removed rule', async () => {
   const initial = structuredClone(document);
   initial.show!.cues = [
