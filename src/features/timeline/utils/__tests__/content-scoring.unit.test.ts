@@ -189,18 +189,19 @@ describe('content-scoring', () => {
   describe('scoreAndSortContent', () => {
     it('should return content sorted by score (highest first)', () => {
       const userContext = createMockUserContext();
+      const createdAt = new Date('2026-01-01T00:00:00Z');
 
       const contents = [
-        createMockContent({ id: '1', recentEngagementVelocity: 10 }),
-        createMockContent({ id: '2', recentEngagementVelocity: 500 }),
-        createMockContent({ id: '3', recentEngagementVelocity: 100 }),
+        createMockContent({ id: '1', createdAt, recentEngagementVelocity: 10 }),
+        createMockContent({ id: '2', createdAt, recentEngagementVelocity: 500 }),
+        createMockContent({ id: '3', createdAt, recentEngagementVelocity: 90 }),
       ];
 
       const result = scoreAndSortContent(contents, userContext);
 
       // Highest trending should be first
       expect(result[0].content.id).toBe('2');
-      expect(result[0].score).toBeGreaterThanOrEqual(result[1].score);
+      expect(result[0].score).toBeGreaterThan(result[1].score);
       expect(result[1].score).toBeGreaterThanOrEqual(result[2].score);
     });
 
