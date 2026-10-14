@@ -27,14 +27,37 @@ export function measuredServerWarnings(log: Buffer, offset: number) {
   return { warnings, errors: [...new Set(errors)] };
 }
 
+/** Preserve complete diagnostics, including analyzer requests, in append-only byte coordinates. */
+export function parseQueryAPILog(log: Buffer) {
+  const records: any[] = [];
+  const errors: string[] = [];
+  let byteStart = 0;
+  while (byteStart < log.length) {
+    const newline = log.indexOf(10, byteStart);
+    const byteEnd = newline < 0 ? log.length : newline + 1;
+    const line = log.subarray(byteStart, byteEnd).toString('utf8');
+    const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
+    if (start >= 0) {
+      try {
+        if (newline < 0) throw new Error('Incomplete diagnostic line');
+        records.push({
+          ...JSON.parse(line.slice(start)),
+          log: { source: 'app.log', byteStart, byteEnd, byteLength: log.length },
+        });
+      } catch {
+        errors.push('Invalid query API diagnostic record');
+      }
+    }
+    byteStart = byteEnd;
+  }
+  return { records, errors };
+}
+
 export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
   const byRequest = new Map<string, any[]>();
   const byQuery = new Map<string, any[]>();
   for (const record of records) {
-    if (!record || typeof record.requestID !== 'string') continue;
-    const group = byRequest.get(record.requestID) ?? [];
-    group.push(record);
-    byRequest.set(record.requestID, group);
+    if (!record) continue;
     if (record.phase === 'query-identities' && Array.isArray(record.queries)) {
       for (const query of record.queries) {
         if (!query || typeof query.id !== 'string' || typeof query.name !== 'string') continue;
@@ -44,11 +67,15 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
         byQuery.set(key, identities);
       }
     }
+    if (typeof record.requestID !== 'string') continue;
+    const group = byRequest.get(record.requestID) ?? [];
+    group.push(record);
+    byRequest.set(record.requestID, group);
   }
   for (const measurement of measurements)
     for (const sample of measurement.samples) {
       delete sample.api;
-      const identities = (
+      const candidates = (
         byQuery.get(JSON.stringify([measurement.name, sample.queryID])) ?? []
       ).filter(
         record =>
@@ -59,9 +86,32 @@ export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
             (query: any) => query.id === sample.queryID && query.name === measurement.name
           )
       );
+      const boundary = sample.apiLogBoundary;
+      const byteLength = candidates[0]?.log?.byteLength;
+      if (
+        boundary?.source !== 'app.log' ||
+        !Number.isSafeInteger(boundary.byteEnd) ||
+        boundary.byteEnd < 0 ||
+        !Number.isSafeInteger(byteLength) ||
+        boundary.byteEnd > byteLength
+      )
+        continue;
+      const validPosition = (record: any) =>
+        record.log?.source === 'app.log' &&
+        record.log.byteLength === byteLength &&
+        Number.isSafeInteger(record.log.byteStart) &&
+        Number.isSafeInteger(record.log.byteEnd) &&
+        record.log.byteStart >= 0 &&
+        record.log.byteEnd > record.log.byteStart &&
+        record.log.byteEnd <= byteLength;
+      // Invalid coordinates cannot be discarded to manufacture a unique request.
+      if (candidates.some(record => !validPosition(record))) continue;
+      const identities = candidates.filter(record => record.log.byteEnd <= boundary.byteEnd);
       if (identities.length !== 1) continue;
       const identity = identities[0];
       const group = byRequest.get(identity.requestID) ?? [];
+      if (group.some(record => !validPosition(record) || record.log.byteEnd > boundary.byteEnd))
+        continue;
       const one = (phase: string) => {
         const matches = group.filter(record => record.phase === phase);
         return matches.length === 1 ? matches[0] : undefined;

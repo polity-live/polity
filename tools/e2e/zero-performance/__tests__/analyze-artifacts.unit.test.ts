@@ -33,6 +33,7 @@ function measurement(values: number[]): Measurement {
       clientID: `client-${index}`,
       queryID: 'query',
       clientCorrelationID: `correlation-${index}`,
+      apiLogBoundary: { source: 'app.log' as const, byteEnd: 1 },
       activatedAt: 100,
       authoritativeAt: 100 + totalMs,
       api: {

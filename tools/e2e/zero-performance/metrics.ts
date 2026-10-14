@@ -4,6 +4,8 @@ export const BUDGETS = Object.freeze({ totalMs: 1_000, clientMs: 50, serverMs: 1
 export const REPETITIONS = Object.freeze({ materialize: 5, warmup: 0, analyze: 1 });
 export interface Sample {
   clientCorrelationID?: string;
+  /** Captured after hydration metrics close, before any analyzer can issue a request. */
+  apiLogBoundary?: { source: 'app.log'; byteEnd: number };
   api?: {
     requestID: string;
     clientCorrelationID: string;
@@ -71,6 +73,9 @@ export function checkBudgets(measurement: Measurement, requireAPI = true): strin
       if (
         !sample.queryID ||
         !sample.clientCorrelationID ||
+        sample.apiLogBoundary?.source !== 'app.log' ||
+        !Number.isSafeInteger(sample.apiLogBoundary.byteEnd) ||
+        sample.apiLogBoundary.byteEnd < 0 ||
         !Number.isFinite(sample.activatedAt) ||
         !Number.isFinite(sample.authoritativeAt) ||
         !api?.requestID ||

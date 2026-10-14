@@ -101,6 +101,7 @@ describe('benchmark source isolation', () => {
 import {
   reportFailures,
   correlateQueryAPI,
+  parseQueryAPILog,
   serverWarningFailures,
   securityCoverageFailures,
   navigationMaterializationFailures,
@@ -158,6 +159,7 @@ function measurement(overrides: Partial<Measurement> = {}): Measurement {
     samples: Array.from({ length: REPETITIONS.materialize }, (_, index) => ({
       queryID: 'query',
       clientCorrelationID: `correlation-${index}`,
+      apiLogBoundary: { source: 'app.log' as const, byteEnd: 1 },
       activatedAt: 1000 + index * 100,
       authoritativeAt: 1100 + index * 100,
       api: {
@@ -577,7 +579,7 @@ describe('Zero performance gate', () => {
   });
   it('correlates repeated query IDs by their fresh client identity and refuses ambiguity', () => {
     const item = measurement();
-    const records = item.samples.flatMap((sample, index) =>
+    const rawRecords = item.samples.flatMap((sample, index) =>
       [
         { requestID: `request-${index}`, phase: 'arrival', at: 1001 + index * 100 },
         { requestID: `request-${index}`, phase: 'auth', elapsed: 10 },
@@ -591,6 +593,13 @@ describe('Zero performance gate', () => {
         { requestID: `request-${index}`, phase: 'response', at: 1021 + index * 100, elapsed: 20 },
       ].map(record => ({ ...record, clientCorrelationID: sample.clientCorrelationID }))
     );
+    const log = Buffer.from(
+      rawRecords
+        .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+        .join('')
+    );
+    const { records } = parseQueryAPILog(log);
+    for (const sample of item.samples) sample.apiLogBoundary!.byteEnd = log.length;
     correlateQueryAPI([item], records);
     expect(item.samples.map(sample => sample.api?.requestID)).toEqual(
       Array.from({ length: 5 }, (_, index) => `request-${index}`)
@@ -610,7 +619,7 @@ describe('Zero performance gate', () => {
   it('keeps raw server clocks separate from client clocks without changing measured budgets', () => {
     for (const offset of [-60_000, 60_000]) {
       const item = measurement();
-      const records = item.samples.flatMap((sample, index) =>
+      const rawRecords = item.samples.flatMap((sample, index) =>
         [
           { phase: 'arrival', at: 1001 + index * 100 + offset },
           { phase: 'auth', elapsed: 10 },
@@ -628,7 +637,14 @@ describe('Zero performance gate', () => {
         }))
       );
       // Keep timestamp epochs valid while their clocks remain deliberately far apart.
-      for (const record of records) if (typeof record.at === 'number') record.at += 100_000;
+      for (const record of rawRecords) if (typeof record.at === 'number') record.at += 100_000;
+      const log = Buffer.from(
+        rawRecords
+          .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+          .join('')
+      );
+      const { records } = parseQueryAPILog(log);
+      for (const sample of item.samples) sample.apiLogBoundary!.byteEnd = log.length;
       correlateQueryAPI([item], records);
       expect(checkBudgets(item)).toEqual([]);
       expect(item.samples.map(sample => sample.totalMs)).toEqual([100, 100, 100, 100, 100]);

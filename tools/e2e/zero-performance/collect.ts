@@ -9,6 +9,7 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
+  parseQueryAPILog,
   isAbsoluteBudgetFailure,
   measuredServerWarnings,
   type Report,
@@ -329,7 +330,8 @@ try {
   infrastructure.push(String(error));
 } finally {
   await closeDb();
-  const appLog = await readFile(path.join(logOutput, 'app.log'), 'utf8');
+  const appLogBuffer = await readFile(path.join(logOutput, 'app.log'));
+  const appLog = appLogBuffer.toString('utf8');
   mutationDiagnostics = appLog.split('\n').flatMap(line => {
     const start = line.indexOf('{"benchmark":"mutation-api"');
     if (start < 0) return [];
@@ -342,16 +344,9 @@ try {
   });
   correlateMutationAPI(mutations, mutationDiagnostics);
   for (const row of mutations) row.failures = mutationFailures(row);
-  const apiDiagnostics = appLog.split('\n').flatMap(line => {
-    const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
-    if (start < 0) return [];
-    try {
-      return [JSON.parse(line.slice(start))];
-    } catch {
-      infrastructure.push('Invalid query API diagnostic record');
-      return [];
-    }
-  });
+  const parsed = parseQueryAPILog(appLogBuffer);
+  const apiDiagnostics = parsed.records;
+  infrastructure.push(...parsed.errors);
   correlateQueryAPI(measurements, apiDiagnostics);
   for (const row of measurements) row.failures = checkBudgets(row);
   const warningLog = measuredServerWarnings(

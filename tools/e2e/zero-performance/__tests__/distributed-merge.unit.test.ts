@@ -4,7 +4,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { createManifest, type Execution, type Manifest, type Shard } from '../sharding';
 import { shardMeasurementKeys } from '../distributed-report';
-import { correlateQueryAPI, type Report } from '../report';
+import { correlateQueryAPI, parseQueryAPILog, type Report } from '../report';
 import { writeJoinPlanArtifact } from '../plan-artifacts';
 import { writeJSON } from '../distributed-io';
 import { mergeShards } from '../distributed-merge';
@@ -93,6 +93,7 @@ async function partial(
         return {
           queryID: 'query',
           clientCorrelationID: identity.clientCorrelationID,
+          apiLogBoundary: { source: 'app.log' as const, byteEnd: 0 },
           activatedAt: 100,
           authoritativeAt: 200,
           totalMs: 100,
@@ -178,7 +179,16 @@ async function partial(
       };
     })
   );
-  correlateQueryAPI(measurements, apiDiagnostics);
+  const log = Buffer.from(
+    apiDiagnostics
+      .map(record => JSON.stringify({ benchmark: 'query-api', ...record }) + '\n')
+      .join('')
+  );
+  const parsed = parseQueryAPILog(log);
+  for (const row of measurements)
+    for (const sample of row.samples)
+      sample.apiLogBoundary = { source: 'app.log', byteEnd: log.length };
+  correlateQueryAPI(measurements, parsed.records);
   return {
     runtime,
     format: 12,
@@ -197,7 +207,7 @@ async function partial(
     measurements,
     infrastructure: [],
     serverWarnings: [],
-    apiDiagnostics,
+    apiDiagnostics: parsed.records,
     journeys: [],
   } as Report;
 }

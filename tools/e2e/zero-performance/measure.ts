@@ -27,6 +27,7 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
+  parseQueryAPILog,
   measuredServerWarnings,
 } from './report';
 import { writeJoinPlanArtifact } from './plan-artifacts';
@@ -316,7 +317,12 @@ async function measure(
         )
           throw new Error('Missing client/server/total hydration metrics');
         timelineTotals(timeline, elapsed, stats.hydrateTotal);
+        const apiLogBoundary = {
+          source: 'app.log' as const,
+          byteEnd: (await stat(path.join(logOutput, 'app.log'))).size,
+        };
         measurement.samples.push({
+          apiLogBoundary,
           clientCorrelationID: required(clientCorrelations.get(zero)),
           queryID: stats.id,
           activatedAt,
@@ -463,17 +469,9 @@ async function measure(
 async function save(extra: Record<string, unknown> = {}, final = false) {
   Object.assign(diagnostics, extra);
   if (final) {
-    const log = await readFile(path.join(logOutput, 'app.log'), 'utf8');
-    diagnostics.apiDiagnostics = log.split('\n').flatMap(line => {
-      const start = line.search(/\{"benchmark":"query-(?:api|http)"/);
-      if (start < 0) return [];
-      try {
-        return [JSON.parse(line.slice(start))];
-      } catch {
-        infrastructure.push('Invalid query API diagnostic record');
-        return [];
-      }
-    });
+    const parsed = parseQueryAPILog(await readFile(path.join(logOutput, 'app.log')));
+    diagnostics.apiDiagnostics = parsed.records;
+    infrastructure.push(...parsed.errors);
     correlateQueryAPI(results, diagnostics.apiDiagnostics as any[]);
     correlateTimelines(queryTimelines, results);
     for (const result of results) result.failures = checkBudgets(result);

@@ -39,6 +39,7 @@ function report(values = [1090.9, 41.9, 50.2, 48.5, 95.5], prefix = 'initial'): 
       clientID: `${prefix}-client-${i}`,
       queryID: 'q',
       clientCorrelationID: `${prefix}-correlation-${i}`,
+      apiLogBoundary: { source: 'app.log' as const, byteEnd: 1 },
       activatedAt: 100,
       authoritativeAt: 100 + totalMs,
       api: {
