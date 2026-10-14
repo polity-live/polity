@@ -28,6 +28,16 @@ export interface Shard {
   head: string[];
   base: string[];
 }
+
+/** Start the browser's uninterrupted itinerary early without changing assignments. */
+export function measurementMatrix(shards: readonly Shard[]) {
+  return {
+    include: [...shards]
+      .sort((a, b) => Number(b.layer === 'journeys') - Number(a.layer === 'journeys'))
+      .map(shard => ({ shard: shard.id, layer: shard.layer })),
+  };
+}
+
 export interface Manifest {
   format: number;
   protocol: string;

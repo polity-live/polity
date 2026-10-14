@@ -82,9 +82,9 @@ jobs:
     name: Zero measurements / ${{ matrix.shard }}
     needs: [test-selection, zero-performance-prepare]
     if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
-    # Standard public ARM64 runners use Cobalt 100 CPUs. Keep both revisions
-    # and every unchanged acceptance budget on the same native Linux worker.
-    runs-on: ubuntu-24.04-arm
+    # Query/security workers use public ARM64 runners. Run Chromium on the
+    # standard x64 Ubuntu worker; both revisions retain every original budget.
+    runs-on: ${{ matrix.layer == 'journeys' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false

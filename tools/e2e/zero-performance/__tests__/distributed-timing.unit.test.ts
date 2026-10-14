@@ -118,7 +118,9 @@ describe('active Zero CI budget', () => {
       prepare.steps.find((step: any) => step.id === 'prepare').env.ZERO_PERFORMANCE_BASE_REF
     ).toContain('inputs.zero_baseline_ref');
     expect(prepare['runs-on']).toBe('ubuntu-24.04');
-    expect(runners['runs-on']).toBe('ubuntu-24.04-arm');
+    expect(runners['runs-on']).toBe(
+      "${{ matrix.layer == 'journeys' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}"
+    );
     expect(
       runners.steps.find((step: any) => step.name === 'Cache pinned Chromium').with.key
     ).toContain('${{ runner.arch }}');

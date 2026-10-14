@@ -12,6 +12,7 @@ import {
   SECURITY_SHARD_COUNT,
   TOTAL_SHARD_COUNT,
   type Workload,
+  measurementMatrix,
 } from '../sharding';
 import { securityScenarios, securityCaseManifest } from '../security';
 
@@ -37,6 +38,16 @@ const manifest = () =>
   );
 
 describe('distributed Zero workload planning', () => {
+  it('starts the browser early while preserving every assignment and the immutable manifest order', () => {
+    const original = manifest();
+    const before = original.shards.map(shard => ({ shard: shard.id, layer: shard.layer }));
+    const matrix = measurementMatrix(original.shards);
+    expect(matrix.include[0]).toEqual({ shard: 'journeys', layer: 'journeys' });
+    expect(matrix.include.slice(1)).toEqual(before.filter(shard => shard.layer !== 'journeys'));
+    expect(original.shards.map(shard => ({ shard: shard.id, layer: shard.layer }))).toEqual(before);
+    expect(matrix.include).toHaveLength(TOTAL_SHARD_COUNT);
+    validateManifest(original);
+  });
   it('preserves the manifest checksum through JSON transport with optional fields', () => {
     for (const hasBase of [true, false]) {
       const result = createManifest(

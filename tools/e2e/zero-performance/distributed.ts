@@ -6,7 +6,13 @@ import os from 'node:os';
 import { loadCases } from './catalog';
 import { securityCaseManifest } from './security';
 import { mutationInventory } from './mutation-runtime';
-import { createManifest, validateManifest, type Manifest, type Workload } from './sharding';
+import {
+  createManifest,
+  validateManifest,
+  measurementMatrix,
+  type Manifest,
+  type Workload,
+} from './sharding';
 import {
   command,
   git,
@@ -84,9 +90,7 @@ if (action === 'prepare') {
     startedAt: new Date(Date.now() - elapsedMs).toISOString(),
     completedAt: new Date().toISOString(),
   });
-  const matrix = {
-    include: manifest.shards.map(shard => ({ shard: shard.id, layer: shard.layer })),
-  };
+  const matrix = measurementMatrix(manifest.shards);
   if (process.env.GITHUB_OUTPUT)
     await appendFile(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify(matrix)}\n`);
   console.log(
