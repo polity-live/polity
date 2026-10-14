@@ -82,6 +82,13 @@ electors could otherwise change the baseline independently of the rejected write
 The full snapshot equality, SQL denial proof, five fresh writers and existing
 deadlines remain mandatory.
 
+Studio presentation authorization explicitly resolves the requested event ID
+through its primary key before fetching presentation state. The root foreign key
+already implies that identity; all tutorial, audience and role predicates remain
+intact. This prevents a planner-dependent duplicate parent lookup (three versus
+two owner reads, or two versus one denied-reader read) without acknowledging extra
+row work or changing any acceptance threshold.
+
 The single diagnostic analysis uses the public `joinPlans: false` option. The complete join trace is exported once afterwards with `joinPlans: true`, with its own `exportMs` diagnostic duration. `analyzeMs` retains exactly one unmodified Zero `elapsed` value without a performance budget. Analysis/export errors, timeouts and invalid or missing diagnostics remain failures. Row work and warnings remain validated. Analyzer calls fall from 24 to 2 per case (about 92% fewer); this does not imply the same reduction in end-to-end suite time. Missing plans and slow-query warnings from the separate export still fail the measurement.
 
 Worker progress, console tables and success/failure CSVs share one summary schema: `totalMedianMs`, `totalMaxMs`, `clientMaxMs`, `serverMedianMs`, `serverMaxMs`, `analyzerMs`, `planExportMs`, and the existing Auth/API/transform diagnostics and row counts. Missing diagnostics appear as `missing`, never zero. `startup.json` records setup/build time and reports record worker elapsed times separately from query/analyzer durations; concurrent connection durations must not be summed as wall time.

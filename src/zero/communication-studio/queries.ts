@@ -95,7 +95,11 @@ export const studioQueries = {
   eventPresentation: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
     zql.event_presentation
       .where('event_id', args.eventId)
-      .whereExists('event', e => applyEventQueryAccess(e, ctx.userID))
+      // The FK already fixes the parent identity. Resolve its complete access
+      // predicate once through that primary key before reading presentation state.
+      .whereExists('event', e => applyEventQueryAccess(e.where('id', args.eventId), ctx.userID), {
+        flip: true,
+      })
       .one()
   ),
   eventManager: defineQuery(z.object({ eventId: z.string().uuid() }), ({ args, ctx }) =>
