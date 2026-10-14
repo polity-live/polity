@@ -36,7 +36,7 @@ describe('initial database baseline', () => {
     const config = readFileSync(resolve(directory, 'config.toml'), 'utf8');
     const configured = [...config.matchAll(/"\.\/schemas\/([^"\n]+)"/g)].map(match => match[1]);
     const files = readdirSync(resolve(directory, 'schemas')).filter(file => file.endsWith('.sql'));
-    expect(configured.toSorted()).toEqual(files.toSorted());
+    expect([...configured].sort()).toEqual([...files].sort());
     expect(configured.indexOf('35_security.sql')).toBeGreaterThan(
       configured.indexOf('91_triggers.sql')
     );

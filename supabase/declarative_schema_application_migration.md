@@ -50,6 +50,13 @@ Own triggers on `auth.users` and own RLS policies on `storage.objects` and
 view indexes and other comments) must be assessed when introducing those objects;
 this application currently declares no additional instances of them.
 
+The deployed Storage service additionally manages three bucket-control triggers
+(`protect_bucket_control_insert`, `protect_bucket_control_update`, and
+`protect_bucket_control_update_role`) that differ from the CLI's shadow platform
+version. They call functions owned by the managed `storage` schema. A linked
+migra diff can display these platform differences even though application objects
+match. Do not copy or remove them as application SQL.
+
 ## Generate and validate migrations
 
 Use the pinned CLI (2.115.0 for this baseline) and explicitly select `--use-migra`.
@@ -89,12 +96,26 @@ incremental migration that can be pushed over the previous application tables.
 - For the linked production project, pause writers, remove uploads through the
   Storage API (not SQL, which leaves physical files behind), and hard-delete Auth
   accounts through the Admin API before resetting application objects.
+- If legacy Auth deletion callbacks fail against the old application data, keep
+  registrations and writers paused, rebuild the baseline first, then verify and
+  clean up any remaining Auth accounts through the Admin API. The tested remote
+  reset cleared the previous Auth rows; a subsequent real Admin API create/profile/
+  delete probe verified the new lifecycle without sending email.
 - Preserve Supabase system structures, project settings and Vault secrets. Check
   the linked project identity before running `supabase db reset --linked --no-seed`.
 - Provision buckets with `supabase seed buckets --linked` and apply **only**
   `seed.production.sql`; never run the configured local seed list remotely.
 - Reinitialize Zero replication and its persistent replica, restart services, and
   verify the two applied migration versions, catalog parity and service health.
+
+The current linked project is on Supabase Free, whose maximum upload size is
+50 MiB. Its effective Studio bucket limit remains 50 MiB, with the canonical MIME
+types and private visibility. The local configuration still declares 100 MiB.
+Provisioning that 100 MiB limit remotely requires a paid project; neither SQL nor
+bucket seeding can bypass the plan ceiling. A targeted Management API request was
+rejected with HTTP 402 and did not change the plan or incur an upgrade. Decide
+whether to unify both environments at 50 MiB or upgrade before provisioning
+100 MiB there. See [Supabase file limits](https://supabase.com/docs/guides/storage/uploads/file-limits).
 
 See the [Supabase declarative schema guide](https://supabase.com/docs/guides/local-development/declarative-database-schemas)
 and [CLI diff reference](https://supabase.com/docs/reference/cli/supabase-db-diff).
