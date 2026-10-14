@@ -85,7 +85,17 @@ export function installNavigationProbe() {
     ) &&
     (!target.id || event.ids.includes(target.id));
   const visible = (element: Element) => {
-    if (!element.getClientRects().length) return false;
+    const nativeVisibility = typeof element.checkVisibility === 'function';
+    if (
+      nativeVisibility &&
+      !element.checkVisibility({
+        checkOpacity: true,
+        checkVisibilityCSS: true,
+        contentVisibilityAuto: true,
+      })
+    )
+      return false;
+    if (!nativeVisibility && !element.getClientRects().length) return false;
     const bounds = element.getBoundingClientRect();
     if (
       bounds.width <= 0 ||
@@ -96,6 +106,9 @@ export function installNavigationProbe() {
       bounds.left >= innerWidth
     )
       return false;
+    // The native box-tree check includes ancestor opacity and skipped content.
+    // Avoid per-ancestor computed-style serialization inside the measured frame.
+    if (nativeVisibility) return true;
     for (let parent: Element | null = element; parent; parent = parent.parentElement) {
       const style = getComputedStyle(parent);
       if (

@@ -352,6 +352,52 @@ describe('original navigation frame diagnostics', () => {
 });
 
 describe('navigation paint measurement', () => {
+  it('uses native visibility including opacity and skipped content at the real paint frame', () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    const native = vi.fn(() => false);
+    Object.defineProperty(document.querySelector('h1')!, 'checkVisibility', { value: native });
+    const styles = vi.spyOn(globalThis, 'getComputedStyle');
+    const rects = vi.spyOn(Element.prototype, 'getClientRects');
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    expect(native).not.toHaveBeenCalled();
+    frame();
+    expect(native).toHaveBeenCalledWith({
+      checkOpacity: true,
+      checkVisibilityCSS: true,
+      contentVisibilityAuto: true,
+    });
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    native.mockReturnValue(true);
+    clock.mockReturnValue(42);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBe(32);
+    expect(styles).not.toHaveBeenCalled();
+    expect(rects).not.toHaveBeenCalled();
+  });
+
+  it('still rejects offscreen content when the native visibility check succeeds', () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    Object.defineProperty(document.querySelector('h1')!, 'checkVisibility', {
+      value: vi.fn(() => true),
+    });
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: innerHeight + 1,
+      left: 10,
+      width: 100,
+      height: 30,
+      right: 110,
+      bottom: innerHeight + 31,
+    } as DOMRect);
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+  });
+
   it('records candidates first discovered by the initial RAF in that real frame', () => {
     const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
     history.replaceState(null, '', '/old');
