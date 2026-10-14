@@ -86,13 +86,25 @@ it.each([
   { size: 'invalid', mimetype: 'image/png' },
   { size: 0, mimetype: 'image/png' },
   { size: -1, mimetype: 'image/png' },
-  { size: 100 * 1024 * 1024 + 1, mimetype: 'image/png' },
+  { size: 50 * 1024 * 1024 + 1, mimetype: 'image/png' },
 ])('rejects unsupported media metadata %j before signing or copying', async metadata => {
   overrideRow('storage.objects', [{ owner_id: 'actor', metadata }]);
   await expect(importChatMedia(tx, 'actor', 'run', 'project', path, 'asset')).rejects.toThrow(
     'Unsupported media'
   );
   expect(io.sign).not.toHaveBeenCalled();
+});
+it('imports media at the 50 MiB Studio upload boundary', async () => {
+  overrideRow('storage.objects', [
+    { owner_id: 'actor', metadata: { size: 50 * 1024 * 1024, mimetype: 'image/png' } },
+  ]);
+  await expect(
+    importChatMedia(tx, 'actor', 'run', 'project', path, 'asset')
+  ).resolves.toMatchObject({
+    assetId: 'asset',
+    status: 'ready',
+  });
+  expect(io.copy).toHaveBeenCalled();
 });
 it.each([
   { count: 100, bytes: 0 },

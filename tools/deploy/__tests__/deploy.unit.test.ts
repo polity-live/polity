@@ -18,10 +18,10 @@ describe('deployment CLI dry-run', () => {
     const config = readFileSync(resolve('supabase/config.toml'), 'utf8');
     const storage = config.match(/\[storage\]\s*([\s\S]*?)(?=\r?\n\[|$)/)?.[1];
     const section = config.match(/\[storage\.buckets\.studio\]\s*([\s\S]*?)(?=\r?\n\[|$)/)?.[1];
-    expect(storage).toContain('file_size_limit = "100MiB"');
+    expect(storage).toContain('file_size_limit = "50MiB"');
     expect(section).toBeDefined();
     expect(section).toContain('public = false');
-    expect(section).toContain('file_size_limit = "100MiB"');
+    expect(section).toContain('file_size_limit = "50MiB"');
     const mimeTypes = JSON.parse(section!.match(/allowed_mime_types\s*=\s*(\[[^\]]*\])/)![1]);
     expect(mimeTypes).toEqual([
       'audio/mpeg',

@@ -58,6 +58,21 @@ import { studioSharedMutators } from '../shared-mutators';
 import { studioCommandSchemas, canvasCommandSchema } from '../commands';
 import { presentationCommandSchema } from '../presentation-schema';
 import { encodeAppError } from '@/features/shared/errors/app-error';
+
+it('accepts the 50 MiB Studio upload boundary and rejects larger files before upload', () => {
+  const upload = {
+    operationId: crypto.randomUUID(),
+    projectId: crypto.randomUUID(),
+    id: crypto.randomUUID(),
+    name: 'photo.png',
+    mime: 'image/png',
+    size: 50 * 1024 * 1024,
+  };
+  expect(studioCommandSchemas.beginUpload.safeParse(upload).success).toBe(true);
+  expect(
+    studioCommandSchemas.beginUpload.safeParse({ ...upload, size: upload.size + 1 }).success
+  ).toBe(false);
+});
 const id = crypto.randomUUID();
 const input = {
   id,

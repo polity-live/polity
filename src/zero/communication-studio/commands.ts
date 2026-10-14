@@ -121,7 +121,7 @@ export const studioCommandSchemas = {
       .number()
       .int()
       .min(1)
-      .max(100 * 1024 * 1024),
+      .max(50 * 1024 * 1024),
   }),
   finishUpload: z.object({ ...operation, id: uuid }),
   cancelUpload: z.object({ ...operation, id: uuid }),

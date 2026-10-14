@@ -49,7 +49,7 @@ export async function importChatMedia(
     !['image/png', 'image/jpeg', 'image/webp', 'video/mp4'].includes(mime) ||
     !Number.isFinite(size) ||
     size <= 0 ||
-    size > 100 * 1024 * 1024
+    size > 50 * 1024 * 1024
   )
     throw new Error('Unsupported media or file size');
   const [usage] = await rows<{ count: number; bytes: number }>(

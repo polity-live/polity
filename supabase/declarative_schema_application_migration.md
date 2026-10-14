@@ -109,13 +109,13 @@ incremental migration that can be pushed over the previous application tables.
   verify the two applied migration versions, catalog parity and service health.
 
 The current linked project is on Supabase Free, whose maximum upload size is
-50 MiB. Its effective Studio bucket limit remains 50 MiB, with the canonical MIME
-types and private visibility. The local configuration still declares 100 MiB.
-Provisioning that 100 MiB limit remotely requires a paid project; neither SQL nor
-bucket seeding can bypass the plan ceiling. A targeted Management API request was
-rejected with HTTP 402 and did not change the plan or incur an upgrade. Decide
-whether to unify both environments at 50 MiB or upgrade before provisioning
-100 MiB there. See [Supabase file limits](https://supabase.com/docs/guides/storage/uploads/file-limits).
+50 MiB. The global Storage setting, private Studio bucket and Studio upload
+validation use 50 MiB in both local and remote environments, with the canonical
+MIME types. Provision this configuration with `supabase seed buckets --local`
+and `supabase seed buckets --linked`; no SQL migration or paid upgrade is needed.
+The asset metadata constraint retains its 100 MiB integrity ceiling; actual uploads
+are restricted to 50 MiB by Storage and command validation.
+See [Supabase file limits](https://supabase.com/docs/guides/storage/uploads/file-limits).
 
 See the [Supabase declarative schema guide](https://supabase.com/docs/guides/local-development/declarative-database-schemas)
 and [CLI diff reference](https://supabase.com/docs/reference/cli/supabase-db-diff).
